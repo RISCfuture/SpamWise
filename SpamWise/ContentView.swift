@@ -1,17 +1,6 @@
 import SwiftUI
-import Playgrounds
+import SpamWiseCore
 
 struct ContentView: View {
-    var body: some View {
-        Text("Hello, world!")
-            .padding()
-    }
-}
-
-#Preview {
-    ContentView()
-}
-
-#Playground {
-    _ = 1 + 2
+    var body: some View { Text("SpamWise").padding() }
 }

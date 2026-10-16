@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 
 @main struct MyApp: App {

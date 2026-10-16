@@ -8,10 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		019C874D3081F4C500513EEC /* MailExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 019C87443081F4C500513EEC /* MailExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		019C877F3081F53C00513EEC /* SpamWiseKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019C87743081F53C00513EEC /* SpamWiseKit.framework */; };
-		019C87893081F53C00513EEC /* SpamWiseKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019C87743081F53C00513EEC /* SpamWiseKit.framework */; };
-		019C878A3081F53C00513EEC /* SpamWiseKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 019C87743081F53C00513EEC /* SpamWiseKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		019C87933081F54700513EEC /* SpamWiseKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 019C87743081F53C00513EEC /* SpamWiseKit.framework */; };
+		AA0000000000000000000002 = {isa = PBXBuildFile; productRef = AA0000000000000000000001; };
+		AA0000000000000000000004 = {isa = PBXBuildFile; productRef = AA0000000000000000000003; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,27 +34,6 @@
 			remoteGlobalIDString = 000000000000000100000000;
 			remoteInfo = SpamWise;
 		};
-		019C87803081F53C00513EEC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 000000000000000000000000 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 019C87733081F53C00513EEC;
-			remoteInfo = SpamWiseKit;
-		};
-		019C87823081F53C00513EEC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 000000000000000000000000 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 000000000000000100000000;
-			remoteInfo = SpamWise;
-		};
-		019C87873081F53C00513EEC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 000000000000000000000000 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 019C87733081F53C00513EEC;
-			remoteInfo = SpamWiseKit;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -69,15 +46,6 @@
 			);
 			name = "Embed Foundation Extensions";
 		};
-		019C878E3081F53C00513EEC /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			dstPath = "";
-			dstSubfolder = Frameworks;
-			files = (
-				019C878A3081F53C00513EEC /* SpamWiseKit.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -85,8 +53,6 @@
 		019C87443081F4C500513EEC /* MailExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MailExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		019C87593081F50B00513EEC /* UnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		019C87663081F51600513EEC /* UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		019C87743081F53C00513EEC /* SpamWiseKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SpamWiseKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		019C877E3081F53C00513EEC /* SpamWiseKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpamWiseKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -123,29 +89,19 @@
 			path = UITests;
 			sourceTree = "<group>";
 		};
-		019C87753081F53C00513EEC /* SpamWiseKit */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SpamWiseKit;
-			sourceTree = "<group>";
-		};
-		019C87843081F53C00513EEC /* SpamWiseKitTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SpamWiseKitTests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		000000000000000130000000 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				019C87893081F53C00513EEC /* SpamWiseKit.framework in Frameworks */,
+				AA0000000000000000000002,
 			);
 		};
 		019C87413081F4C500513EEC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				019C87933081F54700513EEC /* SpamWiseKit.framework in Frameworks */,
+				AA0000000000000000000004,
 			);
 		};
 		019C87563081F50B00513EEC /* Frameworks */ = {
@@ -158,17 +114,6 @@
 			files = (
 			);
 		};
-		019C87713081F53C00513EEC /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			files = (
-			);
-		};
-		019C877B3081F53C00513EEC /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			files = (
-				019C877F3081F53C00513EEC /* SpamWiseKit.framework in Frameworks */,
-			);
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -179,8 +124,6 @@
 				019C87453081F4C500513EEC /* MailExtension */,
 				019C875A3081F50B00513EEC /* UnitTests */,
 				019C87673081F51600513EEC /* UITests */,
-				019C87753081F53C00513EEC /* SpamWiseKit */,
-				019C87843081F53C00513EEC /* SpamWiseKitTests */,
 				019C87923081F54700513EEC /* Frameworks */,
 				000000000000000000000020 /* Products */,
 			);
@@ -193,8 +136,6 @@
 				019C87443081F4C500513EEC /* MailExtension.appex */,
 				019C87593081F50B00513EEC /* UnitTests.xctest */,
 				019C87663081F51600513EEC /* UITests.xctest */,
-				019C87743081F53C00513EEC /* SpamWiseKit.framework */,
-				019C877E3081F53C00513EEC /* SpamWiseKitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -209,29 +150,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		019C876F3081F53C00513EEC /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			files = (
-			);
-		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		000000000000000100000000 /* SpamWise */ = {
 			isa = PBXNativeTarget;
+			packageProductDependencies = (AA0000000000000000000001,);
 			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "SpamWise" */;
 			buildPhases = (
 				000000000000000120000000 /* Sources */,
 				000000000000000130000000 /* Frameworks */,
 				000000000000000140000000 /* Resources */,
 				019C87523081F4C500513EEC /* Embed Foundation Extensions */,
-				019C878E3081F53C00513EEC /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				019C874C3081F4C500513EEC /* PBXTargetDependency */,
-				019C87883081F53C00513EEC /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* SpamWise */,
@@ -243,6 +178,7 @@
 		};
 		019C87433081F4C500513EEC /* MailExtension */ = {
 			isa = PBXNativeTarget;
+			packageProductDependencies = (AA0000000000000000000003,);
 			buildConfigurationList = 019C874F3081F4C500513EEC /* Build configuration list for PBXNativeTarget "MailExtension" */;
 			buildPhases = (
 				019C87403081F4C500513EEC /* Sources */,
@@ -301,52 +237,12 @@
 			productReference = 019C87663081F51600513EEC /* UITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		019C87733081F53C00513EEC /* SpamWiseKit */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 019C878B3081F53C00513EEC /* Build configuration list for PBXNativeTarget "SpamWiseKit" */;
-			buildPhases = (
-				019C876F3081F53C00513EEC /* Headers */,
-				019C87703081F53C00513EEC /* Sources */,
-				019C87713081F53C00513EEC /* Frameworks */,
-				019C87723081F53C00513EEC /* Resources */,
-			);
-			buildRules = (
-			);
-			fileSystemSynchronizedGroups = (
-				019C87753081F53C00513EEC /* SpamWiseKit */,
-			);
-			name = SpamWiseKit;
-			productName = SpamWiseKit;
-			productReference = 019C87743081F53C00513EEC /* SpamWiseKit.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		019C877D3081F53C00513EEC /* SpamWiseKitTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 019C878F3081F53C00513EEC /* Build configuration list for PBXNativeTarget "SpamWiseKitTests" */;
-			buildPhases = (
-				019C877A3081F53C00513EEC /* Sources */,
-				019C877B3081F53C00513EEC /* Frameworks */,
-				019C877C3081F53C00513EEC /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				019C87813081F53C00513EEC /* PBXTargetDependency */,
-				019C87833081F53C00513EEC /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				019C87843081F53C00513EEC /* SpamWiseKitTests */,
-			);
-			name = SpamWiseKitTests;
-			productName = SpamWiseKitTests;
-			productReference = 019C877E3081F53C00513EEC /* SpamWiseKitTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		000000000000000000000000 /* Project object */ = {
 			isa = PBXProject;
+			packageReferences = (AA0000000000000000000005,);
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2700;
@@ -363,13 +259,6 @@
 						TestTargetID = 000000000000000100000000;
 					};
 					019C87653081F51600513EEC = {
-						CreatedOnToolsVersion = 27.0;
-						TestTargetID = 000000000000000100000000;
-					};
-					019C87733081F53C00513EEC = {
-						CreatedOnToolsVersion = 27.0;
-					};
-					019C877D3081F53C00513EEC = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = 000000000000000100000000;
 					};
@@ -393,8 +282,6 @@
 				019C87433081F4C500513EEC /* MailExtension */,
 				019C87583081F50B00513EEC /* UnitTests */,
 				019C87653081F51600513EEC /* UITests */,
-				019C87733081F53C00513EEC /* SpamWiseKit */,
-				019C877D3081F53C00513EEC /* SpamWiseKitTests */,
 			);
 		};
 /* End PBXProject section */
@@ -416,16 +303,6 @@
 			);
 		};
 		019C87643081F51600513EEC /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			files = (
-			);
-		};
-		019C87723081F53C00513EEC /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			files = (
-			);
-		};
-		019C877C3081F53C00513EEC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -453,16 +330,6 @@
 			files = (
 			);
 		};
-		019C87703081F53C00513EEC /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			files = (
-			);
-		};
-		019C877A3081F53C00513EEC /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			files = (
-			);
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -480,21 +347,6 @@
 			isa = PBXTargetDependency;
 			target = 000000000000000100000000 /* SpamWise */;
 			targetProxy = 019C876A3081F51600513EEC /* PBXContainerItemProxy */;
-		};
-		019C87813081F53C00513EEC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 019C87733081F53C00513EEC /* SpamWiseKit */;
-			targetProxy = 019C87803081F53C00513EEC /* PBXContainerItemProxy */;
-		};
-		019C87833081F53C00513EEC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 000000000000000100000000 /* SpamWise */;
-			targetProxy = 019C87823081F53C00513EEC /* PBXContainerItemProxy */;
-		};
-		019C87883081F53C00513EEC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 019C87733081F53C00513EEC /* SpamWiseKit */;
-			targetProxy = 019C87873081F53C00513EEC /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -565,6 +417,8 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				ENABLE_HARDENED_RUNTIME = YES;
 				TVOS_DEPLOYMENT_TARGET = 27.0;
 				WATCHOS_DEPLOYMENT_TARGET = 27.0;
 				XROS_DEPLOYMENT_TARGET = 27.0;
@@ -629,6 +483,8 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_VERSION = 6.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				ENABLE_HARDENED_RUNTIME = YES;
 				TVOS_DEPLOYMENT_TARGET = 27.0;
 				WATCHOS_DEPLOYMENT_TARGET = 27.0;
 				XROS_DEPLOYMENT_TARGET = 27.0;
@@ -643,8 +499,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
@@ -656,6 +512,8 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads mail history and applies your corrections in Apple Mail.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -690,8 +548,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
@@ -703,6 +561,8 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads mail history and applies your corrections in Apple Mail.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -867,118 +727,11 @@
 			};
 			name = Release;
 		};
-		019C878C3081F53C00513EEC /* Debug configuration for PBXNativeTarget "SpamWiseKit" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2NFSK2WB24;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.SpamWiseKit;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_INSTALL_MODULE = YES;
-				SWIFT_INSTALL_OBJC_HEADER = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Debug;
-		};
-		019C878D3081F53C00513EEC /* Release configuration for PBXNativeTarget "SpamWiseKit" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2NFSK2WB24;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.SpamWiseKit;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_INSTALL_MODULE = YES;
-				SWIFT_INSTALL_OBJC_HEADER = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Release;
-		};
-		019C87903081F53C00513EEC /* Debug configuration for PBXNativeTarget "SpamWiseKitTests" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2NFSK2WB24;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.SpamWiseKitTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SpamWise.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SpamWise";
-			};
-			name = Debug;
-		};
-		019C87913081F53C00513EEC /* Release configuration for PBXNativeTarget "SpamWiseKitTests" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2NFSK2WB24;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.SpamWiseKitTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SpamWise.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SpamWise";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
+		AA0000000000000000000001 = {isa = XCSwiftPackageProductDependency; productName = SpamWiseCore; };
+		AA0000000000000000000003 = {isa = XCSwiftPackageProductDependency; productName = SpamWiseCore; };
+		AA0000000000000000000005 = {isa = XCLocalSwiftPackageReference; relativePath = SpamWiseCore; };
 /* Begin XCConfigurationList section */
 		000000000000000010000000 /* Build configuration list for PBXProject "SpamWise" */ = {
 			isa = XCConfigurationList;
@@ -1017,22 +770,6 @@
 			buildConfigurations = (
 				019C876D3081F51600513EEC /* Debug configuration for PBXNativeTarget "UITests" */,
 				019C876E3081F51600513EEC /* Release configuration for PBXNativeTarget "UITests" */,
-			);
-			defaultConfigurationName = Release;
-		};
-		019C878B3081F53C00513EEC /* Build configuration list for PBXNativeTarget "SpamWiseKit" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				019C878C3081F53C00513EEC /* Debug configuration for PBXNativeTarget "SpamWiseKit" */,
-				019C878D3081F53C00513EEC /* Release configuration for PBXNativeTarget "SpamWiseKit" */,
-			);
-			defaultConfigurationName = Release;
-		};
-		019C878F3081F53C00513EEC /* Build configuration list for PBXNativeTarget "SpamWiseKitTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				019C87903081F53C00513EEC /* Debug configuration for PBXNativeTarget "SpamWiseKitTests" */,
-				019C87913081F53C00513EEC /* Release configuration for PBXNativeTarget "SpamWiseKitTests" */,
 			);
 			defaultConfigurationName = Release;
 		};
