@@ -7,7 +7,7 @@ import Darwin
     var payload: Data
     init(key: String, payload: Data) { self.key = key; self.payload = payload }
 }
-public enum StoreError: Error, Sendable { case lockUnavailable, missingAppGroup }
+public enum StoreError: Error, Sendable { case lockUnavailable, missingAppGroup, invalidPath }
 /// Each operation uses a fresh container/context under a cross-process lock.
 /// No actor suspension occurs between reading and saving a transaction.
 public actor Store {
@@ -39,6 +39,8 @@ public actor Store {
         }
     }
     private func access<R>(_ body: (ModelContext) throws -> R) throws -> R {
+        var isDirectory: ObjCBool = false
+        if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory), isDirectory.boolValue { throw StoreError.invalidPath }
         let fd = open(url.path + ".lock", O_CREAT | O_RDWR, 0o600)
         guard fd >= 0 else { throw StoreError.lockUnavailable }
         defer { close(fd) }
