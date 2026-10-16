@@ -25,6 +25,9 @@ import SpamWiseCore
   #expect(prompt.contains("49@example.org"))
   #expect(!prompt.contains(String(repeating: "a", count: 7000)))
   #expect(!PromptBuilder.instructions.contains(message.text))
+  var oversized = input
+  oversized.evidence.fromDisplayName = String(repeating: "界", count: 22_000)
+  #expect(throws: ClassificationError.contextExceeded) { try PromptBuilder.prompt(oversized) }
 }
 @Test func `invalid confidence and empty reason fail`() {
   #expect(throws: ClassificationError.self) {

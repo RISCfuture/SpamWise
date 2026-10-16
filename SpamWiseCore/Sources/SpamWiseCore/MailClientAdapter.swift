@@ -12,8 +12,12 @@ public struct MailEnvelope: Sendable {
 public struct ActionReceipt: Sendable {
   /// Client observation of completion, without a separate mail-server acknowledgement.
   public var confirmed: Bool
+  /// Fresh account-scoped identity observed after a mailbox move, when the adapter can prove it.
+  public var updatedIdentity: MessageIdentity?
   /// Creates an ActionReceipt with the supplied configuration.
-  public init(confirmed: Bool) { self.confirmed = confirmed }
+  public init(confirmed: Bool, updatedIdentity: MessageIdentity? = nil) {
+    self.confirmed = confirmed; self.updatedIdentity = updatedIdentity
+  }
 }
 /// Message discovery, history, and non-destructive Mail action operations.
 public protocol MailClientAdapter: Sendable {

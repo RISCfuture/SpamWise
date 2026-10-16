@@ -1,0 +1,189 @@
+import Foundation
+import Dispatch
+import Darwin
+import SpamWiseCore
+import MailIntegration
+
+@main
+struct SpamWiseDaemon {
+  private static let usage = """
+    spamwise-daemon --config path [--once | --poll-seconds 60...3600] [--limit 1...100] [--actions]
+      [--model MODEL]
+    spamwise-daemon --config path --validate
+    spamwise-daemon --config path --probe UID
+
+    Default: one bounded dry run. Classification can send bounded message context to the explicitly
+    selected provider and consumes the selected store's evaluation budget. Actions also require a \
+    successful
+    disposable-message probe, the IMAP route, and dry run disabled in shared settings.
+    --probe moves only an Inbox message whose subject starts with [SpamWise Probe], then restores \
+    it.
+    No launch service is installed. SIGINT/SIGTERM cancel pending work. Secrets are never CLI \
+    arguments.
+    --model selects an explicit supported model in this store; providerCredentials can reference
+    provider-specific environment or login Keychain secrets. No provider or credential fallback.
+    """
+
+  static func main() async {
+    let arguments = Array(CommandLine.arguments.dropFirst())
+    if arguments.isEmpty || arguments == ["--help"] { print(usage); return }
+    let task = Task { try await run(arguments) }
+    let signals = [SIGINT, SIGTERM].map { number in
+      _ = signal(number, SIG_IGN)
+      let source = DispatchSource.makeSignalSource(signal: number, queue: .global())
+      source.setEventHandler { task.cancel() }
+      source.resume()
+      return source
+    }
+    do { try await task.value } catch is CancellationError { print("Stopped.") } catch {
+      FileHandle.standardError.write(
+        Data(
+          "Headless operation failed. Check settings and credentials. Uncertain actions are not retried.\n"
+            .utf8
+        )
+      )
+      for source in signals { source.cancel() }
+      exit(1)
+    }
+    for source in signals { source.cancel() }
+  }
+  private static func run(_ arguments: [String]) async throws {
+    let options = try Options(arguments)
+    let file = try FileHandle(forReadingFrom: URL(filePath: options.path))
+    defer { try? file.close() }
+    let data = try file.read(upToCount: 65_537) ?? Data()
+    let configuration = try IMAPDaemonConfiguration.decode(data)
+    let store = try Store(
+      url: configuration.statePath.map { URL(filePath: $0) } ?? Store.sharedURL()
+    )
+    try await selectModel(options.model, store: store)
+    var account = configuration.account
+    account.allowsActions = options.actions
+    let credential = configuration.credential
+    let adapter = IMAPAdapter(configuration: account, credentials: { try credential.resolve() })
+    _ = try await adapter.validateReadOnly()
+    if options.validate {
+      print("Read-only IMAP validation passed. Mail actions remain separately gated."); return
+    }
+    if let uid = options.probe {
+      _ = try await adapter.testDisposableMessage(uid: uid)
+      try await IMAPAccountValidation.record(account, store: store)
+      print(
+        "Disposable probe restored to Inbox; endpoint validation recorded. Dry run remains unchanged."
+      )
+      return
+    }
+    let classifier: ConfiguredClassifier
+    if let references = configuration.providerCredentials {
+      classifier = ConfiguredClassifier(store: store) { backend in
+        guard let reference = references[backend.rawValue] else {
+          throw ClassificationError.configuration
+        }
+        return try reference.resolvedSecret()
+      }
+    } else {
+      classifier = ConfiguredClassifier(store: store)
+    }
+    let pipeline = Pipeline(store: store, classifier: classifier)
+    repeat {
+      try Task.checkCancellation()
+      if options.actions {
+        guard try await IMAPAccountValidation.isValidated(account, store: store) else {
+          throw IntegrationError.accountUnverified
+        }
+      }
+      let messages = try await adapter.nextInboxMessages(limit: options.limit, cursorStore: store)
+      let state = try await StateRepository.load(store)
+      let seen = Set(state.records.map { $0.identity.key })
+      var processed = 0
+      for message in messages where !seen.contains(message.identity.key) {
+        try Task.checkCancellation()
+        _ = await pipeline.process(message, adapter: adapter, forceDryRun: !options.actions)
+        processed += 1
+      }
+      if options.actions { await pipeline.retryDue(adapter: adapter, accountID: account.id) }
+      print(
+        "Processed \(processed) messages; \(options.actions ? "shared action gates applied" : "dry run")."
+      )
+      guard let interval = options.poll else { return }
+      try await Task.sleep(for: .seconds(interval))
+    } while !Task.isCancelled
+  }
+
+  private static func selectModel(_ model: String?, store: Store) async throws {
+    guard let model else { return }
+    let backend = try backend(for: model)
+    let current = try await StateRepository.load(store).settings.advancedOptions
+    guard current.backend != backend || (current.modelID ?? current.backend.defaultModelID) != model
+    else {
+      return
+    }
+    try await StateRepository.editSettings(store) { settings in
+      var advanced = settings.advancedOptions
+      advanced.backend = backend; advanced.modelID = model
+      settings.advancedOptions = advanced
+    }
+  }
+
+  private static func backend(for model: String) throws -> ModelBackend {
+    switch model {
+      case "apple-on-device": return .onDevice
+      case "apple-private-cloud-compute": return .privateCloudCompute
+      case "claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5": return .claude
+      case "gpt-5.4-mini": return .openAI
+      case "gemini-3.8-flash": return .gemini
+      default: throw IMAPError.invalidConfiguration
+    }
+  }
+
+  private struct Options {
+    var path: String
+    var actions = false
+    var validate = false
+    var probe: UInt32?
+    var poll: Int?
+    var limit = 20
+    var model: String?
+    init(_ arguments: [String]) throws {
+      var values: [String: String] = [:], flags: Set<String> = []
+      var offset = 0
+      while offset < arguments.count {
+        let name = arguments[offset]; offset += 1
+        if ["--actions", "--once", "--validate"].contains(name) {
+          guard flags.insert(name).inserted else { throw IMAPError.invalidConfiguration }
+        } else {
+          guard ["--config", "--probe", "--poll-seconds", "--limit", "--model"].contains(name),
+            offset < arguments.count, values[name] == nil
+          else { throw IMAPError.invalidConfiguration }
+          values[name] = arguments[offset]; offset += 1
+        }
+      }
+      guard let path = values["--config"], !path.isEmpty else {
+        throw IMAPError.invalidConfiguration
+      }
+      self.path = path
+      actions = flags.contains("--actions")
+      validate = flags.contains("--validate")
+      model = values["--model"]
+      if let model { _ = try SpamWiseDaemon.backend(for: model) }
+      if let value = values["--probe"] {
+        guard let uid = UInt32(value), uid > 0 else { throw IMAPError.invalidConfiguration }
+        probe = uid
+      }
+      if let value = values["--poll-seconds"] {
+        guard let seconds = Int(value), (60...3600).contains(seconds) else {
+          throw IMAPError.invalidConfiguration
+        }; poll = seconds
+      }
+      if let value = values["--limit"] {
+        guard let count = Int(value), (1...100).contains(count) else {
+          throw IMAPError.invalidConfiguration
+        }; limit = count
+      }
+      guard !(flags.contains("--once") && poll != nil),
+        !(validate && (probe != nil || actions || poll != nil || model != nil)),
+        !(probe != nil && (actions || poll != nil || model != nil))
+      else { throw IMAPError.invalidConfiguration }
+    }
+  }
+}

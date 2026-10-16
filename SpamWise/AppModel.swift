@@ -4,15 +4,16 @@ import MailIntegration
 
 @MainActor @Observable final class AppModel {
   var state = AppState()
-  var status = "Ready for setup"
-  var keyStatus = "Key not verified in this session"
-  var mailStatus = "Mail connection not checked"
-  var contactsStatus = "Contacts optional — not requested"
+  var status = String(localized: "Ready for setup")
+  var keyStatus = String(localized: "Key not verified in this session")
+  var mailStatus = String(localized: "Mail connection not checked")
+  var contactsStatus = String(localized: "Contacts optional — not requested")
   var busy = false
   var storageReady = false
   var accounts: [MailAccount] = []
   var showSetup = false
-  private var store: Store?
+  var showDigest = false
+  var store: Store?
   private var pipeline: Pipeline?
   private let adapter: AppleMailAdapter
   private let uiTesting: Bool
@@ -39,7 +40,7 @@ import MailIntegration
       let store = try Store(url: url); self.store = store
       pipeline = Pipeline(
         store: store,
-        classifier: ClaudeClassifier { try APIKeychain().read() },
+        classifier: ConfiguredClassifier(store: store),
         rdap: RDAPLookup(
           cacheURL: url.deletingLastPathComponent().appending(path: "rdap-cache.json")
         )
@@ -47,7 +48,10 @@ import MailIntegration
       storageReady = true
     } catch {
       status =
-        "Shared storage unavailable. Check signing and App Group access; mail stays unchanged."
+        String(
+          localized:
+            "Shared storage unavailable. Check signing and App Group access; mail stays unchanged."
+        )
     }
   }
   func refresh() async {
@@ -56,15 +60,22 @@ import MailIntegration
       var loaded = try await StateRepository.load(store)
       if pendingSettings > 0 { loaded.settings = state.settings }
       state = loaded
+      if state.settings.advancedOptions.weeklyDigest, state.settings.onboardingComplete {
+        let digest = ReviewDigest(state: state)
+        if state.lastDigestWeek != digest.week, !digest.records.isEmpty {
+          showDigest = true
+          try await StateRepository.update(store) { $0.lastDigestWeek = digest.week }
+        }
+      }
     } catch {
-      status = "Shared storage unavailable; mail stays unchanged."
+      status = String(localized: "Shared storage unavailable; mail stays unchanged.")
     }
   }
   func monitor() async {
     #if DEBUG
       if uiTesting, ProcessInfo.processInfo.arguments.contains("--ui-corrections"), let store {
         do { try await UITestFixture.seedCorrections(in: store) } catch {
-          status = "Correction fixture could not be loaded."
+          status = String(localized: "Correction fixture could not be loaded.")
         }
       }
     #endif
@@ -78,7 +89,8 @@ import MailIntegration
       {
         try? await refreshContacts()
       }
-      if !uiTesting, !busy, state.settings.onboardingComplete, state.settings.route == .mailRule,
+      if !uiTesting, !busy, state.settings.onboardingComplete,
+        [.mailRule, .imap].contains(state.settings.route),
         !state.settings.paused, Date().timeIntervalSince(lastScan) > 60
       {
         scan(dryRun: state.settings.dryRun, automatic: true)
@@ -93,7 +105,7 @@ import MailIntegration
     settingsWork = Task {
       await previous?.value
       do { try await StateRepository.editSettings(store, edit) } catch {
-        status = "Settings could not be saved; mail stays unchanged."
+        status = String(localized: "Settings could not be saved; mail stays unchanged.")
       }
       pendingSettings -= 1
       await refresh()
@@ -116,9 +128,11 @@ import MailIntegration
   }
   func cancel() {
     work?.cancel()
-    status = "Cancelling; mail stays unchanged unless an action was already requested."
+    status = String(
+      localized: "Cancelling; mail stays unchanged unless an action was already requested."
+    )
   }
-  private func run(_ operation: @escaping @MainActor () async throws -> Void) {
+  func run(_ operation: @escaping @MainActor () async throws -> Void) {
     guard !busy else { return }; busy = true
     work = Task {
       defer { busy = false }
@@ -126,52 +140,19 @@ import MailIntegration
       await refresh()
     }
   }
-  func verifyKey(_ key: String) {
-    let credential = key.trimmingCharacters(in: .whitespacesAndNewlines)
-    run { [self] in
-      guard !credential.isEmpty else { throw ClassificationError.missingCredential }
-      keyStatus = "Verifying Haiku 5.5…"
-      do {
-        let raw = Data(
-          """
-          From: setup@example.org
-          Subject: API connection check
-
-          Hello. This is a synthetic SpamWise connection test.
-          """
-          .utf8
-        )
-        let message = try MIMEParser().parse(raw)
-        let verdict = try await ClaudeClassifier(key: { credential }).classify(
-          .init(message: message, evidence: .init(message: message))
-        )
-        try APIKeychain().save(credential)
-        if let store {
-          let record = DecisionRecord(
-            identity: .init(accountID: nil, contentHash: message.hash),
-            sender: "SpamWise setup",
-            subject: "API connection verification",
-            verdict: verdict,
-            decision: .init(label: .inbox, action: .none, reason: "Haiku 5.5 connection verified"),
-            outcome: .noAction,
-            path: "verification"
-          )
-          try await StateRepository.update(store) { $0.record(record) }
-        }
-        keyStatus = "Verified — stored in Keychain"; status = "Haiku 5.5 is ready"
-      } catch { keyStatus = Self.describe(error); throw error }
-    }
-  }
   func checkMail() {
     run { [self] in
       do {
         if uiTesting { throw IntegrationError.permissionDenied }
-        mailStatus = "Waiting for Mail Automation permission…"
+        mailStatus = String(localized: "Waiting for Mail Automation permission…")
         try await SystemAppleEventRunner.requestMailPermission()
         accounts = try await adapter.accounts()
         mailStatus =
-          "Connected — \(accounts.count) accounts readable. Actions need a disposable-message test."
-        status = "Mail connection checked"
+          String(
+            localized:
+              "Connected — \(accounts.count) accounts readable. Actions need a disposable-message test."
+          )
+        status = String(localized: "Mail connection checked")
       } catch { mailStatus = Self.describe(error); throw error }
     }
   }
@@ -191,9 +172,12 @@ import MailIntegration
       }
       contactsStatus =
         addresses == nil
-        ? "Contacts unavailable — relationship remains unknown" : "Contacts refreshed"
+        ? String(localized: "Contacts unavailable — relationship remains unknown")
+        : String(localized: "Contacts refreshed")
     } catch {
-      contactsStatus = "Contacts refresh failed — cached evidence expires after 24 hours"
+      contactsStatus = String(
+        localized: "Contacts refresh failed — cached evidence expires after 24 hours"
+      )
       throw error
     }
   }
@@ -206,32 +190,51 @@ import MailIntegration
           $0.decision.label == .inbox && $0.outcome != .superseded
         }.map { $0.identity.key }
       ).subtracting(current.retries.map { $0.identity.key })
-      let histories = try await adapter.importHistory(
-        previous: current.histories,
-        eligibleInbox: eligible,
-        incremental: true
-      )
-      try await StateRepository.update(store) { $0.histories = histories }
+      let histories: [String: HistoryIndex]
+      if state.settings.advancedOptions.transport == .imap {
+        histories = try await configuredIMAPAdapter().importHistory()
+      } else {
+        histories = try await adapter.importHistory(
+          previous: current.histories,
+          eligibleInbox: eligible,
+          incremental: true
+        )
+      }
+      try await StateRepository.update(store) { state in
+        for (account, history) in histories { state.histories[account] = history }
+      }
     } catch {
-      mailStatus = "History refresh unavailable — only previously stored relationships are known"
+      mailStatus = String(
+        localized: "History refresh unavailable — only previously stored relationships are known"
+      )
     }
   }
   func importHistory() {
     run { [self] in
-      let histories = try await adapter.importHistory(previous: state.histories)
+      let histories: [String: HistoryIndex]
+      if state.settings.advancedOptions.transport == .imap {
+        histories = try await configuredIMAPAdapter().importHistory()
+      } else {
+        histories = try await adapter.importHistory(previous: state.histories)
+      }
       if let store {
         try await StateRepository.update(store) { state in
           for (account, imported) in histories { state.histories[account] = imported }
         }
       }
-      status = "Imported bounded Inbox and Sent history; remaining history is unknown."
+      status = String(
+        localized: "Imported bounded Inbox and Sent history; remaining history is unknown."
+      )
     }
   }
   func testDisposableMessage() {
     run { [self] in
       do {
         mailStatus =
-          "Testing the selected message; allowing 30 seconds after each move for Mail to sync…"
+          String(
+            localized:
+              "Testing the selected message; allowing 30 seconds after each move for Mail to sync…"
+          )
         let account = try await adapter.testDisposableMessage()
         if let store {
           try await StateRepository.update(store) { state in
@@ -240,7 +243,7 @@ import MailIntegration
           }
         }
         mailStatus =
-          "Junk, Inbox restoration, and orange flag verified in Mail."
+          String(localized: "Junk, Inbox restoration, and orange flag verified in Mail.")
         status = mailStatus
       } catch { mailStatus = Self.describe(error); throw error }
     }
@@ -248,7 +251,7 @@ import MailIntegration
   func scan(dryRun: Bool = true, automatic: Bool = false, limit: Int = 20) {
     guard let pipeline else { return }
     if automatic
-      && (!state.settings.onboardingComplete || state.settings.route != .mailRule
+      && (!state.settings.onboardingComplete || ![.mailRule, .imap].contains(state.settings.route)
         || state.settings.paused)
     {
       return
@@ -260,33 +263,57 @@ import MailIntegration
       }
       if automatic { await maintainHistory() }
       await refresh()
-      let messages =
-        try await
-        (automatic
-        ? adapter.nextInboxMessages(limit: limit) : adapter.recentMessages(limit: limit))
+      let activeAdapter: any MailClientAdapter
+      let messages: [MailEnvelope]
+      var retryAccountID: String?
+      if state.settings.advancedOptions.transport == .imap {
+        let imap = try await configuredIMAPAdapter()
+        activeAdapter = imap
+        retryAccountID = imap.accountID
+        messages =
+          try await
+          (automatic
+          ? imap.nextInboxMessages(limit: limit, cursorStore: store)
+          : imap.recentMessages(limit: limit))
+      } else {
+        activeAdapter = adapter
+        messages =
+          try await
+          (automatic
+          ? adapter.nextInboxMessages(limit: limit) : adapter.recentMessages(limit: limit))
+      }
       let seen = Set(state.records.map { $0.identity.key })
       var count = 0
       for message in messages where !automatic || !seen.contains(message.identity.key) {
         try Task.checkCancellation()
-        _ = await pipeline.process(message, adapter: adapter, forceDryRun: dryRun)
-        count += 1; status = "Classified \(count) of \(messages.count) messages"
+        _ = await pipeline.process(message, adapter: activeAdapter, forceDryRun: dryRun)
+        count += 1; status = String(localized: "Classified \(count) of \(messages.count) messages")
         await refresh()
       }
-      if !dryRun { await pipeline.retryDue(adapter: adapter) }
-      status = dryRun ? "Dry run finished — no mail actions requested" : "Mail check finished"
+      if !dryRun { await pipeline.retryDue(adapter: activeAdapter, accountID: retryAccountID) }
+      status =
+        dryRun
+        ? String(localized: "Dry run finished — no mail actions requested")
+        : String(localized: "Mail check finished")
     }
   }
   func correct(_ record: DecisionRecord, label: MailLabel, scope: RuleScope = .address) {
     guard let pipeline else { return }
     run { [self] in
+      let activeAdapter: (any MailClientAdapter)?
+      if record.identity.mailboxValidity != nil {
+        activeAdapter = try? await configuredIMAPCorrectionAdapter()
+      } else {
+        activeAdapter = adapter
+      }
       let result = try await pipeline.correct(
         recordID: record.id,
         label: label,
         scope: scope,
-        adapter: adapter
+        adapter: activeAdapter
       )
       status =
-        "Correction saved. Mail action: \(result.outcome.rawValue)."
+        String(localized: "Correction saved. Mail action: \(result.outcome.localizedTitle).")
         + (result.actionError.map { " " + $0 } ?? "")
     }
   }
@@ -296,22 +323,42 @@ import MailIntegration
   }
   func revealRule() {
     guard let url = Bundle.main.url(forResource: "SpamWiseRule", withExtension: "scpt") else {
-      status = "Rule script missing from app bundle"; return
+      status = String(localized: "Rule script missing from app bundle"); return
     }
     NSWorkspace.shared.activateFileViewerSelecting([url])
   }
   static func describe(_ error: any Error) -> String {
     if error as? IntegrationError == .permissionDenied {
       return
-        "Automation permission denied. Allow SpamWise in System Settings → Privacy & Security → Automation."
+        String(
+          localized:
+            "Automation permission denied. Allow SpamWise in System Settings → Privacy & Security → Automation."
+        )
     }
-    if let error = error as? IntegrationError { return error.localizedDescription }
-    if let error = error as? ClassificationError { return error.localizedDescription }
+    if let error = error as? IntegrationError {
+      return String(localized: "Mail action unavailable: \(error.rawValue).")
+    }
+    if let error = error as? ClassificationError {
+      return String(
+        localized: "Classification unavailable: \(error.rawValue). Mail was left unchanged."
+      )
+    }
+    if let error = error as? BudgetError { return error.localizedDescription }
+    if let error = error as? RuleManagementError { return error.localizedDescription }
+    if let error = error as? IMAPError {
+      return String(localized: "IMAP operation failed: \(error.rawValue).")
+    }
     if error is KeychainError {
-      return "Keychain unavailable. Check the signed app’s shared Keychain entitlement."
+      return String(
+        localized: "Keychain unavailable. Check the signed app’s shared Keychain entitlement."
+      )
     }
-    if error is CancellationError { return "Cancelled — no further actions requested." }
-    return "Operation unavailable. Mail stays unchanged; check Help for troubleshooting."
+    if error is CancellationError {
+      return String(localized: "Cancelled — no further actions requested.")
+    }
+    return String(
+      localized: "Operation unavailable. Mail stays unchanged; check Help for troubleshooting."
+    )
   }
   var today: [DecisionRecord] { state.records.filter { Calendar.current.isDateInToday($0.date) } }
   var monthCost: Double {

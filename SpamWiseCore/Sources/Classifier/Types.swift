@@ -14,14 +14,29 @@ public struct TokenUsage: Codable, Sendable, Equatable {
   public var cached: Int
   /// Whether token counts are estimates rather than provider measurements.
   public var estimated: Bool
+  /// Explicit model identity; absent on historical Haiku records.
+  public var modelID: String?
+  /// Rates captured when this usage was measured.
+  public var pricing: ModelTokenPricing?
   /// Creates a TokenUsage with the supplied configuration.
-  public init(input: Int = 0, output: Int = 0, cached: Int = 0, estimated: Bool = true) {
+  public init(
+    input: Int = 0,
+    output: Int = 0,
+    cached: Int = 0,
+    estimated: Bool = true,
+    modelID: String? = nil,
+    pricing: ModelTokenPricing? = nil
+  ) {
     self.input = max(0, input); self.output = max(0, output)
     self.cached = min(max(0, cached), max(0, input)); self.estimated = estimated
+    self.modelID = modelID; self.pricing = pricing
   }
-  /// Cache creation premiums are not exposed separately by the provider, so cost is always estimated.
+  /// Estimated USD from captured rates; historical records without a model identity use Haiku rates.
   public var estimatedCost: Double {
-    (Double(input - cached) * 0.10 + Double(cached) * 0.01 + Double(output) * 0.50) / 1_000_000
+    let rates = pricing ?? .legacyHaiku
+    return
+      (Double(input - cached) * rates.input + Double(cached) * rates.cached
+      + Double(output) * rates.output) / 1_000_000
   }
 }
 /// Model output kept separate from action policy and integration outcomes.
@@ -144,6 +159,8 @@ public enum ClassificationError: String, Error, Codable, Sendable, LocalizedErro
 }
 /// Builds separate fixed instructions and escaped, untrusted message context.
 public enum PromptBuilder {
+  /// Maximum UTF-8 size of escaped preferences and message context across all providers.
+  public static let maximumPromptBytes = 65_536
   /// Identity of the guided-output schema used in response-cache keys.
   public static let schemaID = "spamwise-verdict-v1"
   /// Initial editable filtering preferences.
@@ -197,7 +214,9 @@ public enum PromptBuilder {
     }
     let preferences = Preferences(
       policy: String(input.policy.prefix(4000)),
-      examples: input.corrections.sorted { $0.date < $1.date }.suffix(input.correctionLimit).map {
+      examples: input.corrections.sorted { $0.date < $1.date }.suffix(
+        min(100, max(0, input.correctionLimit))
+      ).map {
         Example(
           sender: $0.sender,
           domain: $0.domain,
@@ -211,10 +230,15 @@ public enum PromptBuilder {
     let content = Content(
       evidence: input.evidence,
       subject: String(input.message.subject.prefix(500)),
-      text: String(lines.joined(separator: "\n").prefix(input.bodyTokenBudget * 4))
+      text: String(
+        lines.joined(separator: "\n").prefix(min(4000, max(100, input.bodyTokenBudget)) * 4)
+      )
     )
-    return "USER_PREFERENCES_JSON\n" + (try json(preferences))
+    let prompt =
+      "USER_PREFERENCES_JSON\n" + (try json(preferences))
       + "\nEND_USER_PREFERENCES\nUNTRUSTED_MESSAGE_JSON\n" + (try json(content))
       + "\nEND_UNTRUSTED_MESSAGE"
+    guard prompt.utf8.count <= maximumPromptBytes else { throw ClassificationError.contextExceeded }
+    return prompt
   }
 }

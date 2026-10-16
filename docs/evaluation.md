@@ -16,9 +16,26 @@ The five samples use explicitly supplied synthetic verdicts. This verifies parsi
 
 Place independently human-labeled `.eml` files in `good/`, `junk/`, and optionally `graymail/`. Duplicate message bytes are rejected to prevent inflated sample sizes. Include personal mail, wanted newsletters, club notices, receipts, order confirmations, and realistic spam. Reserve a separate held-out set before tuning.
 
-Live calls require `SPAMWISE_LIVE_API=1` and `ANTHROPIC_API_KEY` supplied to the process environment. The CLI never saves the key. Select `--model claude-haiku-5-5`, `claude-sonnet-5-5`, or `claude-opus-5-5`; unsupported models fail, and there is no fallback. The app remains fixed to Haiku 5.5. Set `--input-price`, `--output-price`, and `--cache-price` in USD per million tokens for non-Haiku models; otherwise their cost is unknown. Haiku estimates use the prices recorded in CLAUDE.md. Provider cache-write premiums are not separately exposed.
+Live calls require `SPAMWISE_LIVE_API=1`. Select `--model claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`, `gpt-5.4-mini`, or `gemini-3.8-flash`, with the corresponding `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` in the process environment. The CLI never saves keys. `apple-on-device` and `apple-private-cloud-compute` use Apple's Foundation Models framework without an API key; PCC requires Apple's managed entitlement and availability. Unsupported or unavailable models fail without fallback. Rates are captured for the selected model; optional `--input-price`, `--output-price`, and `--cache-price` override report estimates in USD per million tokens. Provider cache-write premiums are not separately exposed.
 
-Optional `--state snapshot.json` reads an `AppState` with rules, corrections, Contacts, and history under account ID `eval`. Each run uses a fresh temporary store, forces dry run, clears action claims and retries, and never mutates the app's store. RDAP is deliberately unknown in reproducible offline runs; no remote URLs from mail are fetched.
+Before each uncached paid request, the CLI atomically reserves a conservative upper bound in the application's shared persistent $150 evaluation budget: $0.10 for Haiku, $1 for other paid models. App, extension and CLI share this ledger by default. Reservations are commitments, not measured billing; failed calls retain their reservation because a timeout cannot prove that the provider did not bill. `--budget-store PATH` selects a separate ledger and therefore requires separate spending authorization; it must not be used to bypass an exhausted shared allowance. The report's measured-token cost estimate is distinct from reserved budget. Neither a custom path nor a report-price override grants permission to spend.
+
+Optional `--state snapshot.json` reads an `AppState` with rules, corrections, Contacts, and history under account ID `eval`. Each run uses a fresh temporary classification store, forces dry run, and clears action claims and retries. It does not mutate the app's classification state; paid requests update the shared budget ledger. RDAP is unknown, external DNS/Rspamd and image OCR are disabled, and no remote URLs from mail are fetched.
+
+## Reviewed-label exports
+
+Enable local reviewed-content retention in the app before correcting messages, then export reviewed labels from Settings. Labels created without retained text remain useful metadata but cannot supply evaluation input. Evaluate the export directly:
+
+```sh
+spamwise-eval --reviewed /private/path/reviewed-labels.json --model mock \
+  --partition held-out --output /private/path/reviewed-report.json
+```
+
+`--reviewed` replaces `--input`; the default partition is `held-out`. The stable content identity uses normalized subject and body, independently of delivery headers, correction date, or label. The loader rejects duplicate retained content across the entire export before making model calls. Export limits are 64 MiB, 10,000 labels, and 2 MB per retained parsed message. `reviewedCorpus` reports total labels, missing content, partition exclusions, and selected messages. Metadata-only labels are skipped explicitly; a selection with no retained messages produces zero observations and clear counts. Graymail remains separate.
+
+Retained `ParsedMessage` values go directly to the pipeline; human labels are used only for metrics and never enter prompts. The default state is empty. `--state` is rejected for `held-out` and `all` partitions to prevent imported rules or learned state from leaking labels. `--partition training` permits a supplied state for exploratory testing; `training` and `all` cannot establish held-out quality. Clearing retained text preserves an available sample identity and its split, but makes that sample unavailable to the evaluator.
+
+This is a statistical content holdout, not proof of independent live full-pipeline quality. Earlier corrections may already have influenced user policy or model selection, and retained messages omit original MIME images and delivery context. An independent, representative corpus and separately validated live integrations remain necessary before claiming a calibrated false-positive rate.
 
 ## Reports and calibration
 

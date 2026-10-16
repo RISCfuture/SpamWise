@@ -15,6 +15,7 @@ public struct ClaudeClassifier: Classifier {
   /// The explicitly selected Claude model identifier.
   public static let modelID = "claude-haiku-5-5"
   private let selectedModel: ClaudeModel
+  private let selectedModelID: String
   /// Creates an explicitly selected supported model for evaluation; the app defaults to Haiku 5.5.
   public init(modelID: String, key: @escaping @Sendable () throws -> String) throws {
     switch modelID {
@@ -24,11 +25,12 @@ public struct ClaudeClassifier: Classifier {
       default: throw ClassificationError.configuration
     }
     self.key = key
+    selectedModelID = modelID
   }
   private let key: @Sendable () throws -> String
   /// Creates a ClaudeClassifier with the supplied configuration.
   public init(key: @escaping @Sendable () throws -> String) {
-    self.key = key; selectedModel = .haiku5_5
+    self.key = key; selectedModel = .haiku5_5; selectedModelID = Self.modelID
   }
   /// Produces a validated verdict or throws without requesting a mail action.
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
@@ -67,7 +69,9 @@ public struct ClaudeClassifier: Classifier {
             input: usage.input.totalTokenCount,
             output: usage.output.totalTokenCount,
             cached: usage.input.cachedTokenCount,
-            estimated: false
+            estimated: false,
+            modelID: selectedModelID,
+            pricing: try .rates(for: selectedModelID)
           )
         ).validated()
       }

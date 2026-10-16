@@ -30,7 +30,7 @@ struct HelpButton: View {
     } label: {
       Image(systemName: "questionmark.circle")
     }.buttonStyle(.plain).accessibilityLabel(
-      "Help for \(page.replacingOccurrences(of: "-", with: " "))"
+      "Help for \(Help.localizedTitle(for: page))"
     )
   }
 }

@@ -21,7 +21,7 @@ struct SettingsView: View {
         Section("Filtering") {
           Picker("Filtering strength", selection: binding(\.strength)) {
             ForEach(FilteringStrength.allCases, id: \.self) { strength in
-              Text(strength.rawValue.capitalized).tag(strength)
+              Text(strength.localizedTitle).tag(strength)
             }
           }
           Text(
@@ -48,14 +48,11 @@ struct SettingsView: View {
           }
         }
         Section("Mail") { MailConnectionView(model: model) }
+        IMAPSettingsView(model: model)
       }.formStyle(.grouped).tabItem { Label("General", systemImage: "gearshape") }
       PolicyView(model: model).tabItem { Label("Preferences", systemImage: "text.alignleft") }
       Form {
-        KeyEntryView(model: model)
-        LabeledContent(
-          "Month-to-date estimated API cost",
-          value: model.monthCost.formatted(.currency(code: "USD"))
-        )
+        ModelSettingsView(model: model)
         Text(
           """
           Token counts are measured when the provider exposes them. Dollar costs are estimates; \
@@ -82,20 +79,11 @@ struct SettingsView: View {
             "Body length uses a four-characters-per-token estimate. Quoted reply chains and attachments are omitted."
           ).font(.caption)
         }
-        Section("Learned rules (read only)") {
-          if model.state.rules.isEmpty {
-            Text("Correct a message in Activity to create a rule.").foregroundStyle(.secondary)
-          }
-          ForEach(model.state.rules) { rule in
-            LabeledContent("\(rule.scope.rawValue): \(rule.value)") {
-              Text(rule.disposition.rawValue.capitalized).accessibilityIdentifier(
-                "settings.rule.\(rule.scope.rawValue).\(rule.value)"
-              )
-            }
-          }
-        }
+        RuleEditorView(model: model)
+        LearningSettingsView(model: model)
+        EvidenceSettingsView(model: model)
         Section("Integration") {
-          LabeledContent("Incoming route", value: model.state.settings.route.rawValue)
+          LabeledContent("Incoming route", value: model.state.settings.route.localizedTitle)
           Text(
             "MailKit remains dry-run-only pending signed timing and account identity validation."
           ).font(.caption)
@@ -109,24 +97,38 @@ struct SettingsView: View {
 struct PolicyView: View {
   @Bindable var model: AppModel
   @State private var policy = ""
+  private var localizedDefaultPolicy: String {
+    String(
+      localized:
+        """
+        Marketing from retailers I haven't ordered from is unwanted. Cart and checkout reminders \
+        from stores with no order history are unwanted. Shipping notices are wanted only if they \
+        match an order in my history. Anything from people I've corresponded with is wanted.
+        """
+    )
+  }
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       Text("Your mail preferences").font(.title2.bold())
       Text(
-        "Describe what you want to receive. Your policy is sent to Anthropic with eligible messages."
+        "Describe what you want to receive. Your policy is sent to your selected provider with eligible messages."
       )
       TextEditor(text: $policy).font(.body).border(.quaternary).accessibilityLabel(
         "Mail filtering policy"
       )
       Text("\(policy.count)/4,000 characters").font(.caption).foregroundStyle(.secondary)
       HStack {
-        Button("Reset to default") { policy = PromptBuilder.defaultPolicy }
+        Button("Reset to default") { policy = localizedDefaultPolicy }
         Spacer()
         Button("Save preferences") {
           model.setSetting(\.policy, to: policy)
         }.disabled(policy.count > 4000)
       }
       HelpButton(page: "how-decisions-are-made")
-    }.padding(24).onAppear { policy = model.state.settings.policy }
+    }.padding(24).onAppear {
+      policy =
+        model.state.settings.policy == PromptBuilder.defaultPolicy
+        ? localizedDefaultPolicy : model.state.settings.policy
+    }
   }
 }

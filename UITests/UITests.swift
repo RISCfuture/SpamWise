@@ -20,6 +20,12 @@ final class UITests: XCTestCase {
     XCTAssertEqual(updatedSettings.addressRule, "Block")
     XCTAssertEqual(updatedSettings.domainRule, "Allow")
     updatedSettings.close()
+    detail.markReview()
+    XCTAssertTrue(detail.correctionSavedWithActionFailure)
+    let reviewedSettings = activity.openAdvancedSettings()
+    XCTAssertFalse(reviewedSettings.hasAddressRule)
+    XCTAssertEqual(reviewedSettings.domainRule, "Allow")
+    reviewedSettings.close()
   }
   @MainActor func testOnboardingAndOfflineActivity() throws {
     let setup = SetupScreen.launchOffline()
@@ -104,12 +110,12 @@ final class UITests: XCTestCase {
   let app: XCUIApplication
   private var savedFailure: XCUIElement {
     app.staticTexts["activity.status"].descendants(matching: .staticText).matching(
-      NSPredicate(format: "value CONTAINS %@", "Correction saved. Mail action: failed.")
+      NSPredicate(format: "value CONTAINS[c] %@", "Correction saved. Mail action: failed.")
     ).firstMatch
   }
   var correctionSavedWithActionFailure: Bool { savedFailure.waitForExistence(timeout: 5) }
   private func waitForCorrection(_ label: String) {
-    let predicate = NSPredicate(format: "value CONTAINS %@", label)
+    let predicate = NSPredicate(format: "value CONTAINS[c] %@", label)
     XCTAssertEqual(
       XCTWaiter.wait(
         for: [
@@ -131,6 +137,10 @@ final class UITests: XCTestCase {
     app.buttons["correction.junk"].click()
     waitForCorrection("junk")
   }
+  func markReview() {
+    app.buttons["correction.review"].click()
+    waitForCorrection("review")
+  }
   func allowDomain() {
     app.menuButtons["correction.domain"].click()
     app.menuItems["correction.domain.allow"].click()
@@ -149,6 +159,9 @@ final class UITests: XCTestCase {
     return (text.exists ? text.value : rule.value) as? String ?? ""
   }
   var hasDomainRule: Bool { app.staticTexts["settings.rule.domain.example.org"].exists }
+  var hasAddressRule: Bool {
+    app.staticTexts["settings.rule.address.newsletter@example.org"].exists
+  }
   var domainRule: String {
     ruleValue("settings.rule.domain.example.org")
   }

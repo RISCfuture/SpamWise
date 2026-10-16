@@ -1,28 +1,36 @@
-# Deferred work
+# Roadmap implementation and acceptance
 
-- **Apple model backends.** On-device `SystemLanguageModel`: 4,096-token context per session; default guardrails check input and output and throw `guardrailViolation`/`refusal`; `permissiveContentTransformations` works **only for string output**, not guided generation — so classifying adult/scam spam likely needs string output parsed into a verdict, or treating guardrail errors as a weak spam signal. `PrivateCloudComputeLanguageModel`: 32K context, light/moderate/deep reasoning, per-user daily quota (`quotaUsage`, `quotaLimitReached`; higher with iCloud+), requires the managed entitlement `com.apple.developer.private-cloud-compute` (eligibility application), guardrails not configurable, requires network. Compare with the eval harness before offering.
-- **OpenAI / Gemini backends** via their Foundation Models providers or a Chat Completions–compatible `LanguageModel`.
-- **Blocklist/allowlist editing UI** with import/export.
-- **Policy distillation** from accumulated correction examples.
-- **Retrieval-based examples** (k most similar corrections per message).
-- **Learned per-user weights** (logistic regression over evidence + verdict, regularized toward defaults).
-- **Fingerprinting** user-junked mail to catch campaign variants.
-- **URI/DNS blocklist lookups** (Spamhaus DBL etc.) with correct usage-terms handling.
-- **Rspamd sidecar:** run Rspamd locally and pass its symbols (via `rspamc`) into the EvidenceBundle.
-- **Bayes as a weak signal**, auto-trained only from high-confidence model verdicts no other signal contradicts.
-- **Direct IMAP mode** (server-side, protects iPhone/iPad; headless).
-- **Other mail clients** via `MailClientAdapter`.
-- **Image-only spam** via multimodal input or Vision OCR.
-- **Mac App Store distribution.**
-- **Full Help book coverage**, localization.
-- **Weekly digest** of Review items.
+The signed Apple Mail move spike passed for generated cross-account probes in iCloud and Google. The user then authorized implementing the deferred roadmap. Optional capabilities remain off by default; production thresholds remain uncalibrated. Implementation and live acceptance are tracked separately below.
 
-## Follow-up context
+## Implemented; final integrated verification in progress
 
-- Direct IMAP findings: a separate IMAP connection can see server-routed Junk and protect other devices, but requires per-provider OAuth or app passwords, UIDVALIDITY/UID account-scoped identity, mailbox SPECIAL-USE discovery, IDLE reconnect and conflict handling. No IMAP code is included in Phase 1. Start with a read-only spike and provider terms review.
-- Validate signed runtime integration: use the checklist in docs/probes before selecting an automatic route. SDK support does not establish callback timing or account coverage.
-- Extend move synchronization coverage to slow/offline servers and longer observation windows. Signed cross-account probes now pass Junk, Inbox restoration and orange-flag verification for iCloud and Google, with 30 seconds settling after each move. This does not explain the earlier self-sent probe's recovery conclusively or provide a separate server acknowledgement. Same-account Sent copies with matching Message-ID remain ambiguous and untouched.
-- Calibrate thresholds on a representative held-out corpus. 99/95/90 are provisional, uncalibrated; zero errors on fixtures do not demonstrate the ≤1-in-500 target. About 1,500 good examples with zero false positives are needed for the rule-of-three 0.2% upper bound.
-- Each item above needs evaluation/UX work before release; existing entries retain the original brief’s rationale and constraints.
-- Complete live onboarding and correction acceptance. The provisioned XCTest runner passes offline four-step onboarding, simulated denied Mail permission, dry-run status, Pause, address-rule replacement, explicit domain correction, and retained corrections after action failure. One signed-app Haiku verification succeeded with measured usage; actual Mail permissions and live correction actions remain separate acceptance checks.
-- Measure sweep latency on large/mutating mailboxes during the signed runtime probe. Discovery uses bounded repeating pages and restarts after app relaunch; it does not promise immediate coverage.
+- [x] Explicit Apple on-device, Private Cloud Compute, OpenAI and Gemini classifiers alongside Claude. Fresh sessions, bounded prompts/results, measured usage where available, explicit prices, refusal handling and no fallback. PCC still requires Apple's managed entitlement.
+- [x] Address/domain rule editing, validated atomic import and export. Address rules precede domain rules and trusted relationships.
+- [x] Policy suggestions from consistent corrections, applied only by the user.
+- [x] Retrieval of similar reviewed examples within the correction limit.
+- [x] Bounded regularized evidence weights and Bayes as optional weak signals, with minimum reviewed-data gates and held-out statistical samples.
+- [x] Anchored campaign fingerprints from explicit Junk corrections, suppressed by conflicting Good examples.
+- [x] Optional Spamhaus DBL domain lookups with explicit terms acknowledgement and unknown results for service errors.
+- [x] Optional local Rspamd symbols through bounded `rspamc` execution; sandbox denial remains unknown.
+- [x] Bounded Vision OCR of embedded PNG/JPEG parts without remote image loading.
+- [x] TLS IMAP adapter and headless executable, with UIDVALIDITY/UID identity, SPECIAL-USE discovery, capability checks, disposable-message validation and verified move identities. Other mail clients can use the same server-side IMAP route; no unsupported client automation is claimed.
+- [x] Local weekly digest of unresolved Review items, without sending email.
+- [x] Explicit Good/Junk/Review label collection and optional bounded reviewed-text export for later evaluation.
+- [x] Persistent conservative spending reservations. The authorized additional evaluation ceiling is $150, not a spending target.
+- [x] Mac App Store archive preflight and local export configuration. These do not submit or publish an app.
+- [x] Finish Spanish/French catalog verification, localized Help indexing and UI checks.
+- [ ] Finish whole-change review, package/app/UI/archive checks, signed commits and notarized delivery.
+
+See [roadmap progress](docs/roadmap-progress.md), [evidence](docs/evidence.md), [IMAP](docs/imap.md), [evaluation](docs/evaluation.md), and [App Store preparation](docs/app-store.md) for limits and reproducible commands.
+
+## Live acceptance and external prerequisites
+
+- [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI/Gemini credentials were not supplied. Apple availability and PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
+- [ ] Validate an explicitly configured IMAP account read-only, then run a disposable-message move probe. No IMAP credentials have been supplied; transcript tests do not establish provider interoperability. OAuth tokens require a separately authorized flow or supplied token; no mailbox credentials are extracted from Mail.
+- [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
+- [ ] Complete signed live onboarding/correction acceptance and incoming MailKit callback/account/deadline observations. Apple Mail's validated account-scoped route remains independent of MailKit's unresolved account bridge.
+- [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. Existing 30-second cross-account observations are not a separate server acknowledgement; ambiguous same-account Sent copies remain untouched.
+- [ ] Measure automatic sweep latency on large and mutating mailboxes. Bounded repeating scans do not promise immediate coverage.
+- [ ] Accumulate independently reviewed labels and calibrate on a representative held-out corpus. No labeled personal corpus exists yet. Conservative 99, Balanced 95 and Aggressive 90 remain provisional. Approximately 1,500 good examples with zero false positives are needed for a rule-of-three upper bound of 0.2%; mock fixtures do not establish that target.
+- [ ] Obtain PCC managed entitlement approval and matching profiles if PCC is desired.
+- [ ] Complete App Store Connect metadata/privacy disclosures, Mail Automation exception justification, distribution profiles, signed store export, store validation and App Review. No upload or publication has been performed.

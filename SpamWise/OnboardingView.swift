@@ -28,8 +28,8 @@ struct OnboardingView: View {
               )
               Label(
                 """
-                Anthropic receives your policy, correction examples, evidence, and a shortened \
-                message only when local rules do not decide it.
+                Your selected provider receives your policy, correction examples, evidence, and a \
+                shortened message only when local rules do not decide it.
                 """,
                 systemImage: "network"
               )
@@ -50,8 +50,8 @@ struct OnboardingView: View {
               Text("Try a dry run").font(.title2.bold())
               Text(
                 """
-                Optionally classify up to 20 recent Inbox messages. This sends eligible messages \
-                to Anthropic using your key, and never requests a Mail action.
+                Optionally classify up to 20 recent Inbox messages. Eligible messages use your \
+                selected provider. This never requests a Mail action.
                 """
               )
               Button("Dry run 20 recent messages") { model.scan(limit: 20) }.disabled(model.busy)

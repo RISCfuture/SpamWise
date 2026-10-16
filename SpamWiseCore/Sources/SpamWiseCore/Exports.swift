@@ -3,3 +3,4 @@
 @_exported import Classifier
 @_exported import Decision
 @_exported import Store
+@_exported import Learning

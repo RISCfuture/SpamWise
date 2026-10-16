@@ -2,9 +2,9 @@ public import Foundation
 
 /// Persists decisions before claiming actions and fails open on errors.
 public actor Pipeline {
-  private let store: Store
-  private let classifier: any Classifier
-  private let rdap: RDAPLookup?
+  let store: Store
+  let classifier: any Classifier
+  let rdap: RDAPLookup?
   private var inFlight: Set<String> = []
   /// Creates a Pipeline with the supplied configuration.
   public init(store: Store, classifier: any Classifier, rdap: RDAPLookup? = nil) {
@@ -17,14 +17,25 @@ public actor Pipeline {
     forceDryRun: Bool = false,
     timeout: Double = 15
   ) async -> DecisionRecord {
+    let start = Date()
     do {
-      let message = try MIMEParser().parse(envelope.raw)
+      var message = try MIMEParser().parse(envelope.raw)
+      let current = try await StateRepository.load(store)
+      let settings = current.settings.paused ? AdvancedSettings() : current.settings.advancedOptions
+      if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: envelope.raw) {
+        message.text += "\nEmbedded image text (untrusted):\n" + text
+      }
+      var findings: [String] = []
+      if let path = settings.externalEvidence?.rspamcPath {
+        findings.append(await RspamdLookup(executablePath: path).lookup(raw: envelope.raw).summary)
+      }
       return await process(
         message,
         identity: envelope.identity,
         adapter: adapter,
         forceDryRun: forceDryRun,
-        timeout: timeout
+        timeout: max(0, timeout - Date().timeIntervalSince(start)),
+        auxiliaryFindings: findings
       )
     } catch {
       let record = failure(
@@ -41,7 +52,8 @@ public actor Pipeline {
     adapter: (any MailClientAdapter)? = nil,
     forceDryRun: Bool = false,
     timeout: Double = 15,
-    attempt: Int = 0
+    attempt: Int = 0,
+    auxiliaryFindings: [String] = []
   ) async -> DecisionRecord {
     guard inFlight.insert(identity.key).inserted else {
       var record = failure(identity: identity, reason: "Duplicate callback already in progress")
@@ -65,8 +77,8 @@ public actor Pipeline {
         message,
         identity: identity,
         state: state,
-        start: start,
-        timeout: timeout
+        budget: (start, timeout),
+        auxiliaryFindings: auxiliaryFindings
       )
       try Task.checkCancellation()
       guard Date().timeIntervalSince(start) < timeout else { throw ClassificationError.timeout }
@@ -95,6 +107,8 @@ public actor Pipeline {
       let reason: String
       if let error = error as? ClassificationError {
         reason = error.rawValue
+      } else if error is BudgetError {
+        reason = "spending limit reached; no provider request was made"
       } else if error is CancellationError {
         reason = "cancelled"
       } else {
@@ -163,79 +177,22 @@ public actor Pipeline {
       }
     }
   }
-  private struct Classification {
-    var verdict: Verdict
-    var evidence: EvidenceBundle
-    var path: String
-  }
-  private func classify(
-    _ message: ParsedMessage,
-    identity: MessageIdentity,
-    state: AppState,
-    start: Date,
-    timeout: Double
-  ) async throws -> Classification {
-    let domain = DomainResolver().domain(ofAddress: message.fromAddress)
-    let history =
-      state.histories[identity.accountID ?? ""]?.summary(
-        address: message.fromAddress,
-        domain: domain
-      ) ?? .init()
-    let contact: Bool? =
-      state.contactsUpdatedAt.map { Date().timeIntervalSince($0) < 86_400 } == true
-      ? state.contactAddresses?.contains(message.fromAddress) : nil
-    var evidence = EvidenceBundle(message: message, history: history, contact: contact)
-    let verdict: Verdict, path: String
-    if let gate = Gates.evaluate(
-      address: message.fromAddress,
-      domain: domain,
-      rules: state.rules,
-      contact: contact,
-      history: history
-    ) {
-      path = "gate"
-      verdict = Verdict(
-        label: gate.disposition == .allow ? .inbox : .junk,
-        confidence: 100,
-        reason: gate.reason,
-        usage: .init(estimated: false)
-      )
-    } else {
-      path = "model"
-      if let domain, let rdap {
-        evidence.domainAgeDays = try? await withDeadline(seconds: min(3, max(0.01, timeout / 3))) {
-          await rdap.ageDays(domain: domain)
-        }
-      }
-      let remaining = min(15, timeout - Date().timeIntervalSince(start))
-      guard remaining > 0 else { throw ClassificationError.timeout }
-      let input = ClassificationInput(
-        message: message,
-        evidence: evidence,
-        policy: state.settings.policy,
-        corrections: state.corrections,
-        correctionLimit: state.settings.correctionLimit,
-        bodyTokenBudget: state.settings.bodyTokenBudget,
-        timeout: remaining
-      )
-      let classifier = self.classifier
-      verdict = try await withDeadline(seconds: remaining) {
-        try await classifier.classify(input)
-      }.validated()
-    }
-    return Classification(verdict: verdict, evidence: evidence, path: path)
-  }
   /// Consumes eligible retries while rejecting expired or superseded work.
-  public func retryDue(adapter: any MailClientAdapter, now: Date = .now) async {
+  public func retryDue(adapter: any MailClientAdapter, now: Date = .now, accountID: String? = nil)
+    async
+  {
     guard
       let jobs = try? await StateRepository.update(
         store,
         { state -> [RetryJob] in
+          guard !state.settings.paused else { return [] }
           let jobs = state.retries.filter {
             $0.due <= now && $0.expires > now && $0.revision == state.revision
+              && (accountID == nil || $0.identity.accountID == accountID)
           }
           state.retries.removeAll {
-            $0.due <= now || $0.expires <= now || $0.revision != state.revision
+            (accountID == nil || $0.identity.accountID == accountID)
+              && ($0.due <= now || $0.expires <= now || $0.revision != state.revision)
           }
           return jobs
         }
@@ -252,64 +209,7 @@ public actor Pipeline {
       )
     }
   }
-  /// Atomically saves a correction and then attempts the separately recorded mail action.
-  public func correct(
-    recordID: UUID,
-    label: MailLabel,
-    scope: RuleScope = .address,
-    adapter: (any MailClientAdapter)? = nil
-  ) async throws -> DecisionRecord {
-    guard label != .review else { throw ClassificationError.invalidOutput }
-    let record = try await StateRepository.update(store) { state -> DecisionRecord in
-      guard let i = state.records.firstIndex(where: { $0.id == recordID }) else {
-        throw IntegrationError.unavailable
-      }
-      let previous = state.records[i]
-      guard let address = MIMEParser.address(previous.sender) else {
-        throw IntegrationError.unavailable
-      }
-      let domain = DomainResolver().domain(ofAddress: address)
-      guard scope != .domain || domain != nil else { throw IntegrationError.unavailable }
-      let rule = SenderRule(
-        scope: scope,
-        value: scope == .address ? address : domain!,
-        disposition: label == .inbox ? .allow : .block
-      )
-      state.rules = Gates.replacing(rule, in: state.rules)
-      state.corrections.append(
-        CorrectionExample(
-          sender: address,
-          domain: domain,
-          subject: previous.subject,
-          gist: previous.decision.reason,
-          label: label
-        )
-      )
-      state.corrections = Array(state.corrections.suffix(200))
-      state.revision += 1
-      state.retries.removeAll()  // Any old prompt/evidence generation is stale after a correction.
-      state.records[i].correctedLabel = label
-      var correction = DecisionRecord(
-        identity: previous.identity,
-        sender: address,
-        subject: previous.subject,
-        evidence: previous.evidence,
-        decision: .init(
-          label: label,
-          action: label == .inbox ? .moveToInbox : .moveToJunk,
-          reason: "User correction (\(scope.rawValue))"
-        ),
-        outcome: .pending,
-        path: "correction",
-        revision: state.revision
-      )
-      correction.correctedLabel = label
-      state.record(correction)
-      return correction
-    }
-    return try await dispatch(record, adapter: adapter, forceDryRun: false, correction: true)
-  }
-  private func dispatch(
+  func dispatch(
     _ original: DecisionRecord,
     adapter: (any MailClientAdapter)?,
     forceDryRun: Bool,
@@ -352,6 +252,9 @@ public actor Pipeline {
       else { completed.outcome = .superseded; try await save(completed); return completed }
       let receipt = try await adapter.perform(claimed.decision.action, for: claimed.identity)
       completed.outcome = receipt.confirmed ? .applied : .requested
+      if receipt.confirmed, let identity = receipt.updatedIdentity {
+        completed.identity = identity
+      }
     } catch {
       completed.outcome = .failed
       completed.actionError =

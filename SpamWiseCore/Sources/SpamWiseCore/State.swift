@@ -2,7 +2,7 @@ public import Foundation
 
 /// The explicitly validated incoming-mail integration route.
 public enum IncomingRoute: String, Codable, Sendable, CaseIterable {
-  case unverified, mailKit, mailRule
+  case unverified, mailKit, mailRule, imap
 }
 /// Persisted filtering preferences with dry run enabled by default.
 public struct Settings: Codable, Sendable, Equatable {
@@ -28,6 +28,13 @@ public struct Settings: Codable, Sendable, Equatable {
   public var validatedAccounts: Set<String> = []
   /// Provisional callback budget in seconds; requires runtime calibration.
   public var callbackDeadline: Double = 10
+  /// Optional advanced preferences; absent in Phase 1 stores.
+  public var advanced: AdvancedSettings?
+  /// Backward-compatible defaults for optional capabilities.
+  public var advancedOptions: AdvancedSettings {
+    get { advanced ?? AdvancedSettings() }
+    set { advanced = newValue }
+  }
   /// Creates a Settings with the supplied configuration.
   public init() {}
 }
@@ -155,6 +162,12 @@ public struct AppState: Codable, Sendable {
   public var lastBodyCallback: Date?
   /// Estimated charges retained independently of the bounded activity log.
   public var costByMonth: [String: Double]?
+  /// Bounded derived learning data from explicit corrections and eligible predictions.
+  public var learning: LearningState?
+  /// Explicit labels retained independently of the Activity display window.
+  public var reviewedLabels: [ReviewedLabel]?
+  /// Last calendar week whose local Review digest was presented.
+  public var lastDigestWeek: String?
   /// Creates an AppState with the supplied configuration.
   public init() {}
 }
@@ -200,6 +213,11 @@ public enum StateRepository {
       edit(&state.settings)
       state.settings.correctionLimit = min(100, max(0, state.settings.correctionLimit))
       state.settings.bodyTokenBudget = min(4000, max(100, state.settings.bodyTokenBudget))
+      if !state.settings.advancedOptions.retainReviewedContent {
+        state.reviewedLabels = state.reviewedLabels?.map { label in
+          var label = label; label.message = nil; return label
+        }
+      }
       if state.settings.validatedAccounts.isEmpty { state.settings.dryRun = true }
       state.revision += 1
       state.retries.removeAll()

@@ -8,11 +8,12 @@ public struct APIKeychain: Sendable {
   /// Keychain access group shared by the app and extension.
   public static let accessGroup = "2NFSK2WB24.codes.tim.SpamWise.shared"
   /// Creates an APIKeychain with the supplied configuration.
-  public init() {}
+  public init(service: String = "codes.tim.SpamWise.anthropic") { self.service = service }
+  private let service: String
   private var query: [String: Any] {
     [
       kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: "codes.tim.SpamWise.anthropic",
+      kSecAttrService as String: service,
       kSecAttrAccount as String: "user-api-key", kSecAttrAccessGroup as String: Self.accessGroup,
       kSecUseDataProtectionKeychain as String: true
     ]
@@ -29,9 +30,11 @@ public struct APIKeychain: Sendable {
     else { throw KeychainError.status(status) }
     return key
   }
-  /// Writes a nonempty API key to the shared Keychain.
-  public func save(_ key: String) throws {
-    let value = Data(key.trimmingCharacters(in: .whitespacesAndNewlines).utf8)
+  /// Writes a nonempty credential, preserving significant password whitespace when explicitly requested.
+  public func save(_ key: String, preserveWhitespace: Bool = false) throws {
+    let value = Data(
+      (preserveWhitespace ? key : key.trimmingCharacters(in: .whitespacesAndNewlines)).utf8
+    )
     guard !value.isEmpty else { throw KeychainError.missing }
     let updated = SecItemUpdate(query as CFDictionary, [kSecValueData: value] as CFDictionary)
     if updated == errSecItemNotFound {

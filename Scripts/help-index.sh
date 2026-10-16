@@ -1,5 +1,8 @@
 #!/bin/bash
 set -euo pipefail
-book="SpamWise/SpamWise.help/Contents/Resources/en.lproj"
-hiutil -I corespotlight -C -a -s en -f "$book/search.cshelpindex" "$book"
+for book in SpamWise/SpamWise.help/Contents/Resources/*.lproj; do
+  language="${book##*/}"
+  language="${language%.lproj}"
+  hiutil -I corespotlight -C -a -s "$language" -l "$language" -f "$book/search.cshelpindex" "$book"
+done
 plutil -lint SpamWise/SpamWise.help/Contents/Info.plist SpamWise/Info.plist

@@ -27,13 +27,13 @@ final class MessageActionHandler: NSObject, MEMessageActionHandler {
         }
         let state = try await StateRepository.load(store)
         guard !state.settings.paused, state.settings.onboardingComplete,
-          state.settings.route != .mailRule
+          state.settings.route != .mailRule, state.settings.route != .imap
         else {
           completion.finish(nil); return
         }
         let pipeline = Pipeline(
           store: store,
-          classifier: ClaudeClassifier { try APIKeychain().read() }
+          classifier: ConfiguredClassifier(store: store)
         )
         _ = await pipeline.process(
           .init(identity: identity, raw: raw),

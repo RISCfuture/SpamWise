@@ -41,6 +41,12 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   public var senderHistory: SenderHistory
   /// Whether the address is a contact; nil means permission or evidence unavailable.
   public var contact: Bool?
+  /// Optional uncalibrated lexical evidence; absence means insufficient training or disabled.
+  public var bayesLogOdds: Double?
+  /// Optional regularized evidence margin; not a probability or standalone action instruction.
+  public var learnedMargin: Double?
+  /// Bounded optional local or network findings, treated as untrusted evidence.
+  public var auxiliaryFindings: [String]?
   /// Creates an EvidenceBundle with the supplied configuration.
   public init(
     message: ParsedMessage,

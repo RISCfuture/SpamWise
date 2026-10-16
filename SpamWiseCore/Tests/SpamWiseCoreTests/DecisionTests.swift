@@ -39,14 +39,22 @@ import SpamWiseCore
 actor RecordingAdapter: MailClientAdapter {
   var actions: [MailAction] = []
   var fail = false
-  func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? { nil }
+  var updatedIdentity: MessageIdentity?
+  var lookups = 0
+  var message: MailEnvelope?
+  func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? {
+    lookups += 1
+    return message
+  }
+  func retain(_ envelope: MailEnvelope) { message = envelope }
   func recentMessages(limit: Int) async throws -> [MailEnvelope] { [] }
   func importHistory() async throws -> [String: HistoryIndex] { [:] }
   func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
     if fail { throw IntegrationError.permissionDenied }
-    actions.append(action); return .init(confirmed: true)
+    actions.append(action); return .init(confirmed: true, updatedIdentity: updatedIdentity)
   }
   func deny() { fail = true }
+  func moveIdentity(to identity: MessageIdentity) { updatedIdentity = identity }
 }
 func testStore() throws -> Store {
   try Store(
@@ -71,6 +79,9 @@ func enableActions(_ store: Store) async throws {
 @Test func `persist before action and never duplicate`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
+  var moved = try envelope().identity
+  moved.localID = 42; moved.mailboxValidity = 99; moved.mailbox = "Junk"
+  await adapter.moveIdentity(to: moved)
   let pipeline = Pipeline(
     store: store,
     classifier: MockClassifier(
@@ -87,6 +98,7 @@ func enableActions(_ store: Store) async throws {
   let state = try await StateRepository.load(store)
   #expect(state.costByMonth?[AppState.monthKey(first.date)] == first.verdict?.usage.estimatedCost)
   #expect(first.outcome == .applied)
+  #expect(first.identity == moved)
   #expect(first.id == second.id)
   #expect(await adapter.actions == [.moveToJunk])
   #expect(try await StateRepository.load(store).records.first?.verdict?.label == .junk)
@@ -131,6 +143,64 @@ func enableActions(_ store: Store) async throws {
   #expect(state.rules.count == 1)
   #expect(state.rules[0].scope == .address)
   #expect(state.corrections.count == 1)
+  #expect(await adapter.actions.isEmpty)
+  let review = try await pipeline.correct(recordID: failed.id, label: .review, adapter: adapter)
+  let reviewed = try await StateRepository.load(store)
+  #expect(review.decision.action == .orangeFlag)
+  #expect(reviewed.rules.isEmpty)
+  #expect(reviewed.reviewedLabels?.first?.label == .review)
+  #expect(reviewed.corrections.last?.label == .review)
+  #expect(await adapter.lookups == 0)
+  #expect(reviewed.learning == nil)
+  await adapter.retain(try envelope())
+  try await StateRepository.update(store) { state in
+    var options = state.settings.advancedOptions
+    options.retainReviewedContent = true
+    state.settings.advanced = options
+  }
+  _ = try await pipeline.correct(recordID: failed.id, label: .inbox, adapter: adapter)
+  let retained = try await StateRepository.load(store)
+  #expect(await adapter.lookups == 1)
+  #expect(retained.reviewedLabels?.first?.message != nil)
+  #expect(retained.learning == nil)
+  try await StateRepository.update(store) { state in
+    var options = state.settings.advancedOptions
+    options.retainReviewedContent = false
+    options.bayes = true
+    state.settings.advanced = options
+  }
+  _ = try await pipeline.correct(recordID: failed.id, label: .junk, adapter: adapter)
+  let learned = try await StateRepository.load(store)
+  #expect(await adapter.lookups == 2)
+  #expect(learned.reviewedLabels?.first?.message == nil)
+  #expect(learned.reviewedLabels?.first?.sampleID != nil)
+  #expect(learned.learning?.samples.count == 1)
+}
+@Test func `retry consumption stays within the selected account`() async throws {
+  let store = try testStore(), adapter = RecordingAdapter()
+  let failed = Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { _ in
+      throw ClassificationError.rateLimited
+    })
+  )
+  let first = try envelope()
+  var second = first; second.identity.accountID = "account-B"
+  _ = await failed.process(first, adapter: adapter)
+  _ = await failed.process(second, adapter: adapter)
+  let due = Date().addingTimeInterval(35)
+  let successful = Pipeline(
+    store: store,
+    classifier: MockClassifier(
+      verdict:
+        .init(label: .inbox, confidence: 99, reason: "Retry succeeded")
+    )
+  )
+  await successful.retryDue(adapter: adapter, now: due, accountID: "account-A")
+  let state = try await StateRepository.load(store)
+  #expect(state.retries.map { $0.identity.accountID } == ["account-B"])
+  #expect(state.records.last?.identity.accountID == "account-A")
+  #expect(state.records.last?.decision.label == .inbox)
   #expect(await adapter.actions.isEmpty)
 }
 @Test func `correction during classification supersedes old verdict`() async throws {

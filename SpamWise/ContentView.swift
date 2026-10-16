@@ -25,6 +25,7 @@ struct ContentView: View {
           model.togglePause()
         }.accessibilityIdentifier("activity.pause")
         Button("Dry run recent mail") { model.scan() }.disabled(model.busy || !model.storageReady)
+        Button("Review digest") { model.showDigest = true }
         SettingsLink { Image(systemName: "gearshape") }.accessibilityLabel("Open Settings")
           .accessibilityIdentifier("activity.settings")
         HelpButton(page: "how-decisions-are-made")
@@ -49,7 +50,9 @@ struct ContentView: View {
             ContentUnavailableView(
               "No decisions yet",
               systemImage: "tray",
-              description: Text("Finish setup, then try a dry run on recent mail.")
+              description: model.state.settings.onboardingComplete
+                ? Text("Try a dry run on recent mail.")
+                : Text("Finish setup, then try a dry run on recent mail.")
             )
           }
         }
@@ -64,7 +67,7 @@ struct ContentView: View {
       Divider()
       HStack {
         Text(
-          "Today: \(model.today.count) decisions · \(model.today.filter { $0.decision.label == .junk }.count) Junk · \(model.today.filter { $0.decision.label == .review }.count) Review"
+          "Decisions today: \(model.today.count) · Junk: \(model.today.filter { $0.decision.label == .junk }.count) · Review: \(model.today.filter { $0.decision.label == .review }.count)"
         )
         Spacer()
         Text("Month API cost ≈ \(model.monthCost, format: .currency(code: "USD"))").help(
@@ -79,6 +82,7 @@ struct ContentView: View {
       }.padding(.horizontal, 20).padding(.bottom, 12).padding(.top, 6)
     }
     .frame(minWidth: 900, minHeight: 560)
+    .sheet(isPresented: $model.showDigest) { ReviewDigestView(model: model) }
     .sheet(
       isPresented: Binding(
         get: { !model.state.settings.onboardingComplete || model.showSetup },
@@ -103,13 +107,13 @@ struct DecisionDetailView: View {
         VerdictBadge(record: row)
         Text(row.decision.reason).textSelection(.enabled)
         LabeledContent("Path", value: row.path)
-        LabeledContent("Intended action", value: row.decision.action.rawValue)
-        LabeledContent("Outcome", value: row.outcome.rawValue)
+        LabeledContent("Intended action", value: row.decision.action.localizedTitle)
+        LabeledContent("Outcome", value: row.outcome.localizedTitle)
         if let error = row.actionError {
           Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
         }
         if let correction = row.correctedLabel {
-          Text("User corrected to \(correction.rawValue)").accessibilityIdentifier(
+          Text("User corrected to \(correction.localizedTitle)").accessibilityIdentifier(
             "correction.label"
           )
         }
@@ -128,6 +132,10 @@ struct DecisionDetailView: View {
           Button("Mark as Junk") { model.correct(row, label: .junk) }
             .accessibilityIdentifier("correction.junk")
         }.disabled(model.busy || row.path == "verification")
+        Button("Mark as Review") { model.correct(row, label: .review) }
+          .accessibilityIdentifier("correction.review").disabled(
+            model.busy || row.path == "verification"
+          )
         Menu("Correct entire domain…") {
           Button("Allow this domain") { model.correct(row, label: .inbox, scope: .domain) }
             .accessibilityIdentifier("correction.domain.allow")
@@ -135,7 +143,10 @@ struct DecisionDetailView: View {
         }.accessibilityIdentifier("correction.domain")
           .disabled(model.busy || row.evidence?.fromDomain == nil)
         Text(
-          "Sender corrections create address rules. Domain corrections apply to all senders on that registrable domain."
+          """
+          Good and Junk corrections create address rules. Review removes the address rule. \
+          Explicit domain rules still apply to that domain.
+          """
         ).font(.caption).foregroundStyle(.secondary)
         HelpButton(page: "correcting-mistakes")
         if let evidence = row.evidence, let data = try? JSONEncoder.pretty.encode(evidence),
@@ -153,13 +164,13 @@ struct VerdictBadge: View {
   var body: some View {
     let label = record.decision.label
     Label(
-      label?.rawValue.capitalized ?? "Unclassified",
+      label?.localizedTitle ?? String(localized: "Unclassified"),
       systemImage: label == .junk
         ? "tray.full"
         : label == .review ? "flag" : label == .inbox ? "checkmark.circle" : "questionmark.circle"
     )
     .foregroundStyle(label == .junk ? Color.red : label == .review ? Color.orange : Color.primary)
-    .accessibilityLabel("Verdict: \(label?.rawValue ?? "unclassified")")
+    .accessibilityLabel("Verdict: \(label?.localizedTitle ?? String(localized: "Unclassified"))")
   }
 }
 extension JSONEncoder {

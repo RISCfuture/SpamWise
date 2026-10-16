@@ -14,14 +14,17 @@ struct RunReport: Encodable {
   var newEstimatedCostUSD: Double?
   var costNote: String
   var evidenceNote: String
+  var reviewedCorpus: ReviewedCorpus.Summary?
 
   init(
     options: Options,
     report: EvaluationReport,
     raw: [EvaluationObservation],
-    cache: CachedClassifier
+    cache: CachedClassifier,
+    reviewed: ReviewedCorpus.Summary? = nil
   ) async throws {
     model = options.model
+    reviewedCorpus = reviewed
     strength = try options.strength
     metrics = report
     thresholdCandidates = Dictionary(
@@ -51,10 +54,10 @@ struct RunReport: Encodable {
     cacheHits = await cache.hits
     providerCalls = await cache.misses
     newUsage = await cache.newUsage
-    let isHaiku = model == ClaudeClassifier.modelID
-    let inputPrice = try options.price("input-price", default: isHaiku ? 0.10 : nil)
-    let outputPrice = try options.price("output-price", default: isHaiku ? 0.50 : nil)
-    let cachePrice = try options.price("cache-price", default: isHaiku ? 0.01 : nil)
+    let pricing = try? ModelTokenPricing.rates(for: model)
+    let inputPrice = try options.price("input-price", default: pricing?.input)
+    let outputPrice = try options.price("output-price", default: pricing?.output)
+    let cachePrice = try options.price("cache-price", default: pricing?.cached)
     if model == "mock" {
       newEstimatedCostUSD = 0; providerCalls = 0
     } else if let inputPrice, let outputPrice, let cachePrice {
@@ -65,13 +68,26 @@ struct RunReport: Encodable {
     }
     costNote =
       """
-      Estimated, excludes undisclosed cache-write premiums. Non-Haiku prices require explicit \
-      price flags; cached reruns incur zero new tokens.
+      Estimated, excludes undisclosed cache-write premiums. Rates use the explicit model's \
+      verified pricing unless overridden; cached reruns incur zero new tokens.
       """
     evidenceNote =
       """
       Offline evidence only: optional RDAP is unknown. --state can supply rules, contacts and \
       account history under account ID eval. Mock output tests plumbing, not model quality.
       """
+    if let reviewed {
+      evidenceNote = """
+        Retained parsed-message evaluation, partition \(reviewed.partition.rawValue). Truth labels \
+        never enter model input. No live DNS, Rspamd, OCR, or Mail access. This statistical \
+        content hold-out does not establish independent live full-pipeline quality: reviewed \
+        corrections may have influenced user policy or model choice. Missing retained content is \
+        counted in reviewedCorpus, not silently evaluated as empty mail.
+        """
+      if reviewed.partition != .heldOut {
+        calibrationStatus +=
+          " Training/all partitions are exploratory and cannot establish held-out quality."
+      }
+    }
   }
 }
