@@ -2,6 +2,11 @@
 
 The signed Apple Mail move spike passed for generated cross-account probes in iCloud and Google. The user then authorized implementing the deferred roadmap. Optional capabilities remain off by default; production thresholds remain uncalibrated. Implementation and live acceptance are tracked separately below.
 
+Mail.app is the sole client integration target. Other-client adapters, Microsoft
+Graph integration and standalone IMAP expansion/acceptance are outside the current
+roadmap. Existing IMAP code is retained; account coverage below means accounts
+configured in Mail.app.
+
 ## Implemented and verified offline
 
 - [x] Explicit Apple on-device, Private Cloud Compute, OpenAI and Gemini classifiers alongside Claude. Fresh sessions, bounded prompts/results, measured usage where available, explicit prices, refusal handling and no fallback. PCC still requires Apple's managed entitlement.
@@ -13,7 +18,7 @@ The signed Apple Mail move spike passed for generated cross-account probes in iC
 - [x] Optional Spamhaus DBL domain lookups with explicit terms acknowledgement and unknown results for service errors.
 - [x] Optional local Rspamd symbols through bounded `rspamc` execution; sandbox denial remains unknown.
 - [x] Bounded Vision OCR of embedded PNG/JPEG parts without remote image loading.
-- [x] TLS IMAP adapter and headless executable, with UIDVALIDITY/UID identity, SPECIAL-USE discovery, capability checks, disposable-message validation and verified move identities. Other mail clients can use the same server-side IMAP route; no unsupported client automation is claimed.
+- [x] TLS IMAP adapter and headless executable, with UIDVALIDITY/UID identity, SPECIAL-USE discovery, capability checks, disposable-message validation and verified move identities. Existing implementation retained; further development and live acceptance are deferred under the Mail.app-only scope.
 - [x] Local weekly digest of unresolved Review items, without sending email.
 - [x] Explicit Good/Junk/Review label collection and optional bounded reviewed-text export for later evaluation.
 - [x] Persistent conservative spending reservations. The authorized additional evaluation ceiling is $150, not a spending target.
@@ -26,7 +31,6 @@ See [roadmap progress](docs/roadmap-progress.md), [evidence](docs/evidence.md), 
 ## Live acceptance and external prerequisites
 
 - [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI/Gemini credentials were not supplied. Apple on-device completed five synthetic requests but returned Review for every fixture; quality remains unvalidated. PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
-- [ ] Validate an explicitly configured IMAP account read-only, then run a disposable-message move probe. No IMAP credentials have been supplied; transcript tests do not establish provider interoperability. OAuth tokens require a separately authorized flow or supplied token; no mailbox credentials are extracted from Mail.
 - [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
 - [ ] Complete signed live onboarding/correction acceptance and incoming MailKit callback/account/deadline observations. Apple Mail's validated account-scoped route remains independent of MailKit's unresolved account bridge.
 - [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. Existing 30-second cross-account observations are not a separate server acknowledgement; ambiguous same-account Sent copies remain untouched.
@@ -57,7 +61,7 @@ creating separate completion criteria for the same work.
 | --- | --- | --- |
 | Personalized filtering | Explicit provider choice, natural-language policy, correction retrieval, optional Bayes/weights/fingerprints | Learned signals are supporting evidence; neither local nor cloud accuracy is calibrated |
 | Trusted senders and rules | Contacts/history gates, address/domain rules, rule import/export | No rich header/body rules, rule diagnostics, or own-address trust exclusion |
-| Mail integration | Apple Mail adapter, bounded Inbox polling, IMAP adapter/CLI | MailKit acceptance unresolved; IMAP interoperability unverified; no remote training or arbitrary-folder selection |
+| Mail integration | Apple Mail adapter and bounded Inbox polling | MailKit acceptance unresolved; no synchronized-folder training or arbitrary-folder selection |
 | Corrections | Good/Junk/Review in the Activity inspector; rules persist despite action failures | No general selected-Mail-message training command, bulk initial training, or correction undo |
 | Inspection and evaluation | Verdict/action/outcome separation, evidence details, CLI metrics/cache, reviewed export | No searchable corpus, app statistics dashboard, safe message preview, or complete backup/restore |
 | Safety and review | Persist-before-action, fail open, deduplication, dry run, Review stays in Inbox, local weekly digest | Need sustained runtime coverage and faster review workflows; no superiority claim yet |
@@ -85,7 +89,7 @@ creating separate completion criteria for the same work.
   mail on the Mac. An on-device model alone does not meet that baseline: SpamWise
   currently supplies RDAP even with that backend. Add one explicit local-mode policy
   that disables cloud classification, RDAP, DNS reputation and other outbound
-  evidence, while permitting the selected mail transport. Verify with network
+  evidence, while allowing Mail.app to synchronize accounts. Verify with network
   observation and offline fixtures. Evaluate a useful trained local classifier;
   the current five-fixture on-device run returning only Review is not parity.
 - [ ] **SS-04 — Correct selected mail without leaving Mail.** Match SpamSieve’s
@@ -109,11 +113,11 @@ creating separate completion criteria for the same work.
   false-positive bound and $150 ceiling above; no new spend is authorized by this item.
 - [ ] **SS-06 — Make unattended operation a supported setup path.** SpamSieve’s
   [drone workflow](https://c-command.com/spamsieve/help/drone-setup-and-remote)
-  filters synchronized accounts while its Mac is running. Our CLI exists, but no
-  login service is installed and app monitoring depends on its lifecycle. Add
+  filters synchronized accounts while its Mac is running. SpamWise monitoring
+  depends on its app lifecycle, and no login service is installed. Add
   opt-in launch-at-login/background operation, visible paused/offline states and
   restart recovery. Validate filtering with windows closed, screen locked, after
-  restart and after sleep; explain when the Mac must remain available. Finish
+  restart and after sleep; explain when the Mac and Mail.app must remain running. Finish
   fresh-user live onboarding and package the actual accepted build.
 
 ### P1 — daily workflows and control
@@ -126,10 +130,12 @@ creating separate completion criteria for the same work.
   filter provenance, avoid rescuing user-blocked senders, and prevent move loops
   with SpamSieve/server filters. Do not treat the user’s growing sample folders as
   permission to move or relabel their contents automatically.
-- [ ] **SS-08 — Train remotely from iPhone, webmail or another client.** Match
+- [ ] **SS-08 — Train through Mail.app’s synchronized folders.** Match
   SpamSieve’s [dedicated training mailboxes](https://c-command.com/spamsieve/help/drone-setup-and-remote)
-  with explicitly configured, account-scoped Good/Junk training folders. Process
-  each deliberate placement once, save the correction before moving it to the
+  with explicitly configured, account-scoped Good/Junk training folders read through
+  Mail.app. Folder placements may synchronize from another device without requiring
+  integration with its mail client. Process each deliberate placement once,
+  save the correction before moving it to the
   intended Inbox/Junk destination, and reconcile reconnects and duplicate deliveries.
   Ordinary Junk moves and server classifications must not count as user training.
   Test from a second device and preserve failures for review.
@@ -199,7 +205,7 @@ creating separate completion criteria for the same work.
   to a different account/endpoint. Test migration, corruption recovery and restore
   with actions paused; avoid synchronizing a live SwiftData database between Macs.
 
-### P2 — broader coverage and ecosystem
+### P2 — Mail.app coverage and product lifecycle
 
 - [ ] **SS-17 — Analyze more attachment-only spam locally.** SpamSieve advertises
   [image and document inspection](https://c-command.com/spamsieve/). Our embedded
@@ -207,20 +213,18 @@ creating separate completion criteria for the same work.
   extraction and additional image formats, with malicious, encrypted and oversized
   fixtures. Keep attachment content untrusted, never execute macros or fetch remote
   content, and distinguish unreadable attachments from spam evidence.
-- [ ] **SS-18 — Publish an honest client/account compatibility matrix.** SpamSieve
-  supports [multiple native clients](https://c-command.com/spamsieve/help/requirements),
-  but [New Outlook is indirect](https://c-command.com/spamsieve/help/end-of-support-for-lega).
-  Validate our existing IMAP route first, then add multi-account configuration,
-  OAuth onboarding/refresh and supervised background operation. Prioritize supported
-  client adapters and investigate a Graph route where IMAP is unavailable. Separate
-  direct training integration from server-synchronized filtering; never promise
-  unsupported New Outlook automation. Document macOS 27 and hardware requirements
-  against SpamSieve’s broader OS support; older-macOS support needs a feasibility
-  decision rather than an automatic deployment-target downgrade.
+- [ ] **SS-18 — Publish a verified Mail.app/account compatibility matrix.** Use
+  SpamSieve’s [requirements](https://c-command.com/spamsieve/help/requirements) as
+  a documentation baseline. Verify account types through Mail.app, including
+  account-specific special mailboxes, synchronization and offline recovery. Distinguish
+  MailKit observations from Apple Events acceptance and document unsupported cases.
+  Document macOS 27 and hardware requirements; older-macOS support needs a feasibility
+  decision rather than an automatic deployment-target downgrade. No additional
+  mail-client adapters or direct server integrations are required.
 - [ ] **SS-19 — Expose documented automation.** SpamSieve supplies an
   [AppleScript interface and integration SDK](https://c-command.com/spamsieve/help/customizing-using-apple).
-  Design supported CLI/Shortcuts/Apple Events entry points for classify-preview,
-  explicit correction, status and export. Keep account identity, cancellation,
+  Design supported CLI/Shortcuts/Apple Events entry points for SpamWise and Mail.app:
+  classify-preview, explicit correction, status and export. Keep account identity, cancellation,
   idempotency, spending limits and action authorization consistent with the app.
   The existing Inbox-trigger URL and evaluator/daemon do not cover these workflows.
 - [ ] **SS-20 — Finish maintainable distribution and lifecycle support.** SpamSieve
@@ -262,9 +266,9 @@ creating separate completion criteria for the same work.
 - Keep fail-open behavior for parsing, evidence, storage and integration failures;
   do not adopt encoding/language-only blocking from the competitor’s configurable
   rules. Preserve user rules first and explicit domain-level corrections.
-- Prefer the supported Apple Events/IMAP routes over private Mail database access,
-  legacy plug-in injection or Full Disk Access. Document their performance limits
-  and validate the fallback instead of claiming universal compatibility.
+- Use Mail.app’s public MailKit and Apple Events interfaces, with runtime validation
+  for each route. Avoid private Mail database access, legacy plug-in injection and
+  Full Disk Access. Document performance limits and validate the polling fallback.
 
 Suggested delivery order: SS-01/02/05/06 for reliability and evidence, SS-03/04 for
 local privacy and correction access, then SS-07/08 and the remaining P1 work.
