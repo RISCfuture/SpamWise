@@ -1,0 +1,54 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "A rule exceeded the time limit and did not match.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una regla superó el límite de tiempo y no coincidió."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une règle a dépassé le délai et n’a pas correspondu."
+          }
+        }
+      }
+    },
+    "Check the rule expression and size limits.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa la expresión y los límites de tamaño."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez l’expression et les limites de taille."
+          }
+        }
+      }
+    },
+    "Content rules could not be evaluated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron evaluar las reglas de contenido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les règles de contenu n’ont pas pu être évaluées."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

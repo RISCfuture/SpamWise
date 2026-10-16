@@ -1,0 +1,426 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ exceeds the %@ parser limit.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ exceeds the %2$@ parser limit."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ supera el límite del analizador de %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ dépasse la limite de l’analyseur de %2$@."
+          }
+        }
+      }
+    },
+    "%@ has no .eml files in good/, junk/ or graymail/.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ no tiene archivos .eml en good/, junk/ ni graymail/."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ne contient aucun fichier .eml dans good/, junk/ ou graymail/."
+          }
+        }
+      }
+    },
+    "%@ has the same bytes as %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ has the same bytes as %2$@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ tiene los mismos bytes que %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ contient les mêmes octets que %2$@."
+          }
+        }
+      }
+    },
+    "%@ isn’t a regular file.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ no es un archivo normal."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas un fichier ordinaire."
+          }
+        }
+      }
+    },
+    "%@ isn’t set for this process. The CLI never saves keys.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ no está definida para este proceso. La CLI nunca guarda claves."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas définie pour ce processus. La CLI n’enregistre jamais de clés."
+          }
+        }
+      }
+    },
+    "%@ must be a nonnegative amount in USD.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ debe ser un importe no negativo en USD."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ doit être un montant positif ou nul en USD."
+          }
+        }
+      }
+    },
+    "--budget-limit requires --budget-store.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--budget-limit requiere --budget-store."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--budget-limit exige --budget-store."
+          }
+        }
+      }
+    },
+    "--limit must be from %lld to %lld.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "--limit must be from %1$lld to %2$lld."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--limit debe estar entre %1$lld y %2$lld."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--limit doit être compris entre %1$lld et %2$lld."
+          }
+        }
+      }
+    },
+    "--mock-responses requires --model mock.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--mock-responses requiere --model mock."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--mock-responses exige --model mock."
+          }
+        }
+      }
+    },
+    "--state is allowed only with --partition training.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--state solo se permite con --partition training."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--state n’est autorisé qu’avec --partition training."
+          }
+        }
+      }
+    },
+    "Budget and price options apply only to provider models.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las opciones de presupuesto y precio solo se aplican a los modelos de proveedores."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les options de budget et de prix ne s’appliquent qu’aux modèles des fournisseurs."
+          }
+        }
+      }
+    },
+    "Couldn’t evaluate the corpus.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo evaluar el corpus."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’évaluer le corpus."
+          }
+        }
+      }
+    },
+    "Exported %lld messages. Assign human labels before evaluating.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Exported %lld message. Assign human labels before evaluating."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Exported %lld messages. Assign human labels before evaluating."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se exportaron %lld de mensajes. Asigna etiquetas humanas antes de evaluar."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se exportó %lld mensaje. Asigna etiquetas humanas antes de evaluar."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se exportaron %lld mensajes. Asigna etiquetas humanas antes de evaluar."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld de messages exportés. Attribuez des étiquettes humaines avant l’évaluation."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld message exporté. Attribuez des étiquettes humaines avant l’évaluation."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld messages exportés. Attribuez des étiquettes humaines avant l’évaluation."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Live evaluation requires %@=1. No provider call was made.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La evaluación en vivo requiere %@=1. No se realizó ninguna llamada al proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’évaluation en direct exige %@=1. Aucun appel au fournisseur n’a été effectué."
+          }
+        }
+      }
+    },
+    "No mock response exists for hash %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No existe ninguna respuesta simulada para el hash %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune réponse simulée n’existe pour le hachage %@."
+          }
+        }
+      }
+    },
+    "No report was written, because its metrics would cover only part of the corpus.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se escribió ningún informe, porque sus métricas solo cubrirían parte del corpus."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun rapport n’a été écrit, car ses mesures ne couvriraient qu’une partie du corpus."
+          }
+        }
+      }
+    },
+    "Paid models require --budget-store PATH.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los modelos de pago requieren --budget-store RUTA."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les modèles payants exigent --budget-store CHEMIN."
+          }
+        }
+      }
+    },
+    "Remove duplicates before calibration.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina los duplicados antes de la calibración."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimez les doublons avant l’étalonnage."
+          }
+        }
+      }
+    },
+    "Stopped at %@: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Stopped at %1$@: %2$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detenido en %1$@: %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt sur %1$@ : %2$@"
+          }
+        }
+      }
+    },
+    "The JSON input is invalid at %@: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The JSON input is invalid at %1$@: %2$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La entrada JSON no es válida en %1$@: %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’entrée JSON n’est pas valide (emplacement : %1$@) : %2$@"
+          }
+        }
+      }
+    },
+    "the top level": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "el nivel superior"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "niveau supérieur"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

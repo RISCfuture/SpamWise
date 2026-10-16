@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Messages vérifiés et apprentissage — Aide SpamWise</title><meta name="description" content="Consultez les messages dont SpamWise apprend, ajoutez des messages vérifiés et choisissez ce qu’il apprend.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Rubriques d’aide"><h2>Premiers pas</h2><ul><li><a href="getting-started.html">Premiers pas</a></li><li><a href="how-decisions-are-made.html">Comment les décisions sont prises</a></li><li><a href="filtering-strength.html">Intensité du filtrage</a></li><li><a href="what-data-is-sent.html">Quelles données sont envoyées</a></li></ul><h2>Utilisation quotidienne</h2><ul><li><a href="activity.html">Utiliser Activité</a></li><li><a href="correcting-mistakes.html">Corriger les erreurs</a></li><li><a href="review-junk.html">Vérifier les indésirables</a></li><li><a href="notifications.html">Notifications et récapitulatif des messages à vérifier</a></li><li><a href="statistics.html">Statistiques</a></li><li><a href="shortcuts.html">Raccourcis</a></li></ul><h2>Règles et apprentissage</h2><ul><li><a href="rules.html">Règles d’expéditeur et de contenu</a></li><li><a href="folders.html">Dossiers</a></li><li><a href="reviewed-messages-and-learning.html" aria-current="page">Messages vérifiés et apprentissage</a></li></ul><h2>Comptes et données</h2><ul><li><a href="imap-connection.html">Se connecter en IMAP</a></li><li><a href="backup-and-restore.html">Sauvegarde et restauration</a></li><li><a href="troubleshooting-mail-integration.html">Résoudre les problèmes d’intégration Mail</a></li></ul></nav>
+<main><a name="reviewed-messages-and-learning" id="reviewed-messages-and-learning"></a><h1>Messages vérifiés et apprentissage</h1>
+<h2><a name="reviewed-messages" id="reviewed-messages"></a>Messages vérifiés</h2>
+<p>Choisissez Outils → Corpus vérifié (Option + Commande + C) pour ouvrir Messages vérifiés. Cette fenêtre liste vos corrections et les messages que vous avez importés, chacun étiqueté Légitime, Indésirables ou À vérifier.</p>
+<ul>
+<li>Pour ajouter des messages que vous avez vérifiés vous-même, choisissez une étiquette dans Importer comme, puis Importer des messages…, et sélectionnez jusqu’à 20 fichiers .eml. L’import ne crée jamais de règle et ne déplace jamais de message.</li>
+<li>Pour changer des étiquettes, sélectionnez des messages et choisissez Étiqueter comme.</li>
+<li>Pour retirer des messages, sélectionnez-les et choisissez Oublier…. SpamWise oublie aussi ce qu’il en a appris ; vos règles d’expéditeur restent.</li>
+<li>Choisissez Plus → Exporter les messages vérifiés… pour enregistrer la liste, ou Plus → Reconstruire l’apprentissage pour réapprendre uniquement à partir des messages listés.</li>
+</ul>
+<p>SpamWise conserve un nombre limité d’exemples. Si un import dépassait cette limite, SpamWise demande confirmation avant d’oublier vos plus anciennes corrections en tant qu’exemples.</p>
+<h2><a name="learning-from-corrections" id="learning-from-corrections"></a>Apprentissage à partir des corrections</h2>
+<p>Dans Réglages → Avancé, sous Apprentissage à partir des corrections :</p>
+<ul>
+<li>Reconnaître les campagnes que vous avez marquées comme Indésirables classe À vérifier tout message très proche d’une campagne que vous avez marquée comme indésirable.</li>
+<li>Apprendre des mots des messages corrigés commence lorsque vous avez vérifié au moins 20 messages légitimes et 20 indésirables.</li>
+<li>Apprendre quels indices comptent le plus commence lorsque vous avez vérifié au moins 100 messages, dont 30 légitimes et 30 indésirables.</li>
+</ul>
+<p>L’apprentissage rend seulement un classement plus ou moins probable. Vos règles et les personnes que vous connaissez passent toujours en premier, et l’apprentissage ne modifie jamais l’intensité du filtrage. Seuls les messages que vous avez vérifiés vous-même enseignent à SpamWise, pas ceux que d’autres filtres ont placés dans Indésirables.</p>
+<h2><a name="evaluation-data" id="evaluation-data"></a>Données d’évaluation</h2>
+<p>Pour conserver le texte des messages vérifiés pour vos propres tests, activez Conserver le texte révisé pour l’export d’évaluation. SpamWise conserve sur ce Mac le texte de 500 messages vérifiés au maximum. Choisissez Exporter les étiquettes révisées… pour les enregistrer. Désactiver l’option supprime le texte conservé ; les étiquettes et l’apprentissage restent.</p>
+</main></body></html>

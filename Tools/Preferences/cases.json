@@ -1,0 +1,45 @@
+{
+  "schema": "spamwise-synthetic-preferences-v1",
+  "synthetic": true,
+  "languages": [
+    {
+      "language": "en",
+      "subject": "Garden Notes: autumn bulbs and a weekend offer",
+      "body": "This month's Garden Notes explains when to plant autumn bulbs and how to prepare containers for winter. Our nursery also offers 15% off bulb packs this weekend. Read the growing guide at https://garden-notes.example/guide. You can manage your newsletter subscription at https://garden-notes.example/preferences.",
+      "wanted_policy": "I want gardening newsletters with practical growing advice, including newsletters that also contain ordinary plant promotions. Keep this category in my inbox. Unrelated unsolicited advertising is unwanted. Uncertain threats belong in review.",
+      "unwanted_policy": "I do not want gardening newsletters or plant promotions, even when they also include practical growing advice or a subscription link. Put this category in junk. Personal correspondence and genuine transaction messages are wanted. Uncertain threats belong in review.",
+      "examples": [
+        {"subject": "Indoor herbs: watering advice and seed sale", "gist": "Monthly gardening newsletter with herb care advice and a seed discount."},
+        {"subject": "Healthy tomatoes and planters this week", "gist": "Growing tips newsletter with an ordinary promotion for plant containers."}
+      ],
+      "wanted_reason": "I want practical gardening newsletters, including their ordinary promotions.",
+      "unwanted_reason": "I do not want gardening newsletters or their promotions."
+    },
+    {
+      "language": "es",
+      "subject": "Notas del jardín: bulbos de otoño y una oferta de fin de semana",
+      "body": "Este mes, Notas del jardín explica cuándo plantar bulbos de otoño y cómo preparar las macetas para el invierno. Nuestro vivero también ofrece un 15 % de descuento en paquetes de bulbos este fin de semana. Lee la guía de cultivo en https://garden-notes.example/guide. Puedes gestionar tu suscripción al boletín en https://garden-notes.example/preferences.",
+      "wanted_policy": "Quiero recibir boletines de jardinería con consejos prácticos de cultivo, incluidos los que también contienen promociones normales de plantas. Conserva esta categoría en mi bandeja de entrada. No quiero publicidad no solicitada sobre otros temas. Las amenazas inciertas deben ir a revisión.",
+      "unwanted_policy": "No quiero boletines de jardinería ni promociones de plantas, aunque incluyan consejos prácticos de cultivo o un enlace de suscripción. Envía esta categoría al correo no deseado. Quiero conservar la correspondencia personal y los mensajes de transacciones auténticas. Las amenazas inciertas deben ir a revisión.",
+      "examples": [
+        {"subject": "Hierbas de interior: riego y oferta de semillas", "gist": "Boletín mensual de jardinería con consejos sobre hierbas y un descuento en semillas."},
+        {"subject": "Tomates sanos y macetas esta semana", "gist": "Boletín de consejos de cultivo con una promoción normal de macetas."}
+      ],
+      "wanted_reason": "Quiero boletines prácticos de jardinería, incluidas sus promociones normales.",
+      "unwanted_reason": "No quiero boletines de jardinería ni sus promociones."
+    },
+    {
+      "language": "fr",
+      "subject": "Notes du jardin : bulbes d’automne et offre du week-end",
+      "body": "Ce mois-ci, Notes du jardin explique quand planter les bulbes d’automne et comment préparer les pots pour l’hiver. Notre pépinière propose aussi une réduction de 15 % sur les lots de bulbes ce week-end. Consultez le guide de culture sur https://garden-notes.example/guide. Vous pouvez gérer votre abonnement à la lettre d’information sur https://garden-notes.example/preferences.",
+      "wanted_policy": "Je souhaite recevoir des lettres d’information de jardinage avec des conseils pratiques, y compris celles qui contiennent aussi des promotions ordinaires sur les plantes. Gardez cette catégorie dans ma boîte de réception. La publicité non sollicitée sur d’autres sujets est indésirable. Les menaces incertaines doivent être examinées.",
+      "unwanted_policy": "Je ne souhaite pas recevoir de lettres d’information de jardinage ni de promotions sur les plantes, même avec des conseils pratiques ou un lien d’abonnement. Classez cette catégorie en courrier indésirable. Je souhaite conserver la correspondance personnelle et les véritables messages de transaction. Les menaces incertaines doivent être examinées.",
+      "examples": [
+        {"subject": "Herbes d’intérieur : arrosage et promotion sur les graines", "gist": "Lettre mensuelle de jardinage avec des conseils sur les herbes et une réduction sur les graines."},
+        {"subject": "Des tomates saines et des pots cette semaine", "gist": "Lettre de conseils de culture avec une promotion ordinaire sur les pots."}
+      ],
+      "wanted_reason": "Je souhaite ces lettres pratiques de jardinage, avec leurs promotions ordinaires.",
+      "unwanted_reason": "Je ne souhaite pas ces lettres de jardinage ni leurs promotions."
+    }
+  ]
+}

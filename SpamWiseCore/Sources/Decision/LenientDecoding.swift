@@ -1,0 +1,59 @@
+/// A string-backed enumeration that decodes values written by a newer version to a conservative case.
+public protocol FallbackDecodable: RawRepresentable, Decodable where RawValue == String {
+  /// The case used for an unrecognized raw value.
+  static var fallback: Self { get }
+}
+
+extension FallbackDecodable {
+  /// Decodes a known raw value, or ``fallback`` for an unrecognized one.
+  public init(from decoder: any Decoder) throws {
+    let raw = try decoder.singleValueContainer().decode(String.self)
+    self = Self(rawValue: raw) ?? .fallback
+  }
+}
+
+extension KeyedDecodingContainer {
+  /**
+   Decodes a field that may be absent, or unreadable because a different version wrote it.
+
+   - Returns: The decoded value, or `fallback` when the key is missing or its value cannot be read.
+   */
+  public func lenient<T: Decodable>(_ key: Key, default fallback: T) -> T {
+    // When `T` is itself optional, `?? nil` collapses a decoded `.some(nil)`, so it falls back too.
+    // swiftlint:disable:next redundant_nil_coalescing
+    ((try? decodeIfPresent(T.self, forKey: key)) ?? nil) ?? fallback
+  }
+
+  /**
+   Decodes a field that limits what may happen, such as a privacy setting, so a value written by
+   a different version never widens that limit.
+
+   - Returns: The decoded value, `fallback` when the key is missing or null, or `restrictive` when
+     its value cannot be read.
+   */
+  public func lenient<T: Decodable>(_ key: Key, default fallback: T, unreadable restrictive: T) -> T
+  {
+    guard contains(key), (try? decodeNil(forKey: key)) == false else { return fallback }
+    return (try? decode(T.self, forKey: key)) ?? restrictive
+  }
+}
+
+extension ActionOutcome: FallbackDecodable {
+  /// An unrecognized outcome may have dispatched an action, so it is treated as requested.
+  public static var fallback: Self { .requested }
+}
+
+extension MailAction: FallbackDecodable {
+  /// An unrecognized action is never performed.
+  public static var fallback: Self { .none }
+}
+
+extension FilteringStrength: FallbackDecodable {
+  /// An unrecognized strength uses the highest Junk threshold.
+  public static var fallback: Self { .conservative }
+}
+
+extension ReviewTreatment: FallbackDecodable {
+  /// An unrecognized treatment uses the default orange flag.
+  public static var fallback: Self { .orangeFlag }
+}

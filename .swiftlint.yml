@@ -1,0 +1,26 @@
+parent_config: https://gist.githubusercontent.com/RISCfuture/c57d132e5e0160a768df1625e20ae3b8/raw/.swiftlint.yml
+
+included:
+  - SpamWise
+  - SpamWise-MAS
+  - SpamWise-download
+  - MailExtension
+  - SpamWiseCore/Sources
+  - SpamWiseCore/Tests
+  - UnitTests
+  - UITests
+
+excluded:
+  - .build
+  - .superpowers  # scratch snapshots of source files, not sources
+  - Tools/Corpus
+  - DerivedData
+
+disabled_rules:
+  # Nimble is not a dependency; the tests use XCTest and Swift Testing.
+  - prefer_nimble
+  # swift-format owns layout, and it wraps a long call chain with some calls sharing a line.
+  - multiline_function_chains
+  # raw_value_for_camel_cased_codable_enum requires the explicit raw values that pin persisted
+  # camel-case names, and this rule reports exactly those values as redundant.
+  - redundant_string_enum_value

@@ -1,0 +1,259 @@
+{
+  "model": "telecomsxchange/OpenTextShield",
+  "revision": "9e839db78bd1daff8062ae2f2638af0b64b416ae",
+  "weights_sha256": "8e5f65efc7fecafc8280b8a817215f80738871d4da206bab94cce1ca43781fe9",
+  "corpus_sha256": "1f089e1c8f8e7556fb22ab009c5a2bc3d87d05914aabbc2327737ba625f4f2b9",
+  "seed": "spamwise-public-2026-10-v1",
+  "torch": "2.14.1",
+  "transformers": "5.20.1",
+  "python": "3.14.8",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "max_tokens": 96,
+  "elapsed_seconds_excluding_load": 11.28700445900904,
+  "cpu_seconds_process": 14.593210999999998,
+  "preprocessing": "Raw prepared corpus text; no model production normalizer.",
+  "device": "cpu",
+  "threads": 2,
+  "attention": "eager",
+  "peak_process_memory_bytes_macos": 941129728,
+  "paid_calls": 0,
+  "cohorts": {
+    "spam": {
+      "positive_records": 181,
+      "template_groups": 123,
+      "argmax_counts": {
+        "spam": 67,
+        "ham": 65,
+        "phishing": 49
+      },
+      "scored_output": "spam",
+      "output_is_task_proxy": false,
+      "threshold_hits": {
+        "0.5": 67,
+        "0.9": 59,
+        "0.95": 57,
+        "0.99": 50
+      },
+      "spam_or_phishing_at_0.5": 117,
+      "negative_records": 232,
+      "negative_template_groups": 225,
+      "negative_argmax_counts": {
+        "phishing": 106,
+        "spam": 95,
+        "ham": 31
+      },
+      "threshold_false_positives": {
+        "0.5": 94,
+        "0.9": 82,
+        "0.95": 73,
+        "0.99": 64
+      },
+      "false_positive_rate": 0.4051724137931034,
+      "false_positive_threshold": 0.5,
+      "spam_or_phishing_at_0.5_negative": 201
+    },
+    "phishing": {
+      "positive_records": 78,
+      "template_groups": 70,
+      "argmax_counts": {
+        "ham": 8,
+        "phishing": 67,
+        "spam": 3
+      },
+      "scored_output": "phishing",
+      "output_is_task_proxy": false,
+      "threshold_hits": {
+        "0.5": 67,
+        "0.9": 61,
+        "0.95": 59,
+        "0.99": 49
+      },
+      "spam_or_phishing_at_0.5": 70,
+      "negative_records": 0,
+      "negative_template_groups": 0,
+      "negative_argmax_counts": {},
+      "threshold_false_positives": {
+        "0.5": 0,
+        "0.9": 0,
+        "0.95": 0,
+        "0.99": 0
+      },
+      "false_positive_rate": null,
+      "false_positive_threshold": 0.5,
+      "spam_or_phishing_at_0.5_negative": 0
+    }
+  },
+  "evaluated_records": 491,
+  "truncated_records": 467,
+  "inference_ms": {
+    "p50": 21.309999996447004,
+    "p95": 22.003834004863165
+  },
+  "limits": [
+    "Development data only; reserved holdout is excluded from scoring.",
+    "Positive-only cohorts do not establish false-positive rates; thresholds remain uncalibrated.",
+    "Phishing is a separate model output; non-spam labels do not establish phishing negatives.",
+    "Template groups are heuristic; records are not assumed independent.",
+    "Labels, languages and pretrained exposure have not been independently audited."
+  ],
+  "synthetic_smoke": {
+    "input_sha256": "ad438d0303e1c2b3885cffe1bb46691dc23850b75c69f250ef9bc66b9e79391e",
+    "purpose": "Separate constructed smoke cases, excluded from corpus metrics.",
+    "results": [
+      {
+        "id": "wanted_personal",
+        "group": "wanted_personal",
+        "labels": {},
+        "prediction": "ham",
+        "scores": {
+          "ham": 0.998731791973114,
+          "spam": 0.00012011188664473593,
+          "phishing": 0.0011480742832645774
+        },
+        "input_tokens_before_truncation": 28,
+        "truncated": false,
+        "inference_ms": 12.1374579903204
+      },
+      {
+        "id": "graymail",
+        "group": "graymail",
+        "labels": {},
+        "prediction": "spam",
+        "scores": {
+          "ham": 0.0012190447887405753,
+          "spam": 0.9661282896995544,
+          "phishing": 0.03265262767672539
+        },
+        "input_tokens_before_truncation": 59,
+        "truncated": false,
+        "inference_ms": 16.791082991403528
+      },
+      {
+        "id": "spam",
+        "group": "spam",
+        "labels": {},
+        "prediction": "phishing",
+        "scores": {
+          "ham": 0.0010450424160808325,
+          "spam": 0.013203616254031658,
+          "phishing": 0.9857513308525085
+        },
+        "input_tokens_before_truncation": 32,
+        "truncated": false,
+        "inference_ms": 11.838665988761932
+      },
+      {
+        "id": "phishing",
+        "group": "phishing",
+        "labels": {},
+        "prediction": "phishing",
+        "scores": {
+          "ham": 3.0504479582305066e-05,
+          "spam": 2.7266489269095473e-05,
+          "phishing": 0.9999421834945679
+        },
+        "input_tokens_before_truncation": 43,
+        "truncated": false,
+        "inference_ms": 15.998999995645136
+      },
+      {
+        "id": "targeted_fraud",
+        "group": "targeted_fraud",
+        "labels": {},
+        "prediction": "ham",
+        "scores": {
+          "ham": 0.9590224623680115,
+          "spam": 0.0004893050063401461,
+          "phishing": 0.04048815369606018
+        },
+        "input_tokens_before_truncation": 48,
+        "truncated": false,
+        "inference_ms": 15.940957993734628
+      },
+      {
+        "id": "legitimate_security",
+        "group": "legitimate_security",
+        "labels": {},
+        "prediction": "ham",
+        "scores": {
+          "ham": 0.9559703469276428,
+          "spam": 0.0007455434533767402,
+          "phishing": 0.04328412935137749
+        },
+        "input_tokens_before_truncation": 43,
+        "truncated": false,
+        "inference_ms": 15.970291002304293
+      },
+      {
+        "id": "wanted_french",
+        "group": "wanted_french",
+        "labels": {},
+        "prediction": "ham",
+        "scores": {
+          "ham": 0.9986107349395752,
+          "spam": 0.00013314852549228817,
+          "phishing": 0.001256103627383709
+        },
+        "input_tokens_before_truncation": 34,
+        "truncated": false,
+        "inference_ms": 14.903249990311451
+      },
+      {
+        "id": "wanted_spanish",
+        "group": "wanted_spanish",
+        "labels": {},
+        "prediction": "ham",
+        "scores": {
+          "ham": 0.9988068342208862,
+          "spam": 0.0006719219963997602,
+          "phishing": 0.0005212972173467278
+        },
+        "input_tokens_before_truncation": 31,
+        "truncated": false,
+        "inference_ms": 12.131666007917374
+      },
+      {
+        "id": "legitimate_payment_change",
+        "group": "legitimate_payment_change",
+        "labels": {},
+        "prediction": "phishing",
+        "scores": {
+          "ham": 0.0003698672808241099,
+          "spam": 6.0351743741193786e-05,
+          "phishing": 0.999569833278656
+        },
+        "input_tokens_before_truncation": 50,
+        "truncated": false,
+        "inference_ms": 16.13925000128802
+      },
+      {
+        "id": "wanted_french_accented",
+        "group": "wanted_french_accented",
+        "labels": {},
+        "prediction": "ham",
+        "scores": {
+          "ham": 0.9984992742538452,
+          "spam": 0.00012483823229558766,
+          "phishing": 0.0013759019784629345
+        },
+        "input_tokens_before_truncation": 35,
+        "truncated": false,
+        "inference_ms": 14.892041013808921
+      },
+      {
+        "id": "wanted_spanish_accented",
+        "group": "wanted_spanish_accented",
+        "labels": {},
+        "prediction": "ham",
+        "scores": {
+          "ham": 0.9989540576934814,
+          "spam": 0.00012840371346101165,
+          "phishing": 0.0009175615268759429
+        },
+        "input_tokens_before_truncation": 32,
+        "truncated": false,
+        "inference_ms": 11.89766699098982
+      }
+    ]
+  }
+}

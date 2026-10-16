@@ -1,0 +1,8 @@
+From: Retailer <news@unknown-retailer.com>
+To: Tim <tim@example.com>
+Message-ID: <unsolicited-newsletter@fixtures.example>
+Subject: Our biggest sale
+Authentication-Results: mx.example; spf=pass; dkim=pass; dmarc=pass
+Content-Type: text/plain; charset=utf-8
+
+Subscribe to savings! Shop our entire collection at https://unknown-retailer.com/sale.

@@ -1,0 +1,472 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "--config needs a configuration file path.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--config necesita la ruta de un archivo de configuración."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--config nécessite le chemin d’un fichier de configuration."
+          }
+        }
+      }
+    },
+    "--limit must be from %@ to %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "--limit must be from %1$@ to %2$@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--limit debe estar entre %1$@ y %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--limit doit être compris entre %1$@ et %2$@."
+          }
+        }
+      }
+    },
+    "--model changes the store’s model; set statePath in the configuration so the app’s model stays unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--model cambia el modelo del almacén; define statePath en la configuración para que el modelo de la app no cambie."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--model change le modèle du stockage ; définissez statePath dans la configuration pour que le modèle de l’app reste inchangé."
+          }
+        }
+      }
+    },
+    "--once cannot be combined with --poll-seconds.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--once no se puede combinar con --poll-seconds."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--once ne peut pas être combiné avec --poll-seconds."
+          }
+        }
+      }
+    },
+    "--poll-seconds must be from %@ to %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "--poll-seconds must be from %1$@ to %2$@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--poll-seconds debe estar entre %1$@ y %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--poll-seconds doit être compris entre %1$@ et %2$@."
+          }
+        }
+      }
+    },
+    "Changed settings in the store shared with the app: %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes cambiados en el almacén compartido con la app: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages modifiés dans le stockage partagé avec l’app : %@."
+          }
+        }
+      }
+    },
+    "Changed settings in this daemon’s store: %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes cambiados en el almacén de este daemon: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages modifiés dans le stockage de ce daemon : %@."
+          }
+        }
+      }
+    },
+    "Check the credential that the configuration file refers to.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprueba la credencial a la que hace referencia el archivo de configuración."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez l’identifiant auquel le fichier de configuration fait référence."
+          }
+        }
+      }
+    },
+    "Check the server address in the configuration file and the network connection.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprueba la dirección del servidor en el archivo de configuración y la conexión de red."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez l’adresse du serveur dans le fichier de configuration et la connexion réseau."
+          }
+        }
+      }
+    },
+    "Correct the account in the configuration file.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrige la cuenta en el archivo de configuración."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrigez le compte dans le fichier de configuration."
+          }
+        }
+      }
+    },
+    "Correct the configuration file, then run the command again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrige el archivo de configuración y vuelve a ejecutar el comando."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrigez le fichier de configuration, puis exécutez à nouveau la commande."
+          }
+        }
+      }
+    },
+    "Daemon validation recorded for this endpoint.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Validación del daemon registrada para este servidor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Validation du daemon enregistrée pour ce serveur."
+          }
+        }
+      }
+    },
+    "Disposable probe restored to Inbox.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensaje de prueba desechable devuelto a Recibidos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Message de test jetable remis dans Réception."
+          }
+        }
+      }
+    },
+    "Dry run: no mail was moved. Live filtering in this store acts on previewed mail once dry run is off.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulación: no se movió ningún correo. El filtrado real en este almacén actuará sobre el correo previsualizado cuando se desactive la simulación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulation : aucun message n’a été déplacé. Le filtrage réel dans ce stockage agira sur le courrier prévisualisé une fois la simulation désactivée."
+          }
+        }
+      }
+    },
+    "Filtering paused; Inbox not read.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrado en pausa; no se leyó la bandeja de entrada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrage en pause ; la boîte de réception n’a pas été lue."
+          }
+        }
+      }
+    },
+    "Headless operation failed; uncertain actions are not retried": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La operación sin interfaz falló; las acciones inciertas no se reintentan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’opération sans interface a échoué ; les actions incertaines ne sont pas réessayées"
+          }
+        }
+      }
+    },
+    "Messages visited: %@. Classified: %@. For review: %@. Unclassified: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Messages visited: %1$@. Classified: %2$@. For review: %3$@. Unclassified: %4$@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes revisados: %1$@. Clasificados: %2$@. Para revisión: %3$@. Sin clasificar: %4$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages parcourus : %1$@. Classés : %2$@. À vérifier : %3$@. Non classés : %4$@."
+          }
+        }
+      }
+    },
+    "No settings changed in the store shared with the app.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No cambió ningún ajuste en el almacén compartido con la app."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun réglage n’a changé dans le stockage partagé avec l’app."
+          }
+        }
+      }
+    },
+    "No settings changed in this daemon’s store.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No cambió ningún ajuste en el almacén de este daemon."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun réglage n’a changé dans le stockage de ce daemon."
+          }
+        }
+      }
+    },
+    "Read-only check passed, but the server lacks MOVE or a unique Junk mailbox; validation revoked.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La comprobación de solo lectura se superó, pero el servidor no admite MOVE o no tiene un único buzón de correo no deseado; validación revocada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La vérification en lecture seule a réussi, mais le serveur ne prend pas en charge MOVE ou n’a pas de boîte Indésirables unique ; validation révoquée."
+          }
+        }
+      }
+    },
+    "Read-only check passed; Inbox and Junk validated for this endpoint.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La comprobación de solo lectura se superó; Recibidos y Correo no deseado validados para este servidor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La vérification en lecture seule a réussi ; Réception et Indésirables validés pour ce serveur."
+          }
+        }
+      }
+    },
+    "Run spamwise-daemon validate with this configuration first.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejecuta primero spamwise-daemon validate con esta configuración."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécutez d’abord spamwise-daemon validate avec cette configuration."
+          }
+        }
+      }
+    },
+    "Run the command again in a moment.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a ejecutar el comando dentro de un momento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécutez à nouveau la commande dans un instant."
+          }
+        }
+      }
+    },
+    "Set statePath in the configuration file to use a store of the daemon’s own.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Define statePath en el archivo de configuración para usar un almacén propio del daemon."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définissez statePath dans le fichier de configuration pour utiliser un stockage propre au daemon."
+          }
+        }
+      }
+    },
+    "Shared action gates applied.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se aplicaron las condiciones compartidas para las acciones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les conditions partagées des actions ont été appliquées."
+          }
+        }
+      }
+    },
+    "Stopped.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detenido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêté."
+          }
+        }
+      }
+    },
+    "Sweep failed; retrying in %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La revisión falló; se reintentará en %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La vérification a échoué ; nouvel essai dans %@"
+          }
+        }
+      }
+    },
+    "The probe UID must be a positive number.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El UID del mensaje de prueba debe ser un número positivo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’UID du message de test doit être un nombre positif."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

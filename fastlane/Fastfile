@@ -1,0 +1,496 @@
+# frozen_string_literal: true
+
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+
+require "fileutils"
+require "json"
+require "open3"
+require "shellwords"
+require "tmpdir"
+
+default_platform :mac
+
+APP_NAME = "SpamWise"
+XCODEPROJ = "SpamWise.xcodeproj"
+
+# `sh` runs its command from the fastlane directory while gym resolves paths from the project root,
+# so anything touching the working tree is built from here rather than written relative to either.
+REPO_ROOT = File.expand_path("..", __dir__)
+
+# Where the archive, the disk image, and the dSYMs land, so a CI run can collect them as artifacts.
+# Relative, because that is what gym expects; OUTPUT_PATH is for anything reading the directory back.
+OUTPUT_DIRECTORY = "build"
+OUTPUT_PATH = File.join(REPO_ROOT, OUTPUT_DIRECTORY)
+
+# SpamWise ships two editions from one project. They share a bundle identifier, the Mail
+# extension, and every line of their interface; they differ in how they are signed and in whether
+# they update themselves. The App Store edition is signed for the store and uploaded to App Store
+# Connect. The downloadable edition is signed with Developer ID, notarized, and attached to a GitHub
+# release as a disk image, and it is the only one that checks GitHub for its own updates.
+APP_IDENTIFIER = "codes.tim.SpamWise"
+
+EDITIONS = {
+  "mas" => { scheme: "SpamWise (MAS)", export_method: "app-store",
+             # How App Store Connect names this platform. Only an edition with one has a version
+             # record to write notes onto and attach a build to.
+             connect: "MAC_OS",
+             # A Mac App Store submission ships as a .pkg, which the Apple Distribution certificate
+             # cannot sign — that takes the separate Mac Installer Distribution certificate.
+             match_type: "appstore", additional_cert_types: ["mac_installer_distribution"] },
+  "download" => { scheme: "SpamWise (download)", export_method: "developer-id",
+                  match_type: "developer_id", additional_cert_types: [] }
+}.freeze
+
+def edition(name)
+  EDITIONS.fetch(name) do
+    UI.user_error!("Unknown edition #{name.inspect}. SpamWise ships #{EDITIONS.keys.join(', ')}.")
+  end
+end
+
+# Every bundle that carries entitlements, and so needs a provisioning profile of its own. Both carry
+# the App Group and shared keychain access group, which a bare signature cannot satisfy, and both
+# editions export both bundles. SpamWiseCommon.framework is signed with the app's identity.
+APP_IDENTIFIERS = [APP_IDENTIFIER, "codes.tim.SpamWise.MailExtension"].freeze
+
+# The repository the downloadable edition checks for updates, from the tracked xcconfig. GitHub's
+# own rules for owner and repository names: a build whose values break them never checks at all.
+UPDATE_CONFIG = File.join(REPO_ROOT, "Config", "SpamWise.xcconfig")
+UPDATE_OWNER_PATTERN = /\A[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?\z/
+UPDATE_REPOSITORY_PATTERN = /\A[A-Za-z0-9._-]{1,100}\z/
+
+# Signing credentials live in a private repository, everything in it encrypted under one
+# MATCH_PASSWORD: the signing certificates (managed by _match_) and the App Store Connect API key
+# (decrypted by that repository's own `bin/api-key`). Neither is ever written to this working tree.
+# CI checks the repository out and sets CERTIFICATES_REPO; a local run falls back to a clone
+# alongside the other repositories.
+DEFAULT_CERTIFICATES_REPO = File.expand_path("~/Repositories/certificates")
+
+def certificates_repo
+  path = ENV.fetch("CERTIFICATES_REPO", DEFAULT_CERTIFICATES_REPO)
+  return path if Dir.exist?(path)
+
+  UI.user_error!("No signing credentials at #{path} — clone the certificates repository there, " \
+                 "or point CERTIFICATES_REPO at an existing checkout.")
+end
+
+# The Developer ID Application identity _match_ installed, read back from the keychain rather than
+# written out here, so renewing the certificate never means editing this file.
+def developer_id_identity
+  identity = `security find-identity -v -p codesigning`[/"(Developer ID Application:[^"]+)"/, 1]
+  if identity.nil?
+    UI.user_error!("No Developer ID Application identity in the keychain — ensure_signing has to " \
+                   "run before anything can be signed with it.")
+  end
+  identity
+end
+
+# gym never hands App Store Connect credentials to xcodebuild, so `-allowProvisioningUpdates` on its
+# own has no account to authenticate with. xcodebuild takes the key through its own flags, which want
+# a path, so the key is written to a private temp file that goes away when the process exits.
+def provisioning_authentication_args
+  key = Fastlane::Actions.lane_context[Fastlane::Actions::SharedValues::APP_STORE_CONNECT_API_KEY]
+  UI.user_error!("ensure_api_key has to run before an archive can be signed.") if key.nil?
+
+  directory = Dir.mktmpdir("asc-api-key")
+  at_exit { FileUtils.remove_entry(directory, true) }
+  path = File.join(directory, "AuthKey_#{key[:key_id]}.p8")
+  File.write(path, key[:key])
+  FileUtils.chmod(0o600, path)
+
+  "-authenticationKeyPath #{path.shellescape} " \
+    "-authenticationKeyID #{key[:key_id].shellescape} " \
+    "-authenticationKeyIssuerID #{key[:issuer_id].shellescape}"
+end
+
+# The app gym exported, which is what gets notarized, packaged, and read for its version.
+def exported_app
+  app = Dir[File.join(OUTPUT_PATH, "*.app")].first
+  UI.user_error!("The export produced no .app in #{OUTPUT_PATH}.") if app.nil?
+  app
+end
+
+# The app inside the most recent archive. An App Store export is a .pkg, so this is the only .app
+# both editions leave behind.
+def archived_app
+  archive = Fastlane::Actions.lane_context[Fastlane::Actions::SharedValues::XCODEBUILD_ARCHIVE].to_s
+  app = Dir[File.join(archive, "Products", "Applications", "*.app")].first
+  UI.user_error!("The archive holds no app.") if app.nil?
+  app
+end
+
+# One value from the built app's Info.plist. The project file is not the authority: a release stamps
+# its version through xcargs and leaves the checked-in MARKETING_VERSION alone.
+def exported_app_value(app, key)
+  plist = File.join(app, "Contents", "Info.plist")
+  output, status = Open3.capture2("/usr/libexec/PlistBuddy", "-c", "Print :#{key}", plist)
+  status.success? ? output.strip : ""
+end
+
+def exported_app_version(app)
+  exported_app_value(app, "CFBundleShortVersionString")
+end
+
+# Fails unless the bundle carries the compiled Icon Composer icon.
+def check_app_icon(app)
+  sh("bash", File.join(REPO_ROOT, "Scripts", "check-app-icon.sh"), app)
+end
+
+# The update owner and repository the tracked xcconfig assigns, by setting name.
+def configured_update_repository
+  File.read(UPDATE_CONFIG).scan(/^\s*(SPAMWISE_UPDATE_(?:OWNER|REPOSITORY))\s*=\s*(\S*)\s*$/).to_h
+end
+
+# Refuses a downloadable build that could never learn about the release after it. Both values are
+# checked against GitHub's naming rules, not just for presence, because the app rejects a malformed
+# one exactly as it does a missing one.
+def verify_update_repository(owner, repository, source:)
+  return if owner.to_s.match?(UPDATE_OWNER_PATTERN) && repository.to_s.match?(UPDATE_REPOSITORY_PATTERN)
+
+  UI.user_error!("#{source} names no valid update repository (owner #{owner.inspect}, repository " \
+                 "#{repository.inspect}). Set SPAMWISE_UPDATE_OWNER and SPAMWISE_UPDATE_REPOSITORY " \
+                 "in Config/SpamWise.xcconfig; a download build without them never checks for updates.")
+end
+
+# The number of commits reaching HEAD: it only ever grows, needs no service to remember it, any
+# checkout of a given commit reproduces it, and it numbers both editions alike.
+def commit_count
+  deepen_shallow_checkout
+  count = `git -C #{REPO_ROOT.shellescape} rev-list --count HEAD`.strip.to_i
+  UI.user_error!("git counted no commits in #{REPO_ROOT}, so there is no build number.") if count.zero?
+  count
+end
+
+# `actions/checkout` clones a single commit deep unless asked otherwise, and a shallow clone counts
+# one commit however long the history really is.
+def deepen_shallow_checkout
+  return unless `git -C #{REPO_ROOT.shellescape} rev-parse --is-shallow-repository`.strip == "true"
+
+  sh("git", "-C", REPO_ROOT, "fetch", "--unshallow", "--quiet")
+end
+
+# App Store Connect's ceiling on a "What's New" entry.
+RELEASE_NOTES_LIMIT = 4000
+
+# How long to wait for Apple to finish processing an upload, and how often to ask. The wait is capped
+# so a stuck build fails the job rather than holding a runner indefinitely.
+BUILD_PROCESSING_TIMEOUT = 45 * 60
+BUILD_POLL_INTERVAL = 60
+
+# The version states in which attaching a build is still the developer's to do. An allowlist, so a
+# state Apple adds later is refused rather than assumed safe.
+ATTACHABLE_VERSION_STATES = %w[
+  PREPARE_FOR_SUBMISSION
+  READY_FOR_REVIEW
+  DEVELOPER_REJECTED
+  REJECTED
+  METADATA_REJECTED
+  INVALID_BINARY
+].freeze
+
+def store_editions
+  EDITIONS.select { |_, config| config[:connect] }
+end
+
+# One version's release notes, rendered as App Store Connect wants them. Captured rather than run
+# through `sh`, so a missing changelog section fails with the script's own explanation.
+def release_notes(version, locale: nil)
+  script = File.join(REPO_ROOT, "Scripts", "release-notes.sh")
+  output, status = Open3.capture2e(script, *["--plain", version, locale].compact)
+  UI.user_error!(output.strip) unless status.success?
+  output.strip
+end
+
+# The version record to release into, created if App Store Connect has none.
+def ensure_store_version(app:, version:, platform:, name:)
+  app.ensure_version!(version, platform: platform)
+  store_version = app.get_edit_app_store_version(platform: platform)
+  UI.user_error!("No editable #{name} version to release #{version} into.") if store_version.nil?
+  store_version
+end
+
+# Writes the notes onto every locale the listing carries, each falling back to the version's default
+# section when the changelog has nothing specific to it. An empty rendering is never written.
+def write_release_notes(store_version, version:, name:)
+  written = store_version.get_app_store_version_localizations.filter_map do |localization|
+    text = release_notes(version, locale: localization.locale)
+    if text.empty?
+      UI.important("#{name} #{version} rendered no notes for #{localization.locale}; leaving them alone.")
+      next nil
+    end
+    localization.update(attributes: { whats_new: text })
+    localization.locale
+  end
+
+  UI.success("#{name} #{version} notes written for #{written.join(', ')}.")
+end
+
+def newest_build(app:, version:, platform:)
+  Spaceship::ConnectAPI::Build.all(app_id: app.id, limit: 200)
+                              .select do |build|
+                                build.pre_release_version&.version == version &&
+                                  build.pre_release_version&.platform == platform
+                              end
+                              .max_by { |build| build.version.to_i }
+end
+
+# Stops a release from changing which binary a version points at once that version has left the
+# developer's hands.
+def refuse_unsafe_attach(store_version, name:, version:, build_number:)
+  state = store_version.app_version_state || store_version.app_store_state
+  return if ATTACHABLE_VERSION_STATES.include?(state)
+
+  UI.user_error!("#{name} #{version} is #{state}, so this run will not attach build #{build_number} " \
+                 "to it. Build #{build_number} is uploaded; if it is the one that should ship, " \
+                 "withdraw the submission and attach it by hand, then resubmit.")
+end
+
+# Waits for the named build to appear, then for Apple to finish processing it. Identity rather than
+# recency: in the minutes before Apple indexes an upload, the newest build is the previous one.
+def await_build(app:, version:, platform:, number:, name:)
+  deadline = Time.now + BUILD_PROCESSING_TIMEOUT
+  loop do
+    build = Spaceship::ConnectAPI::Build.all(app_id: app.id, limit: 200).find do |candidate|
+      candidate.pre_release_version&.version == version &&
+        candidate.pre_release_version&.platform == platform &&
+        candidate.version.to_i == number.to_i
+    end
+    return await_processing(build, name: name) if build
+
+    if Time.now >= deadline
+      UI.user_error!("#{name} build #{number} never appeared for #{version} after " \
+                     "#{BUILD_PROCESSING_TIMEOUT / 60} minutes. Attach it by hand once it shows up.")
+    end
+    UI.message("#{name} build #{number} has not been indexed yet; asking again in #{BUILD_POLL_INTERVAL}s.")
+    sleep(BUILD_POLL_INTERVAL)
+  end
+end
+
+def await_processing(build, name:)
+  deadline = Time.now + BUILD_PROCESSING_TIMEOUT
+  loop do
+    case build.processing_state
+      when "VALID" then return build
+      when "PROCESSING"
+        if Time.now >= deadline
+          UI.user_error!("#{name} build #{build.version} was still processing after " \
+                         "#{BUILD_PROCESSING_TIMEOUT / 60} minutes. Re-run this job once App Store " \
+                         "Connect shows the build as valid.")
+        end
+        UI.message("#{name} build #{build.version} is still processing; asking again in #{BUILD_POLL_INTERVAL}s.")
+        sleep(BUILD_POLL_INTERVAL)
+      else
+        UI.user_error!("#{name} build #{build.version} is #{build.processing_state}, so there is " \
+                       "nothing to attach. Apple reports why by email.")
+    end
+    build = Spaceship::ConnectAPI::Build.get(build_id: build.id)
+  end
+end
+
+platform :mac do
+  desc "Build the App Store edition and upload it to App Store Connect"
+  lane :release do |options|
+    archive_edition(edition_name: "mas", version: options[:version], build: options[:build])
+    upload_store_build
+    collect_debug_symbols
+  end
+
+  desc "Build the App Store edition and upload it to TestFlight"
+  lane :beta do |options|
+    archive_edition(edition_name: "mas", version: options[:version], build: options[:build])
+    upload_to_testflight(app_identifier: APP_IDENTIFIER)
+    collect_debug_symbols
+  end
+
+  desc "Archive, notarize, staple, and package the downloadable edition as a disk image"
+  lane :download_release do |options|
+    archive_edition(edition_name: "download", version: options[:version], build: options[:build])
+    notarize_and_package
+    collect_debug_symbols
+  end
+
+  desc "Archive one edition and ship it (CI)"
+  lane :ci_release do |options|
+    # The reusable release workflow invokes this lane once per entry in its `platforms` input and
+    # passes the name through as `platform:` — which is the edition here. The tag and the commit
+    # count, not the project file, are the authority on a CI release.
+    name = options.fetch(:platform)
+    archive_edition(edition_name: name, version: options.fetch(:version), build: options.fetch(:build))
+
+    case name
+      when "mas" then upload_store_build
+      when "download" then notarize_and_package
+      else UI.user_error!("Unknown edition #{name.inspect}.")
+    end
+
+    collect_debug_symbols
+  end
+
+  desc "Resolve the next build number and write it where CI can read it"
+  lane :ci_next_build_number do
+    next_build_number = commit_count
+    UI.success("Next build number: #{next_build_number}")
+
+    build_number_file = ENV.fetch("BUILD_NUMBER_FILE", nil)
+    File.write(build_number_file, next_build_number) if build_number_file
+  end
+
+  desc "Refuse to start a release whose notes or update repository are missing (CI)"
+  lane :ci_verify_release_notes do |options|
+    version = options.fetch(:version)
+
+    # Every locale falls back to the default section, so checking it alone needs no App Store
+    # Connect credentials, which lets this run before anything is built.
+    notes = release_notes(version)
+    UI.user_error!("CHANGELOG.md's #{version} section is empty.") if notes.empty?
+    if notes.length > RELEASE_NOTES_LIMIT
+      UI.user_error!("The #{version} release notes are #{notes.length} characters; App Store " \
+                     "Connect takes at most #{RELEASE_NOTES_LIMIT}.")
+    end
+
+    repository = configured_update_repository
+    verify_update_repository(repository["SPAMWISE_UPDATE_OWNER"], repository["SPAMWISE_UPDATE_REPOSITORY"],
+                             source: "Config/SpamWise.xcconfig")
+
+    UI.success("#{version} has #{notes.length} characters of release notes.")
+  end
+
+  desc "Write the release notes and attach the build to its version (CI)"
+  lane :ci_finish_release do |options|
+    version = options.fetch(:version)
+    number = options[:build]
+    ensure_api_key
+
+    store_editions.each do |name, config|
+      app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+      platform = config.fetch(:connect)
+      store_version = ensure_store_version(app: app, version: version, platform: platform, name: name)
+
+      # Notes first: attaching waits on Apple and can fail on a build Apple rejects, and notes that
+      # landed are worth more than notes withheld because a binary went bad.
+      write_release_notes(store_version, version: version, name: name)
+      refuse_unsafe_attach(store_version, name: name, version: version, build_number: number || "the newest")
+
+      build = if number
+                await_build(app: app, version: version, platform: platform, number: number, name: name)
+              else
+                UI.important("No build number given, so #{name} will attach whichever build is newest.")
+                newest = newest_build(app: app, version: version, platform: platform)
+                UI.user_error!("App Store Connect has no #{name} build for #{version}.") if newest.nil?
+                await_processing(newest, name: name)
+              end
+
+      store_version.select_build(build_id: build.id)
+      UI.success("#{name} #{version} now ships build #{build.version}.")
+    end
+  end
+
+  # Archives one edition. `version` and `build` are optional: a local run without them keeps whatever
+  # Config/SpamWise.xcconfig carries.
+  private_lane :archive_edition do |options|
+    config = edition(options.fetch(:edition_name))
+
+    setup_ci # No-op off CI; elsewhere it keeps match out of the login keychain.
+    ensure_signing(match_type: config.fetch(:match_type), additional_cert_types: config.fetch(:additional_cert_types))
+    sh(File.join(REPO_ROOT, "Scripts", "help-index.sh"))
+
+    # The version goes on the command line rather than into the project, so a release leaves no
+    # commit behind and every target in the archive is stamped alike. The archive signs
+    # automatically; the export consumes the stored match profiles, which build_app wires into its
+    # export options from match's mapping.
+    stamps = []
+    stamps << "MARKETING_VERSION=#{options[:version]}" if options[:version]
+    stamps << "CURRENT_PROJECT_VERSION=#{options[:build]}" if options[:build]
+
+    build_app(
+      scheme:           config.fetch(:scheme),
+      destination:      "generic/platform=macOS",
+      export_method:    config.fetch(:export_method),
+      output_directory: OUTPUT_DIRECTORY,
+      xcargs:           "#{stamps.join(' ')} -allowProvisioningUpdates #{provisioning_authentication_args}".strip
+    )
+    check_app_icon(archived_app)
+  end
+
+  # Uploads the archived App Store build. The listing's text and screenshots are maintained in App
+  # Store Connect, so a release carries neither.
+  private_lane :upload_store_build do
+    upload_to_app_store(
+      app_identifier:             APP_IDENTIFIER,
+      platform:                   "osx",
+      skip_metadata:              true,
+      skip_screenshots:           true,
+      submit_for_review:          false,
+      run_precheck_before_submit: false
+    )
+  end
+
+  # Notarizes and staples the exported app, then wraps the stapled app in the disk image the GitHub
+  # release ships, and signs, notarizes, and staples that image too. The image is built only from the
+  # stapled app, so the copy a user drags out validates offline.
+  private_lane :notarize_and_package do
+    app_path = exported_app
+    check_app_icon(app_path)
+    verify_update_repository(exported_app_value(app_path, "SpamWiseUpdateOwner"),
+                             exported_app_value(app_path, "SpamWiseUpdateRepository"),
+                             source: "The exported app")
+
+    notarize(package: app_path, api_key: lane_context[SharedValues::APP_STORE_CONNECT_API_KEY], print_log: true)
+    sh("xcrun", "stapler", "validate", app_path)
+
+    dmg = sh(File.join(REPO_ROOT, "Scripts", "make-dmg.sh"), app_path, exported_app_version(app_path),
+             OUTPUT_PATH).strip
+
+    # A browser download arrives quarantined, and Gatekeeper judges the image when it is opened,
+    # before anyone reaches the app inside, so the image is notarized in its own right.
+    sh("codesign", "--force", "--timestamp", "--sign", developer_id_identity, dmg)
+    notarize(package: dmg, api_key: lane_context[SharedValues::APP_STORE_CONNECT_API_KEY], print_log: true)
+    sh("xcrun", "stapler", "validate", dmg)
+    UI.success("Packaged #{dmg}")
+  end
+
+  # Loads the App Store Connect API key. `--stdout` keeps the decrypted key in memory rather than
+  # leaving a plaintext .p8 in the working tree, and `log: false` stops fastlane echoing it.
+  private_lane :ensure_api_key do
+    if ENV["MATCH_PASSWORD"].to_s.empty?
+      UI.user_error!("MATCH_PASSWORD is not set. Put it in fastlane/.env (git-ignored, loaded " \
+                     "automatically; see fastlane/.env.example) or export it before this lane.")
+    end
+
+    key = JSON.parse(sh(File.join(certificates_repo, "bin", "api-key"), "--stdout", log: false))
+    app_store_connect_api_key(key_id: key["key_id"], issuer_id: key["issuer_id"], key_content: key["key"])
+  end
+
+  # Everything an archive needs to be signed and accepted. The archive signs with a development
+  # identity, as Xcode does locally, and the export re-signs for distribution, so both certificates
+  # are installed. The development call comes first because match records a profile mapping either
+  # way, and the distribution call's mapping is the one the export needs.
+  private_lane :ensure_signing do |options|
+    ensure_api_key
+    match(type: "development", app_identifier: APP_IDENTIFIER, readonly: true, skip_provisioning_profiles: true)
+    match(type:                  options.fetch(:match_type),
+          platform:              "macos",
+          app_identifier:        APP_IDENTIFIERS,
+          readonly:              true,
+          additional_cert_types: options.fetch(:additional_cert_types))
+  end
+
+  # Keeps the archive's dSYMs as a build artifact, zipped where the release workflow collects
+  # `build/*.dSYM.zip`, so a crash report can be read against the exact build that produced it.
+  private_lane :collect_debug_symbols do
+    dsym_path = File.join(lane_context[SharedValues::XCODEBUILD_ARCHIVE].to_s, "dSYMs")
+    unless Dir.exist?(dsym_path)
+      UI.important("The archive carries no dSYMs, so there is nothing to keep.")
+      next
+    end
+
+    # The archive's own copy of the app names the version: an App Store export is a .pkg, not an .app.
+    archive_path = File.join(OUTPUT_PATH, "#{APP_NAME}-#{exported_app_version(archived_app)}.dSYM.zip")
+    FileUtils.rm_f(archive_path)
+    zip(path: dsym_path, output_path: archive_path, verbose: false)
+  end
+end

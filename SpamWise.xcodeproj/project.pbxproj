@@ -1,0 +1,1184 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 90;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5A000000000000000000010A /* SpamWiseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5A0000000000000000000108 /* SpamWiseCore */; };
+		5A000000000000000000010B /* MailIntegration in Frameworks */ = {isa = PBXBuildFile; productRef = 5A0000000000000000000109 /* MailIntegration */; };
+		5A000000000000000000020D /* SpamWiseCommon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A0000000000000000000107 /* SpamWiseCommon.framework */; };
+		5A000000000000000000020E /* SpamWiseCommon.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5A0000000000000000000107 /* SpamWiseCommon.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5A000000000000000000020F /* MailExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 019C87443081F4C500513EEC /* MailExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5A000000000000000000030D /* SpamWiseCommon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A0000000000000000000107 /* SpamWiseCommon.framework */; };
+		5A000000000000000000030E /* SpamWiseCommon.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5A0000000000000000000107 /* SpamWiseCommon.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5A000000000000000000030F /* MailExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 019C87443081F4C500513EEC /* MailExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5A0000000000000000000315 /* GitHubUpdateChecker in Frameworks */ = {isa = PBXBuildFile; productRef = 5A0000000000000000000314 /* GitHubUpdateChecker */; };
+		5A0000000000000000000600 /* SpamWiseCommon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A0000000000000000000107 /* SpamWiseCommon.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		019C876A3081F51600513EEC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A0000000000000000000200;
+			remoteInfo = "SpamWise-MAS";
+		};
+		5A0000000000000000000211 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A0000000000000000000100;
+			remoteInfo = "SpamWise Common";
+		};
+		5A0000000000000000000213 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 019C87433081F4C500513EEC;
+			remoteInfo = MailExtension;
+		};
+		5A0000000000000000000311 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A0000000000000000000100;
+			remoteInfo = "SpamWise Common";
+		};
+		5A0000000000000000000313 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 019C87433081F4C500513EEC;
+			remoteInfo = MailExtension;
+		};
+		5A0000000000000000000602 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A0000000000000000000100;
+			remoteInfo = "SpamWise Common";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5A0000000000000000000207 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				5A000000000000000000020F /* MailExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+		5A0000000000000000000208 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = Frameworks;
+			files = (
+				5A000000000000000000020E /* SpamWiseCommon.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+		};
+		5A0000000000000000000307 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				5A000000000000000000030F /* MailExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+		5A0000000000000000000308 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = Frameworks;
+			files = (
+				5A000000000000000000030E /* SpamWiseCommon.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		019C87443081F4C500513EEC /* MailExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MailExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		019C87593081F50B00513EEC /* UnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		019C87663081F51600513EEC /* UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A0000000000000000000107 /* SpamWiseCommon.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SpamWiseCommon.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A0000000000000000000209 /* SpamWise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpamWise.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A0000000000000000000309 /* SpamWise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpamWise.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A0000000000000000000501 /* SpamWise.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SpamWise.xcconfig; sourceTree = "<group>"; };
+		5A0000000000000000000502 /* SpamWise.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = SpamWise.xctestplan; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		019C874E3081F4C500513EEC /* Exceptions for "MailExtension" folder in "MailExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 019C87433081F4C500513EEC /* MailExtension */;
+		};
+		5A000000000000000000010C /* Exceptions for "SpamWise" folder in "SpamWise Common" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIcon.icon,
+				AppShortcuts.xcstrings,
+				"/Localized: InfoPlist.strings",
+				SpamWise.help,
+				SpamWiseRule.scpt,
+			);
+			target = 5A0000000000000000000100 /* SpamWise Common */;
+		};
+		5A000000000000000000020B /* Exceptions for "SpamWise-MAS" folder in "SpamWise-MAS" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5A0000000000000000000200 /* SpamWise-MAS */;
+		};
+		5A000000000000000000020C /* Exceptions for "SpamWise" folder in "SpamWise-MAS" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIcon.icon,
+				AppShortcuts.xcstrings,
+				"/Localized: InfoPlist.strings",
+				Localizable.xcstrings,
+				PrivacyInfo.xcprivacy,
+				SpamWise.help,
+				SpamWiseRule.scpt,
+			);
+			target = 5A0000000000000000000200 /* SpamWise-MAS */;
+		};
+		5A000000000000000000030B /* Exceptions for "SpamWise-download" folder in "SpamWise-download" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5A0000000000000000000300 /* SpamWise-download */;
+		};
+		5A000000000000000000030C /* Exceptions for "SpamWise" folder in "SpamWise-download" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIcon.icon,
+				AppShortcuts.xcstrings,
+				"/Localized: InfoPlist.strings",
+				Localizable.xcstrings,
+				PrivacyInfo.xcprivacy,
+				SpamWise.help,
+				SpamWiseRule.scpt,
+			);
+			target = 5A0000000000000000000300 /* SpamWise-download */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		000000000000000000000010 /* SpamWise */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5A000000000000000000010C /* Exceptions for "SpamWise" folder in "SpamWise Common" target */,
+				5A000000000000000000020C /* Exceptions for "SpamWise" folder in "SpamWise-MAS" target */,
+				5A000000000000000000030C /* Exceptions for "SpamWise" folder in "SpamWise-download" target */,
+			);
+			path = SpamWise;
+			sourceTree = "<group>";
+		};
+		019C87453081F4C500513EEC /* MailExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				019C874E3081F4C500513EEC /* Exceptions for "MailExtension" folder in "MailExtension" target */,
+			);
+			path = MailExtension;
+			sourceTree = "<group>";
+		};
+		019C875A3081F50B00513EEC /* UnitTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = UnitTests;
+			sourceTree = "<group>";
+		};
+		019C87673081F51600513EEC /* UITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		5A000000000000000000020A /* SpamWise-MAS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5A000000000000000000020B /* Exceptions for "SpamWise-MAS" folder in "SpamWise-MAS" target */,
+			);
+			path = "SpamWise-MAS";
+			sourceTree = "<group>";
+		};
+		5A000000000000000000030A /* SpamWise-download */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5A000000000000000000030B /* Exceptions for "SpamWise-download" folder in "SpamWise-download" target */,
+			);
+			path = "SpamWise-download";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		019C87413081F4C500513EEC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		019C87563081F50B00513EEC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				5A0000000000000000000600 /* SpamWiseCommon.framework in Frameworks */,
+			);
+		};
+		019C87633081F51600513EEC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		5A0000000000000000000105 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				5A000000000000000000010A /* SpamWiseCore in Frameworks */,
+				5A000000000000000000010B /* MailIntegration in Frameworks */,
+			);
+		};
+		5A0000000000000000000205 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				5A000000000000000000020D /* SpamWiseCommon.framework in Frameworks */,
+			);
+		};
+		5A0000000000000000000305 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				5A000000000000000000030D /* SpamWiseCommon.framework in Frameworks */,
+				5A0000000000000000000315 /* GitHubUpdateChecker in Frameworks */,
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		000000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				5A0000000000000000000500 /* Config */,
+				5A0000000000000000000502 /* SpamWise.xctestplan */,
+				000000000000000000000010 /* SpamWise */,
+				5A000000000000000000020A /* SpamWise-MAS */,
+				5A000000000000000000030A /* SpamWise-download */,
+				019C87453081F4C500513EEC /* MailExtension */,
+				019C875A3081F50B00513EEC /* UnitTests */,
+				019C87673081F51600513EEC /* UITests */,
+				000000000000000000000020 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		000000000000000000000020 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5A0000000000000000000107 /* SpamWiseCommon.framework */,
+				5A0000000000000000000209 /* SpamWise.app */,
+				5A0000000000000000000309 /* SpamWise.app */,
+				019C87443081F4C500513EEC /* MailExtension.appex */,
+				019C87593081F50B00513EEC /* UnitTests.xctest */,
+				019C87663081F51600513EEC /* UITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5A0000000000000000000500 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				5A0000000000000000000501 /* SpamWise.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		019C87433081F4C500513EEC /* MailExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 019C874F3081F4C500513EEC /* Build configuration list for PBXNativeTarget "MailExtension" */;
+			buildPhases = (
+				019C87403081F4C500513EEC /* Sources */,
+				019C87413081F4C500513EEC /* Frameworks */,
+				019C87423081F4C500513EEC /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				019C87453081F4C500513EEC /* MailExtension */,
+			);
+			name = MailExtension;
+			packageProductDependencies = (
+			);
+			productName = MailExtension;
+			productReference = 019C87443081F4C500513EEC /* MailExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		019C87583081F50B00513EEC /* UnitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 019C875F3081F50B00513EEC /* Build configuration list for PBXNativeTarget "UnitTests" */;
+			buildPhases = (
+				019C87553081F50B00513EEC /* Sources */,
+				019C87563081F50B00513EEC /* Frameworks */,
+				019C87573081F50B00513EEC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5A0000000000000000000601 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				019C875A3081F50B00513EEC /* UnitTests */,
+			);
+			name = UnitTests;
+			productName = UnitTests;
+			productReference = 019C87593081F50B00513EEC /* UnitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		019C87653081F51600513EEC /* UITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 019C876C3081F51600513EEC /* Build configuration list for PBXNativeTarget "UITests" */;
+			buildPhases = (
+				019C87623081F51600513EEC /* Sources */,
+				019C87633081F51600513EEC /* Frameworks */,
+				019C87643081F51600513EEC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				019C876B3081F51600513EEC /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				019C87673081F51600513EEC /* UITests */,
+			);
+			name = UITests;
+			productName = UITests;
+			productReference = 019C87663081F51600513EEC /* UITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		5A0000000000000000000100 /* SpamWise Common */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A0000000000000000000101 /* Build configuration list for PBXNativeTarget "SpamWise Common" */;
+			buildPhases = (
+				5A0000000000000000000104 /* Sources */,
+				5A0000000000000000000105 /* Frameworks */,
+				5A0000000000000000000106 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				000000000000000000000010 /* SpamWise */,
+			);
+			name = "SpamWise Common";
+			packageProductDependencies = (
+				5A0000000000000000000108 /* SpamWiseCore */,
+				5A0000000000000000000109 /* MailIntegration */,
+			);
+			productName = SpamWiseCommon;
+			productReference = 5A0000000000000000000107 /* SpamWiseCommon.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		5A0000000000000000000200 /* SpamWise-MAS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A0000000000000000000201 /* Build configuration list for PBXNativeTarget "SpamWise-MAS" */;
+			buildPhases = (
+				5A0000000000000000000204 /* Sources */,
+				5A0000000000000000000205 /* Frameworks */,
+				5A0000000000000000000206 /* Resources */,
+				5A0000000000000000000207 /* Embed Foundation Extensions */,
+				5A0000000000000000000208 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5A0000000000000000000210 /* PBXTargetDependency */,
+				5A0000000000000000000212 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5A000000000000000000020A /* SpamWise-MAS */,
+			);
+			name = "SpamWise-MAS";
+			productName = SpamWise;
+			productReference = 5A0000000000000000000209 /* SpamWise.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5A0000000000000000000300 /* SpamWise-download */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A0000000000000000000301 /* Build configuration list for PBXNativeTarget "SpamWise-download" */;
+			buildPhases = (
+				5A0000000000000000000304 /* Sources */,
+				5A0000000000000000000305 /* Frameworks */,
+				5A0000000000000000000306 /* Resources */,
+				5A0000000000000000000307 /* Embed Foundation Extensions */,
+				5A0000000000000000000308 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5A0000000000000000000310 /* PBXTargetDependency */,
+				5A0000000000000000000312 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5A000000000000000000030A /* SpamWise-download */,
+			);
+			name = "SpamWise-download";
+			packageProductDependencies = (
+				5A0000000000000000000314 /* GitHubUpdateChecker */,
+			);
+			productName = SpamWise;
+			productReference = 5A0000000000000000000309 /* SpamWise.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000000000000000000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					019C87433081F4C500513EEC = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					019C87583081F50B00513EEC = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					019C87653081F51600513EEC = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 5A0000000000000000000200;
+					};
+					5A0000000000000000000100 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					5A0000000000000000000200 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					5A0000000000000000000300 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = 000000000000000010000000 /* Build configuration list for PBXProject "SpamWise" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				es,
+				fr,
+				Base,
+			);
+			mainGroup = 000000000000000000000001;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AA0000000000000000000005 /* XCLocalSwiftPackageReference "SpamWiseCore" */,
+				5A0000000000000000000400 /* XCRemoteSwiftPackageReference "GitHubUpdateChecker" */,
+			);
+			preferredProjectObjectVersion = 90;
+			productRefGroup = 000000000000000000000020 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5A0000000000000000000200 /* SpamWise-MAS */,
+				5A0000000000000000000300 /* SpamWise-download */,
+				5A0000000000000000000100 /* SpamWise Common */,
+				019C87433081F4C500513EEC /* MailExtension */,
+				019C87583081F50B00513EEC /* UnitTests */,
+				019C87653081F51600513EEC /* UITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		019C87423081F4C500513EEC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		019C87573081F50B00513EEC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		019C87643081F51600513EEC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		5A0000000000000000000106 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		5A0000000000000000000206 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		5A0000000000000000000306 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		019C87403081F4C500513EEC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		019C87553081F50B00513EEC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		019C87623081F51600513EEC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		5A0000000000000000000104 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		5A0000000000000000000204 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		5A0000000000000000000304 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		019C876B3081F51600513EEC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A0000000000000000000200 /* SpamWise-MAS */;
+			targetProxy = 019C876A3081F51600513EEC /* PBXContainerItemProxy */;
+		};
+		5A0000000000000000000210 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A0000000000000000000100 /* SpamWise Common */;
+			targetProxy = 5A0000000000000000000211 /* PBXContainerItemProxy */;
+		};
+		5A0000000000000000000212 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 019C87433081F4C500513EEC /* MailExtension */;
+			targetProxy = 5A0000000000000000000213 /* PBXContainerItemProxy */;
+		};
+		5A0000000000000000000310 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A0000000000000000000100 /* SpamWise Common */;
+			targetProxy = 5A0000000000000000000311 /* PBXContainerItemProxy */;
+		};
+		5A0000000000000000000312 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 019C87433081F4C500513EEC /* MailExtension */;
+			targetProxy = 5A0000000000000000000313 /* PBXContainerItemProxy */;
+		};
+		5A0000000000000000000601 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A0000000000000000000100 /* SpamWise Common */;
+			targetProxy = 5A0000000000000000000602 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		000000000000000011000000 /* Debug configuration for PBXProject "SpamWise" */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5A0000000000000000000501 /* SpamWise.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -enable-upcoming-feature ImmutableWeakCaptures";
+				PROJECT_UNIQUE_VALUE = Y3KPGN5X;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY = YES;
+				SWIFT_UPCOMING_FEATURE_INTERNAL_IMPORTS_BY_DEFAULT = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		000000000000000012000000 /* Release configuration for PBXProject "SpamWise" */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5A0000000000000000000501 /* SpamWise.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -enable-upcoming-feature ImmutableWeakCaptures";
+				PROJECT_UNIQUE_VALUE = Y3KPGN5X;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY = YES;
+				SWIFT_UPCOMING_FEATURE_INTERNAL_IMPORTS_BY_DEFAULT = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		019C87503081F4C500513EEC /* Debug configuration for PBXNativeTarget "MailExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MailExtension/MailExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MailExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.MailExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		019C87513081F4C500513EEC /* Release configuration for PBXNativeTarget "MailExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MailExtension/MailExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MailExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.MailExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		019C87603081F50B00513EEC /* Debug configuration for PBXNativeTarget "UnitTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.UnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Debug;
+		};
+		019C87613081F50B00513EEC /* Release configuration for PBXNativeTarget "UnitTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.UnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Release;
+		};
+		019C876D3081F51600513EEC /* Debug configuration for PBXNativeTarget "UITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_REQUIRED = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_TARGET_NAME = "SpamWise-MAS";
+			};
+			name = Debug;
+		};
+		019C876E3081F51600513EEC /* Release configuration for PBXNativeTarget "UITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_REQUIRED = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_TARGET_NAME = "SpamWise-MAS";
+			};
+			name = Release;
+		};
+		5A0000000000000000000102 /* Debug configuration for PBXNativeTarget "SpamWise Common" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.Common;
+				PRODUCT_NAME = SpamWiseCommon;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		5A0000000000000000000103 /* Release configuration for PBXNativeTarget "SpamWise Common" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.Common;
+				PRODUCT_NAME = SpamWiseCommon;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		5A0000000000000000000202 /* Debug configuration for PBXNativeTarget "SpamWise-MAS" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "SpamWise-MAS/SpamWise-MAS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SpamWise-MAS/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads messages in Mail to classify them and, when you allow it, moves unwanted mail to Junk, flags messages for review, and restores mail you correct.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise;
+				PRODUCT_MODULE_NAME = SpamWiseMAS;
+				PRODUCT_NAME = SpamWise;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		5A0000000000000000000203 /* Release configuration for PBXNativeTarget "SpamWise-MAS" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "SpamWise-MAS/SpamWise-MAS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SpamWise-MAS/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads messages in Mail to classify them and, when you allow it, moves unwanted mail to Junk, flags messages for review, and restores mail you correct.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise;
+				PRODUCT_MODULE_NAME = SpamWiseMAS;
+				PRODUCT_NAME = SpamWise;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		5A0000000000000000000302 /* Debug configuration for PBXNativeTarget "SpamWise-download" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "SpamWise-download/SpamWise-download.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SpamWise-download/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads messages in Mail to classify them and, when you allow it, moves unwanted mail to Junk, flags messages for review, and restores mail you correct.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise;
+				PRODUCT_MODULE_NAME = SpamWiseDownload;
+				PRODUCT_NAME = SpamWise;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		5A0000000000000000000303 /* Release configuration for PBXNativeTarget "SpamWise-download" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "SpamWise-download/SpamWise-download.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SpamWise-download/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads messages in Mail to classify them and, when you allow it, moves unwanted mail to Junk, flags messages for review, and restores mail you correct.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise;
+				PRODUCT_MODULE_NAME = SpamWiseDownload;
+				PRODUCT_NAME = SpamWise;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		000000000000000010000000 /* Build configuration list for PBXProject "SpamWise" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000011000000 /* Debug configuration for PBXProject "SpamWise" */,
+				000000000000000012000000 /* Release configuration for PBXProject "SpamWise" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		019C874F3081F4C500513EEC /* Build configuration list for PBXNativeTarget "MailExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				019C87503081F4C500513EEC /* Debug configuration for PBXNativeTarget "MailExtension" */,
+				019C87513081F4C500513EEC /* Release configuration for PBXNativeTarget "MailExtension" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		019C875F3081F50B00513EEC /* Build configuration list for PBXNativeTarget "UnitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				019C87603081F50B00513EEC /* Debug configuration for PBXNativeTarget "UnitTests" */,
+				019C87613081F50B00513EEC /* Release configuration for PBXNativeTarget "UnitTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		019C876C3081F51600513EEC /* Build configuration list for PBXNativeTarget "UITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				019C876D3081F51600513EEC /* Debug configuration for PBXNativeTarget "UITests" */,
+				019C876E3081F51600513EEC /* Release configuration for PBXNativeTarget "UITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		5A0000000000000000000101 /* Build configuration list for PBXNativeTarget "SpamWise Common" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A0000000000000000000102 /* Debug configuration for PBXNativeTarget "SpamWise Common" */,
+				5A0000000000000000000103 /* Release configuration for PBXNativeTarget "SpamWise Common" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		5A0000000000000000000201 /* Build configuration list for PBXNativeTarget "SpamWise-MAS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A0000000000000000000202 /* Debug configuration for PBXNativeTarget "SpamWise-MAS" */,
+				5A0000000000000000000203 /* Release configuration for PBXNativeTarget "SpamWise-MAS" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		5A0000000000000000000301 /* Build configuration list for PBXNativeTarget "SpamWise-download" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A0000000000000000000302 /* Debug configuration for PBXNativeTarget "SpamWise-download" */,
+				5A0000000000000000000303 /* Release configuration for PBXNativeTarget "SpamWise-download" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		AA0000000000000000000005 /* XCLocalSwiftPackageReference "SpamWiseCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = SpamWiseCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5A0000000000000000000400 /* XCRemoteSwiftPackageReference "GitHubUpdateChecker" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RISCfuture/GitHubUpdateChecker";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5A0000000000000000000108 /* SpamWiseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SpamWiseCore;
+		};
+		5A0000000000000000000109 /* MailIntegration */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MailIntegration;
+		};
+		5A0000000000000000000314 /* GitHubUpdateChecker */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5A0000000000000000000400 /* XCRemoteSwiftPackageReference "GitHubUpdateChecker" */;
+			productName = GitHubUpdateChecker;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 000000000000000000000000 /* Project object */;
+}

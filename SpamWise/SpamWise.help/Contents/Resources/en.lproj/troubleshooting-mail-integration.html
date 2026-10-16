@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Troubleshooting Mail integration — SpamWise Help</title><meta name="description" content="Allow SpamWise to control Mail, find out why mail wasn’t moved, and restore a message.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Help topics"><h2>Get started</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li></ul><h2>Everyday use</h2><ul><li><a href="activity.html">Using Activity</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="review-junk.html">Reviewing Junk</a></li><li><a href="notifications.html">Notifications and the Review digest</a></li><li><a href="statistics.html">Statistics</a></li><li><a href="shortcuts.html">Shortcuts</a></li></ul><h2>Rules and learning</h2><ul><li><a href="rules.html">Sender and content rules</a></li><li><a href="folders.html">Folders</a></li><li><a href="reviewed-messages-and-learning.html">Reviewed messages and learning</a></li></ul><h2>Accounts and data</h2><ul><li><a href="imap-connection.html">Connecting with IMAP</a></li><li><a href="backup-and-restore.html">Backup and restore</a></li><li><a href="troubleshooting-mail-integration.html" aria-current="page">Troubleshooting Mail integration</a></li></ul></nav>
+<main><a name="troubleshooting-mail-integration" id="troubleshooting-mail-integration"></a><h1>Troubleshooting Mail integration</h1>
+<h2><a name="automation-denied" id="automation-denied"></a>SpamWise isn’t allowed to control Mail</h2>
+<p>SpamWise reads and moves mail through Mail, which needs your permission. If Settings → Accounts says “SpamWise isn’t allowed to control Mail, so it can’t check or move mail”:</p>
+<ol>
+<li>Choose Open Automation Settings. You can also open System Settings → Privacy &amp; Security → Automation.</li>
+<li>Under SpamWise, turn on Mail.</li>
+<li>In SpamWise, choose Check Mail Connection.</li>
+</ol>
+<p>SpamWise doesn’t need Full Disk Access, so don’t grant it or turn off macOS security features. If Settings asks you to open Mail, open it; SpamWise checks your accounts once Mail is running.</p>
+<p>Contacts access is optional. To allow it, turn on SpamWise in System Settings → Privacy &amp; Security → Contacts, then choose Connect Contacts in Settings → Accounts.</p>
+<h2><a name="no-action" id="no-action"></a>Mail wasn’t moved</h2>
+<p>Select the message in Activity and check its Outcome in the inspector. The SpamWise menu-bar menu and the bottom of the Activity window also say what is holding filtering back. Common causes:</p>
+<ul>
+<li><strong>Dry run is on.</strong> The Outcome is Dry run. Turn off “Dry run — do not change mail” in Settings → General. SpamWise then acts on the mail it checked during the dry run that’s still in your Inbox.</li>
+<li><strong>SpamWise hasn’t found the account’s Inbox and Junk mailboxes.</strong> The account says “SpamWise won’t move this account’s mail until it finds the Inbox and Junk mailboxes.” Choose Check Mail Connection, or open Advanced under the account and choose Check Mailboxes. Mail must show exactly one Inbox and one Junk mailbox for the account.</li>
+<li><strong>Filtering is paused.</strong> The Outcome is Paused. Choose Filtering → Resume Filtering.</li>
+<li><strong>The account isn’t included.</strong> Turn on Filter this account under the account in Settings → Accounts. Filtering starts with mail that arrives from then on.</li>
+<li><strong>There’s no API key, or mail sharing is off.</strong> The Verdict is Unclassified. In Settings → Classifier, add the key under API key and turn on “Allow mail context to be sent to <var>provider</var>”. Then choose Classify Again.</li>
+<li><strong>The monthly spending limit was reached.</strong> Raise the limit under Usage and spending in Settings → Classifier, or wait until next month.</li>
+<li><strong>The mail arrived before filtering started.</strong> Older mail isn’t sorted automatically; see <a href="getting-started.html#older-mail">Sort older mail</a>.</li>
+<li><strong>Mail isn’t running, or the Mac is offline.</strong> Checks resume when Mail opens or the connection returns.</li>
+<li><strong>The verdict is Good or Review.</strong> Good mail stays in Inbox, and Review mail stays in Inbox with its orange mark.</li>
+</ul>
+<h2><a name="restore-message" id="restore-message"></a>Restore a message</h2>
+<p>SpamWise never deletes mail. Anything it moved is in the account’s Junk mailbox.</p>
+<ul>
+<li>In Activity, select the message and choose Filtering → Mark as Good. SpamWise moves it to Inbox and allows its sender.</li>
+<li>Or choose Filtering → Review Junk, choose the account, select the message and choose Mark as Good and Restore. See <a href="review-junk.html">Reviewing Junk</a>.</li>
+<li>If you move the message to Inbox in Mail yourself, also mark it as Good in Activity so SpamWise allows the sender next time.</li>
+</ul>
+<p>Undo latest correction… restores rules and learning, but doesn’t move mail.</p>
+<h2><a name="not-classified" id="not-classified"></a>Messages aren’t classified</h2>
+<ul>
+<li>“No API key for <var>provider</var>”: add one under API key in Settings → Classifier.</li>
+<li>Apple on-device needs Apple Intelligence. Turn it on in System Settings → Apple Intelligence &amp; Siri, or choose another provider.</li>
+<li>“Mail isn’t classified while this Mac is kept local and a network provider is selected”: choose Apple on-device as the Provider, or turn off Keep filtering on this Mac.</li>
+<li>When the provider is busy, unreachable or times out, messages stay where they are. Select one and choose Classify Again later. SpamWise never switches to another provider on its own.</li>
+</ul>
+<h2><a name="check-failed" id="check-failed"></a>Some mail couldn’t be checked</h2>
+<p>When Activity or the menu-bar menu says “Some mail couldn’t be checked — see Settings → Accounts”, each account’s Status in Settings → Accounts shows the problem. A message Mail can’t load stays where it is and is tried again later, and SpamWise keeps checking the messages after it. Keep SpamWise and Mail open.</p>
+<h2><a name="new-mail" id="new-mail"></a>Check new mail sooner</h2>
+<p>SpamWise checks your Inbox every minute. To check new mail as soon as it arrives, add a Mail rule that runs the SpamWise script:</p>
+<ol>
+<li>In Settings → Accounts, under New mail, choose Show Script in Finder.</li>
+<li>Copy the selected script to the folder ~/Library/Application Scripts/com.apple.mail. To open the folder, choose Go → Go to Folder in Finder.</li>
+<li>In Mail, choose Mail → Settings, click Rules, then Add Rule. Set the condition to Every Message and the action to Run AppleScript, then choose the SpamWise script.</li>
+</ol>
+<p>You don’t need to turn on SpamWise in Mail’s extension settings.</p>
+<h2><a name="move-test" id="move-test"></a>Test moving a message</h2>
+<p>To check that SpamWise can move mail in an account, send yourself a message whose subject begins “[SpamWise Probe]”. Select it in Mail’s Inbox, then open Diagnostics in Settings → Advanced and choose Test selected message. SpamWise moves it to Junk and back, then flags it orange. Dry run isn’t changed.</p>
+</main></body></html>

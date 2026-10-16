@@ -1,0 +1,42 @@
+{
+  "schema": "spamwise-synthetic-preferences-audit-v1",
+  "date": "2026-10-16",
+  "source_hashes": {
+    "cases": {
+      "path": "Tools/Preferences/cases.json",
+      "sha256": "84f27ed6e6fa48b16a7a9d75e07aabb92d15b6c349f2486db0c2dfaf029f732d"
+    },
+    "keychain_launcher": {
+      "path": "Scripts/evaluate-with-keychain.swift",
+      "sha256": "31d54c55fbf163a2810d97c41271776b59fff336690c425d4bd04aeaf3dda941"
+    },
+    "executable": {
+      "built_by": "swift build --package-path SpamWiseCore --product spamwise-eval (debug configuration)",
+      "sha256": "44557ebd4b3dcc83c5246a664fb1e7635a36223e6b0eb2842329dbf81f05111d"
+    },
+    "manifest": {
+      "built_by": "Tools/Preferences/run.py --live, as the manifest.json in its output directory",
+      "sha256": "d2b0a045cc198835b4be40ccd1c24192d58ad02d5c78d55c751f3309f90672a9"
+    }
+  },
+  "distinct_message_hashes": 3,
+  "distinct_effective_prompt_cache_keys": 12,
+  "successful_provider_calls": 12,
+  "cache_hits": 0,
+  "additional_reservations_usd": 1.2,
+  "reservation_basis": "Twelve successful uncached calls through the CLI BudgetedClassifier, each admitted after a $0.10 shared-ledger reservation; total shared balance not read.",
+  "input_tokens": 15514,
+  "output_tokens": 1043,
+  "cache_read_tokens": 0,
+  "estimated_cost_usd": 0.0020729,
+  "pricing_urls": [
+    "https://platform.claude.com/docs/en/models/haiku-5-5/overview",
+    "https://platform.claude.com/docs/en/about-claude/pricing"
+  ],
+  "fine_tuning": false,
+  "synthetic": true,
+  "accuracy_claim": false,
+  "run_directory_created_at_utc": "2026-10-17T04:14:35.707521+00:00",
+  "final_results_written_at_utc": "2026-10-17T04:14:58.323164+00:00",
+  "timestamp_basis": "Local filesystem creation/modification timestamps; not provider server timestamps."
+}

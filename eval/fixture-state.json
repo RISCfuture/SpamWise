@@ -1,0 +1,16 @@
+{
+  "histories": {
+    "eval": {
+      "availability": "partial",
+      "received": {
+        "trusted-shop.com": 3
+      },
+      "senderReceipts": {
+        "orders@trusted-shop.com": 2
+      },
+      "authenticatedSenderReceipts": {
+        "orders@trusted-shop.com": 2
+      }
+    }
+  }
+}

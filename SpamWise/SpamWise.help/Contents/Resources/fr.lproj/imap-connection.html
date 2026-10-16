@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Se connecter en IMAP — Aide SpamWise</title><meta name="description" content="Connectez SpamWise directement à un serveur de messagerie IMAP au lieu de passer par Apple Mail.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Rubriques d’aide"><h2>Premiers pas</h2><ul><li><a href="getting-started.html">Premiers pas</a></li><li><a href="how-decisions-are-made.html">Comment les décisions sont prises</a></li><li><a href="filtering-strength.html">Intensité du filtrage</a></li><li><a href="what-data-is-sent.html">Quelles données sont envoyées</a></li></ul><h2>Utilisation quotidienne</h2><ul><li><a href="activity.html">Utiliser Activité</a></li><li><a href="correcting-mistakes.html">Corriger les erreurs</a></li><li><a href="review-junk.html">Vérifier les indésirables</a></li><li><a href="notifications.html">Notifications et récapitulatif des messages à vérifier</a></li><li><a href="statistics.html">Statistiques</a></li><li><a href="shortcuts.html">Raccourcis</a></li></ul><h2>Règles et apprentissage</h2><ul><li><a href="rules.html">Règles d’expéditeur et de contenu</a></li><li><a href="folders.html">Dossiers</a></li><li><a href="reviewed-messages-and-learning.html">Messages vérifiés et apprentissage</a></li></ul><h2>Comptes et données</h2><ul><li><a href="imap-connection.html" aria-current="page">Se connecter en IMAP</a></li><li><a href="backup-and-restore.html">Sauvegarde et restauration</a></li><li><a href="troubleshooting-mail-integration.html">Résoudre les problèmes d’intégration Mail</a></li></ul></nav>
+<main><a name="imap-connection" id="imap-connection"></a><h1>Se connecter en IMAP</h1>
+<p>SpamWise fonctionne habituellement par l’intermédiaire d’Apple Mail. Il peut aussi se connecter directement à un compte IMAP par une connexion sécurisée.</p>
+<ol>
+<li>Dans Réglages → Comptes, sous Connexion de messagerie, réglez Connexion sur IMAP, puis choisissez Passer à IMAP. La simulation s’active.</li>
+<li>Sous Compte IMAP, saisissez le Serveur, votre Nom d’utilisateur et votre Mot de passe ou jeton. Si votre fournisseur l’exige, ouvrez Options de connexion pour changer le Port TLS ou activer Se connecter avec un jeton OAuth.</li>
+<li>Choisissez Enregistrer la connexion. Le mot de passe est enregistré dans le trousseau.</li>
+<li>Choisissez Vérifier la connexion. SpamWise se connecte, trouve les boîtes de réception et d’indésirables et lit les messages sans les modifier.</li>
+<li>Lorsque vous êtes prêt, désactivez la simulation dans Réglages → Général.</li>
+</ol>
+<p>Le serveur doit permettre de déplacer des messages et identifier sa boîte des indésirables ; sinon, SpamWise laisse les messages inchangés. Si vous remettez dans Réception, avec une autre app de messagerie, un message que SpamWise avait placé dans Indésirables, SpamWise le considère comme marqué légitime.</p>
+<p>Pour ne plus utiliser IMAP, choisissez Oublier la connexion…. SpamWise supprime le mot de passe du trousseau et revient à Apple Mail avec la simulation activée. Les messages sur le serveur restent tels quels.</p>
+</main></body></html>

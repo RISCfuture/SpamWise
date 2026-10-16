@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Règles d’expéditeur et de contenu — Aide SpamWise</title><meta name="description" content="Autorisez ou bloquez toujours des messages selon l’expéditeur, le domaine ou le contenu.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Rubriques d’aide"><h2>Premiers pas</h2><ul><li><a href="getting-started.html">Premiers pas</a></li><li><a href="how-decisions-are-made.html">Comment les décisions sont prises</a></li><li><a href="filtering-strength.html">Intensité du filtrage</a></li><li><a href="what-data-is-sent.html">Quelles données sont envoyées</a></li></ul><h2>Utilisation quotidienne</h2><ul><li><a href="activity.html">Utiliser Activité</a></li><li><a href="correcting-mistakes.html">Corriger les erreurs</a></li><li><a href="review-junk.html">Vérifier les indésirables</a></li><li><a href="notifications.html">Notifications et récapitulatif des messages à vérifier</a></li><li><a href="statistics.html">Statistiques</a></li><li><a href="shortcuts.html">Raccourcis</a></li></ul><h2>Règles et apprentissage</h2><ul><li><a href="rules.html" aria-current="page">Règles d’expéditeur et de contenu</a></li><li><a href="folders.html">Dossiers</a></li><li><a href="reviewed-messages-and-learning.html">Messages vérifiés et apprentissage</a></li></ul><h2>Comptes et données</h2><ul><li><a href="imap-connection.html">Se connecter en IMAP</a></li><li><a href="backup-and-restore.html">Sauvegarde et restauration</a></li><li><a href="troubleshooting-mail-integration.html">Résoudre les problèmes d’intégration Mail</a></li></ul></nav>
+<main><a name="rules" id="rules"></a><h1>Règles d’expéditeur et de contenu</h1>
+<p>Ouvrez Réglages → Règles, puis choisissez Règles d’expéditeur ou Règles de contenu en haut.</p>
+<h2><a name="sender-rules" id="sender-rules"></a>Règles d’expéditeur</h2>
+<p>Une règle d’expéditeur autorise ou bloque toujours les messages d’une adresse ou de tout un domaine. Vos corrections créent des règles d’expéditeur ; vous pouvez aussi les gérer vous-même.</p>
+<ul>
+<li>Pour en ajouter une, choisissez Ajouter une règle…, choisissez à quoi elle S’applique (Adresse e-mail ou Tout le domaine), saisissez l’adresse ou le domaine, choisissez Autoriser ou Bloquer, puis Enregistrer.</li>
+<li>Pour changer l’action d’une règle, sélectionnez-la et choisissez Modifier…. Pour supprimer des règles, sélectionnez-les et choisissez Supprimer…. Les messages déjà filtrés restent où ils sont.</li>
+<li>Pour copier vos règles sur un autre Mac, choisissez Transférer les règles → Exporter les règles…, puis Importer des règles… sur l’autre Mac. Les règles importées remplacent celles de la même adresse ou du même domaine. Les exports ne contiennent ni messages ni mots de passe.</li>
+</ul>
+<p>Une règle pour une adresse l’emporte sur une règle pour son domaine. Les règles Autoriser ne décident que des messages que SpamWise peut vérifier ; consultez <a href="how-decisions-are-made.html#trusted-mail-server">Faire confiance au serveur de messagerie d’un compte</a>.</p>
+<p>Lorsque vous corrigez de la même façon plusieurs expéditeurs d’un domaine, Réglages → Avancé propose une règle sous Règles de domaine suggérées. Choisissez Autoriser le domaine ou Bloquer le domaine pour l’ajouter.</p>
+<h2><a name="content-rules" id="content-rules"></a>Règles de contenu</h2>
+<p>Une règle de contenu autorise ou bloque les messages selon ce qu’ils contiennent. Les règles de contenu s’appliquent après les règles d’expéditeur.</p>
+<ol>
+<li>Sous Règles de contenu, choisissez Ajouter une règle….</li>
+<li>Choisissez le Champ à vérifier : Objet, Corps, List-ID, Destinataires, Reply-To, Type de contenu, Noms des pièces jointes ou Types des pièces jointes.</li>
+<li>Choisissez le type de Correspondance : Contient, Est égal à ou Expression régulière, et saisissez l’Expression. La casse n’est pas prise en compte.</li>
+<li>Choisissez Autoriser ou Bloquer, et ajoutez des Notes pour vous rappeler pourquoi.</li>
+<li>Pour essayer la règle, sélectionnez un message dans Mail et choisissez Tester avec le message sélectionné dans Mail.</li>
+<li>Choisissez Enregistrer.</li>
+</ol>
+<p>Si plusieurs règles de contenu correspondent, la plus récente décide. Utilisez le commutateur d’une règle pour la désactiver sans la supprimer. Correspondances compte les messages décidés par chaque règle. Ignorées compte les messages qu’une règle n’a pas pu vérifier ; une règle trop longue à vérifier ne correspond pas. Pour copier les règles de contenu sur un autre Mac, utilisez Transférer les règles → Exporter les règles de contenu… et Importer des règles de contenu….</p>
+</main></body></html>

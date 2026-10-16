@@ -1,0 +1,322 @@
+{
+  "synthetic": true,
+  "mode": "live",
+  "fine_tuning": false,
+  "model": "claude-haiku-5-5",
+  "maximum_reservation_usd": 1.2000000000000002,
+  "completed": true,
+  "results": [
+    {
+      "id": "en-wanted-policy_only",
+      "language": "en",
+      "preference": "wanted",
+      "condition": "policy_only",
+      "message_sha256": "b32ea6b0ca1ec178b94be07b68d7d29f846d90fc44e6e306178bbb2ca50bd65d",
+      "state_sha256": "e1e730bd37c130615124c9e9a34f616034f9bf32bdf550b6b9e6a880a8718e20",
+      "synthetic_target": "inbox",
+      "correction_examples": 0,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1111,
+        "output": 89
+      },
+      "estimated_cost_usd": 0.00015560000000000001,
+      "effective_labels": {
+        "inbox": 1
+      },
+      "model_label": "inbox",
+      "confidence": 80,
+      "reason": "Gardening newsletter with practical bulb-planting advice and a related plant promotion, matching the user's stated policy; sender history is unavailable, and no trusted auth failure or brand mismatch appears."
+    },
+    {
+      "id": "en-wanted-bounded_examples",
+      "language": "en",
+      "preference": "wanted",
+      "condition": "bounded_examples",
+      "message_sha256": "b32ea6b0ca1ec178b94be07b68d7d29f846d90fc44e6e306178bbb2ca50bd65d",
+      "state_sha256": "17a74bcf256f43c2a23f898967eaa83fae0add03f494820756524106ce06c942",
+      "synthetic_target": "inbox",
+      "correction_examples": 2,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1338,
+        "output": 91
+      },
+      "estimated_cost_usd": 0.00017930000000000002,
+      "effective_labels": {
+        "inbox": 1
+      },
+      "model_label": "inbox",
+      "confidence": 78,
+      "reason": "Practical gardening newsletter from its own domain with matching links and an ordinary plant promotion, matching the user's gardening-newsletter policy; sender history unavailable so unknown, not a threat signal."
+    },
+    {
+      "id": "en-unwanted-policy_only",
+      "language": "en",
+      "preference": "unwanted",
+      "condition": "policy_only",
+      "message_sha256": "b32ea6b0ca1ec178b94be07b68d7d29f846d90fc44e6e306178bbb2ca50bd65d",
+      "state_sha256": "f7108f64f472daed59b1121c91c2d9f1f32b9ca0d82936bb2ee29daf0c5e8293",
+      "synthetic_target": "junk",
+      "correction_examples": 0,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1110,
+        "output": 83
+      },
+      "estimated_cost_usd": 0.0001525,
+      "effective_labels": {
+        "review": 1
+      },
+      "model_label": "junk",
+      "confidence": 90,
+      "reason": "Gardening newsletter with plant/bulb promotion and nursery discount, which the user's policy explicitly places in junk even with growing advice and subscription link; sender history unavailable."
+    },
+    {
+      "id": "en-unwanted-bounded_examples",
+      "language": "en",
+      "preference": "unwanted",
+      "condition": "bounded_examples",
+      "message_sha256": "b32ea6b0ca1ec178b94be07b68d7d29f846d90fc44e6e306178bbb2ca50bd65d",
+      "state_sha256": "b213e5bad0d98656d410e5d6842623ad30e28091daf70d2cc9281ffcbf766ca9",
+      "synthetic_target": "junk",
+      "correction_examples": 2,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1325,
+        "output": 92
+      },
+      "estimated_cost_usd": 0.0001785,
+      "effective_labels": {
+        "review": 1
+      },
+      "model_label": "junk",
+      "confidence": 88,
+      "reason": "Monthly gardening newsletter with growing advice and a bulb-pack promotion matches the user's stated policy against gardening newsletters and plant promotions; sender history is unavailable, so no relationship is inferred."
+    },
+    {
+      "id": "es-wanted-policy_only",
+      "language": "es",
+      "preference": "wanted",
+      "condition": "policy_only",
+      "message_sha256": "0fcd51c143fd426e2ecea2f159d5607db13192720e2fa3a47060d3950556e275",
+      "state_sha256": "831658867ac467a62da079acb67d33462a4e0197a8b911e0b8d5556ec0b6f7d0",
+      "synthetic_target": "inbox",
+      "correction_examples": 0,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1188,
+        "output": 83
+      },
+      "estimated_cost_usd": 0.00016030000000000002,
+      "effective_labels": {
+        "inbox": 1
+      },
+      "model_label": "inbox",
+      "confidence": 88,
+      "reason": "Gardening newsletter with practical planting advice and a normal plant-promotion, matching the user's stated preference; sender history unavailable and no trusted auth failures or abuse indicators."
+    },
+    {
+      "id": "es-wanted-bounded_examples",
+      "language": "es",
+      "preference": "wanted",
+      "condition": "bounded_examples",
+      "message_sha256": "0fcd51c143fd426e2ecea2f159d5607db13192720e2fa3a47060d3950556e275",
+      "state_sha256": "db365c88daf0f6bd03026a38345afae2ed33246f71f1a37c9da3aaf55a9a2902",
+      "synthetic_target": "inbox",
+      "correction_examples": 2,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1442,
+        "output": 85
+      },
+      "estimated_cost_usd": 0.0001867,
+      "effective_labels": {
+        "inbox": 1
+      },
+      "model_label": "inbox",
+      "confidence": 72,
+      "reason": "Gardening newsletter with practical planting advice and a normal plant promotion, matching the user's stated policy; no auth or abuse signals, though sender history is unavailable and auth results are absent."
+    },
+    {
+      "id": "es-unwanted-policy_only",
+      "language": "es",
+      "preference": "unwanted",
+      "condition": "policy_only",
+      "message_sha256": "0fcd51c143fd426e2ecea2f159d5607db13192720e2fa3a47060d3950556e275",
+      "state_sha256": "356da5a3c704537a26ef1dda900a2581e3e8cf6da44465154ac199325fd8b082",
+      "synthetic_target": "junk",
+      "correction_examples": 0,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1196,
+        "output": 82
+      },
+      "estimated_cost_usd": 0.00016060000000000003,
+      "effective_labels": {
+        "review": 1
+      },
+      "model_label": "junk",
+      "confidence": 90,
+      "reason": "Gardening newsletter and plant/bulb promotion with a discount; user policy explicitly sends gardening bulletins and plant promotions to junk even with practical tips or subscription links."
+    },
+    {
+      "id": "es-unwanted-bounded_examples",
+      "language": "es",
+      "preference": "unwanted",
+      "condition": "bounded_examples",
+      "message_sha256": "0fcd51c143fd426e2ecea2f159d5607db13192720e2fa3a47060d3950556e275",
+      "state_sha256": "6754782e64b3265ebfa6a1b6699de856fde145a8628e46c2d46eaa190a740a0d",
+      "synthetic_target": "junk",
+      "correction_examples": 2,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1430,
+        "output": 87
+      },
+      "estimated_cost_usd": 0.0001865,
+      "effective_labels": {
+        "review": 1
+      },
+      "model_label": "junk",
+      "confidence": 88,
+      "reason": "Gardening newsletter with planting tips and a plant-bulb discount, matching the user's stated policy against gardening bulletins and plant promotions; no personal or transactional content, sender history unavailable."
+    },
+    {
+      "id": "fr-wanted-policy_only",
+      "language": "fr",
+      "preference": "wanted",
+      "condition": "policy_only",
+      "message_sha256": "24988af1673eaf9e21fd43d81101b555e0e024e3d837a41e3b8d2de83026c12b",
+      "state_sha256": "15682c16411c489f7279f1c8fc73e66efa176c30fb490c632c23ca50df8a3e71",
+      "synthetic_target": "inbox",
+      "correction_examples": 0,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1207,
+        "output": 86
+      },
+      "estimated_cost_usd": 0.0001637,
+      "effective_labels": {
+        "inbox": 1
+      },
+      "model_label": "inbox",
+      "confidence": 82,
+      "reason": "Gardening newsletter with practical planting advice and an ordinary plant promotion, matching the user's stated policy; links stay on the sender's domain, though history is unavailable and auth results are absent."
+    },
+    {
+      "id": "fr-wanted-bounded_examples",
+      "language": "fr",
+      "preference": "wanted",
+      "condition": "bounded_examples",
+      "message_sha256": "24988af1673eaf9e21fd43d81101b555e0e024e3d837a41e3b8d2de83026c12b",
+      "state_sha256": "382504cf460dc4642c125f7dcbd411e06233e6f9f13857e62b11a2ae95997722",
+      "synthetic_target": "inbox",
+      "correction_examples": 2,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1486,
+        "output": 84
+      },
+      "estimated_cost_usd": 0.0001906,
+      "effective_labels": {
+        "inbox": 1
+      },
+      "model_label": "inbox",
+      "confidence": 85,
+      "reason": "Gardening newsletter with practical planting advice and an ordinary plant promotion, matching the user's stated policy; sender history is unavailable and no authentication failures or abuse signals appear."
+    },
+    {
+      "id": "fr-unwanted-policy_only",
+      "language": "fr",
+      "preference": "unwanted",
+      "condition": "policy_only",
+      "message_sha256": "24988af1673eaf9e21fd43d81101b555e0e024e3d837a41e3b8d2de83026c12b",
+      "state_sha256": "339ea2f33dcbfd1013157a0b1e6fd34cf9a063a94a8b7e0a4b9586b34b839c48",
+      "synthetic_target": "junk",
+      "correction_examples": 0,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1208,
+        "output": 91
+      },
+      "estimated_cost_usd": 0.0001663,
+      "effective_labels": {
+        "review": 1
+      },
+      "model_label": "junk",
+      "confidence": 85,
+      "reason": "Gardening newsletter with plant promotions and a weekend bulb discount; user policy explicitly classifies gardening newsletters and plant promotions as junk, and history is unavailable so no relationship is inferred."
+    },
+    {
+      "id": "fr-unwanted-bounded_examples",
+      "language": "fr",
+      "preference": "unwanted",
+      "condition": "bounded_examples",
+      "message_sha256": "24988af1673eaf9e21fd43d81101b555e0e024e3d837a41e3b8d2de83026c12b",
+      "state_sha256": "dbed91a65daeead3056c1940bf01ec345be4d58fb17520e51d0790f52767d891",
+      "synthetic_target": "junk",
+      "correction_examples": 2,
+      "status": "classified",
+      "provider_calls": 1,
+      "cache_hits": 0,
+      "new_usage": {
+        "cached": 0,
+        "estimated": false,
+        "input": 1473,
+        "output": 90
+      },
+      "estimated_cost_usd": 0.0001923,
+      "effective_labels": {
+        "review": 1
+      },
+      "model_label": "junk",
+      "confidence": 88,
+      "reason": "Monthly gardening newsletter with planting tips and a weekend bulb discount, matching the user's stated junk policy for gardening newsletters and plant promotions; no sign of personal or transactional correspondence."
+    }
+  ]
+}

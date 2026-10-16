@@ -1,0 +1,8 @@
+From: Friend via List <friend@example.org>
+To: readers@lists.example.net
+Subject: Mailing list discussion
+List-ID: Readers <readers.lists.example.net>
+Authentication-Results: lists.example.net; dkim=pass header.d=lists.example.net; dmarc=fail header.from=example.org
+Content-Type: text/plain; charset=utf-8
+
+A forwarded mailing list post with a signature from the list domain, not the From domain.

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="shield-filled" gradientUnits="userSpaceOnUse" x1="0" y1="447" x2="0" y2="867">
+      <stop offset="0" stop-color="#34D06A"/>
+      <stop offset="1" stop-color="#0E9642"/>
+    </linearGradient>
+    <linearGradient id="shield-open" gradientUnits="userSpaceOnUse" x1="0" y1="447" x2="0" y2="867">
+      <stop offset="0" stop-color="#B4F2C8"/>
+      <stop offset="1" stop-color="#66D490"/>
+    </linearGradient>
+  </defs>
+  <path d="M754,447 C686,486.1 629.2,497.4 584,497.4 L584,648.6 C584,760.7 663.2,827.9 754,867 Z" fill="url(#shield-filled)"/>
+  <path d="M754,447 C822,486.1 878.8,497.4 924,497.4 L924,648.6 C924,760.7 844.8,827.9 754,867 Z" fill="url(#shield-open)"/>
+</svg>
