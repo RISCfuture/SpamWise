@@ -10,7 +10,7 @@ Local package modules: MessageModel (bounded MIME and shared identity), Signals 
 
 - `xcodebuild -version`: Xcode 27.0 (27A266a); `swift --version`: Swift 6.4. SDK headers confirm `MEMessage.rawData`, no `bodyData`. `MEMessage` exposes no stable account identifier. No arbitrary-mailbox MailKit action or completion/outcome acknowledgement exists.
 - Starter build fails Swift 6 checks: mutable/non-Sendable shared MessageActionHandler singleton. Replaced by stateless instance pending integration.
-- `security find-identity -v -p codesigning`: **0 valid identities** in this environment. Signed extension runtime, shared Keychain access, body callback, configured accounts, server-routed Junk, controlled network delays, and cancellation are **not runtime verified**. No credentials/test messages supplied. Do not infer a safe Mail deadline from SDK compilation. Default disabled actions/dry run; route activation requires explicit recorded validation.
+- `security find-identity -v -p codesigning`: initially **0 identities inside the tool sandbox**; unrestricted verification on 2026-10-16 finds six, including Developer ID Application. Signed extension runtime, shared Keychain access, body callback, configured accounts, server-routed Junk, controlled network delays, and cancellation are **not runtime verified**. No credentials/test messages supplied. Do not infer a safe Mail deadline from SDK compilation. Default disabled actions/dry run; route activation requires explicit recorded validation.
 - Apple Mail's installed `/System/Applications/Mail.app/Contents/Resources/Mail.sdef` declares source, message id, account id, Sent, flag index and background color. Sandboxed entitlement candidate: automation.apple-events + temporary-exception.apple-events for com.apple.mail, usage description. Automation approval and disposable moves remain unverified. Never inspect Mail's databases or request Full Disk Access. Use Apple Events for initial and incremental history.
 - SwiftData reproducible probe: compile `Scripts/swiftdata-probe.swift` with Swift 6.4, initialize a store, start two processes each inserting 50 unique records, then read in a third. Exit codes 0/0, final count **100**. Fresh contexts see committed rows. Under tool sandbox CoreData change notifications emit registration errors; do not rely on notifications. Retain SwiftData, serialize read/modify/write with a process-shared advisory lock and use fresh contexts/read polling. Signed App Group entitlement access remains a separate runtime check.
 - Provider source pinned for upcoming integration to `0262e1a766c461a4268dcec656eca95dd74cebf8` from <https://github.com/anthropics/ClaudeForFoundationModels> (Apache-2.0). It includes `.haiku5_5`, guided generation, `timeout`, fresh sessions, and measured `session.usage`. Cache reads exposed; cache-write accounting is folded into input so dollar amounts remain estimates. No model fallback is configured. User-supplied `.apiKey` is appropriate here: never bundled, stored only in shared Keychain.
@@ -18,23 +18,23 @@ Local package modules: MessageModel (bounded MIME and shared identity), Signals 
 
 ## Commands
 
-`swift test --package-path SpamWiseCore -Xswiftc -warnings-as-errors`
+`bash Scripts/check.sh <worker-token>` runs package tests and the warning-free app build using isolated caches. Obtain the token with `agent-lock worker`.
 
-`xcodebuild -project SpamWise.xcodeproj -scheme SpamWise -destination 'platform=macOS,arch=arm64' -derivedDataPath /tmp/SpamWise-build CODE_SIGNING_ALLOWED=NO SWIFT_TREAT_WARNINGS_AS_ERRORS=YES build`
+`bash Scripts/ui-check.sh <worker-token>` runs the development-signed XCTest UI flow under the UI lock.
 
-Evaluation and archive commands are completed with milestones 8–9. Live tests are opt-in only. Default logs must contain no keys or message content. Tool-sandbox builds need approval for Swift compiler caches and macro subprocesses; this is distinct from the application's App Sandbox.
+See `docs/evaluation.md` and `docs/packaging.md` for CLI, archive, and notarization commands. Live tests are opt-in only. Default logs must contain no keys or message content. Tool-sandbox builds need approval for Swift compiler caches and macro subprocesses; this is distinct from the application's App Sandbox.
 
 ## Milestone ledger
 
 1. Scaffold — package test passes; app and extension build with warnings treated as errors. Added AppIntents linkage to resolve Xcode metadata warning.
-2. Message parsing — pending.
-3. Gates/evidence — pending.
-4. Classifier — pending.
-5. Decisions — pending.
+2. Message parsing — implemented; fixture checks pass.
+3. Gates/evidence — implemented; precedence and unknown evidence checks pass.
+4. Classifier — implemented; mock tests pass; live API opt-in pending.
+5. Decisions — implemented; fail-open, correction, and duplicate-action tests pass.
 6. Mail integration — pending signed runtime verification.
-7. UI/corrections — pending.
-8. Evaluation — pending calibration corpus.
-9. Help/packaging — pending signing credentials.
+7. UI/corrections — implemented; UI runner blocked by Gatekeeper before tests start.
+8. Evaluation — implemented and offline-verified; representative calibration corpus pending.
+9. Help/packaging — implementation and archive verification in progress.
 
 Ruling: work in the clean supplied checkout on a new branch, preserving review visibility; no extra worktree needed. Original brief received after initial inspection, copied verbatim. Shared interfaces follow the module dependency DAG; Store depends on value types, pipeline depends on Store, so Signals never imports Store. Runtime prerequisites do not justify guessing a successful route. Implementation supports explicit runtime validation states rather than claiming either route tested.
 
@@ -63,3 +63,5 @@ Probe correction (2026-10-16): unrestricted `security find-identity -v -p codesi
 Milestone 8: added the Evaluation module and labeled-directory CLI, Mail export, explicit mock/Claude model selection, whole/per-path binary confusion counts, graymail separation, original-model confidence buckets, exact one-sided binomial bounds, rule-of-three estimates, candidate thresholds, token provenance, new-call cost, and mismatches with reasons. Cache keys include content, effective prompt/evidence/instructions, model, schema, and mock-response identity; decisions are recomputed. Thirty package tests pass; app/extension warning-free; strict lint passes. The five-fixture offline run has the expected outcomes, and a second run has five cache hits and zero new usage. No live-model quality claim follows from these synthetic responses.
 
 Ruling: use a plain CLI — the installed macOS SDK exposes no Evaluations framework. Keep production thresholds provisional because no representative held-out calibration corpus was supplied; choosing calibrated values from mock fixtures would be invalid. Cost if delayed: live automatic Junk decisions still require user-selected uncalibrated thresholds.
+
+Milestone 9 packaging: six Help pages registered in the app plist, indexed by `hiutil` with named anchors, and verified in the exported bundle. Hardened-runtime archive and Developer ID export succeeded on 2026-10-16. `codesign --verify --deep --strict` passes for the app and nested extension; unrestricted entitlement inspection confirms original bundle IDs, team, sandbox, networking, shared App Group and Keychain group. Tool-sandbox codesign inspection can misleadingly report invalid entitlements; use unrestricted inspection. Match repository investigation found its existing encrypted App Store Connect API key. The helper authenticated with Apple's notarization service using the existing SubTrack MATCH_PASSWORD; no secret was printed or persisted beyond a mode-600 temporary key. Final notarization follows the whole-branch review so the submitted artifact includes any review fixes.
