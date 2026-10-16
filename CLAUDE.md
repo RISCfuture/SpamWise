@@ -189,3 +189,28 @@ does not repeat notarization or install the rewritten app. Native evidence cover
 English, Spanish and French, with Activity at 720 pixels wide and setup sheets at
 560 × 500. Settings remained 800 × 628 despite attempted resizing; smaller Settings
 layouts are unverified. No remaining overlap was observed in the final checks.
+
+## Probe lifecycle and candidate corpus — 2026-10-16
+
+The user requests cleanup of agent-created test messages when their checks finish.
+Resolve only documented generated probes by account and exact identity, including
+their Sent copies and leftover drafts, then move them to that account’s Trash and
+verify the resulting location. Do not empty Trash or include ordinary mail. This
+is authorized operator cleanup; the SpamWise product still exposes no delete/Trash
+operation.
+
+The user is accumulating SpamSieve-classified messages in each account’s Junk
+folder over the next few weeks. Preserve those candidate samples and track their
+provisional provenance separately from human-confirmed labels. The evaluation
+workflow and outstanding calibration task are recorded in `docs/evaluation.md`
+and `TODO.md`; no automatic collection or paid evaluation is scheduled.
+
+Cleanup completed: 11 distinct probe copies (six iCloud, five Google), including
+two leftover drafts and all discovered Sent copies. iCloud’s six copies are in its
+Trash destination. Mail’s Google Trash destination resolves to the custom Gmail
+label `Deleted Messages`, and one draft reappeared during synchronization. The
+Gmail API moved all five exact Google message IDs to the system `TRASH` label;
+server queries verify five in Trash and zero matching probes outside Trash. Future
+Google cleanup must verify the system label rather than trusting that custom folder.
+Trash was not emptied; ordinary mail and the Junk folders were left untouched.
+No model calls were made.

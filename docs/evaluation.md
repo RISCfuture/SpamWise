@@ -50,3 +50,20 @@ spamwise-eval --export inbox --destination /path/to/unlabeled --limit 500
 ```
 
 The helper reads through Apple Events and may require Automation permission. Supported source roles are Inbox, Junk, and Sent. No move/delete operation is exposed. Source mailbox placement is not a human label: review exported messages before placing them in corpus folders. Existing export files are never overwritten. Exported mail, cached reasons, and reports may contain personal data; keep them outside the repository.
+
+## Accumulating SpamSieve samples
+
+The user’s iCloud and Google accounts each have a Junk folder that will accumulate
+SpamSieve-classified messages over the coming weeks. Preserve those messages as
+candidate evaluation data. A SpamSieve decision is a provisional label, not an
+independently confirmed answer; folder membership alone does not establish which
+filter moved a message.
+
+When collecting a snapshot, retain account, collection date and known label source
+alongside the private export. Keep unreviewed samples outside the evaluator’s
+`good/`, `junk/` and `graymail/` directories. Review samples before assigning those
+labels, include representative wanted mail from each account, exclude generated
+`[SpamWise Probe]` messages, deduplicate, and reserve a separate holdout before
+tuning. A Junk-only collection cannot establish a false-positive rate for wanted
+mail. Collection itself requires no model calls; the existing $150 ceiling applies
+to any later authorized paid evaluation.
