@@ -1,82 +1,201 @@
-import Foundation
+public import Foundation
 
-public enum IncomingRoute: String, Codable, Sendable, CaseIterable { case unverified, mailKit, mailRule }
+/// The explicitly validated incoming-mail integration route.
+public enum IncomingRoute: String, Codable, Sendable, CaseIterable {
+  case unverified, mailKit, mailRule
+}
+/// Persisted filtering preferences with dry run enabled by default.
 public struct Settings: Codable, Sendable, Equatable {
-    public var strength: FilteringStrength = .balanced
-    public var review: ReviewTreatment = .orangeFlag
-    public var dryRun = true
-    public var paused = false
-    public var policy = PromptBuilder.defaultPolicy
-    public var correctionLimit = 40
-    public var bodyTokenBudget = 1500
-    public var onboardingComplete = false
-    public var route: IncomingRoute = .unverified
-    public var validatedAccounts: Set<String> = []
-    public var callbackDeadline: Double = 10
-    public init() {}
+  /// Selected provisional Junk confidence threshold.
+  public var strength: FilteringStrength = .balanced
+  /// Annotation used for Review messages.
+  public var review: ReviewTreatment = .orangeFlag
+  /// Whether mail actions must be suppressed.
+  public var dryRun = true
+  /// Whether classification and actions are paused.
+  public var paused = false
+  /// The user's bounded plain-English filtering preferences.
+  public var policy = PromptBuilder.defaultPolicy
+  /// Maximum number of correction examples included in a prompt.
+  public var correctionLimit = 40
+  /// Approximate body budget, using four characters per token.
+  public var bodyTokenBudget = 1500
+  /// Whether the user completed the setup flow.
+  public var onboardingComplete = false
+  /// The recorded incoming-message integration route.
+  public var route: IncomingRoute = .unverified
+  /// Accounts that passed the explicit disposable-message action probe.
+  public var validatedAccounts: Set<String> = []
+  /// Provisional callback budget in seconds; requires runtime calibration.
+  public var callbackDeadline: Double = 10
+  /// Creates a Settings with the supplied configuration.
+  public init() {}
 }
+/// A durable explanation and the independently recorded action outcome.
 public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
-    public var id = UUID()
-    public var date = Date()
-    public var identity: MessageIdentity
-    public var sender: String
-    public var subject: String
-    public var evidence: EvidenceBundle?
-    public var verdict: Verdict?
-    public var decision: Decision
-    public var outcome: ActionOutcome
-    public var actionError: String?
-    public var path: String
-    public var latency: Double
-    public var revision: Int
-    public var correctedLabel: MailLabel?
-    public init(identity: MessageIdentity, sender: String = "Unknown", subject: String = "Unclassified message", evidence: EvidenceBundle? = nil, verdict: Verdict? = nil, decision: Decision, outcome: ActionOutcome, path: String = "error", latency: Double = 0, revision: Int = 0) {
-        self.identity = identity; self.sender = sender; self.subject = subject; self.evidence = evidence; self.verdict = verdict
-        self.decision = decision; self.outcome = outcome; self.path = path; self.latency = latency; self.revision = revision
-    }
+  /// Stable identity used for persistence and presentation.
+  public var id = UUID()
+  /// Timestamp when this record was created.
+  public var date = Date()
+  /// Account and content identity used to resolve this message safely.
+  public var identity: MessageIdentity
+  /// Sender address retained for corrections and activity display.
+  public var sender: String
+  /// Decoded message subject.
+  public var subject: String
+  /// Signals available when the decision was made.
+  public var evidence: EvidenceBundle?
+  /// Model output, absent for errors or explicit corrections.
+  public var verdict: Verdict?
+  /// Intended action, kept separate from the observed outcome.
+  public var decision: Decision
+  /// Observed action status, including dry run and integration failure.
+  public var outcome: ActionOutcome
+  /// Sanitized action failure separate from the classification explanation.
+  public var actionError: String?
+  /// Decision source, such as gate, model, correction, or error.
+  public var path: String
+  /// Elapsed decision time in seconds.
+  public var latency: Double
+  /// Policy generation used to invalidate stale work after corrections.
+  public var revision: Int
+  /// The user's explicit replacement label, if corrected.
+  public var correctedLabel: MailLabel?
+  /// Creates a DecisionRecord with the supplied configuration.
+  public init(
+    identity: MessageIdentity,
+    sender: String = "Unknown",
+    subject: String = "Unclassified message",
+    evidence: EvidenceBundle? = nil,
+    verdict: Verdict? = nil,
+    decision: Decision,
+    outcome: ActionOutcome,
+    path: String = "error",
+    latency: Double = 0,
+    revision: Int = 0
+  ) {
+    self.identity = identity; self.sender = sender; self.subject = subject
+    self.evidence = evidence; self.verdict = verdict
+    self.decision = decision; self.outcome = outcome; self.path = path; self.latency = latency
+    self.revision = revision
+  }
 }
+/// A bounded, revision-specific classification retry.
 public struct RetryJob: Codable, Sendable, Identifiable {
-    public var id: String { identity.key }
-    public var identity: MessageIdentity
-    public var message: ParsedMessage
-    public var revision: Int
-    public var attempt: Int
-    public var due: Date
-    public var expires: Date
-    public var dryRun: Bool
+  /// Stable identity used for persistence and presentation.
+  public var id: String { identity.key }
+  /// Account and content identity used to resolve this message safely.
+  public var identity: MessageIdentity
+  /// Parsed message supplied to this operation.
+  public var message: ParsedMessage
+  /// Policy generation used to invalidate stale work after corrections.
+  public var revision: Int
+  /// Retry attempt number; the pipeline permits at most three retries.
+  public var attempt: Int
+  /// Earliest time the retry can run.
+  public var due: Date
+  /// Time after which this queued retry must be discarded.
+  public var expires: Date
+  /// Whether mail actions must be suppressed.
+  public var dryRun: Bool
 }
+/// Account-scoped, deduplicated correspondence and receipt history.
 public struct HistoryIndex: Codable, Sendable {
-    public var availability: HistoryAvailability = .unavailable
-    public var received: [String: Int] = [:]
-    public var replied: [String: Int] = [:]
-    public var receipts: [String: Int] = [:]
-    public var importedIDs: Set<String> = []
-    public var updatedAt: Date?
-    public init() {}
-    public func summary(address: String, domain: String?) -> SenderHistory {
-        .init(availability: availability, receivedCount: received[domain ?? address, default: 0], replyCount: replied[address, default: 0], receiptCount: receipts[domain ?? "", default: 0])
-    }
+  /// The completeness of the available history.
+  public var availability: HistoryAvailability = .unavailable
+  /// Distinct received-message counts by registrable domain.
+  public var received: [String: Int] = [:]
+  /// Reply counts by recipient address.
+  public var replied: [String: Int] = [:]
+  /// Heuristic receipt counts by registrable domain.
+  public var receipts: [String: Int] = [:]
+  /// Account-scoped identities already included in this history snapshot.
+  public var importedIDs: Set<String> = []
+  /// Timestamp of the latest stored update.
+  public var updatedAt: Date?
+  /// Creates a HistoryIndex with the supplied configuration.
+  public init() {}
+  /// Human-readable history with unknown and partial states preserved.
+  public func summary(address: String, domain: String?) -> SenderHistory {
+    .init(
+      availability: availability,
+      receivedCount: received[domain ?? address, default: 0],
+      replyCount: replied[address, default: 0],
+      receiptCount: receipts[domain ?? "", default: 0]
+    )
+  }
 }
+/// Durable application state shared by the app and Mail extension.
 public struct AppState: Codable, Sendable {
-    public var schemaVersion = 1
-    public var revision = 0
-    public var settings = Settings()
-    public var rules: [SenderRule] = []
-    public var corrections: [CorrectionExample] = []
-    public var records: [DecisionRecord] = []
-    public var retries: [RetryJob] = []
-    public var histories: [String: HistoryIndex] = [:]
-    public var claimedActions: [String: UUID] = [:]
-    public var contactAddresses: Set<String>?
-    public var contactsUpdatedAt: Date?
-    public var lastExtensionCallback: Date?
-    public var lastBodyCallback: Date?
-    public init() {}
+  /// Version of the persisted application state.
+  public var schemaVersion = 1
+  /// Policy generation used to invalidate stale work after corrections.
+  public var revision = 0
+  /// Current filtering and integration preferences.
+  public var settings = Settings()
+  /// Persisted address and explicitly scoped domain rules.
+  public var rules: [SenderRule] = []
+  /// Recent explicit user corrections used as quoted examples.
+  public var corrections: [CorrectionExample] = []
+  /// Bounded Activity log of decisions and outcomes.
+  public var records: [DecisionRecord] = []
+  /// Bounded queue of transient classification failures.
+  public var retries: [RetryJob] = []
+  /// Correspondence snapshots keyed by Mail account identifier.
+  public var histories: [String: HistoryIndex] = [:]
+  /// Durable at-most-once action claims retained beyond log truncation.
+  public var claimedActions: [String: UUID] = [:]
+  /// Cached contact addresses; nil means unavailable.
+  public var contactAddresses: Set<String>?
+  /// Time the cached Contacts snapshot was refreshed.
+  public var contactsUpdatedAt: Date?
+  /// Last observed extension callback heartbeat.
+  public var lastExtensionCallback: Date?
+  /// Last callback in which raw message bytes were available.
+  public var lastBodyCallback: Date?
+  /// Estimated charges retained independently of the bounded activity log.
+  public var costByMonth: [String: Double]?
+  /// Creates an AppState with the supplied configuration.
+  public init() {}
 }
-public enum StateRepository {
-    public static let key = "application-v1"
-    public static func load(_ store: Store) async throws -> AppState { try await store.read(key, default: AppState()) }
-    public static func update<R: Sendable>(_ store: Store, _ body: @Sendable (inout AppState) throws -> R) async throws -> R {
-        try await store.update(key, default: AppState(), body)
+extension AppState {
+  /// Inserts or updates activity without charging twice for outcome updates.
+  public mutating func record(_ record: DecisionRecord) {
+    if costByMonth == nil {
+      costByMonth = [:]
+      for previous in records {
+        costByMonth?[Self.monthKey(previous.date), default: 0] +=
+          previous.verdict?.usage.estimatedCost ?? 0
+      }
     }
+    if let index = records.firstIndex(where: { $0.id == record.id }) {
+      records[index] = record
+    } else {
+      records.append(record)
+      costByMonth?[Self.monthKey(record.date), default: 0] +=
+        record.verdict?.usage.estimatedCost ?? 0
+    }
+    records = Array(records.suffix(5000))
+  }
+  /// Calendar month used for the usage ledger and footer.
+  public static func monthKey(_ date: Date) -> String {
+    let components = Calendar.current.dateComponents([.year, .month], from: date)
+    return "\(components.year ?? 0)-\(components.month ?? 0)"
+  }
+}
+/// Typed transactions for the shared application snapshot.
+public enum StateRepository {
+  /// Stable storage or deduplication key.
+  public static let key = "application-v1"
+  /// Reads the current shared application snapshot.
+  public static func load(_ store: Store) async throws -> AppState {
+    try await store.read(key, default: AppState())
+  }
+  /// Atomically reads, modifies, and commits a shared value.
+  public static func update<R: Sendable>(
+    _ store: Store,
+    _ body: @Sendable (inout AppState) throws -> R
+  ) async throws -> R {
+    try await store.update(key, default: AppState(), body)
+  }
 }

@@ -1,5 +1,14 @@
 // swift-tools-version: 6.4
 import PackageDescription
+let swiftSettings: [SwiftSetting] = [
+    .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+    .enableUpcomingFeature("InferIsolatedConformances"),
+    .enableUpcomingFeature("ImmutableWeakCaptures"),
+    .enableUpcomingFeature("MemberImportVisibility"),
+    .enableUpcomingFeature("ExistentialAny"),
+    .enableUpcomingFeature("InternalImportsByDefault"),
+    .strictMemorySafety()
+]
 let package = Package(
     name: "SpamWiseCore",
     platforms: [.macOS("27.0")],
@@ -20,3 +29,5 @@ let package = Package(
     ],
     swiftLanguageModes: [.v6]
 )
+
+for target in package.targets { target.swiftSettings = swiftSettings }

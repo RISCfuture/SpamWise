@@ -1,43 +1,65 @@
-//
-//  UITests.swift
-//  UITests
-//
-//  Created by Tim Morgan on 10/15/26.
-//
-
+import AppIntents
 import XCTest
 
 final class UITests: XCTestCase {
-
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
-        continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
-        app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
-    }
-
-    @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
-        }
-    }
+  @MainActor func testOnboardingAndOfflineActivity() throws {
+    let setup = SetupScreen.launchOffline()
+    XCTAssertTrue(setup.introVisible)
+    setup.continueSetup()
+    XCTAssertTrue(setup.keyVisible)
+    setup.continueSetup()
+    setup.checkDeniedMailPermission()
+    XCTAssertTrue(setup.hasPermissionDeniedStatus)
+    setup.continueSetup()
+    let activity = setup.finish()
+    XCTAssertTrue(activity.isDryRun)
+    activity.pause()
+    XCTAssertTrue(activity.isPaused)
+  }
+}
+@MainActor private struct SetupScreen {
+  let app: XCUIApplication
+  static func launchOffline() -> Self {
+    let app = XCUIApplication()
+    app.launchArguments = ["--ui-testing"]
+    app.launch()
+    _ = app.staticTexts["setup.intro"].waitForExistence(timeout: 10)
+    return Self(app: app)
+  }
+  var introVisible: Bool { app.staticTexts["setup.intro"].exists }
+  var keyVisible: Bool { app.secureTextFields["setup.key"].waitForExistence(timeout: 5) }
+  var hasPermissionDeniedStatus: Bool {
+    app.staticTexts["mail.status"].label.contains("Automation permission denied")
+  }
+  func continueSetup() { app.buttons["setup.continue"].click() }
+  func checkDeniedMailPermission() {
+    app.buttons["mail.check"].click()
+    let predicate = NSPredicate(format: "label CONTAINS %@", "Automation permission denied")
+    _ = XCTWaiter.wait(
+      for: [
+        XCTNSPredicateExpectation(predicate: predicate, object: app.staticTexts["mail.status"])
+      ],
+      timeout: 5
+    )
+  }
+  func finish() -> ActivityScreen {
+    app.buttons["setup.finish"].click()
+    _ = app.staticTexts["activity.title"].waitForExistence(timeout: 5)
+    return ActivityScreen(app: app)
+  }
+}
+@MainActor private struct ActivityScreen {
+  let app: XCUIApplication
+  var isDryRun: Bool {
+    app.descendants(matching: .any)["activity.mode"].firstMatch.label.contains("Dry run")
+  }
+  var isPaused: Bool { app.buttons["activity.pause"].label.contains("Resume") }
+  func pause() {
+    app.buttons["activity.pause"].click()
+    let predicate = NSPredicate(format: "label CONTAINS %@", "Resume")
+    _ = XCTWaiter.wait(
+      for: [XCTNSPredicateExpectation(predicate: predicate, object: app.buttons["activity.pause"])],
+      timeout: 5
+    )
+  }
 }
