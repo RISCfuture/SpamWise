@@ -1,9 +1,14 @@
 import SwiftUI
 import SpamWiseCore
+import UniformTypeIdentifiers
+import MailIntegration
 
 struct DecisionDetailView: View {
   let model: AppModel
   let row: DecisionRecord
+  @State private var source: RulesDocument?
+  @State private var exporting = false
+  @State private var confirmingUndo = false
 
   var body: some View {
     Form {
@@ -25,13 +30,55 @@ struct DecisionDetailView: View {
       }
       Section("Correct this decision") {
         CorrectionControls(model: model, row: row)
+        if row.correctionUndone == true {
+          Text("Correction undone; the recorded Mail action was not reversed.")
+        }
+        if let undo = model.state.correctionUndo, undo.isAvailable(in: model.state) {
+          Button("Undo latest correction…") { confirmingUndo = true }.disabled(model.busy)
+            .accessibilityIdentifier("correction.undo")
+            .confirmationDialog(
+              "Restore the previous rules and learning? Mail will not move.",
+              isPresented: $confirmingUndo
+            ) {
+              Button("Undo rules and learning") {
+                model.run {
+                  guard let store = model.store else { throw IntegrationError.unavailable }
+                  try await CorrectionUndo.apply(store: store)
+                  model.status = String(
+                    localized:
+                      "Correction undone. Use a separate correction to request a Mail action."
+                  )
+                }
+              }.accessibilityIdentifier("correction.undo.confirm")
+            } message: {
+              Text(
+                "Restores \(undo.ruleCount) rules and \(undo.exampleCount) examples. Later changes disable undo."
+              )
+            }
+        }
       }
       Section {
         Button("Preview message") { model.previewMessage(row) }.disabled(model.busy)
         Button("Open in Mail") { model.openInMail(row) }.disabled(model.busy)
+        Button("Export raw source…") {
+          model.run {
+            guard let envelope = try await model.adapter.lookup(row.identity) else {
+              throw IntegrationError.unavailable
+            }
+            source = RulesDocument(data: envelope.raw); exporting = true
+          }
+        }.disabled(model.busy)
         DisclosureGroup("Decision details") { DecisionDiagnosticsView(row: row) }
       }
     }.formStyle(.grouped)
+      .fileExporter(
+        isPresented: $exporting,
+        document: source,
+        contentType: .data,
+        defaultFilename: "message.eml"
+      ) {
+        if case .failure = $0 { model.status = String(localized: "Message source export failed.") }
+      }
   }
 }
 

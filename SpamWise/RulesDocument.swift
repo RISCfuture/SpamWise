@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import SpamWiseCore
 
 struct RulesDocument: FileDocument {
-  static var readableContentTypes: [UTType] { [.json] }
+  static var readableContentTypes: [UTType] { [.json, .data] }
   var data: Data
   init(data: Data) { self.data = data }
   init(configuration: ReadConfiguration) throws {

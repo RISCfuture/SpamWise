@@ -71,7 +71,7 @@ public actor Pipeline {
     do {
       try Task.checkCancellation()
       let state = try await StateRepository.load(store); revision = state.revision
-      if let id = state.claimedActions[identity.key],
+      if !forceDryRun, let id = state.claimedActions[identity.key],
         let previous = state.records.first(where: { $0.id == id })
       {
         return previous

@@ -150,7 +150,7 @@ Parent items remain open until their full acceptance criteria are met.
   renames/removals without silently broadening scope; keep Junk rescue separate.
   Test server-routed mail and explicit historical refiltering without replaying
   old actions or allowing the message to establish its own trusted history.
-- [ ] **SS-10 — Expand rules beyond literal sender addresses/domains.** SpamSieve
+- [x] **SS-10 — Expand rules beyond literal sender addresses/domains.** SpamSieve
   has [header/body matchers, regex, rule state and match statistics](https://c-command.com/spamsieve/help/rule-columns-locations).
   Add a staged rule builder for mailing-list headers, recipients, Reply-To,
   subject/body and attachment metadata; support enabled state, notes, bounded
@@ -158,7 +158,7 @@ Parent items remain open until their full acceptance criteria are met.
   conflicts. Specify new-rule ordering before implementation while preserving
   address → domain → trusted gates and latest same-scope correction; no lock option
   may silently defeat a user’s later correction. Include schema migration/export.
-- [ ] **SS-11 — Add initial training and a manageable corpus.** SpamSieve supports
+- [x] **SS-11 — Add initial training and a manageable corpus.** SpamSieve supports
   [initial examples](https://c-command.com/spamsieve/help/do-an-initial-training), a
   [corpus browser](https://c-command.com/spamsieve/help/corpus) and
   [controlled auto-training](https://c-command.com/spamsieve/help/auto-train-as-needed).
@@ -170,7 +170,7 @@ Parent items remain open until their full acceptance criteria are met.
   supported SpamSieve export formats before promising rule/corpus migration. Add undo
   with a preview of affected rules/examples and a separately verified mail action.
   Keep predicted labels separate and never promote them into held-out truth.
-- [ ] **SS-12 — Make Activity a useful troubleshooting log.** SpamSieve’s
+- [x] **SS-12 — Make Activity a useful troubleshooting log.** SpamSieve’s
   [log](https://c-command.com/spamsieve/help/log) records predictions, training,
   rule changes and failures, with message/source inspection. Add search and filters
   for account, sender, date, path, outcome and correction; retain a policy/rule
@@ -192,7 +192,7 @@ Parent items remain open until their full acceptance criteria are met.
   explicit supported preference after a confirmed Junk action. Keep text labels,
   sparse color and uncalibrated-score warnings; do not overwrite users’ flags or
   claim that Apple Mail background colors synchronize to mobile devices.
-- [ ] **SS-15 — Protect against own-address and trusted-sender spoofing.** SpamSieve
+- [x] **SS-15 — Protect against own-address and trusted-sender spoofing.** SpamSieve
   has an [own-address exception to Contacts trust](https://c-command.com/spamsieve/help/catch-spam-sent-from-my).
   Add explicit own-address/alias discovery and configurable exclusions from automatic
   relationship trust. Evaluate authenticated alignment and forged-contact cases

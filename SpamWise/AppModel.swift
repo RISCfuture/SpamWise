@@ -21,6 +21,7 @@ import MailIntegration
   var showCorrections = false
   var correctionResults: [MailCorrectionResult] = []
   var showJunk = false
+  var folders: [MailFolder] = []
   var junkMessages: [MailEnvelope] = []
   var junkTotal = 0
   var previewText = ""

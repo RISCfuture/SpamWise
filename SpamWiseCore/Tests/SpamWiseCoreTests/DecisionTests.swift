@@ -76,6 +76,70 @@ func enableActions(_ store: Store) async throws {
     state.settings.validatedAccounts = ["account-A"]
   }
 }
+
+@Test func `claims training corrections atomically and keeps uncertain moves claimed`() async throws
+{
+  let store = try testStore(), adapter = RecordingAdapter()
+  var selected = try envelope()
+  selected.identity.mailbox = "SpamWise Train Good"
+  var plan = MailFolderPlan(
+    folder: .init(accountID: "account-A", path: ["SpamWise Train Good"]),
+    purpose: .trainGood
+  )
+  plan.enabled = true
+  let unvalidated = plan
+  try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [unvalidated] }
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { _ in
+      Issue.record("Deliberate training must not classify first")
+      throw ClassificationError.configuration
+    })
+  )
+  await #expect(throws: IntegrationError.self) {
+    try await pipeline.correct(
+      envelope: selected,
+      label: .inbox,
+      adapter: adapter,
+      trainingPlanID: plan.id
+    )
+  }
+  plan.trainingBaselineValidated = true
+  let validated = plan
+  try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [validated] }
+  let first = try await pipeline.correct(
+    envelope: selected,
+    label: .inbox,
+    adapter: adapter,
+    trainingPlanID: plan.id
+  )
+  await #expect(throws: IntegrationError.staleMessage) {
+    try await pipeline.correct(
+      envelope: selected,
+      label: .inbox,
+      adapter: adapter,
+      trainingPlanID: plan.id
+    )
+  }
+  #expect(try await StateRepository.load(store).corrections.count == 1)
+  try await TrainingFolders.observe([], planID: plan.id, sweepComplete: true, store: store)
+  #expect(try await StateRepository.load(store).trainingClaims?.isEmpty == true)
+  let second = try await pipeline.correct(
+    envelope: selected,
+    label: .inbox,
+    adapter: adapter,
+    trainingPlanID: plan.id
+  )
+  #expect(second.id != first.id)
+  try await StateRepository.update(store) { state in
+    if let index = state.records.firstIndex(where: { $0.id == second.id }) {
+      state.records[index].outcome = .failed
+    }
+  }
+  try await TrainingFolders.observe([], planID: plan.id, sweepComplete: true, store: store)
+  #expect(try await StateRepository.load(store).trainingClaims?.count == 1)
+  #expect(await adapter.actions.isEmpty)
+}
 @Test func `persists before acting and prevents duplicate actions`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
@@ -102,6 +166,10 @@ func enableActions(_ store: Store) async throws {
   #expect(first.id == second.id)
   #expect(await adapter.actions == [.moveToJunk])
   #expect(try await StateRepository.load(store).records.first?.verdict?.label == .junk)
+  let preview = await pipeline.process(try envelope(), adapter: adapter, forceDryRun: true)
+  #expect(preview.id != first.id)
+  #expect(preview.outcome == .dryRun)
+  #expect(await adapter.actions == [.moveToJunk])
 }
 @Test func `prevents actions during dry runs pauses and failures`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
@@ -175,6 +243,15 @@ func `corrects selected mail without classifying and excludes own addresses from
   let ruled = await pipeline.process(selected)
   #expect(ruled.path == "gate")
   #expect(ruled.decision.label == .inbox)
+  try await TrustExclusions.save(" ALIAS@EXAMPLE.ORG \nfriend@example.org", store: store)
+  let excluded = try await StateRepository.load(store)
+  #expect(
+    excluded.settings.mailOptions.trustExclusions == ["alias@example.org", "friend@example.org"]
+  )
+  await #expect(throws: RuleManagementError.self) {
+    try await TrustExclusions.save("valid@example.org\nnot an address", store: store)
+  }
+  #expect(try await StateRepository.load(store).revision == excluded.revision)
 }
 @Test func `preserves pending retries during previews and invalidates them on correction`()
   async throws
@@ -234,6 +311,19 @@ func `corrects selected mail without classifying and excludes own addresses from
   #expect(learned.reviewedLabels?.first?.message == nil)
   #expect(learned.reviewedLabels?.first?.sampleID != nil)
   #expect(learned.learning?.samples.count == 1)
+  #expect(try #require(learned.correctionUndo).isAvailable(in: learned))
+  try await CorrectionUndo.apply(store: store)
+  let undone = try await StateRepository.load(store)
+  #expect(undone.rules == retained.rules)
+  #expect(undone.learning == retained.learning)
+  #expect(undone.corrections == retained.corrections)
+  #expect(undone.records.last?.correctionUndone == true)
+  #expect(await adapter.actions.isEmpty)
+  _ = try await pipeline.correct(recordID: failed.id, label: .junk, adapter: adapter)
+  try await StateRepository.editSettings(store) { $0.paused = true }
+  await #expect(throws: IntegrationError.staleMessage) {
+    try await CorrectionUndo.apply(store: store)
+  }
 }
 @Test func `consumes retries only within the selected account`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()

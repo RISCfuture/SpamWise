@@ -68,6 +68,32 @@ import SpamWiseCore
     }
   )
 }
+
+@Test(arguments: ["self-mail", "forwarded-contact", "list-contact"])
+func `keeps self and forwarded authentication claims untrusted when excluding aliases`(
+  _ name: String
+) async throws {
+  let store = try testStore()
+  let raw = try fixture(name), message = try MIMEParser().parse(raw)
+  let address = message.fromAddress
+  try await StateRepository.update(store) {
+    $0.contactAddresses = [address]; $0.contactsUpdatedAt = .now
+    $0.settings.mailOptions.trustExclusions = [address]
+  }
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { input in
+      #expect(input.evidence.contact == nil)
+      #expect(input.evidence.authResults.allSatisfy { !$0.trusted })
+      return .init(label: .review, confidence: 50, reason: "Authentication remains unknown")
+    })
+  )
+  let result = await pipeline.process(
+    MailEnvelope(identity: .init(accountID: "account", contentHash: message.hash), raw: raw)
+  )
+  #expect(result.path == "model")
+  #expect(result.decision.label == .review)
+}
 actor StubRDAP: HTTPFetcher {
   var calls = 0
   var fail: Bool
@@ -146,4 +172,26 @@ actor StubRDAP: HTTPFetcher {
   newer.enabled = true; newer.pattern = "(a+)+$"
   message.subject = String(repeating: "a", count: 10_000) + "!"
   #expect(throws: ContentRuleError.timeout) { try ContentRules.matches([newer], message: message) }
+  newer.pattern = "a$"
+  message.subject = String(repeating: "a", count: 16_000) + "tail"
+  #expect(throws: ContentRuleError.invalid) { try ContentRules.matches([newer], message: message) }
+  let raw = Data(
+    """
+    From: person@example.org
+    Content-Type: multipart/mixed; boundary=test
+
+    --test
+    Content-Type: application/pdf
+    Content-Disposition: attachment; filename="../invoice.pdf"
+
+    Not a real PDF and must not be opened.
+    --test--
+
+    """.utf8
+  )
+  message = try MIMEParser().parse(raw)
+  newer.field = .attachmentNames; newer.pattern = "invoice.pdf"; newer.operation = .contains
+  #expect(try ContentRules.matches([newer], message: message).count == 1)
+  #expect(message.text.isEmpty)
+  #expect(message.attachments?.first?.mediaType == "application/pdf")
 }

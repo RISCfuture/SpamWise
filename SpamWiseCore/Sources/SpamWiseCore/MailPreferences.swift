@@ -10,6 +10,8 @@ public struct MailPreferences: Codable, Sendable, Equatable {
   public var trustExclusions: Set<String> = []
   /// Excludes discovered own addresses from implicit relationship trust.
   public var excludeOwnAddresses = true
+  /// Optional explicitly configured non-Inbox filtering and dedicated-training folders.
+  public var folderPlans: [MailFolderPlan]?
   /// Creates conservative defaults without changing existing account scope.
   public init() {}
 }

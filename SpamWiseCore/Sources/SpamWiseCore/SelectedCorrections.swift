@@ -4,7 +4,8 @@ extension Pipeline {
     envelope: MailEnvelope,
     label: MailLabel,
     scope: RuleScope = .address,
-    adapter: (any MailClientAdapter)? = nil
+    adapter: (any MailClientAdapter)? = nil,
+    trainingPlanID: String? = nil
   ) async throws -> DecisionRecord {
     let message = try MIMEParser().parse(envelope.raw)
     let seed = try await StateRepository.update(store) { state -> DecisionRecord in
@@ -21,7 +22,13 @@ extension Pipeline {
       state.record(record)
       return record
     }
-    return try await correct(recordID: seed.id, label: label, scope: scope, adapter: adapter)
+    return try await correct(
+      recordID: seed.id,
+      label: label,
+      scope: scope,
+      adapter: adapter,
+      trainingPlanID: trainingPlanID
+    )
   }
 }
 

@@ -39,6 +39,21 @@ final class UITests: XCTestCase {
     XCTAssertEqual(editedSettings.addressRule, "Block")
     XCTAssertEqual(editedSettings.domainRule, "Allow")
     editedSettings.close()
+    detail.markGood()
+    XCTAssertTrue(detail.correctionSavedWithActionFailure)
+    detail.undoLatestCorrection()
+    let restoredSettings = activity.openRulesSettings()
+    XCTAssertEqual(restoredSettings.addressRule, "Block")
+    XCTAssertEqual(restoredSettings.domainRule, "Allow")
+    restoredSettings.close()
+    let corpus = activity.openCorpus()
+    XCTAssertEqual(corpus.labelCount, 1)
+    corpus.forgetFirstExample()
+    XCTAssertEqual(corpus.labelCount, 0)
+    corpus.close()
+    let retainedSettings = activity.openRulesSettings()
+    XCTAssertEqual(retainedSettings.addressRule, "Block")
+    retainedSettings.close()
   }
 
   @MainActor func testOnboardingAndOfflineActivity() throws {
@@ -58,7 +73,7 @@ final class UITests: XCTestCase {
   }
 }
 
-private enum UITestTiming {
+enum UITestTiming {
   static let launch: TimeInterval = 10
   static let transition: TimeInterval = 5
 }
@@ -176,6 +191,15 @@ private enum UITestTiming {
     return StatisticsScreen(app: app)
   }
 
+  func openCorpus() -> CorpusScreen {
+    app.menuButtons["activity.filter"].click()
+    app.menuItems["activity.corpus"].click()
+    XCTAssertTrue(
+      app.staticTexts["corpus.title"].waitForExistence(timeout: UITestTiming.transition)
+    )
+    return CorpusScreen(app: app)
+  }
+
   func pause() {
     app.buttons["activity.pause"].click()
     XCTAssertEqual(
@@ -189,17 +213,6 @@ private enum UITestTiming {
         timeout: UITestTiming.transition
       ),
       .completed
-    )
-  }
-}
-
-@MainActor private struct StatisticsScreen {
-  let app: XCUIApplication
-  var decisionCount: String { app.staticTexts["statistics.decisions"].value as? String ?? "" }
-  func close() {
-    app.buttons["statistics.done"].click()
-    XCTAssertTrue(
-      app.buttons["activity.statistics"].waitForExistence(timeout: UITestTiming.transition)
     )
   }
 }
@@ -244,6 +257,27 @@ private enum UITestTiming {
     app.menuButtons["correction.domain"].click()
     app.menuItems["correction.domain.allow"].click()
     waitForCorrection("inbox")
+  }
+
+  func undoLatestCorrection() {
+    let undo = app.buttons["correction.undo"]
+    XCTAssertTrue(undo.waitForExistence(timeout: UITestTiming.transition))
+    undo.click()
+    let confirm = app.buttons["correction.undo.confirm"]
+    XCTAssertTrue(confirm.waitForExistence(timeout: UITestTiming.transition))
+    confirm.click()
+    XCTAssertEqual(
+      XCTWaiter.wait(
+        for: [
+          XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false"),
+            object: undo
+          )
+        ],
+        timeout: UITestTiming.transition
+      ),
+      .completed
+    )
   }
 
   private func waitForCorrection(_ label: String) {

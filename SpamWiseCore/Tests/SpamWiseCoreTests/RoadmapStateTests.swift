@@ -101,6 +101,7 @@ import SpamWiseCore
     try await RuleManagement.importRules(invalid, store: store)
   }
   #expect(try await StateRepository.load(store).rules == before.rules)
+  #expect(try await StateRepository.load(store).auditEvents?.count == before.auditEvents?.count)
   let exported = try RuleManagement.exportRules(before.rules)
   let other = try testStore()
   try await RuleManagement.importRules(exported, store: other)
@@ -115,6 +116,58 @@ import SpamWiseCore
   #expect(changed.rules.count == 1)
   #expect(changed.rules.first?.disposition == .block)
   #expect(changed.revision > before.revision)
+  #expect(changed.auditEvents?.last?.kind == .senderRule)
+  var content = ContentRule(); content.pattern = "newsletter"
+  let contentArchive = try ContentRuleManagement.exportRules([content])
+  try await ContentRuleManagement.importRules(contentArchive, store: store)
+  try await ContentRuleManagement.importRules(contentArchive, store: store)
+  #expect(try await StateRepository.load(store).contentRules?.count == 1)
+  content.pattern = "["; content.operation = .regularExpression
+  #expect(throws: ContentRuleError.invalid) { try ContentRuleManagement.exportRules([content]) }
+}
+
+@Test func `imports deduplicated corpus labels without rules and forgets linked learning`()
+  async throws
+{
+  let store = try testStore()
+  try await RuleManagement.save(
+    scope: .address,
+    value: "friend@example.org",
+    disposition: .allow,
+    store: store
+  )
+  let message = try MIMEParser().parse(fixture("filler-spam"))
+  var examples = (0..<20).map { index in
+    var sample = message
+    sample.subject = "Corpus example \(index)"
+    sample.hash = stableHash(Data(sample.subject.utf8))
+    return sample
+  }
+  try await CorpusManagement.importMessages(examples, label: .junk, store: store)
+  examples[0].hash = "different delivery"
+  try await CorpusManagement.importMessages([examples[0]], label: .inbox, store: store)
+  let state = try await StateRepository.load(store)
+  let labels = try #require(state.reviewedLabels)
+  #expect(labels.count == 20)
+  #expect(state.rules.count == 1)
+  #expect(state.records.isEmpty)
+  let heldOut = labels.filter(\.heldOut)
+  #expect(!heldOut.isEmpty)
+  #expect(
+    heldOut.allSatisfy { label in !state.corrections.contains { $0.sampleID == label.sampleID } }
+  )
+  #expect(state.learning?.samples.allSatisfy { $0.partition == .training } == true)
+  let last = try #require(labels.last)
+  #expect(last.label == .inbox)
+  #expect(last.message == nil)
+  try await CorpusManagement.relabel(id: last.id, label: .review, store: store)
+  #expect(try await StateRepository.load(store).reviewedLabels?.last?.label == .review)
+  try await CorpusManagement.forget(id: last.id, store: store)
+  let forgotten = try await StateRepository.load(store)
+  #expect(forgotten.reviewedLabels?.count == 19)
+  #expect(!forgotten.corrections.contains { $0.sampleID == last.sampleID })
+  #expect(forgotten.learning?.samples.contains { $0.id == last.sampleID } == false)
+  #expect(forgotten.rules == state.rules)
 }
 
 @Test func `bounds concurrent budget reservations by the configured cap`() async throws {

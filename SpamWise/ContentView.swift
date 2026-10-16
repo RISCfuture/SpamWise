@@ -24,6 +24,9 @@ private struct ActivityView: View {
   @State private var showsInspector = false
   @State private var query = ActivityQuery()
   @State private var showsStatistics = false
+  @State private var showsAudit = false
+  @State private var showsCorpus = false
+  @State private var showsDates = false
 
   private var selected: DecisionRecord? {
     model.state.records.first { $0.id == selection }
@@ -101,8 +104,13 @@ private struct ActivityView: View {
             Button("Today") {
               query.start = Calendar.current.startOfDay(for: .now); query.end = nil
             }
+            Button("Date range…") { showsDates = true }
             Button("Clear filters") { query = ActivityQuery() }
-          }
+            Divider()
+            Button("Configuration history") { showsAudit = true }
+            Button("Reviewed corpus") { showsCorpus = true }
+              .accessibilityIdentifier("activity.corpus")
+          }.accessibilityIdentifier("activity.filter")
         }
         ToolbarItem {
           Button("Statistics") { showsStatistics = true }
@@ -129,6 +137,9 @@ private struct ActivityView: View {
     .sheet(isPresented: $model.showJunk) { MailReviewView(model: model) }
     .sheet(isPresented: $model.showPreview) { MessagePreviewView(text: model.previewText) }
     .sheet(isPresented: $showsStatistics) { ActivityStatisticsView(model: model) }
+    .sheet(isPresented: $showsAudit) { AuditTrailView(model: model) }
+    .sheet(isPresented: $showsCorpus) { CorpusView(model: model) }
+    .sheet(isPresented: $showsDates) { ActivityDateFilterView(query: $query) }
   }
 }
 

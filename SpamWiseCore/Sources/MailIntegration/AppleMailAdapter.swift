@@ -126,7 +126,7 @@ public actor AppleMailAdapter: MailClientAdapter {
     self.runner = runner
     self.moveSettlingTime = max(.zero, moveSettlingTime)
   }
-  private static func envelope(_ value: ScriptValue) throws -> MailEnvelope {
+  static func envelope(_ value: ScriptValue) throws -> MailEnvelope {
     guard let fields = value.list, fields.count == 5, let account = fields[0].string,
       !account.isEmpty,
       let box = fields[1].string, let id = fields[2].integer, let messageID = fields[3].string,
@@ -143,6 +143,9 @@ public actor AppleMailAdapter: MailClientAdapter {
       ),
       raw: raw
     )
+  }
+  func runFolderScript(_ source: String) async throws -> ScriptValue {
+    try await runner.run(source)
   }
   /// Reads Mail account identifiers and display names.
   public func accounts() async throws -> [MailAccount] {

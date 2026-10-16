@@ -82,6 +82,8 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var revision: Int
   /// The user's explicit replacement label, if corrected.
   public var correctedLabel: MailLabel?
+  /// Whether a later explicit undo restored this correction's rules and learning only.
+  public var correctionUndone: Bool?
   /// Creates a DecisionRecord with the supplied configuration.
   public init(
     identity: MessageIdentity,
@@ -161,6 +163,14 @@ public struct AppState: Codable, Sendable {
   public var contentRules: [ContentRule]?
   /// Counts of winning content rules, independent of Activity retention.
   public var contentRuleHits: [UUID: Int]?
+  /// At-most-once corrections for observed placements in dedicated training folders.
+  public var trainingClaims: [String: UUID]?
+  /// Identities observed during an unfinished training-folder sweep.
+  public var trainingObservations: [String: Set<String>]?
+  /// Bounded settings, rule and correction revision trail.
+  public var auditEvents: [AuditEvent]?
+  /// The latest unchanged correction's bounded undo snapshot.
+  public var correctionUndo: CorrectionUndo?
   /// Recent explicit user corrections used as quoted examples.
   public var corrections: [CorrectionExample] = []
   /// Bounded Activity log of decisions and outcomes.
@@ -230,10 +240,11 @@ public enum StateRepository {
   /// Applies a field-level edit to current preferences and invalidates stale classification work.
   public static func editSettings(
     _ store: Store,
-    _ edit: @Sendable (inout Settings) -> Void
+    _ edit: @Sendable (inout Settings) throws -> Void
   ) async throws {
     try await update(store) { state in
-      edit(&state.settings)
+      try edit(&state.settings)
+      state.correctionUndo = nil
       state.settings.correctionLimit = min(
         correctionLimitRange.upperBound,
         max(correctionLimitRange.lowerBound, state.settings.correctionLimit)
@@ -250,6 +261,7 @@ public enum StateRepository {
       if state.settings.validatedAccounts.isEmpty { state.settings.dryRun = true }
       state.revision += 1
       state.retries.removeAll()
+      state.audit(.settings, detail: String(localized: "Filtering or integration settings changed"))
     }
   }
   /// Atomically reads, modifies, and commits a shared value.

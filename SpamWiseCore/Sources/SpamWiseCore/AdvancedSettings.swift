@@ -75,6 +75,8 @@ public struct ExternalEvidenceSettings: Codable, Sendable, Equatable {
 
 /// An explicit user label; automatic mailbox placement is not ground truth.
 public struct ReviewedLabel: Codable, Sendable, Identifiable {
+  /// Human action that supplied the label; legacy labels came from corrections.
+  public var origin: Origin?
   /// Original account-scoped message identity.
   public var identity: MessageIdentity
   /// Human-selected label, including graymail represented as Review.
@@ -113,8 +115,13 @@ public struct ReviewedLabel: Codable, Sendable, Identifiable {
       message: try values.decodeIfPresent(ParsedMessage.self, forKey: .message),
       sampleID: try values.decodeIfPresent(String.self, forKey: .sampleID)
     )
+    origin = try values.decodeIfPresent(Origin.self, forKey: .origin)
   }
-  private enum CodingKeys: String, CodingKey { case identity, label, date, message, sampleID }
+  /// Explicit human label sources; predictions have separate learning provenance.
+  public enum Origin: String, Codable, Sendable { case correction, reviewedImport }
+  private enum CodingKeys: String, CodingKey {
+    case identity, label, date, message, sampleID, origin
+  }
 }
 
 /// Local weekly summary; it never sends mail or changes message state.

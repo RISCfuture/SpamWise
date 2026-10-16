@@ -31,6 +31,7 @@ struct MailConnectionView: View {
           "Explicit sender rules still take precedence. Check Mail connection to refresh your account addresses."
         )
         .foregroundStyle(.secondary)
+        TrustExclusionsView(model: model)
         Button("Import Inbox and Sent history") { model.importHistory() }
           .frame(maxWidth: .infinity, alignment: .leading)
       }

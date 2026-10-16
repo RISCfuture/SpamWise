@@ -16,10 +16,24 @@ public struct ParsedMessage: Codable, Sendable, Equatable {
   public var urls: [String]
   /// SHA-256 digest of the original message bytes.
   public var hash: String
+  /// Bounded attachment header claims; names are never interpreted as local paths.
+  public var attachments: [AttachmentMetadata]?
   /// RFC Message-ID claim, which is not globally unique or trusted.
   public var messageID: String? { headers["message-id"]?.first }
   /// Returns the first value for a case-insensitive header name.
   public func header(_ name: String) -> String? { headers[name.lowercased()]?.first }
+}
+/// Untrusted attachment labels extracted without opening attachment content.
+public struct AttachmentMetadata: Codable, Sendable, Equatable {
+  /// Declared MIME type, independent of filename extension.
+  public var mediaType: String
+  /// Declared filename, bounded to 256 characters.
+  public var filename: String?
+  /// Creates untrusted metadata for explicit user rules.
+  public init(mediaType: String, filename: String?) {
+    self.mediaType = String(mediaType.prefix(256))
+    self.filename = filename.map { String($0.prefix(256)) }
+  }
 }
 /// Failures that prevent safe interpretation of message content.
 public protocol MessageParsingError: Error {}

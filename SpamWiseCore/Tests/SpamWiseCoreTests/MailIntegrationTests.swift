@@ -110,6 +110,13 @@ final class Counter: Sendable {
     contentHash: "test"
   )
   let scripts = [
+    MailScripts.folders,
+    try MailScripts.folderPage(
+      .init(accountID: "account", path: ["Parent", "Quot\"ed"]),
+      offset: 0,
+      limit: 20,
+      since: Date()
+    ),
     MailScripts.accounts, MailScripts.selected, MailScripts.selectedBatch,
     MailScripts.recent(limit: 5, offset: 20),
     MailScripts.accountPage(accountID: "test-account", offset: 20, limit: 5),

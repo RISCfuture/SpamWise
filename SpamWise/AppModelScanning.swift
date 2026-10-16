@@ -62,6 +62,7 @@ extension AppModel {
       }
       await refresh()
     }
+    try await scanConfiguredFolders(with: pipeline, dryRun: dryRun, limit: limit)
     status = String(localized: "Mail sweep updated. See Accounts for scan health.")
   }
   private func prepareScan(automatic: Bool) async {
@@ -89,7 +90,7 @@ extension AppModel {
     }
     return ScanBatch(adapter: adapter, messages: messages, retryAccountID: nil)
   }
-  private func classify(
+  func classify(
     _ batch: ScanBatch,
     with pipeline: Pipeline,
     dryRun: Bool,

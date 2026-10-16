@@ -198,7 +198,8 @@ public struct MIMEParser: Sendable {
       subject: try Self.decodeWords(headers["subject"]?.first ?? "(No subject)"),
       text: String(content.text.prefix(Self.maximumTextCharacters)),
       urls: Array(Set(content.urls)).sorted().prefix(Self.maximumURLs).map { $0 },
-      hash: stableHash(data)
+      hash: stableHash(data),
+      attachments: content.attachments
     )
   }
 
@@ -241,8 +242,16 @@ public struct MIMEParser: Sendable {
     let mime = contentType.components(separatedBy: ";")[0].lowercased().trimmingCharacters(
       in: .whitespaces
     )
-    if headers["content-disposition"]?.first?.lowercased().hasPrefix("attachment") == true {
-      return Content(text: "", urls: [], plain: false)
+    let disposition = headers["content-disposition"]?.first ?? ""
+    if disposition.lowercased().hasPrefix("attachment") {
+      let filename =
+        Self.parameter("filename", in: disposition) ?? Self.parameter("name", in: contentType)
+      return Content(
+        text: "",
+        urls: [],
+        plain: false,
+        attachments: [.init(mediaType: mime, filename: try filename.map(Self.decodeWords))]
+      )
     }
     if mime.hasPrefix("multipart/") {
       guard let boundary = Self.parameter("boundary", in: contentType), !boundary.isEmpty,
@@ -266,7 +275,8 @@ public struct MIMEParser: Sendable {
         text: mime == "multipart/alternative"
           ? Self.alternativeText(contents) : contents.map(\.text).joined(separator: "\n"),
         urls: contents.flatMap(\.urls),
-        plain: contents.contains(where: \.plain)
+        plain: contents.contains(where: \.plain),
+        attachments: contents.flatMap(\.attachments)
       )
     }
     guard ["text/plain", "text/html"].contains(mime) else {
@@ -300,5 +310,10 @@ public struct MIMEParser: Sendable {
     )
   }
 
-  private struct Content { var text: String; var urls: [String]; var plain: Bool }
+  private struct Content {
+    var text: String
+    var urls: [String]
+    var plain: Bool
+    var attachments: [AttachmentMetadata] = []
+  }
 }

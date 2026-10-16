@@ -21,7 +21,8 @@ extension Pipeline {
     recordID: UUID,
     label: MailLabel,
     scope: RuleScope = .address,
-    adapter: (any MailClientAdapter)? = nil
+    adapter: (any MailClientAdapter)? = nil,
+    trainingPlanID: String? = nil
   ) async throws -> DecisionRecord {
     guard label != .review || scope == .address else { throw ClassificationError.invalidOutput }
     let record = try await StateRepository.update(store) { state -> DecisionRecord in
@@ -29,6 +30,13 @@ extension Pipeline {
         throw IntegrationError.unavailable
       }
       let previous = state.records[index]
+      let before = state
+      let trainingKey = try TrainingFolders.claimKey(
+        planID: trainingPlanID,
+        label: label,
+        identity: previous.identity,
+        state: state
+      )
       guard let address = MIMEParser.address(previous.sender) else {
         throw IntegrationError.unavailable
       }
@@ -72,7 +80,21 @@ extension Pipeline {
         revision: state.revision
       )
       correction.correctedLabel = label
+      state.correctionUndo = CorrectionUndo(
+        state: before,
+        source: previous,
+        recordID: correction.id,
+        revision: state.revision
+      )
       state.record(correction)
+      state.audit(
+        .correction,
+        detail: String(localized: "\(scope.rawValue): \(address) → \(label.rawValue)")
+      )
+      if let trainingKey {
+        if state.trainingClaims == nil { state.trainingClaims = [:] }
+        state.trainingClaims?[trainingKey] = correction.id
+      }
       return correction
     }
     try await recordReviewedLabel(record, label: label, adapter: adapter)
@@ -99,6 +121,9 @@ extension Pipeline {
     let reviewedMessage = message
     try await StateRepository.update(store) { state in
       guard state.revision == record.revision else { return }
+      if let reviewedMessage, let index = state.corrections.indices.last {
+        state.corrections[index].sampleID = LearningSample.identity(for: reviewedMessage)
+      }
       var labels = state.reviewedLabels ?? []
       labels.removeAll { $0.id == record.identity.contentHash }
       labels.append(
@@ -118,6 +143,10 @@ extension Pipeline {
           label: label
         )
         state.learning = learning
+      }
+      if state.correctionUndo?.recordID == record.id {
+        let digest = try CorrectionUndo.digest(state)
+        state.correctionUndo?.expectedDigest = digest
       }
     }
   }

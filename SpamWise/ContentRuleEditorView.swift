@@ -1,12 +1,16 @@
 import SwiftUI
 import SpamWiseCore
 import MailIntegration
+import UniformTypeIdentifiers
 
 struct ContentRuleEditorView: View {
   let model: AppModel
   @State private var selection: UUID?
   @State private var editing: ContentRule?
   @State private var showsEditor = false
+  @State private var importing = false
+  @State private var exporting = false
+  @State private var archive: RulesDocument?
   @Environment(\.dismiss) private var dismiss
 
   private var rules: [ContentRule] {
@@ -33,6 +37,15 @@ struct ContentRuleEditorView: View {
         }
         .disabled(selection == nil)
         Button("Remove", role: .destructive) { remove() }.disabled(selection == nil)
+        Menu("Transfer") {
+          Button("Import content rules…") { importing = true }
+          Button("Export content rules…") {
+            model.run {
+              archive = try RulesDocument(data: ContentRuleManagement.exportRules(rules))
+              exporting = true
+            }
+          }
+        }
         Spacer()
         Button("Done") { dismiss() }
       }.disabled(model.busy)
@@ -40,6 +53,28 @@ struct ContentRuleEditorView: View {
       .sheet(isPresented: $showsEditor) {
         ContentRuleFormView(model: model, rule: editing ?? ContentRule())
       }
+      .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
+        if case .success(let url) = result { importRules(url) }
+      }
+      .fileExporter(
+        isPresented: $exporting,
+        document: archive,
+        contentType: .json,
+        defaultFilename: "SpamWise-content-rules"
+      ) { result in
+        if case .failure = result { model.status = String(localized: "Rule export failed.") }
+      }
+  }
+  private func importRules(_ url: URL) {
+    model.run {
+      guard let store = model.store else { throw IntegrationError.unavailable }
+      let scoped = url.startAccessingSecurityScopedResource()
+      defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+      let file = try FileHandle(forReadingFrom: url)
+      defer { try? file.close() }
+      let data = try file.read(upToCount: 1_000_001) ?? Data()
+      try await ContentRuleManagement.importRules(data, store: store)
+    }
   }
   private func remove() {
     guard let selection else { return }
@@ -115,6 +150,9 @@ struct ContentRuleFormView: View {
       } else {
         result = String(localized: "This rule does not win for the selected message.")
       }
+      if matches.count > 1 {
+        result += " " + String(localized: "Matching content rules: \(matches.count). Newest wins.")
+      }
     }
   }
 }
@@ -128,6 +166,8 @@ extension ContentRuleField {
       case .recipients: String(localized: "Recipients")
       case .replyTo: String(localized: "Reply-To")
       case .contentType: String(localized: "Content type")
+      case .attachmentNames: String(localized: "Attachment names")
+      case .attachmentTypes: String(localized: "Attachment types")
     }
   }
 }

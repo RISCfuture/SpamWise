@@ -93,6 +93,8 @@ public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {
   public var label: MailLabel
   /// Short explanation of the evidence or policy behind this result.
   public var reason: String?
+  /// Content identity for forgetting an explicitly linked training example.
+  public var sampleID: String?
   /// Creates a CorrectionExample with the supplied configuration.
   public init(
     sender: String,

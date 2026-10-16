@@ -4,8 +4,14 @@ import MailIntegration
 
 struct MailHealthView: View {
   let model: AppModel
+  @State private var showsFolders = false
 
   var body: some View {
+    Button("Configure folders…") {
+      showsFolders = true; model.discoverFolders()
+    }
+    .disabled(model.busy)
+    .sheet(isPresented: $showsFolders) { FolderSettingsView(model: model) }
     if model.accounts.isEmpty {
       Text("Check Mail connection to discover accounts.")
     }

@@ -250,6 +250,28 @@ public struct LearningState: Codable, Sendable, Equatable {
   public func campaignMatch(for message: ParsedMessage) -> CampaignMatch? {
     CampaignContent.match(message: message, fingerprints: fingerprints)
   }
+  /// Removes one explicit sample and its campaign signature without changing sender rules.
+  public mutating func forget(sampleID: String) {
+    samples.removeAll { $0.id == sampleID }
+    fingerprints.removeAll { $0.id == sampleID }
+  }
+  /// Relabels retained features without requiring a body; campaign signatures are withdrawn.
+  public mutating func relabel(sampleID: String, label: MailLabel, date: Date = .now) {
+    guard let sample = samples.first(where: { $0.id == sampleID }) else { return }
+    forget(sampleID: sampleID)
+    samples.append(
+      LearningSample(
+        id: sample.id,
+        date: date,
+        label: label,
+        provenance: .explicitCorrection,
+        partition: sample.partition,
+        tokens: sample.tokens,
+        features: sample.features
+      )
+    )
+    enforceBounds()
+  }
 
   /// Computes bounded statistical estimates only after minimum reviewed-data gates pass.
   public func estimate(message: ParsedMessage, evidence: EvidenceBundle) -> LearningEstimate {

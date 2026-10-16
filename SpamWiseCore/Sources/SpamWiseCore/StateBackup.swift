@@ -72,6 +72,7 @@ public enum StateBackup {
     } catch { throw BackupError.invalidArchive }
     try await StateRepository.update(store) { state in
       state.rules = payload.rules
+      state.correctionUndo = nil
       state.contentRules = payload.contentRules
       state.corrections = payload.corrections
       state.learning = payload.learning
@@ -88,6 +89,10 @@ public enum StateBackup {
       state.settings.route = .unverified
       state.retries = []
       state.revision += 1
+      state.audit(
+        .backupRestore,
+        detail: String(localized: "Restored portable learning state; actions paused")
+      )
     }
   }
   private static func key(_ encoded: String) throws -> SymmetricKey {

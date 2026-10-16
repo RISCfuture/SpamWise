@@ -66,6 +66,10 @@ public enum RuleManagement {
       state.rules = Gates.replacing(rule, in: state.rules)
       guard state.rules.count <= maximumRules else { throw RuleManagementError.tooManyRules }
       state.revision += 1; state.retries.removeAll()
+      state.audit(
+        .senderRule,
+        detail: String(localized: "Saved \(rule.id): \(rule.disposition.rawValue)")
+      )
     }
   }
   /// Removes only the selected scoped rule; existing mail actions are not reversed.
@@ -73,6 +77,7 @@ public enum RuleManagement {
     try await StateRepository.update(store) { state in
       state.rules.removeAll { $0.id == id }
       state.revision += 1; state.retries.removeAll()
+      state.audit(.senderRule, detail: String(localized: "Removed \(id)"))
     }
   }
   /// Serializes rules without mail bodies, API keys or correction examples.
@@ -102,6 +107,7 @@ public enum RuleManagement {
       for rule in rules { state.rules = Gates.replacing(rule, in: state.rules) }
       guard state.rules.count <= maximumRules else { throw RuleManagementError.tooManyRules }
       state.revision += 1; state.retries.removeAll()
+      state.audit(.senderRule, detail: String(localized: "Imported \(rules.count) sender rules"))
     }
   }
   private struct Archive: Codable { var version = 1; var rules: [SenderRule] }

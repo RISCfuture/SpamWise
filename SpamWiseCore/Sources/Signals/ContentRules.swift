@@ -3,7 +3,7 @@ public import MessageModel
 
 /// Message fields eligible for explicit content rules.
 public enum ContentRuleField: String, Codable, Sendable, CaseIterable {
-  case subject, body, listID, recipients, replyTo, contentType
+  case subject, body, listID, recipients, replyTo, contentType, attachmentNames, attachmentTypes
 }
 /// Supported bounded match operators.
 public enum ContentRuleOperator: String, Codable, Sendable, CaseIterable {
@@ -63,7 +63,7 @@ public enum ContentRules {
   /// Checks syntax and resource limits without evaluating any message.
   public static func validate(_ rule: ContentRule) throws {
     guard !rule.pattern.isEmpty, rule.pattern.count <= maximumPatternCharacters,
-      rule.note.count <= maximumNoteCharacters
+      rule.note.count <= maximumNoteCharacters, rule.updatedAt.timeIntervalSince1970.isFinite
     else { throw ContentRuleError.invalid }
     if rule.operation == .regularExpression {
       do { _ = try NSRegularExpression(pattern: rule.pattern, options: .caseInsensitive) } catch {
@@ -83,7 +83,8 @@ public enum ContentRules {
     }) {
       try validate(rule)
       guard ContinuousClock.now < deadline else { throw ContentRuleError.timeout }
-      let text = String(value(rule.field, message: message).prefix(maximumInputCharacters))
+      let text = value(rule.field, message: message)
+      guard text.count <= maximumInputCharacters else { throw ContentRuleError.invalid }
       let match: Bool
       switch rule.operation {
         case .contains: match = text.range(of: rule.pattern, options: .caseInsensitive) != nil
@@ -103,6 +104,9 @@ public enum ContentRules {
         ((message.headers["to"] ?? []) + (message.headers["cc"] ?? [])).joined(separator: "\n")
       case .replyTo: message.header("reply-to") ?? ""
       case .contentType: message.header("content-type") ?? ""
+      case .attachmentNames:
+        (message.attachments ?? []).compactMap(\.filename).joined(separator: "\n")
+      case .attachmentTypes: (message.attachments ?? []).map(\.mediaType).joined(separator: "\n")
     }
   }
   private static func regex(_ pattern: String, text: String, deadline: ContinuousClock.Instant)
