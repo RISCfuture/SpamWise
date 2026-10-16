@@ -14,9 +14,22 @@ import ClaudeForFoundationModels
 public struct ClaudeClassifier: Classifier {
   /// The explicitly selected Claude model identifier.
   public static let modelID = "claude-haiku-5-5"
+  private let selectedModel: ClaudeModel
+  /// Creates an explicitly selected supported model for evaluation; the app defaults to Haiku 5.5.
+  public init(modelID: String, key: @escaping @Sendable () throws -> String) throws {
+    switch modelID {
+      case "claude-haiku-5-5": selectedModel = .haiku5_5
+      case "claude-sonnet-5-5": selectedModel = .sonnet5_5
+      case "claude-opus-5-5": selectedModel = .opus5_5
+      default: throw ClassificationError.configuration
+    }
+    self.key = key
+  }
   private let key: @Sendable () throws -> String
   /// Creates a ClaudeClassifier with the supplied configuration.
-  public init(key: @escaping @Sendable () throws -> String) { self.key = key }
+  public init(key: @escaping @Sendable () throws -> String) {
+    self.key = key; selectedModel = .haiku5_5
+  }
   /// Produces a validated verdict or throws without requesting a mail action.
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
     let credential = try key()
@@ -27,7 +40,7 @@ public struct ClaudeClassifier: Classifier {
     do {
       return try await withDeadline(seconds: input.timeout) {
         let model = ClaudeLanguageModel(
-          name: .haiku5_5,
+          name: selectedModel,
           auth: .apiKey(credential),
           fixedEffort: .low,
           fallbacks: [],

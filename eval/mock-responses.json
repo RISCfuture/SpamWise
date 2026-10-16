@@ -1,0 +1,57 @@
+{
+  "469810594d0eb1a8e9b71bd1e98efe04eb0da7a7973fd8a9ff6a6ff4c467695c": {
+    "label": "junk",
+    "confidence": 99,
+    "reason": "Synthetic fixture mock; not a live model result",
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "estimated": true
+    }
+  },
+  "33ba66d1d1a68284381c78af3f4eb3d70eccd1d967ece8d76711148176239a40": {
+    "label": "junk",
+    "confidence": 99,
+    "reason": "Synthetic fixture mock; not a live model result",
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "estimated": true
+    }
+  },
+  "69bd190417e90b8712298827dbd369b4b1a77c7f22ebf4ee4763e80d618f02b6": {
+    "label": "review",
+    "confidence": 99,
+    "reason": "Synthetic fixture mock; not a live model result",
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "estimated": true
+    }
+  },
+  "a940251af1d8114e86dd01522df04dce9fc33b40483668e6e47f818054e92a42": {
+    "label": "inbox",
+    "confidence": 99,
+    "reason": "Synthetic fixture mock; not a live model result",
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "estimated": true
+    }
+  },
+  "cf980b0c9e21815b983e7d07acc9cd4b6bd63303efe4e96f75f49111cdfcb30d": {
+    "label": "inbox",
+    "confidence": 99,
+    "reason": "Synthetic fixture mock; not a live model result",
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "estimated": true
+    }
+  }
+}

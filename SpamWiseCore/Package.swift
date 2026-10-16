@@ -24,8 +24,9 @@ let package = Package(
         .target(name: "Store", dependencies: ["MessageModel", "Signals", "Classifier", "Decision"]),
         .target(name: "SpamWiseCore", dependencies: ["MessageModel", "Signals", "Classifier", "Decision", "Store"]),
         .target(name: "MailIntegration", dependencies: ["SpamWiseCore"]),
-        .executableTarget(name: "SpamWiseEval", dependencies: ["SpamWiseCore", "MailIntegration"]),
-        .testTarget(name: "SpamWiseCoreTests", dependencies: ["SpamWiseCore", "MailIntegration"], resources: [.copy("Fixtures")])
+        .target(name: "Evaluation", dependencies: ["SpamWiseCore"]),
+        .executableTarget(name: "SpamWiseEval", dependencies: ["SpamWiseCore", "MailIntegration", "Evaluation"]),
+        .testTarget(name: "SpamWiseCoreTests", dependencies: ["SpamWiseCore", "MailIntegration", "Evaluation"], resources: [.copy("Fixtures")])
     ],
     swiftLanguageModes: [.v6]
 )

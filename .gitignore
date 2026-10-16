@@ -4,3 +4,4 @@ DerivedData/
 .superpowers/
 *.xcuserstate
 xcuserdata/
+.spamwise-eval-cache/
