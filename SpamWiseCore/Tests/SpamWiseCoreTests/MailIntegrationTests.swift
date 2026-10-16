@@ -56,7 +56,7 @@ final class Counter: Sendable {
     contentHash: "test"
   )
   let scripts = [
-    MailScripts.accounts, MailScripts.selected, MailScripts.recent(limit: 5),
+    MailScripts.accounts, MailScripts.selected, MailScripts.recent(limit: 5, offset: 20),
     try MailScripts.lookup(identity),
     try MailScripts.lookup(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody")
   ]
@@ -83,10 +83,47 @@ private struct HistoryEvents: AppleEventRunner {
   let adapter = AppleMailAdapter(runner: HistoryEvents())
   var old = HistoryIndex()
   old.received["prior.example"] = 4
+  let excluded = try await adapter.importHistory(
+    previous: ["account": old],
+    eligibleInbox: [],
+    incremental: true
+  )
+  #expect(excluded["account"]?.receipts.isEmpty == true)
   let first = try await adapter.importHistory(previous: ["account": old])
   let second = try await adapter.importHistory(previous: first)
   #expect(second["account"]?.received["prior.example"] == 4)
   #expect(second["account"]?.received["example.org"] == 1)
   #expect(second["account"]?.receipts["example.org"] == 1)
   #expect(second["account"]?.availability == .partial)
+}
+
+private actor PagedEvents: AppleEventRunner {
+  private var offsets: [Int] = []
+  func run(_ source: String) async throws -> ScriptValue {
+    let marker = "set firstIndex to "
+    guard let start = source.range(of: marker)?.upperBound,
+      let first = Int(source[start...].prefix(while: \.isNumber))
+    else {
+      throw IntegrationError.scriptFailed
+    }
+    offsets.append(first)
+    if first > 21 { return .list([]) }
+    return .list(
+      (first...min(21, first + 19)).map { index in
+        .list([
+          .string("account"), .string("Inbox"), .integer(index), .string("id-\(index)"),
+          .string("From: person@example.org\nSubject: Message \(index)\n\nHello")
+        ])
+      }
+    )
+  }
+}
+@Test func `inbox sweeps advance beyond retained first page and wrap`() async throws {
+  let adapter = AppleMailAdapter(runner: PagedEvents())
+  let first = try await adapter.nextInboxMessages(limit: 20)
+  let second = try await adapter.nextInboxMessages(limit: 20)
+  let wrapped = try await adapter.nextInboxMessages(limit: 20)
+  #expect(first.count == 20)
+  #expect(second.map { $0.identity.localID } == [21])
+  #expect(wrapped.map { $0.identity.key } == first.map { $0.identity.key })
 }

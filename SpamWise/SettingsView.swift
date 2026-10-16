@@ -3,12 +3,15 @@ import SpamWiseCore
 
 struct SettingsView: View {
   @Bindable var model: AppModel
-  func binding<T>(_ key: WritableKeyPath<SpamWiseCore.Settings, T>) -> Binding<T> {
+  func binding<T: Sendable>(_ key: any WritableKeyPath<SpamWiseCore.Settings, T> & Sendable)
+    -> Binding<
+      T
+    >
+  {
     Binding(
       get: { model.state.settings[keyPath: key] },
       set: { value in
-        var settings = model.state.settings; settings[keyPath: key] = value
-        model.saveSettings(settings)
+        model.setSetting(key, to: value)
       }
     )
   }
@@ -119,8 +122,7 @@ struct PolicyView: View {
         Button("Reset to default") { policy = PromptBuilder.defaultPolicy }
         Spacer()
         Button("Save preferences") {
-          var settings = model.state.settings; settings.policy = policy
-          model.saveSettings(settings)
+          model.setSetting(\.policy, to: policy)
         }.disabled(policy.count > 4000)
       }
       HelpButton(page: "how-decisions-are-made")

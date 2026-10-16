@@ -12,6 +12,7 @@ Requires Xcode 27, Swift 6.4, macOS 27, `swiftlint`, `xcbeautify`, `shellcheck`,
 agent-lock worker
 # Use the printed token consistently for this session.
 bash Scripts/check.sh <worker-token>
+bash Scripts/store-check.sh <worker-token>
 swiftlint lint --strict --no-cache
 shellcheck Scripts/*.sh
 markdownlint-cli2 --config ~/.markdownlint-cli2.jsonc --fix README.md CLAUDE.md TODO.md docs/evaluation.md docs/packaging.md
@@ -26,7 +27,7 @@ Use `swift format format -i -r SpamWise SpamWiseCore/Sources SpamWiseCore/Tests 
 
 Open `SpamWise.xcodeproj` and run the SpamWise scheme with signing configured for team `2NFSK2WB24`. Complete the four setup steps. API verification sends a synthetic message; recent-mail dry run sends eligible message context to Anthropic. The key is stored in Keychain only after successful verification. Contacts is optional. Do not grant Full Disk Access.
 
-For mail actions, select an explicitly disposable message beginning `[SpamWise Probe]`, run the account probe in Settings, install the bundled Mail rule script as described in Help, and review dry-run results before disabling dry run. Keep SpamWise running. The Inbox scanner does not automatically process server-routed Junk.
+For mail actions, select an explicitly disposable message beginning `[SpamWise Probe]`, run the account probe in Settings, install the bundled Mail rule script as described in Help, and review dry-run results before disabling dry run. Keep SpamWise running. Automatic scans advance through Inbox pages and repeat sweeps; large mailboxes and mailbox changes can delay discovery. Authorized Contacts refresh hourly, and bounded Sent/Inbox history updates run with automatic scans. The Inbox scanner does not automatically process server-routed Junk.
 
 ## Evaluation and packaging
 

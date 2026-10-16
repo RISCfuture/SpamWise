@@ -111,3 +111,20 @@ actor StubRDAP: HTTPFetcher {
   } catch {}
   #expect(try await first.read("rules", default: [SenderRule]()).count == 1)
 }
+
+@Test func `field edits preserve safety settings and validated accounts`() async throws {
+  let store = try testStore()
+  try await enableActions(store)
+  try await StateRepository.editSettings(store) {
+    $0.paused = true; $0.dryRun = true
+  }
+  try await StateRepository.editSettings(store) {
+    $0.strength = .aggressive; $0.bodyTokenBudget = 50_000
+  }
+  let state = try await StateRepository.load(store)
+  #expect(state.settings.paused)
+  #expect(state.settings.dryRun)
+  #expect(state.settings.validatedAccounts == ["account-A"])
+  #expect(state.settings.bodyTokenBudget == 4000)
+  #expect(state.revision == 2)
+}

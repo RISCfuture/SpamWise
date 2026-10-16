@@ -36,13 +36,30 @@ public struct MIMEParser: Sendable {
 
   /// Extracts a normalized mailbox address from a header value.
   public static func address(_ value: String) -> String? {
-    let hits = matches(
-      #"[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9.-]*[A-Z0-9])?"#,
-      value,
-      options: .caseInsensitive
-    )
-    guard hits.count == 1 else { return nil }
-    return hits[0][0].lowercased()
+    let mailbox = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    let candidate: String
+    if let opening = mailbox.firstIndex(of: "<") {
+      guard mailbox.last == ">", mailbox.filter({ $0 == "<" }).count == 1,
+        mailbox.filter({ $0 == ">" }).count == 1
+      else { return nil }
+      let display = mailbox[..<opening].trimmingCharacters(in: .whitespaces)
+      guard !display.contains("@"), !display.contains("\n"), !display.contains("\r"),
+        !display.contains(",") || (display.first == "\"" && display.last == "\"")
+      else { return nil }
+      candidate = String(
+        mailbox[mailbox.index(after: opening)..<mailbox.index(before: mailbox.endIndex)]
+      )
+      .trimmingCharacters(in: .whitespaces)
+    } else {
+      candidate = mailbox
+    }
+    let atom = #"[A-Z0-9!#$%&'*+/=?^_`{|}~-]+"#
+    let label = #"[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?"#
+    let pattern = "\\A" + atom + "(?:\\." + atom + ")*@" + label + "(?:\\." + label + ")*\\z"
+    guard candidate.utf8.count <= 254,
+      matches(pattern, candidate, options: .caseInsensitive).count == 1
+    else { return nil }
+    return candidate.lowercased()
   }
 
   private func split(_ source: String) throws -> ([String: [String]], String) {
@@ -105,13 +122,11 @@ public struct MIMEParser: Sendable {
       guard closed, !parts.isEmpty else { throw ParseError.malformed }
       var contents: [Content] = []
       for p in parts { contents.append(try part(p, depth: depth + 1, count: &count)) }
-      let chosen =
-        mime == "multipart/alternative"
-        ? [contents.first(where: { $0.plain && !$0.text.isEmpty }) ?? contents.last!] : contents
       return Content(
-        text: chosen.map(\.text).joined(separator: "\n"),
+        text: mime == "multipart/alternative"
+          ? Self.alternativeText(contents) : contents.map(\.text).joined(separator: "\n"),
         urls: contents.flatMap(\.urls),
-        plain: chosen.contains(where: \.plain)
+        plain: contents.contains(where: \.plain)
       )
     }
     guard ["text/plain", "text/html"].contains(mime) else {
@@ -143,6 +158,24 @@ public struct MIMEParser: Sendable {
       urls: urls,
       plain: mime == "text/plain"
     )
+  }
+
+  private static func alternativeText(_ contents: [Content]) -> String {
+    var seen: Set<String> = []
+    var alternatives = contents.compactMap { content -> Substring? in
+      let normalized = content.text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+      guard !normalized.isEmpty, seen.insert(normalized).inserted else { return nil }
+      return content.text.prefix(100_000)
+    }
+    guard alternatives.count > 1 else { return alternatives.first.map(String.init) ?? "" }
+    var result = "MIME alternatives differ; all following text is untrusted.\n"
+    while alternatives.contains(where: { !$0.isEmpty }), result.count < 100_000 {
+      for index in alternatives.indices where !alternatives[index].isEmpty {
+        result += "[Alternative \(index + 1)] " + alternatives[index].prefix(128) + "\n"
+        alternatives[index] = alternatives[index].dropFirst(128)
+      }
+    }
+    return String(result.prefix(100_000))
   }
 
   private static func parameter(_ key: String, in value: String) -> String? {

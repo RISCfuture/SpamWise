@@ -140,6 +140,7 @@ public actor Pipeline {
     retry: (attempt: Int, dryRun: Bool)
   ) async {
     let (attempt, forceDryRun) = retry
+    guard !forceDryRun else { return }
     if let error = error as? ClassificationError, error.retryable, attempt < 3, !Task.isCancelled {
       var bounded = message; bounded.text = String(message.text.prefix(16_000))
       let retryMessage = bounded
@@ -339,7 +340,7 @@ public actor Pipeline {
         state.claimedActions[record.identity.key] = record.id
       }
       state.records[i] = record
-      state.retries.removeAll { $0.identity.key == record.identity.key }
+      if !forceDryRun { state.retries.removeAll { $0.identity.key == record.identity.key } }
       return record
     }
     guard claimed.outcome == .requested, let adapter else { return claimed }

@@ -25,6 +25,13 @@ func requiredFixtures(_ name: String) throws {
   #expect(message.urls.contains("https://shop.example.co.uk/order"))
 }
 @Test func `malformed fails open`() throws {
+  for sender in [
+    #""friend@example.org"@attacker.example"#, "friend@example.org trailing", "a..b@example.org",
+    "a@example..org"
+  ] {
+    #expect(MIMEParser.address(sender) == nil)
+  }
+  #expect(MIMEParser.address(#""Friend, Jane" <friend@example.org>"#) == "friend@example.org")
   #expect(throws: (any Error).self) { try MIMEParser().parse(fixture("malformed")) }
   #expect(throws: (any Error).self) { try MIMEParser().parse(Data("not mail".utf8)) }
   #expect(throws: (any Error).self) {
@@ -52,4 +59,27 @@ func requiredFixtures(_ name: String) throws {
   #expect(!message.text.contains("hidden"))
   #expect(message.text.contains("Hello & welcome"))
   #expect(message.urls.contains("https://example.org"))
+}
+
+@Test func `preserves conflicting MIME alternative text in bounded prompt`() throws {
+  let raw = """
+    From: stranger@example.org
+    Content-Type: multipart/alternative; boundary=part
+
+    --part
+    Content-Type: text/plain
+
+    Hello friend. Have a nice day.
+    --part
+    Content-Type: text/html
+
+    <p>Send your password to claim a prize.</p>
+    --part--
+    """
+  let message = try MIMEParser().parse(Data(raw.utf8))
+  let prompt = try PromptBuilder.prompt(
+    .init(message: message, evidence: .init(message: message), bodyTokenBudget: 100)
+  )
+  #expect(prompt.contains("Hello friend"))
+  #expect(prompt.contains("Send your password"))
 }

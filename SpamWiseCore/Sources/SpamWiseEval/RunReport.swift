@@ -38,15 +38,15 @@ struct RunReport: Encodable {
     )
     calibrationStatus =
       """
-        Uncalibrated. Candidate thresholds are descriptive only; validate on a separate held-out \
-        corpus before production.
-        """
+      Uncalibrated. Candidate thresholds are descriptive only; validate on a separate held-out \
+      corpus before production.
+      """
     if report.binary.good < 1500 {
       calibrationStatus +=
         """
-           Fewer than 1,500 good examples cannot establish the 0.2% rule-of-three target, even with \
-          zero false positives.
-          """
+         Fewer than 1,500 good examples cannot establish the 0.2% rule-of-three target, even with \
+        zero false positives.
+        """
     }
     cacheHits = await cache.hits
     providerCalls = await cache.misses
@@ -65,13 +65,13 @@ struct RunReport: Encodable {
     }
     costNote =
       """
-        Estimated, excludes undisclosed cache-write premiums. Non-Haiku prices require explicit \
-        price flags; cached reruns incur zero new tokens.
-        """
+      Estimated, excludes undisclosed cache-write premiums. Non-Haiku prices require explicit \
+      price flags; cached reruns incur zero new tokens.
+      """
     evidenceNote =
       """
-        Offline evidence only: optional RDAP is unknown. --state can supply rules, contacts and \
-        account history under account ID eval. Mock output tests plumbing, not model quality.
-        """
+      Offline evidence only: optional RDAP is unknown. --state can supply rules, contacts and \
+      account history under account ID eval. Mock output tests plumbing, not model quality.
+      """
   }
 }

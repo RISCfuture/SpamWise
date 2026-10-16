@@ -26,7 +26,9 @@ final class MessageActionHandler: NSObject, MEMessageActionHandler {
           state.lastExtensionCallback = .now; state.lastBodyCallback = .now
         }
         let state = try await StateRepository.load(store)
-        guard !state.settings.paused, state.settings.onboardingComplete else {
+        guard !state.settings.paused, state.settings.onboardingComplete,
+          state.settings.route != .mailRule
+        else {
           completion.finish(nil); return
         }
         let pipeline = Pipeline(

@@ -191,6 +191,20 @@ public enum StateRepository {
   public static func load(_ store: Store) async throws -> AppState {
     try await store.read(key, default: AppState())
   }
+  /// Applies a field-level edit to current preferences and invalidates stale classification work.
+  public static func editSettings(
+    _ store: Store,
+    _ edit: @Sendable (inout Settings) -> Void
+  ) async throws {
+    try await update(store) { state in
+      edit(&state.settings)
+      state.settings.correctionLimit = min(100, max(0, state.settings.correctionLimit))
+      state.settings.bodyTokenBudget = min(4000, max(100, state.settings.bodyTokenBudget))
+      if state.settings.validatedAccounts.isEmpty { state.settings.dryRun = true }
+      state.revision += 1
+      state.retries.removeAll()
+    }
+  }
   /// Atomically reads, modifies, and commits a shared value.
   public static func update<R: Sendable>(
     _ store: Store,

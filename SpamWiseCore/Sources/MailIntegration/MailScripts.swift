@@ -88,7 +88,7 @@ public enum MailScripts {
       """
   }
   /// Builds a bounded special-mailbox read script.
-  public static func recent(limit: Int, mailbox: String = "inbox") -> String {
+  public static func recent(limit: Int, mailbox: String = "inbox", offset: Int = 0) -> String {
     let role = ["inbox", "sent mailbox", "junk mailbox"].contains(mailbox) ? mailbox : "inbox"
     return helpers + "\n" + """
       with timeout of 8 seconds
@@ -96,9 +96,11 @@ public enum MailScripts {
               set rows to {}
               set candidates to messages of \(role)
               set n to count of candidates
-              if n > \(max(1, min(1000, limit))) then set n to \(max(1, min(1000, limit)))
-              if n > 0 then
-                  repeat with i from 1 to n
+              set firstIndex to \(max(0, offset) + 1)
+              set lastIndex to firstIndex + \(max(1, min(1000, limit))) - 1
+              if lastIndex > n then set lastIndex to n
+              if firstIndex <= lastIndex then
+                  repeat with i from firstIndex to lastIndex
                       set end of rows to my envelope(item i of candidates)
                   end repeat
               end if

@@ -18,6 +18,9 @@ import MailIntegration
   private let uiTesting: Bool
   private var work: Task<Void, Never>?
   private var lastScan = Date.distantPast
+  private var lastContactsRefresh = Date.distantPast
+  private var settingsWork: Task<Void, Never>?
+  private var pendingSettings = 0
   init(preview: Bool = false) {
     uiTesting = preview || ProcessInfo.processInfo.arguments.contains("--ui-testing")
     adapter = AppleMailAdapter(runner: SystemAppleEventRunner())
@@ -43,7 +46,11 @@ import MailIntegration
   }
   func refresh() async {
     guard let store else { return }
-    do { state = try await StateRepository.load(store) } catch {
+    do {
+      var loaded = try await StateRepository.load(store)
+      if pendingSettings > 0 { loaded.settings = state.settings }
+      state = loaded
+    } catch {
       status = "Shared storage unavailable; mail stays unchanged."
     }
   }
@@ -53,6 +60,11 @@ import MailIntegration
       try? await Task.sleep(for: .seconds(3))
       guard !Task.isCancelled else { return }
       await refresh()
+      if !uiTesting, !busy, state.settings.onboardingComplete,
+        Date().timeIntervalSince(lastContactsRefresh) >= 3600
+      {
+        try? await refreshContacts()
+      }
       if !uiTesting, !busy, state.settings.onboardingComplete, state.settings.route == .mailRule,
         !state.settings.paused, Date().timeIntervalSince(lastScan) > 60
       {
@@ -60,27 +72,34 @@ import MailIntegration
       }
     }
   }
-  func saveSettings(_ settings: SpamWiseCore.Settings) {
+  func editSettings(_ edit: @escaping @Sendable (inout SpamWiseCore.Settings) -> Void) {
     guard let store else { return }
-    Task {
-      do {
-        try await StateRepository.update(store) { state in
-          var settings = settings
-          settings.correctionLimit = min(100, max(0, settings.correctionLimit))
-          settings.bodyTokenBudget = min(4000, max(100, settings.bodyTokenBudget))
-          if settings.validatedAccounts.isEmpty { settings.dryRun = true }
-          state.settings = settings; state.revision += 1; state.retries.removeAll()
-        }
-        await refresh()
-      } catch { status = "Settings could not be saved; mail stays unchanged." }
+    edit(&state.settings)
+    pendingSettings += 1
+    let previous = settingsWork
+    settingsWork = Task {
+      await previous?.value
+      do { try await StateRepository.editSettings(store, edit) } catch {
+        status = "Settings could not be saved; mail stays unchanged."
+      }
+      pendingSettings -= 1
+      await refresh()
     }
   }
+  func setSetting<T: Sendable>(
+    _ key: any WritableKeyPath<SpamWiseCore.Settings, T> & Sendable,
+    to value: T
+  ) {
+    editSettings { $0[keyPath: key] = value }
+  }
   func finishSetup() {
-    var settings = state.settings; settings.onboardingComplete = true; settings.dryRun = true
-    saveSettings(settings); showSetup = false
+    editSettings {
+      $0.onboardingComplete = true; $0.dryRun = true
+    }
+    showSetup = false
   }
   func togglePause() {
-    var settings = state.settings; settings.paused.toggle(); saveSettings(settings)
+    setSetting(\.paused, to: !state.settings.paused)
   }
   func cancel() {
     work?.cancel()
@@ -143,7 +162,13 @@ import MailIntegration
   }
   func requestContacts() {
     run { [self] in
-      let addresses = try await ContactsLookup().addresses(requestAccess: true)
+      try await refreshContacts(requestAccess: true)
+    }
+  }
+  private func refreshContacts(requestAccess: Bool = false) async throws {
+    lastContactsRefresh = .now
+    do {
+      let addresses = try await ContactsLookup().addresses(requestAccess: requestAccess)
       if let store {
         try await StateRepository.update(store) {
           $0.contactAddresses = addresses; $0.contactsUpdatedAt = .now
@@ -151,7 +176,29 @@ import MailIntegration
       }
       contactsStatus =
         addresses == nil
-        ? "Contacts access denied — relationship remains unknown" : "Contacts connected"
+        ? "Contacts unavailable — relationship remains unknown" : "Contacts refreshed"
+    } catch {
+      contactsStatus = "Contacts refresh failed — cached evidence expires after 24 hours"
+      throw error
+    }
+  }
+  private func maintainHistory() async {
+    guard let store else { return }
+    do {
+      let current = try await StateRepository.load(store)
+      let eligible = Set(
+        current.records.filter {
+          $0.decision.label == .inbox && $0.outcome != .superseded
+        }.map { $0.identity.key }
+      ).subtracting(current.retries.map { $0.identity.key })
+      let histories = try await adapter.importHistory(
+        previous: current.histories,
+        eligibleInbox: eligible,
+        incremental: true
+      )
+      try await StateRepository.update(store) { $0.histories = histories }
+    } catch {
+      mailStatus = "History refresh unavailable — only previously stored relationships are known"
     }
   }
   func importHistory() {
@@ -188,7 +235,15 @@ import MailIntegration
     }
     run { [self] in
       lastScan = .now
-      let messages = try await adapter.recentMessages(limit: limit)
+      if !uiTesting, Date().timeIntervalSince(lastContactsRefresh) >= 3600 {
+        try? await refreshContacts()
+      }
+      if automatic { await maintainHistory() }
+      await refresh()
+      let messages =
+        try await
+        (automatic
+        ? adapter.nextInboxMessages(limit: limit) : adapter.recentMessages(limit: limit))
       let seen = Set(state.records.map { $0.identity.key })
       var count = 0
       for message in messages where !automatic || !seen.contains(message.identity.key) {

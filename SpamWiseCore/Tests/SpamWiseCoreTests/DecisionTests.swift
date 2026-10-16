@@ -114,6 +114,16 @@ func enableActions(_ store: Store) async throws {
     classifier: MockClassifier(operation: { _ in throw ClassificationError.rateLimited })
   )
   let failed = await pipeline.process(try envelope(), adapter: adapter)
+  let pending = try #require(await StateRepository.load(store).retries.first)
+  _ = await pipeline.process(try envelope(), adapter: adapter, forceDryRun: true)
+  let afterFailure = try #require(await StateRepository.load(store).retries.first)
+  #expect(afterFailure.dryRun == pending.dryRun)
+  #expect(afterFailure.due == pending.due)
+  let preview = Pipeline(
+    store: store,
+    classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "preview"))
+  )
+  _ = await preview.process(try envelope(), adapter: adapter, forceDryRun: true)
   #expect(try await StateRepository.load(store).retries.count == 1)
   _ = try await pipeline.correct(recordID: failed.id, label: .inbox, adapter: adapter)
   let state = try await StateRepository.load(store)

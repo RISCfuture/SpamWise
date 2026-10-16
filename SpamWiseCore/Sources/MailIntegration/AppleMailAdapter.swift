@@ -49,6 +49,7 @@ public struct MailAccount: Identifiable, Sendable { public var id: String; publi
 /// Account-scoped Apple Events integration with exact-source action checks.
 public actor AppleMailAdapter: MailClientAdapter {
   private let runner: any AppleEventRunner
+  private var pageOffsets: [String: Int] = [:]
   /// Creates an AppleMailAdapter with the supplied configuration.
   public init(runner: any AppleEventRunner) { self.runner = runner }
   /// Reads Mail account identifiers and display names.
@@ -74,6 +75,22 @@ public actor AppleMailAdapter: MailClientAdapter {
   /// Reads a bounded window of Inbox messages without changing mail.
   public func recentMessages(limit: Int) async throws -> [MailEnvelope] {
     try await messages(limit: limit, role: "inbox")
+  }
+  /// Advances a bounded Inbox sweep, restarting at the beginning after its last page.
+  public func nextInboxMessages(limit: Int) async throws -> [MailEnvelope] {
+    try await nextPage(limit: limit, role: "inbox", cursor: "filter")
+  }
+  private func nextPage(limit: Int, role: String, cursor: String) async throws -> [MailEnvelope] {
+    let count = max(1, min(1000, limit))
+    let offset = pageOffsets[cursor, default: 0]
+    guard
+      let rows = try await runner.run(
+        MailScripts.recent(limit: count, mailbox: role, offset: offset)
+      ).list
+    else { throw IntegrationError.scriptFailed }
+    let envelopes = try rows.map(Self.envelope)
+    pageOffsets[cursor] = rows.count < count ? 0 : offset + rows.count
+    return envelopes
   }
   /// Reads a bounded window from the specified special mailbox role.
   public func messages(limit: Int, role: String) async throws -> [MailEnvelope] {
@@ -106,11 +123,23 @@ public actor AppleMailAdapter: MailClientAdapter {
     try await importHistory(previous: [:])
   }
   /// Adds only unseen messages to an account-scoped history snapshot.
-  public func importHistory(previous: [String: HistoryIndex]) async throws -> [String: HistoryIndex]
-  {
-    // Bounded initial import and subsequent deduplicated updates. Never claim complete mailbox history.
-    let sent = try await messages(limit: 1000, role: "sent mailbox")
-    let inbox = try await messages(limit: 1000, role: "inbox")
+  public func importHistory(
+    previous: [String: HistoryIndex],
+    eligibleInbox: Set<String>? = nil,
+    incremental: Bool = false
+  ) async throws -> [String: HistoryIndex] {
+    // Automatic imports accept only previously classified Inbox mail, never a new message's own claims.
+    let sent =
+      try await
+      (incremental
+      ? nextPage(limit: 100, role: "sent mailbox", cursor: "history-sent")
+      : messages(limit: 1000, role: "sent mailbox"))
+    let inboxPage =
+      try await
+      (incremental
+      ? nextPage(limit: 100, role: "inbox", cursor: "history-inbox")
+      : messages(limit: 1000, role: "inbox"))
+    let inbox = inboxPage.filter { eligibleInbox?.contains($0.identity.key) ?? true }
     var indexes = previous
     let sentKeys = Set(sent.map { $0.identity.key })
     for envelope in inbox + sent {
