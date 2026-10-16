@@ -35,6 +35,10 @@ public enum MailTransport: String, Codable, Sendable, CaseIterable {
 public struct AdvancedSettings: Codable, Sendable, Equatable {
   /// Explicit model provider.
   public var backend: ModelBackend = .claude
+  /// Providers explicitly allowed to receive mail context; missing consent grants no access.
+  public var mailSharingConsent: Set<ModelBackend>?
+  /// Opt-in sender-domain disclosure to registration-data services.
+  public var domainRegistrationLookup: Bool?
   /// Explicit override for providers that support selectable model identities.
   public var modelID: String?
   /// Account access method; IMAP requires separate credentials and validation.

@@ -44,7 +44,9 @@ public actor Pipeline {
       if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: envelope.raw) {
         message.text += "\nEmbedded image text (untrusted):\n" + text
       }
-      if !current.settings.mailOptions.localOnly, let path = settings.externalEvidence?.rspamcPath {
+      if DistributionCapabilities.externalPrograms, !current.settings.mailOptions.localOnly,
+        let path = settings.externalEvidence?.rspamcPath
+      {
         findings.append(await RspamdLookup(executablePath: path).lookup(raw: envelope.raw).summary)
       }
       return await process(

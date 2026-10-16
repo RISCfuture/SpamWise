@@ -10,6 +10,15 @@ struct EvidenceSettingsView: View {
     Section {
       DisclosureGroup("Optional evidence") {
         Toggle(
+          "Share sender domains with registration services to check domain age",
+          isOn: Binding(
+            get: { model.state.settings.advancedOptions.domainRegistrationLookup == true },
+            set: { enabled in
+              model.editSettings { $0.advancedOptions.domainRegistrationLookup = enabled }
+            }
+          )
+        )
+        Toggle(
           "Read embedded image text with on-device OCR",
           isOn: model.advancedBinding(\.imageOCR)
         )
@@ -43,7 +52,9 @@ struct EvidenceSettingsView: View {
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        TextField("Optional local rspamc path", text: $path)
+        if DistributionCapabilities.externalPrograms {
+          TextField("Optional local rspamc path", text: $path)
+        }
         Text("Unavailable or failed evidence never counts as spam.").foregroundStyle(.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
         Button("Save evidence settings") { save() }
@@ -58,7 +69,7 @@ struct EvidenceSettingsView: View {
 
   private func save() {
     var saved = configuration
-    saved.rspamcPath = path.isEmpty ? nil : path
+    saved.rspamcPath = !DistributionCapabilities.externalPrograms || path.isEmpty ? nil : path
     let updated = saved
     model.editSettings {
       var advanced = $0.advancedOptions

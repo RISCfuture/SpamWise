@@ -26,19 +26,21 @@ The presence of an exception is not proof of rejection; approval is discretionar
   Existing-mail source, history, lookup and move operations lack a suitable narrow
   group. Replacing the exception with compose permission would break the product.
   Keep the exact `com.apple.mail` exception and explain its bounded use accurately.
-- Optional `rspamc` executes a separately installed program. Exclude that integration
-  from the store variant rather than make store functionality depend on it. The
-  core classifier and other evidence do not require it.
-- Cloud-provider selection and Help currently describe data flow, but the store
-  release should retain explicit, revocable provider-specific mail-sharing consent
-  and gate requests before credentials/reservations. Include attachment/OCR text,
-  correction examples and sensitive mail in the disclosure. Supplying an API key
-  alone should not substitute for that permission.
+- The `APP_STORE` variant disables optional `rspamc` execution and its configuration
+  UI, including restored executable settings. The core classifier does not require it.
+- Provider-specific mail-sharing permission defaults off, including existing stores.
+  Requests require consent before credentials/reservations and recheck it before
+  paid requests. The disclosure includes attachment/OCR text, correction examples
+  and sensitive mail. Supplying an API key does not grant mail-sharing permission.
+  Domain-age lookups also require a separate opt-in to share sender domains.
 - The privacy policy/support URLs, provider-retention disclosures, required-reason
   API manifest review and complete App Store metadata remain pending. Do not claim
   “data not collected” merely because the user supplies their own provider key.
-- PCC is visible as an option but the app lacks its managed entitlement. The store
-  release must either obtain and validate the grant or omit the unavailable option.
+- The app lacks the managed PCC entitlement. The store variant omits that choice
+  and rejects restored PCC settings without silently changing providers.
+- A privacy manifest declares the app's own UserDefaults access with reason CA92.1.
+  A complete dependency/collection inventory and provider-retention review remain
+  release gates; the manifest is not an App Privacy questionnaire submission.
 - Signed store export previously stopped at Distribution-key access. A successful
   Developer ID archive is not evidence of a signed store package or store acceptance.
 - Pricing is undecided. Review the actual business model; do not assume any exception

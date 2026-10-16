@@ -1,6 +1,18 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Optional domain-age lookups share the sender’s domain with registration services.": {
+      "localizations": {
+        "es": { "stringUnit": { "state": "translated", "value": "Las consultas opcionales de antigüedad del dominio comparten el dominio del remitente con servicios de registro." } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Les recherches facultatives d’âge du domaine communiquent le domaine de l’expéditeur aux services d’enregistrement." } }
+      }
+    },
+    "Share sender domains with registration services to check domain age": {
+      "localizations": {
+        "es": { "stringUnit": { "state": "translated", "value": "Compartir dominios de remitentes con servicios de registro para comprobar su antigüedad" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Partager les domaines des expéditeurs avec les services d’enregistrement pour vérifier leur âge" } }
+      }
+    },
     "%@/%@ characters": {
       "localizations": {
         "es": {
@@ -605,6 +617,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autoriser le domaine"
+          }
+        }
+      }
+    },
+    "Allow mail context to be sent to %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir el envío del contexto del correo a %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser l’envoi du contexte des messages à %@"
+          }
+        }
+      }
+    },
+    "Allow mail sharing with the selected provider in Account settings first.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primero permite compartir el correo con el proveedor elegido en los ajustes de Cuenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez d’abord le partage des messages avec le fournisseur choisi dans les réglages du compte."
           }
         }
       }
@@ -4140,6 +4184,22 @@
         }
       }
     },
+    "Includes sender, subject, shortened text, evidence, preferences and correction examples. Enabled attachment/OCR text may be included. Mail can contain sensitive information.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluye remitente, asunto, texto abreviado, indicios, preferencias y ejemplos corregidos. Puede incluir texto de adjuntos y OCR si están activados. El correo puede contener información sensible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprend l’expéditeur, l’objet, le texte abrégé, les indices, les préférences et les exemples corrigés. Le texte des pièces jointes et de l’OCR peut être inclus si activé. Les messages peuvent contenir des données sensibles."
+          }
+        }
+      }
+    },
     "Incoming route": {
       "localizations": {
         "es": {
@@ -6386,6 +6446,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Private Cloud Compute"
+          }
+        }
+      }
+    },
+    "Private Cloud Compute is unavailable in this distribution. Select another provider.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private Cloud Compute no está disponible en esta distribución. Selecciona otro proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private Cloud Compute n’est pas disponible dans cette distribution. Choisissez un autre fournisseur."
           }
         }
       }
@@ -9742,6 +9818,22 @@
         }
       }
     },
+    "Turn this off to stop future requests. Requests already sent cannot be recalled. Provider retention terms apply; keys stay in Keychain.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactiva esta opción para detener futuras solicitudes. Las solicitudes ya enviadas no se pueden recuperar. Se aplican las condiciones de conservación del proveedor; las claves permanecen en el Llavero."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivez cette option pour arrêter les futures requêtes. Les requêtes déjà envoyées ne peuvent pas être rappelées. Les conditions de conservation du fournisseur s’appliquent ; les clés restent dans le Trousseau."
+          }
+        }
+      }
+    },
     "Unavailable": {
       "localizations": {
         "es": {
@@ -10314,6 +10406,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quelles données sont envoyées"
+          }
+        }
+      }
+    },
+    "What is shared": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qué se comparte"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Données partagées"
           }
         }
       }

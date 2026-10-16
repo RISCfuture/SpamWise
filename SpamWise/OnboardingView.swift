@@ -18,7 +18,11 @@ struct OnboardingView: View {
       Form {
         switch step {
           case .welcome: SetupIntroductionView()
-          case .account: Section("Connect your Anthropic account") { KeyEntryView(model: model) }
+          case .account:
+            Section("Connect your Anthropic account") {
+              KeyEntryView(model: model)
+              ProviderConsentView(model: model, backend: .claude)
+            }
           case .mail: MailConnectionView(model: model)
           case .preview: SetupPreviewView(model: model)
         }
@@ -69,7 +73,7 @@ private struct SetupIntroductionView: View {
         examples when local rules cannot decide.
         """
       )
-      Text("RDAP services receive the sender’s domain when its age is not cached.")
+      Text("Optional domain-age lookups share the sender’s domain with registration services.")
       HStack {
         Text("API keys stay in Keychain. You can complete setup offline.")
         Spacer()

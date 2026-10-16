@@ -19,9 +19,22 @@ func `reads only the configured provider credential and fails without fallback`(
     #expect(selected == backend)
     throw CredentialProbe.requested
   }
+  await #expect(throws: ClassificationError.consentRequired) {
+    _ = try await classifier.classify(providerInput())
+  }
+  try await StateRepository.editSettings(store) { settings in
+    settings.advancedOptions.mailSharingConsent = [backend]
+  }
   await #expect(throws: CredentialProbe.requested) {
     _ = try await classifier.classify(providerInput())
   }
+  try await StateRepository.editSettings(store) { settings in
+    settings.advancedOptions.mailSharingConsent = []
+  }
+  await #expect(throws: ClassificationError.consentRequired) {
+    _ = try await classifier.classify(providerInput())
+  }
+  #expect(try await EvaluationBudget.load(store).committedUSD == 0)
 }
 
 @Test func `preserves provider pricing through persistence and migrates legacy usage`() throws {

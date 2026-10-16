@@ -180,6 +180,8 @@ public enum ClassificationError: String, ClassificationFailure, Codable, Sendabl
   case missingCredential
   /// The selected provider or model configuration is unavailable.
   case configuration
+  /// The user has not allowed this provider to receive private mail context.
+  case consentRequired
   /// The provider refused a request because of a rate limit.
   case rateLimited
   /// The operation exceeded its deadline.
@@ -205,6 +207,10 @@ public enum ClassificationError: String, ClassificationFailure, Codable, Sendabl
     switch self {
       case .missingCredential: String(localized: "The provider credential is missing or invalid.")
       case .configuration: String(localized: "The selected model configuration is unavailable.")
+      case .consentRequired:
+        String(
+          localized: "Allow mail sharing with the selected provider in Account settings first."
+        )
       case .rateLimited: String(localized: "The provider’s request limit was reached.")
       case .timeout: String(localized: "The classification deadline expired.")
       case .network: String(localized: "The provider could not be reached.")

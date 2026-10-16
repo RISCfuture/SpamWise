@@ -148,7 +148,7 @@ extension Pipeline {
     var evidence = evidence
     guard !localOnly else { return evidence }
     let domain = DomainResolver().domain(ofAddress: message.fromAddress)
-    if let domain, let rdap {
+    if advanced.domainRegistrationLookup == true, let domain, let rdap {
       evidence.domainAgeDays = try? await withDeadline(
         seconds: min(
           Self.maximumDomainLookupTimeSec,

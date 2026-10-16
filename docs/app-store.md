@@ -12,6 +12,8 @@ bash Scripts/app-store-check.sh <worker-token> archive
 Obtain a distinct token with `agent-lock worker`. Archive mode places its unsigned,
 optimized app and extension in `.build/<worker-token>/app-store/SpamWise.xcarchive`.
 It builds with warnings treated as errors and checks the sandbox entitlements.
+The `APP_STORE` compilation condition disables external executable evidence and
+the ungranted PCC option in both the UI and shared request paths.
 An unsigned archive verifies compilation and bundle assembly; it does not verify
 store signing, entitlements granted by a profile or App Review acceptance.
 
@@ -52,6 +54,7 @@ xcodebuild -project SpamWise.xcodeproj -scheme SpamWise \
   -archivePath .build/$AGENT_WORKER_ID/app-store/SpamWise-signed.xcarchive \
   CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM=2NFSK2WB24 \
   CODE_SIGN_IDENTITY='Apple Development' ENABLE_HARDENED_RUNTIME=YES \
+  SWIFT_ACTIVE_COMPILATION_CONDITIONS=APP_STORE \
   SWIFT_TREAT_WARNINGS_AS_ERRORS=YES SWIFT_SUPPRESS_WARNINGS=NO archive
 ```
 
@@ -109,10 +112,9 @@ inspection and move operations.
 
 Prepare an accurate justification for the bounded, account-specific Mail actions,
 user consent, dry-run defaults, persist-before-action policy and refusal to delete
-mail. App Review approval remains pending. The explicit IMAP route provides an
-independent account connection; switching routes in preferences does not remove
-the compiled app's temporary-exception entitlement. A separate store-specific
-entitlement or feature change would require its own implementation and validation.
+mail. App Review approval remains pending. Mail.app is the supported product focus;
+the existing experimental IMAP code does not establish a store workaround or remove
+the compiled app's temporary-exception entitlement.
 
 ## Private Cloud Compute
 
@@ -149,7 +151,7 @@ and [version metadata](https://developer.apple.com/help/app-store-connect/refere
 | Name | SpamWise |
 | Subtitle | Mail filtering you control |
 | Primary category | Productivity |
-| Keywords | email,junk,inbox,filter,privacy,imap,review,rules |
+| Keywords | email,junk,inbox,filter,privacy,mail,review,rules |
 | Promotional text | Preview mail decisions, set your own sender rules, and review uncertain messages before enabling automatic actions. |
 
 Description draft:
@@ -159,7 +161,7 @@ Description draft:
 > and corrections update the rules you choose. Review uncertain messages, inspect
 > estimated model usage, and pause processing whenever you need to.
 >
-> Connect through Apple Mail or configure a separate TLS IMAP account. Automatic
+> Connect through Apple Mail. Automatic
 > moves require account validation. SpamWise never deletes mail or moves it to
 > Trash. Choose an available on-device model or configure a supported external
 > provider with your own API credentials. External providers receive bounded mail
@@ -179,15 +181,15 @@ Policy draft for review before publication:
 > Optional learning and reviewed-content settings retain additional local data.
 > API credentials and app-configured IMAP credentials are stored in Keychain.
 >
-> When you choose Anthropic Claude, OpenAI, or Google Gemini, SpamWise sends bounded
+> When you grant mail-sharing permission to Anthropic Claude, OpenAI, or Google Gemini, SpamWise sends bounded
 > message text, subject, evidence, preferences, and selected correction examples to
 > that provider using your credentials. Mail context can contain personal or
 > sensitive information. Your provider's terms and retention settings apply.
 > Selecting an on-device model performs model inference on your Mac. Optional
 > domain reputation checks send queried domains to the configured DNS service;
-> domain-age lookups contact registration-data services. An optional local Rspamd
-> integration passes mail to your separately configured scanner, whose own network
-> behavior and retention are controlled by its configuration.
+> optional domain-age lookups contact registration-data services. You can revoke
+> provider permission in Account settings; already dispatched requests cannot be
+> recalled. The App Store build excludes external executable scanners.
 >
 > Contacts permission, when granted, supplies local trusted-sender evidence.
 > SpamWise has no advertising or tracking integration. Pausing stops new processing;

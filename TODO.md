@@ -275,6 +275,8 @@ Parent items remain open until their full acceptance criteria are met.
   Finish the existing notarized-release/App Store prerequisites without treating
   archive success as distribution or review approval.
   - [x] Document upgrade/recovery, login-item removal and optional data removal.
+  - [x] Research Apple's distribution rules and document the store-first decision, Mail exception and remaining review gates.
+  - [x] Add revocable provider mail-sharing permission, opt-in domain-age lookups and store-specific executable/PCC restrictions.
   - [ ] Finish App Store feasibility gaps and release acceptance; use GitHub Releases with GitHubUpdateChecker only if the store path proves unsuitable.
 
 ### Opportunities to exceed the baseline — prove, then claim

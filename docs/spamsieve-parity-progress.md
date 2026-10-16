@@ -170,8 +170,9 @@ has been invented, and no paid request is needed to run this reporting path.
 The [Mail.app matrix](mail-compatibility.md) documents the specific signed iCloud/Google
 probes and their limits. The [lifecycle guide](lifecycle.md) covers install, manual
 upgrade/recovery, login-item removal and optional personal-data removal. SS-18 remains
-open for offline/account coverage; SS-20 remains open for a hosted signed updater,
-interrupted-update testing and App Store prerequisites.
+open for offline/account coverage; SS-20 remains open for App Store prerequisites
+and release acceptance. GitHub Releases and GitHubUpdateChecker are the fallback
+only if the store path proves unsuitable.
 
 The current batch passes 82 package tests, warning-free package/app/extension builds,
 strict formatting and SwiftLint. The frozen-comparison CLI smoke test reads only the
@@ -181,3 +182,39 @@ the native-intent test is explicitly skipped pending registration acceptance.
 Result: `Test-SpamWise-2026.10.16_14-56-59--0700.xcresult`. The UI test exposed duplicate
 Corpus sheets when Tools opened another Activity window; Activity is now a single
 window and Tools brings it forward. No API charges or generated mail were incurred.
+
+## Store build and mail-sharing permission
+
+The App Store assessment remains viable with review gates, so no external updater
+has been introduced. `APP_STORE` disables external executable evidence and the
+ungranted PCC option at the settings and request boundaries. Restored preferences
+cannot enable those requests. The unsigned optimized store archive passes with
+warnings treated as errors; its compiler log confirms the condition reaches
+SpamWiseCore. The archive contains the UserDefaults required-reason manifest.
+This does not establish distribution signing, collection-label correctness or
+App Review acceptance.
+
+Cloud mail sharing requires explicit provider-specific permission in onboarding
+or Account settings, including for existing stores. Saving a key grants no mail
+permission. Paid requests check before credential access and spending reservation,
+then recheck immediately before calling the provider. Revocation cannot recall
+already dispatched requests. Domain-age evidence has a separate off-by-default
+permission to share sender domains. Local mode overrides it. Help and disclosures
+are updated in English, Spanish and French.
+
+The existing provider and privacy tests now cover absent/granted/revoked permission,
+no credential access or budget commitment when denied, and domain-age opt-in/local
+mode precedence. All 82 package tests and the warning-free app build pass.
+XCTest's correction flow passed in 89.645 seconds. The updated onboarding flow
+passed in 15.237 seconds, verifying consent starts off, can be enabled and revoked,
+then completing denied-permission setup, dry-run status and Pause. Its final result
+is `Test-SpamWise-2026.10.16_15-13-49--0700.xcresult`. Earlier consent test failures
+were locator/value-type assumptions: the native control is a Switch with a numeric
+accessibility value. The native-intent acceptance test remains explicitly skipped.
+Swift formatting, strict SwiftLint, shellcheck, Markdown and plist checks pass.
+
+Direct fixture inspection also verified the notification-denied state, one Corpus
+sheet from Tools, and `spamwise://review` reopening the closed Activity window with
+Weekly Review. Notification delivery, live Mail actions, folder-plan layout and
+native intent registration remain distinct pending acceptance checks. No new mail
+or paid API calls were created during this batch.

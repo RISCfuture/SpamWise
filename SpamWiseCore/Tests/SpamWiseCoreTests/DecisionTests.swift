@@ -173,6 +173,15 @@ import SpamWiseCore
   )
   _ = await privatePipeline.process(try envelope(), adapter: adapter)
   #expect(await network.calls == 0)
+  try await StateRepository.editSettings(store) { $0.mailOptions.localOnly = false }
+  _ = await privatePipeline.process(try envelope(), adapter: adapter, forceDryRun: true)
+  #expect(await network.calls == 0)
+  try await StateRepository.editSettings(store) {
+    $0.mailOptions.localOnly = true
+    $0.advancedOptions.domainRegistrationLookup = true
+  }
+  _ = await privatePipeline.process(try envelope(), adapter: adapter, forceDryRun: true)
+  #expect(await network.calls == 0)
   let configured = ConfiguredClassifier(
     store: store,
     credential: { _ in

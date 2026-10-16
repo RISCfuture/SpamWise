@@ -41,6 +41,7 @@ xcodebuild -project SpamWise.xcodeproj -scheme SpamWise -destination 'generic/pl
   -derivedDataPath "$build_root/DerivedData" -clonedSourcePackagesDirPath "$build_root/SourcePackages" \
   -archivePath "$build_root/SpamWise.xcarchive" CODE_SIGNING_ALLOWED=NO ENABLE_HARDENED_RUNTIME=YES \
   SWIFT_TREAT_WARNINGS_AS_ERRORS=YES SWIFT_SUPPRESS_WARNINGS=NO archive \
+  SWIFT_ACTIVE_COMPILATION_CONDITIONS=APP_STORE \
   2>&1 | tee "$build_root/archive.log" | xcbeautify
 if rg -n 'warning:|error:' "$build_root/archive.log"; then
   exit 1

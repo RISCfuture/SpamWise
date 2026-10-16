@@ -83,6 +83,11 @@ final class UITests: XCTestCase {
     XCTAssertTrue(introduction.isVisible)
     let credential = introduction.continueSetup()
     XCTAssertTrue(credential.isVisible)
+    XCTAssertFalse(credential.sharesMail)
+    credential.toggleMailSharing()
+    XCTAssertTrue(credential.sharesMail)
+    credential.toggleMailSharing()
+    XCTAssertFalse(credential.sharesMail)
     let mail = credential.continueSetup()
     mail.checkDeniedPermission()
     XCTAssertTrue(mail.hasPermissionDeniedStatus)
@@ -127,6 +132,27 @@ enum UITestTiming {
   let app: XCUIApplication
 
   var isVisible: Bool { app.secureTextFields["setup.key"].exists }
+  var sharesMail: Bool {
+    (app.switches["provider.consent"].value as? NSNumber)?.boolValue == true
+  }
+
+  func toggleMailSharing() {
+    let consent = app.switches["provider.consent"]
+    let expected = NSNumber(value: !sharesMail)
+    consent.click()
+    XCTAssertEqual(
+      XCTWaiter.wait(
+        for: [
+          XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", expected),
+            object: consent
+          )
+        ],
+        timeout: UITestTiming.transition
+      ),
+      .completed
+    )
+  }
 
   func continueSetup() -> MailSetupScreen {
     app.buttons["setup.continue"].click()

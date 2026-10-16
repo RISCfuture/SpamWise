@@ -28,10 +28,19 @@ public struct ConfiguredClassifier: Classifier {
     guard !current.mailOptions.localOnly || settings.backend == .onDevice else {
       throw ClassificationError.configuration
     }
+    guard
+      settings.backend == .onDevice
+        || settings.mailSharingConsent?.contains(settings.backend) == true
+    else {
+      throw ClassificationError.consentRequired
+    }
     let modelID = settings.modelID ?? settings.backend.defaultModelID
     switch settings.backend {
       case .onDevice: return try await AppleClassifier(backend: .onDevice).classify(input)
       case .privateCloudCompute:
+        guard DistributionCapabilities.privateCloudCompute else {
+          throw ClassificationError.configuration
+        }
         return try await AppleClassifier(backend: .privateCloudCompute).classify(input)
       case .claude, .openAI, .gemini:
         let key = try credential(settings.backend)
@@ -45,11 +54,27 @@ public struct ConfiguredClassifier: Classifier {
         }
         _ = try PromptBuilder.prompt(input)
         return try await BudgetedClassifier(
-          classifier,
+          ConsentCheckedClassifier(underlying: classifier, store: store, backend: settings.backend),
           store: store,
           upperBoundUSD: modelID == "claude-haiku-5-5"
             ? Self.haikuReservationUSD : Self.otherModelReservationUSD
         ).classify(input)
     }
+  }
+}
+
+private struct ConsentCheckedClassifier: Classifier {
+  let underlying: any Classifier
+  let store: Store
+  let backend: ModelBackend
+
+  func classify(_ input: ClassificationInput) async throws -> Verdict {
+    let current = try await StateRepository.load(store).settings
+    guard !current.mailOptions.localOnly,
+      current.advancedOptions.backend == backend,
+      current.advancedOptions.mailSharingConsent?.contains(backend) == true
+    else { throw ClassificationError.consentRequired }
+    try Task.checkCancellation()
+    return try await underlying.classify(input)
   }
 }

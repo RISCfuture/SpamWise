@@ -184,6 +184,7 @@ private func enrichedInferenceFixture() async throws -> EnrichedInferenceFixture
   try await StateRepository.update(store) {
     $0.learning = trained
     var options = $0.settings.advancedOptions; options.learnedWeights = true
+    options.domainRegistrationLookup = true
     $0.settings.advancedOptions = options
   }
   let message = try learningMessage("A new sample", sender: "sender@example.com")
