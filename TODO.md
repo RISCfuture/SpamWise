@@ -23,5 +23,5 @@
 - Validate signed runtime integration: use the checklist in docs/probes before selecting an automatic route. SDK support does not establish callback timing or account coverage.
 - Calibrate thresholds on a representative held-out corpus. 99/95/90 are provisional, uncalibrated; zero errors on fixtures do not demonstrate the ≤1-in-500 target. About 1,500 good examples with zero false positives are needed for the rule-of-three 0.2% upper bound.
 - Each item above needs evaluation/UX work before release; existing entries retain the original brief’s rationale and constraints.
-- Complete interactive onboarding/correction acceptance after resolving the local UITests-Runner rejection; direct inspection has verified only the first onboarding page.
+- Complete live onboarding and correction UI acceptance. The provisioned XCTest runner now passes offline four-step onboarding, simulated denied Mail permission, dry-run status, and Pause; live credentials, actual permissions, and correction interactions remain separate acceptance checks.
 - Measure sweep latency on large/mutating mailboxes during the signed runtime probe. Discovery uses bounded repeating pages and restarts after app relaunch; it does not promise immediate coverage.

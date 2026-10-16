@@ -100,9 +100,7 @@ struct KeyEntryView: View {
       Button("Verify and save key") {
         model.verifyKey(key); key = ""
       }.disabled(key.isEmpty || model.busy)
-      Text(model.keyStatus).textSelection(.enabled).accessibilityLabel(
-        "API key status: \(model.keyStatus)"
-      )
+      Text("API key status: \(model.keyStatus)").textSelection(.enabled)
       Text("Model: Claude Haiku 5.5 · no automatic model substitution").font(.caption)
         .foregroundStyle(.secondary)
     }

@@ -28,19 +28,16 @@ final class UITests: XCTestCase {
   }
   var introVisible: Bool { app.staticTexts["setup.intro"].exists }
   var keyVisible: Bool { app.secureTextFields["setup.key"].waitForExistence(timeout: 5) }
-  var hasPermissionDeniedStatus: Bool {
-    app.staticTexts["mail.status"].label.contains("Automation permission denied")
+  private var permissionDeniedStatus: XCUIElement {
+    app.staticTexts["mail.status"].descendants(matching: .staticText).matching(
+      NSPredicate(format: "value CONTAINS %@", "Automation permission denied")
+    ).firstMatch
   }
+  var hasPermissionDeniedStatus: Bool { permissionDeniedStatus.exists }
   func continueSetup() { app.buttons["setup.continue"].click() }
   func checkDeniedMailPermission() {
     app.buttons["mail.check"].click()
-    let predicate = NSPredicate(format: "label CONTAINS %@", "Automation permission denied")
-    _ = XCTWaiter.wait(
-      for: [
-        XCTNSPredicateExpectation(predicate: predicate, object: app.staticTexts["mail.status"])
-      ],
-      timeout: 5
-    )
+    _ = permissionDeniedStatus.waitForExistence(timeout: 5)
   }
   func finish() -> ActivityScreen {
     app.buttons["setup.finish"].click()
@@ -51,7 +48,7 @@ final class UITests: XCTestCase {
 @MainActor private struct ActivityScreen {
   let app: XCUIApplication
   var isDryRun: Bool {
-    app.descendants(matching: .any)["activity.mode"].firstMatch.label.contains("Dry run")
+    (app.staticTexts["activity.mode"].value as? String)?.contains("Dry run") == true
   }
   var isPaused: Bool { app.buttons["activity.pause"].label.contains("Resume") }
   func pause() {

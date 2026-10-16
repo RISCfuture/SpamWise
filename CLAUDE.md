@@ -32,7 +32,7 @@ See `docs/evaluation.md` and `docs/packaging.md` for CLI, archive, and notarizat
 4. Classifier — implemented; mock tests pass; live API opt-in pending.
 5. Decisions — implemented; fail-open, correction, and duplicate-action tests pass.
 6. Mail integration — pending signed runtime verification.
-7. UI/corrections — implemented; UI runner blocked by Gatekeeper before tests start.
+7. UI/corrections — implemented; provisioned UI runner passes offline onboarding, simulated denied Mail permission, dry-run status, and Pause. Live onboarding and correction UI acceptance remain pending.
 8. Evaluation — implemented and offline-verified; representative calibration corpus pending.
 9. Help/packaging — implemented; Developer ID archive/export, notarization, stapling, and Gatekeeper acceptance verified.
 
@@ -77,3 +77,13 @@ Direct UI inspection launched the Developer ID export with isolated test storage
 Scope ruling: fingerprints and URI/DNS blocklists remain deferred under the supplied implementation plan and §11; no decisive fingerprint/blocklist gate is claimed. Calibration remains pending a representative held-out corpus. The existing `codex/phase-one` branch is retained locally under the project contract; no merge or push is part of this implementation.
 
 Final packaging result: Apple accepted submission `a64e1cf2-60b7-42f7-bcf6-4b1292c3df11`. Stapling and ticket validation passed; `spctl --assess --type execute --verbose=2` reports **accepted, Notarized Developer ID**. Deep strict signature verification passes for the final app and nested extension. The stapled distribution ZIP is `.build/65e4c22c-94b4-441b-9059-5d9ee9cd0ec2/SpamWise-notarized.zip`. Notarization establishes distribution signing acceptance, not live Mail or model behavior. The final five-fixture offline smoke test again produced two Inbox, two Junk, and one Review using explicit mock responses.
+
+## UI runner resolution — 2026-10-16
+
+Unified logs identify the launch rejection as `taskgated-helper: no eligible provisioning profiles found`. The development-signed runner claimed `com.apple.application-identifier = 2NFSK2WB24.codes.tim.SpamWise.UITests.xctrunner` but contained no embedded profile. Xcode's macOS UI-test product defaults to not requiring provisioning. Setting `PROVISIONING_PROFILE_REQUIRED = YES` on UITests Debug and Release makes automatic signing embed the team's wildcard Mac development profile. XCTest now launches and connects without a security override, certificate replacement, or human approval.
+
+The running test then reproduced a stack-overflow crash during accessibility queries on the API-key page. Removing the custom accessibility-label override from its selectable status text and putting the same prefix in the visible text resolves the crash. The test reads macOS static-text values and the current nested selectable Mail-status text. Temporary crash-recovery handling was removed after diagnosis; the final test launches normally.
+
+`bash Scripts/ui-check.sh c9bb73f1-a63e-4dc1-bc30-c2b388a122fb` passed the existing onboarding/activity test in 10.321 seconds with zero failures. It exercises all four offline setup steps, simulated denied Mail permission, dry-run status, and Pause. The result bundle is `.build/c9bb73f1-a63e-4dc1-bc30-c2b388a122fb/ui-results.xcresult`. This does not establish live setup timing, Mail integration, API behavior, or correction UI acceptance.
+
+Final checks pass: 33 package test functions (live API opt-in remains skipped), warning-free app/extension and hardened-runtime archive builds, Swift formatting, strict SwiftLint, Markdown lint, and project plist validation. The updated Developer ID app was accepted under notarization submission `4a085091-1ebf-4371-87c4-682fe00934ca`; stapling, ticket validation, deep strict signature verification, and Gatekeeper assessment pass. The updated distribution is `.build/c9bb73f1-a63e-4dc1-bc30-c2b388a122fb/SpamWise-notarized.zip`.

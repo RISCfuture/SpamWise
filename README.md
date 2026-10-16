@@ -19,7 +19,7 @@ markdownlint-cli2 --config ~/.markdownlint-cli2.jsonc --fix README.md CLAUDE.md 
 bash Scripts/ui-check.sh <worker-token>
 ```
 
-The check script runs all package tests with warnings as errors, then builds the app and extension without signing. The UI script takes the shared UI lock and uses automatic development signing. macOS must allow the test runner to launch; a Gatekeeper “Move to Trash” rejection is an environment failure, not a passing UI test. Cancel that prompt and resolve provisioning in Xcode. The test-mode app uses isolated temporary storage and simulated denied Mail permission.
+The check script runs all package tests with warnings as errors, then builds the app and extension without signing. The UI script takes the shared UI lock and uses automatic development signing. The UITests target requires an embedded provisioning profile to authorize the runner's application-identifier entitlement; Xcode downloads or creates it using the configured team account. A signed runner without that profile can be rejected with a “Move to Trash” prompt. The test-mode app uses isolated temporary storage and simulated denied Mail permission. The UI flow covers all four onboarding steps, denied-permission messaging, dry-run status, and Pause.
 
 Use `swift format format -i -r SpamWise SpamWiseCore/Sources SpamWiseCore/Tests MailExtension UITests UnitTests`, then `swiftlint lint --fix` and `swiftlint lint --strict`. SwiftLint layout rules that disagree with Swift's formatter are disabled in the repository configuration.
 
