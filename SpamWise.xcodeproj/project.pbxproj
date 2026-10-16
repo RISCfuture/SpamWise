@@ -10,6 +10,7 @@
 		019C874D3081F4C500513EEC /* MailExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 019C87443081F4C500513EEC /* MailExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AA0000000000000000000002 = {isa = PBXBuildFile; productRef = AA0000000000000000000001; };
 		AA0000000000000000000004 = {isa = PBXBuildFile; productRef = AA0000000000000000000003; };
+AA0000000000000000000007 = {isa = PBXBuildFile; productRef = AA0000000000000000000006; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +97,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				AA0000000000000000000002,
+                AA0000000000000000000007,
 			);
 		};
 		019C87413081F4C500513EEC /* Frameworks */ = {
@@ -155,7 +157,7 @@
 /* Begin PBXNativeTarget section */
 		000000000000000100000000 /* SpamWise */ = {
 			isa = PBXNativeTarget;
-			packageProductDependencies = (AA0000000000000000000001,);
+			packageProductDependencies = (AA0000000000000000000001,AA0000000000000000000006,);
 			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "SpamWise" */;
 			buildPhases = (
 				000000000000000120000000 /* Sources */,
@@ -732,6 +734,7 @@
 		AA0000000000000000000001 = {isa = XCSwiftPackageProductDependency; productName = SpamWiseCore; };
 		AA0000000000000000000003 = {isa = XCSwiftPackageProductDependency; productName = SpamWiseCore; };
 		AA0000000000000000000005 = {isa = XCLocalSwiftPackageReference; relativePath = SpamWiseCore; };
+AA0000000000000000000006 = {isa = XCSwiftPackageProductDependency; productName = MailIntegration; };
 /* Begin XCConfigurationList section */
 		000000000000000010000000 /* Build configuration list for PBXProject "SpamWise" */ = {
 			isa = XCConfigurationList;

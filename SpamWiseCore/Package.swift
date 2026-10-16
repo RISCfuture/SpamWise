@@ -4,6 +4,7 @@ let package = Package(
     name: "SpamWiseCore",
     platforms: [.macOS("27.0")],
     products: [.library(name: "SpamWiseCore", targets: ["SpamWiseCore"]),
+               .library(name: "MailIntegration", targets: ["MailIntegration"]),
                .executable(name: "spamwise-eval", targets: ["SpamWiseEval"])],
     dependencies: [.package(url: "https://github.com/anthropics/ClaudeForFoundationModels.git", revision: "0262e1a766c461a4268dcec656eca95dd74cebf8")],
     targets: [
@@ -13,8 +14,9 @@ let package = Package(
         .target(name: "Decision", dependencies: ["Classifier"]),
         .target(name: "Store", dependencies: ["MessageModel", "Signals", "Classifier", "Decision"]),
         .target(name: "SpamWiseCore", dependencies: ["MessageModel", "Signals", "Classifier", "Decision", "Store"]),
-        .executableTarget(name: "SpamWiseEval", dependencies: ["SpamWiseCore"]),
-        .testTarget(name: "SpamWiseCoreTests", dependencies: ["SpamWiseCore"], resources: [.copy("Fixtures")])
+        .target(name: "MailIntegration", dependencies: ["SpamWiseCore"]),
+        .executableTarget(name: "SpamWiseEval", dependencies: ["SpamWiseCore", "MailIntegration"]),
+        .testTarget(name: "SpamWiseCoreTests", dependencies: ["SpamWiseCore", "MailIntegration"], resources: [.copy("Fixtures")])
     ],
     swiftLanguageModes: [.v6]
 )

@@ -1,9 +1,30 @@
+import Foundation
 import MailKit
 import SpamWiseCore
 
-/// Fail open until the shared pipeline and runtime probes are configured.
 final class MessageActionHandler: NSObject, MEMessageActionHandler {
+    var requiredHeaders: [String] { ["From", "Message-ID", "Authentication-Results", "Reply-To", "Return-Path", "List-Unsubscribe", "Content-Type", "Content-Transfer-Encoding"] }
     func decideAction(for message: MEMessage, completionHandler: @escaping (MEMessageActionDecision?) -> Void) {
-        completionHandler(nil)
+        let completion = CompletionOnce(completionHandler)
+        guard message.state == .received else { completion.finish(nil); return }
+        guard let raw = message.rawData else { completion.finish(.invokeAgainWithBody); return }
+        // MailKit lacks an account identifier. Until signed identity/account probes pass,
+        // this route can safely record dry runs only; Apple Events handles account-scoped actions.
+        let identity = MessageIdentity(accountID: nil, contentHash: stableHash(raw))
+        let work = Task {
+            do {
+                let store = try Store(url: Store.sharedURL())
+                try await StateRepository.update(store) { state in state.lastExtensionCallback = .now; state.lastBodyCallback = .now }
+                let state = try await StateRepository.load(store)
+                guard !state.settings.paused, state.settings.onboardingComplete else { completion.finish(nil); return }
+                let pipeline = Pipeline(store: store, classifier: ClaudeClassifier { try APIKeychain().read() })
+                _ = await pipeline.process(.init(identity: identity, raw: raw), forceDryRun: true, timeout: min(8, state.settings.callbackDeadline))
+            } catch { /* Fail open if App Group/Keychain/persistence is unavailable. */ }
+            completion.finish(nil)
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(9))
+            if completion.finish(nil) { work.cancel() }
+        }
     }
 }

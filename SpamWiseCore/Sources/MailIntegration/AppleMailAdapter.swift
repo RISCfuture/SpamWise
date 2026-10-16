@@ -1,0 +1,119 @@
+import Foundation
+import SpamWiseCore
+
+public indirect enum ScriptValue: Sendable, Equatable {
+    case string(String), integer(Int), list([ScriptValue]), boolean(Bool)
+    var string: String? { if case .string(let value) = self { value } else { nil } }
+    var integer: Int? { if case .integer(let value) = self { value } else { nil } }
+    var list: [ScriptValue]? { if case .list(let value) = self { value } else { nil } }
+}
+public protocol AppleEventRunner: Sendable { func run(_ source: String) async throws -> ScriptValue }
+@MainActor public final class SystemAppleEventRunner: AppleEventRunner {
+    public init() {}
+    public func run(_ source: String) async throws -> ScriptValue {
+        try Task.checkCancellation()
+        guard let script = NSAppleScript(source: source) else { throw IntegrationError.scriptFailed }
+        var error: NSDictionary?
+        let result = script.executeAndReturnError(&error)
+        if let error {
+            let code = error[NSAppleScript.errorNumber] as? Int
+            if code == -1743 || code == -10004 { throw IntegrationError.permissionDenied }
+            if code == -1701 { throw IntegrationError.ambiguous }
+            if code == -1702 { throw IntegrationError.staleMessage }
+            throw IntegrationError.scriptFailed
+        }
+        return Self.value(result)
+    }
+    private static func value(_ descriptor: NSAppleEventDescriptor) -> ScriptValue {
+        if descriptor.descriptorType == typeAEList {
+            return .list((1...max(1, descriptor.numberOfItems)).compactMap { descriptor.atIndex($0) }.map(value))
+        }
+        if descriptor.descriptorType == typeBoolean { return .boolean(descriptor.booleanValue) }
+        if [typeSInt16, typeSInt32, typeSInt64].contains(descriptor.descriptorType) { return .integer(Int(descriptor.int32Value)) }
+        return .string(descriptor.stringValue ?? "")
+    }
+}
+public struct MailAccount: Identifiable, Sendable { public var id: String; public var name: String }
+public actor AppleMailAdapter: MailClientAdapter {
+    private let runner: any AppleEventRunner
+    public init(runner: any AppleEventRunner) { self.runner = runner }
+    public func accounts() async throws -> [MailAccount] {
+        guard let rows = try await runner.run(MailScripts.accounts).list else { throw IntegrationError.scriptFailed }
+        return try rows.map { row in
+            guard let fields = row.list, fields.count == 2, let id = fields[0].string, let name = fields[1].string else { throw IntegrationError.scriptFailed }
+            return MailAccount(id: id, name: name)
+        }
+    }
+    public func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? {
+        let envelope = try Self.envelope(await runner.run(MailScripts.lookup(identity)))
+        guard envelope.identity.accountID == identity.accountID, envelope.identity.contentHash == identity.contentHash else { throw IntegrationError.staleMessage }
+        return envelope
+    }
+    public func recentMessages(limit: Int) async throws -> [MailEnvelope] { try await messages(limit: limit, role: "inbox") }
+    public func messages(limit: Int, role: String) async throws -> [MailEnvelope] {
+        guard ["inbox", "junk mailbox", "sent mailbox"].contains(role), let rows = try await runner.run(MailScripts.recent(limit: limit, mailbox: role)).list else { throw IntegrationError.scriptFailed }
+        return try rows.map(Self.envelope)
+    }
+    public func selectedMessage() async throws -> MailEnvelope { try Self.envelope(await runner.run(MailScripts.selected)) }
+    public func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
+        guard action != .none else { return .init(confirmed: true) }
+        guard let message = try await lookup(identity), let source = String(data: message.raw, encoding: .utf8) else { throw IntegrationError.staleMessage }
+        try Task.checkCancellation()
+        let result = try await runner.run(MailScripts.lookup(identity, action: action, expectedSource: source))
+        guard result == .boolean(true) else { throw IntegrationError.scriptFailed }
+        return .init(confirmed: true)
+    }
+    public func importHistory() async throws -> [String: HistoryIndex] {
+        // Bounded initial import and subsequent deduplicated updates. Never claim complete mailbox history.
+        let sent = try await messages(limit: 1000, role: "sent mailbox")
+        let inbox = try await messages(limit: 1000, role: "inbox")
+        var indexes: [String: HistoryIndex] = [:]
+        for envelope in inbox + sent {
+            guard let account = envelope.identity.accountID, let message = try? MIMEParser().parse(envelope.raw) else { continue }
+            var index = indexes[account] ?? HistoryIndex()
+            index.availability = .partial; index.updatedAt = .now
+            let isSent = sent.contains { $0.identity.key == envelope.identity.key }
+            let id = (isSent ? "sent:" : "inbox:") + envelope.identity.key
+            guard index.importedIDs.insert(id).inserted else { continue }
+            if isSent {
+                if message.header("in-reply-to") != nil {
+                    for value in (message.headers["to"] ?? []) + (message.headers["cc"] ?? []) {
+                        for address in value.components(separatedBy: ",").compactMap(MIMEParser.address) { index.replied[address, default: 0] += 1 }
+                    }
+                }
+            } else if let domain = DomainResolver().domain(ofAddress: message.fromAddress) {
+                index.received[domain, default: 0] += 1
+                // Conservative receipt heuristic; current incoming claims never establish their own gate.
+                let subject = message.subject.lowercased(), body = message.text.lowercased()
+                if (subject.contains("order confirmation") || subject.contains("your receipt")), body.contains("order"), body.range(of: #"(?:\$|USD|EUR)\s*\d"#, options: [.regularExpression, .caseInsensitive]) != nil {
+                    index.receipts[domain, default: 0] += 1
+                }
+            }
+            indexes[account] = index
+        }
+        return indexes
+    }
+    /// Explicit UI probe: only a message deliberately named [SpamWise Probe] is eligible.
+    public func testDisposableMessage() async throws -> String {
+        let selected = try await selectedMessage()
+        let message = try MIMEParser().parse(selected.raw)
+        guard message.subject.hasPrefix("[SpamWise Probe]"), let account = selected.identity.accountID else { throw IntegrationError.unavailable }
+        _ = try await perform(.moveToJunk, for: selected.identity)
+        _ = try await perform(.moveToInbox, for: selected.identity)
+        _ = try await perform(.orangeFlag, for: selected.identity)
+        return account
+    }
+    public func export(role: String, to directory: URL, limit: Int = 500) async throws -> Int {
+        let messages = try await messages(limit: limit, role: role)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        for message in messages { try message.raw.write(to: directory.appending(path: message.identity.key + ".eml"), options: [.atomic, .withoutOverwriting]) }
+        return messages.count
+    }
+    private static func envelope(_ value: ScriptValue) throws -> MailEnvelope {
+        guard let fields = value.list, fields.count == 5, let account = fields[0].string, !account.isEmpty,
+              let box = fields[1].string, let id = fields[2].integer, let messageID = fields[3].string,
+              let source = fields[4].string, source.utf8.count <= 2_000_000 else { throw IntegrationError.scriptFailed }
+        let raw = Data(source.utf8)
+        return .init(identity: .init(accountID: account, messageID: messageID.isEmpty ? nil : messageID, localID: id, mailbox: box, contentHash: stableHash(raw)), raw: raw)
+    }
+}
