@@ -1,0 +1,2278 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "A newer version of SpamWise saved it in a format this version doesn’t read.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una versión más reciente de SpamWise los guardó en un formato que esta versión no lee."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une version plus récente de SpamWise les a enregistrées dans un format que cette version ne lit pas."
+          }
+        }
+      }
+    },
+    "Allow SpamWise to control Mail in System Settings → Privacy & Security → Automation.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite que SpamWise controle Mail en Ajustes del Sistema → Privacidad y seguridad → Automatización."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez SpamWise à contrôler Mail dans Réglages Système → Confidentialité et sécurité → Automatisation."
+          }
+        }
+      }
+    },
+    "An account can trust at most eight servers.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una cuenta puede confiar en ocho servidores como máximo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un compte peut faire confiance à huit serveurs au maximum."
+          }
+        }
+      }
+    },
+    "An earlier attempt with this request identifier did not finish, so it was not repeated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un intento anterior con este identificador de solicitud no terminó, así que no se repitió."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une tentative précédente avec cet identifiant de demande n’a pas abouti ; elle n’a donc pas été répétée."
+          }
+        }
+      }
+    },
+    "Check the message in Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa el mensaje en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez le message dans Mail."
+          }
+        }
+      }
+    },
+    "Couldn’t communicate with Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo comunicar con Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de communiquer avec Mail."
+          }
+        }
+      }
+    },
+    "Couldn’t confirm mark-as-read. The Junk move remains recorded; this step will not retry.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo confirmar la marca como leído. El movimiento a No deseado sigue registrado; este paso no se reintentará."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de confirmer le marquage comme lu. Le déplacement vers Indésirables reste enregistré ; cette étape ne sera pas retentée."
+          }
+        }
+      }
+    },
+    "Couldn’t save the folder plan.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar el plan de carpeta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer la configuration du dossier."
+          }
+        }
+      }
+    },
+    "Couldn’t save the spending limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar el límite de gasto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer la limite de dépenses."
+          }
+        }
+      }
+    },
+    "Create a dedicated folder named “%@” in Mail, then select it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea en Mail una carpeta dedicada llamada “%@” y selecciónala."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créez dans Mail un dossier dédié nommé « %@ », puis sélectionnez-le."
+          }
+        }
+      }
+    },
+    "Enter a complete email address or a registrable domain.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce una dirección de correo completa o un dominio registrable."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez une adresse e-mail complète ou un domaine enregistrable."
+          }
+        }
+      }
+    },
+    "Enter at most %lld addresses.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Enter at most %lld address."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Enter at most %lld addresses."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld de direcciones."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld dirección."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld direcciones."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld d’adresses."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld adresse."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld adresses."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Enter at most %lld characters.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Enter at most %lld character."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Enter at most %lld characters."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld de caracteres."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld carácter."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld caracteres."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld de caractères."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld caractère."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld caractères."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Enter each server as a single name, such as mx.google.com.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce cada servidor como un solo nombre, como mx.google.com."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez chaque serveur sous la forme d’un seul nom, comme mx.google.com."
+          }
+        }
+      }
+    },
+    "Filtering is paused, or the training folder plan is off or unvalidated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El filtrado está en pausa, o el plan de la carpeta de entrenamiento está desactivado o sin validar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtrage est en pause, ou le plan du dossier d’entraînement est désactivé ou non validé."
+          }
+        }
+      }
+    },
+    "Forget imported examples you no longer need, then import again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Olvida los ejemplos importados que ya no necesites y vuelve a importar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oubliez les exemples importés dont vous n’avez plus besoin, puis importez à nouveau."
+          }
+        }
+      }
+    },
+    "Import at most %lld messages at a time.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Import at most %lld message at a time."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Import at most %lld messages at a time."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa como máximo %lld de mensajes a la vez."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa como máximo %lld mensaje a la vez."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa como máximo %lld mensajes a la vez."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez au maximum %lld de messages à la fois."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez au maximum %lld message à la fois."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez au maximum %lld messages à la fois."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Install the latest version of SpamWise.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instala la versión más reciente de SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installez la dernière version de SpamWise."
+          }
+        }
+      }
+    },
+    "Mail action needs attention": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La acción en Mail requiere atención"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’action dans Mail nécessite votre attention"
+          }
+        }
+      }
+    },
+    "Mail could not complete the requested operation.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no pudo completar la operación solicitada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas pu terminer l’opération demandée."
+          }
+        }
+      }
+    },
+    "Mail couldn’t identify this account’s mailbox uniquely.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no pudo identificar de forma única el buzón de esta cuenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas pu identifier de façon unique la boîte aux lettres de ce compte."
+          }
+        }
+      }
+    },
+    "Mail didn’t respond in time, so a requested change may still happen.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no respondió a tiempo, así que es posible que el cambio solicitado aún se produzca."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas répondu à temps ; la modification demandée peut donc encore avoir lieu."
+          }
+        }
+      }
+    },
+    "Mail didn’t show the expected result before the observation window ended.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no mostró el resultado esperado antes de que terminara el periodo de observación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas affiché le résultat attendu avant la fin de la période d’observation."
+          }
+        }
+      }
+    },
+    "Mail doesn’t have %lld to %lld messages selected.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail doesn’t have %1$lld to %#@arg2@ selected."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no tiene de %1$lld a %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes seleccionados"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje seleccionado"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes seleccionados"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas de %1$lld à %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages sélectionnés"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message sélectionné"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages sélectionnés"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Mail doesn’t have exactly one message selected.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no tiene exactamente un mensaje seleccionado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas exactement un message sélectionné."
+          }
+        }
+      }
+    },
+    "Mail has more than %lld mailboxes or folders nested more than %lld levels deep.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail has more than %#@arg1@ or folders nested more than %#@arg2@ deep."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mailbox"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mailboxes"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg level"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg levels"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail tiene más de %#@arg1@ o carpetas anidadas a más de %#@arg2@ de profundidad."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de buzones"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg buzón"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg buzones"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de niveles"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg nivel"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg niveles"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail contient plus de %#@arg1@ ou des dossiers imbriqués sur plus de %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de boîtes aux lettres"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg boîte aux lettres"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg boîtes aux lettres"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de niveaux"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg niveau"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg niveaux"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Mail has no unique account with the recorded identifier.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no tiene una única cuenta con el identificador registrado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail ne possède aucun compte unique correspondant à l’identifiant enregistré."
+          }
+        }
+      }
+    },
+    "Mail showed the move, but the message later left its destination. Its result is unknown; not retried.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail mostró el traslado, pero después el mensaje salió de su destino. Se desconoce el resultado; no se reintenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail a affiché le déplacement, mais le message a ensuite quitté sa destination. Le résultat est inconnu ; aucune nouvelle tentative."
+          }
+        }
+      }
+    },
+    "Mark-as-read status could not be saved. The confirmed Junk move is retained.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar el estado de lectura. Se conserva el traslado confirmado a correo no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer l’état de lecture. Le déplacement confirmé vers les indésirables est conservé."
+          }
+        }
+      }
+    },
+    "Model and local evidence disagree": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El modelo y los indicios locales discrepan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le modèle et les indices locaux divergent"
+          }
+        }
+      }
+    },
+    "More than one message matches the requested identity.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más de un mensaje coincide con la identidad solicitada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plusieurs messages correspondent à l’identité demandée."
+          }
+        }
+      }
+    },
+    "Move its messages elsewhere so the folder is empty, then save the plan again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mueve sus mensajes a otro lugar para vaciar la carpeta y vuelve a guardar el plan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacez ses messages ailleurs pour vider le dossier, puis enregistrez à nouveau la configuration."
+          }
+        }
+      }
+    },
+    "Only an unclassified message can be retried.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se puede reintentar un mensaje sin clasificar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seul un message non classé peut être réessayé."
+          }
+        }
+      }
+    },
+    "Only an uncorrected dry-run preview can be applied.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se puede aplicar una vista previa de simulación sin corregir."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seul un aperçu de simulation non corrigé peut être appliqué."
+          }
+        }
+      }
+    },
+    "Permission to control Mail was denied.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se denegó el permiso para controlar Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’autorisation de contrôler Mail a été refusée."
+          }
+        }
+      }
+    },
+    "Quit and reopen SpamWise. Your saved data is left unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sal de SpamWise y vuelve a abrirlo. Tus datos guardados no se modifican."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quittez SpamWise et rouvrez-le. Vos données enregistrées restent inchangées."
+          }
+        }
+      }
+    },
+    "Raise the limit in Settings, or wait until next month.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aumenta el límite en Ajustes o espera al próximo mes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Augmentez la limite dans les Réglages ou attendez le mois prochain."
+          }
+        }
+      }
+    },
+    "Remove a plan you no longer use, then try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina un plan que ya no uses y vuelve a intentarlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimez une configuration que vous n’utilisez plus, puis réessayez."
+          }
+        }
+      }
+    },
+    "Review corrections apply only to the sender’s address, not its domain.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las correcciones a Revisar solo se aplican a la dirección del remitente, no a su dominio."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les corrections vers À vérifier ne s’appliquent qu’à l’adresse de l’expéditeur, pas à son domaine."
+          }
+        }
+      }
+    },
+    "Rules, labels or settings changed after the correction was saved.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las reglas, etiquetas o ajustes cambiaron después de guardar la corrección."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des règles, étiquettes ou réglages ont changé après l’enregistrement de la correction."
+          }
+        }
+      }
+    },
+    "Select %lld to %lld messages in Mail, then try again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select %1$lld to %#@arg2@ in Mail, then try again."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona de %1$lld a %#@arg2@ en Mail y vuelve a intentarlo."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez de %1$lld à %#@arg2@ dans Mail, puis réessayez."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Select one message in Mail, then try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona un mensaje en Mail y vuelve a intentarlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez un message dans Mail, puis réessayez."
+          }
+        }
+      }
+    },
+    "Select one message in the account’s Inbox whose subject starts with “[SpamWise Probe]”.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona un mensaje de la bandeja de entrada de la cuenta cuyo asunto empiece por «[SpamWise Probe]»."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez un message de la boîte de réception du compte dont l’objet commence par « [SpamWise Probe] »."
+          }
+        }
+      }
+    },
+    "Select the folder again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a seleccionar la carpeta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez à nouveau le dossier."
+          }
+        }
+      }
+    },
+    "SpamWise can’t use its saved data.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no puede usar sus datos guardados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise ne peut pas utiliser ses données enregistrées."
+          }
+        }
+      }
+    },
+    "SpamWise hasn’t seen enough of this account’s mail to detect its servers.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise aún no ha visto suficiente correo de esta cuenta para detectar sus servidores."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas encore vu assez de courrier de ce compte pour détecter ses serveurs."
+          }
+        }
+      }
+    },
+    "SpamWise keeps at most %lld folder plans.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise keeps at most %lld folder plan."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise keeps at most %lld folder plans."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserva como máximo %lld de planes de carpeta."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserva como máximo %lld plan de carpeta."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserva como máximo %lld planes de carpeta."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserve au maximum %lld de configurations de dossier."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserve au maximum %lld configuration de dossier."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserve au maximum %lld configurations de dossier."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SpamWise keeps at most %lld imported labels; %lld more can be imported.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise keeps at most %#@arg1@; %2$lld more can be imported."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg imported label"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg imported labels"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise conserva como máximo %#@arg1@; %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de etiquetas importadas"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg etiqueta importada"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg etiquetas importadas"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se pueden importar %arg más"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se puede importar %arg más"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se pueden importar %arg más"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise conserve au maximum %#@arg1@ ; %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg d’étiquettes importées"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg étiquette importée"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg étiquettes importées"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de plus peuvent être importées"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de plus peut être importée"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de plus peuvent être importées"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SpamWise remembers at most %lld automation requests.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise remembers at most %lld automation request."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise remembers at most %lld automation requests."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise recuerda como máximo %lld de solicitudes de automatización."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise recuerda como máximo %lld solicitud de automatización."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise recuerda como máximo %lld solicitudes de automatización."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise retient au maximum %lld de demandes d’automatisation."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise retient au maximum %lld demande d’automatisation."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise retient au maximum %lld demandes d’automatisation."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "The Activity record couldn’t be used.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo usar el registro de Actividad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’utiliser l’entrée d’activité."
+          }
+        }
+      }
+    },
+    "The Activity record is no longer available.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El registro de Actividad ya no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’entrée d’activité n’est plus disponible."
+          }
+        }
+      }
+    },
+    "The Mail action failed or was cancelled; its result is unknown. Not retried.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La acción de Mail falló o se canceló; se desconoce su resultado. No se reintentará."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’action Mail a échoué ou a été annulée ; son résultat est inconnu. Aucune nouvelle tentative."
+          }
+        }
+      }
+    },
+    "The Mail action was not attempted; the message is unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se intentó la acción de Mail; el mensaje no ha cambiado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’action Mail n’a pas été tentée ; le message est inchangé."
+          }
+        }
+      }
+    },
+    "The account’s Inbox and Junk mailboxes haven’t been validated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los buzones de Entrada y No deseado de la cuenta no se han validado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les boîtes Réception et Indésirables du compte n’ont pas été validées."
+          }
+        }
+      }
+    },
+    "The automation request couldn’t be completed.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo completar la solicitud de automatización."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de terminer la demande d’automatisation."
+          }
+        }
+      }
+    },
+    "The backup could not be opened.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo abrir la copia de seguridad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sauvegarde n’a pas pu être ouverte."
+          }
+        }
+      }
+    },
+    "The configured account or folder couldn’t be found uniquely.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo identificar de forma única la cuenta o carpeta configurada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le compte ou le dossier configuré n’a pas pu être identifié de façon unique."
+          }
+        }
+      }
+    },
+    "The correction couldn’t be saved.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar la corrección."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer la correction."
+          }
+        }
+      }
+    },
+    "The correction couldn’t be undone.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo deshacer la corrección."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’annuler la correction."
+          }
+        }
+      }
+    },
+    "The folder plan no longer exists.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El plan de carpeta ya no existe."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration du dossier n’existe plus."
+          }
+        }
+      }
+    },
+    "The folder “%@” isn’t empty.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carpeta “%@” no está vacía."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier « %@ » n’est pas vide."
+          }
+        }
+      }
+    },
+    "The folder “%@” isn’t named “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The folder “%1$@” isn’t named “%2$@”."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carpeta “%1$@” no se llama “%2$@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier « %1$@ » ne s’appelle pas « %2$@ »."
+          }
+        }
+      }
+    },
+    "The mail operation failed. Mail stays unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La operación de correo falló. El correo no cambia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’opération de messagerie a échoué. Les messages restent inchangés."
+          }
+        }
+      }
+    },
+    "The maximum of 10,000 sender rules has been reached.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se alcanzó el máximo de 10.000 reglas de remitentes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le maximum de 10 000 règles d’expéditeur a été atteint."
+          }
+        }
+      }
+    },
+    "The message already has a flag or color you set, so SpamWise left it unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje ya tiene una bandera o un color que estableciste, así que SpamWise no lo modificó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message porte déjà un drapeau ou une couleur que vous avez définis ; SpamWise ne l’a donc pas modifié."
+          }
+        }
+      }
+    },
+    "The message couldn’t be found in Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró el mensaje en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message est introuvable dans Mail."
+          }
+        }
+      }
+    },
+    "The message has no Message-ID, so SpamWise can’t confirm a move and left it in place.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje no tiene Message-ID, así que SpamWise no puede confirmar un traslado y lo dejó donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message n’a pas de Message-ID ; SpamWise ne peut donc pas confirmer un déplacement et l’a laissé en place."
+          }
+        }
+      }
+    },
+    "The message has no account or changed since it was selected.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje no tiene cuenta o cambió desde que se seleccionó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message n’a pas de compte ou a changé depuis sa sélection."
+          }
+        }
+      }
+    },
+    "The message has no single readable sender address.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje no tiene una única dirección de remitente legible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message n’a pas d’adresse d’expéditeur unique lisible."
+          }
+        }
+      }
+    },
+    "The message is no longer available in the mail client.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje ya no está disponible en el cliente de correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message n’est plus disponible dans le client de messagerie."
+          }
+        }
+      }
+    },
+    "The message is no longer in the mailbox where SpamWise found it, so it was left in place.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje ya no está en el buzón donde SpamWise lo encontró, así que se dejó donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message ne se trouve plus dans la boîte aux lettres où SpamWise l’a trouvé ; il a donc été laissé en place."
+          }
+        }
+      }
+    },
+    "The message is too large for SpamWise to read, so it was left unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje es demasiado grande para que SpamWise lo lea, así que no se modificó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message est trop volumineux pour que SpamWise le lise ; il n’a donc pas été modifié."
+          }
+        }
+      }
+    },
+    "The message isn’t in the training folder its plan names.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje no está en la carpeta de entrenamiento que indica su plan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message ne se trouve pas dans le dossier d’entraînement indiqué par son plan."
+          }
+        }
+      }
+    },
+    "The message no longer matches its recorded state.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje ya no coincide con su estado registrado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message ne correspond plus à son état enregistré."
+          }
+        }
+      }
+    },
+    "The message’s Activity record is no longer available.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El registro de Actividad del mensaje ya no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’entrée d’activité du message n’est plus disponible."
+          }
+        }
+      }
+    },
+    "The requested message or Mail service is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje o servicio de Mail solicitado no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message ou le service Mail demandé est indisponible."
+          }
+        }
+      }
+    },
+    "The reviewed example is no longer available.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El ejemplo revisado ya no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exemple vérifié n’est plus disponible."
+          }
+        }
+      }
+    },
+    "The reviewed examples couldn’t be updated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron actualizar los ejemplos revisados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de mettre à jour les exemples vérifiés."
+          }
+        }
+      }
+    },
+    "The rule file is invalid or exceeds the import limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El archivo de reglas no es válido o supera el límite de importación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fichier de règles est invalide ou dépasse la limite d’importation."
+          }
+        }
+      }
+    },
+    "The selected message isn’t a SpamWise probe message in an Inbox.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje seleccionado no es un mensaje de prueba de SpamWise en una bandeja de entrada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message sélectionné n’est pas un message de test SpamWise dans une boîte de réception."
+          }
+        }
+      }
+    },
+    "The sender rules could not be updated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron actualizar las reglas de remitentes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de mettre à jour les règles d’expéditeurs."
+          }
+        }
+      }
+    },
+    "The shared database couldn’t be opened.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo abrir la base de datos compartida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’ouvrir la base de données partagée."
+          }
+        }
+      }
+    },
+    "The spending limit must be a positive amount no greater than %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El límite de gasto debe ser un importe positivo no superior a %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de dépenses doit être un montant positif ne dépassant pas %@."
+          }
+        }
+      }
+    },
+    "The training folder holds more messages than SpamWise tracks.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carpeta de entrenamiento contiene más mensajes de los que SpamWise registra."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier d’entraînement contient plus de messages que SpamWise n’en suit."
+          }
+        }
+      }
+    },
+    "The training folder placement couldn’t be applied.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo aplicar la colocación en la carpeta de entrenamiento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’appliquer le placement dans le dossier d’entraînement."
+          }
+        }
+      }
+    },
+    "The trust exclusions couldn’t be saved.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron guardar las exclusiones de confianza."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer les exclusions de confiance."
+          }
+        }
+      }
+    },
+    "The trusted mail servers could not be updated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron actualizar los servidores de correo de confianza."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de mettre à jour les serveurs de messagerie de confiance."
+          }
+        }
+      }
+    },
+    "This mail connection can’t perform the action, so it was not attempted.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta conexión de correo no puede realizar la acción, así que no se intentó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette connexion de messagerie ne peut pas effectuer l’action ; elle n’a donc pas été tentée."
+          }
+        }
+      }
+    },
+    "This month’s spending limit has been reached.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha alcanzado el límite de gasto de este mes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de dépenses de ce mois-ci est atteinte."
+          }
+        }
+      }
+    },
+    "This placement was already applied.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta colocación ya se aplicó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce placement a déjà été appliqué."
+          }
+        }
+      }
+    },
+    "This request identifier was already used for a different request.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este identificador de solicitud ya se usó para otra solicitud."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet identifiant de demande a déjà servi pour une autre demande."
+          }
+        }
+      }
+    },
+    "Uncertain classification; confidence is uncalibrated": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clasificación incierta; confianza sin calibrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classement incertain ; confiance non étalonnée"
+          }
+        }
+      }
+    },
+    "Use the matching recovery key and a supported SpamWise backup.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa la clave correspondiente y una copia compatible de SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez la clé correspondante et une sauvegarde SpamWise compatible."
+          }
+        }
+      }
+    },
+    "Your monthly spending limit prevented this request. Mail was left unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu límite de gasto mensual impidió esta solicitud. El correo no se ha modificado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre limite de dépenses mensuelle a empêché cette requête. Le message n’a pas été modifié."
+          }
+        }
+      }
+    },
+    "“%@” has no registrable domain for a domain-wide rule.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» no tiene un dominio registrable para una regla de todo el dominio."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » n’a pas de domaine enregistrable pour une règle portant sur tout le domaine."
+          }
+        }
+      }
+    },
+    "“%@” is not a complete email address.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» no es una dirección de correo completa."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » n’est pas une adresse e-mail complète."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

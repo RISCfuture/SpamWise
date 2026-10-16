@@ -1,0 +1,161 @@
+{
+  "records": 18433,
+  "groups": 17960,
+  "source_labels_and_indices_verified": true,
+  "evaluation_only_groups": 225,
+  "split_counts": {
+    "real/holdout": 259,
+    "real/train": 1243,
+    "real/validation": 491,
+    "synthetic/holdout": 2523,
+    "synthetic/train": 11545,
+    "synthetic/validation": 2372
+  },
+  "language_labels": {
+    "unknown": 18433
+  },
+  "independently_reviewed_records": 0,
+  "frozen_membership": {
+    "preserved_records": 18201,
+    "preserved_holdout_records": 2782
+  },
+  "records_sha256": "1f089e1c8f8e7556fb22ab009c5a2bc3d87d05914aabbc2327737ba625f4f2b9",
+  "baseline_records_sha256": "303796aa67d0022d20aa0165198fe636fc87536e3aa346df728f3366d31898ec",
+  "campaigns": {
+    "selected_real_non_holdout_records": 1734,
+    "eligible_records": 1713,
+    "method": "Unmasked normalized five-word shingles; at least 20 distinct shingles; Jaccard >= 0.8; first 10000 words",
+    "different_group_candidate_pairs": 487,
+    "cross_train_validation_candidate_pairs": 136,
+    "holdout_content_examined": false,
+    "group_assignments_changed": false,
+    "candidate_source_pairs": {
+      "spamassassin-hard-ham-20030228": 9,
+      "guenter-2026-09": 475,
+      "nazario-2025": 3
+    },
+    "candidate_distinct_records": 198,
+    "cross_split_distinct_records": 73
+  },
+  "derived_development": {
+    "records": 1734,
+    "groups": 1311,
+    "accepted_overlap_pairs": 421,
+    "split_counts": {
+      "validation": 520,
+      "train": 1214
+    },
+    "train_records_moved_to_validation": 29,
+    "holdout_records": 0,
+    "prior_development_exposure_preserved": true,
+    "independent_evaluation_eligible": false,
+    "accepted_cross_split_pairs": 0,
+    "remaining_lower_overlap_cross_split_pairs": 37
+  },
+  "development_header_claims": {
+    "guenter-2026-09": {
+      "source_period": "2026-09 collection archive; individual headers untrusted",
+      "accepted_development_origins": 1256,
+      "untrusted_date_year": {
+        "2026": 1253,
+        "unknown": 3
+      },
+      "untrusted_content_language": {
+        "en-in": 1,
+        "en-us": 1,
+        "unknown_or_multiple": 1254
+      }
+    },
+    "nazario-2025": {
+      "source_period": "2025 collection file; individual headers untrusted",
+      "accepted_development_origins": 412,
+      "untrusted_date_year": {
+        "2024": 1,
+        "2025": 408,
+        "unknown": 3
+      },
+      "untrusted_content_language": {
+        "en-us": 4,
+        "pt-br": 1,
+        "unknown_or_multiple": 407
+      }
+    },
+    "spamassassin-hard-ham-20030228": {
+      "source_period": "2003-02-28 corpus assembly; archive updated 2004-12-16; individual headers untrusted",
+      "accepted_development_origins": 232,
+      "untrusted_date_year": {
+        "2002": 232
+      },
+      "untrusted_content_language": {
+        "unknown_or_multiple": 232
+      }
+    }
+  },
+  "inferred_development_languages": {
+    "records": 1734,
+    "framework": "macOS NaturalLanguage NLLanguageRecognizer",
+    "macos_version": "27.0.1",
+    "executable_sha256": "1bd60d21ca51dfe5305718fd9b4981b5a91f17ee0817f5a09f584df77c207a54",
+    "method": "First 20000 characters; at least 40 letters; highest hypothesis >=0.8 and margin >=0.2; otherwise unknown",
+    "inferred_not_reviewed": true,
+    "holdout_records": 0,
+    "counts": {
+      "de": 10,
+      "en": 1539,
+      "es": 5,
+      "fr": 9,
+      "hu": 4,
+      "id": 4,
+      "it": 4,
+      "ja": 3,
+      "nl": 8,
+      "pt": 4,
+      "sv": 1,
+      "uk": 4,
+      "unknown": 134,
+      "zh-Hans": 5
+    },
+    "source_counts": {
+      "guenter-2026-09": {
+        "de": 4,
+        "en": 1048,
+        "es": 1,
+        "fr": 8,
+        "it": 3,
+        "ja": 1,
+        "nl": 7,
+        "uk": 4,
+        "unknown": 37,
+        "zh-Hans": 4
+      },
+      "nazario-2025": {
+        "de": 3,
+        "en": 320,
+        "es": 4,
+        "fr": 1,
+        "hu": 4,
+        "id": 1,
+        "it": 1,
+        "pt": 4,
+        "sv": 1,
+        "unknown": 45,
+        "zh-Hans": 1
+      },
+      "spamassassin-hard-ham-20030228": {
+        "de": 3,
+        "en": 171,
+        "id": 3,
+        "ja": 2,
+        "nl": 1,
+        "unknown": 52
+      }
+    }
+  },
+  "limitations": [
+    "Source-label fidelity is not independent correctness review.",
+    "Candidate overlap is not proof of shared campaign; unchanged groups are provisional.",
+    "Holdout text is not inspected for campaign similarity or model inference.",
+    "Sender-controlled dates/language headers are not verified time/language coverage.",
+    "No threat classifier is loaded; pretrained exposure remains unknown."
+  ]
+}

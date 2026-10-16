@@ -1,0 +1,93 @@
+{
+  "model": "Horizon-Labs/phishing-scam-detector-base",
+  "revision": "f1dddff04e7f56dc9f0f068d4e7f0383c583e392",
+  "weights_sha256": "1f056ed61f8c0f6bfb11616e9c2f640762dcbbaff92bdb71657723f1d84125af",
+  "corpus_sha256": "1f089e1c8f8e7556fb22ab009c5a2bc3d87d05914aabbc2327737ba625f4f2b9",
+  "seed": "spamwise-public-2026-10-v1",
+  "torch": "2.14.1",
+  "transformers": "5.20.1",
+  "python": "3.14.8",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "max_tokens": 1024,
+  "elapsed_seconds_excluding_load": 168.14516095900035,
+  "peak_process_memory_bytes_macos": 1708277760,
+  "paid_calls": 0,
+  "cohorts": {
+    "spam": {
+      "positive_records": 181,
+      "template_groups": 123,
+      "argmax_counts": {
+        "spam": 125,
+        "legitimate": 55,
+        "fraud": 1
+      },
+      "scored_output": "spam",
+      "output_is_task_proxy": false,
+      "threshold_hits": {
+        "0.5": 118,
+        "0.9": 17,
+        "0.95": 5,
+        "0.99": 0
+      },
+      "spam_or_fraud_at_0.5": 127,
+      "negative_records": 232,
+      "negative_template_groups": 225,
+      "negative_argmax_counts": {
+        "legitimate": 73,
+        "spam": 159
+      },
+      "threshold_false_positives": {
+        "0.5": 152,
+        "0.9": 7,
+        "0.95": 1,
+        "0.99": 0
+      },
+      "false_positive_rate": 0.6551724137931034,
+      "false_positive_threshold": 0.5,
+      "spam_or_fraud_at_0.5_negative": 164
+    },
+    "phishing": {
+      "positive_records": 78,
+      "template_groups": 70,
+      "argmax_counts": {
+        "fraud": 28,
+        "legitimate": 34,
+        "spam": 16
+      },
+      "scored_output": "fraud",
+      "output_is_task_proxy": true,
+      "threshold_hits": {
+        "0.5": 23,
+        "0.9": 7,
+        "0.95": 5,
+        "0.99": 0
+      },
+      "spam_or_fraud_at_0.5": 53,
+      "negative_records": 0,
+      "negative_template_groups": 0,
+      "negative_argmax_counts": {},
+      "threshold_false_positives": {
+        "0.5": 0,
+        "0.9": 0,
+        "0.95": 0,
+        "0.99": 0
+      },
+      "false_positive_rate": null,
+      "false_positive_threshold": 0.5,
+      "spam_or_fraud_at_0.5_negative": 0
+    }
+  },
+  "evaluated_records": 491,
+  "truncated_records": 311,
+  "inference_ms": {
+    "p50": 397.60979199490976,
+    "p95": 603.5350830061361
+  },
+  "limits": [
+    "Development data only; reserved holdout is excluded from scoring.",
+    "Positive-only cohorts do not establish false-positive rates; thresholds remain uncalibrated.",
+    "Fraud is a broad model output, not a separately trained phishing score.",
+    "Template groups are heuristic; records are not assumed independent.",
+    "Labels, languages and pretrained exposure have not been independently audited."
+  ]
+}

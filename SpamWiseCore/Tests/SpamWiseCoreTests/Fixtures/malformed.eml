@@ -1,0 +1,7 @@
+From: sender@example.com
+Content-Type: multipart/mixed; boundary=x
+
+--x
+Content-Type: text/plain
+
+unterminated

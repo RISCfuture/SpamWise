@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Premiers pas — Aide SpamWise</title><meta name="description" content="Configurez SpamWise, choisissez comment il classe les messages, connectez-le à Mail et essayez une simulation avant qu’il ne modifie vos messages.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Rubriques d’aide"><h2>Premiers pas</h2><ul><li><a href="getting-started.html" aria-current="page">Premiers pas</a></li><li><a href="how-decisions-are-made.html">Comment les décisions sont prises</a></li><li><a href="filtering-strength.html">Intensité du filtrage</a></li><li><a href="what-data-is-sent.html">Quelles données sont envoyées</a></li></ul><h2>Utilisation quotidienne</h2><ul><li><a href="activity.html">Utiliser Activité</a></li><li><a href="correcting-mistakes.html">Corriger les erreurs</a></li><li><a href="review-junk.html">Vérifier les indésirables</a></li><li><a href="notifications.html">Notifications et récapitulatif des messages à vérifier</a></li><li><a href="statistics.html">Statistiques</a></li><li><a href="shortcuts.html">Raccourcis</a></li></ul><h2>Règles et apprentissage</h2><ul><li><a href="rules.html">Règles d’expéditeur et de contenu</a></li><li><a href="folders.html">Dossiers</a></li><li><a href="reviewed-messages-and-learning.html">Messages vérifiés et apprentissage</a></li></ul><h2>Comptes et données</h2><ul><li><a href="imap-connection.html">Se connecter en IMAP</a></li><li><a href="backup-and-restore.html">Sauvegarde et restauration</a></li><li><a href="troubleshooting-mail-integration.html">Résoudre les problèmes d’intégration Mail</a></li></ul></nav>
+<main><a name="getting-started" id="getting-started"></a><h1>Premiers pas</h1>
+<p>SpamWise trie les messages qui arrivent dans Apple Mail. Les messages légitimes restent dans Réception. Les messages à vérifier restent dans Réception avec un drapeau ou un fond orange, pour que vous puissiez les examiner. Les indésirables sont déplacés dans la boîte des indésirables du compte. SpamWise ne supprime jamais de message et n’en place jamais dans la Corbeille.</p>
+<h2><a name="setup-steps" id="setup-steps"></a>Configurer SpamWise</h2>
+<p>À la première ouverture, SpamWise vous guide en cinq étapes.</p>
+<ol>
+<li>Lisez comment SpamWise traite vos données personnelles, puis choisissez Continuer.</li>
+<li>Choisissez un Fournisseur, qui classe les messages que vos règles et les expéditeurs connus ne décident pas :
+<ul>
+<li>Apple sur l’appareil classe les messages sur ce Mac avec Apple Intelligence. Les messages ne sont envoyés nulle part, sans clé API ni frais.</li>
+<li>Claude, OpenAI et Gemini classent les messages avec votre propre clé API, et chaque message est facturé sur le compte de votre fournisseur. Saisissez la clé, choisissez Vérifier et enregistrer la clé ou Enregistrer la clé, puis activez « Autoriser l’envoi du contexte des messages à <var>fournisseur</var> ».</li>
+</ul>
+Pour décider plus tard, choisissez Ignorer pour l’instant ; vous pourrez choisir un fournisseur à tout moment dans Réglages → Classificateur.</li>
+<li>Choisissez Vérifier la connexion à Mail et autorisez SpamWise à contrôler Mail lorsque macOS le demande. SpamWise trouve les boîtes de réception et d’indésirables de chaque compte sans modifier vos messages. Pour qu’il reconnaisse les personnes que vous connaissez, choisissez Connecter Contacts et Importer l’historique de Réception et d’Envoyés.</li>
+<li>Choisissez quoi faire de chaque type de message dont vous ne voulez peut-être pas, comme les promotions de boutiques ou les infolettres : Garder, Signaler ou Indésirables. Pour donner à SpamWise des exemples de ce dont vous ne voulez pas, choisissez Analyser les dossiers d’indésirables, puis Enregistrer les exemples. Consultez <a href="how-decisions-are-made.html#mail-policy">Choisir les messages que vous voulez recevoir</a>.</li>
+<li>Choisissez Simuler sur les messages récents pour voir ce que SpamWise ferait de vos 20 messages les plus récents de Réception. Rien ne change dans Mail. Choisissez ensuite Terminer la configuration.</li>
+</ol>
+<p>Pour refaire ces étapes, choisissez Afficher la configuration initiale dans Réglages → Général.</p>
+<h2><a name="start-filtering" id="start-filtering"></a>Commencer le filtrage</h2>
+<p>La simulation reste active après la configuration : Activité montre ce que SpamWise ferait, et vos messages restent où ils sont. Quand les décisions vous conviennent :</p>
+<ol>
+<li>Choisissez SpamWise → Réglages, puis Général.</li>
+<li>Désactivez « Simulation — ne pas modifier les messages », puis choisissez Désactiver la simulation.</li>
+</ol>
+<p>Ce réglage devient disponible dès que SpamWise a trouvé les boîtes de réception et d’indésirables d’au moins un compte, et seuls ces comptes sont filtrés. SpamWise vérifie chaque déplacement après coup. Si Mail ne confirme pas un déplacement, SpamWise ne le refait pas et ne l’annule pas, et Activité affiche l’échec pour que vous puissiez vérifier le message dans Mail.</p>
+<p>Tant que la simulation reste active, SpamWise vérifie chaque message une seule fois, même si vous modifiez ensuite vos règles ou vos réglages de filtrage, ou corrigez un message. Quand vous désactivez la simulation, SpamWise agit aussi sur les messages vérifiés pendant la simulation qui sont toujours dans votre boîte de réception. Si vos règles et vos réglages de filtrage n’ont pas changé depuis, il réutilise ces décisions au lieu de renvoyer les messages à votre fournisseur.</p>
+<h2><a name="keep-running" id="keep-running"></a>Laisser SpamWise ouvert</h2>
+<p>SpamWise vérifie la boîte de réception de chaque compte toutes les minutes tant que SpamWise et Mail sont ouverts. Si vous fermez ses fenêtres, SpamWise reste actif dans la barre des menus ; si vous le quittez, le filtrage s’arrête. Pour qu’il s’ouvre automatiquement, activez Ouvrir SpamWise à l’ouverture de session dans Réglages → Général. Pour vérifier les nouveaux messages dès leur arrivée, consultez <a href="troubleshooting-mail-integration.html#new-mail">Vérifier plus tôt les nouveaux messages</a>.</p>
+<h2><a name="older-mail" id="older-mail"></a>Trier les messages plus anciens</h2>
+<p>Le filtrage automatique porte sur les messages qui arrivent après la configuration, ou après l’ajout d’un compte. Pour trier les messages déjà présents dans Réception :</p>
+<ol>
+<li>Désactivez la simulation.</li>
+<li>Dans Réglages → Comptes, ouvrez Messages plus anciens sous le compte.</li>
+<li>Choisissez Aperçu des messages antérieurs de Réception, puis vérifiez les décisions dans Activité.</li>
+<li>Choisissez Appliquer les décisions prévisualisées. Pour continuer, augmentez la page de messages antérieurs et prévisualisez la page suivante.</li>
+</ol>
+<p>Les aperçus envoient des messages à votre fournisseur, ce qui peut être payant. Modifier les réglages supprime les aperçus que vous n’avez pas appliqués.</p>
+</main></body></html>

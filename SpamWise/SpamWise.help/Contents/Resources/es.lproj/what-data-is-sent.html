@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Qué datos se envían — Ayuda de SpamWise</title><meta name="description" content="Qué guarda SpamWise en tu Mac y qué envía a tu proveedor y a los servicios opcionales.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Temas de ayuda"><h2>Primeros pasos</h2><ul><li><a href="getting-started.html">Primeros pasos</a></li><li><a href="how-decisions-are-made.html">Cómo se toman las decisiones</a></li><li><a href="filtering-strength.html">Intensidad del filtrado</a></li><li><a href="what-data-is-sent.html" aria-current="page">Qué datos se envían</a></li></ul><h2>Uso diario</h2><ul><li><a href="activity.html">Usar Actividad</a></li><li><a href="correcting-mistakes.html">Corregir errores</a></li><li><a href="review-junk.html">Revisar el correo no deseado</a></li><li><a href="notifications.html">Notificaciones y resumen de mensajes para revisar</a></li><li><a href="statistics.html">Estadísticas</a></li><li><a href="shortcuts.html">Atajos</a></li></ul><h2>Reglas y aprendizaje</h2><ul><li><a href="rules.html">Reglas de remitente y de contenido</a></li><li><a href="folders.html">Carpetas</a></li><li><a href="reviewed-messages-and-learning.html">Mensajes revisados y aprendizaje</a></li></ul><h2>Cuentas y datos</h2><ul><li><a href="imap-connection.html">Conectar por IMAP</a></li><li><a href="backup-and-restore.html">Copia de seguridad y restauración</a></li><li><a href="troubleshooting-mail-integration.html">Resolver problemas de integración con Mail</a></li></ul></nav>
+<main><a name="what-data-is-sent" id="what-data-is-sent"></a><h1>Qué datos se envían</h1>
+<h2><a name="on-this-mac" id="on-this-mac"></a>En tu Mac</h2>
+<p>Tus reglas y los remitentes conocidos se comprueban en este Mac. SpamWise guarda sus ajustes, reglas, decisiones, correcciones y aprendizaje en este Mac. Las claves de API, la clave de consulta de Spamhaus y las contraseñas IMAP se guardan solo en el Llavero. SpamWise nunca lee las bases de datos de Mail ni pide acceso total al disco.</p>
+<h2><a name="provider-data" id="provider-data"></a>Tu proveedor</h2>
+<p>Con Apple en el dispositivo, el correo no sale de este Mac. Con Claude, OpenAI o Gemini, SpamWise no envía nada hasta que activas “Permitir el envío del contexto del correo a <var>proveedor</var>” en Compartir correo, en Ajustes → Clasificador. A partir de entonces, cada mensaje que tus reglas y los remitentes conocidos no deciden se envía al proveedor con tu clave de API. Una solicitud contiene:</p>
+<ul>
+<li>el remitente, el asunto y un texto abreviado del mensaje;</li>
+<li>indicios como los resultados de autenticación y los dominios de los enlaces;</li>
+<li>tus preferencias e instrucciones adicionales;</li>
+<li>algunas correcciones parecidas de la misma cuenta, cada una con el dominio del remitente, el asunto, un fragmento breve y tu etiqueta.</li>
+</ul>
+<p>El correo puede contener información personal tuya y de otras personas. Elige Condiciones de datos y conservación del proveedor en Ajustes → Clasificador para leer cómo la trata tu proveedor. Para dejar de enviar correo, desactiva el envío o activa Mantener el filtrado en este Mac. Las solicitudes ya enviadas no se pueden recuperar.</p>
+<p>En Contexto de clasificación, en Ajustes → Avanzado, Correcciones similares fija cuántas correcciones cita una solicitud (5, salvo que lo cambies) y Texto del mensaje fija cuánto texto del mensaje lleva (unos 1500 tokens). Más contexto puede mejorar las decisiones, pero cuesta más.</p>
+<p>Las simulaciones y las vistas previas del correo anterior también envían mensajes a tu proveedor.</p>
+<h2><a name="spending-limit" id="spending-limit"></a>Coste y límite de gasto mensual</h2>
+<p>Claude, OpenAI y Gemini cobran cada mensaje en la cuenta de tu proveedor. En Uso y gasto, en Ajustes → Clasificador, Coste estimado de la API este mes muestra la estimación del mes.</p>
+<p>Para limitarlo, activa Limitar el gasto mensual y escribe un Límite mensual. Mientras una solicitud está en curso, SpamWise cuenta lo máximo que podría costar; cuando termina, su coste medido sustituye esa cantidad. Cuando la siguiente solicitud superaría el límite, SpamWise deja de enviar correo al proveedor hasta el mes siguiente o hasta que subas el límite. Ese correo se queda donde está y se clasifica cuando las solicitudes vuelvan a caber en el límite.</p>
+<p>Los costes son estimaciones. Lo que pagas es lo que indica la factura de tu proveedor.</p>
+<h2><a name="optional-checks" id="optional-checks"></a>Comprobaciones opcionales</h2>
+<p>Cada una está desactivada hasta que la activas en Ajustes → Avanzado:</p>
+<ul>
+<li>Compartir dominios de remitentes con servicios de registro para comprobar su antigüedad envía el dominio del remitente a los servicios de registro de dominios.</li>
+<li>Consultar dominios de remitentes y enlaces en Spamhaus DBL envía los dominios del remitente y de los enlaces a Spamhaus. Primero debes aceptar las condiciones de uso del servicio.</li>
+<li>Analizar con mi servidor Rspamd envía el mensaje completo a un servidor Rspamd que se ejecuta en este Mac.</li>
+<li>Leer texto de imágenes incrustadas con OCR local y Leer adjuntos de texto y HTML localmente funcionan en este Mac, pero el texto que encuentran puede formar parte de lo que se envía a tu proveedor. Las imágenes remotas nunca se descargan.</li>
+</ul>
+<p>Mantener el filtrado en este Mac, en Ajustes → Clasificador, bloquea todas las solicitudes al proveedor y todas las consultas de red. Mail sigue sincronizando tus cuentas como siempre.</p>
+<h2><a name="exports-and-backups" id="exports-and-backups"></a>Notificaciones, copias de seguridad y exportaciones</h2>
+<p>Las notificaciones muestran recuentos, nunca asuntos ni remitentes. El resumen semanal de mensajes para revisar se queda en SpamWise y nunca se envía por correo. Las copias de seguridad se cifran con tu clave de recuperación y no incluyen claves ni contraseñas. Los mensajes revisados, el código fuente de los mensajes y las etiquetas revisadas que exportas pueden contener correo privado, así que guarda esos archivos en privado. El diagnóstico sin datos personales no incluye claves ni el contenido de los mensajes.</p>
+</main></body></html>

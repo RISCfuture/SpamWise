@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Utiliser Activité — Aide SpamWise</title><meta name="description" content="Consultez les décisions de SpamWise, retrouvez des messages et voyez pourquoi chacun a été trié.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Rubriques d’aide"><h2>Premiers pas</h2><ul><li><a href="getting-started.html">Premiers pas</a></li><li><a href="how-decisions-are-made.html">Comment les décisions sont prises</a></li><li><a href="filtering-strength.html">Intensité du filtrage</a></li><li><a href="what-data-is-sent.html">Quelles données sont envoyées</a></li></ul><h2>Utilisation quotidienne</h2><ul><li><a href="activity.html" aria-current="page">Utiliser Activité</a></li><li><a href="correcting-mistakes.html">Corriger les erreurs</a></li><li><a href="review-junk.html">Vérifier les indésirables</a></li><li><a href="notifications.html">Notifications et récapitulatif des messages à vérifier</a></li><li><a href="statistics.html">Statistiques</a></li><li><a href="shortcuts.html">Raccourcis</a></li></ul><h2>Règles et apprentissage</h2><ul><li><a href="rules.html">Règles d’expéditeur et de contenu</a></li><li><a href="folders.html">Dossiers</a></li><li><a href="reviewed-messages-and-learning.html">Messages vérifiés et apprentissage</a></li></ul><h2>Comptes et données</h2><ul><li><a href="imap-connection.html">Se connecter en IMAP</a></li><li><a href="backup-and-restore.html">Sauvegarde et restauration</a></li><li><a href="troubleshooting-mail-integration.html">Résoudre les problèmes d’intégration Mail</a></li></ul></nav>
+<main><a name="activity" id="activity"></a><h1>Utiliser Activité</h1>
+<p>La fenêtre Activité liste tous les messages que SpamWise a vérifiés. Ouvrez-la avec Afficher l’activité dans le menu SpamWise de la barre des menus.</p>
+<h2><a name="activity-columns" id="activity-columns"></a>Colonnes</h2>
+<ul>
+<li>Date : quand SpamWise a décidé.</li>
+<li>Expéditeur et Objet.</li>
+<li>Classement : Légitime, À vérifier, Indésirables, ou Non classé si le message n’a pas pu être classé.</li>
+<li>Confiance : le niveau de confiance de la décision.</li>
+<li>Motif : pourquoi SpamWise a décidé ainsi, par exemple une règle, une personne que vous connaissez ou l’explication du fournisseur.</li>
+</ul>
+<p>Cliquez sur l’en-tête d’une colonne pour trier selon celle-ci. Choisissez Afficher plus, en bas, pour voir des décisions plus anciennes.</p>
+<h2><a name="find-messages" id="find-messages"></a>Retrouver un message</h2>
+<p>Saisissez du texte dans le champ de recherche pour chercher parmi les expéditeurs, les objets et les motifs. Pour restreindre la liste, choisissez Filtrer dans la barre d’outils, puis un Compte, une source sous Décidé par, un Résultat, Corrections uniquement, Aujourd’hui uniquement ou une Plage de dates…. Choisissez Effacer les filtres pour tout revoir.</p>
+<h2><a name="activity-inspector" id="activity-inspector"></a>Voir les détails</h2>
+<p>Sélectionnez un message et choisissez Présentation → Afficher l’inspecteur (Option + Commande + I). L’inspecteur affiche le classement, le motif et le Résultat, c’est-à-dire ce qui s’est passé dans Mail, par exemple Appliquée, Simulation, En pause ou Échec. Il propose aussi les commandes pour corriger la décision, Aperçu du message, Ouvrir dans Mail et Exporter la source brute…. Détails de la décision indique ce qui a décidé du message, son compte et sa boîte aux lettres, l’action prévue, les jetons utilisés et le coût estimé.</p>
+<h2><a name="activity-commands" id="activity-commands"></a>Barre d’outils et menu Filtrage</h2>
+<ul>
+<li>Suspendre le filtrage arrête le tri des nouveaux messages jusqu’à ce que vous choisissiez Reprendre le filtrage. Les messages déjà triés restent où ils sont.</li>
+<li>Simuler sur les messages récents montre comment SpamWise trierait vos messages les plus récents. Rien n’est déplacé.</li>
+<li>Récapitulatif des messages à vérifier liste les messages de la semaine classés À vérifier. Consultez <a href="notifications.html#review-digest">le récapitulatif des messages à vérifier</a>.</li>
+<li>Vérifier les indésirables permet de parcourir les indésirables et de restaurer ce qui n’en est pas. Consultez <a href="review-junk.html">Vérifier les indésirables</a>.</li>
+<li>Statistiques, également dans le menu Présentation, montre combien de messages SpamWise a triés. Consultez <a href="statistics.html">Statistiques</a>.</li>
+</ul>
+<p>Le menu Filtrage propose aussi les commandes de correction et Classer à nouveau ; consultez <a href="correcting-mistakes.html">Corriger les erreurs</a>. Outils → Historique de configuration liste les modifications de vos règles, de votre politique et de l’apprentissage.</p>
+<h2><a name="filtering-status" id="filtering-status"></a>État</h2>
+<p>Le bas de la fenêtre et le menu SpamWise de la barre des menus indiquent ce que fait SpamWise, par exemple « Simulation — les messages restent inchangés », « Filtrage en pause » ou « Hors ligne — les vérifications reprennent dès le retour de la connexion ». Le bas de la fenêtre affiche aussi les chiffres du jour et le coût estimé du mois. Si quelque chose demande votre attention, consultez <a href="troubleshooting-mail-integration.html">Résoudre les problèmes d’intégration Mail</a>.</p>
+</main></body></html>

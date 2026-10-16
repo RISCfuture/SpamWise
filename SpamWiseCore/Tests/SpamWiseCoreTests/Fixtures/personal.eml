@@ -1,0 +1,8 @@
+From: Jane <jane@example.org>
+To: Tim <tim@example.com>
+Message-ID: <personal@fixtures.example>
+Subject: Dinner Friday?
+Authentication-Results: mx.example; spf=pass; dkim=pass; dmarc=pass
+Content-Type: text/plain; charset=utf-8
+
+Hi Tim, would you like to have dinner Friday? Looking forward to catching up. Jane

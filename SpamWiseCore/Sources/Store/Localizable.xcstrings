@@ -1,0 +1,198 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "A storage update changed “%@” without reading it first.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una actualización del almacenamiento modificó «%@» sin leerlo antes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une mise à jour du stockage a modifié « %@ » sans l’avoir lu au préalable."
+          }
+        }
+      }
+    },
+    "Enter the key or password again in SpamWise Settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a introducir la clave o la contraseña en los Ajustes de SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez à nouveau la clé ou le mot de passe dans les Réglages de SpamWise."
+          }
+        }
+      }
+    },
+    "Keychain returned status %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El Llavero devolvió el estado %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le Trousseau a renvoyé le statut %@."
+          }
+        }
+      }
+    },
+    "Make sure your Mac is unlocked, then try again. If it keeps failing, restart your Mac.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asegúrate de que el Mac esté desbloqueado y vuelve a intentarlo. Si sigue fallando, reinicia el Mac."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez que votre Mac est déverrouillé, puis réessayez. Si l’échec persiste, redémarrez votre Mac."
+          }
+        }
+      }
+    },
+    "No nonempty credential was found.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró ninguna credencial que no esté vacía."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun identifiant secret non vide n’a été trouvé."
+          }
+        }
+      }
+    },
+    "Quit and reopen SpamWise. If the problem continues, reinstall SpamWise.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cierra SpamWise y vuelve a abrirlo. Si el problema continúa, reinstala SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quittez SpamWise et rouvrez-le. Si le problème persiste, réinstallez SpamWise."
+          }
+        }
+      }
+    },
+    "Shared storage is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El almacenamiento compartido no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le stockage partagé est indisponible."
+          }
+        }
+      }
+    },
+    "The credential is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La credencial no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’identifiant secret est indisponible."
+          }
+        }
+      }
+    },
+    "The shared app container is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El contenedor compartido de la app no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le conteneur partagé de l’app est indisponible."
+          }
+        }
+      }
+    },
+    "The shared storage lock could not be acquired.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo obtener el bloqueo del almacenamiento compartido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’obtenir le verrou du stockage partagé."
+          }
+        }
+      }
+    },
+    "The storage path refers to a directory.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La ruta de almacenamiento corresponde a una carpeta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le chemin de stockage désigne un dossier."
+          }
+        }
+      }
+    },
+    "Try again in a moment.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a intentarlo en un momento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayez dans un instant."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -1,0 +1,8 @@
+From: Shop <cart@unknown-store.world>
+To: Tim <tim@example.com>
+Message-ID: <stranger-cart@fixtures.example>
+Subject: You left something in your cart
+Authentication-Results: mx.example; spf=pass; dkim=pass; dmarc=pass
+Content-Type: text/plain; charset=utf-8
+
+Complete your checkout at https://unknown-store.world/cart. We saved your items.

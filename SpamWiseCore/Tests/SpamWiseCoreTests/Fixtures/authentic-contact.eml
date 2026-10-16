@@ -1,0 +1,8 @@
+From: Colleague <colleague@example.net>
+To: Tim <tim@example.com>
+Message-ID: <authentic-contact@fixtures.example>
+Subject: Notes from Tuesday
+Authentication-Results: mx.example; spf=pass smtp.mailfrom=example.net; dkim=pass header.d=example.net; dmarc=pass header.from=example.net
+Content-Type: text/plain; charset=utf-8
+
+Hi Tim, here are my notes from Tuesday's planning meeting. Let me know what you think.

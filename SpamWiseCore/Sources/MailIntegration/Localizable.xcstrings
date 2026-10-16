@@ -1,0 +1,150 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Couldn’t complete the IMAP operation.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo completar la operación IMAP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de terminer l’opération IMAP."
+          }
+        }
+      }
+    },
+    "IMAP authentication failed.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La autenticación IMAP falló."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’authentification IMAP a échoué."
+          }
+        }
+      }
+    },
+    "The IMAP configuration is invalid.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuración IMAP no es válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration IMAP n’est pas valide."
+          }
+        }
+      }
+    },
+    "The IMAP connection is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La conexión IMAP no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La connexion IMAP est indisponible."
+          }
+        }
+      }
+    },
+    "The IMAP operation timed out.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se agotó el tiempo de espera de la operación IMAP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le délai de l’opération IMAP a expiré."
+          }
+        }
+      }
+    },
+    "The IMAP response exceeds the supported resource limits.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La respuesta IMAP supera los límites de recursos admitidos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La réponse IMAP dépasse les limites de ressources prises en charge."
+          }
+        }
+      }
+    },
+    "The IMAP server does not support this operation.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor IMAP no admite esta operación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur IMAP ne prend pas en charge cette opération."
+          }
+        }
+      }
+    },
+    "The IMAP server rejected the operation.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor IMAP rechazó la operación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur IMAP a refusé l’opération."
+          }
+        }
+      }
+    },
+    "The IMAP server returned an invalid response.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor IMAP devolvió una respuesta no válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur IMAP a renvoyé une réponse non valide."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

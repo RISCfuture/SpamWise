@@ -1,0 +1,70 @@
+{
+  "model": "Horizon-Labs/phishing-scam-detector-base",
+  "revision": "f1dddff04e7f56dc9f0f068d4e7f0383c583e392",
+  "weights_sha256": "1f056ed61f8c0f6bfb11616e9c2f640762dcbbaff92bdb71657723f1d84125af",
+  "corpus_sha256": "303796aa67d0022d20aa0165198fe636fc87536e3aa346df728f3366d31898ec",
+  "seed": "spamwise-public-2026-10-v1",
+  "torch": "2.14.1",
+  "transformers": "5.20.1",
+  "python": "3.14.8",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "max_tokens": 384,
+  "elapsed_seconds_excluding_load": 23.517038207995938,
+  "peak_process_memory_bytes_macos": 1507311616,
+  "paid_calls": 0,
+  "cohorts": {
+    "spam": {
+      "positive_records": 181,
+      "template_groups": 123,
+      "argmax_counts": {
+        "spam": 98,
+        "legitimate": 79,
+        "fraud": 4
+      },
+      "scored_output": "spam",
+      "output_is_task_proxy": false,
+      "threshold_hits": {
+        "0.5": 93,
+        "0.9": 24,
+        "0.95": 5,
+        "0.99": 0
+      },
+      "spam_or_fraud_at_0.5": 105,
+      "negative_records": 0,
+      "false_positive_rate": null
+    },
+    "phishing": {
+      "positive_records": 78,
+      "template_groups": 70,
+      "argmax_counts": {
+        "fraud": 30,
+        "legitimate": 41,
+        "spam": 7
+      },
+      "scored_output": "fraud",
+      "output_is_task_proxy": true,
+      "threshold_hits": {
+        "0.5": 25,
+        "0.9": 9,
+        "0.95": 5,
+        "0.99": 0
+      },
+      "spam_or_fraud_at_0.5": 48,
+      "negative_records": 0,
+      "false_positive_rate": null
+    }
+  },
+  "evaluated_records": 259,
+  "truncated_records": 174,
+  "inference_ms": {
+    "p50": 103.21558298892342,
+    "p95": 104.70741699100472
+  },
+  "limits": [
+    "Development data only; reserved holdout is excluded from scoring.",
+    "Source-positive counts do not establish false-positive rates or calibrated action thresholds.",
+    "Fraud is a broad model output, not a separately trained phishing score.",
+    "Template groups are heuristic; records are not assumed independent.",
+    "Labels, languages and pretrained exposure have not been independently audited."
+  ]
+}

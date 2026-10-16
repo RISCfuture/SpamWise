@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="envelope-body" gradientUnits="userSpaceOnUse" x1="0" y1="157" x2="0" y2="637">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E2EAF8"/>
+    </linearGradient>
+    <mask id="shield-gap" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#FFFFFF"/>
+      <path d="M754,447 C822,486.1 878.8,497.4 924,497.4 L924,648.6 C924,760.7 844.8,827.9 754,867 C663.2,827.9 584,760.7 584,648.6 L584,497.4 C629.2,497.4 686,486.1 754,447 Z" fill="#000000" stroke="#000000" stroke-width="72" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <rect x="100" y="157" width="690" height="480" rx="78" ry="78" fill="url(#envelope-body)" mask="url(#shield-gap)"/>
+</svg>

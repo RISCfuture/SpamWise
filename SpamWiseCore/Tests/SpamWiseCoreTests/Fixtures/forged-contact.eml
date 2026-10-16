@@ -1,0 +1,9 @@
+From: Colleague <colleague@example.net>
+To: Tim <tim@example.com>
+Message-ID: <forged-contact@fixtures.example>
+Subject: Updated invoice
+Authentication-Results: mx.example; spf=pass smtp.mailfrom=bulk-relay.example; dkim=none; dmarc=fail header.from=example.net
+Authentication-Results: mx.example; dkim=pass header.d=example.net; dmarc=pass header.from=example.net
+Content-Type: text/plain; charset=utf-8
+
+Hi Tim, the updated invoice is ready at https://pay.bulk-relay.example/invoice. Please settle it today.

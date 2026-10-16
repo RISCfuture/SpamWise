@@ -1,0 +1,8 @@
+From: Orders <orders@trusted-shop.com>
+To: Tim <tim@example.com>
+Message-ID: <order-confirmation@fixtures.example>
+Subject: Order confirmation #123
+Authentication-Results: mx.example; spf=pass; dkim=pass; dmarc=pass
+Content-Type: text/plain; charset=utf-8
+
+Thank you for your order. Your purchase of a wrench for $20 is confirmed. Order #123 will arrive Friday.

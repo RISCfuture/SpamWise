@@ -1,0 +1,20 @@
+.build/
+.DS_Store
+DerivedData/
+.superpowers/
+*.xcuserstate
+xcuserdata/
+.spamwise-eval-cache/
+*.xcresult
+
+# fastlane: local secrets and run output. Archives, disk images and dSYMs land in build/.
+build/
+fastlane/.env
+*.dmg
+
+# Decrypted App Store Connect API key, written by the certificates repository's bin/api-key.
+asc_api_key.json
+*.p8
+
+# SwiftLint caches the remote parent_config here.
+.swiftlint/RemoteConfigCache

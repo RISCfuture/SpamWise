@@ -1,0 +1,678 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Allow mail sharing with the selected provider in Settings → Classifier first.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primero permite compartir el correo con el proveedor elegido en Ajustes → Clasificador."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez d’abord le partage des messages avec le fournisseur choisi dans Réglages → Classificateur."
+          }
+        }
+      }
+    },
+    "Apple Private Cloud Compute model": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelo de Private Cloud Compute de Apple"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle Private Cloud Compute d’Apple"
+          }
+        }
+      }
+    },
+    "Apple on-device model": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelo de Apple en el dispositivo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle Apple sur l’appareil"
+          }
+        }
+      }
+    },
+    "Articles, digests and editorial mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artículos, resúmenes y correo editorial"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Articles, résumés et courriers éditoriaux"
+          }
+        }
+      }
+    },
+    "Card and loan offers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ofertas de tarjetas y préstamos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offres de cartes et de prêts"
+          }
+        }
+      }
+    },
+    "Cart reminders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordatorios de carrito"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rappels de panier"
+          }
+        }
+      }
+    },
+    "Classification is unavailable. Mail was left unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clasificación no está disponible. El correo no se ha modificado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La classification est indisponible. Le courrier n’a pas été modifié."
+          }
+        }
+      }
+    },
+    "Classification was cancelled.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se canceló la clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La classification a été annulée."
+          }
+        }
+      }
+    },
+    "Clubs and groups": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clubes y grupos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clubs et groupes"
+          }
+        }
+      }
+    },
+    "Concert, ticket, webinar and conference offers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ofertas de conciertos, entradas, seminarios web y conferencias"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offres de concerts, de billets, de webinaires et de conférences"
+          }
+        }
+      }
+    },
+    "Donation, annual fund and political appeals": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peticiones de donativos, fondos anuales y campañas políticas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appels aux dons, fonds annuels et sollicitations politiques"
+          }
+        }
+      }
+    },
+    "Event and ticket offers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ofertas de eventos y entradas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offres d’événements et de billets"
+          }
+        }
+      }
+    },
+    "Fundraising": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recaudación de fondos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collectes de fonds"
+          }
+        }
+      }
+    },
+    "Meetings, events and updates from groups you belong to": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reuniones, eventos y novedades de grupos a los que perteneces"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réunions, événements et nouvelles des groupes dont vous faites partie"
+          }
+        }
+      }
+    },
+    "Newsletters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boletines"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Infolettres"
+          }
+        }
+      }
+    },
+    "Personal mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo personal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courrier personnel"
+          }
+        }
+      }
+    },
+    "Posts, suggestions and activity from social networks": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publicaciones, sugerencias y actividad de redes sociales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publications, suggestions et activité des réseaux sociaux"
+          }
+        }
+      }
+    },
+    "Pre-approvals, credit cards, loans and points offers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preaprobaciones, tarjetas de crédito, préstamos y ofertas de puntos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préapprobations, cartes de crédit, prêts et offres de points"
+          }
+        }
+      }
+    },
+    "Product news": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novedades de productos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveautés produits"
+          }
+        }
+      }
+    },
+    "Receipts and account notices": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recibos y avisos de cuenta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reçus et avis de compte"
+          }
+        }
+      }
+    },
+    "Sales pitches": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Propuestas comerciales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarchages commerciaux"
+          }
+        }
+      }
+    },
+    "Sales, discounts and new arrivals": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rebajas, descuentos y novedades"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soldes, réductions et nouveautés"
+          }
+        }
+      }
+    },
+    "Scams and phishing": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estafas y phishing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arnaques et hameçonnage"
+          }
+        }
+      }
+    },
+    "Social network notifications": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones de redes sociales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications de réseaux sociaux"
+          }
+        }
+      }
+    },
+    "Spam": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spam"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spam"
+          }
+        }
+      }
+    },
+    "Store promotions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Promociones de tiendas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Promotions de boutiques"
+          }
+        }
+      }
+    },
+    "Surveys and review requests": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encuestas y solicitudes de reseña"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sondages et demandes d’avis"
+          }
+        }
+      }
+    },
+    "The classification deadline expired.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se agotó el plazo de clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le délai de classification a expiré."
+          }
+        }
+      }
+    },
+    "The message context exceeds the classification limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El contexto del mensaje supera el límite de clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le contexte du message dépasse la limite de classification."
+          }
+        }
+      }
+    },
+    "The message is too large to classify, which is weak junk evidence.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje es demasiado grande para clasificarlo, lo que es un indicio débil de correo no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message est trop volumineux pour être classé, ce qui est un faible indice d’indésirable."
+          }
+        }
+      }
+    },
+    "The message’s evidence alone exceeds the prompt limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los indicios del mensaje superan por sí solos el límite de la solicitud."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les indices du message dépassent à eux seuls la limite de la requête."
+          }
+        }
+      }
+    },
+    "The provider could not be reached.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo conectar con el proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de joindre le fournisseur."
+          }
+        }
+      }
+    },
+    "The provider credential is missing or invalid.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La credencial del proveedor falta o no es válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’identifiant secret du fournisseur est absent ou non valide."
+          }
+        }
+      }
+    },
+    "The provider declined to classify the message.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proveedor rechazó clasificar el mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fournisseur a refusé de classer le message."
+          }
+        }
+      }
+    },
+    "The provider returned an invalid classification.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proveedor devolvió una clasificación no válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fournisseur a renvoyé une classification non valide."
+          }
+        }
+      }
+    },
+    "The provider’s request limit was reached.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha alcanzado el límite de solicitudes del proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de requêtes du fournisseur a été atteinte."
+          }
+        }
+      }
+    },
+    "The selected model configuration is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuración del modelo seleccionado no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration du modèle sélectionné est indisponible."
+          }
+        }
+      }
+    },
+    "Uncategorized": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin categoría"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé"
+          }
+        }
+      }
+    },
+    "Unsolicited business pitches and press releases": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Propuestas comerciales y comunicados de prensa no solicitados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarchages commerciaux et communiqués de presse non sollicités"
+          }
+        }
+      }
+    },
+    "What’s new and changelogs from apps and services": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novedades y cambios de apps y servicios"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveautés et journaux des modifications d’apps et de services"
+          }
+        }
+      }
+    },
+    "“How did we do?” and rating requests": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«¿Qué tal lo hicimos?» y solicitudes de valoración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Comment avons-nous fait ? » et demandes de note"
+          }
+        }
+      }
+    },
+    "“You left something in your cart”": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Dejaste algo en tu carrito»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Vous avez oublié quelque chose dans votre panier »"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
