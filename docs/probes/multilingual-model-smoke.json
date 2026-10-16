@@ -1,0 +1,135 @@
+{
+  "model": "Horizon-Labs/phishing-scam-detector-base",
+  "revision": "f1dddff04e7f56dc9f0f068d4e7f0383c583e392",
+  "torch": "2.14.1",
+  "transformers": "5.20.1",
+  "max_tokens": 384,
+  "attention": "eager",
+  "device": "cpu",
+  "threads": 2,
+  "purpose": "Synthetic screening only; no calibration or quality claim; fraud is not a separate phishing/spearphishing taxonomy",
+  "load_and_run_seconds": 23.049938750002184,
+  "results": [
+    {
+      "synthetic_case": "wanted_personal",
+      "subject": "Lunch tomorrow",
+      "body": "Are we still meeting for lunch tomorrow at noon? I can book our usual table.",
+      "scores": {
+        "legitimate": 0.9999067783355713,
+        "spam": 6.871274672448635e-05,
+        "fraud": 2.4525275875930674e-05
+      },
+      "seconds": 0.04952991599566303
+    },
+    {
+      "synthetic_case": "graymail",
+      "subject": "Your weekly gardening newsletter",
+      "body": "Here are this week's gardening tips. You subscribed to our newsletter. Manage preferences or unsubscribe at https://garden.example.invalid/preferences.",
+      "scores": {
+        "legitimate": 0.9522308111190796,
+        "spam": 0.041901081800460815,
+        "fraud": 0.005868084728717804
+      },
+      "seconds": 0.020046917008585297
+    },
+    {
+      "synthetic_case": "spam",
+      "subject": "Bulk leads for sale",
+      "body": "Buy ten million verified email leads now. Unsolicited bulk offers at the lowest price. Reply to order.",
+      "scores": {
+        "legitimate": 0.016179345548152924,
+        "spam": 0.9719090461730957,
+        "fraud": 0.011911592446267605
+      },
+      "seconds": 0.015774625004269183
+    },
+    {
+      "synthetic_case": "phishing",
+      "subject": "Your mailbox will be closed",
+      "body": "Verify your mailbox password immediately at https://mailbox-security.example.invalid/login or your account will be permanently deleted.",
+      "scores": {
+        "legitimate": 0.004293649457395077,
+        "spam": 0.0016959492349997163,
+        "fraud": 0.9940104484558105
+      },
+      "seconds": 0.019541041998309083
+    },
+    {
+      "synthetic_case": "targeted_fraud",
+      "subject": "Updated payment instructions",
+      "body": "Alex, for the Oak project invoice we discussed yesterday, use my new bank account. Keep this confidential and transfer the funds today. I am in a meeting; do not call.",
+      "scores": {
+        "legitimate": 0.1344681978225708,
+        "spam": 0.0013862154446542263,
+        "fraud": 0.8641456365585327
+      },
+      "seconds": 0.019885540998075157
+    },
+    {
+      "synthetic_case": "legitimate_security",
+      "subject": "Password reset requested",
+      "body": "Someone requested a password reset. If this was not you, ignore this email and visit our official app directly. We will never ask for your password by email.",
+      "scores": {
+        "legitimate": 0.9849366545677185,
+        "spam": 0.008383413776755333,
+        "fraud": 0.006679883226752281
+      },
+      "seconds": 0.019771833991399035
+    },
+    {
+      "synthetic_case": "wanted_french",
+      "subject": "Dejeuner demain",
+      "body": "Est-ce que nous dejeunons ensemble demain a midi ? Je peux reserver notre table habituelle.",
+      "scores": {
+        "legitimate": 0.9989965558052063,
+        "spam": 0.0006071285461075604,
+        "fraud": 0.00039629192906431854
+      },
+      "seconds": 0.015270666990545578
+    },
+    {
+      "synthetic_case": "wanted_spanish",
+      "subject": "Almuerzo manana",
+      "body": "Seguimos con el almuerzo de manana al mediodia? Puedo reservar nuestra mesa habitual.",
+      "scores": {
+        "legitimate": 0.9969519376754761,
+        "spam": 0.0022755854297429323,
+        "fraud": 0.0007724902825430036
+      },
+      "seconds": 0.015557833001366816
+    },
+    {
+      "synthetic_case": "legitimate_payment_change",
+      "subject": "Updated payment instructions",
+      "body": "Alex, for the Oak project invoice we discussed yesterday, our bank account has changed. Please call your usual contact using the number you already have to independently confirm the new details before making any payment.",
+      "scores": {
+        "legitimate": 0.0055929431691765785,
+        "spam": 0.0005303205689415336,
+        "fraud": 0.9938767552375793
+      },
+      "seconds": 0.021975791998556815
+    },
+    {
+      "synthetic_case": "wanted_french_accented",
+      "subject": "Déjeuner demain",
+      "body": "Est-ce que nous déjeunons ensemble demain à midi ? Je peux réserver notre table habituelle.",
+      "scores": {
+        "legitimate": 0.9995331764221191,
+        "spam": 0.00033157155849039555,
+        "fraud": 0.00013522391964215785
+      },
+      "seconds": 0.015354207993368618
+    },
+    {
+      "synthetic_case": "wanted_spanish_accented",
+      "subject": "Almuerzo mañana",
+      "body": "¿Seguimos con el almuerzo de mañana al mediodía? Puedo reservar nuestra mesa habitual.",
+      "scores": {
+        "legitimate": 0.9995489716529846,
+        "spam": 0.0003130665572825819,
+        "fraud": 0.00013796221173834056
+      },
+      "seconds": 0.015138792005018331
+    }
+  ]
+}

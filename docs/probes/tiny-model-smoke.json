@@ -1,0 +1,73 @@
+{
+  "model": "mrm8488/bert-tiny-finetuned-enron-spam-detection",
+  "revision": "2f5580bfd62e4a167d05742f0de321d570df5a21",
+  "label_source": "SetFit/enron_spam@1916f66c89d52221ae33eb57d44498b4f3a5df22/train.jsonl: 0=ham, 1=spam",
+  "torch": "2.14.1",
+  "purpose": "Synthetic smoke probe only; no quality or calibration claim",
+  "results": [
+    {
+      "synthetic_case": "wanted_personal",
+      "subject": "Lunch tomorrow",
+      "body": "Are we still meeting for lunch tomorrow at noon? I can book our usual table.",
+      "ham_score": 0.9983277916908264,
+      "spam_score": 0.0016721658175811172,
+      "seconds": 0.002951542002847418
+    },
+    {
+      "synthetic_case": "graymail",
+      "subject": "Your weekly gardening newsletter",
+      "body": "Here are this week's gardening tips. You subscribed to our newsletter. Manage preferences or unsubscribe at https://garden.example.invalid/preferences.",
+      "ham_score": 0.001767961191944778,
+      "spam_score": 0.9982320666313171,
+      "seconds": 0.0007418750028591603
+    },
+    {
+      "synthetic_case": "spam",
+      "subject": "Bulk leads for sale",
+      "body": "Buy ten million verified email leads now. Unsolicited bulk offers at the lowest price. Reply to order.",
+      "ham_score": 0.0016609550220891833,
+      "spam_score": 0.998339056968689,
+      "seconds": 0.0005826249980600551
+    },
+    {
+      "synthetic_case": "phishing",
+      "subject": "Your mailbox will be closed",
+      "body": "Verify your mailbox password immediately at https://mailbox-security.example.invalid/login or your account will be permanently deleted.",
+      "ham_score": 0.002527671866118908,
+      "spam_score": 0.99747234582901,
+      "seconds": 0.000625625005341135
+    },
+    {
+      "synthetic_case": "targeted_fraud",
+      "subject": "Updated payment instructions",
+      "body": "Alex, for the Oak project invoice we discussed yesterday, use my new bank account. Keep this confidential and transfer the funds today. I am in a meeting; do not call.",
+      "ham_score": 0.9983260035514832,
+      "spam_score": 0.001673963270150125,
+      "seconds": 0.0005908750026719645
+    },
+    {
+      "synthetic_case": "legitimate_security",
+      "subject": "Password reset requested",
+      "body": "Someone requested a password reset. If this was not you, ignore this email and visit our official app directly. We will never ask for your password by email.",
+      "ham_score": 0.9949415326118469,
+      "spam_score": 0.005058450158685446,
+      "seconds": 0.0005432500038295984
+    },
+    {
+      "synthetic_case": "wanted_french",
+      "subject": "Dejeuner demain",
+      "body": "Est-ce que nous dejeunons ensemble demain a midi ? Je peux reserver notre table habituelle.",
+      "ham_score": 0.016834501177072525,
+      "spam_score": 0.9831655025482178,
+      "seconds": 0.0005757500039180741
+    },
+    {
+      "synthetic_case": "wanted_spanish",
+      "subject": "Almuerzo manana",
+      "body": "Seguimos con el almuerzo de manana al mediodia? Puedo reservar nuestra mesa habitual.",
+      "ham_score": 0.003124643350020051,
+      "spam_score": 0.9968752861022949,
+      "seconds": 0.0005773330049123615
+    }
+  ]
+}

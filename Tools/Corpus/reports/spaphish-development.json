@@ -1,0 +1,171 @@
+{
+  "schema": "spamwise-spaphish-development-v1",
+  "source": {
+    "id": "spaphish-hz2d6gz7pc-v5",
+    "doi": "10.17632/hz2d6gz7pc.5",
+    "sha256": "656b2245d58da72d640680e5c2a168673a130b38607f2a427c773bbb167e995e",
+    "license": "CC-BY-4.0",
+    "attribution": "Lazaro Bustio-Martinez et al., SpaPhish v5",
+    "source_declared_language": "es",
+    "source_date_years_by_label": {
+      "0/2014": 1,
+      "0/2018": 3,
+      "0/2019": 41,
+      "0/2020": 160,
+      "0/2021": 105,
+      "0/2022": 90,
+      "0/2023": 72,
+      "0/2024": 104,
+      "0/2025": 88,
+      "1/2019": 1,
+      "1/2020": 1,
+      "1/2021": 16,
+      "1/2022": 20,
+      "1/2023": 55,
+      "1/2024": 191,
+      "1/2025": 423,
+      "1/unknown": 24
+    }
+  },
+  "input_records": 1395,
+  "unique_records": 1395,
+  "conflicting_phishing_records_excluded": 0,
+  "groups": 1245,
+  "campaign_audit": {
+    "selected_real_non_holdout_records": 1395,
+    "eligible_records": 1328,
+    "method": "Unmasked normalized five-word shingles; at least 20 distinct shingles; Jaccard >= 0.8; first 10000 words",
+    "different_group_candidate_pairs": 166,
+    "cross_train_validation_candidate_pairs": 0,
+    "holdout_content_examined": false,
+    "group_assignments_changed": true,
+    "candidate_source_pairs": {
+      "spaphish-hz2d6gz7pc-v5": 166
+    },
+    "candidate_distinct_records": 159,
+    "cross_split_distinct_records": 0,
+    "accepted_overlap_threshold": 0.8,
+    "accepted_cross_split_pairs_after_grouping": 0
+  },
+  "split_seed": "spamwise-spaphish-development-v1",
+  "tool_sha256": "0ee48bfd349f0b9b7a6932cf729ce1a67d4daebf4117ca74b13f6755db11a618",
+  "requirements_sha256": "6fc9fd58cdaba765d6075ba3823f7e87f6e1c4c1a0f3a3266e9004b8ed182fc8",
+  "helper_sha256": {
+    "audit.py": "6bbf013e62854884b08775f3471cb9cf209a3b7eab8f4aea64be7a9bdc0aeee7",
+    "prepare.py": "a6e66a318c2b4105df0ea736f93060099581fd0b14446b2dfdc99bce285ca673",
+    "requirements.txt": "ac06451fe0e62cf973a7f302350656083bfd81333444c368fe88dc5643578f70"
+  },
+  "split_identity_sha256": {
+    "train": "529f1845dc221f43f759951f6264cd1c1054396307c30d310529a273f67c452a",
+    "validation": "a27d728d0653e0e6bbfa04fcf3b9997674eb2bf3bd6adc0e418b8bb9293d05a6"
+  },
+  "body_fewer_than_40_letters": 16,
+  "split_counts": {
+    "validation/False": 176,
+    "train/False": 488,
+    "train/True": 519,
+    "validation/True": 212
+  },
+  "validation_groups_by_label": {
+    "False": 174,
+    "True": 172
+  },
+  "model": {
+    "type": "character TF-IDF + logistic regression",
+    "parameters": {
+      "analyzer": "char_wb",
+      "ngram_range": [
+        3,
+        5
+      ],
+      "min_df": 2,
+      "max_features": 100000,
+      "sublinear_tf": true,
+      "C": 1.0,
+      "solver": "liblinear",
+      "max_iter": 1000,
+      "random_state": 0
+    },
+    "features": 82645,
+    "coefficient_bytes": 661168,
+    "iterations": [
+      5
+    ],
+    "input": "subject and body only",
+    "fit_seconds": 0.9246202089998405
+  },
+  "thresholds": {
+    "0.5": {
+      "tp": 188,
+      "fn": 24,
+      "fp": 5,
+      "tn": 171,
+      "recall": 0.8867924528301887,
+      "false_positive_rate": 0.028409090909090908,
+      "precision": 0.9740932642487047
+    },
+    "0.9": {
+      "tp": 46,
+      "fn": 166,
+      "fp": 0,
+      "tn": 176,
+      "recall": 0.2169811320754717,
+      "false_positive_rate": 0.0,
+      "precision": 1.0
+    },
+    "0.95": {
+      "tp": 13,
+      "fn": 199,
+      "fp": 0,
+      "tn": 176,
+      "recall": 0.06132075471698113,
+      "false_positive_rate": 0.0,
+      "precision": 1.0
+    },
+    "0.99": {
+      "tp": 0,
+      "fn": 212,
+      "fp": 0,
+      "tn": 176,
+      "recall": 0.0,
+      "false_positive_rate": 0.0,
+      "precision": null
+    }
+  },
+  "all_negative_baseline": {
+    "tp": 0,
+    "fn": 212,
+    "fp": 0,
+    "tn": 176,
+    "recall": 0.0,
+    "false_positive_rate": 0.0,
+    "precision": null
+  },
+  "runtime": {
+    "python": "3.14.8",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "packages": {
+      "scikit-learn": "1.9.1",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "threadpoolctl": "3.7.0"
+    },
+    "thread_limit": 2,
+    "inference_including_vectorization_ms": {
+      "p50": 0.5474999998114072,
+      "p95": 1.61104099242948
+    },
+    "wall_seconds": 2.2642891249997774,
+    "cpu_seconds": 2.046008,
+    "peak_rss_bytes": 281985024
+  },
+  "limits": [
+    "Separate development source only; no existing frozen corpus or reserved holdout is read.",
+    "No threshold or hyperparameter search; probabilities are uncalibrated.",
+    "Heuristic grouping is not proof of campaign independence; split is not temporal.",
+    "Source-declared Spanish and expert phishing labels are not independently reviewed here.",
+    "Anonymization and contributor-inbox sampling can create shortcuts and limit transfer.",
+    "Spam, fraud, targeting, malware and graymail labels remain unknown.",
+    "No production model artifact is serialized or shipped; no paid API call is made."
+  ]
+}

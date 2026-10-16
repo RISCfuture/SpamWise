@@ -1,0 +1,88 @@
+import SwiftUI
+import SpamWiseCore
+
+struct MailConnectionView: View {
+  @Bindable var model: AppModel
+
+  var body: some View {
+    Section("Apple Mail") {
+      Text("Allow Automation when asked. Enable SpamWise in Mail → Settings → Extensions.")
+      Button("Check Mail connection") { model.checkMail() }
+        .accessibilityIdentifier("mail.check").disabled(model.busy)
+      Text(model.mailStatus).textSelection(.enabled)
+        .accessibilityIdentifier(
+          model.mailPermissionDenied ? "mail.permissionDenied" : "mail.status"
+        )
+    }
+    Section {
+      DisclosureGroup("Accounts and scan health") {
+        MailHealthView(model: model)
+      }
+      DisclosureGroup("History and Contacts") {
+        Text("Use your correspondence and Contacts to recognize trusted senders.")
+        Button("Connect Contacts (optional)") { model.requestContacts() }
+          .frame(maxWidth: .infinity, alignment: .leading)
+        Text(model.contactsStatus).foregroundStyle(.secondary)
+        Toggle(
+          "Exclude my own addresses from automatic trust",
+          isOn: model.mailBinding(\.excludeOwnAddresses)
+        )
+        Text(
+          "Explicit sender rules still take precedence. Check Mail connection to refresh your account addresses."
+        )
+        .foregroundStyle(.secondary)
+        TrustExclusionsView(model: model)
+        Button("Import Inbox and Sent history") { model.importHistory() }
+          .frame(maxWidth: .infinity, alignment: .leading)
+      }
+      DisclosureGroup("Enable mail actions") {
+        MailActionSetupView(model: model)
+      }
+    }.disabled(model.busy)
+  }
+}
+
+private struct MailActionSetupView: View {
+  let model: AppModel
+
+  var body: some View {
+    Text(
+      """
+      Select one disposable Inbox message from another account with a subject beginning [SpamWise \
+      Probe]. The test moves it to Junk and back, then adds an orange flag.
+      """
+    )
+    Text(
+      """
+      Each move is checked after 30 seconds. If restoration fails, restore the message manually. \
+      Repeat for each account.
+      """
+    )
+    .foregroundStyle(.secondary)
+    Button("Test selected disposable message") { model.testDisposableMessage() }
+    LabeledContent(
+      "Validated accounts",
+      value: model.state.settings.validatedAccounts.count.formatted()
+    )
+    Text("After validation, inspect the message before turning off dry run in General.")
+      .foregroundStyle(.secondary)
+    HStack {
+      Button("Show Mail rule script in Finder") { model.revealRule() }
+      Spacer()
+      HelpButton(page: "troubleshooting-mail-integration")
+    }
+  }
+}
+
+#Preview("Mail connection") {
+  Form { MailConnectionView(model: PreviewHelper.model()) }.formStyle(.grouped)
+}
+#Preview("Permission denied") {
+  let model = PreviewHelper.model()
+  model.mailPermissionDenied = true
+  model.mailStatus = AppModel.describe(IntegrationError.permissionDenied)
+  return Form { MailConnectionView(model: model) }.formStyle(.grouped)
+}
+#Preview("Action setup") {
+  Form { MailActionSetupView(model: PreviewHelper.model()) }.formStyle(.grouped)
+}

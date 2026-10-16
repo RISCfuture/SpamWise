@@ -1,0 +1,7 @@
+From: Myself <alias@example.org>
+To: alias@example.org
+Subject: Notes for later
+Authentication-Results: mx.example.org; dmarc=pass header.from=example.org
+Content-Type: text/plain; charset=utf-8
+
+Legitimate notes sent to myself. Authentication claims alone cannot prove that.

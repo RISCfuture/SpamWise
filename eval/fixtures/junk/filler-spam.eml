@@ -1,0 +1,9 @@
+From: AAA rewards <reward@courtesy-kit.lat>
+To: Tim <tim@example.com>
+Message-ID: <filler-spam@fixtures.example>
+Subject: Your courtesy kit
+Authentication-Results: mx.example; spf=pass; dkim=pass; dmarc=pass
+Content-Type: text/plain; charset=utf-8
+
+The garden is lovely this week. My sister enjoyed dinner.
+Claim your free AAA roadside kit now at https://claim.courtesy-kit.lat/pay. Pay shipping today.

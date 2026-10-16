@@ -1,0 +1,41 @@
+# SpamWise
+
+A macOS 27 Apple Mail filter with local sender rules, optional relationship evidence, and guided Claude classification. It never deletes mail. Inbox means no action, Review stays in Inbox with an annotation, and eligible Junk moves only to that account's resolved Junk mailbox.
+
+The app starts in dry run. MailKit records incoming dry runs; automatic Apple Events actions require a successful disposable-message probe for each account. Signed live Mail behavior and production thresholds still require the acceptance checks in [the runtime checklist](docs/probes/runtime-checklist.md).
+
+The repository is [RISCfuture/SpamWise](https://github.com/RISCfuture/SpamWise),
+currently private while publication is reviewed. The prepared marketing, privacy
+and support pages have no public deployment or release download yet. See the
+[repository approval checklist](docs/repository-approval.md).
+
+## Build and verify
+
+Requires Xcode 27, Swift 6.4, macOS 27, `swiftlint`, `xcbeautify`, `shellcheck`, and `markdownlint-cli2`. The provider dependency is pinned in the local package. Preserve bundle identifiers, signing team, App Group, and shared Keychain group.
+
+```sh
+agent-lock worker
+# Use the printed token consistently for this session.
+bash Scripts/check.sh <worker-token>
+bash Scripts/store-check.sh <worker-token>
+swiftlint lint --strict --no-cache
+shellcheck Scripts/*.sh
+markdownlint-cli2 --config ~/.markdownlint-cli2.jsonc --fix README.md CLAUDE.md TODO.md docs/evaluation.md docs/packaging.md
+bash Scripts/ui-check.sh <worker-token>
+```
+
+The check script runs all package tests with warnings as errors, then builds the app and extension without signing. The UI script takes the shared UI lock and uses automatic development signing. The UITests target requires an embedded provisioning profile to authorize the runner's application-identifier entitlement; Xcode downloads or creates it using the configured team account. A signed runner without that profile can be rejected with a “Move to Trash” prompt. The test-mode app uses isolated temporary storage and simulated denied Mail permission. The UI flows cover all four onboarding steps, denied-permission messaging, dry-run status, Pause, address-rule replacement, explicit domain correction, and retained corrections when a Mail action fails.
+
+Use `swift format format -i -r SpamWise SpamWiseCore/Sources SpamWiseCore/Tests MailExtension UITests UnitTests`, then `swiftlint lint --fix` and `swiftlint lint --strict`. SwiftLint layout rules that disagree with Swift's formatter are disabled in the repository configuration.
+
+## Run
+
+Open `SpamWise.xcodeproj` and run the SpamWise scheme with signing configured for team `2NFSK2WB24`. Complete the four setup steps. API verification sends a synthetic message; recent-mail dry run sends eligible message context to Anthropic. The key is stored in Keychain only after successful verification. Contacts is optional. Do not grant Full Disk Access.
+
+For mail actions, select an explicitly disposable message beginning `[SpamWise Probe]`, run the account probe in Settings, install the bundled Mail rule script as described in Help, and review dry-run results before disabling dry run. Keep SpamWise running. Automatic scans advance through Inbox pages and repeat sweeps; large mailboxes and mailbox changes can delay discovery. Authorized Contacts refresh hourly, and bounded Sent/Inbox history updates run with automatic scans. The Inbox scanner does not automatically process server-routed Junk.
+
+## Evaluation and packaging
+
+[Evaluation instructions](docs/evaluation.md) cover labeled corpora, mailbox export, mock/live selection, cache identity, confidence buckets, usage, and statistical limits. The included fixture verdicts are explicit mocks and do not establish model quality. Live tests are opt-in via `SPAMWISE_LIVE_API=1`.
+
+[Packaging instructions](docs/packaging.md) cover Help indexing, hardened-runtime archives, Developer ID export, notarization, and acceptance. [CLAUDE.md](CLAUDE.md) records implementation decisions and actual probe results; [TODO.md](TODO.md) tracks deferred product work. The original [Phase 1 brief](docs/phase-one-brief.md) is preserved verbatim.

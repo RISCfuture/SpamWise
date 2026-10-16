@@ -1,0 +1,7 @@
+From: Friend <friend@example.org>
+To: alias@example.org
+Subject: Forwarded travel plans
+Authentication-Results: forwarding.example; spf=fail smtp.mailfrom=example.org
+Content-Type: text/plain; charset=utf-8
+
+Our forwarding service delivered these travel plans. A claimed SPF failure is not a block rule.
