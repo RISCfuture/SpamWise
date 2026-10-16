@@ -23,7 +23,13 @@ import MailIntegration
   private var pendingSettings = 0
   init(preview: Bool = false) {
     uiTesting = preview || ProcessInfo.processInfo.arguments.contains("--ui-testing")
-    adapter = AppleMailAdapter(runner: SystemAppleEventRunner())
+    #if DEBUG
+      adapter = AppleMailAdapter(
+        runner: uiTesting ? DeniedAppleEventRunner() : SystemAppleEventRunner()
+      )
+    #else
+      adapter = AppleMailAdapter(runner: SystemAppleEventRunner())
+    #endif
     do {
       let url =
         uiTesting
@@ -55,6 +61,13 @@ import MailIntegration
     }
   }
   func monitor() async {
+    #if DEBUG
+      if uiTesting, ProcessInfo.processInfo.arguments.contains("--ui-corrections"), let store {
+        do { try await UITestFixture.seedCorrections(in: store) } catch {
+          status = "Correction fixture could not be loaded."
+        }
+      }
+    #endif
     await refresh()
     while !Task.isCancelled {
       try? await Task.sleep(for: .seconds(3))
@@ -153,6 +166,8 @@ import MailIntegration
     run { [self] in
       do {
         if uiTesting { throw IntegrationError.permissionDenied }
+        mailStatus = "Waiting for Mail Automation permission…"
+        try await SystemAppleEventRunner.requestMailPermission()
         accounts = try await adapter.accounts()
         mailStatus =
           "Connected — \(accounts.count) accounts readable. Actions need a disposable-message test."
@@ -214,15 +229,19 @@ import MailIntegration
   }
   func testDisposableMessage() {
     run { [self] in
-      let account = try await adapter.testDisposableMessage()
-      if let store {
-        try await StateRepository.update(store) { state in
-          state.settings.validatedAccounts.insert(account); state.settings.route = .mailRule
-          state.revision += 1
+      do {
+        mailStatus = "Testing the selected message, then waiting 30 seconds for Mail to sync…"
+        let account = try await adapter.testDisposableMessage()
+        if let store {
+          try await StateRepository.update(store) { state in
+            state.settings.validatedAccounts.insert(account); state.settings.route = .mailRule
+            state.revision += 1
+          }
         }
-      }
-      mailStatus = "Action test passed for one account — dry run remains on."
-      status = mailStatus
+        mailStatus =
+          "Local action checks passed. Verify the probe in Mail before turning off dry run."
+        status = mailStatus
+      } catch { mailStatus = Self.describe(error); throw error }
     }
   }
   func scan(dryRun: Bool = true, automatic: Bool = false, limit: Int = 20) {

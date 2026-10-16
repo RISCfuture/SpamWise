@@ -20,11 +20,12 @@ import MailIntegration
   #expect(script.contains("mailboxes of junk mailbox"))
 }
 actor StubAppleEvents: AppleEventRunner {
-  let response: ScriptValue
-  init(_ response: ScriptValue) { self.response = response }
-  func run(_ source: String) async throws -> ScriptValue { response }
+  var responses: [ScriptValue]
+  init(_ response: ScriptValue) { responses = [response] }
+  init(responses: [ScriptValue]) { self.responses = responses }
+  func run(_ source: String) async throws -> ScriptValue { responses.removeFirst() }
 }
-@Test func `adapter rejects changed source`() async throws {
+@Test func `adapter rejects changed source and unstable probe restoration`() async throws {
   let runner = StubAppleEvents(
     .list([.string("account"), .string("Inbox"), .integer(1), .string("id"), .string("changed")])
   )
@@ -34,6 +35,23 @@ actor StubAppleEvents: AppleEventRunner {
       .init(accountID: "account", messageID: "id", contentHash: "expected")
     ); Issue.record("Expected stale message rejection")
   } catch { #expect(error as? IntegrationError == .staleMessage) }
+  let raw = "From: probe@example.org\r\nSubject: [SpamWise Probe] Test\r\n\r\nDisposable probe."
+  let selected = ScriptValue.list([
+    .string("account"), .string("Inbox"), .integer(1), .string("id"), .string(raw)
+  ])
+  let recovered = ScriptValue.list([
+    .string("account"), .string("Recovered"), .integer(2), .string("id"), .string(raw)
+  ])
+  let probe = AppleMailAdapter(
+    runner: StubAppleEvents(responses: [
+      selected, selected, .boolean(true), selected, .boolean(true), selected, .boolean(true),
+      recovered
+    ]),
+    probeSettlingTime: .zero
+  )
+  await #expect(throws: IntegrationError.staleMessage) {
+    try await probe.testDisposableMessage()
+  }
 }
 @Test func `completion invokes exactly once`() async {
   let count = Counter()

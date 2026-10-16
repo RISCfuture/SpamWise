@@ -87,10 +87,11 @@ struct SettingsView: View {
             Text("Correct a message in Activity to create a rule.").foregroundStyle(.secondary)
           }
           ForEach(model.state.rules) { rule in
-            LabeledContent(
-              "\(rule.scope.rawValue): \(rule.value)",
-              value: rule.disposition.rawValue.capitalized
-            )
+            LabeledContent("\(rule.scope.rawValue): \(rule.value)") {
+              Text(rule.disposition.rawValue.capitalized).accessibilityIdentifier(
+                "settings.rule.\(rule.scope.rawValue).\(rule.value)"
+              )
+            }
           }
         }
         Section("Integration") {

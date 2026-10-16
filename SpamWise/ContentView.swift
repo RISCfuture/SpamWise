@@ -26,6 +26,7 @@ struct ContentView: View {
         }.accessibilityIdentifier("activity.pause")
         Button("Dry run recent mail") { model.scan() }.disabled(model.busy || !model.storageReady)
         SettingsLink { Image(systemName: "gearshape") }.accessibilityLabel("Open Settings")
+          .accessibilityIdentifier("activity.settings")
         HelpButton(page: "how-decisions-are-made")
       }.padding(22)
       Divider()
@@ -33,7 +34,9 @@ struct ContentView: View {
         Table(model.state.records.reversed(), selection: $selection) {
           TableColumn("Time") { row in Text(row.date, format: .dateTime.hour().minute()) }.width(60)
           TableColumn("Sender", value: \.sender).width(min: 100, ideal: 160)
-          TableColumn("Subject", value: \.subject).width(min: 130, ideal: 230)
+          TableColumn("Subject") { row in
+            Text(row.subject).accessibilityIdentifier("activity.subject.\(row.id)")
+          }.width(min: 130, ideal: 230)
           TableColumn("Verdict") { row in VerdictBadge(record: row) }.width(100)
           TableColumn("Confidence") { row in Text(row.verdict.map { "\($0.confidence)%" } ?? "—") }
             .width(80)
@@ -69,7 +72,10 @@ struct ContentView: View {
         )
       }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, 20).padding(.top, 10)
       HStack {
-        Text(model.status).font(.caption).textSelection(.enabled); Spacer()
+        Text(model.status).font(.caption).textSelection(.enabled).accessibilityIdentifier(
+          "activity.status"
+        )
+        Spacer()
       }.padding(.horizontal, 20).padding(.bottom, 12).padding(.top, 6)
     }
     .frame(minWidth: 900, minHeight: 560)
@@ -102,7 +108,11 @@ struct DecisionDetailView: View {
         if let error = row.actionError {
           Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
         }
-        if let correction = row.correctedLabel { Text("User corrected to \(correction.rawValue)") }
+        if let correction = row.correctedLabel {
+          Text("User corrected to \(correction.rawValue)").accessibilityIdentifier(
+            "correction.label"
+          )
+        }
         if let usage = row.verdict?.usage {
           Text(
             "\(usage.input) input · \(usage.output) output · \(usage.cached) cached tokens (\(usage.estimated ? "estimated" : "measured"))"
@@ -114,12 +124,16 @@ struct DecisionDetailView: View {
         Text("Latency: \(row.latency, specifier: "%.2f") s").font(.caption)
         HStack {
           Button("Mark as Good") { model.correct(row, label: .inbox) }
+            .accessibilityIdentifier("correction.good")
           Button("Mark as Junk") { model.correct(row, label: .junk) }
+            .accessibilityIdentifier("correction.junk")
         }.disabled(model.busy || row.path == "verification")
         Menu("Correct entire domain…") {
           Button("Allow this domain") { model.correct(row, label: .inbox, scope: .domain) }
+            .accessibilityIdentifier("correction.domain.allow")
           Button("Block this domain") { model.correct(row, label: .junk, scope: .domain) }
-        }.disabled(model.busy || row.evidence?.fromDomain == nil)
+        }.accessibilityIdentifier("correction.domain")
+          .disabled(model.busy || row.evidence?.fromDomain == nil)
         Text(
           "Sender corrections create address rules. Domain corrections apply to all senders on that registrable domain."
         ).font(.caption).foregroundStyle(.secondary)

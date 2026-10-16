@@ -1,5 +1,8 @@
 public import Foundation
 public import SpamWiseCore
+import OSLog
+import Dispatch
+import CoreServices
 
 /// Sendable subset of Apple Event results used by the Mail adapter.
 public indirect enum ScriptValue: Sendable, Equatable {
@@ -12,23 +15,63 @@ public indirect enum ScriptValue: Sendable, Equatable {
 public protocol AppleEventRunner: Sendable {
   func run(_ source: String) async throws -> ScriptValue
 }
-/// Executes AppleScript on the main actor and sanitizes integration failures.
-@MainActor public final class SystemAppleEventRunner: AppleEventRunner {
-  /// Creates a SystemAppleEventRunner with the supplied configuration.
-  public init() {}
+/// Serializes AppleScript execution off the UI thread and sanitizes integration failures.
+public struct SystemAppleEventRunner: AppleEventRunner {
+  @MainActor private static let initialized: Void = {
+    _ = unsafe NSAppleScript(source: "return true")?.executeAndReturnError(nil)
+  }()
+  /// Initializes AppleScript on the main actor before dispatching work to its serial executor.
+  @MainActor public init() { _ = Self.initialized }
+  /// Requests Mail Automation consent independently of a script's execution timeout.
+  public static func requestMailPermission() async throws {
+    try await AppleScriptExecutor.shared.checkPermission(askUser: true)
+  }
   /// Executes the supplied Mail script and returns a sendable result.
-  @MainActor public func run(_ source: String) async throws -> ScriptValue {
+  public func run(_ source: String) async throws -> ScriptValue {
+    try await AppleScriptExecutor.shared.run(source)
+  }
+}
+
+private actor AppleScriptExecutor {
+  static let shared = AppleScriptExecutor()
+  private let queue = DispatchSerialQueue(label: "codes.tim.SpamWise.apple-events")
+  nonisolated var unownedExecutor: UnownedSerialExecutor { unsafe queue.asUnownedSerialExecutor() }
+  private let logger = Logger(subsystem: "codes.tim.SpamWise", category: "AppleEvents")
+
+  func checkPermission(askUser: Bool) throws {
     try Task.checkCancellation()
+    let target = NSAppleEventDescriptor(bundleIdentifier: "com.apple.mail")
+    let status = unsafe AEDeterminePermissionToAutomateTarget(
+      target.aeDesc,
+      typeWildCard,
+      typeWildCard,
+      askUser
+    )
+    logger.info("Mail Automation permission status: \(status)")
+    guard status == noErr else {
+      if status == procNotFound { throw IntegrationError.unavailable }
+      throw IntegrationError.permissionDenied
+    }
+    try Task.checkCancellation()
+  }
+
+  func run(_ source: String) throws -> ScriptValue {
+    try checkPermission(askUser: false)
     guard let script = NSAppleScript(source: source) else { throw IntegrationError.scriptFailed }
     var error: NSDictionary?
     let result = unsafe script.executeAndReturnError(&error)
     if let error {
       let code = error[NSAppleScript.errorNumber] as? Int
+      logger.error("AppleScript execution failed: code \(code ?? 0)")
       if code == -1743 || code == -10004 { throw IntegrationError.permissionDenied }
       if code == -1701 { throw IntegrationError.ambiguous }
       if code == -1702 { throw IntegrationError.staleMessage }
       throw IntegrationError.scriptFailed
     }
+    logger.info(
+      "AppleScript returned descriptor type \(result.descriptorType), items \(result.numberOfItems)"
+    )
+    try Task.checkCancellation()
     return Self.value(result)
   }
   private static func value(_ descriptor: NSAppleEventDescriptor) -> ScriptValue {
@@ -49,9 +92,13 @@ public struct MailAccount: Identifiable, Sendable { public var id: String; publi
 /// Account-scoped Apple Events integration with exact-source action checks.
 public actor AppleMailAdapter: MailClientAdapter {
   private let runner: any AppleEventRunner
+  private let probeSettlingTime: Duration
   private var pageOffsets: [String: Int] = [:]
   /// Creates an AppleMailAdapter with the supplied configuration.
-  public init(runner: any AppleEventRunner) { self.runner = runner }
+  public init(runner: any AppleEventRunner, probeSettlingTime: Duration = .seconds(30)) {
+    self.runner = runner
+    self.probeSettlingTime = max(.zero, probeSettlingTime)
+  }
   /// Reads Mail account identifiers and display names.
   public func accounts() async throws -> [MailAccount] {
     guard let rows = try await runner.run(MailScripts.accounts).list else {
@@ -184,6 +231,10 @@ public actor AppleMailAdapter: MailClientAdapter {
     _ = try await perform(.moveToJunk, for: selected.identity)
     _ = try await perform(.moveToInbox, for: selected.identity)
     _ = try await perform(.orangeFlag, for: selected.identity)
+    try await Task.sleep(for: probeSettlingTime)
+    guard let restored = try await lookup(selected.identity),
+      restored.identity.mailbox == selected.identity.mailbox
+    else { throw IntegrationError.staleMessage }
     return account
   }
   /// Writes raw messages to a directory without overwriting existing files.

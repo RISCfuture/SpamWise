@@ -8,9 +8,9 @@ import AppIntents
 
 import MailKit
 
-class MailExtension: NSObject, MEExtension {
+nonisolated final class MailExtension: NSObject, MEExtension {
 
-  func handlerForMessageActions() -> any MEMessageActionHandler {
+  nonisolated func handlerForMessageActions() -> any MEMessageActionHandler {
     return MessageActionHandler()
   }
 
