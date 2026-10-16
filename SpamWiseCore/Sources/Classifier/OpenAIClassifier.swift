@@ -26,7 +26,7 @@ public struct OpenAIClassifier: Classifier {
       header: "Authorization",
       body: [
         "model": selectedModel, "store": false, "service_tier": "default",
-        "max_output_tokens": 1024,
+        "max_output_tokens": ClassificationLimits.maximumResponseTokens,
         "reasoning": ["effort": "low"], "instructions": PromptBuilder.instructions,
         "input": try PromptBuilder.prompt(input),
         "text": [

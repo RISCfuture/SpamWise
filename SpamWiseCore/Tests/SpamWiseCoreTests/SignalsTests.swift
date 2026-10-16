@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import SpamWiseCore
-@Test func `address rules beat domain and trusted gates`() {
+@Test func `prioritizes address rules over domain and trusted gates`() {
   let rules = [
     SenderRule(scope: .domain, value: "example.org", disposition: .allow),
     SenderRule(scope: .address, value: "jane@example.org", disposition: .block)
@@ -25,14 +25,14 @@ import SpamWiseCore
     )?.disposition == .allow
   )
 }
-@Test func `latest correction replaces same scope`() {
+@Test func `replaces same scope rules with the latest correction`() {
   let old = SenderRule(scope: .address, value: "Jane@example.org", disposition: .block)
   let new = SenderRule(scope: .address, value: "jane@example.org", disposition: .allow)
   let rules = Gates.replacing(new, in: [old])
   #expect(rules.count == 1)
   #expect(rules.first?.disposition == .allow)
 }
-@Test func `missing history is never absence`() {
+@Test func `preserves uncertainty when sender history is missing`() {
   let unknown = SenderHistory()
   #expect(unknown.summary.contains("unknown"))
   #expect(
@@ -55,7 +55,7 @@ import SpamWiseCore
     )?.disposition == .allow
   )
 }
-@Test func `authentication claims and domains`() throws {
+@Test func `extracts domain evidence and explicitly trusted authentication claims`() throws {
   let message = try MIMEParser().parse(fixture("filler-spam"))
   let evidence = EvidenceBundle(message: message)
   #expect(evidence.tldIsAbuseHeavy)
@@ -83,16 +83,17 @@ actor StubRDAP: HTTPFetcher {
     )
   }
 }
-@Test func `rdap caches and failure is unknown`() async {
+@Test func `caches RDAP results and preserves uncertainty after lookup failure`() async throws {
   let network = StubRDAP(), lookup = RDAPLookup(fetcher: StubRDAP(fail: true))
   #expect(await lookup.ageDays(domain: "example.com") == nil)
   let rdap = RDAPLookup(fetcher: network)
-  let now = ISO8601DateFormatter().date(from: "2026-01-11T00:00:00Z")!
+  let now = try #require(ISO8601DateFormatter().date(from: "2026-01-11T00:00:00Z"))
   #expect(await rdap.ageDays(domain: "example.com", now: now) == 10)
   #expect(await rdap.ageDays(domain: "example.com", now: now) == 10)
   #expect(await network.calls == 2)
 }
-@Test func `stores share committed rules and rollback`() async throws {
+@Test func `shares committed rules across stores and rolls back failed transactions`() async throws
+{
   let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
   defer { try? FileManager.default.removeItem(at: directory) }
   let first = try Store(url: directory.appending(path: "state.store"))
@@ -104,15 +105,15 @@ actor StubRDAP: HTTPFetcher {
     )
   }
   #expect(try await second.read("rules", default: [SenderRule]()).count == 1)
-  do {
+  await #expect(throws: ParseError.malformed) {
     try await second.update("rules", default: [SenderRule]()) { rules in
       rules = []; throw ParseError.malformed
     }
-  } catch {}
+  }
   #expect(try await first.read("rules", default: [SenderRule]()).count == 1)
 }
 
-@Test func `field edits preserve safety settings and validated accounts`() async throws {
+@Test func `preserves safety settings and validated accounts during field edits`() async throws {
   let store = try testStore()
   try await enableActions(store)
   try await StateRepository.editSettings(store) {

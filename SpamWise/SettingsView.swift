@@ -3,132 +3,61 @@ import SpamWiseCore
 
 struct SettingsView: View {
   @Bindable var model: AppModel
-  func binding<T: Sendable>(_ key: any WritableKeyPath<SpamWiseCore.Settings, T> & Sendable)
-    -> Binding<
-      T
-    >
-  {
-    Binding(
-      get: { model.state.settings[keyPath: key] },
-      set: { value in
-        model.setSetting(key, to: value)
-      }
-    )
-  }
+  @AppStorage private var selectedPane: SettingsPane
+
   var body: some View {
-    TabView {
-      Form {
-        Section("Filtering") {
-          Picker("Filtering strength", selection: binding(\.strength)) {
-            ForEach(FilteringStrength.allCases, id: \.self) { strength in
-              Text(strength.localizedTitle).tag(strength)
-            }
-          }
-          Text(
-            """
-            Uncalibrated thresholds: Conservative 99%, Balanced 95%, Aggressive 90%. Model \
-            confidence is not a probability.
-            """
-          ).font(.caption).foregroundStyle(.secondary)
-          Picker("Review treatment", selection: binding(\.review)) {
-            Text("Orange flag (keep in Inbox)").tag(ReviewTreatment.orangeFlag)
-            Text("Orange background (keep in Inbox)").tag(ReviewTreatment.orangeBackground)
-          }
-          Toggle("Dry run — do not change mail", isOn: binding(\.dryRun)).disabled(
-            model.state.settings.validatedAccounts.isEmpty
+    VStack(spacing: 0) {
+      TabView(selection: $selectedPane) {
+        GeneralSettingsView(model: model)
+          .tabItem { Label("General", systemImage: "gearshape") }.tag(SettingsPane.general)
+        AccountSettingsView(model: model)
+          .tabItem { Label("Accounts", systemImage: "person.crop.circle") }.tag(
+            SettingsPane.accounts
           )
-          if model.state.settings.validatedAccounts.isEmpty {
-            Text("Complete a disposable-message action test before disabling dry run.").font(
-              .caption
-            )
-          }
-          Toggle("Pause filtering", isOn: binding(\.paused))
-          HStack {
-            Button("Show setup") { model.showSetup = true }; HelpButton(page: "filtering-strength")
-          }
-        }
-        Section("Mail") { MailConnectionView(model: model) }
-        IMAPSettingsView(model: model)
-      }.formStyle(.grouped).tabItem { Label("General", systemImage: "gearshape") }
-      PolicyView(model: model).tabItem { Label("Preferences", systemImage: "text.alignleft") }
-      Form {
-        ModelSettingsView(model: model)
-        Text(
-          """
-          Token counts are measured when the provider exposes them. Dollar costs are estimates; \
-          cache-write premiums may differ.
-          """
-        ).font(.caption)
-        HelpButton(page: "what-data-is-sent")
-      }.formStyle(.grouped).tabItem { Label("Account", systemImage: "key") }
-      Form {
-        Section("Context limits") {
-          Stepper(
-            "Recent corrections: \(model.state.settings.correctionLimit)",
-            value: binding(\.correctionLimit),
-            in: 0...100,
-            step: 5
-          )
-          Stepper(
-            "Body budget: ~\(model.state.settings.bodyTokenBudget) tokens",
-            value: binding(\.bodyTokenBudget),
-            in: 100...4000,
-            step: 100
-          )
-          Text(
-            "Body length uses a four-characters-per-token estimate. Quoted reply chains and attachments are omitted."
-          ).font(.caption)
-        }
         RuleEditorView(model: model)
-        LearningSettingsView(model: model)
-        EvidenceSettingsView(model: model)
-        Section("Integration") {
-          LabeledContent("Incoming route", value: model.state.settings.route.localizedTitle)
-          Text(
-            "MailKit remains dry-run-only pending signed timing and account identity validation."
-          ).font(.caption)
-          Text("Pending retries: \(model.state.retries.count)")
-          HelpButton(page: "troubleshooting-mail-integration")
-        }
-      }.formStyle(.grouped).tabItem { Label("Advanced", systemImage: "slider.horizontal.3") }
-    }.frame(width: 730, height: 650).padding(12)
+          .tabItem { Label("Rules", systemImage: "line.3.horizontal.decrease") }.tag(
+            SettingsPane.rules
+          )
+        PolicyView(model: model)
+          .tabItem { Label("Preferences", systemImage: "text.alignleft") }.tag(
+            SettingsPane.preferences
+          )
+        AdvancedSettingsView(model: model)
+          .tabItem { Label("Advanced", systemImage: "slider.horizontal.3") }.tag(
+            SettingsPane.advanced
+          )
+      }
+      if !model.status.isEmpty {
+        Divider()
+        Text(model.status).foregroundStyle(.secondary).textSelection(.enabled)
+          .frame(maxWidth: .infinity, alignment: .leading).padding()
+      }
+    }
+    .navigationTitle(selectedPane.title)
+    .frame(minWidth: 640, idealWidth: 700, maxWidth: 800, minHeight: 540, idealHeight: 640)
   }
-}
-struct PolicyView: View {
-  @Bindable var model: AppModel
-  @State private var policy = ""
-  private var localizedDefaultPolicy: String {
-    String(
-      localized:
-        """
-        Marketing from retailers I haven't ordered from is unwanted. Cart and checkout reminders \
-        from stores with no order history are unwanted. Shipping notices are wanted only if they \
-        match an order in my history. Anything from people I've corresponded with is wanted.
-        """
+
+  init(model: AppModel) {
+    self.model = model
+    _selectedPane = AppStorage(
+      wrappedValue: .general,
+      "settings.selectedPane",
+      store: model.preferences
     )
   }
-  var body: some View {
-    VStack(alignment: .leading, spacing: 16) {
-      Text("Your mail preferences").font(.title2.bold())
-      Text(
-        "Describe what you want to receive. Your policy is sent to your selected provider with eligible messages."
-      )
-      TextEditor(text: $policy).font(.body).border(.quaternary).accessibilityLabel(
-        "Mail filtering policy"
-      )
-      Text("\(policy.count)/4,000 characters").font(.caption).foregroundStyle(.secondary)
-      HStack {
-        Button("Reset to default") { policy = localizedDefaultPolicy }
-        Spacer()
-        Button("Save preferences") {
-          model.setSetting(\.policy, to: policy)
-        }.disabled(policy.count > 4000)
+
+  private enum SettingsPane: String {
+    case general, accounts, rules, preferences, advanced
+    var title: LocalizedStringResource {
+      switch self {
+        case .general: "General"
+        case .accounts: "Accounts"
+        case .rules: "Rules"
+        case .preferences: "Preferences"
+        case .advanced: "Advanced"
       }
-      HelpButton(page: "how-decisions-are-made")
-    }.padding(24).onAppear {
-      policy =
-        model.state.settings.policy == PromptBuilder.defaultPolicy
-        ? localizedDefaultPolicy : model.state.settings.policy
     }
   }
 }
+
+#Preview("Settings") { SettingsView(model: PreviewHelper.model()) }

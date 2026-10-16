@@ -1,15 +1,16 @@
 import Foundation
+import Synchronization
 import Testing
 import SpamWiseCore
 @testable import MailIntegration
-@Test func `apple script literals cannot become commands`() {
+@Test func `escapes AppleScript literals so they cannot become commands`() {
   #expect(
     MailScripts.literal("a\" & do shell script \"bad") == "\"a\\\" & do shell script \\\"bad\""
   )
   #expect(MailScripts.literal("a\\b").contains("a\\\\b"))
   #expect(!MailScripts.literal("a\nb").contains("\n"))
 }
-@Test func `scripts require account scoped identity and exact source`() throws {
+@Test func `requires account scoped identity and exact source in Mail scripts`() throws {
   #expect(throws: IntegrationError.self) {
     try MailScripts.lookup(.init(accountID: nil, contentHash: "x"))
   }
@@ -29,16 +30,16 @@ actor StubAppleEvents: AppleEventRunner {
     return responses.removeFirst()
   }
 }
-@Test func `adapter rejects changed source and unstable probe restoration`() async throws {
+@Test func `rejects changed source and unstable Mail probe restoration`() async throws {
   let runner = StubAppleEvents(
     .list([.string("account"), .string("Inbox"), .integer(1), .string("id"), .string("changed")])
   )
   let adapter = AppleMailAdapter(runner: runner)
-  do {
+  await #expect(throws: IntegrationError.staleMessage) {
     _ = try await adapter.lookup(
       .init(accountID: "account", messageID: "id", contentHash: "expected")
-    ); Issue.record("Expected stale message rejection")
-  } catch { #expect(error as? IntegrationError == .staleMessage) }
+    )
+  }
   let raw = "From: probe@example.org\r\nSubject: [SpamWise Probe] Test\r\n\r\nDisposable probe."
   let selected = ScriptValue.list([
     .string("account"), .string("Inbox"), .integer(1), .string("id"), .string(raw)
@@ -81,7 +82,7 @@ actor StubAppleEvents: AppleEventRunner {
   )
   #expect(await settled.moves == 2)
 }
-@Test func `completion invokes exactly once`() async {
+@Test func `invokes completion exactly once under concurrent calls`() async {
   let count = Counter()
   let completion = CompletionOnce<Int> { _ in count.increment() }
   await withTaskGroup(of: Void.self) { group in
@@ -89,13 +90,12 @@ actor StubAppleEvents: AppleEventRunner {
   }
   #expect(count.value == 1)
 }
-import Synchronization
 final class Counter: Sendable {
   private let storage = Mutex(0)
   var value: Int { storage.withLock { $0 } }
   func increment() { storage.withLock { $0 += 1 } }
 }
-@Test @MainActor func `generated scripts compile and Apple Event booleans decode`() throws {
+@Test @MainActor func `compiles generated scripts and decodes Apple Event booleans`() throws {
   for (source, expected) in [
     ("return true", ScriptValue.boolean(true)),
     ("return false", .boolean(false)),
@@ -174,7 +174,7 @@ private actor PagedEvents: AppleEventRunner {
     )
   }
 }
-@Test func `inbox sweeps advance beyond retained first page and wrap`() async throws {
+@Test func `advances Inbox sweeps beyond the retained first page and wraps`() async throws {
   let adapter = AppleMailAdapter(runner: PagedEvents())
   let first = try await adapter.nextInboxMessages(limit: 20)
   let second = try await adapter.nextInboxMessages(limit: 20)

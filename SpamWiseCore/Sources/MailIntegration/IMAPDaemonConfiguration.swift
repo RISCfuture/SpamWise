@@ -5,6 +5,8 @@ import LocalAuthentication
 
 /// A secret reference; JSON configuration never contains the resolved password or bearer token.
 public struct IMAPCredentialReference: Codable, Sendable {
+  private static let maximumEnvironmentNameBytes = 128
+  private static let maximumKeychainReferenceBytes = 256
   /// Name of an explicitly supplied process environment variable.
   public var environment: String?
   /// Exact login Keychain generic-password service when no environment reference is supplied.
@@ -70,7 +72,7 @@ public struct IMAPCredentialReference: Codable, Sendable {
   func validate() throws {
     if let environment {
       guard keychainService == nil, keychainAccount == nil, !environment.isEmpty,
-        environment.utf8.count <= 128,
+        environment.utf8.count <= Self.maximumEnvironmentNameBytes,
         environment.utf8.allSatisfy({
           $0 == 95 || (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0)
         })
@@ -80,7 +82,8 @@ public struct IMAPCredentialReference: Codable, Sendable {
     } else {
       guard let keychainService, !keychainService.isEmpty, let keychainAccount,
         !keychainAccount.isEmpty,
-        keychainService.utf8.count <= 256, keychainAccount.utf8.count <= 256
+        keychainService.utf8.count <= Self.maximumKeychainReferenceBytes,
+        keychainAccount.utf8.count <= Self.maximumKeychainReferenceBytes
       else { throw IMAPError.invalidConfiguration }
     }
   }
@@ -91,6 +94,8 @@ public struct IMAPCredentialReference: Codable, Sendable {
 
 /// Bounded headless connection configuration with references to secrets and an optional explicit state store.
 public struct IMAPDaemonConfiguration: Codable, Sendable {
+  private static let maximumConfigurationBytes = 65_536
+  private static let maximumStatePathBytes = 4096
   /// Explicit account endpoint and identity.
   public var account: IMAPConfiguration
   /// IMAP password or OAuth secret reference.
@@ -101,7 +106,7 @@ public struct IMAPDaemonConfiguration: Codable, Sendable {
   public var providerCredentials: [String: IMAPCredentialReference]?
   /// Decodes at most 64 KiB and rejects unknown fields, including accidentally embedded secrets.
   public static func decode(_ data: Data) throws -> Self {
-    guard data.count <= 65_536,
+    guard data.count <= maximumConfigurationBytes,
       let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
       Set(object.keys).isSubset(of: ["account", "credential", "statePath", "providerCredentials"]),
       let account = object["account"] as? [String: Any],
@@ -125,7 +130,8 @@ public struct IMAPDaemonConfiguration: Codable, Sendable {
     }
     let result = try JSONDecoder().decode(Self.self, from: data)
     try result.account.validate(); try result.credential.validate()
-    guard result.statePath.map({ !$0.isEmpty && $0.utf8.count <= 4096 }) ?? true else {
+    guard result.statePath.map({ !$0.isEmpty && $0.utf8.count <= maximumStatePathBytes }) ?? true
+    else {
       throw IMAPError.invalidConfiguration
     }
     return result

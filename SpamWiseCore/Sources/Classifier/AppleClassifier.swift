@@ -3,7 +3,10 @@ import FoundationModels
 
 /// Explicit Apple execution location; availability never selects another backend.
 public enum AppleModelBackend: String, Codable, CaseIterable, Sendable {
-  case onDevice, privateCloudCompute
+  /// Executes using the available model on this Mac.
+  case onDevice
+  /// Executes using the explicitly authorized Private Cloud Compute model.
+  case privateCloudCompute
 
   /// Stable cache and usage identity for the selected execution location.
   public var modelID: String {
@@ -25,32 +28,6 @@ public struct AppleClassifier: Classifier {
   /// Creates an Apple backend. PCC requires Apple's managed `com.apple.developer.private-cloud-compute` entitlement.
   public init(backend: AppleModelBackend, generate: Generate? = nil) {
     self.backend = backend; self.generate = generate ?? Self.generate
-  }
-
-  /// Produces a validated result within fifteen seconds; availability, quota and refusal errors fail open.
-  public func classify(_ input: ClassificationInput) async throws -> Verdict {
-    let prompt = try PromptBuilder.prompt(input)
-    do {
-      return try await withDeadline(seconds: min(15, max(0.01, input.timeout))) {
-        try await generate(backend, PromptBuilder.instructions, prompt, 1024).validated()
-      }
-    } catch is CancellationError { throw ClassificationError.cancelled } catch let error
-      as ClassificationError
-    { throw error } catch let error as LanguageModelError {
-      switch error {
-        case .contextSizeExceeded: throw ClassificationError.contextExceeded
-        case .rateLimited: throw ClassificationError.rateLimited
-        case .guardrailViolation, .refusal: throw ClassificationError.refused
-        case .timeout: throw ClassificationError.timeout
-        default: throw ClassificationError.configuration
-      }
-    } catch let error as PrivateCloudComputeLanguageModel.Error {
-      switch error {
-        case .quotaLimitReached: throw ClassificationError.rateLimited
-        case .networkFailure, .serviceUnavailable: throw ClassificationError.network
-        @unknown default: throw ClassificationError.configuration
-      }
-    } catch { throw ClassificationError.configuration }
   }
 
   private static func generate(
@@ -77,7 +54,7 @@ public struct AppleClassifier: Classifier {
     )
     try Task.checkCancellation()
     guard let label = MailLabel(rawValue: response.content.label.rawValue),
-      response.content.reason.count <= 240
+      response.content.reason.count <= ClassificationLimits.maximumReasonCharacters
     else {
       throw ClassificationError.invalidOutput
     }
@@ -96,6 +73,42 @@ public struct AppleClassifier: Classifier {
       )
     ).validated()
   }
+  /// Produces a validated result within fifteen seconds; availability, quota and refusal errors fail open.
+  public func classify(_ input: ClassificationInput) async throws -> Verdict {
+    let prompt = try PromptBuilder.prompt(input)
+    do {
+      return try await withDeadline(
+        seconds: min(
+          ClassificationLimits.timeoutRange.upperBound,
+          max(ClassificationLimits.timeoutRange.lowerBound, input.timeout)
+        )
+      ) {
+        try await generate(
+          backend,
+          PromptBuilder.instructions,
+          prompt,
+          ClassificationLimits.maximumResponseTokens
+        ).validated()
+      }
+    } catch is CancellationError { throw ClassificationError.cancelled } catch let error
+      as ClassificationError
+    { throw error } catch let error as LanguageModelError {
+      switch error {
+        case .contextSizeExceeded: throw ClassificationError.contextExceeded
+        case .rateLimited: throw ClassificationError.rateLimited
+        case .guardrailViolation, .refusal: throw ClassificationError.refused
+        case .timeout: throw ClassificationError.timeout
+        default: throw ClassificationError.configuration
+      }
+    } catch let error as PrivateCloudComputeLanguageModel.Error {
+      switch error {
+        case .quotaLimitReached: throw ClassificationError.rateLimited
+        case .networkFailure, .serviceUnavailable: throw ClassificationError.network
+        @unknown default: throw ClassificationError.configuration
+      }
+    } catch { throw ClassificationError.configuration }
+  }
+
 }
 
 @Generable private enum AppleGuidedLabel: String { case inbox, review, junk }

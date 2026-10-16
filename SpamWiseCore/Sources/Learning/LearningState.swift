@@ -4,14 +4,26 @@ public import MessageModel
 public import Signals
 
 /// Persisted sample partition; held-out labels never train either estimator.
-public enum LearningPartition: String, Codable, Sendable { case training, heldOut }
+public enum LearningPartition: String, Codable, Sendable {
+  /// Eligible for model fitting when the provenance permits it.
+  case training
+  /// Reserved for evaluation and excluded from model fitting.
+  case heldOut
+}
 /// Evidence provenance distinguishes explicit corrections from classifier predictions.
 public enum LearningProvenance: String, Codable, Sendable {
-  case explicitCorrection, highConfidencePrediction
+  /// A label selected by the user.
+  case explicitCorrection
+  /// A prediction admitted by the independent learning gates.
+  case highConfidencePrediction
 }
 
 /// Bounded features and tokens for local learning without retaining complete message bodies.
 public struct LearningSample: Codable, Sendable, Equatable, Identifiable {
+  private static let maximumIdentityCharacters = 8000
+  private static let maximumTokens = 128
+  private static let partitionPrefixCharacters = 2
+  private static let heldOutPartitionDivisor: UInt8 = 5
   /// Content-based identity used to prevent duplicate training and partition leakage.
   public let id: String
   /// Date the latest label was recorded.
@@ -29,7 +41,11 @@ public struct LearningSample: Codable, Sendable, Equatable, Identifiable {
   /// Stable identity ignores delivery headers so duplicate content stays in one partition.
   public static func identity(for message: ParsedMessage) -> String {
     stableHash(
-      Data((message.subject.lowercased() + "\n" + message.text.lowercased()).prefix(8000).utf8)
+      Data(
+        (message.subject.lowercased() + "\n" + message.text.lowercased()).prefix(
+          maximumIdentityCharacters
+        ).utf8
+      )
     )
   }
 }
@@ -70,6 +86,20 @@ public struct LearningEstimate: Codable, Sendable, Equatable {
 
 /// Bounded, deterministic local learning state; callers apply rule and relationship gates first.
 public struct LearningState: Codable, Sendable, Equatable {
+  private static let sampleLimit = 10_000
+  private static let fingerprintLimit = 1000
+  private static let predictionConfidenceRange = 99...100
+  private static let minimumReviewedSamplesPerClass = 20
+  private static let samplesPerPrediction = 5
+  private static let reviewedSamplesPerPrediction = 4
+  private static let contradictoryBayesMagnitude = 1.0
+  private static let contradictoryLogisticMagnitude = 0.5
+  private static let hashCharacters = 64
+  private static let maximumSampleTokens = 128
+  private static let maximumTokenCharacters = 40
+  private static let maximumAnchors = 21
+  private static let maximumAnchorCharacters = 260
+  private static let maximumShingles = 128
   /// Latest bounded labels, ordered newest first with a stable identity tie break.
   public private(set) var samples: [LearningSample] = []
   /// Explicit campaign examples and Good suppressions.
@@ -87,8 +117,38 @@ public struct LearningState: Codable, Sendable, Equatable {
 
   /// Creates empty state with bounded retention limits.
   public init(maximumSamples: Int = 10000, maximumFingerprints: Int = 1000) {
-    self.maximumSamples = min(10000, max(1, maximumSamples))
-    self.maximumFingerprints = min(1000, max(1, maximumFingerprints))
+    self.maximumSamples = min(Self.sampleLimit, max(1, maximumSamples))
+    self.maximumFingerprints = min(Self.fingerprintLimit, max(1, maximumFingerprints))
+  }
+
+  /// Decodes older empty state and clamps persisted retention and feature bounds.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    self.init(
+      maximumSamples: try values.decodeIfPresent(Int.self, forKey: .maximumSamples)
+        ?? Self.sampleLimit,
+      maximumFingerprints: try values.decodeIfPresent(Int.self, forKey: .maximumFingerprints)
+        ?? Self.fingerprintLimit
+    )
+    samples = try values.decodeIfPresent([LearningSample].self, forKey: .samples) ?? []
+    fingerprints =
+      try values.decodeIfPresent([CampaignFingerprint].self, forKey: .fingerprints) ?? []
+    samples = samples.filter {
+      $0.id.count == Self.hashCharacters && $0.tokens.count <= Self.maximumSampleTokens
+        && $0.tokens.allSatisfy { $0.count <= Self.maximumTokenCharacters }
+        && $0.features.count == StatisticalLearning.featureCount
+        && $0.features.allSatisfy { $0.isFinite && (0...1).contains($0) }
+        && $0.partition == LearningSample.partition(for: $0.id)
+        && $0.date.timeIntervalSince1970.isFinite
+    }
+    fingerprints = fingerprints.filter {
+      $0.id.count == Self.hashCharacters && $0.anchors.count <= Self.maximumAnchors
+        && $0.anchors.allSatisfy { $0.count <= Self.maximumAnchorCharacters }
+        && $0.shingles.count <= Self.maximumShingles
+        && $0.shingles.allSatisfy { $0.count == Self.hashCharacters }
+        && $0.date.timeIntervalSince1970.isFinite
+    }
+    enforceBounds()
   }
 
   /// Stores an explicit correction, replacing the same content's prior label and campaign evidence.
@@ -138,21 +198,33 @@ public struct LearningState: Codable, Sendable, Equatable {
     date: Date = .now
   ) -> Bool {
     let identity = LearningSample.identity(for: message)
-    guard !hasContradiction, (99...100).contains(verdict.confidence), verdict.label != .review,
+    guard !hasContradiction, Self.predictionConfidenceRange.contains(verdict.confidence),
+      verdict.label != .review,
       !verdict.reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
       evidence.contact != true, evidence.senderHistory.replyCount == 0,
       evidence.senderHistory.receiptCount == 0,
       !samples.contains(where: { $0.id == identity })
     else { return false }
     let reviewed = trainingSamples
-    guard StatisticalLearning.hasMinimumClasses(reviewed, perClass: 20),
+    guard
+      StatisticalLearning.hasMinimumClasses(
+        reviewed,
+        perClass: Self.minimumReviewedSamplesPerClass
+      ),
       samples.filter({ $0.provenance == .highConfidencePrediction }).count
-        < min(maximumSamples / 5, reviewed.count / 4)
+        < min(
+          maximumSamples / Self.samplesPerPrediction,
+          reviewed.count / Self.reviewedSamplesPerPrediction
+        )
     else { return false }
     let score = StatisticalLearning.bayes(message: message, reviewed: reviewed, predictions: [])
-    if let score, abs(score) >= 1, (score > 0) != (verdict.label == .junk) { return false }
+    if let score, abs(score) >= Self.contradictoryBayesMagnitude,
+      (score > 0) != (verdict.label == .junk)
+    {
+      return false
+    }
     if let margin = StatisticalLearning.logistic(evidence: evidence, reviewed: reviewed),
-      abs(margin) >= 0.5, (margin > 0) != (verdict.label == .junk)
+      abs(margin) >= Self.contradictoryLogisticMagnitude, (margin > 0) != (verdict.label == .junk)
     {
       return false
     }
@@ -199,32 +271,6 @@ public struct LearningState: Codable, Sendable, Equatable {
     )
   }
 
-  /// Decodes older empty state and clamps persisted retention and feature bounds.
-  public init(from decoder: any Decoder) throws {
-    let values = try decoder.container(keyedBy: CodingKeys.self)
-    self.init(
-      maximumSamples: try values.decodeIfPresent(Int.self, forKey: .maximumSamples) ?? 10000,
-      maximumFingerprints: try values.decodeIfPresent(Int.self, forKey: .maximumFingerprints)
-        ?? 1000
-    )
-    samples = try values.decodeIfPresent([LearningSample].self, forKey: .samples) ?? []
-    fingerprints =
-      try values.decodeIfPresent([CampaignFingerprint].self, forKey: .fingerprints) ?? []
-    samples = samples.filter {
-      $0.id.count == 64 && $0.tokens.count <= 128 && $0.tokens.allSatisfy { $0.count <= 40 }
-        && $0.features.count == StatisticalLearning.featureCount
-        && $0.features.allSatisfy { $0.isFinite && (0...1).contains($0) }
-        && $0.partition == LearningSample.partition(for: $0.id)
-        && $0.date.timeIntervalSince1970.isFinite
-    }
-    fingerprints = fingerprints.filter {
-      $0.id.count == 64 && $0.anchors.count <= 21 && $0.anchors.allSatisfy { $0.count <= 260 }
-        && $0.shingles.count <= 128 && $0.shingles.allSatisfy { $0.count == 64 }
-        && $0.date.timeIntervalSince1970.isFinite
-    }
-    enforceBounds()
-  }
-
   private mutating func enforceBounds() {
     var sampleIDs: Set<String> = []
     samples = samples.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date > $1.date }
@@ -255,7 +301,7 @@ extension LearningSample {
       provenance: provenance,
       partition: partition(for: id),
       tokens: Array(Set(LearningText.tokens(message.subject + " " + message.text))).sorted().prefix(
-        128
+        maximumTokens
       ).map { $0 },
       features: StatisticalLearning.features(evidence)
     )
@@ -263,6 +309,7 @@ extension LearningSample {
 
   /// Returns the deterministic content split used by learning and reviewed-corpus evaluation.
   public static func partition(for id: String) -> LearningPartition {
-    (UInt8(id.prefix(2), radix: 16) ?? 0).isMultiple(of: 5) ? .heldOut : .training
+    (UInt8(id.prefix(partitionPrefixCharacters), radix: 16) ?? 0)
+      .isMultiple(of: heldOutPartitionDivisor) ? .heldOut : .training
   }
 }

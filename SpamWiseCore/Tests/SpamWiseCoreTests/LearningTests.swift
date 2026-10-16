@@ -6,7 +6,9 @@ import Signals
 import Testing
 import SpamWiseCore
 
-@Suite struct LearningBehaviorTests {
+@Suite
+// swiftlint:disable:next type_name
+struct `learns from bounded corrections` {
   @Test func `retrieves related older corrections before unrelated recent examples`() throws {
     let message = try learningMessage("Your observatory telescope shipment has arrived")
     let relevant = correction("observatory telescope shipment", date: 1)
@@ -151,11 +153,23 @@ import SpamWiseCore
       hasContradiction: false
     )
     #expect(!inconsistent)
-    try await verifyEnrichedInference()
+    let fixture = try await enrichedInferenceFixture()
+    let enrichedEvidence = try #require(fixture.record.evidence)
+    #expect(enrichedEvidence.domainAgeDays != nil)
+    let expected = try #require(
+      fixture.learning.estimate(message: fixture.message, evidence: enrichedEvidence).logisticMargin
+    )
+    #expect(enrichedEvidence.learnedMargin == expected)
   }
 }
 
-private func verifyEnrichedInference() async throws {
+private struct EnrichedInferenceFixture {
+  let learning: LearningState
+  let message: ParsedMessage
+  let record: DecisionRecord
+}
+
+private func enrichedInferenceFixture() async throws -> EnrichedInferenceFixture {
   var learning = LearningState()
   for index in 0..<200 {
     let message = try learningMessage("A bounded training sample \(index)")
@@ -185,10 +199,7 @@ private func verifyEnrichedInference() async throws {
     message,
     identity: .init(accountID: "eval", contentHash: message.hash)
   )
-  let evidence = try #require(record.evidence)
-  #expect(evidence.domainAgeDays != nil)
-  let expected = try #require(trained.estimate(message: message, evidence: evidence).logisticMargin)
-  #expect(evidence.learnedMargin == expected)
+  return EnrichedInferenceFixture(learning: trained, message: message, record: record)
 }
 
 private let campaignText =

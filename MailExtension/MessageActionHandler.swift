@@ -3,6 +3,8 @@ import MailKit
 import SpamWiseCore
 
 final class MessageActionHandler: NSObject, MEMessageActionHandler {
+  private static let maximumClassificationTimeSec: TimeInterval = 8
+  private static let completionWatchdog = Duration.seconds(9)
   var requiredHeaders: [String] {
     [
       "From", "Message-ID", "Authentication-Results", "Reply-To", "Return-Path", "List-Unsubscribe",
@@ -16,8 +18,7 @@ final class MessageActionHandler: NSObject, MEMessageActionHandler {
     let completion = CompletionOnce(completionHandler)
     guard message.state == .received else { completion.finish(nil); return }
     guard let raw = message.rawData else { completion.finish(.invokeAgainWithBody); return }
-    // MailKit lacks an account identifier. Until signed identity/account probes pass,
-    // this route can safely record dry runs only; Apple Events handles account-scoped actions.
+    // MailKit provides no account identifier, so this route records dry runs only.
     let identity = MessageIdentity(accountID: nil, contentHash: stableHash(raw))
     let work = Task {
       do {
@@ -38,13 +39,13 @@ final class MessageActionHandler: NSObject, MEMessageActionHandler {
         _ = await pipeline.process(
           .init(identity: identity, raw: raw),
           forceDryRun: true,
-          timeout: min(8, state.settings.callbackDeadline)
+          timeout: min(Self.maximumClassificationTimeSec, state.settings.callbackDeadline)
         )
       } catch { /* Fail open if App Group/Keychain/persistence is unavailable. */  }
       completion.finish(nil)
     }
     Task {
-      try? await Task.sleep(for: .seconds(9))
+      try? await Task.sleep(for: Self.completionWatchdog)
       if completion.finish(nil) { work.cancel() }
     }
   }

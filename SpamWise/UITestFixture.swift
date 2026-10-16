@@ -10,6 +10,14 @@
   }
 
   enum UITestFixture {
+    static func seed(arguments: [String], in store: Store) async throws {
+      if arguments.contains("--ui-corrections") {
+        try await seedCorrections(in: store)
+      } else if arguments.contains("--ui-visual-fixture") {
+        try await seedVisualState(in: store)
+      }
+    }
+
     static func seedCorrections(in store: Store) async throws {
       let message = try MIMEParser().parse(
         Data(
@@ -27,7 +35,10 @@
         outcome: .dryRun,
         path: "model"
       )
-      record.id = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+      guard let identity = UUID(uuidString: "00000000-0000-0000-0000-000000000001") else {
+        preconditionFailure("The correction fixture requires a valid UUID.")
+      }
+      record.id = identity
       let initial = record
       try await StateRepository.update(store) { state in
         guard state.records.isEmpty else { return }
@@ -36,6 +47,19 @@
         state.settings.route = .mailRule
         state.settings.validatedAccounts = ["ui-test"]
         state.record(initial)
+      }
+    }
+
+    @MainActor private static func seedVisualState(in store: Store) async throws {
+      let review = PreviewHelper.record, failed = PreviewHelper.failedRecord
+      let corrections = PreviewHelper.corrections
+      try await StateRepository.update(store) { state in
+        guard state.records.isEmpty else { return }
+        state.settings.onboardingComplete = true
+        state.settings.dryRun = true
+        state.corrections = corrections
+        state.record(review)
+        state.record(failed)
       }
     }
   }

@@ -2,6 +2,12 @@ public import Foundation
 
 /// Persists decisions before claiming actions and fails open on errors.
 public actor Pipeline {
+  private static let maximumRetryAttempts = 3
+  private static let maximumRetryCharacters = 16_000
+  private static let maximumRetries = 100
+  private static let initialRetryDelaySec = 30.0
+  private static let retryBackoffFactor = 2.0
+  private static let retryLifetimeSec = 86_400.0
   let store: Store
   let classifier: any Classifier
   let rdap: RDAPLookup?
@@ -155,22 +161,26 @@ public actor Pipeline {
   ) async {
     let (attempt, forceDryRun) = retry
     guard !forceDryRun else { return }
-    if let error = error as? ClassificationError, error.retryable, attempt < 3, !Task.isCancelled {
-      var bounded = message; bounded.text = String(message.text.prefix(16_000))
+    if let error = error as? ClassificationError, error.retryable,
+      attempt < Self.maximumRetryAttempts, !Task.isCancelled
+    {
+      var bounded = message; bounded.text = String(message.text.prefix(Self.maximumRetryCharacters))
       let retryMessage = bounded
       let retryRevision = revision
       try? await StateRepository.update(store) { state in
         guard state.revision == retryRevision else { return }
         state.retries.removeAll { $0.id == identity.key }
-        guard state.retries.count < 100 else { return }
+        guard state.retries.count < Self.maximumRetries else { return }
         state.retries.append(
           RetryJob(
             identity: identity,
             message: retryMessage,
             revision: retryRevision,
             attempt: attempt + 1,
-            due: Date().addingTimeInterval(30 * pow(2, Double(attempt))),
-            expires: Date().addingTimeInterval(86_400),
+            due: Date().addingTimeInterval(
+              Self.initialRetryDelaySec * pow(Self.retryBackoffFactor, Double(attempt))
+            ),
+            expires: Date().addingTimeInterval(Self.retryLifetimeSec),
             dryRun: forceDryRun
           )
         )
@@ -257,9 +267,13 @@ public actor Pipeline {
       }
     } catch {
       completed.outcome = .failed
-      completed.actionError =
-        (error as? IntegrationError)?.localizedDescription
-        ?? "Action failed or was cancelled; delivery status unknown. Not retried."
+      if let error = error as? IntegrationError {
+        completed.actionError = [error.errorDescription, error.failureReason].compactMap { $0 }
+          .joined(separator: " ")
+      } else {
+        completed.actionError =
+          "Action failed or was cancelled; delivery status unknown. Not retried."
+      }
     }
     try await save(completed)
     return completed

@@ -13,19 +13,6 @@ public struct MessageIdentity: Codable, Sendable, Hashable {
   public var mailbox: String?
   /// SHA-256 fingerprint checked before mail actions.
   public var contentHash: String
-  /// Creates a MessageIdentity with the supplied configuration.
-  public init(
-    accountID: String?,
-    messageID: String? = nil,
-    localID: Int? = nil,
-    mailboxValidity: UInt64? = nil,
-    mailbox: String? = nil,
-    contentHash: String
-  ) {
-    self.accountID = accountID; self.messageID = messageID; self.localID = localID
-    self.mailboxValidity = mailboxValidity
-    self.mailbox = mailbox; self.contentHash = contentHash
-  }
   /// Stable storage or deduplication key.
   public var key: String {
     if let mailboxValidity {
@@ -43,5 +30,18 @@ public struct MessageIdentity: Codable, Sendable, Hashable {
         [accountID ?? "unresolved", messageID ?? "", contentHash].joined(separator: "\u{0}").utf8
       )
     )
+  }
+  /// Creates a MessageIdentity with the supplied configuration.
+  public init(
+    accountID: String?,
+    messageID: String? = nil,
+    localID: Int? = nil,
+    mailboxValidity: UInt64? = nil,
+    mailbox: String? = nil,
+    contentHash: String
+  ) {
+    self.accountID = accountID; self.messageID = messageID; self.localID = localID
+    self.mailboxValidity = mailboxValidity
+    self.mailbox = mailbox; self.contentHash = contentHash
   }
 }

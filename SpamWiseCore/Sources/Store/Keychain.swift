@@ -1,14 +1,30 @@
-import Foundation
-public import Security
+public import Foundation
+import Security
+
+/// Failures while accessing or storing credentials.
+public protocol CredentialFailure: Error {}
 
 /// Credential lookup or update failures.
-public enum KeychainError: Error, Sendable { case status(OSStatus), missing }
+public enum KeychainError: CredentialFailure, Sendable, LocalizedError {
+  /// Keychain returned an unsuccessful status or unusable credential data.
+  case status(OSStatus)
+  /// No nonempty credential is available.
+  case missing
+  /// General description of the failed credential operation.
+  public var errorDescription: String? { String(localized: "The credential is unavailable.") }
+  /// The credential prerequisite or Keychain status that caused the failure.
+  public var failureReason: String? {
+    switch self {
+      case .missing: String(localized: "No nonempty credential was found.")
+      case .status(let status):
+        String(localized: "Keychain returned status \(status, format: .number.grouping(.never)).")
+    }
+  }
+}
 /// Stores the user's API key in the shared data-protection Keychain group.
 public struct APIKeychain: Sendable {
   /// Keychain access group shared by the app and extension.
   public static let accessGroup = "2NFSK2WB24.codes.tim.SpamWise.shared"
-  /// Creates an APIKeychain with the supplied configuration.
-  public init(service: String = "codes.tim.SpamWise.anthropic") { self.service = service }
   private let service: String
   private var query: [String: Any] {
     [
@@ -18,6 +34,8 @@ public struct APIKeychain: Sendable {
       kSecUseDataProtectionKeychain as String: true
     ]
   }
+  /// Creates an APIKeychain with the supplied configuration.
+  public init(service: String = "codes.tim.SpamWise.anthropic") { self.service = service }
   /// Reads durable state or credentials, throwing when access is unavailable.
   public func read() throws -> String {
     var query = query; query[kSecReturnData as String] = true

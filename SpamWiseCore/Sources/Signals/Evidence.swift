@@ -15,6 +15,7 @@ public struct AuthResult: Codable, Sendable, Equatable {
 }
 /// Optional evidence supplied to classification; missing values mean unknown.
 public struct EvidenceBundle: Codable, Sendable, Equatable {
+  private static let maximumLinkDomains = 20
   /// Normalized sender email address.
   public var fromAddress: String
   /// Decoded sender display name; this is an untrusted claim.
@@ -71,17 +72,18 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
     self.domainAgeDays = domainAgeDays
     linkDomains = Array(
       Set(message.urls.compactMap { URL(string: $0)?.host }.compactMap(resolver.registrableDomain))
-    ).sorted().prefix(20).map { $0 }
+    ).sorted().prefix(Self.maximumLinkDomains).map { $0 }
     listUnsubscribePresent = message.header("list-unsubscribe") != nil
     senderHistory = history; self.contact = contact
   }
 }
 /// Parses authentication claims without trusting arbitrary sender headers.
 public enum AuthenticationHeaders {
+  private static let maximumHeaders = 10
   /// Parses SPF, DKIM, and DMARC claims with explicit reporting-server trust.
   public static func parse(_ headers: [String], trustedServers: Set<String>) -> [AuthResult] {
     // Header claims remain untrusted by default; no recomputation of SPF/DKIM/DMARC.
-    headers.prefix(10).flatMap { header -> [AuthResult] in
+    headers.prefix(maximumHeaders).flatMap { header -> [AuthResult] in
       let fields = header.lowercased().components(separatedBy: ";")
       let server = (fields.first ?? "").trimmingCharacters(in: .whitespaces).components(
         separatedBy: " "

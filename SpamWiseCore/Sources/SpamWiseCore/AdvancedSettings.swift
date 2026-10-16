@@ -2,7 +2,16 @@ public import Foundation
 
 /// Explicit classifier selection; unavailable backends never fall back to another provider.
 public enum ModelBackend: String, Codable, Sendable, CaseIterable {
-  case claude, onDevice, privateCloudCompute, openAI, gemini
+  /// Uses the explicitly selected Claude model.
+  case claude
+  /// Uses Apple’s available on-device model.
+  case onDevice
+  /// Uses Apple’s explicitly authorized Private Cloud Compute model.
+  case privateCloudCompute
+  /// Uses the supported OpenAI Responses model.
+  case openAI
+  /// Uses the supported Gemini model.
+  case gemini
   /// Default explicit model identity for a newly selected provider.
   public var defaultModelID: String {
     switch self {
@@ -15,7 +24,12 @@ public enum ModelBackend: String, Codable, Sendable, CaseIterable {
   }
 }
 /// Incoming integration chosen independently of the classifier provider.
-public enum MailTransport: String, Codable, Sendable, CaseIterable { case appleMail, imap }
+public enum MailTransport: String, Codable, Sendable, CaseIterable {
+  /// Accesses mail through the Apple Mail integration.
+  case appleMail
+  /// Accesses an explicitly configured account through IMAP.
+  case imap
+}
 
 /// Optional capabilities with conservative defaults.
 public struct AdvancedSettings: Codable, Sendable, Equatable {
@@ -105,6 +119,7 @@ public struct ReviewedLabel: Codable, Sendable, Identifiable {
 
 /// Local weekly summary; it never sends mail or changes message state.
 public struct ReviewDigest: Sendable {
+  private static let lookbackDays = 7
   /// Calendar week identity used to avoid repeated automatic presentation.
   public let week: String
   /// Latest still-unreviewed decisions in the preceding seven days.
@@ -113,7 +128,7 @@ public struct ReviewDigest: Sendable {
   public init(state: AppState, now: Date = .now, calendar: Calendar = .current) {
     let parts = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)
     week = "\(parts.yearForWeekOfYear ?? 0)-\(parts.weekOfYear ?? 0)"
-    let cutoff = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+    let cutoff = calendar.date(byAdding: .day, value: -Self.lookbackDays, to: now) ?? now
     let latest = Dictionary(grouping: state.records, by: { $0.identity.key }).compactMap {
       $0.value.max { $0.date < $1.date }
     }

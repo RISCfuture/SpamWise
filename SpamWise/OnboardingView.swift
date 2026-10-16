@@ -3,158 +3,102 @@ import SpamWiseCore
 
 struct OnboardingView: View {
   @Bindable var model: AppModel
-  @State private var step = 0
+  var completion: () -> Void = {}
+  @State private var step: SetupStep = .welcome
+
   var body: some View {
-    VStack(alignment: .leading, spacing: 22) {
+    VStack(spacing: 0) {
       HStack {
-        Image(systemName: "envelope.badge.shield.half.filled").font(.largeTitle).foregroundStyle(
-          .tint
-        )
-        Text("Welcome to SpamWise").font(.title.bold())
-        Spacer(); Text("Step \(step + 1) of 4").foregroundStyle(.secondary)
-      }
-      ProgressView(value: Double(step + 1), total: 4).accessibilityLabel("Setup progress")
-      Group {
+        Text("Welcome to SpamWise").font(.title2.bold())
+        Spacer()
+        Text(
+          "Step \(step.rawValue + 1, format: .number) of \(SetupStep.allCases.count, format: .number)"
+        ).foregroundStyle(.secondary)
+      }.padding()
+      Form {
         switch step {
-          case 0:
-            VStack(alignment: .leading, spacing: 16) {
-              Text("Your Inbox, with fewer distractions").accessibilityIdentifier("setup.intro")
-                .font(.title2.bold())
-              Text(
-                """
-                SpamWise explains every decision. It never deletes mail or moves it to Trash. \
-                Uncertain mail stays in Inbox with an orange flag.
-                """
-              )
-              Label(
-                """
-                Your selected provider receives your policy, correction examples, evidence, and a \
-                shortened message only when local rules do not decide it.
-                """,
-                systemImage: "network"
-              )
-              Label(
-                "RDAP services receive the sender’s domain when its age is not cached.",
-                systemImage: "globe"
-              )
-              Label(
-                "Your API key stays in Keychain. Start in dry run to see decisions before any mail changes.",
-                systemImage: "key"
-              )
-              HelpButton(page: "what-data-is-sent")
-            }
-          case 1: KeyEntryView(model: model)
-          case 2: MailConnectionView(model: model)
-          default:
-            VStack(alignment: .leading, spacing: 16) {
-              Text("Try a dry run").font(.title2.bold())
-              Text(
-                """
-                Optionally classify up to 20 recent Inbox messages. Eligible messages use your \
-                selected provider. This never requests a Mail action.
-                """
-              )
-              Button("Dry run 20 recent messages") { model.scan(limit: 20) }.disabled(model.busy)
-              Text("You can finish setup offline and return to Settings later.").foregroundStyle(
-                .secondary
-              )
-              Text(model.status).font(.callout).textSelection(.enabled)
-            }
+          case .welcome: SetupIntroductionView()
+          case .account: Section("Connect your Anthropic account") { KeyEntryView(model: model) }
+          case .mail: MailConnectionView(model: model)
+          case .preview: SetupPreviewView(model: model)
         }
-      }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      }.formStyle(.grouped)
       Divider()
       HStack {
-        if step > 0 { Button("Back") { step -= 1 }.disabled(model.busy) }
+        if let previous = step.previous {
+          Button("Back") { step = previous }.disabled(model.busy)
+        }
         Spacer()
         if model.busy { ProgressView().controlSize(.small) }
-        if step == 3 {
-          Button("Finish setup") { model.finishSetup() }.accessibilityIdentifier("setup.finish")
-            .buttonStyle(.borderedProminent).disabled(!model.storageReady || model.busy)
+        if let next = step.next {
+          Button(step == .account ? "Continue offline" : "Continue") { step = next }
+            .accessibilityIdentifier("setup.continue").keyboardShortcut(.defaultAction)
+            .disabled(model.busy)
         } else {
-          Button(step == 1 ? "Continue offline" : "Continue") { step += 1 }.accessibilityIdentifier(
-            "setup.continue"
-          ).buttonStyle(.borderedProminent).disabled(model.busy)
+          Button("Finish setup") {
+            model.finishSetup(); completion()
+          }
+          .accessibilityIdentifier("setup.finish").keyboardShortcut(.defaultAction)
+          .disabled(!model.storageReady || model.busy)
         }
-      }
-    }.padding(30).frame(width: 690, height: 580)
+      }.padding()
+    }
+    .frame(minWidth: 560, idealWidth: 640, maxWidth: 760, minHeight: 480, idealHeight: 560)
+  }
+
+  private enum SetupStep: Int, CaseIterable {
+    case welcome, account, mail, preview
+    var previous: Self? { Self(rawValue: rawValue - 1) }
+    var next: Self? { Self(rawValue: rawValue + 1) }
   }
 }
-struct KeyEntryView: View {
-  @Bindable var model: AppModel
-  @State private var key = ""
+
+private struct SetupIntroductionView: View {
   var body: some View {
-    VStack(alignment: .leading, spacing: 14) {
-      Text("Connect your Anthropic account").font(.title2.bold())
+    Section {
+      Text("Your Inbox, with fewer distractions").font(.headline)
+        .accessibilityIdentifier("setup.intro")
+      Text(
+        "Preview decisions before changing your mail. Uncertain messages stay in Inbox; SpamWise never deletes mail."
+      )
+    }
+    Section("Your privacy") {
       Text(
         """
-        Use your own API key. Verify sends a small synthetic message to Haiku 5.5 and saves the \
-        key in Keychain only if verification succeeds.
+        Your selected provider receives a shortened message, your preferences, and relevant \
+        examples when local rules cannot decide.
         """
       )
-      Link(
-        "Open Claude Console",
-        destination: URL(string: "https://console.anthropic.com/settings/keys")!
-      )
-      SecureField("Anthropic API key", text: $key).textFieldStyle(.roundedBorder)
-        .accessibilityLabel("Anthropic API key").accessibilityIdentifier("setup.key")
-      Button("Verify and save key") {
-        model.verifyKey(key); key = ""
-      }.disabled(key.isEmpty || model.busy)
-      Text("API key status: \(model.keyStatus)").textSelection(.enabled)
-      Text("Model: Claude Haiku 5.5 · no automatic model substitution").font(.caption)
-        .foregroundStyle(.secondary)
-    }
-  }
-}
-struct MailConnectionView: View {
-  @Bindable var model: AppModel
-  var body: some View {
-    ScrollView {
-      VStack(alignment: .leading, spacing: 12) {
-        Text("Connect Apple Mail").font(.title2.bold())
-        Text(
-          "Allow Automation when asked. In Mail → Settings → Extensions, enable SpamWise to inspect incoming dry runs."
-        )
-        HStack {
-          Button("Check Mail connection") { model.checkMail() }.accessibilityIdentifier(
-            "mail.check"
-          )
-          Button("Connect Contacts (optional)") { model.requestContacts() }
-        }.disabled(model.busy)
-        Text(model.mailStatus).accessibilityIdentifier("mail.status").font(.callout).textSelection(
-          .enabled
-        )
-        Text(model.contactsStatus).font(.caption).foregroundStyle(.secondary)
-        Button("Import Inbox and Sent history") { model.importHistory() }.disabled(model.busy)
-        DisclosureGroup("Enable actions with a disposable message") {
-          VStack(alignment: .leading, spacing: 10) {
-            Text(
-              """
-              Select one disposable Inbox message in Mail with a subject beginning [SpamWise \
-              Probe]. The test moves it to that account’s Junk, back to Inbox, and adds an orange \
-              flag, allowing 30 seconds after each move to check the result. Use a message from \
-              another account to avoid an ambiguous Sent copy. Repeat for each account. If the \
-              return fails, restore the test message from Junk manually.
-              """
-            )
-            Button("Test selected disposable message") { model.testDisposableMessage() }.disabled(
-              model.busy
-            )
-            Text(
-              "\(model.state.settings.validatedAccounts.count) accounts passed the action test. Dry run remains on until you turn it off in General."
-            )
-            Text(
-              """
-              For incoming actions, copy the bundled rule script into ~/Library/Application \
-              Scripts/com.apple.mail/ and select it in a Mail rule. SpamWise also checks recent \
-              Inbox mail once a minute while running.
-              """
-            )
-            Button("Show Mail rule script in Finder") { model.revealRule() }
-          }.padding(.top, 8)
-        }
-        HelpButton(page: "troubleshooting-mail-integration")
+      Text("RDAP services receive the sender’s domain when its age is not cached.")
+      HStack {
+        Text("API keys stay in Keychain. You can complete setup offline.")
+        Spacer()
+        HelpButton(page: "what-data-is-sent")
       }
     }
   }
 }
+
+private struct SetupPreviewView: View {
+  let model: AppModel
+
+  var body: some View {
+    Section("Try a dry run") {
+      Text(
+        """
+        Preview up to 20 recent Inbox messages without changing them. Eligible messages use your \
+        selected provider and may incur API charges.
+        """
+      )
+      Button("Dry run 20 recent messages") { model.scan(limit: 20) }.disabled(model.busy)
+      Text(model.status).textSelection(.enabled)
+    }
+    Section {
+      Text("You can finish setup offline and return to Settings later.").foregroundStyle(.secondary)
+    }
+  }
+}
+
+#Preview("Onboarding") { OnboardingView(model: PreviewHelper.model(onboarding: true)) }
+#Preview("Introduction") { Form { SetupIntroductionView() }.formStyle(.grouped) }
+#Preview("Dry run") { Form { SetupPreviewView(model: PreviewHelper.model()) }.formStyle(.grouped) }

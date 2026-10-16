@@ -1,5 +1,7 @@
 /// Explicit account connection settings. Secrets are supplied separately for each connection.
 public struct IMAPConfiguration: Codable, Sendable, Equatable {
+  private static let maximumIdentifierBytes = 256
+  private static let maximumHostBytes = 253
   /// Stable application account identifier, distinct from Apple Mail account identifiers.
   public var id: String
   /// TLS certificate hostname of the IMAP server.
@@ -32,7 +34,8 @@ public struct IMAPConfiguration: Codable, Sendable, Equatable {
     try validate()
   }
   func validate() throws {
-    guard !id.isEmpty, id.utf8.count <= 256, !host.isEmpty, host.utf8.count <= 253, port > 0,
+    guard !id.isEmpty, id.utf8.count <= Self.maximumIdentifierBytes, !host.isEmpty,
+      host.utf8.count <= Self.maximumHostBytes, port > 0,
       host.utf8.allSatisfy({
         [45, 46].contains($0) || (48...57).contains($0) || (65...90).contains($0)
           || (97...122).contains($0)

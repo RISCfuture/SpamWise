@@ -9,8 +9,8 @@ public struct ModelHTTPClient: Sendable {
     let configuration = URLSessionConfiguration.ephemeral
     configuration.httpCookieStorage = nil
     configuration.urlCache = nil
-    configuration.timeoutIntervalForRequest = 15
-    configuration.timeoutIntervalForResource = 15
+    configuration.timeoutIntervalForRequest = ClassificationLimits.timeoutRange.upperBound
+    configuration.timeoutIntervalForResource = ClassificationLimits.timeoutRange.upperBound
     let session = URLSession(
       configuration: configuration,
       delegate: RejectModelRedirects(),

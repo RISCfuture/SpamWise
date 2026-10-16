@@ -2,7 +2,14 @@ public import Foundation
 
 /// The explicitly validated incoming-mail integration route.
 public enum IncomingRoute: String, Codable, Sendable, CaseIterable {
-  case unverified, mailKit, mailRule, imap
+  /// No incoming-message integration has been validated.
+  case unverified
+  /// Uses the MailKit extension callback.
+  case mailKit
+  /// Uses the validated Apple Mail automation route.
+  case mailRule
+  /// Uses an explicitly configured IMAP account.
+  case imap
 }
 /// Persisted filtering preferences with dry run enabled by default.
 public struct Settings: Codable, Sendable, Equatable {
@@ -134,6 +141,7 @@ public struct HistoryIndex: Codable, Sendable {
 }
 /// Durable application state shared by the app and Mail extension.
 public struct AppState: Codable, Sendable {
+  private static let maximumActivityRecords = 5000
   /// Version of the persisted application state.
   public var schemaVersion = 1
   /// Policy generation used to invalidate stale work after corrections.
@@ -172,6 +180,11 @@ public struct AppState: Codable, Sendable {
   public init() {}
 }
 extension AppState {
+  /// Calendar month used for the usage ledger and footer.
+  public static func monthKey(_ date: Date) -> String {
+    let components = Calendar.current.dateComponents([.year, .month], from: date)
+    return "\(components.year ?? 0)-\(components.month ?? 0)"
+  }
   /// Inserts or updates activity without charging twice for outcome updates.
   public mutating func record(_ record: DecisionRecord) {
     if costByMonth == nil {
@@ -188,16 +201,13 @@ extension AppState {
       costByMonth?[Self.monthKey(record.date), default: 0] +=
         record.verdict?.usage.estimatedCost ?? 0
     }
-    records = Array(records.suffix(5000))
-  }
-  /// Calendar month used for the usage ledger and footer.
-  public static func monthKey(_ date: Date) -> String {
-    let components = Calendar.current.dateComponents([.year, .month], from: date)
-    return "\(components.year ?? 0)-\(components.month ?? 0)"
+    records = Array(records.suffix(Self.maximumActivityRecords))
   }
 }
 /// Typed transactions for the shared application snapshot.
 public enum StateRepository {
+  private static let correctionLimitRange = 0...100
+  private static let bodyTokenBudgetRange = 100...4000
   /// Stable storage or deduplication key.
   public static let key = "application-v1"
   /// Reads the current shared application snapshot.
@@ -211,8 +221,14 @@ public enum StateRepository {
   ) async throws {
     try await update(store) { state in
       edit(&state.settings)
-      state.settings.correctionLimit = min(100, max(0, state.settings.correctionLimit))
-      state.settings.bodyTokenBudget = min(4000, max(100, state.settings.bodyTokenBudget))
+      state.settings.correctionLimit = min(
+        correctionLimitRange.upperBound,
+        max(correctionLimitRange.lowerBound, state.settings.correctionLimit)
+      )
+      state.settings.bodyTokenBudget = min(
+        bodyTokenBudgetRange.upperBound,
+        max(bodyTokenBudgetRange.lowerBound, state.settings.bodyTokenBudget)
+      )
       if !state.settings.advancedOptions.retainReviewedContent {
         state.reviewedLabels = state.reviewedLabels?.map { label in
           var label = label; label.message = nil; return label

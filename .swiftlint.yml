@@ -30,3 +30,21 @@ nesting:
   type_level: 2
 identifier_name:
   excluded: [id, fd, i, n, p, cf]
+opt_in_rules:
+  - type_contents_order
+type_contents_order:
+  order:
+    - [type_alias, associated_type]
+    - [case]
+    - [type_property]
+    - [instance_property]
+    - [ib_inspectable]
+    - [ib_outlet]
+    - [initializer]
+    - [type_method]
+    - [view_life_cycle_method]
+    - [ib_action, ib_segue_action]
+    - [other_method]
+    - [subscript]
+    - [deinitializer]
+    - [subtype]

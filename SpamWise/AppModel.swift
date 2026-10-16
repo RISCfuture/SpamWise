@@ -3,27 +3,59 @@ import SpamWiseCore
 import MailIntegration
 
 @MainActor @Observable final class AppModel {
+  private static let monitorInterval: Duration = .seconds(3)
+  private static let contactsRefreshIntervalSec: TimeInterval = 3600
+  private static let scanIntervalSec: TimeInterval = 60
+  private static let defaultScanLimit = 20
   var state = AppState()
-  var status = String(localized: "Ready for setup")
-  var keyStatus = String(localized: "Key not verified in this session")
+  var status = ""
+  var keyStatus = ""
   var mailStatus = String(localized: "Mail connection not checked")
+  var mailPermissionDenied = false
   var contactsStatus = String(localized: "Contacts optional — not requested")
   var busy = false
   var storageReady = false
+  var hasLoadedState = false
   var accounts: [MailAccount] = []
-  var showSetup = false
   var showDigest = false
   var store: Store?
   private var pipeline: Pipeline?
   private let adapter: AppleMailAdapter
+  let preferences: UserDefaults
   private let uiTesting: Bool
   private var work: Task<Void, Never>?
   private var lastScan = Date.distantPast
   private var lastContactsRefresh = Date.distantPast
   private var settingsWork: Task<Void, Never>?
   private var pendingSettings = 0
+  var today: [DecisionRecord] { state.records.filter { Calendar.current.isDateInToday($0.date) } }
+  var monthCost: Double {
+    state.costByMonth?[AppState.monthKey(.now)]
+      ?? state.records.filter {
+        Calendar.current.isDate($0.date, equalTo: .now, toGranularity: .month)
+      }.reduce(0) { $0 + ($1.verdict?.usage.estimatedCost ?? 0) }
+  }
+  private var canMonitorMail: Bool {
+    !uiTesting && !busy && state.settings.onboardingComplete
+  }
+  private var contactsNeedRefresh: Bool {
+    Date().timeIntervalSince(lastContactsRefresh) >= Self.contactsRefreshIntervalSec
+  }
+  private var canScanAutomatically: Bool {
+    state.settings.onboardingComplete && [.mailRule, .imap].contains(state.settings.route)
+      && !state.settings.paused
+  }
   init(preview: Bool = false) {
+    hasLoadedState = preview
     uiTesting = preview || ProcessInfo.processInfo.arguments.contains("--ui-testing")
+    if uiTesting {
+      guard let isolated = UserDefaults(suiteName: "codes.tim.SpamWise.ui.\(UUID())") else {
+        preconditionFailure("UI fixtures require an isolated preferences suite.")
+      }
+      preferences = isolated
+    } else {
+      preferences = .standard
+    }
     #if DEBUG
       adapter = AppleMailAdapter(
         runner: uiTesting ? DeniedAppleEventRunner() : SystemAppleEventRunner()
@@ -54,7 +86,11 @@ import MailIntegration
         )
     }
   }
+}
+
+extension AppModel {
   func refresh() async {
+    defer { hasLoadedState = true }
     guard let store else { return }
     do {
       var loaded = try await StateRepository.load(store)
@@ -73,30 +109,30 @@ import MailIntegration
   }
   func monitor() async {
     #if DEBUG
-      if uiTesting, ProcessInfo.processInfo.arguments.contains("--ui-corrections"), let store {
-        do { try await UITestFixture.seedCorrections(in: store) } catch {
+      if uiTesting, let store {
+        do {
+          try await UITestFixture.seed(arguments: ProcessInfo.processInfo.arguments, in: store)
+        } catch {
           status = String(localized: "Correction fixture could not be loaded.")
         }
       }
     #endif
     await refresh()
     while !Task.isCancelled {
-      try? await Task.sleep(for: .seconds(3))
+      try? await Task.sleep(for: Self.monitorInterval)
       guard !Task.isCancelled else { return }
       await refresh()
-      if !uiTesting, !busy, state.settings.onboardingComplete,
-        Date().timeIntervalSince(lastContactsRefresh) >= 3600
-      {
-        try? await refreshContacts()
-      }
-      if !uiTesting, !busy, state.settings.onboardingComplete,
-        [.mailRule, .imap].contains(state.settings.route),
-        !state.settings.paused, Date().timeIntervalSince(lastScan) > 60
-      {
-        scan(dryRun: state.settings.dryRun, automatic: true)
+      if canMonitorMail {
+        if contactsNeedRefresh { try? await refreshContacts() }
+        if canScanAutomatically, Date().timeIntervalSince(lastScan) > Self.scanIntervalSec {
+          scan(dryRun: state.settings.dryRun, automatic: true)
+        }
       }
     }
   }
+}
+
+extension AppModel {
   func editSettings(_ edit: @escaping @Sendable (inout SpamWiseCore.Settings) -> Void) {
     guard let store else { return }
     edit(&state.settings)
@@ -121,11 +157,13 @@ import MailIntegration
     editSettings {
       $0.onboardingComplete = true; $0.dryRun = true
     }
-    showSetup = false
   }
   func togglePause() {
     setSetting(\.paused, to: !state.settings.paused)
   }
+}
+
+extension AppModel {
   func cancel() {
     work?.cancel()
     status = String(
@@ -140,8 +178,12 @@ import MailIntegration
       await refresh()
     }
   }
+}
+
+extension AppModel {
   func checkMail() {
     run { [self] in
+      mailPermissionDenied = false
       do {
         if uiTesting { throw IntegrationError.permissionDenied }
         mailStatus = String(localized: "Waiting for Mail Automation permission…")
@@ -150,10 +192,17 @@ import MailIntegration
         mailStatus =
           String(
             localized:
-              "Connected — \(accounts.count) accounts readable. Actions need a disposable-message test."
+              "Connected — \(accounts.count, format: .number) accounts readable. Actions need a disposable-message test."
           )
         status = String(localized: "Mail connection checked")
-      } catch { mailStatus = Self.describe(error); throw error }
+      } catch IntegrationError.permissionDenied {
+        mailPermissionDenied = true
+        mailStatus = Self.describe(IntegrationError.permissionDenied)
+        throw IntegrationError.permissionDenied
+      } catch {
+        mailStatus = Self.describe(error)
+        throw error
+      }
     }
   }
   func requestContacts() {
@@ -181,6 +230,9 @@ import MailIntegration
       throw error
     }
   }
+}
+
+extension AppModel {
   private func maintainHistory() async {
     guard let store else { return }
     do {
@@ -248,55 +300,66 @@ import MailIntegration
       } catch { mailStatus = Self.describe(error); throw error }
     }
   }
-  func scan(dryRun: Bool = true, automatic: Bool = false, limit: Int = 20) {
-    guard let pipeline else { return }
-    if automatic
-      && (!state.settings.onboardingComplete || ![.mailRule, .imap].contains(state.settings.route)
-        || state.settings.paused)
-    {
-      return
-    }
+}
+
+extension AppModel {
+  func scan(dryRun: Bool = true, automatic: Bool = false, limit: Int = AppModel.defaultScanLimit) {
+    guard let pipeline, !automatic || canScanAutomatically else { return }
     run { [self] in
-      lastScan = .now
-      if !uiTesting, Date().timeIntervalSince(lastContactsRefresh) >= 3600 {
-        try? await refreshContacts()
+      await prepareScan(automatic: automatic)
+      let batch = try await scanBatch(automatic: automatic, limit: limit)
+      try await classify(batch, with: pipeline, dryRun: dryRun, automatic: automatic)
+      if !dryRun {
+        await pipeline.retryDue(adapter: batch.adapter, accountID: batch.retryAccountID)
       }
-      if automatic { await maintainHistory() }
-      await refresh()
-      let activeAdapter: any MailClientAdapter
-      let messages: [MailEnvelope]
-      var retryAccountID: String?
-      if state.settings.advancedOptions.transport == .imap {
-        let imap = try await configuredIMAPAdapter()
-        activeAdapter = imap
-        retryAccountID = imap.accountID
-        messages =
-          try await
-          (automatic
-          ? imap.nextInboxMessages(limit: limit, cursorStore: store)
-          : imap.recentMessages(limit: limit))
-      } else {
-        activeAdapter = adapter
-        messages =
-          try await
-          (automatic
-          ? adapter.nextInboxMessages(limit: limit) : adapter.recentMessages(limit: limit))
-      }
-      let seen = Set(state.records.map { $0.identity.key })
-      var count = 0
-      for message in messages where !automatic || !seen.contains(message.identity.key) {
-        try Task.checkCancellation()
-        _ = await pipeline.process(message, adapter: activeAdapter, forceDryRun: dryRun)
-        count += 1; status = String(localized: "Classified \(count) of \(messages.count) messages")
-        await refresh()
-      }
-      if !dryRun { await pipeline.retryDue(adapter: activeAdapter, accountID: retryAccountID) }
       status =
         dryRun
         ? String(localized: "Dry run finished — no mail actions requested")
         : String(localized: "Mail check finished")
     }
   }
+  private func prepareScan(automatic: Bool) async {
+    lastScan = .now
+    if !uiTesting, contactsNeedRefresh { try? await refreshContacts() }
+    if automatic { await maintainHistory() }
+    await refresh()
+  }
+  private func scanBatch(automatic: Bool, limit: Int) async throws -> ScanBatch {
+    if state.settings.advancedOptions.transport == .imap {
+      let imap = try await configuredIMAPAdapter()
+      let messages =
+        try await automatic
+        ? imap.nextInboxMessages(limit: limit, cursorStore: store)
+        : imap.recentMessages(limit: limit)
+      return ScanBatch(adapter: imap, messages: messages, retryAccountID: imap.accountID)
+    }
+    let messages =
+      try await automatic
+      ? adapter.nextInboxMessages(limit: limit) : adapter.recentMessages(limit: limit)
+    return ScanBatch(adapter: adapter, messages: messages, retryAccountID: nil)
+  }
+  private func classify(
+    _ batch: ScanBatch,
+    with pipeline: Pipeline,
+    dryRun: Bool,
+    automatic: Bool
+  ) async throws {
+    let seen = Set(state.records.map { $0.identity.key })
+    var count: UInt = 0
+    for message in batch.messages where !automatic || !seen.contains(message.identity.key) {
+      try Task.checkCancellation()
+      _ = await pipeline.process(message, adapter: batch.adapter, forceDryRun: dryRun)
+      count += 1
+      status = String(
+        localized:
+          "Classified \(count, format: .number) of \(batch.messages.count, format: .number) messages"
+      )
+      await refresh()
+    }
+  }
+}
+
+extension AppModel {
   func correct(_ record: DecisionRecord, label: MailLabel, scope: RuleScope = .address) {
     guard let pipeline else { return }
     run { [self] in
@@ -317,54 +380,10 @@ import MailIntegration
         + (result.actionError.map { " " + $0 } ?? "")
     }
   }
-  func handle(_ url: URL) {
-    guard url.scheme == "spamwise", url.host == "check-inbox" else { return }
-    scan(dryRun: state.settings.dryRun, automatic: true)
-  }
-  func revealRule() {
-    guard let url = Bundle.main.url(forResource: "SpamWiseRule", withExtension: "scpt") else {
-      status = String(localized: "Rule script missing from app bundle"); return
-    }
-    NSWorkspace.shared.activateFileViewerSelecting([url])
-  }
-  static func describe(_ error: any Error) -> String {
-    if error as? IntegrationError == .permissionDenied {
-      return
-        String(
-          localized:
-            "Automation permission denied. Allow SpamWise in System Settings → Privacy & Security → Automation."
-        )
-    }
-    if let error = error as? IntegrationError {
-      return String(localized: "Mail action unavailable: \(error.rawValue).")
-    }
-    if let error = error as? ClassificationError {
-      return String(
-        localized: "Classification unavailable: \(error.rawValue). Mail was left unchanged."
-      )
-    }
-    if let error = error as? BudgetError { return error.localizedDescription }
-    if let error = error as? RuleManagementError { return error.localizedDescription }
-    if let error = error as? IMAPError {
-      return String(localized: "IMAP operation failed: \(error.rawValue).")
-    }
-    if error is KeychainError {
-      return String(
-        localized: "Keychain unavailable. Check the signed app’s shared Keychain entitlement."
-      )
-    }
-    if error is CancellationError {
-      return String(localized: "Cancelled — no further actions requested.")
-    }
-    return String(
-      localized: "Operation unavailable. Mail stays unchanged; check Help for troubleshooting."
-    )
-  }
-  var today: [DecisionRecord] { state.records.filter { Calendar.current.isDateInToday($0.date) } }
-  var monthCost: Double {
-    state.costByMonth?[AppState.monthKey(.now)]
-      ?? state.records.filter {
-        Calendar.current.isDate($0.date, equalTo: .now, toGranularity: .month)
-      }.reduce(0) { $0 + ($1.verdict?.usage.estimatedCost ?? 0) }
-  }
+}
+
+private struct ScanBatch {
+  let adapter: any MailClientAdapter
+  let messages: [MailEnvelope]
+  let retryAccountID: String?
 }

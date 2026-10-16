@@ -1,11 +1,11 @@
 import Foundation
 
 extension Pipeline {
-  struct Classification {
-    var verdict: Verdict
-    var evidence: EvidenceBundle
-    var path: String
-  }
+  private static let maximumClassificationTimeSec = 15.0
+  private static let maximumDomainLookupTimeSec = 3.0
+  private static let minimumDomainLookupTimeSec = 0.01
+  private static let domainLookupBudgetDivisor = 3.0
+  private static let contactFreshnessSec = 86_400.0
   func classify(
     _ message: ParsedMessage,
     identity: MessageIdentity,
@@ -55,7 +55,10 @@ extension Pipeline {
         if advanced.bayes { evidence.bayesLogOdds = estimate.bayesLogOdds }
         if advanced.learnedWeights { evidence.learnedMargin = estimate.logisticMargin }
       }
-      let remaining = min(15, budget.timeout - Date().timeIntervalSince(budget.start))
+      let remaining = min(
+        Self.maximumClassificationTimeSec,
+        budget.timeout - Date().timeIntervalSince(budget.start)
+      )
       guard remaining > 0 else { throw ClassificationError.timeout }
       let input = ClassificationInput(
         message: message,
@@ -120,7 +123,10 @@ extension Pipeline {
     let domain = DomainResolver().domain(ofAddress: message.fromAddress)
     if let domain, let rdap {
       evidence.domainAgeDays = try? await withDeadline(
-        seconds: min(3, max(0.01, timeout / 3))
+        seconds: min(
+          Self.maximumDomainLookupTimeSec,
+          max(Self.minimumDomainLookupTimeSec, timeout / Self.domainLookupBudgetDivisor)
+        )
       ) {
         await rdap.ageDays(domain: domain)
       }
@@ -154,8 +160,14 @@ extension Pipeline {
         domain: domain
       ) ?? .init()
     let contact: Bool? =
-      state.contactsUpdatedAt.map { Date().timeIntervalSince($0) < 86_400 } == true
+      state.contactsUpdatedAt.map { Date().timeIntervalSince($0) < Self.contactFreshnessSec }
+        == true
       ? state.contactAddresses?.contains(message.fromAddress) : nil
     return EvidenceBundle(message: message, history: history, contact: contact)
+  }
+  struct Classification {
+    var verdict: Verdict
+    var evidence: EvidenceBundle
+    var path: String
   }
 }

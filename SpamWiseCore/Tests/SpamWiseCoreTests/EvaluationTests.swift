@@ -45,8 +45,8 @@ import SpamWiseCore
   #expect(report.unclassified == 1)
   #expect(report.calibration.reduce(0) { $0 + $1.count } == 2)
   #expect(report.misclassifications.count == 3)
-  #expect(BinomialBound.upper95(errors: 0, trials: 1500)! <= 0.002)
-  #expect(BinomialBound.upper95(errors: 1, trials: 2)! > 0.97)
+  #expect(try #require(BinomialBound.upper95(errors: 0, trials: 1500)) <= 0.002)
+  #expect(try #require(BinomialBound.upper95(errors: 1, trials: 2)) > 0.97)
   #expect(BinomialBound.upper95(errors: 0, trials: 0) == nil)
 }
 
@@ -91,8 +91,7 @@ import SpamWiseCore
   #expect(calls.value == 3)
 }
 
-@Test func `reviewed corpus uses content partitions and reports missing retained messages`() throws
-{
+@Test func `partitions reviewed content and reports missing retained messages`() throws {
   let message = try MIMEParser().parse(fixture("personal"))
   let identity = MessageIdentity(
     accountID: "fixture",
@@ -130,7 +129,7 @@ import SpamWiseCore
   #expect(migrated.heldOut == label.heldOut)
 }
 
-@Test func `reviewed corpus rejects duplicate content despite changed delivery headers`() throws {
+@Test func `rejects duplicate reviewed content despite changed delivery headers`() throws {
   let original = try MIMEParser().parse(fixture("personal"))
   var redelivered = original
   redelivered.headers["received"] = ["another delivery route"]

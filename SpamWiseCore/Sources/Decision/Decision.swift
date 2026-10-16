@@ -3,7 +3,12 @@ public import Classifier
 
 /// Provisional confidence thresholds, pending held-out calibration.
 public enum FilteringStrength: String, Codable, Sendable, CaseIterable {
-  case conservative, balanced, aggressive
+  /// Requires confidence of at least 99 before a Junk action.
+  case conservative
+  /// Requires confidence of at least 95 before a Junk action.
+  case balanced
+  /// Requires confidence of at least 90 before a Junk action.
+  case aggressive
   /// Minimum provisional confidence required to act on a Junk verdict.
   public var threshold: Int {
     switch self { case .conservative: 99;  case .balanced: 95;  case .aggressive: 90
@@ -12,16 +17,48 @@ public enum FilteringStrength: String, Codable, Sendable, CaseIterable {
 }
 /// The annotation applied to Review messages left in Inbox.
 public enum ReviewTreatment: String, Codable, Sendable, CaseIterable {
-  case orangeFlag, orangeBackground
+  /// Marks Review messages with an orange flag.
+  case orangeFlag
+  /// Marks Review messages with an orange background.
+  case orangeBackground
 }
 /// The supported action vocabulary deliberately contains no deletion or Trash operation.
 public enum MailAction: String, Codable, Sendable {
-  case none, orangeFlag, orangeBackground, moveToJunk, moveToInbox
+  /// Leaves the message unchanged.
+  case none
+  /// Applies the orange Review flag.
+  case orangeFlag
+  /// Applies the orange Review background.
+  case orangeBackground
+  /// Moves the message into the account’s Junk mailbox.
+  case moveToJunk
+  /// Moves the message into the account’s Inbox.
+  case moveToInbox
 }
 /// Observed dispatch state, independent of the model verdict.
 public enum ActionOutcome: String, Codable, Sendable {
-  case noAction, dryRun, paused, pending, requested, applied, failed, unclassified, superseded,
-    duplicate, integrationUnavailable
+  /// The decision requires no mail operation.
+  case noAction
+  /// Dry run suppressed the intended operation.
+  case dryRun
+  /// The user paused filtering.
+  case paused
+  /// The decision is persisted and awaits dispatch evaluation.
+  case pending
+  /// Dispatch was requested without confirmed completion.
+  case requested
+  /// The adapter observed the intended client state.
+  case applied
+  /// The requested operation failed.
+  case failed
+  /// No valid classification was produced.
+  case unclassified
+  /// A newer policy revision invalidated this decision.
+  case superseded
+  /// An existing action claim or in-flight operation suppressed duplicate work.
+  case duplicate
+  /// No validated integration could perform the action.
+  case integrationUnavailable
 }
 /// An intended label and supported mail action.
 public struct Decision: Codable, Sendable, Equatable {

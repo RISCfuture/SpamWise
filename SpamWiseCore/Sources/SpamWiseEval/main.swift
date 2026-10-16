@@ -4,6 +4,7 @@ import MailIntegration
 import Evaluation
 
 @main struct SpamWiseEvaluation {
+  private static let maximumMessageBytes = 2_000_000
   static func main() async {
     let arguments = Array(CommandLine.arguments.dropFirst())
     if arguments.isEmpty || arguments == ["--help"] { print(Options.usage); return }
@@ -15,15 +16,21 @@ import Evaluation
         try await evaluate(options)
       }
     } catch {
-      let message =
-        (error as? EvaluationError)?.localizedDescription
-        ?? (error as? ReviewedCorpusError)?.localizedDescription
-        ?? (error as? ClassificationError)?.localizedDescription
-        ?? "Evaluation failed. Check paths, input format, and permissions."
+      let message = diagnostic(for: error)
       FileHandle.standardError.write(Data((message + "\n").utf8))
       exit(1)
     }
   }
+  private static func diagnostic(for error: any Error) -> String {
+    guard error is any CorpusEvaluationError || error is ClassificationError,
+      let localized = error as? any LocalizedError
+    else {
+      return String(localized: "Evaluation failed. Check paths, input format, and permissions.")
+    }
+    return [localized.errorDescription, localized.failureReason, localized.recoverySuggestion]
+      .compactMap { $0 }.joined(separator: " ")
+  }
+
   private static func export(_ options: Options) async throws {
     let role: String
     switch try options.required("export") {
@@ -192,7 +199,9 @@ import Evaluation
       }.sorted { $0.path < $1.path }
       for file in files {
         let properties = try file.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
-        guard properties.isRegularFile == true, (properties.fileSize ?? Int.max) <= 2_000_000 else {
+        guard properties.isRegularFile == true,
+          (properties.fileSize ?? Int.max) <= Self.maximumMessageBytes
+        else {
           throw EvaluationError.oversizedFile
         }
         let raw = try Data(contentsOf: file), hash = stableHash(raw)

@@ -3,6 +3,7 @@ import Darwin
 
 /// Registrable-domain lookup using the bundled Mozilla Public Suffix List.
 public struct DomainResolver: Sendable {
+  private static let maximumLabelCharacters = 63
   private static let rules: Set<String> = {
     guard let url = Bundle.module.url(forResource: "public_suffix_list", withExtension: "dat"),
       let text = try? String(contentsOf: url, encoding: .utf8)
@@ -23,7 +24,7 @@ public struct DomainResolver: Sendable {
     let labels = host.split(separator: ".").map(String.init)
     guard labels.count > 1,
       labels.allSatisfy({
-        !$0.isEmpty && $0.count <= 63
+        !$0.isEmpty && $0.count <= Self.maximumLabelCharacters
           && !$0.contains(where: { $0.isWhitespace || $0 == "/" || $0 == "@" })
       }), !Self.rules.isEmpty
     else { return nil }

@@ -6,7 +6,7 @@ import SpamWiseCore
 private enum CredentialProbe: Error { case requested }
 
 @Test(arguments: [ModelBackend.claude, .openAI, .gemini])
-func `configured provider reads only its explicit credential and fails without fallback`(
+func `reads only the configured provider credential and fails without fallback`(
   _ backend: ModelBackend
 ) async throws {
   let store = try testStore()
@@ -24,7 +24,7 @@ func `configured provider reads only its explicit credential and fails without f
   }
 }
 
-@Test func `provider pricing survives persistence without charging Haiku rates`() throws {
+@Test func `preserves provider pricing through persistence and migrates legacy usage`() throws {
   let data = Data(
     #"""
     {"input":1000,"output":100,"cached":200,"estimated":false,"modelID":"gpt-5.4-mini",
@@ -66,7 +66,7 @@ private let geminiResponse =
       "thoughtsTokenCount":20,"cachedContentTokenCount":200}}
   """#
 
-@Test func `remote providers encode isolated structured requests and account for billed tokens`()
+@Test func `encodes isolated provider requests and accounts for billed tokens`()
   async throws
 {
   let openAI = try OpenAIClassifier(
@@ -111,7 +111,7 @@ private let geminiResponse =
   openAIResponse.replacingOccurrences(of: "completed", with: "incomplete"),
   openAIResponse.replacingOccurrences(of: "\"cached_tokens\":200", with: "\"cached_tokens\":2000")
 ])
-func `openai rejects malformed or incomplete verdicts`(_ response: String) async throws {
+func `rejects malformed or incomplete OpenAI verdicts`(_ response: String) async throws {
   let classifier = try OpenAIClassifier(
     modelID: "gpt-5.4-mini",
     key: { "fixture" },
@@ -130,7 +130,7 @@ func `openai rejects malformed or incomplete verdicts`(_ response: String) async
     with: "\"thoughtsTokenCount\":-1"
   )
 ])
-func `gemini rejects malformed truncated and invalid usage responses`(_ response: String)
+func `rejects malformed truncated and invalid Gemini usage responses`(_ response: String)
   async throws
 {
   let classifier = try GeminiClassifier(
@@ -143,7 +143,7 @@ func `gemini rejects malformed truncated and invalid usage responses`(_ response
   }
 }
 
-@Test func `captured prices retain billing provenance after introductory rates end`() throws {
+@Test func `retains billing provenance after introductory rates end`() throws {
   let introductory = try ModelTokenPricing.rates(
     for: "gemini-3.8-flash",
     at: Date(timeIntervalSince1970: 1_798_761_599)
@@ -173,7 +173,7 @@ func `gemini rejects malformed truncated and invalid usage responses`(_ response
   #expect(abs(sonnet.estimatedCost - 0.00262) < 0.00000001)
 }
 
-@Test func `providers reject refusals and rate limits without a verdict`() async throws {
+@Test func `rejects provider refusals and rate limits without a verdict`() async throws {
   let refused =
     #"{"status":"completed","output":[{"type":"message","content":[{"type":"refusal","refusal":"No"}]}]}"#
   let openAI = try OpenAIClassifier(
@@ -198,7 +198,7 @@ func `gemini rejects malformed truncated and invalid usage responses`(_ response
   }
 }
 
-@Test func `providers enforce deadline response limits and explicit model selection`() async throws
+@Test func `enforces provider deadlines response limits and explicit model selection`() async throws
 {
   let slow = try OpenAIClassifier(
     modelID: "gpt-5.4-mini",
@@ -227,7 +227,7 @@ func `gemini rejects malformed truncated and invalid usage responses`(_ response
   }
 }
 
-@Test func `apple adapter preserves backend errors and caps session results`() async throws {
+@Test func `preserves Apple backend errors and validates session results`() async throws {
   let apple = AppleClassifier(
     backend: .privateCloudCompute,
     generate: { backend, _, _, _ in

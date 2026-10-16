@@ -65,6 +65,22 @@
         }
       }
     },
+    "%lld/%lld characters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld caracteres"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld caractères"
+          }
+        }
+      }
+    },
     "%lld/4,000 characters": {
       "localizations": {
         "es": {
@@ -129,6 +145,22 @@
         }
       }
     },
+    "API keys stay in Keychain. You can complete setup offline.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las claves API permanecen en el Llavero. Puedes completar la configuración sin conexión."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les clés API restent dans le Trousseau. Vous pouvez terminer la configuration hors ligne."
+          }
+        }
+      }
+    },
     "Account": {
       "localizations": {
         "es": {
@@ -141,6 +173,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compte"
+          }
+        }
+      }
+    },
+    "Accounts": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuentas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comptes"
           }
         }
       }
@@ -173,6 +221,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activité"
+          }
+        }
+      }
+    },
+    "Add an address or domain to always allow or block its mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade una dirección o un dominio para permitir o bloquear siempre sus mensajes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez une adresse ou un domaine pour toujours autoriser ou bloquer ses messages."
+          }
+        }
+      }
+    },
+    "Add rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir regla"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une règle"
           }
         }
       }
@@ -225,6 +305,22 @@
         }
       }
     },
+    "After validation, inspect the message before turning off dry run in General.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tras la validación, revisa el mensaje antes de desactivar la simulación en General."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après la validation, vérifiez le message avant de désactiver la simulation dans Général."
+          }
+        }
+      }
+    },
     "Aggressive": {
       "localizations": {
         "es": {
@@ -257,6 +353,22 @@
         }
       }
     },
+    "Allow Automation when asked. Enable SpamWise in Mail → Settings → Extensions.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite la automatización cuando se solicite. Activa SpamWise en Mail → Ajustes → Extensiones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez l’automatisation lorsque cela vous est demandé. Activez SpamWise dans Mail → Réglages → Extensions."
+          }
+        }
+      }
+    },
     "Allow Automation when asked. In Mail → Settings → Extensions, enable SpamWise to inspect incoming dry runs.": {
       "localizations": {
         "es": {
@@ -269,6 +381,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autorisez Automatisation lorsque vous y êtes invité. Dans Mail → Réglages → Extensions, activez SpamWise pour simuler l’analyse des messages entrants."
+          }
+        }
+      }
+    },
+    "Allow SpamWise to control Mail in System Settings → Privacy & Security → Automation.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite que SpamWise controle Mail en Ajustes del Sistema → Privacidad y seguridad → Automatización."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez SpamWise à contrôler Mail dans Réglages Système → Confidentialité et sécurité → Automatisation."
           }
         }
       }
@@ -577,6 +705,22 @@
         }
       }
     },
+    "Cached tokens": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens en caché"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens en cache"
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "es": {
@@ -673,6 +817,23 @@
         }
       }
     },
+    "Classification is unavailable. Mail was left unchanged.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clasificación no está disponible. El correo no se ha modificado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La classification est indisponible. Le courrier n’a pas été modifié."
+          }
+        }
+      }
+    },
     "Classification unavailable: %@. Mail was left unchanged.": {
       "localizations": {
         "es": {
@@ -685,6 +846,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Classement indisponible : %@. Les messages sont restés inchangés."
+          }
+        }
+      }
+    },
+    "Classification was cancelled.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se canceló la clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La classification a été annulée."
+          }
+        }
+      }
+    },
+    "Classified %@ of %@ messages": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ de %@ mensajes clasificados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ messages classés sur %@"
           }
         }
       }
@@ -769,6 +963,22 @@
         }
       }
     },
+    "Confidence thresholds are provisional until calibrated with reviewed mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los umbrales de confianza son provisionales hasta que se calibren con correo revisado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les seuils de confiance sont provisoires jusqu’à leur étalonnage avec du courrier révisé."
+          }
+        }
+      }
+    },
     "Configure a separate IMAP connection.": {
       "localizations": {
         "es": {
@@ -833,6 +1043,22 @@
         }
       }
     },
+    "Connected — %@ accounts readable. Actions need a disposable-message test.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectado — %@ cuentas accesibles. Las acciones requieren una prueba con un mensaje desechable."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecté — %@ comptes accessibles. Les actions nécessitent un test avec un message jetable."
+          }
+        }
+      }
+    },
     "Connected — %lld accounts readable. Actions need a disposable-message test.": {
       "localizations": {
         "es": {
@@ -845,6 +1071,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connecté — %lld comptes accessibles. Les actions nécessitent un test avec un message de test."
+          }
+        }
+      }
+    },
+    "Connection": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conexión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion"
+          }
+        }
+      }
+    },
+    "Connection options": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opciones de conexión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Options de connexion"
           }
         }
       }
@@ -1009,6 +1267,23 @@
         }
       }
     },
+    "Corpus message exceeds the 2 MB parser budget.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un mensaje del corpus supera el límite de análisis de 2 MB."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un message du corpus dépasse la limite d’analyse de 2 Mo."
+          }
+        }
+      }
+    },
     "Correct entire domain…": {
       "localizations": {
         "es": {
@@ -1021,6 +1296,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corriger tout le domaine…"
+          }
+        }
+      }
+    },
+    "Correct this decision": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corregir esta decisión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corriger cette décision"
           }
         }
       }
@@ -1089,6 +1380,74 @@
         }
       }
     },
+    "Couldn’t complete the IMAP operation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo completar la operación IMAP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de terminer l’opération IMAP."
+          }
+        }
+      }
+    },
+    "Couldn’t evaluate the corpus.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo evaluar el corpus."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’évaluer le corpus."
+          }
+        }
+      }
+    },
+    "Couldn’t evaluate the reviewed corpus.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo evaluar el corpus revisado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’évaluer le corpus révisé."
+          }
+        }
+      }
+    },
+    "Couldn’t read the message.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer el mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de lire le message."
+          }
+        }
+      }
+    },
     "Credentials are stored only in Keychain. Leave the credential blank to keep the saved value.": {
       "localizations": {
         "es": {
@@ -1117,6 +1476,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adresse du résolveur DNS"
+          }
+        }
+      }
+    },
+    "Decision details": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalles de la decisión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails de la décision"
           }
         }
       }
@@ -1313,6 +1688,39 @@
         }
       }
     },
+    "Duplicate message bytes in corpus; remove duplicates before calibration.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El corpus contiene mensajes idénticos; elimina los duplicados antes de calibrar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le corpus contient des messages identiques ; supprimez les doublons avant l’étalonnage."
+          }
+        }
+      }
+    },
+    "Each move is checked after 30 seconds. If restoration fails, restore the message manually. Repeat for each account.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cada traslado se comprueba después de 30 segundos. Si la restauración falla, devuelve el mensaje manualmente. Repite la prueba para cada cuenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque déplacement est vérifié après 30 secondes. Si la restauration échoue, restaurez le message manuellement. Répétez l’opération pour chaque compte."
+          }
+        }
+      }
+    },
     "Each paid call reserves an upper bound before it starts. Commitments include failed calls and exceed estimated actual charges. Calls stop when the ceiling would be exceeded.": {
       "localizations": {
         "es": {
@@ -1341,6 +1749,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modifier"
+          }
+        }
+      }
+    },
+    "Edit rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar regla"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier la règle"
           }
         }
       }
@@ -1393,6 +1817,22 @@
         }
       }
     },
+    "Enable mail actions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar acciones de correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer les actions sur le courrier"
+          }
+        }
+      }
+    },
     "Enter a complete email address or a registrable domain.": {
       "localizations": {
         "es": {
@@ -1441,6 +1881,54 @@
         }
       }
     },
+    "Estimated": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimé"
+          }
+        }
+      }
+    },
+    "Estimated API cost this month": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coste estimado de API este mes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût estimé des API ce mois-ci"
+          }
+        }
+      }
+    },
+    "Estimated cost": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coste estimado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût estimé"
+          }
+        }
+      }
+    },
     "Estimated cost from measured or explicitly estimated token counts; cache-write premiums may differ.": {
       "localizations": {
         "es": {
@@ -1469,6 +1957,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Coût estimé : %@"
+          }
+        }
+      }
+    },
+    "Evaluation data": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos de evaluación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Données d’évaluation"
+          }
+        }
+      }
+    },
+    "Evaluation failed. Check paths, input format, and permissions.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La evaluación falló. Comprueba las rutas, el formato de entrada y los permisos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’évaluation a échoué. Vérifiez les chemins, le format d’entrée et les autorisations."
+          }
+        }
+      }
+    },
+    "Evaluation spending is unavailable. No provider call was made.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El gasto de evaluación no está disponible. No se realizó ninguna llamada al proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les dépenses d’évaluation sont indisponibles. Aucun appel au fournisseur n’a été effectué."
           }
         }
       }
@@ -1713,6 +2251,22 @@
         }
       }
     },
+    "Good": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Légitime"
+          }
+        }
+      }
+    },
     "Good and Junk corrections create address rules. Review removes the address rule. Explicit domain rules still apply to that domain.": {
       "localizations": {
         "es": {
@@ -1793,6 +2347,22 @@
         }
       }
     },
+    "History and Contacts": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historial y Contactos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique et Contacts"
+          }
+        }
+      }
+    },
     "History refresh unavailable — only previously stored relationships are known": {
       "localizations": {
         "es": {
@@ -1869,6 +2439,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compte IMAP"
+          }
+        }
+      }
+    },
+    "IMAP authentication failed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La autenticación IMAP falló."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’authentification IMAP a échoué."
           }
         }
       }
@@ -2033,6 +2620,22 @@
         }
       }
     },
+    "Input tokens": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens de entrada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens d’entrée"
+          }
+        }
+      }
+    },
     "Integration": {
       "localizations": {
         "es": {
@@ -2045,6 +2648,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Intégration"
+          }
+        }
+      }
+    },
+    "Integration details": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalles de integración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails d’intégration"
           }
         }
       }
@@ -2077,6 +2696,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Action prévue"
+          }
+        }
+      }
+    },
+    "Invalid arguments. Use --help for usage.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Argumentos no válidos. Usa --help para consultar las instrucciones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arguments non valides. Utilisez --help pour consulter les instructions."
           }
         }
       }
@@ -2129,6 +2765,23 @@
         }
       }
     },
+    "Keychain returned status %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El Llavero devolvió el estado %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le Trousseau a renvoyé le statut %@."
+          }
+        }
+      }
+    },
     "Keychain unavailable. Check the signed app’s shared Keychain entitlement.": {
       "localizations": {
         "es": {
@@ -2141,6 +2794,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trousseau indisponible. Vérifiez l’autorisation de Trousseau partagé de l’application signée."
+          }
+        }
+      }
+    },
+    "Latency": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latencia"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latence"
           }
         }
       }
@@ -2173,6 +2842,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apprentissage à partir des corrections"
+          }
+        }
+      }
+    },
+    "Learning needs reviewed good and junk examples. Your sender rules always take precedence.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El aprendizaje necesita ejemplos revisados de correo deseado y no deseado. Tus reglas de remitentes siempre tienen prioridad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’apprentissage nécessite des exemples révisés de courrier légitime et indésirable. Vos règles d’expéditeurs sont toujours prioritaires."
+          }
+        }
+      }
+    },
+    "Leave the credential blank to keep the saved Keychain value.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deja la credencial en blanco para conservar el valor guardado en el Llavero."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissez l’identifiant secret vide pour conserver la valeur enregistrée dans le Trousseau."
+          }
+        }
+      }
+    },
+    "Live evaluation requires SPAMWISE_LIVE_API=1. No provider call was made.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La evaluación en vivo requiere SPAMWISE_LIVE_API=1. No se realizó ninguna llamada al proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’évaluation en direct nécessite SPAMWISE_LIVE_API=1. Aucun appel au fournisseur n’a été effectué."
+          }
+        }
+      }
+    },
+    "Local evidence is unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los indicios locales no están disponibles."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les indices locaux sont indisponibles."
           }
         }
       }
@@ -2285,6 +3020,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connexion à Mail non vérifiée"
+          }
+        }
+      }
+    },
+    "Mail could not complete the requested operation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no pudo completar la operación solicitada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas pu terminer l’opération demandée."
           }
         }
       }
@@ -2417,6 +3169,22 @@
         }
       }
     },
+    "Marketing from retailers I haven’t ordered from is unwanted. Cart and checkout reminders from stores with no order history are unwanted. Shipping notices are wanted only if they match an order in my history. Anything from people I’ve corresponded with is wanted.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No quiero publicidad de comercios en los que no he comprado. No quiero recordatorios de carritos ni de pago de tiendas sin pedidos en mi historial. Solo quiero avisos de envío si corresponden a un pedido de mi historial. Quiero recibir todos los mensajes de las personas con las que he mantenido correspondencia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je ne souhaite pas recevoir de publicité de commerçants auprès desquels je n’ai jamais commandé. Je ne souhaite pas recevoir de rappels de panier ou de paiement de boutiques sans commande dans mon historique. Je souhaite recevoir des avis d’expédition uniquement s’ils correspondent à une commande de mon historique. Je souhaite recevoir tous les messages des personnes avec lesquelles j’ai échangé."
+          }
+        }
+      }
+    },
     "Match explicitly junked campaigns": {
       "localizations": {
         "es": {
@@ -2429,6 +3197,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reconnaître les campagnes explicitement marquées indésirables"
+          }
+        }
+      }
+    },
+    "Measured": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesuré"
           }
         }
       }
@@ -2513,6 +3297,39 @@
         }
       }
     },
+    "Month: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mes: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mois : %@"
+          }
+        }
+      }
+    },
+    "More than one message matches the requested identity.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más de un mensaje coincide con la identidad solicitada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plusieurs messages correspondent à l’identité demandée."
+          }
+        }
+      }
+    },
     "Move to Inbox": {
       "localizations": {
         "es": {
@@ -2593,6 +3410,73 @@
         }
       }
     },
+    "No labeled .eml files found.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontraron archivos .eml etiquetados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun fichier .eml étiqueté n’a été trouvé."
+          }
+        }
+      }
+    },
+    "No mock response exists for this message hash.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No existe una respuesta simulada para el hash de este mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune réponse simulée n’existe pour l’empreinte de ce message."
+          }
+        }
+      }
+    },
+    "No nonempty credential was found.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró ninguna credencial que no esté vacía."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun identifiant secret non vide n’a été trouvé."
+          }
+        }
+      }
+    },
+    "No sender rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay reglas de remitentes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune règle d’expéditeur"
+          }
+        }
+      }
+    },
     "No unresolved Review items in the last seven days.": {
       "localizations": {
         "es": {
@@ -2625,6 +3509,22 @@
         }
       }
     },
+    "Nothing to review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nada que revisar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien à examiner"
+          }
+        }
+      }
+    },
     "OCR reads bounded embedded PNG and JPEG images. It never downloads remote images; unavailable text remains unknown.": {
       "localizations": {
         "es": {
@@ -2637,6 +3537,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’OCR lit les images PNG et JPEG intégrées dans des limites de taille. Il ne télécharge jamais d’images distantes ; le texte indisponible reste inconnu."
+          }
+        }
+      }
+    },
+    "Only embedded images are read. Remote images are never downloaded.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se leen imágenes incrustadas. Nunca se descargan imágenes remotas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seules les images intégrées sont lues. Les images distantes ne sont jamais téléchargées."
           }
         }
       }
@@ -2849,6 +3765,38 @@
         }
       }
     },
+    "Output tokens": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens de salida"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens de sortie"
+          }
+        }
+      }
+    },
+    "Paid requests reserve a maximum cost before starting. Reservations include failed requests and may exceed actual charges.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las solicitudes de pago reservan un coste máximo antes de empezar. Las reservas incluyen solicitudes fallidas y pueden superar los cargos reales."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les requêtes payantes réservent un coût maximal avant de commencer. Les réservations incluent les requêtes échouées et peuvent dépasser les frais réels."
+          }
+        }
+      }
+    },
     "Password or bearer token": {
       "localizations": {
         "es": {
@@ -2929,6 +3877,22 @@
         }
       }
     },
+    "Pending retries": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentos pendientes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouvelles tentatives en attente"
+          }
+        }
+      }
+    },
     "Pending retries: %lld": {
       "localizations": {
         "es": {
@@ -2941,6 +3905,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nouvelles tentatives en attente : %lld"
+          }
+        }
+      }
+    },
+    "Permission to control Mail was denied.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se denegó el permiso para controlar Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’autorisation de contrôler Mail a été refusée."
           }
         }
       }
@@ -2973,6 +3954,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Préférences"
+          }
+        }
+      }
+    },
+    "Preview decisions before changing your mail. Uncertain messages stay in Inbox; SpamWise never deletes mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previsualiza las decisiones antes de modificar el correo. Los mensajes dudosos permanecen en Entrada; SpamWise nunca elimina correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prévisualisez les décisions avant de modifier votre courrier. Les messages incertains restent dans Réception ; SpamWise ne supprime jamais de courrier."
+          }
+        }
+      }
+    },
+    "Preview up to 20 recent Inbox messages without changing them. Eligible messages use your selected provider and may incur API charges.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previsualiza hasta 20 mensajes recientes de Entrada sin modificarlos. Los mensajes aptos usan el proveedor seleccionado y pueden generar cargos de API."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prévisualisez jusqu’à 20 messages récents de Réception sans les modifier. Les messages admissibles utilisent le fournisseur sélectionné et peuvent entraîner des frais d’API."
           }
         }
       }
@@ -3085,6 +4098,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les requêtes révèlent des noms de domaine au résolveur et au service de réputation. Les résultats échoués, refusés ou mal formés restent inconnus."
+          }
+        }
+      }
+    },
+    "Queries share domain names with your resolver and the lookup service.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las consultas comparten nombres de dominio con tu resolutor y el servicio de consulta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les requêtes partagent les noms de domaine avec votre résolveur et le service de recherche."
           }
         }
       }
@@ -3217,6 +4246,23 @@
         }
       }
     },
+    "Remove duplicate content before evaluation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina el contenido duplicado antes de evaluar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimez le contenu en double avant l’évaluation."
+          }
+        }
+      }
+    },
     "Remove rule for %@": {
       "localizations": {
         "es": {
@@ -3245,6 +4291,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Demandée"
+          }
+        }
+      }
+    },
+    "Requires Apple Intelligence on this Mac.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requiere Apple Intelligence en este Mac."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nécessite Apple Intelligence sur ce Mac."
+          }
+        }
+      }
+    },
+    "Requires Apple’s Private Cloud Compute entitlement and an eligible distribution.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requiere la autorización de Private Cloud Compute de Apple y una distribución compatible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nécessite l’autorisation Private Cloud Compute d’Apple et une distribution admissible."
           }
         }
       }
@@ -3393,6 +4471,22 @@
         }
       }
     },
+    "Reviewed labels": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etiquetas revisadas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étiquettes révisées"
+          }
+        }
+      }
+    },
     "Reviewed labels could not be exported.": {
       "localizations": {
         "es": {
@@ -3537,6 +4631,22 @@
         }
       }
     },
+    "Rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles"
+          }
+        }
+      }
+    },
     "Rules could not be exported.": {
       "localizations": {
         "es": {
@@ -3665,6 +4775,38 @@
         }
       }
     },
+    "Scope": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ámbito"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portée"
+          }
+        }
+      }
+    },
+    "Select one disposable Inbox message from another account with a subject beginning [SpamWise Probe]. The test moves it to Junk and back, then adds an orange flag.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona en Entrada un mensaje de prueba de otra cuenta cuyo asunto empiece por [SpamWise Probe]. La prueba lo traslada a No deseado y de vuelta, y luego añade una bandera naranja."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez dans Réception un message de test provenant d’un autre compte dont l’objet commence par [SpamWise Probe]. Le test le déplace vers Indésirables puis le ramène, avant d’ajouter un drapeau orange."
+          }
+        }
+      }
+    },
     "Select one disposable Inbox message in Mail with a subject beginning [SpamWise Probe]. The test moves it to that account’s Junk, back to Inbox, and adds an orange flag, allowing 30 seconds after each move to check the result. Use a message from another account to avoid an ambiguous Sent copy. Repeat for each account. If the return fails, restore the test message from Junk manually.": {
       "localizations": {
         "es": {
@@ -3745,6 +4887,23 @@
         }
       }
     },
+    "Set the selected provider’s API key for this process. The CLI never saves it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configura la clave API del proveedor seleccionado para este proceso. La herramienta de línea de comandos nunca la guarda."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définissez la clé API du fournisseur sélectionné pour ce processus. L’outil en ligne de commande ne l’enregistre jamais."
+          }
+        }
+      }
+    },
     "Settings could not be saved; mail stays unchanged.": {
       "localizations": {
         "es": {
@@ -3773,6 +4932,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Progression de la configuration"
+          }
+        }
+      }
+    },
+    "Shared storage is unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El almacenamiento compartido no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le stockage partagé est indisponible."
           }
         }
       }
@@ -3853,6 +5029,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher un récapitulatif hebdomadaire des messages à vérifier"
+          }
+        }
+      }
+    },
+    "Show details": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar detalles"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher les détails"
           }
         }
       }
@@ -3965,6 +5157,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les scores statistiques restent non étalonnés et exigent des exemples révisés de messages légitimes et indésirables. Les règles d’adresse et de domaine ont priorité."
+          }
+        }
+      }
+    },
+    "Step %lld of %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paso %lld de %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étape %lld sur %lld"
           }
         }
       }
@@ -4145,6 +5353,261 @@
         }
       }
     },
+    "The IMAP configuration is invalid.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuración IMAP no es válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration IMAP n’est pas valide."
+          }
+        }
+      }
+    },
+    "The IMAP connection is unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La conexión IMAP no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La connexion IMAP est indisponible."
+          }
+        }
+      }
+    },
+    "The IMAP operation timed out.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se agotó el tiempo de espera de la operación IMAP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le délai de l’opération IMAP a expiré."
+          }
+        }
+      }
+    },
+    "The IMAP response exceeds the supported resource limits.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La respuesta IMAP supera los límites de recursos admitidos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La réponse IMAP dépasse les limites de ressources prises en charge."
+          }
+        }
+      }
+    },
+    "The IMAP server does not support this operation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor IMAP no admite esta operación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur IMAP ne prend pas en charge cette opération."
+          }
+        }
+      }
+    },
+    "The IMAP server rejected the operation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor IMAP rechazó la operación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur IMAP a refusé l’opération."
+          }
+        }
+      }
+    },
+    "The IMAP server returned an invalid response.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor IMAP devolvió una respuesta no válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur IMAP a renvoyé une réponse non valide."
+          }
+        }
+      }
+    },
+    "The Mail action is unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La acción de Mail no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’action Mail est indisponible."
+          }
+        }
+      }
+    },
+    "The account has not passed action validation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cuenta no ha superado la validación de acciones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le compte n’a pas réussi la validation des actions."
+          }
+        }
+      }
+    },
+    "The classification deadline expired.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se agotó el plazo de clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le délai de classification a expiré."
+          }
+        }
+      }
+    },
+    "The credential is unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La credencial no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’identifiant secret est indisponible."
+          }
+        }
+      }
+    },
+    "The evaluation spending limit has been reached.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha alcanzado el límite de gasto de evaluación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de dépenses d’évaluation a été atteinte."
+          }
+        }
+      }
+    },
+    "The local evidence process could not complete.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proceso de indicios locales no pudo completarse."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le processus d’analyse des indices locaux n’a pas pu se terminer."
+          }
+        }
+      }
+    },
+    "The local evidence process timed out.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se agotó el tiempo de espera del proceso de indicios locales."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le délai du processus d’analyse des indices locaux a expiré."
+          }
+        }
+      }
+    },
+    "The local evidence response exceeds the output limit.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La respuesta de indicios locales supera el límite de salida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La réponse d’analyse des indices locaux dépasse la limite de sortie."
+          }
+        }
+      }
+    },
     "The maximum of 10,000 sender rules has been reached.": {
       "localizations": {
         "es": {
@@ -4161,6 +5624,295 @@
         }
       }
     },
+    "The message contains invalid encoded content.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje contiene contenido codificado no válido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message contient du contenu encodé non valide."
+          }
+        }
+      }
+    },
+    "The message context exceeds the classification limit.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El contexto del mensaje supera el límite de clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le contexte du message dépasse la limite de classification."
+          }
+        }
+      }
+    },
+    "The message exceeds the local evidence input limit.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje supera el límite de entrada de indicios locales."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message dépasse la limite d’entrée de l’analyse des indices locaux."
+          }
+        }
+      }
+    },
+    "The message exceeds the supported content limits.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje supera los límites de contenido admitidos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message dépasse les limites de contenu prises en charge."
+          }
+        }
+      }
+    },
+    "The message no longer matches its recorded state.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje ya no coincide con su estado registrado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message ne correspond plus à son état enregistré."
+          }
+        }
+      }
+    },
+    "The message structure is invalid or ambiguous.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La estructura del mensaje no es válida o es ambigua."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La structure du message n’est pas valide ou est ambiguë."
+          }
+        }
+      }
+    },
+    "The message uses an unsupported character set.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje usa un conjunto de caracteres no admitido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message utilise un jeu de caractères non pris en charge."
+          }
+        }
+      }
+    },
+    "The operation timed out.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se agotó el tiempo de espera de la operación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le délai de l’opération a expiré."
+          }
+        }
+      }
+    },
+    "The provider could not be reached.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo conectar con el proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de joindre le fournisseur."
+          }
+        }
+      }
+    },
+    "The provider credential is missing or invalid.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La credencial del proveedor falta o no es válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’identifiant secret du fournisseur est absent ou non valide."
+          }
+        }
+      }
+    },
+    "The provider declined to classify the message.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proveedor rechazó clasificar el mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fournisseur a refusé de classer le message."
+          }
+        }
+      }
+    },
+    "The provider returned an invalid classification.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proveedor devolvió una clasificación no válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fournisseur a renvoyé une classification non valide."
+          }
+        }
+      }
+    },
+    "The provider’s request limit was reached.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha alcanzado el límite de solicitudes del proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de requêtes du fournisseur a été atteinte."
+          }
+        }
+      }
+    },
+    "The requested message or Mail service is unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje o servicio de Mail solicitado no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message ou le service Mail demandé est indisponible."
+          }
+        }
+      }
+    },
+    "The requested spending amount is invalid.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El importe de gasto solicitado no es válido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le montant de dépense demandé n’est pas valide."
+          }
+        }
+      }
+    },
+    "The reviewed corpus contains duplicate content.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El corpus revisado contiene contenido duplicado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le corpus révisé contient du contenu en double."
+          }
+        }
+      }
+    },
+    "The reviewed export exceeds the supported input limits.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La exportación revisada supera los límites de entrada admitidos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exportation révisée dépasse les limites d’entrée prises en charge."
+          }
+        }
+      }
+    },
     "The rule file is invalid or exceeds the import limit.": {
       "localizations": {
         "es": {
@@ -4173,6 +5925,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le fichier de règles est invalide ou dépasse la limite d’importation."
+          }
+        }
+      }
+    },
+    "The selected model configuration is unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuración del modelo seleccionado no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration du modèle sélectionné est indisponible."
+          }
+        }
+      }
+    },
+    "The sender rules could not be updated.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron actualizar las reglas de remitentes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de mettre à jour les règles d’expéditeurs."
+          }
+        }
+      }
+    },
+    "The shared app container is unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El contenedor compartido de la app no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le conteneur partagé de l’app est indisponible."
+          }
+        }
+      }
+    },
+    "The shared storage lock could not be acquired.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo obtener el bloqueo del almacenamiento compartido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’obtenir le verrou du stockage partagé."
+          }
+        }
+      }
+    },
+    "The storage path refers to a directory.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La ruta de almacenamiento corresponde a una carpeta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le chemin de stockage désigne un dossier."
           }
         }
       }
@@ -4209,6 +6046,22 @@
         }
       }
     },
+    "Today: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoy: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aujourd’hui : %@"
+          }
+        }
+      }
+    },
     "Token counts are measured when the provider exposes them. Dollar costs are estimates; cache-write premiums may differ.": {
       "localizations": {
         "es": {
@@ -4221,6 +6074,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les tokens sont mesurés lorsque le fournisseur en communique le nombre. Les coûts en dollars sont des estimations ; les frais d’écriture en cache peuvent varier."
+          }
+        }
+      }
+    },
+    "Transfer rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transferir reglas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transférer les règles"
           }
         }
       }
@@ -4273,6 +6142,38 @@
         }
       }
     },
+    "Try a dry run to preview how your mail will be classified.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba una simulación para ver cómo se clasificará tu correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancez une simulation pour voir comment votre courrier sera classé."
+          }
+        }
+      }
+    },
+    "Unavailable or failed evidence never counts as spam.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los indicios no disponibles o fallidos nunca cuentan como correo no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les indices indisponibles ou en échec ne sont jamais considérés comme du courrier indésirable."
+          }
+        }
+      }
+    },
     "Uncalibrated thresholds: Conservative 99%, Balanced 95%, Aggressive 90%. Model confidence is not a probability.": {
       "localizations": {
         "es": {
@@ -4301,6 +6202,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Non classé"
+          }
+        }
+      }
+    },
+    "Usage": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uso"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisation"
+          }
+        }
+      }
+    },
+    "Usage and spending": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uso y gasto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisation et dépenses"
           }
         }
       }
@@ -4353,6 +6286,22 @@
         }
       }
     },
+    "Use your correspondence and Contacts to recognize trusted senders.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa tu correspondencia y Contactos para reconocer remitentes de confianza."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez votre correspondance et vos Contacts pour reconnaître les expéditeurs de confiance."
+          }
+        }
+      }
+    },
     "Use your own API key. Verify sends a small synthetic message to Haiku 5.5 and saves the key in Keychain only if verification succeeds.": {
       "localizations": {
         "es": {
@@ -4401,6 +6350,38 @@
         }
       }
     },
+    "Validate a disposable message in Accounts before enabling mail actions.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valida un mensaje de prueba en Cuentas antes de activar las acciones de correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Validez un message de test dans Comptes avant d’activer les actions sur le courrier."
+          }
+        }
+      }
+    },
+    "Validated accounts": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuentas validadas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comptes validés"
+          }
+        }
+      }
+    },
     "Verdict": {
       "localizations": {
         "es": {
@@ -4429,6 +6410,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Classement : %@"
+          }
+        }
+      }
+    },
+    "Verification sends one synthetic message to Haiku 5.5 and saves your key in Keychain.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La verificación envía un mensaje sintético a Haiku 5.5 y guarda tu clave en el Llavero."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La vérification envoie un message synthétique à Haiku 5.5 et enregistre votre clé dans le Trousseau."
           }
         }
       }
@@ -4609,6 +6606,38 @@
         }
       }
     },
+    "Your privacy": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu privacidad"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre confidentialité"
+          }
+        }
+      }
+    },
+    "Your selected provider receives a shortened message, your preferences, and relevant examples when local rules cannot decide.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proveedor seleccionado recibe un mensaje abreviado, tus preferencias y ejemplos relevantes cuando las reglas locales no pueden decidir."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fournisseur sélectionné reçoit un message abrégé, vos préférences et des exemples pertinents lorsque les règles locales ne permettent pas de décider."
+          }
+        }
+      }
+    },
     "Your selected provider receives your policy, correction examples, evidence, and a shortened message only when local rules do not decide it.": {
       "localizations": {
         "es": {
@@ -4669,6 +6698,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "—"
+          }
+        }
+      }
+    },
+    "Decisions today: %@ · Junk: %@ · Review: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisiones de hoy: %@ · No deseado: %@ · Revisar: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décisions aujourd’hui : %@ · Indésirables : %@ · À vérifier : %@"
+          }
+        }
+      }
+    },
+    "Recent corrections: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correcciones recientes: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrections récentes : %@"
+          }
+        }
+      }
+    },
+    "Body budget: ~%@ tokens": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Límite del cuerpo: ~%@ tokens"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite du corps : ~%@ tokens"
+          }
+        }
+      }
+    },
+    "%@/%@ characters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@/%@ caracteres"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@/%@ caractères"
+          }
+        }
+      }
+    },
+    "Step %@ of %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paso %@ de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étape %@ sur %@"
           }
         }
       }

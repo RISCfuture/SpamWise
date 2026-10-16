@@ -7,10 +7,32 @@ import Darwin
   var payload: Data
   init(key: String, payload: Data) { self.key = key; self.payload = payload }
 }
+/// Failures while accessing durable shared storage.
+public protocol StorageFailure: Error {}
+
 /// Shared storage or transaction-lock failures.
-public enum StoreError: Error, Sendable { case lockUnavailable, missingAppGroup, invalidPath }
-/// Each operation uses a fresh container/context under a cross-process lock.
-/// No actor suspension occurs between reading and saving a transaction.
+public enum StoreError: StorageFailure, Sendable, LocalizedError {
+  /// The nonblocking transaction lock could not be acquired.
+  case lockUnavailable
+  /// The signed App Group container could not be resolved.
+  case missingAppGroup
+  /// The store path identifies a directory instead of a file.
+  case invalidPath
+  /// General description of the failed storage operation.
+  public var errorDescription: String? { String(localized: "Shared storage is unavailable.") }
+  /// The storage prerequisite that could not be satisfied.
+  public var failureReason: String? {
+    switch self {
+      case .lockUnavailable: String(localized: "The shared storage lock could not be acquired.")
+      case .missingAppGroup: String(localized: "The shared app container is unavailable.")
+      case .invalidPath: String(localized: "The storage path refers to a directory.")
+    }
+  }
+}
+/**
+ Each operation uses a fresh container/context under a cross-process lock.
+ No actor suspension occurs between reading and saving a transaction.
+ */
 public actor Store {
   /// Location of the durable shared store.
   public let url: URL

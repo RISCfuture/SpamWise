@@ -1,17 +1,9 @@
 import AppIntents
-//
-//  MailExtension.swift
-//  MailExtension
-//
-//  Created by Tim Morgan on 10/15/26.
-//
-
 import MailKit
 
+// Mail constructs the principal object on its XPC queue; it has no actor-bound state.
 nonisolated final class MailExtension: NSObject, MEExtension {
-
   nonisolated func handlerForMessageActions() -> any MEMessageActionHandler {
-    return MessageActionHandler()
+    MessageActionHandler()
   }
-
 }

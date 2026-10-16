@@ -79,7 +79,6 @@
 			exceptions = (
 				AA0000000000000000000008 /* Exceptions for "SpamWise" folder in "SpamWise" target */,
 			);
-			explicitFolders = (SpamWise.help,);
 			path = SpamWise;
 			sourceTree = "<group>";
 		};

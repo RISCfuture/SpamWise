@@ -11,20 +11,20 @@ func fixture(_ name: String) throws -> Data {
 @Test(arguments: [
   "filler-spam", "stranger-cart", "unsolicited-newsletter", "order-confirmation", "personal"
 ])
-func requiredFixtures(_ name: String) throws {
+func `parses required message fixtures`(_ name: String) throws {
   let message = try MIMEParser().parse(fixture(name))
   #expect(!message.subject.isEmpty)
   #expect(!message.text.isEmpty)
   #expect(message.fromAddress.contains("@"))
 }
-@Test func `decodes m i m e and folded headers`() throws {
+@Test func `decodes MIME and folded headers`() throws {
   let message = try MIMEParser().parse(fixture("encoded"))
   #expect(message.subject == "Café with lunch")
   #expect(message.fromDisplayName == "José")
   #expect(message.text.contains("Café"))
   #expect(message.urls.contains("https://shop.example.co.uk/order"))
 }
-@Test func `malformed fails open`() throws {
+@Test func `rejects malformed senders and oversized messages`() throws {
   for sender in [
     #""friend@example.org"@attacker.example"#, "friend@example.org trailing", "a..b@example.org",
     "a@example..org"
@@ -38,7 +38,7 @@ func requiredFixtures(_ name: String) throws {
     try MIMEParser().parse(Data(repeating: 65, count: 2_100_000))
   }
 }
-@Test func `public suffix boundaries`() {
+@Test func `resolves registrable domains at public suffix boundaries`() {
   let domains = DomainResolver()
   #expect(domains.registrableDomain("mail.shop.example.co.uk") == "example.co.uk")
   #expect(domains.registrableDomain("a.user.github.io") == "user.github.io")
@@ -46,7 +46,7 @@ func requiredFixtures(_ name: String) throws {
   #expect(domains.registrableDomain("www.city.kawasaki.jp") == "city.kawasaki.jp")
   #expect(domains.registrableDomain("127.0.0.1") == nil)
 }
-@Test func `html never includes scripts or remote images`() throws {
+@Test func `excludes scripts and remote images from HTML text`() throws {
   let raw =
     """
     From: a@example.com

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `legacy state keeps settings and reviewed digest excludes corrected mail`() throws {
+@Test func `migrates legacy settings and excludes corrected mail from the Review digest`() throws {
   let encoded = try JSONEncoder().encode(AppState())
   var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
   object.removeValue(forKey: "learning"); object.removeValue(forKey: "reviewedLabels")
@@ -33,7 +33,8 @@ import SpamWiseCore
   #expect(ReviewDigest(state: state).records.isEmpty)
 }
 
-@Test func `rule import is atomic and explicit edits invalidate stale work`() async throws {
+@Test func `imports rules atomically and invalidates stale work after explicit edits`() async throws
+{
   let store = try testStore()
   try await RuleManagement.save(
     scope: .address,
@@ -67,7 +68,7 @@ import SpamWiseCore
   #expect(changed.revision > before.revision)
 }
 
-@Test func `budget reservations cannot exceed cap across concurrent consumers`() async throws {
+@Test func `bounds concurrent budget reservations by the configured cap`() async throws {
   let store = try testStore()
   try await EvaluationBudget.configure(limitUSD: 0.20, store: store)
   let successes = await withTaskGroup(of: Bool.self, returning: Int.self) { group in

@@ -29,7 +29,7 @@ public struct GeminiClassifier: Classifier {
         "systemInstruction": ["parts": [["text": PromptBuilder.instructions]]],
         "contents": [["role": "user", "parts": [["text": try PromptBuilder.prompt(input)]]]],
         "generationConfig": [
-          "candidateCount": 1, "maxOutputTokens": 1024,
+          "candidateCount": 1, "maxOutputTokens": ClassificationLimits.maximumResponseTokens,
           "responseMimeType": "application/json", "responseJsonSchema": RemoteVerdict.schema,
           "thinkingConfig": ["thinkingLevel": "low"]
         ]
@@ -55,7 +55,8 @@ public struct GeminiClassifier: Classifier {
         let measured = response.usageMetadata
       else { throw ClassificationError.invalidOutput }
       let thoughts = measured.thoughtsTokenCount ?? 0
-      guard (0...100_000).contains(thoughts), (0...100_000).contains(measured.candidatesTokenCount)
+      guard (0...ClassificationLimits.maximumOutputTokens).contains(thoughts),
+        (0...ClassificationLimits.maximumOutputTokens).contains(measured.candidatesTokenCount)
       else {
         throw ClassificationError.invalidOutput
       }

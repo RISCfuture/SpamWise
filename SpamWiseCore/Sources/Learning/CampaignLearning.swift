@@ -4,6 +4,15 @@ import MessageModel
 
 enum CampaignContent {
   static let minimumOverlap = 0.8
+  private static let maximumBodyCharacters = 8000
+  private static let minimumBodyCharacters = 100
+  private static let minimumWords = 20
+  private static let minimumDistinctWords = 16
+  private static let wordsPerShingle = 5
+  private static let maximumShingles = 128
+  private static let minimumShingles = 12
+  private static let maximumURLs = 100
+  private static let maximumLinkAnchors = 20
   private static let footerMarkers = [
     "unsubscribe", "privacy policy", "manage preferences", "manage your preferences",
     "view in browser",
@@ -13,17 +22,20 @@ enum CampaignContent {
   static func fingerprint(message: ParsedMessage, label: MailLabel, date: Date)
     -> CampaignFingerprint?
   {
-    let body = String(message.text.prefix(8000)).components(separatedBy: .newlines).filter { line in
-      !footerMarkers.contains { line.lowercased().contains($0) }
-    }.joined(separator: " ")
+    let body = String(message.text.prefix(maximumBodyCharacters)).components(separatedBy: .newlines)
+      .filter { line in
+        !footerMarkers.contains { line.lowercased().contains($0) }
+      }.joined(separator: " ")
     let words = LearningText.tokens(body)
-    guard body.count >= 100, words.count >= 20, Set(words).count >= 16 else { return nil }
+    guard body.count >= minimumBodyCharacters, words.count >= minimumWords,
+      Set(words).count >= minimumDistinctWords
+    else { return nil }
     let shingles = Set(
-      (0..<(words.count - 4)).map {
-        stableHash(Data(words[$0..<($0 + 5)].joined(separator: " ").utf8))
+      (0..<(words.count - wordsPerShingle + 1)).map {
+        stableHash(Data(words[$0..<($0 + wordsPerShingle)].joined(separator: " ").utf8))
       }
-    ).sorted().prefix(128).map { $0 }
-    guard shingles.count >= 12 else { return nil }
+    ).sorted().prefix(maximumShingles).map { $0 }
+    guard shingles.count >= minimumShingles else { return nil }
     let anchors = anchors(message)
     guard !anchors.isEmpty else { return nil }
     return CampaignFingerprint(
@@ -37,10 +49,10 @@ enum CampaignContent {
 
   static func anchors(_ message: ParsedMessage) -> [String] {
     let resolver = DomainResolver()
-    var anchors = message.urls.prefix(100).compactMap { URL(string: $0)?.host }.compactMap(
+    var anchors = message.urls.prefix(maximumURLs).compactMap { URL(string: $0)?.host }.compactMap(
       resolver.registrableDomain
     )
-    .prefix(20).map { "link:" + $0 }
+    .prefix(maximumLinkAnchors).map { "link:" + $0 }
     if let domain = resolver.domain(ofAddress: message.fromAddress) {
       anchors.append("sender:" + domain)
     }

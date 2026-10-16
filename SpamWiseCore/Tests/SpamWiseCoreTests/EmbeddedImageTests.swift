@@ -24,7 +24,7 @@ private func imageMessage(parts: Int = 1, payload: String = pixelPNG, attachment
   )
 }
 
-@Test func `embedded OCR processes only bounded inline image bytes`() async throws {
+@Test func `recognizes text only from bounded inline image bytes`() async throws {
   let ocr = EmbeddedImageOCR { data in
     #expect(data == Data(base64Encoded: pixelPNG))
     return "Offer shown inside image"
@@ -40,7 +40,7 @@ private func imageMessage(parts: Int = 1, payload: String = pixelPNG, attachment
   #expect(text.count <= 3000)
 }
 
-@Test func `embedded OCR rejects oversized payloads and pixel declarations before recognition`()
+@Test func `rejects oversized image payloads and dimensions before recognition`()
   async throws
 {
   let ocr = EmbeddedImageOCR { _ in

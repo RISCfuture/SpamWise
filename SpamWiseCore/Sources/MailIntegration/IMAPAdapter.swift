@@ -2,6 +2,8 @@ import Foundation
 public import SpamWiseCore
 /// Client-independent, bounded IMAP adapter using explicit TLS credentials and UID-scoped actions.
 public actor IMAPAdapter: MailClientAdapter {
+  private static let historyPageSize = 100
+  private static let maximumMessageBytes = 2_000_000
   /// Explicit account identity used to scope retries and persisted actions.
   public nonisolated let accountID: String
   private let configuration: IMAPConfiguration
@@ -110,7 +112,7 @@ public actor IMAPAdapter: MailClientAdapter {
       let messages = try await Self.messages(
         mailbox: sent,
         account: account,
-        limit: 100,
+        limit: Self.historyPageSize,
         session: session
       )
       var index = HistoryIndex()
@@ -329,7 +331,7 @@ extension IMAPAdapter {
     }
     guard matching.count <= 1 else { throw IntegrationError.ambiguous }
     guard let row = matching.first else { return nil }
-    guard let size = number("RFC822.SIZE", in: row), size <= 2_000_000,
+    guard let size = number("RFC822.SIZE", in: row), size <= maximumMessageBytes,
       row.filter({ $0.isAtom("BODY[]") }).count == 1,
       let body = row.firstIndex(where: { $0.isAtom("BODY[]") }), body + 1 < row.count,
       case .literal(let data) = row[body + 1], data.count == size

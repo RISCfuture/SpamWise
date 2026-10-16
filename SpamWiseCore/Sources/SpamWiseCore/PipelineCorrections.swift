@@ -1,6 +1,21 @@
 public import Foundation
 
 extension Pipeline {
+  private static let maximumCorrections = 200
+  private static let maximumReviewedCharacters = 16_000
+  private static let maximumReviewedURLs = 40
+  private static let maximumURLCharacters = 2048
+  private static let maximumReviewedLabels = 500
+  private static func correctionAction(_ label: MailLabel, review: ReviewTreatment) -> MailAction {
+    switch label {
+      case .inbox: .moveToInbox
+      case .junk: .moveToJunk
+      case .review: review == .orangeFlag ? .orangeFlag : .orangeBackground
+    }
+  }
+  private static func collectsLearning(_ options: AdvancedSettings) -> Bool {
+    options.fingerprints || options.bayes || options.learnedWeights
+  }
   /// Atomically saves a correction and then attempts the separately recorded mail action.
   public func correct(
     recordID: UUID,
@@ -10,10 +25,10 @@ extension Pipeline {
   ) async throws -> DecisionRecord {
     guard label != .review || scope == .address else { throw ClassificationError.invalidOutput }
     let record = try await StateRepository.update(store) { state -> DecisionRecord in
-      guard let i = state.records.firstIndex(where: { $0.id == recordID }) else {
+      guard let index = state.records.firstIndex(where: { $0.id == recordID }) else {
         throw IntegrationError.unavailable
       }
-      let previous = state.records[i]
+      let previous = state.records[index]
       guard let address = MIMEParser.address(previous.sender) else {
         throw IntegrationError.unavailable
       }
@@ -38,10 +53,10 @@ extension Pipeline {
           label: label
         )
       )
-      state.corrections = Array(state.corrections.suffix(200))
+      state.corrections = Array(state.corrections.suffix(Self.maximumCorrections))
       state.revision += 1
       state.retries.removeAll()  // Any old prompt/evidence generation is stale after a correction.
-      state.records[i].correctedLabel = label
+      state.records[index].correctedLabel = label
       var correction = DecisionRecord(
         identity: previous.identity,
         sender: address,
@@ -63,13 +78,6 @@ extension Pipeline {
     try await recordReviewedLabel(record, label: label, adapter: adapter)
     return try await dispatch(record, adapter: adapter, forceDryRun: false, correction: true)
   }
-  private static func correctionAction(_ label: MailLabel, review: ReviewTreatment) -> MailAction {
-    switch label {
-      case .inbox: .moveToInbox
-      case .junk: .moveToJunk
-      case .review: review == .orangeFlag ? .orangeFlag : .orangeBackground
-    }
-  }
   private func recordReviewedLabel(
     _ record: DecisionRecord,
     label: MailLabel,
@@ -81,10 +89,11 @@ extension Pipeline {
       let envelope = try? await adapter?.lookup(record.identity)
     {
       message = try? MIMEParser().parse(envelope.raw)
-      let boundedText = String(message?.text.prefix(16_000) ?? "")
+      let boundedText = String(message?.text.prefix(Self.maximumReviewedCharacters) ?? "")
       message?.text = boundedText
       message?.headers = [:]
-      let boundedURLs = Array(message?.urls.prefix(40) ?? []).map { String($0.prefix(2048)) }
+      let boundedURLs = Array(message?.urls.prefix(Self.maximumReviewedURLs) ?? [])
+        .map { String($0.prefix(Self.maximumURLCharacters)) }
       message?.urls = boundedURLs
     }
     let reviewedMessage = message
@@ -100,7 +109,7 @@ extension Pipeline {
           sampleID: reviewedMessage.map(LearningSample.identity)
         )
       )
-      state.reviewedLabels = Array(labels.suffix(500))
+      state.reviewedLabels = Array(labels.suffix(Self.maximumReviewedLabels))
       if Self.collectsLearning(state.settings.advancedOptions), let reviewedMessage {
         var learning = state.learning ?? LearningState()
         learning.recordCorrection(
@@ -111,8 +120,5 @@ extension Pipeline {
         state.learning = learning
       }
     }
-  }
-  private static func collectsLearning(_ options: AdvancedSettings) -> Bool {
-    options.fingerprints || options.bayes || options.learnedWeights
   }
 }

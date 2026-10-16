@@ -2,6 +2,9 @@ import Foundation
 import SpamWiseCore
 
 extension IMAPAdapter {
+  private static let maximumPageSize = 100
+  private static let maximumPageMessageBytes = 2_000_000
+  private static let maximumPageBytes = 4_000_000
   static func messages(
     mailbox: String,
     account: String,
@@ -19,14 +22,14 @@ extension IMAPAdapter {
     }
     guard selected.count > 0 else { return ([], 0) }
     let last = max(1, selected.count - offset)
-    let first = max(1, last - min(limit, 100) + 1)
+    let first = max(1, last - min(limit, maximumPageSize) + 1)
     let rows = try await session.command("FETCH \(first):\(last) (UID RFC822.SIZE)")
-    let metadata = try metadata(rows, range: first...last, limit: min(limit, 100))
+    let metadata = try metadata(rows, range: first...last, limit: min(limit, maximumPageSize))
     var envelopes: [MailEnvelope] = []
     var total = 0, nextOffset = selected.count - first + 1
     for row in metadata {
-      guard row.size <= 2_000_000 else { continue }
-      guard row.size <= 4_000_000 - total else {
+      guard row.size <= maximumPageMessageBytes else { continue }
+      guard row.size <= maximumPageBytes - total else {
         nextOffset = selected.count - row.sequence
         break
       }

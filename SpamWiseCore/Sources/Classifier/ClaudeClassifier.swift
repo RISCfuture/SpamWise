@@ -16,6 +16,7 @@ public struct ClaudeClassifier: Classifier {
   public static let modelID = "claude-haiku-5-5"
   private let selectedModel: ClaudeModel
   private let selectedModelID: String
+  private let key: @Sendable () throws -> String
   /// Creates an explicitly selected supported model for evaluation; the app defaults to Haiku 5.5.
   public init(modelID: String, key: @escaping @Sendable () throws -> String) throws {
     switch modelID {
@@ -27,7 +28,6 @@ public struct ClaudeClassifier: Classifier {
     self.key = key
     selectedModelID = modelID
   }
-  private let key: @Sendable () throws -> String
   /// Creates a ClaudeClassifier with the supplied configuration.
   public init(key: @escaping @Sendable () throws -> String) {
     self.key = key; selectedModel = .haiku5_5; selectedModelID = Self.modelID
@@ -52,7 +52,9 @@ public struct ClaudeClassifier: Classifier {
         let response = try await session.respond(
           to: prompt,
           generating: GuidedVerdict.self,
-          options: GenerationOptions(maximumResponseTokens: 1024)
+          options: GenerationOptions(
+            maximumResponseTokens: ClassificationLimits.maximumResponseTokens
+          )
         )
         try Task.checkCancellation()
         let label: MailLabel

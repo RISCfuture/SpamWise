@@ -3,7 +3,7 @@ import Testing
 import SpamWiseCore
 
 @Test(arguments: ["127.255.255.254", "127.255.255.255", "127.0.1.255", "203.0.113.1"])
-func `blocklist error codes never become spam evidence`(_ address: String) async {
+func `keeps blocklist error codes out of spam evidence`(_ address: String) async {
   let lookup = SpamhausDomainLookup(
     configuration: .init(termsAcknowledged: true, resolverAddress: "127.0.0.1"),
     query: { _, _ in .init(status: .answered, addresses: [address]) }
@@ -13,7 +13,7 @@ func `blocklist error codes never become spam evidence`(_ address: String) async
   #expect(result.first?.status == .unknown)
 }
 
-@Test func `blocklist queries require consent and valid domain names`() async {
+@Test func `requires consent and valid domain names for blocklist queries`() async {
   let disabled = SpamhausDomainLookup(
     configuration: .init(),
     query: { _, _ in
@@ -38,8 +38,7 @@ func `blocklist error codes never become spam evidence`(_ address: String) async
   #expect(result.first?.subject == "example.com")
 }
 
-@Test func `rspamd passes raw mail only through stdin and treats symbols as evidence`() async throws
-{
+@Test func `passes raw mail to Rspamd through stdin and extracts evidence symbols`() async throws {
   let raw = Data("From: sender@example.org\r\n\r\n$(touch /tmp/unwanted)".utf8)
   let process = EvidenceProcess { executable, arguments, input in
     #expect(executable == "/opt/homebrew/bin/rspamc")
@@ -67,7 +66,7 @@ func `blocklist error codes never become spam evidence`(_ address: String) async
   #expect(await failed.lookup(raw: raw).status == .unknown)
 }
 
-@Test func `bounded processes preserve stdin and stop floods and timeouts`() async throws {
+@Test func `preserves process input and stops output floods and timeouts`() async throws {
   let echoed = try await EvidenceProcess.live.run(
     executable: "/bin/cat",
     arguments: [],

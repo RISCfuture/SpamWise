@@ -2,6 +2,15 @@ public import Foundation
 
 /// Standard USD rates per million tokens, stored with source and verification date.
 public struct ModelTokenPricing: Codable, Sendable, Equatable {
+  private static let geminiStandardPricingDate = Date(timeIntervalSince1970: 1_798_761_600)
+  private static let geminiStandardPriceMultiplier = 2.0
+  static let legacyHaiku = ModelTokenPricing(
+    input: 0.10,
+    output: 0.50,
+    cached: 0.01,
+    source: "https://platform.claude.com/docs/en/about-claude/pricing",
+    verified: "2026-10-16"
+  )
   /// Uncached input rate.
   public let input: Double
   /// Output rate, including billed reasoning tokens.
@@ -12,14 +21,6 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
   public let source: String
   /// Date the source was verified, in ISO calendar format.
   public let verified: String
-
-  static let legacyHaiku = ModelTokenPricing(
-    input: 0.10,
-    output: 0.50,
-    cached: 0.01,
-    source: "https://platform.claude.com/docs/en/about-claude/pricing",
-    verified: "2026-10-16"
-  )
 
   /// Returns explicit supported-model rates, rejecting unknown model names.
   public static func rates(for modelID: String, at date: Date = .now) throws -> Self {
@@ -39,7 +40,7 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
           verified: "2026-10-16"
         )
       case "gemini-3.8-flash":
-        let multiplier = date < Date(timeIntervalSince1970: 1_798_761_600) ? 1.0 : 2.0
+        let multiplier = date < geminiStandardPricingDate ? 1.0 : geminiStandardPriceMultiplier
         return .init(
           input: 0.75 * multiplier,
           output: 3.75 * multiplier,

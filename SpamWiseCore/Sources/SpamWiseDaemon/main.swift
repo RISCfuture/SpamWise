@@ -6,6 +6,7 @@ import MailIntegration
 
 @main
 struct SpamWiseDaemon {
+  private static let maximumConfigurationBytes = 65_536
   private static let usage = """
     spamwise-daemon --config path [--once | --poll-seconds 60...3600] [--limit 1...100] [--actions]
       [--model MODEL]
@@ -51,7 +52,7 @@ struct SpamWiseDaemon {
     let options = try Options(arguments)
     let file = try FileHandle(forReadingFrom: URL(filePath: options.path))
     defer { try? file.close() }
-    let data = try file.read(upToCount: 65_537) ?? Data()
+    let data = try file.read(upToCount: maximumConfigurationBytes + 1) ?? Data()
     let configuration = try IMAPDaemonConfiguration.decode(data)
     let store = try Store(
       url: configuration.statePath.map { URL(filePath: $0) } ?? Store.sharedURL()
@@ -137,12 +138,15 @@ struct SpamWiseDaemon {
   }
 
   private struct Options {
+    private static let allowedPollSeconds = 60...3600
+    private static let allowedPageSize = 1...100
+    private static let defaultPageSize = 20
     var path: String
     var actions = false
     var validate = false
     var probe: UInt32?
     var poll: Int?
-    var limit = 20
+    var limit = Self.defaultPageSize
     var model: String?
     init(_ arguments: [String]) throws {
       var values: [String: String] = [:], flags: Set<String> = []
@@ -171,12 +175,12 @@ struct SpamWiseDaemon {
         probe = uid
       }
       if let value = values["--poll-seconds"] {
-        guard let seconds = Int(value), (60...3600).contains(seconds) else {
+        guard let seconds = Int(value), Self.allowedPollSeconds.contains(seconds) else {
           throw IMAPError.invalidConfiguration
         }; poll = seconds
       }
       if let value = values["--limit"] {
-        guard let count = Int(value), (1...100).contains(count) else {
+        guard let count = Int(value), Self.allowedPageSize.contains(count) else {
           throw IMAPError.invalidConfiguration
         }; limit = count
       }

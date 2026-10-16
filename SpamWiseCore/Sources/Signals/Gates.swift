@@ -38,16 +38,6 @@ public struct SenderHistory: Codable, Sendable, Equatable {
   public var receiptCount: Int = 0
   /// Timestamp of the most recent known receipt, when available.
   public var lastReceipt: Date?
-  /// Creates a SenderHistory with the supplied configuration.
-  public init(
-    availability: HistoryAvailability = .unavailable,
-    receivedCount: Int = 0,
-    replyCount: Int = 0,
-    receiptCount: Int = 0
-  ) {
-    self.availability = availability; self.receivedCount = receivedCount
-    self.replyCount = replyCount; self.receiptCount = receiptCount
-  }
   /// Human-readable history with unknown and partial states preserved.
   public var summary: String {
     if replyCount > 0 { return "User replied to this sender \(replyCount) times" }
@@ -59,6 +49,16 @@ public struct SenderHistory: Codable, Sendable, Equatable {
     return availability == .complete
       ? "No prior mail in the completely imported history window"
       : "No match in partial history; relationship unknown"
+  }
+  /// Creates a SenderHistory with the supplied configuration.
+  public init(
+    availability: HistoryAvailability = .unavailable,
+    receivedCount: Int = 0,
+    replyCount: Int = 0,
+    receiptCount: Int = 0
+  ) {
+    self.availability = availability; self.receivedCount = receivedCount
+    self.replyCount = replyCount; self.receiptCount = receiptCount
   }
 }
 /// A deterministic rule or trusted-relationship decision.

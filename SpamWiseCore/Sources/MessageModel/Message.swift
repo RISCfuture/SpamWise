@@ -21,9 +21,25 @@ public struct ParsedMessage: Codable, Sendable, Equatable {
   /// Returns the first value for a case-insensitive header name.
   public func header(_ name: String) -> String? { headers[name.lowercased()]?.first }
 }
+/// Failures that prevent safe interpretation of message content.
+public protocol MessageParsingError: Error {}
+
 /// A malformed or over-budget message that must remain unclassified.
-public enum ParseError: Error, Sendable {
+public enum ParseError: MessageParsingError, Sendable, LocalizedError {
   case malformed, tooLarge, unsupportedCharset, invalidEncoding
+
+  /// General description of the parsing failure.
+  public var errorDescription: String? { String(localized: "Couldn’t read the message.") }
+
+  /// The unsupported content or resource limit that prevented parsing.
+  public var failureReason: String? {
+    switch self {
+      case .malformed: String(localized: "The message structure is invalid or ambiguous.")
+      case .tooLarge: String(localized: "The message exceeds the supported content limits.")
+      case .unsupportedCharset: String(localized: "The message uses an unsupported character set.")
+      case .invalidEncoding: String(localized: "The message contains invalid encoded content.")
+    }
+  }
 }
 /// Returns the lowercase hexadecimal SHA-256 digest of the supplied bytes.
 public func stableHash(_ data: Data) -> String {

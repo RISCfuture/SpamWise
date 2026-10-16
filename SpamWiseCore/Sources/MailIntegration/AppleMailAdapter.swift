@@ -27,6 +27,7 @@ public indirect enum ScriptValue: Sendable, Equatable {
 }
 /// Injectable execution boundary for Mail Apple Events.
 public protocol AppleEventRunner: Sendable {
+  /// Executes a script and returns only transferable result values.
   func run(_ source: String) async throws -> ScriptValue
 }
 /// Serializes AppleScript execution off the UI thread and sanitizes integration failures.
@@ -49,6 +50,7 @@ public struct SystemAppleEventRunner: AppleEventRunner {
 private actor AppleScriptExecutor {
   static let shared = AppleScriptExecutor()
   private let queue = DispatchSerialQueue(label: "codes.tim.SpamWise.apple-events")
+  // The actor owns this queue for its entire lifetime, including every AppleScript call.
   nonisolated var unownedExecutor: UnownedSerialExecutor { unsafe queue.asUnownedSerialExecutor() }
   private let logger = Logger(subsystem: "codes.tim.SpamWise", category: "AppleEvents")
 
@@ -91,9 +93,17 @@ private actor AppleScriptExecutor {
 
 }
 /// A Mail account's stable scripting identifier and display name.
-public struct MailAccount: Identifiable, Sendable { public var id: String; public var name: String }
+public struct MailAccount: Identifiable, Sendable {
+  /// Mail’s stable scripting account identifier.
+  public var id: String
+  /// Account name supplied by Mail for display.
+  public var name: String
+}
 /// Account-scoped Apple Events integration with exact-source action checks.
 public actor AppleMailAdapter: MailClientAdapter {
+  private static let maximumPageSize = 1000
+  private static let historyPageSize = 100
+  private static let maximumMessageBytes = 2_000_000
   private let runner: any AppleEventRunner
   private let moveSettlingTime: Duration
   private var pageOffsets: [String: Int] = [:]
@@ -101,6 +111,24 @@ public actor AppleMailAdapter: MailClientAdapter {
   public init(runner: any AppleEventRunner, moveSettlingTime: Duration = .seconds(30)) {
     self.runner = runner
     self.moveSettlingTime = max(.zero, moveSettlingTime)
+  }
+  private static func envelope(_ value: ScriptValue) throws -> MailEnvelope {
+    guard let fields = value.list, fields.count == 5, let account = fields[0].string,
+      !account.isEmpty,
+      let box = fields[1].string, let id = fields[2].integer, let messageID = fields[3].string,
+      let source = fields[4].string, source.utf8.count <= maximumMessageBytes
+    else { throw IntegrationError.scriptFailed }
+    let raw = Data(source.utf8)
+    return .init(
+      identity: .init(
+        accountID: account,
+        messageID: messageID.isEmpty ? nil : messageID,
+        localID: id,
+        mailbox: box,
+        contentHash: stableHash(raw)
+      ),
+      raw: raw
+    )
   }
   /// Reads Mail account identifiers and display names.
   public func accounts() async throws -> [MailAccount] {
@@ -131,7 +159,7 @@ public actor AppleMailAdapter: MailClientAdapter {
     try await nextPage(limit: limit, role: "inbox", cursor: "filter")
   }
   private func nextPage(limit: Int, role: String, cursor: String) async throws -> [MailEnvelope] {
-    let count = max(1, min(1000, limit))
+    let count = max(1, min(Self.maximumPageSize, limit))
     let offset = pageOffsets[cursor, default: 0]
     guard
       let rows = try await runner.run(
@@ -195,13 +223,13 @@ public actor AppleMailAdapter: MailClientAdapter {
     let sent =
       try await
       (incremental
-      ? nextPage(limit: 100, role: "sent mailbox", cursor: "history-sent")
-      : messages(limit: 1000, role: "sent mailbox"))
+      ? nextPage(limit: Self.historyPageSize, role: "sent mailbox", cursor: "history-sent")
+      : messages(limit: Self.maximumPageSize, role: "sent mailbox"))
     let inboxPage =
       try await
       (incremental
-      ? nextPage(limit: 100, role: "inbox", cursor: "history-inbox")
-      : messages(limit: 1000, role: "inbox"))
+      ? nextPage(limit: Self.historyPageSize, role: "inbox", cursor: "history-inbox")
+      : messages(limit: Self.maximumPageSize, role: "inbox"))
     let inbox = inboxPage.filter { eligibleInbox?.contains($0.identity.key) ?? true }
     var indexes = previous
     let sentKeys = Set(sent.map { $0.identity.key })
@@ -265,23 +293,5 @@ public actor AppleMailAdapter: MailClientAdapter {
       )
     }
     return messages.count
-  }
-  private static func envelope(_ value: ScriptValue) throws -> MailEnvelope {
-    guard let fields = value.list, fields.count == 5, let account = fields[0].string,
-      !account.isEmpty,
-      let box = fields[1].string, let id = fields[2].integer, let messageID = fields[3].string,
-      let source = fields[4].string, source.utf8.count <= 2_000_000
-    else { throw IntegrationError.scriptFailed }
-    let raw = Data(source.utf8)
-    return .init(
-      identity: .init(
-        accountID: account,
-        messageID: messageID.isEmpty ? nil : messageID,
-        localID: id,
-        mailbox: box,
-        contentHash: stableHash(raw)
-      ),
-      raw: raw
-    )
   }
 }

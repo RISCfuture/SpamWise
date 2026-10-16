@@ -5,7 +5,23 @@ import SpamWiseCore
 
 @Suite
 // swiftlint:disable:next type_name
-struct `bounded IMAP integration` {
+struct `integrates bounded IMAP messages` {
+  private static let validation =
+    "* OK ready\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS1 OK capability\r\nS2 OK login\r\n"
+    + "* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS3 OK capability\r\n"
+    + "* LIST (\\Junk) \"/\" \"Junk Mail\"\r\n* LIST (\\Sent) \"/\" \"Sent\"\r\nS4 OK list\r\n"
+    + "* OK [UIDVALIDITY 33] selected\r\n* 0 EXISTS\r\nS5 OK examine\r\n"
+
+  private static func fetched(_ raw: String, uid: Int, tag: Int) -> String {
+    "* 1 FETCH (UID \(uid) RFC822.SIZE \(raw.utf8.count) BODY[] {\(raw.utf8.count)}\r\n\(raw))\r\nS\(tag) OK fetched\r\n"
+  }
+  private static func selection(validity: Int, tag: Int) -> String {
+    "* OK [UIDVALIDITY \(validity)] selected\r\n* 1 EXISTS\r\nS\(tag) OK selected\r\n"
+  }
+
+  private static func selected(validity: Int) -> String {
+    "* OK ready\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS1 OK capability\r\nS2 OK login\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS3 OK capability\r\n* OK [UIDVALIDITY \(validity)] selected\r\n* 1 EXISTS\r\nS4 OK select\r\n"
+  }
   @Test
   func `parses fragmented literal mailboxes and rejects oversized literals`() async throws {
     let transport = IMAPFixtureTransport(
@@ -378,19 +394,4 @@ struct `bounded IMAP integration` {
     #expect(await !deniedTransport.commands.contains { $0.contains("UID MOVE") })
   }
 
-  private static func fetched(_ raw: String, uid: Int, tag: Int) -> String {
-    "* 1 FETCH (UID \(uid) RFC822.SIZE \(raw.utf8.count) BODY[] {\(raw.utf8.count)}\r\n\(raw))\r\nS\(tag) OK fetched\r\n"
-  }
-  private static func selection(validity: Int, tag: Int) -> String {
-    "* OK [UIDVALIDITY \(validity)] selected\r\n* 1 EXISTS\r\nS\(tag) OK selected\r\n"
-  }
-
-  private static let validation =
-    "* OK ready\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS1 OK capability\r\nS2 OK login\r\n"
-    + "* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS3 OK capability\r\n"
-    + "* LIST (\\Junk) \"/\" \"Junk Mail\"\r\n* LIST (\\Sent) \"/\" \"Sent\"\r\nS4 OK list\r\n"
-    + "* OK [UIDVALIDITY 33] selected\r\n* 0 EXISTS\r\nS5 OK examine\r\n"
-  private static func selected(validity: Int) -> String {
-    "* OK ready\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS1 OK capability\r\nS2 OK login\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS3 OK capability\r\n* OK [UIDVALIDITY \(validity)] selected\r\n* 1 EXISTS\r\nS4 OK select\r\n"
-  }
 }

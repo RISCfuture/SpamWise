@@ -3,6 +3,14 @@ import ImageIO
 
 /// Bounded extraction of inline base64 PNG and JPEG MIME parts, without remote resources.
 public struct EmbeddedImages: Sendable {
+  private static let maximumMessageBytes = 2_000_000
+  private static let maximumHeaderBytes = 65_536
+  private static let maximumTotalImageBytes = 1_048_576
+  private static let maximumTotalImagePixels = 8_000_000
+  private static let maximumImageDimension = 4096
+  private static let maximumNestingDepth = 12
+  private static let maximumParts = 128
+  private static let maximumBoundaryCharacters = 200
   /// Maximum inline images accepted for one message.
   public static let maximumImages = 4
   /// Maximum decoded bytes in one image.
@@ -13,9 +21,25 @@ public struct EmbeddedImages: Sendable {
   /// Creates the bounded MIME image extractor.
   public init() {}
 
+  private static func pixels(in data: Data, mime: String) throws -> Int {
+    let options = [kCGImageSourceShouldCache: false] as CFDictionary
+    guard let source = CGImageSourceCreateWithData(data as CFData, options),
+      CGImageSourceGetCount(source) == 1,
+      let type = CGImageSourceGetType(source) as String?,
+      type == (mime == "image/png" ? "public.png" : "public.jpeg"),
+      let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, options) as? [CFString: Any],
+      let width = properties[kCGImagePropertyPixelWidth] as? Int,
+      let height = properties[kCGImagePropertyPixelHeight] as? Int,
+      width > 0, height > 0, width <= Self.maximumImageDimension,
+      height <= Self.maximumImageDimension,
+      width <= maximumImagePixels / height
+    else { throw ParseError.tooLarge }
+    return width * height
+  }
+
   /// Extracts validated raster bytes; unsupported or excessive MIME fails without image decoding.
   public func extract(from raw: Data) throws -> [Data] {
-    guard raw.count <= 2_000_000 else { throw ParseError.tooLarge }
+    guard raw.count <= Self.maximumMessageBytes else { throw ParseError.tooLarge }
     let source = String(decoding: raw, as: UTF8.self).replacingOccurrences(of: "\r\n", with: "\n")
     var state = Extraction()
     try visit(source, depth: 0, state: &state)
@@ -24,7 +48,9 @@ public struct EmbeddedImages: Sendable {
 
   private func visit(_ source: String, depth: Int, state: inout Extraction) throws {
     state.parts += 1
-    guard depth <= 12, state.parts <= 128 else { throw ParseError.tooLarge }
+    guard depth <= Self.maximumNestingDepth, state.parts <= Self.maximumParts else {
+      throw ParseError.tooLarge
+    }
     let (headers, body) = try split(source)
     let contentType = headers["content-type"] ?? "text/plain"
     let mime = contentType.components(separatedBy: ";")[0].lowercased().trimmingCharacters(
@@ -61,13 +87,14 @@ public struct EmbeddedImages: Sendable {
     else { throw ParseError.tooLarge }
     let pixels = try Self.pixels(in: data, mime: mime)
     state.bytes += data.count; state.pixels += pixels
-    guard state.bytes <= 1_048_576, state.pixels <= 8_000_000 else { throw ParseError.tooLarge }
+    guard state.bytes <= Self.maximumTotalImageBytes, state.pixels <= Self.maximumTotalImagePixels
+    else { throw ParseError.tooLarge }
     state.images.append(data)
   }
 
   private func split(_ source: String) throws -> ([String: String], String) {
     guard let separator = source.range(of: "\n\n"),
-      source[..<separator.lowerBound].utf8.count <= 65_536
+      source[..<separator.lowerBound].utf8.count <= Self.maximumHeaderBytes
     else {
       throw ParseError.malformed
     }
@@ -105,23 +132,10 @@ public struct EmbeddedImages: Sendable {
     let range = match.range(at: 1).location == NSNotFound ? match.range(at: 2) : match.range(at: 1)
     guard let range = Range(range, in: contentType) else { throw ParseError.malformed }
     let value = String(contentType[range])
-    guard !value.isEmpty, value.count <= 200 else { throw ParseError.malformed }
+    guard !value.isEmpty, value.count <= Self.maximumBoundaryCharacters else {
+      throw ParseError.malformed
+    }
     return value
-  }
-
-  private static func pixels(in data: Data, mime: String) throws -> Int {
-    let options = [kCGImageSourceShouldCache: false] as CFDictionary
-    guard let source = CGImageSourceCreateWithData(data as CFData, options),
-      CGImageSourceGetCount(source) == 1,
-      let type = CGImageSourceGetType(source) as String?,
-      type == (mime == "image/png" ? "public.png" : "public.jpeg"),
-      let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, options) as? [CFString: Any],
-      let width = properties[kCGImagePropertyPixelWidth] as? Int,
-      let height = properties[kCGImagePropertyPixelHeight] as? Int,
-      width > 0, height > 0, width <= 4096, height <= 4096,
-      width <= maximumImagePixels / height
-    else { throw ParseError.tooLarge }
-    return width * height
   }
 
   private struct Extraction {

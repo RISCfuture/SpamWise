@@ -24,6 +24,24 @@ struct Options {
     --budget-store selects separate accounting and requires separate spending authorization.
     """
   var values: [String: String] = [:]
+  var reviewedPartition: ReviewedCorpusPartition {
+    get throws {
+      guard let partition = ReviewedCorpusPartition(rawValue: values["partition"] ?? "held-out")
+      else {
+        throw EvaluationError.arguments
+      }
+      return partition
+    }
+  }
+  var model: String { values["model"] ?? "mock" }
+  var strength: FilteringStrength {
+    get throws {
+      guard let strength = FilteringStrength(rawValue: values["strength"] ?? "balanced") else {
+        throw EvaluationError.arguments
+      }
+      return strength
+    }
+  }
   init(_ arguments: [String]) throws {
     let allowed: Set<String> = [
       "input", "model", "strength", "cache", "output", "state", "mock-responses",
@@ -48,24 +66,6 @@ struct Options {
     }
     _ = try reviewedPartition
   }
-  var reviewedPartition: ReviewedCorpusPartition {
-    get throws {
-      guard let partition = ReviewedCorpusPartition(rawValue: values["partition"] ?? "held-out")
-      else {
-        throw EvaluationError.arguments
-      }
-      return partition
-    }
-  }
-  var model: String { values["model"] ?? "mock" }
-  var strength: FilteringStrength {
-    get throws {
-      guard let strength = FilteringStrength(rawValue: values["strength"] ?? "balanced") else {
-        throw EvaluationError.arguments
-      }
-      return strength
-    }
-  }
   func required(_ name: String) throws -> String {
     guard let value = values[name], !value.isEmpty else { throw EvaluationError.arguments }
     return value
@@ -78,20 +78,28 @@ struct Options {
     return value
   }
 }
-enum EvaluationError: Error, LocalizedError {
+enum EvaluationError: CorpusEvaluationError, LocalizedError {
   case arguments, emptyCorpus, duplicateMessage, missingMock, liveDisabled, missingKey,
     oversizedFile
-  var errorDescription: String? {
+  var errorDescription: String? { String(localized: "Couldn’t evaluate the corpus.") }
+  var failureReason: String? {
     switch self {
-      case .arguments: "Invalid arguments. Use --help for usage."
-      case .emptyCorpus: "No labeled .eml files found."
+      case .arguments: String(localized: "Invalid arguments. Use --help for usage.")
+      case .emptyCorpus: String(localized: "No labeled .eml files found.")
       case .duplicateMessage:
-        "Duplicate message bytes in corpus; remove duplicates before calibration."
-      case .missingMock: "No mock response exists for this message hash."
-      case .liveDisabled: "Live evaluation requires SPAMWISE_LIVE_API=1. No provider call was made."
+        String(
+          localized: "Duplicate message bytes in corpus; remove duplicates before calibration."
+        )
+      case .missingMock: String(localized: "No mock response exists for this message hash.")
+      case .liveDisabled:
+        String(
+          localized: "Live evaluation requires SPAMWISE_LIVE_API=1. No provider call was made."
+        )
       case .missingKey:
-        "Set the selected provider's API key for this process. The CLI never saves it."
-      case .oversizedFile: "Corpus message exceeds the 2 MB parser budget."
+        String(
+          localized: "Set the selected provider’s API key for this process. The CLI never saves it."
+        )
+      case .oversizedFile: String(localized: "Corpus message exceeds the 2 MB parser budget.")
     }
   }
 }

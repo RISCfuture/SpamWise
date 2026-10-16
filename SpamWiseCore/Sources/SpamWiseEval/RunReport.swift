@@ -3,6 +3,8 @@ import SpamWiseCore
 import Evaluation
 
 struct RunReport: Encodable {
+  private static let minimumGoodExamples = 1500
+  private static let tokensPerMillion: Double = 1_000_000
   var model: String
   var strength: FilteringStrength
   var metrics: EvaluationReport
@@ -44,7 +46,7 @@ struct RunReport: Encodable {
       Uncalibrated. Candidate thresholds are descriptive only; validate on a separate held-out \
       corpus before production.
       """
-    if report.binary.good < 1500 {
+    if report.binary.good < Self.minimumGoodExamples {
       calibrationStatus +=
         """
          Fewer than 1,500 good examples cannot establish the 0.2% rule-of-three target, even with \
@@ -64,7 +66,7 @@ struct RunReport: Encodable {
       newEstimatedCostUSD =
         (Double(newUsage.input - newUsage.cached) * inputPrice
           + Double(newUsage.cached) * cachePrice + Double(newUsage.output) * outputPrice)
-        / 1_000_000
+        / Self.tokensPerMillion
     }
     costNote =
       """

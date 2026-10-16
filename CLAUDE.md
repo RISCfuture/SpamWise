@@ -147,3 +147,45 @@ The final hardened-runtime archive and Developer ID export pass without warnings
 An optional five-fixture live Haiku CLI evaluation stopped at login Keychain access before the evaluator launched. The pending reader was canceled without retrying; no key was output or written. Before/after budget snapshots show zero new reservations and zero paid calls. Prior signed-app measured Haiku verification remains 990 input / 78 output tokens, estimated $0.000138; additional roadmap spend remains $0. The $150 ceiling is not a spending target.
 
 Final installed-app acceptance at 10:06 PDT: the exact `~/Applications/SpamWise.app` process connected to both configured Mail accounts without a new permission prompt. One authorized synthetic Google-to-iCloud message, `[SpamWise Probe] Final acceptance 644e5a3f E`, arrived uniquely in iCloud Inbox (local ID 63318 observed at 10:07:26 PDT). No ordinary-mail scan, move or paid classification was initiated. During the following observation window the shared incoming/body callback timestamps remained absent; MailKit callback acceptance remains unresolved. The installed extension process launched from the exact installed path (PID 31718), but this does not establish a body callback. A separate unowned Xcode app/extension registration was left untouched. Dry run remains enabled, onboarding incomplete and the AppleScript route selected. The prior generated cross-account move checks remain the evidence for Apple Mail actions.
+
+## Repository conventions and interface review — 2026-10-16
+
+Reviewed every project-owned code file against the Swift and SwiftUI conventions in
+`~/Repositories/shell-files/dotfiles/agents/skills/`. The exhaustive 140-file ledger
+and compatibility decisions are in `docs/conventions-and-design-review.md`.
+Declaration ordering is enforced by SwiftLint; public APIs use DocC, errors expose
+localized categories and reasons, production bounds are named, and Swift Testing
+cases use prose identifiers. Existing persistence, prompt and wire identities are
+preserved. Signed integer API/storage fields and collection indices retain their
+existing validation and compatibility contracts.
+
+The design follows Apple's native Settings, toolbar, inspector, layout and disclosure
+patterns. Activity has four columns and an inspector; Settings separates General,
+Accounts, Rules, Preferences and Advanced. First-run setup occupies the main window;
+General can reopen its four steps as a sheet. Conditional controls and disclosures
+reduce persistent explanatory text. Help buttons use the native AppKit component.
+Spanish and French translations cover the revised interface. UI-test preferences
+and fixture storage are isolated from production data.
+
+The native review exercises all 27 view/representable types. It exposed status-footers
+overlapping native scrollable forms; the footers now have separate layout space.
+Permission guidance appears once in the Mail form. Rule editing keeps its draft and
+error visible until persistence succeeds; IMAP transport selection is disabled while
+its connection operation is busy. The preview denied-state fixture includes the
+actual localized failure text.
+
+This review uses offline fixtures and a denied Apple Events test boundary. No real
+Mail actions, provider requests or credential changes are part of the review; its
+new API spend is zero. Existing live integration and calibration limitations remain.
+
+Final verification: all 72 package tests pass (live API opt-in skipped), both XCTest
+UI flows pass with zero failures in 71.713 seconds, and app/extension builds are
+warning-free. Strict SwiftLint, Swift formatting, shellcheck, YAML/Markdown lint,
+plist checks, 420-entry localization coverage, Help links/indexes, Store concurrency
+and offline evaluation checks pass. Final UI result:
+`.build/ca664761-7b58-458e-9bda-cd338002266a/DerivedData/Logs/Test/Test-SpamWise-2026.10.16_12-03-01--0700.xcresult`.
+Developer ID archive/export and deep strict signature verification pass; this review
+does not repeat notarization or install the rewritten app. Native evidence covers
+English, Spanish and French, with Activity at 720 pixels wide and setup sheets at
+560 × 500. Settings remained 800 × 628 despite attempted resizing; smaller Settings
+layouts are unverified. No remaining overlap was observed in the final checks.

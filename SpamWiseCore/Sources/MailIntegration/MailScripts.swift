@@ -3,15 +3,7 @@ public import SpamWiseCore
 
 /// Escaped AppleScript programs for bounded, account-scoped Mail access.
 public enum MailScripts {
-  /// Escapes text for use as an AppleScript string literal.
-  public static func literal(_ value: String) -> String {
-    "\""
-      + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(
-        of: "\"",
-        with: "\\\""
-      ).replacingOccurrences(of: "\r", with: "\\r").replacingOccurrences(of: "\n", with: "\\n")
-      .replacingOccurrences(of: "\t", with: "\\t") + "\""
-  }
+  private static let maximumPageSize = 1000
   /// Shared account and message resolution handlers.
   public static let helpers = """
     on collectMatches(boxes, wantedID, wantedLocal)
@@ -40,6 +32,39 @@ public enum MailScripts {
         end tell
     end envelope
     """
+  /// Script requiring exactly one selected message.
+  public static let selected =
+    helpers + "\n" + """
+      with timeout of 8 seconds
+          tell application "Mail"
+              set selectedMessages to selection
+              if (count of selectedMessages) is not 1 then error "Select one disposable probe" \
+      number -1701
+              return my envelope(item 1 of selectedMessages)
+          end tell
+      end timeout
+      """
+  /// Reads Mail account identifiers and display names.
+  public static let accounts = """
+    with timeout of 8 seconds
+        tell application "Mail"
+            set resultRows to {}
+            repeat with a in accounts
+                set end of resultRows to {id of a, name of a}
+            end repeat
+            return resultRows
+        end tell
+    end timeout
+    """
+  /// Escapes text for use as an AppleScript string literal.
+  public static func literal(_ value: String) -> String {
+    "\""
+      + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(
+        of: "\"",
+        with: "\\\""
+      ).replacingOccurrences(of: "\r", with: "\\r").replacingOccurrences(of: "\n", with: "\\n")
+      .replacingOccurrences(of: "\t", with: "\\t") + "\""
+  }
   /// Resolves exactly one account-scoped message and rejects stale content.
   public static func lookup(
     _ identity: MessageIdentity,
@@ -133,7 +158,7 @@ public enum MailScripts {
               set candidates to messages of \(role)
               set n to count of candidates
               set firstIndex to \(max(0, offset) + 1)
-              set lastIndex to firstIndex + \(max(1, min(1000, limit))) - 1
+              set lastIndex to firstIndex + \(max(1, min(maximumPageSize, limit))) - 1
               if lastIndex > n then set lastIndex to n
               if firstIndex <= lastIndex then
                   repeat with i from firstIndex to lastIndex
@@ -145,28 +170,4 @@ public enum MailScripts {
       end timeout
       """
   }
-  /// Script requiring exactly one selected message.
-  public static let selected =
-    helpers + "\n" + """
-      with timeout of 8 seconds
-          tell application "Mail"
-              set selectedMessages to selection
-              if (count of selectedMessages) is not 1 then error "Select one disposable probe" \
-      number -1701
-              return my envelope(item 1 of selectedMessages)
-          end tell
-      end timeout
-      """
-  /// Reads Mail account identifiers and display names.
-  public static let accounts = """
-    with timeout of 8 seconds
-        tell application "Mail"
-            set resultRows to {}
-            repeat with a in accounts
-                set end of resultRows to {id of a, name of a}
-            end repeat
-            return resultRows
-        end tell
-    end timeout
-    """
 }

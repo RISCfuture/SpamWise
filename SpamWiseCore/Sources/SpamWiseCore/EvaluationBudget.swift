@@ -1,11 +1,24 @@
 public import Foundation
 
+/// Failures while configuring or reserving provider spending.
+public protocol BudgetFailure: Error {}
+
 /// A spending ceiling or invalid budget request prevented a provider call.
-public enum BudgetError: Error, Sendable, LocalizedError {
-  case invalidAmount, exhausted
+public enum BudgetError: BudgetFailure, Sendable, LocalizedError {
+  /// The requested ceiling or reservation is not a valid amount.
+  case invalidAmount
+  /// The reservation would exceed the authorized ceiling.
+  case exhausted
   /// User-visible reason that classification was not attempted.
   public var errorDescription: String? {
-    String(localized: "Evaluation spending limit reached or invalid. No provider call was made.")
+    String(localized: "Evaluation spending is unavailable. No provider call was made.")
+  }
+  /// The budget constraint that prevented the operation.
+  public var failureReason: String? {
+    switch self {
+      case .invalidAmount: String(localized: "The requested spending amount is invalid.")
+      case .exhausted: String(localized: "The evaluation spending limit has been reached.")
+    }
   }
 }
 /// Conservative lifetime spending commitments, separate from measured token-cost estimates.

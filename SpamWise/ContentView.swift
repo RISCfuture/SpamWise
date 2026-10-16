@@ -2,180 +2,131 @@ import SwiftUI
 import SpamWiseCore
 
 struct ContentView: View {
-  @Bindable var model: AppModel
-  @State private var selection: UUID?
-  var selected: DecisionRecord? { model.state.records.first { $0.id == selection } }
+  let model: AppModel
+
   var body: some View {
-    VStack(spacing: 0) {
-      HStack {
-        VStack(alignment: .leading, spacing: 5) {
-          Text("Activity").accessibilityIdentifier("activity.title").font(.largeTitle.bold())
-          Label(
-            model.state.settings.paused
-              ? "Filtering paused"
-              : model.state.settings.dryRun
-                ? "Dry run — mail stays unchanged" : "Filtering validated accounts",
-            systemImage: model.state.settings.paused ? "pause.circle" : "shield.checkered"
-          )
-          .foregroundStyle(.secondary).accessibilityIdentifier("activity.mode")
-        }
-        Spacer()
-        if model.busy { ProgressView().controlSize(.small); Button("Cancel") { model.cancel() } }
-        Button(model.state.settings.paused ? "Resume filtering" : "Pause filtering") {
-          model.togglePause()
-        }.accessibilityIdentifier("activity.pause")
-        Button("Dry run recent mail") { model.scan() }.disabled(model.busy || !model.storageReady)
-        Button("Review digest") { model.showDigest = true }
-        SettingsLink { Image(systemName: "gearshape") }.accessibilityLabel("Open Settings")
-          .accessibilityIdentifier("activity.settings")
-        HelpButton(page: "how-decisions-are-made")
-      }.padding(22)
-      Divider()
-      HSplitView {
-        Table(model.state.records.reversed(), selection: $selection) {
-          TableColumn("Time") { row in Text(row.date, format: .dateTime.hour().minute()) }.width(60)
-          TableColumn("Sender", value: \.sender).width(min: 100, ideal: 160)
-          TableColumn("Subject") { row in
-            Text(row.subject).accessibilityIdentifier("activity.subject.\(row.id)")
-          }.width(min: 130, ideal: 230)
-          TableColumn("Verdict") { row in VerdictBadge(record: row) }.width(100)
-          TableColumn("Confidence") { row in Text(row.verdict.map { "\($0.confidence)%" } ?? "—") }
-            .width(80)
-          TableColumn("Reason") { row in Text(row.decision.reason).lineLimit(2) }.width(
-            min: 130,
-            ideal: 220
-          )
-        }.overlay {
-          if model.state.records.isEmpty {
-            ContentUnavailableView(
-              "No decisions yet",
-              systemImage: "tray",
-              description: model.state.settings.onboardingComplete
-                ? Text("Try a dry run on recent mail.")
-                : Text("Finish setup, then try a dry run on recent mail.")
-            )
-          }
-        }
-        if let selected {
-          DecisionDetailView(model: model, row: selected).frame(
-            minWidth: 270,
-            idealWidth: 300,
-            maxWidth: 380
-          )
-        }
+    Group {
+      if !model.hasLoadedState {
+        ProgressView().controlSize(.large)
+          .frame(minWidth: 720, minHeight: 460)
+      } else if !model.state.settings.onboardingComplete {
+        OnboardingView(model: model)
+      } else {
+        ActivityView(model: model)
       }
-      Divider()
-      HStack {
-        Text(
-          "Decisions today: \(model.today.count) · Junk: \(model.today.filter { $0.decision.label == .junk }.count) · Review: \(model.today.filter { $0.decision.label == .review }.count)"
-        )
-        Spacer()
-        Text("Month API cost ≈ \(model.monthCost, format: .currency(code: "USD"))").help(
-          "Estimated cost from measured or explicitly estimated token counts; cache-write premiums may differ."
-        )
-      }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, 20).padding(.top, 10)
-      HStack {
-        Text(model.status).font(.caption).textSelection(.enabled).accessibilityIdentifier(
-          "activity.status"
-        )
-        Spacer()
-      }.padding(.horizontal, 20).padding(.bottom, 12).padding(.top, 6)
-    }
-    .frame(minWidth: 900, minHeight: 560)
-    .sheet(isPresented: $model.showDigest) { ReviewDigestView(model: model) }
-    .sheet(
-      isPresented: Binding(
-        get: { !model.state.settings.onboardingComplete || model.showSetup },
-        set: { model.showSetup = $0 }
-      )
-    ) {
-      OnboardingView(model: model).interactiveDismissDisabled(
-        !model.state.settings.onboardingComplete
-      )
     }
   }
 }
 
-struct DecisionDetailView: View {
-  var model: AppModel
-  var row: DecisionRecord
+private struct ActivityView: View {
+  @Bindable var model: AppModel
+  @State private var selection: UUID?
+  @State private var showsInspector = false
+
+  private var selected: DecisionRecord? {
+    model.state.records.first { $0.id == selection }
+  }
+
   var body: some View {
-    ScrollView {
-      VStack(alignment: .leading, spacing: 14) {
-        Text(row.subject).font(.title3.bold())
-        Text(row.sender).foregroundStyle(.secondary).textSelection(.enabled)
-        VerdictBadge(record: row)
-        Text(row.decision.reason).textSelection(.enabled)
-        LabeledContent("Path", value: row.path)
-        LabeledContent("Intended action", value: row.decision.action.localizedTitle)
-        LabeledContent("Outcome", value: row.outcome.localizedTitle)
-        if let error = row.actionError {
-          Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+    VStack(spacing: 0) {
+      Table(model.state.records.reversed(), selection: $selection) {
+        TableColumn("Time") { row in
+          Text(row.date, format: .dateTime.hour().minute())
+        }.width(min: 60, ideal: 75)
+        TableColumn("Sender", value: \.sender).width(min: 120, ideal: 180)
+        TableColumn("Subject") { row in
+          Text(row.subject).accessibilityIdentifier("activity.subject.\(row.id)")
+        }.width(min: 160, ideal: 320)
+        TableColumn("Verdict") { row in
+          VerdictBadge(label: row.decision.label)
+        }.width(min: 90, ideal: 110)
+      }
+      .overlay {
+        if model.state.records.isEmpty {
+          ContentUnavailableView {
+            Label("No decisions yet", systemImage: "tray")
+          } description: {
+            Text("Try a dry run to preview how your mail will be classified.")
+          }
         }
-        if let correction = row.correctedLabel {
-          Text("User corrected to \(correction.localizedTitle)").accessibilityIdentifier(
-            "correction.label"
-          )
+      }
+      .navigationTitle("Activity")
+      .toolbar {
+        ToolbarItemGroup {
+          Button(model.state.settings.paused ? "Resume filtering" : "Pause filtering") {
+            model.togglePause()
+          }.accessibilityIdentifier("activity.pause")
+          Button("Dry run recent mail") { model.scan() }
+            .disabled(model.busy || !model.storageReady)
+            .accessibilityIdentifier("activity.scan")
+          Button("Review digest") { model.showDigest = true }
+            .accessibilityIdentifier("activity.digest")
         }
-        if let usage = row.verdict?.usage {
-          Text(
-            "\(usage.input) input · \(usage.output) output · \(usage.cached) cached tokens (\(usage.estimated ? "estimated" : "measured"))"
-          ).font(.caption)
-          Text("Estimated cost: \(usage.estimatedCost, format: .currency(code: "USD"))").font(
-            .caption
-          )
+        ToolbarItem {
+          Button("Show details", systemImage: "sidebar.right") { showsInspector.toggle() }
+            .disabled(selected == nil)
+            .accessibilityIdentifier("activity.inspector")
         }
-        Text("Latency: \(row.latency, specifier: "%.2f") s").font(.caption)
-        HStack {
-          Button("Mark as Good") { model.correct(row, label: .inbox) }
-            .accessibilityIdentifier("correction.good")
-          Button("Mark as Junk") { model.correct(row, label: .junk) }
-            .accessibilityIdentifier("correction.junk")
-        }.disabled(model.busy || row.path == "verification")
-        Button("Mark as Review") { model.correct(row, label: .review) }
-          .accessibilityIdentifier("correction.review").disabled(
-            model.busy || row.path == "verification"
-          )
-        Menu("Correct entire domain…") {
-          Button("Allow this domain") { model.correct(row, label: .inbox, scope: .domain) }
-            .accessibilityIdentifier("correction.domain.allow")
-          Button("Block this domain") { model.correct(row, label: .junk, scope: .domain) }
-        }.accessibilityIdentifier("correction.domain")
-          .disabled(model.busy || row.evidence?.fromDomain == nil)
-        Text(
-          """
-          Good and Junk corrections create address rules. Review removes the address rule. \
-          Explicit domain rules still apply to that domain.
-          """
-        ).font(.caption).foregroundStyle(.secondary)
-        HelpButton(page: "correcting-mistakes")
-        if let evidence = row.evidence, let data = try? JSONEncoder.pretty.encode(evidence),
-          let text = String(data: data, encoding: .utf8)
-        {
-          Divider(); Text("Evidence").font(.headline)
-          Text(text).font(.system(.caption, design: .monospaced)).textSelection(.enabled)
+      }
+      .inspector(isPresented: $showsInspector) {
+        if let selected {
+          DecisionDetailView(model: model, row: selected)
+            .inspectorColumnWidth(min: 300, ideal: 340, max: 440)
         }
-      }.padding(18)
+      }
+      .onChange(of: selection) { _, value in showsInspector = value != nil }
+      ActivityStatusView(model: model)
     }
+    .frame(minWidth: 720, minHeight: 460)
+    .sheet(isPresented: $model.showDigest) { ReviewDigestView(model: model) }
   }
 }
-struct VerdictBadge: View {
-  var record: DecisionRecord
+
+private struct ActivityStatusView: View {
+  let model: AppModel
+
+  private var mode: LocalizedStringKey {
+    if model.state.settings.paused { return "Filtering paused" }
+    return model.state.settings.dryRun
+      ? "Dry run — mail stays unchanged" : "Filtering validated accounts"
+  }
+
+  private var modeValue: String {
+    if model.state.settings.paused { return "paused" }
+    return model.state.settings.dryRun ? "dryRun" : "active"
+  }
+
   var body: some View {
-    let label = record.decision.label
-    Label(
-      label?.localizedTitle ?? String(localized: "Unclassified"),
-      systemImage: label == .junk
-        ? "tray.full"
-        : label == .review ? "flag" : label == .inbox ? "checkmark.circle" : "questionmark.circle"
-    )
-    .foregroundStyle(label == .junk ? Color.red : label == .review ? Color.orange : Color.primary)
-    .accessibilityLabel("Verdict: \(label?.localizedTitle ?? String(localized: "Unclassified"))")
+    VStack(alignment: .leading, spacing: 6) {
+      Divider()
+      HStack {
+        Text(mode).accessibilityIdentifier("activity.mode").accessibilityValue(modeValue)
+        if model.busy {
+          ProgressView().controlSize(.small)
+          Button("Cancel") { model.cancel() }
+        }
+        Spacer()
+        Text("Today: \(model.today.count, format: .number)")
+          .help(
+            "Decisions today: \(model.today.count, format: .number) · Junk: \(model.today.filter { $0.decision.label == .junk }.count, format: .number) · Review: \(model.today.filter { $0.decision.label == .review }.count, format: .number)"
+          )
+        Text("Month: \(model.monthCost, format: .currency(code: "USD"))")
+          .help("Estimated API cost this month")
+      }
+      if !model.status.isEmpty {
+        Text(model.status).textSelection(.enabled).accessibilityIdentifier("activity.status")
+          .lineLimit(2)
+      }
+    }
+    .font(.callout).foregroundStyle(.secondary)
+    .padding(.horizontal).padding(.bottom, 8)
   }
 }
-extension JSONEncoder {
-  static var pretty: JSONEncoder {
-    let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    return encoder
-  }
-}
+
+#Preview("Activity") { ContentView(model: PreviewHelper.model()) }
+#Preview("Empty activity") { ContentView(model: PreviewHelper.model(empty: true)) }
+#Preview("Paused") { ContentView(model: PreviewHelper.model(paused: true)) }
+
+#Preview("Activity status") { ActivityStatusView(model: PreviewHelper.model()) }
+
+#Preview("Activity table") { ActivityView(model: PreviewHelper.model()) }

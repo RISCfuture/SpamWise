@@ -31,73 +31,15 @@ enum IMAPToken: Equatable, Sendable {
 }
 
 actor IMAPResponseReader {
+  private static let maximumLiteralBytes = 2_000_000
+  private static let maximumResponseBytes = 2_100_000
+  private static let maximumChunkBytes = 65_536
+  private static let maximumTokens = 4096
+  private static let maximumNestingDepth = 12
+  private static let maximumLiterals = 8
   private let transport: any IMAPTransport
   private var buffer = Data()
   init(transport: any IMAPTransport) { self.transport = transport }
-
-  func read() async throws -> [IMAPToken] {
-    var tokens: [IMAPToken] = []
-    var total = 0, literals = 0, depth = 0
-    while true {
-      let line = try await readLine()
-      total += line.count
-      var segment = try Self.tokenize(line)
-      var literalLength: Int?
-      if let last = segment.last, case .atom(let text) = last, text.hasPrefix("{") {
-        guard text.hasSuffix("}"), let length = Int(text.dropFirst().dropLast()), length >= 0 else {
-          throw IMAPError.malformedResponse
-        }
-        guard length <= 2_000_000 else { throw IMAPError.limitExceeded }
-        literalLength = length
-        segment.removeLast()
-      }
-      for token in segment {
-        if token == .open { depth += 1 }
-        if token == .close { depth -= 1 }
-        guard depth >= 0, depth <= 12 else { throw IMAPError.malformedResponse }
-      }
-      tokens += segment
-      guard tokens.count <= 4096, total <= 2_100_000 else { throw IMAPError.limitExceeded }
-      guard let literalLength else {
-        guard depth == 0 else { throw IMAPError.malformedResponse }
-        return tokens
-      }
-      literals += 1
-      total += literalLength
-      guard literals <= 8, total <= 2_100_000 else { throw IMAPError.limitExceeded }
-      tokens.append(.literal(try await readBytes(literalLength)))
-    }
-  }
-
-  private func readLine() async throws -> Data {
-    while true {
-      if let range = buffer.range(of: Data([13, 10])) {
-        guard range.lowerBound <= 65_536 else { throw IMAPError.limitExceeded }
-        let line = Data(buffer[..<range.lowerBound])
-        buffer.removeSubrange(..<range.upperBound)
-        buffer = Data(buffer)
-        return line
-      }
-      guard buffer.count <= 65_536 else { throw IMAPError.limitExceeded }
-      try await appendChunk()
-    }
-  }
-  private func readBytes(_ length: Int) async throws -> Data {
-    while buffer.count < length { try await appendChunk() }
-    let data = Data(buffer.prefix(length))
-    buffer.removeFirst(length)
-    buffer = Data(buffer)
-    return data
-  }
-  private func appendChunk() async throws {
-    try Task.checkCancellation()
-    let chunk = try await transport.receive()
-    guard !chunk.isEmpty else { throw IMAPError.unavailable }
-    guard chunk.count <= 65_536, buffer.count + chunk.count <= 2_100_000 else {
-      throw IMAPError.limitExceeded
-    }
-    buffer.append(chunk)
-  }
   private static func tokenize(_ data: Data) throws -> [IMAPToken] {
     let bytes = Array(data)
     var offset = 0
@@ -118,7 +60,7 @@ actor IMAPResponseReader {
           }
           tokens.append(.atom(String(decoding: bytes[start..<offset], as: UTF8.self)))
       }
-      guard tokens.count <= 4096 else { throw IMAPError.limitExceeded }
+      guard tokens.count <= Self.maximumTokens else { throw IMAPError.limitExceeded }
     }
     return tokens
   }
@@ -146,14 +88,98 @@ actor IMAPResponseReader {
     }
     throw IMAPError.malformedResponse
   }
+
+  func read() async throws -> [IMAPToken] {
+    var tokens: [IMAPToken] = []
+    var total = 0, literals = 0, depth = 0
+    while true {
+      let line = try await readLine()
+      total += line.count
+      var segment = try Self.tokenize(line)
+      var literalLength: Int?
+      if let last = segment.last, case .atom(let text) = last, text.hasPrefix("{") {
+        guard text.hasSuffix("}"), let length = Int(text.dropFirst().dropLast()), length >= 0 else {
+          throw IMAPError.malformedResponse
+        }
+        guard length <= Self.maximumLiteralBytes else { throw IMAPError.limitExceeded }
+        literalLength = length
+        segment.removeLast()
+      }
+      for token in segment {
+        if token == .open { depth += 1 }
+        if token == .close { depth -= 1 }
+        guard depth >= 0, depth <= Self.maximumNestingDepth else {
+          throw IMAPError.malformedResponse
+        }
+      }
+      tokens += segment
+      guard tokens.count <= Self.maximumTokens, total <= Self.maximumResponseBytes else {
+        throw IMAPError.limitExceeded
+      }
+      guard let literalLength else {
+        guard depth == 0 else { throw IMAPError.malformedResponse }
+        return tokens
+      }
+      literals += 1
+      total += literalLength
+      guard literals <= Self.maximumLiterals, total <= Self.maximumResponseBytes else {
+        throw IMAPError.limitExceeded
+      }
+      tokens.append(.literal(try await readBytes(literalLength)))
+    }
+  }
+
+  private func readLine() async throws -> Data {
+    while true {
+      if let range = buffer.range(of: Data([13, 10])) {
+        guard range.lowerBound <= Self.maximumChunkBytes else { throw IMAPError.limitExceeded }
+        let line = Data(buffer[..<range.lowerBound])
+        buffer.removeSubrange(..<range.upperBound)
+        buffer = Data(buffer)
+        return line
+      }
+      guard buffer.count <= Self.maximumChunkBytes else { throw IMAPError.limitExceeded }
+      try await appendChunk()
+    }
+  }
+  private func readBytes(_ length: Int) async throws -> Data {
+    while buffer.count < length { try await appendChunk() }
+    let data = Data(buffer.prefix(length))
+    buffer.removeFirst(length)
+    buffer = Data(buffer)
+    return data
+  }
+  private func appendChunk() async throws {
+    try Task.checkCancellation()
+    let chunk = try await transport.receive()
+    guard !chunk.isEmpty else { throw IMAPError.unavailable }
+    guard chunk.count <= Self.maximumChunkBytes,
+      buffer.count + chunk.count <= Self.maximumResponseBytes
+    else {
+      throw IMAPError.limitExceeded
+    }
+    buffer.append(chunk)
+  }
 }
 
 actor IMAPSession {
+  private static let maximumCommandBytes = 60_000
+  private static let maximumResponseRows = 2048
+  private static let maximumCommandResponseBytes = 4_200_000
+  private static let maximumQuotedBytes = 8192
   let reader: IMAPResponseReader
   let transport: any IMAPTransport
   private var tag = 0
   init(transport: any IMAPTransport) {
     self.transport = transport; reader = .init(transport: transport)
+  }
+  static func quote(_ value: String) throws -> String {
+    guard !value.isEmpty, value.utf8.count <= Self.maximumQuotedBytes,
+      value.utf8.allSatisfy({ $0 >= 32 && $0 < 127 })
+    else { throw IMAPError.invalidConfiguration }
+    return "\""
+      + value.replacingOccurrences(of: "\\", with: "\\\\")
+      .replacingOccurrences(of: "\"", with: "\\\"") + "\""
   }
 
   func open(configuration: IMAPConfiguration, credential: IMAPCredential) async throws -> Set<
@@ -194,7 +220,9 @@ actor IMAPSession {
   }
   func command(_ command: String) async throws -> [[IMAPToken]] {
     try Task.checkCancellation()
-    guard !command.contains("\r"), !command.contains("\n"), command.utf8.count <= 60_000 else {
+    guard !command.contains("\r"), !command.contains("\n"),
+      command.utf8.count <= Self.maximumCommandBytes
+    else {
       throw IMAPError.invalidConfiguration
     }
     tag += 1
@@ -202,7 +230,7 @@ actor IMAPSession {
     try await transport.send(Data("\(identifier) \(command)\r\n".utf8))
     var rows: [[IMAPToken]] = []
     var bytes = 0
-    for _ in 0..<2048 {
+    for _ in 0..<Self.maximumResponseRows {
       let row = try await reader.read()
       guard let first = row.first else { throw IMAPError.malformedResponse }
       if first.isAtom(identifier) {
@@ -219,17 +247,9 @@ actor IMAPSession {
           count + (token.text?.utf8.count ?? 1)
         }
       }
-      guard bytes <= 4_200_000 else { throw IMAPError.limitExceeded }
+      guard bytes <= Self.maximumCommandResponseBytes else { throw IMAPError.limitExceeded }
       rows.append(row)
     }
     throw IMAPError.limitExceeded
-  }
-  static func quote(_ value: String) throws -> String {
-    guard !value.isEmpty, value.utf8.count <= 8192,
-      value.utf8.allSatisfy({ $0 >= 32 && $0 < 127 })
-    else { throw IMAPError.invalidConfiguration }
-    return "\""
-      + value.replacingOccurrences(of: "\\", with: "\\\\")
-      .replacingOccurrences(of: "\"", with: "\\\"") + "\""
   }
 }

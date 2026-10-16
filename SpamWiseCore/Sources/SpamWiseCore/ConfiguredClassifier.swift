@@ -2,6 +2,8 @@ import Foundation
 
 /// Resolves explicit provider settings for every request without silently changing backends.
 public struct ConfiguredClassifier: Classifier {
+  private static let haikuReservationUSD = 0.10
+  private static let otherModelReservationUSD = 1.0
   private let store: Store
   private let credential: @Sendable (ModelBackend) throws -> String
   /// Reads current settings with an optional provider-specific credential boundary.
@@ -41,7 +43,8 @@ public struct ConfiguredClassifier: Classifier {
         return try await BudgetedClassifier(
           classifier,
           store: store,
-          upperBoundUSD: modelID == "claude-haiku-5-5" ? 0.10 : 1.0
+          upperBoundUSD: modelID == "claude-haiku-5-5"
+            ? Self.haikuReservationUSD : Self.otherModelReservationUSD
         ).classify(input)
     }
   }

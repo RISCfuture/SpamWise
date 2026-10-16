@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import SpamWiseCore
-@Test(arguments: FilteringStrength.allCases) func `decision threshold branches`(
+@Test(arguments: FilteringStrength.allCases) func `selects actions at each decision threshold`(
   _ strength: FilteringStrength
 ) throws {
   #expect(
@@ -76,7 +76,7 @@ func enableActions(_ store: Store) async throws {
     state.settings.validatedAccounts = ["account-A"]
   }
 }
-@Test func `persist before action and never duplicate`() async throws {
+@Test func `persists before acting and prevents duplicate actions`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   var moved = try envelope().identity
@@ -103,7 +103,7 @@ func enableActions(_ store: Store) async throws {
   #expect(await adapter.actions == [.moveToJunk])
   #expect(try await StateRepository.load(store).records.first?.verdict?.label == .junk)
 }
-@Test func `dry run pause and failure do not act`() async throws {
+@Test func `prevents actions during dry runs pauses and failures`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   let pipeline = Pipeline(
     store: store,
@@ -119,7 +119,9 @@ func enableActions(_ store: Store) async throws {
   )
   #expect(await failing.process(try envelope(), adapter: adapter).outcome == .unclassified)
 }
-@Test func `retry queue is bounded and correction invalidates it`() async throws {
+@Test func `preserves pending retries during previews and invalidates them on correction`()
+  async throws
+{
   let store = try testStore(), adapter = RecordingAdapter()
   let pipeline = Pipeline(
     store: store,
@@ -176,7 +178,7 @@ func enableActions(_ store: Store) async throws {
   #expect(learned.reviewedLabels?.first?.sampleID != nil)
   #expect(learned.learning?.samples.count == 1)
 }
-@Test func `retry consumption stays within the selected account`() async throws {
+@Test func `consumes retries only within the selected account`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   let failed = Pipeline(
     store: store,
@@ -203,7 +205,7 @@ func enableActions(_ store: Store) async throws {
   #expect(state.records.last?.decision.label == .inbox)
   #expect(await adapter.actions.isEmpty)
 }
-@Test func `correction during classification supersedes old verdict`() async throws {
+@Test func `supersedes pending verdicts when a correction arrives`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   let initial = Pipeline(
@@ -224,7 +226,7 @@ func enableActions(_ store: Store) async throws {
   #expect(try await task.value.outcome == .superseded)
   #expect(await adapter.actions == [.moveToInbox])
 }
-@Test func `action failure is separate from verdict`() async throws {
+@Test func `records action failures separately from verdicts`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   await adapter.deny(); try await enableActions(store)
   let pipeline = Pipeline(
@@ -236,7 +238,7 @@ func enableActions(_ store: Store) async throws {
   #expect(record.outcome == .failed)
   #expect(record.actionError != nil)
 }
-@Test func `persistence failure prevents action`() async throws {
+@Test func `prevents actions after persistence fails`() async throws {
   let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
   try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
   let store = try Store(url: dir)

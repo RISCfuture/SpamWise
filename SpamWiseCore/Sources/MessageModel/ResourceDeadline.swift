@@ -1,19 +1,18 @@
 public import Foundation
 import Synchronization
 
+/// Failures caused by an operation exceeding its available time.
+public protocol OperationDeadlineError: Error {}
+
 /// A resource operation that exceeded its wall-clock deadline.
-public enum ResourceDeadlineError: Error, Sendable, LocalizedError {
+public enum ResourceDeadlineError: OperationDeadlineError, Sendable, LocalizedError {
   case timeout
   /// Non-sensitive description of the deadline failure.
-  public var errorDescription: String? { "The operation timed out." }
+  public var errorDescription: String? { String(localized: "The operation timed out.") }
 }
 
 private final class DeadlineRace<T: Sendable>: Sendable {
-  struct State: Sendable {
-    var continuation: CheckedContinuation<T, any Error>?
-    var result: Result<T, any Error>?
-    var tasks: [Task<Void, Never>] = []
-  }
+  static var minimumTimeoutSec: TimeInterval { 0.001 }
   private let state = Mutex(State())
   func install(_ continuation: CheckedContinuation<T, any Error>) {
     let existing = state.withLock { state -> Result<T, any Error>? in
@@ -38,6 +37,11 @@ private final class DeadlineRace<T: Sendable>: Sendable {
     delivery.1.forEach { $0.cancel() }
     delivery.0?.resume(with: result)
   }
+  struct State: Sendable {
+    var continuation: CheckedContinuation<T, any Error>?
+    var result: Result<T, any Error>?
+    var tasks: [Task<Void, Never>] = []
+  }
 }
 /// Returns at the deadline even if a provider ignores cancellation; late results are discarded.
 public func withResourceDeadline<T: Sendable>(
@@ -55,7 +59,8 @@ public func withResourceDeadline<T: Sendable>(
       }
       let timer = Task.detached {
         do {
-          try await Task.sleep(for: .seconds(seconds.isFinite ? max(0.001, seconds) : 0.001))
+          let minimum = DeadlineRace<T>.minimumTimeoutSec
+          try await Task.sleep(for: .seconds(seconds.isFinite ? max(minimum, seconds) : minimum))
           race.finish(.failure(ResourceDeadlineError.timeout))
         } catch {}
       }

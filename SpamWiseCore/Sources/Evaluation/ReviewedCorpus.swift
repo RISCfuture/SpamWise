@@ -7,20 +7,36 @@ public enum ReviewedCorpusPartition: String, Codable, Sendable {
   case training, all
 }
 
+/// Failures that prevent a corpus from being evaluated.
+public protocol CorpusEvaluationError: Error {}
+
 /// Invalid reviewed-corpus input that must be resolved before model calls.
-public enum ReviewedCorpusError: Error, Sendable, LocalizedError {
+public enum ReviewedCorpusError: CorpusEvaluationError, Sendable, LocalizedError {
   case duplicateContent, oversized
   /// Non-sensitive input failure explanation.
   public var errorDescription: String? {
+    String(localized: "Couldn’t evaluate the reviewed corpus.")
+  }
+  /// The input condition that prevents a valid evaluation.
+  public var failureReason: String? {
     switch self {
-      case .duplicateContent: "Duplicate reviewed content; remove duplicates before evaluation."
-      case .oversized: "Reviewed export exceeds its bounded input limits."
+      case .duplicateContent: String(localized: "The reviewed corpus contains duplicate content.")
+      case .oversized: String(localized: "The reviewed export exceeds the supported input limits.")
+    }
+  }
+  /// An available correction to the supplied corpus.
+  public var recoverySuggestion: String? {
+    switch self {
+      case .duplicateContent: String(localized: "Remove duplicate content before evaluation.")
+      case .oversized: nil
     }
   }
 }
 
 /// Selected retained messages and explicit accounting for skipped metadata-only labels.
 public struct ReviewedCorpus: Sendable {
+  private static let maximumLabels = 10_000
+  private static let maximumMessageBytes = 2_000_000
   /// Total JSON bytes accepted from one export.
   public static let maximumExportBytes = 64 * 1024 * 1024
   /// Parsed retained messages, never synthesized MIME.
@@ -30,11 +46,11 @@ public struct ReviewedCorpus: Sendable {
 
   /// Validates all retained content identities before selecting a statistical partition.
   public init(labels: [ReviewedLabel], partition: ReviewedCorpusPartition = .heldOut) throws {
-    guard labels.count <= 10_000 else { throw ReviewedCorpusError.oversized }
+    guard labels.count <= Self.maximumLabels else { throw ReviewedCorpusError.oversized }
     var entries: [Entry] = [], identities: Set<String> = [], missing = 0, excluded = 0
     for label in labels {
       guard let message = label.message else { missing += 1; continue }
-      guard try JSONEncoder().encode(message).count <= 2_000_000 else {
+      guard try JSONEncoder().encode(message).count <= Self.maximumMessageBytes else {
         throw ReviewedCorpusError.oversized
       }
       let identity = LearningSample.identity(for: message)
