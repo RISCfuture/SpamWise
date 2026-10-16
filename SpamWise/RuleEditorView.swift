@@ -9,6 +9,7 @@ struct RuleEditorView: View {
   @State private var showingEditor = false
   @State private var importing = false
   @State private var exporting = false
+  @State private var showsContentRules = false
   @State private var document = RulesDocument(data: Data())
 
   private var selectedRule: SenderRule? { model.state.rules.first { $0.id == selection } }
@@ -53,8 +54,10 @@ struct RuleEditorView: View {
           Button("Export rules…") { exportRules() }.disabled(sortedRules.isEmpty)
         }
       }.disabled(model.busy)
+      Button("Content rules…") { showsContentRules = true }
     }.padding()
       .sheet(isPresented: $showingEditor) { RuleFormView(model: model, rule: editingRule) }
+      .sheet(isPresented: $showsContentRules) { ContentRuleEditorView(model: model) }
       .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
         switch result {
           case .success(let url): model.importRules(url)

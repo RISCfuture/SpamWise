@@ -55,6 +55,9 @@ credible everyday replacement; P1 closes important workflow gaps; P2 broadens
 coverage. SS-01, SS-02 and SS-05 refine existing acceptance work rather than
 creating separate completion criteria for the same work.
 
+Implementation is underway; see [parity progress and verification](docs/spamsieve-parity-progress.md).
+Parent items remain open until their full acceptance criteria are met.
+
 ### Current foundation to retain
 
 | Area | SpamWise today | Remaining distinction |
@@ -174,7 +177,7 @@ creating separate completion criteria for the same work.
   revision trail. Add safe local previews, an unambiguous open-in-Mail action and
   opt-in raw-source export. Offer a redacted diagnostic bundle with no keys or mail
   content by default. Verify that previews never fetch remote resources.
-- [ ] **SS-13 — Bring meaningful statistics into the app.** Match SpamSieve’s
+- [x] **SS-13 — Bring meaningful statistics into the app.** Match SpamSieve’s
   [date-filtered statistics](https://c-command.com/spamsieve/help/statistics) using
   existing evaluator primitives: per-account trends, reviewed mistakes, unresolved
   Review, action failures and provider cost. Show reviewed sample counts and
@@ -196,7 +199,7 @@ creating separate completion criteria for the same work.
   without trusting sender-supplied Authentication-Results. Preserve explicit user
   rule precedence; missing or untrusted authentication remains unknown. Include
   legitimate self-mail, forwarding and mailing-list fixtures before changing gates.
-- [ ] **SS-16 — Back up, restore and migrate learned state safely.** SpamSieve
+- [x] **SS-16 — Back up, restore and migrate learned state safely.** SpamSieve
   documents [training-data transfer/restore](https://c-command.com/spamsieve/help/how-can-i-copy-my-train)
   and [storage management](https://c-command.com/spamsieve/help/settings-storage).
   Go beyond our rules-only import/export: versioned, validated backups of rules,

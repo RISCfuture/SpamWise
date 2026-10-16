@@ -28,6 +28,7 @@ struct AdvancedSettingsView: View {
       }
       LearningSettingsView(model: model)
       EvidenceSettingsView(model: model)
+      Section { BackupSettingsView(model: model) }
       Section {
         DisclosureGroup("Integration details") {
           LabeledContent("Incoming route", value: model.state.settings.route.localizedTitle)

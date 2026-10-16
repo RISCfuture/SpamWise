@@ -110,9 +110,15 @@ final class Counter: Sendable {
     contentHash: "test"
   )
   let scripts = [
-    MailScripts.accounts, MailScripts.selected, MailScripts.recent(limit: 5, offset: 20),
+    MailScripts.accounts, MailScripts.selected, MailScripts.selectedBatch,
+    MailScripts.recent(limit: 5, offset: 20),
+    MailScripts.accountPage(accountID: "test-account", offset: 20, limit: 5),
+    MailScripts.accountPage(accountID: "test-account", offset: 0, limit: 5, role: "junk mailbox"),
+    try MailScripts.resolve(identity, operation: "open targetMessage\nreturn true"),
     try MailScripts.lookup(identity),
     try MailScripts.lookup(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody"),
+    try MailScripts.lookup(identity, action: .orangeFlag, expectedSource: "From: x\n\nbody"),
+    try MailScripts.lookup(identity, action: .orangeBackground, expectedSource: "From: x\n\nbody"),
     try MailScripts.verification(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody"),
     try MailScripts.verification(identity, action: .orangeFlag, expectedSource: "From: x\n\nbody")
   ]
@@ -182,4 +188,20 @@ private actor PagedEvents: AppleEventRunner {
   #expect(first.count == 20)
   #expect(second.map { $0.identity.localID } == [21])
   #expect(wrapped.map { $0.identity.key } == first.map { $0.identity.key })
+  let store = try testStore()
+  try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
+    $0.complete(count: 20, total: 21)
+  }
+  let restarted = try await Store(url: store.url)
+  #expect(try await MailHealthRepository.load(restarted)["account"]?.nextOffset == 20)
+  try await MailHealthRepository.update(store, accountID: "other", name: "Other") {
+    $0.failure = "unavailable"
+  }
+  try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
+    $0.complete(count: 1, total: 21)
+  }
+  let health = try await MailHealthRepository.load(store)
+  #expect(health["account"]?.nextOffset == 0)
+  #expect(health["account"]?.lastCompletedSweep != nil)
+  #expect(health["other"]?.failure == "unavailable")
 }

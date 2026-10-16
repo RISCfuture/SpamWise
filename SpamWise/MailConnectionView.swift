@@ -15,11 +15,22 @@ struct MailConnectionView: View {
         )
     }
     Section {
+      DisclosureGroup("Accounts and scan health") {
+        MailHealthView(model: model)
+      }
       DisclosureGroup("History and Contacts") {
         Text("Use your correspondence and Contacts to recognize trusted senders.")
         Button("Connect Contacts (optional)") { model.requestContacts() }
           .frame(maxWidth: .infinity, alignment: .leading)
         Text(model.contactsStatus).foregroundStyle(.secondary)
+        Toggle(
+          "Exclude my own addresses from automatic trust",
+          isOn: model.mailBinding(\.excludeOwnAddresses)
+        )
+        Text(
+          "Explicit sender rules still take precedence. Check Mail connection to refresh your account addresses."
+        )
+        .foregroundStyle(.secondary)
         Button("Import Inbox and Sent history") { model.importHistory() }
           .frame(maxWidth: .infinity, alignment: .leading)
       }

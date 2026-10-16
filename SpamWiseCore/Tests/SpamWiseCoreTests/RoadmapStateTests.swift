@@ -8,6 +8,7 @@ import SpamWiseCore
   object.removeValue(forKey: "learning"); object.removeValue(forKey: "reviewedLabels")
   var settings = try #require(object["settings"] as? [String: Any])
   settings.removeValue(forKey: "advanced"); settings["paused"] = true
+  settings.removeValue(forKey: "mailPreferences")
   object["settings"] = settings
   let decoded = try JSONDecoder().decode(
     AppState.self,
@@ -16,6 +17,7 @@ import SpamWiseCore
   #expect(decoded.settings.paused)
   #expect(decoded.settings.advancedOptions.backend == .claude)
   #expect(!decoded.settings.advancedOptions.fingerprints)
+  #expect(!decoded.settings.mailOptions.localOnly)
   var state = decoded
   let identity = MessageIdentity(accountID: "account", contentHash: "digest")
   var review = DecisionRecord(
@@ -31,6 +33,53 @@ import SpamWiseCore
   #expect(ReviewDigest(state: state).records.count == 1)
   review.correctedLabel = .inbox; state.records = [review]
   #expect(ReviewDigest(state: state).records.isEmpty)
+  var query = ActivityQuery()
+  query.text = "PERSON"
+  #expect(query.apply(to: state.records).count == 1)
+  query.accountID = "other"
+  #expect(query.apply(to: state.records).isEmpty)
+  review.verdict = .init(label: .review, confidence: 50, reason: "uncertain")
+  review.outcome = .failed
+  let statistics = ActivityStatistics(records: [review])
+  #expect(statistics.reviewedDecisions == 1)
+  #expect(statistics.reviewedMistakes == 1)
+  #expect(statistics.unresolvedReview == 0)
+  #expect(statistics.actionFailures == 1)
+  let diagnostic = try JSONEncoder().encode(DiagnosticSummary(state: state))
+  #expect(!String(decoding: diagnostic, as: UTF8.self).contains("person@example.com"))
+}
+
+@Test func `restores authenticated backups while preserving spending and disabling actions`()
+  async throws
+{
+  let store = try testStore()
+  try await enableActions(store)
+  try await RuleManagement.save(
+    scope: .address,
+    value: "friend@example.org",
+    disposition: .allow,
+    store: store
+  )
+  try await EvaluationBudget.reserve(upperBoundUSD: 1, store: store)
+  let before = try await StateRepository.load(store)
+  let key = StateBackup.recoveryKey()
+  let archive = try StateBackup.export(before, recoveryKey: key)
+  #expect(!String(decoding: archive, as: UTF8.self).contains("friend@example.org"))
+  await #expect(throws: BackupError.self) {
+    try await StateBackup.restore(archive, recoveryKey: StateBackup.recoveryKey(), store: store)
+  }
+  #expect(try await StateRepository.load(store).revision == before.revision)
+  var damaged = archive; damaged[0] ^= 1
+  await #expect(throws: BackupError.self) {
+    try await StateBackup.restore(damaged, recoveryKey: key, store: store)
+  }
+  try await StateBackup.restore(archive, recoveryKey: key, store: store)
+  let restored = try await StateRepository.load(store)
+  #expect(restored.rules == before.rules)
+  #expect(restored.settings.paused && restored.settings.dryRun)
+  #expect(restored.settings.validatedAccounts.isEmpty)
+  #expect(restored.settings.route == .unverified)
+  #expect(try await EvaluationBudget.load(store).committedUSD == 1)
 }
 
 @Test func `imports rules atomically and invalidates stale work after explicit edits`() async throws

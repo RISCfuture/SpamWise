@@ -44,13 +44,29 @@ public enum MailScripts {
           end tell
       end timeout
       """
+  /// Captures a bounded selection without changing read status or mailbox membership.
+  public static let selectedBatch =
+    helpers + "\n" + """
+      with timeout of 8 seconds
+          tell application "Mail"
+              set chosen to selection
+              if (count of chosen) < 1 or (count of chosen) > 50 then error "Select 1 to 50 \
+      messages" number -1701
+              set rows to {}
+              repeat with m in chosen
+                  set end of rows to my envelope(contents of m)
+              end repeat
+              return rows
+          end tell
+      end timeout
+      """
   /// Reads Mail account identifiers and display names.
   public static let accounts = """
     with timeout of 8 seconds
         tell application "Mail"
             set resultRows to {}
             repeat with a in accounts
-                set end of resultRows to {id of a, name of a}
+                set end of resultRows to {id of a, name of a, email addresses of a}
             end repeat
             return resultRows
         end tell
@@ -76,8 +92,18 @@ public enum MailScripts {
       guard let expectedSource else { throw IntegrationError.staleMessage }
       let change: String
       switch action {
-        case .orangeFlag: change = "set flag index of targetMessage to 1"
-        case .orangeBackground: change = "set background color of targetMessage to orange"
+        case .orangeFlag:
+          change = """
+            if (flag index of targetMessage) is not -1 and (flag index of targetMessage) is not 1 \
+            then error "Existing flag retained" number -1702
+            set flag index of targetMessage to 1
+            """
+        case .orangeBackground:
+          change = """
+            if (background color of targetMessage) is not none and (background color of \
+            targetMessage) is not orange then error "Existing color retained" number -1702
+            set background color of targetMessage to orange
+            """
         case .moveToJunk, .moveToInbox:
           change =
             try destination(identity, action: action)
@@ -130,7 +156,7 @@ public enum MailScripts {
       if (count of destinations) is not 1 then error "Account mailbox unresolved" number -1701
       """
   }
-  private static func resolve(_ identity: MessageIdentity, operation: String) throws -> String {
+  static func resolve(_ identity: MessageIdentity, operation: String) throws -> String {
     guard let account = identity.accountID, !account.isEmpty,
       identity.messageID != nil || identity.localID != nil
     else { throw IntegrationError.ambiguous }
@@ -166,6 +192,39 @@ public enum MailScripts {
                   end repeat
               end if
               return rows
+          end tell
+      end timeout
+      """
+  }
+  /// Reads one account's Inbox and reports its size without modifying messages.
+  public static func accountPage(
+    accountID: String,
+    offset: Int,
+    limit: Int,
+    role: String = "inbox"
+  ) -> String {
+    let role = ["inbox", "junk mailbox", "sent mailbox"].contains(role) ? role : "inbox"
+    return helpers + "\n" + """
+      with timeout of 8 seconds
+          tell application "Mail"
+              set boxes to {}
+              repeat with b in mailboxes of \(role)
+                  if (id of account of b) is \(literal(accountID)) then set end of boxes to \
+      contents of b
+              end repeat
+              if (count of boxes) is not 1 then error "Account Inbox unresolved" number -1701
+              set rows to {}
+              set candidates to messages of item 1 of boxes
+              set n to count of candidates
+              set firstIndex to \(max(0, offset) + 1)
+              set lastIndex to firstIndex + \(max(1, min(maximumPageSize, limit))) - 1
+              if lastIndex > n then set lastIndex to n
+              if firstIndex <= lastIndex then
+                  repeat with i from firstIndex to lastIndex
+                      set end of rows to my envelope(item i of candidates)
+                  end repeat
+              end if
+              return {n, rows}
           end tell
       end timeout
       """

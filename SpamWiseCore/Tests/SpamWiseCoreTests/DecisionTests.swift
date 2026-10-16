@@ -118,6 +118,63 @@ func enableActions(_ store: Store) async throws {
     classifier: MockClassifier(operation: { _ in throw ClassificationError.network })
   )
   #expect(await failing.process(try envelope(), adapter: adapter).outcome == .unclassified)
+  try await StateRepository.editSettings(store) {
+    $0.paused = false
+    $0.mailOptions.localOnly = true
+  }
+  let network = StubRDAP()
+  let privatePipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { input in
+      #expect(input.evidence.domainAgeDays == nil)
+      return Verdict(label: .review, confidence: 10, reason: "unknown")
+    }),
+    rdap: RDAPLookup(fetcher: network)
+  )
+  _ = await privatePipeline.process(try envelope(), adapter: adapter)
+  #expect(await network.calls == 0)
+  let configured = ConfiguredClassifier(
+    store: store,
+    credential: { _ in
+      Issue.record("Local mode must reject cloud classification before reading credentials")
+      return "unused"
+    }
+  )
+  await #expect(throws: ClassificationError.configuration) {
+    try await configured.classify(
+      ClassificationInput(
+        message: MIMEParser().parse(fixture("filler-spam")),
+        evidence: EvidenceBundle(message: MIMEParser().parse(fixture("filler-spam")))
+      )
+    )
+  }
+}
+
+@Test
+func `corrects selected mail without classifying and excludes own addresses from implicit trust`()
+  async throws
+{
+  let store = try testStore(), adapter = RecordingAdapter()
+  let selected = try envelope()
+  let message = try MIMEParser().parse(selected.raw)
+  try await StateRepository.update(store) {
+    $0.contactAddresses = [message.fromAddress]
+    $0.contactsUpdatedAt = .now
+    $0.ownAddresses = [message.fromAddress]
+  }
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(verdict: .init(label: .review, confidence: 50, reason: "unknown"))
+  )
+  let classified = await pipeline.process(selected)
+  #expect(classified.path == "model")
+  let correction = try await pipeline.correct(envelope: selected, label: .inbox, adapter: adapter)
+  #expect(correction.correctedLabel == .inbox)
+  #expect(correction.outcome == .dryRun)
+  #expect(await adapter.actions.isEmpty)
+  let ruled = await pipeline.process(selected)
+  #expect(ruled.path == "gate")
+  #expect(ruled.decision.label == .inbox)
 }
 @Test func `preserves pending retries during previews and invalidates them on correction`()
   async throws

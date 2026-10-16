@@ -32,7 +32,7 @@ public actor Pipeline {
         message.text += "\nEmbedded image text (untrusted):\n" + text
       }
       var findings: [String] = []
-      if let path = settings.externalEvidence?.rspamcPath {
+      if !current.settings.mailOptions.localOnly, let path = settings.externalEvidence?.rspamcPath {
         findings.append(await RspamdLookup(executablePath: path).lookup(raw: envelope.raw).summary)
       }
       return await process(
@@ -113,6 +113,8 @@ public actor Pipeline {
       let reason: String
       if let error = error as? ClassificationError {
         reason = error.rawValue
+      } else if error is ContentRuleError {
+        reason = "content rule invalid or exceeded its evaluation deadline"
       } else if error is BudgetError {
         reason = "spending limit reached; no provider request was made"
       } else if error is CancellationError {

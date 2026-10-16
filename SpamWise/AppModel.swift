@@ -6,7 +6,7 @@ import MailIntegration
   private static let monitorInterval: Duration = .seconds(3)
   private static let contactsRefreshIntervalSec: TimeInterval = 3600
   private static let scanIntervalSec: TimeInterval = 60
-  private static let defaultScanLimit = 20
+  static let defaultScanLimit = 20
   var state = AppState()
   var status = ""
   var keyStatus = ""
@@ -18,13 +18,22 @@ import MailIntegration
   var hasLoadedState = false
   var accounts: [MailAccount] = []
   var showDigest = false
+  var showCorrections = false
+  var correctionResults: [MailCorrectionResult] = []
+  var showJunk = false
+  var junkMessages: [MailEnvelope] = []
+  var junkTotal = 0
+  var previewText = ""
+  var showPreview = false
+  var scanHealth: [String: MailScanHealth] = [:]
+  private var monitoring: Task<Void, Never>?
   var store: Store?
-  private var pipeline: Pipeline?
-  private let adapter: AppleMailAdapter
+  var pipeline: Pipeline?
+  let adapter: AppleMailAdapter
   let preferences: UserDefaults
-  private let uiTesting: Bool
+  let uiTesting: Bool
   private var work: Task<Void, Never>?
-  private var lastScan = Date.distantPast
+  var lastScan = Date.distantPast
   private var lastContactsRefresh = Date.distantPast
   private var settingsWork: Task<Void, Never>?
   private var pendingSettings = 0
@@ -38,11 +47,11 @@ import MailIntegration
   private var canMonitorMail: Bool {
     !uiTesting && !busy && state.settings.onboardingComplete
   }
-  private var contactsNeedRefresh: Bool {
+  var contactsNeedRefresh: Bool {
     Date().timeIntervalSince(lastContactsRefresh) >= Self.contactsRefreshIntervalSec
   }
-  private var canScanAutomatically: Bool {
-    state.settings.onboardingComplete && [.mailRule, .imap].contains(state.settings.route)
+  var canScanAutomatically: Bool {
+    state.settings.onboardingComplete && [.mailRule, .mailKit, .imap].contains(state.settings.route)
       && !state.settings.paused
   }
   init(preview: Bool = false) {
@@ -96,6 +105,7 @@ extension AppModel {
       var loaded = try await StateRepository.load(store)
       if pendingSettings > 0 { loaded.settings = state.settings }
       state = loaded
+      scanHealth = try await MailHealthRepository.load(store)
       if state.settings.advancedOptions.weeklyDigest, state.settings.onboardingComplete {
         let digest = ReviewDigest(state: state)
         if state.lastDigestWeek != digest.week, !digest.records.isEmpty {
@@ -106,6 +116,10 @@ extension AppModel {
     } catch {
       status = String(localized: "Shared storage unavailable; mail stays unchanged.")
     }
+  }
+  func startMonitoring() {
+    guard monitoring == nil else { return }
+    monitoring = Task { await monitor() }
   }
   func monitor() async {
     #if DEBUG
@@ -188,7 +202,7 @@ extension AppModel {
         if uiTesting { throw IntegrationError.permissionDenied }
         mailStatus = String(localized: "Waiting for Mail Automation permission…")
         try await SystemAppleEventRunner.requestMailPermission()
-        accounts = try await adapter.accounts()
+        try await discoverAccounts()
         mailStatus =
           String(
             localized:
@@ -210,7 +224,7 @@ extension AppModel {
       try await refreshContacts(requestAccess: true)
     }
   }
-  private func refreshContacts(requestAccess: Bool = false) async throws {
+  func refreshContacts(requestAccess: Bool = false) async throws {
     lastContactsRefresh = .now
     do {
       let addresses = try await ContactsLookup().addresses(requestAccess: requestAccess)
@@ -233,7 +247,7 @@ extension AppModel {
 }
 
 extension AppModel {
-  private func maintainHistory() async {
+  func maintainHistory() async {
     guard let store else { return }
     do {
       let current = try await StateRepository.load(store)
@@ -303,63 +317,6 @@ extension AppModel {
 }
 
 extension AppModel {
-  func scan(dryRun: Bool = true, automatic: Bool = false, limit: Int = AppModel.defaultScanLimit) {
-    guard let pipeline, !automatic || canScanAutomatically else { return }
-    run { [self] in
-      await prepareScan(automatic: automatic)
-      let batch = try await scanBatch(automatic: automatic, limit: limit)
-      try await classify(batch, with: pipeline, dryRun: dryRun, automatic: automatic)
-      if !dryRun {
-        await pipeline.retryDue(adapter: batch.adapter, accountID: batch.retryAccountID)
-      }
-      status =
-        dryRun
-        ? String(localized: "Dry run finished — no mail actions requested")
-        : String(localized: "Mail check finished")
-    }
-  }
-  private func prepareScan(automatic: Bool) async {
-    lastScan = .now
-    if !uiTesting, contactsNeedRefresh { try? await refreshContacts() }
-    if automatic { await maintainHistory() }
-    await refresh()
-  }
-  private func scanBatch(automatic: Bool, limit: Int) async throws -> ScanBatch {
-    if state.settings.advancedOptions.transport == .imap {
-      let imap = try await configuredIMAPAdapter()
-      let messages =
-        try await automatic
-        ? imap.nextInboxMessages(limit: limit, cursorStore: store)
-        : imap.recentMessages(limit: limit)
-      return ScanBatch(adapter: imap, messages: messages, retryAccountID: imap.accountID)
-    }
-    let messages =
-      try await automatic
-      ? adapter.nextInboxMessages(limit: limit) : adapter.recentMessages(limit: limit)
-    return ScanBatch(adapter: adapter, messages: messages, retryAccountID: nil)
-  }
-  private func classify(
-    _ batch: ScanBatch,
-    with pipeline: Pipeline,
-    dryRun: Bool,
-    automatic: Bool
-  ) async throws {
-    let seen = Set(state.records.map { $0.identity.key })
-    var count: UInt = 0
-    for message in batch.messages where !automatic || !seen.contains(message.identity.key) {
-      try Task.checkCancellation()
-      _ = await pipeline.process(message, adapter: batch.adapter, forceDryRun: dryRun)
-      count += 1
-      status = String(
-        localized:
-          "Classified \(count, format: .number) of \(batch.messages.count, format: .number) messages"
-      )
-      await refresh()
-    }
-  }
-}
-
-extension AppModel {
   func correct(_ record: DecisionRecord, label: MailLabel, scope: RuleScope = .address) {
     guard let pipeline else { return }
     run { [self] in
@@ -382,7 +339,7 @@ extension AppModel {
   }
 }
 
-private struct ScanBatch {
+struct ScanBatch {
   let adapter: any MailClientAdapter
   let messages: [MailEnvelope]
   let retryAccountID: String?

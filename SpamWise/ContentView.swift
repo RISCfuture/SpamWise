@@ -22,6 +22,8 @@ private struct ActivityView: View {
   @Bindable var model: AppModel
   @State private var selection: UUID?
   @State private var showsInspector = false
+  @State private var query = ActivityQuery()
+  @State private var showsStatistics = false
 
   private var selected: DecisionRecord? {
     model.state.records.first { $0.id == selection }
@@ -29,7 +31,7 @@ private struct ActivityView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      Table(model.state.records.reversed(), selection: $selection) {
+      Table(query.apply(to: model.state.records), selection: $selection) {
         TableColumn("Time") { row in
           Text(row.date, format: .dateTime.hour().minute())
         }.width(min: 60, ideal: 75)
@@ -51,6 +53,7 @@ private struct ActivityView: View {
         }
       }
       .navigationTitle("Activity")
+      .searchable(text: $query.text, prompt: "Search sender, subject or reason")
       .toolbar {
         ToolbarItemGroup {
           Button(model.state.settings.paused ? "Resume filtering" : "Pause filtering") {
@@ -61,6 +64,49 @@ private struct ActivityView: View {
             .accessibilityIdentifier("activity.scan")
           Button("Review digest") { model.showDigest = true }
             .accessibilityIdentifier("activity.digest")
+          Button("Review Junk") {
+            model.showJunk = true
+            model.run { try await model.discoverAccounts() }
+          }.disabled(model.busy)
+        }
+        ToolbarItem {
+          Menu("Filter") {
+            Picker("Account", selection: $query.accountID) {
+              Text("All accounts").tag(String?.none)
+              ForEach(
+                Array(Set(model.state.records.compactMap { $0.identity.accountID })).sorted(),
+                id: \.self
+              ) {
+                Text($0).tag(Optional($0))
+              }
+            }
+            Picker("Path", selection: $query.path) {
+              Text("All paths").tag(String?.none)
+              ForEach(Array(Set(model.state.records.map(\.path))).sorted(), id: \.self) {
+                Text($0).tag(Optional($0))
+              }
+            }
+            Picker("Outcome", selection: $query.outcome) {
+              Text("All outcomes").tag(ActionOutcome?.none)
+              ForEach(
+                Array(Set(model.state.records.map { $0.outcome.rawValue })).sorted(),
+                id: \.self
+              ) { value in
+                if let outcome = ActionOutcome(rawValue: value) {
+                  Text(outcome.localizedTitle).tag(Optional(outcome))
+                }
+              }
+            }
+            Toggle("Corrections only", isOn: $query.correctionsOnly)
+            Button("Today") {
+              query.start = Calendar.current.startOfDay(for: .now); query.end = nil
+            }
+            Button("Clear filters") { query = ActivityQuery() }
+          }
+        }
+        ToolbarItem {
+          Button("Statistics") { showsStatistics = true }
+            .accessibilityIdentifier("activity.statistics")
         }
         ToolbarItem {
           Button("Show details", systemImage: "sidebar.right") { showsInspector.toggle() }
@@ -79,6 +125,10 @@ private struct ActivityView: View {
     }
     .frame(minWidth: 720, minHeight: 460)
     .sheet(isPresented: $model.showDigest) { ReviewDigestView(model: model) }
+    .sheet(isPresented: $model.showCorrections) { CorrectionResultsView(model: model) }
+    .sheet(isPresented: $model.showJunk) { MailReviewView(model: model) }
+    .sheet(isPresented: $model.showPreview) { MessagePreviewView(text: model.previewText) }
+    .sheet(isPresented: $showsStatistics) { ActivityStatisticsView(model: model) }
   }
 }
 

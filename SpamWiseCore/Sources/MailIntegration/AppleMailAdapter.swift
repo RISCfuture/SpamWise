@@ -98,6 +98,20 @@ public struct MailAccount: Identifiable, Sendable {
   public var id: String
   /// Account name supplied by Mail for display.
   public var name: String
+  /// Own addresses reported by Mail, without reading credentials.
+  public var addresses: [String]
+  /// Creates a displayable account with optional own-address discovery.
+  public init(id: String, name: String, addresses: [String] = []) {
+    self.id = id; self.name = name; self.addresses = addresses
+  }
+}
+
+/// One bounded account-scoped page and Mail's observed mailbox size.
+public struct MailPage: Sendable {
+  /// Envelopes from this page only.
+  public let messages: [MailEnvelope]
+  /// Current observed mailbox size; not a server acknowledgement.
+  public let total: Int
 }
 /// Account-scoped Apple Events integration with exact-source action checks.
 public actor AppleMailAdapter: MailClientAdapter {
@@ -136,10 +150,11 @@ public actor AppleMailAdapter: MailClientAdapter {
       throw IntegrationError.scriptFailed
     }
     return try rows.map { row in
-      guard let fields = row.list, fields.count == 2, let id = fields[0].string,
+      guard let fields = row.list, (2...3).contains(fields.count), let id = fields[0].string,
         let name = fields[1].string
       else { throw IntegrationError.scriptFailed }
-      return MailAccount(id: id, name: name)
+      let addresses = fields.count == 3 ? fields[2].list?.compactMap(\.string) ?? [] : []
+      return MailAccount(id: id, name: name, addresses: addresses.compactMap(MIMEParser.address))
     }
   }
   /// Resolves exactly one account-scoped message and rejects stale content.
@@ -157,6 +172,29 @@ public actor AppleMailAdapter: MailClientAdapter {
   /// Advances a bounded Inbox sweep, restarting at the beginning after its last page.
   public func nextInboxMessages(limit: Int) async throws -> [MailEnvelope] {
     try await nextPage(limit: limit, role: "inbox", cursor: "filter")
+  }
+  /// Reads a page within one account without advancing the caller's durable cursor.
+  public func inboxPage(accountID: String, offset: Int, limit: Int) async throws -> MailPage {
+    try await accountPage(accountID: accountID, offset: offset, limit: limit)
+  }
+  /// Reads a special mailbox through Mail.app without inferring a label from its membership.
+  public func accountPage(accountID: String, offset: Int, limit: Int, role: String = "inbox")
+    async throws -> MailPage
+  {
+    guard ["inbox", "junk mailbox", "sent mailbox"].contains(role) else {
+      throw IntegrationError.unavailable
+    }
+    guard
+      let result = try await runner.run(
+        MailScripts.accountPage(accountID: accountID, offset: offset, limit: limit, role: role)
+      ).list, result.count == 2, let total = result[0].integer, total >= 0,
+      let rows = result[1].list, rows.count <= max(1, min(Self.maximumPageSize, limit))
+    else { throw IntegrationError.scriptFailed }
+    let messages = try rows.map(Self.envelope)
+    guard messages.allSatisfy({ $0.identity.accountID == accountID }) else {
+      throw IntegrationError.ambiguous
+    }
+    return MailPage(messages: messages, total: total)
   }
   private func nextPage(limit: Int, role: String, cursor: String) async throws -> [MailEnvelope] {
     let count = max(1, min(Self.maximumPageSize, limit))
@@ -180,6 +218,26 @@ public actor AppleMailAdapter: MailClientAdapter {
   /// Reads exactly one message selected in Mail.
   public func selectedMessage() async throws -> MailEnvelope {
     try Self.envelope(await runner.run(MailScripts.selected))
+  }
+  /// Captures up to fifty selected messages before any correction or move begins.
+  public func selectedMessages() async throws -> [MailEnvelope] {
+    guard let rows = try await runner.run(MailScripts.selectedBatch).list,
+      (1...50).contains(rows.count)
+    else { throw IntegrationError.ambiguous }
+    return try rows.map(Self.envelope)
+  }
+  /// Opens exactly one verified message in Mail's own viewer.
+  public func open(_ identity: MessageIdentity) async throws {
+    guard let message = try await lookup(identity),
+      let source = String(data: message.raw, encoding: .utf8)
+    else { throw IntegrationError.staleMessage }
+    _ = try await runner.run(
+      MailScripts.resolve(
+        identity,
+        operation:
+          "if (source of targetMessage) is not \(MailScripts.literal(source)) then error \"Message changed\" number -1702\nopen targetMessage\nactivate\nreturn true"
+      )
+    )
   }
   /// Requests an action and observes its result after allowing each move to settle.
   public func perform(_ action: MailAction, for identity: MessageIdentity) async throws

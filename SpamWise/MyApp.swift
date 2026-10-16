@@ -3,15 +3,15 @@ import SwiftUI
 import SpamWiseCore
 
 @main struct SpamWiseApp: App {
-  @State private var model = AppModel()
+  @State private var model: AppModel
 
   var body: some Scene {
-    WindowGroup("SpamWise") {
+    WindowGroup("SpamWise", id: "activity") {
       ContentView(model: model)
-        .task { await model.monitor() }
         .onOpenURL { model.handle($0) }
     }
     .defaultSize(width: 1060, height: 680)
+    .defaultLaunchBehavior(.presented)
     .commands {
       CommandGroup(replacing: .help) {
         Button("SpamWise Help") { Help.open("getting-started") }
@@ -19,5 +19,14 @@ import SpamWiseCore
     }
     SwiftUI.Settings { SettingsView(model: model) }
       .windowResizability(.contentSize)
+    MenuBarExtra("SpamWise", systemImage: "envelope.badge.shield.half.filled") {
+      MailMenuView(model: model)
+    }
   }
+  init() {
+    let model = AppModel()
+    _model = State(initialValue: model)
+    model.startMonitoring()
+  }
+
 }

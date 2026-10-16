@@ -2,6 +2,16 @@ import SwiftUI
 import SpamWiseCore
 
 extension AppModel {
+  func mailBinding<T: Sendable>(
+    _ key: any WritableKeyPath<MailPreferences, T> & Sendable
+  ) -> Binding<T> {
+    Binding(
+      get: { self.state.settings.mailOptions[keyPath: key] },
+      set: { value in
+        self.editSettings { $0.mailOptions[keyPath: key] = value }
+      }
+    )
+  }
   func saveProviderKey(_ key: String) {
     let backend = state.settings.advancedOptions.backend
     run { [self] in

@@ -37,6 +37,13 @@ public struct Settings: Codable, Sendable, Equatable {
   public var callbackDeadline: Double = 10
   /// Optional advanced preferences; absent in Phase 1 stores.
   public var advanced: AdvancedSettings?
+  /// Mail.app workflow preferences, with defaults for existing stores.
+  public var mailPreferences: MailPreferences?
+  /// Effective Mail.app workflow preferences.
+  public var mailOptions: MailPreferences {
+    get { mailPreferences ?? MailPreferences() }
+    set { mailPreferences = newValue }
+  }
   /// Backward-compatible defaults for optional capabilities.
   public var advancedOptions: AdvancedSettings {
     get { advanced ?? AdvancedSettings() }
@@ -150,6 +157,10 @@ public struct AppState: Codable, Sendable {
   public var settings = Settings()
   /// Persisted address and explicitly scoped domain rules.
   public var rules: [SenderRule] = []
+  /// Optional user-authored header and body rules.
+  public var contentRules: [ContentRule]?
+  /// Counts of winning content rules, independent of Activity retention.
+  public var contentRuleHits: [UUID: Int]?
   /// Recent explicit user corrections used as quoted examples.
   public var corrections: [CorrectionExample] = []
   /// Bounded Activity log of decisions and outcomes.
@@ -164,6 +175,8 @@ public struct AppState: Codable, Sendable {
   public var contactAddresses: Set<String>?
   /// Time the cached Contacts snapshot was refreshed.
   public var contactsUpdatedAt: Date?
+  /// Own addresses discovered through Mail.app, used only to exclude implicit trust.
+  public var ownAddresses: Set<String>?
   /// Last observed extension callback heartbeat.
   public var lastExtensionCallback: Date?
   /// Last callback in which raw message bytes were available.

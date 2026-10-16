@@ -5,6 +5,9 @@ final class UITests: XCTestCase {
   @MainActor func testCorrectionsKeepRulesWhenMailActionFails() throws {
     continueAfterFailure = false
     let activity = ActivityScreen.launchCorrectionFixture()
+    let statistics = activity.openStatistics()
+    XCTAssertEqual(statistics.decisionCount, "1")
+    statistics.close()
     let detail = activity.openFixture()
     detail.markGood()
     XCTAssertTrue(detail.correctionSavedWithActionFailure)
@@ -165,6 +168,14 @@ private enum UITestTiming {
     return RulesScreen(app: app)
   }
 
+  func openStatistics() -> StatisticsScreen {
+    app.buttons["activity.statistics"].click()
+    XCTAssertTrue(
+      app.staticTexts["statistics.decisions"].waitForExistence(timeout: UITestTiming.transition)
+    )
+    return StatisticsScreen(app: app)
+  }
+
   func pause() {
     app.buttons["activity.pause"].click()
     XCTAssertEqual(
@@ -178,6 +189,17 @@ private enum UITestTiming {
         timeout: UITestTiming.transition
       ),
       .completed
+    )
+  }
+}
+
+@MainActor private struct StatisticsScreen {
+  let app: XCUIApplication
+  var decisionCount: String { app.staticTexts["statistics.decisions"].value as? String ?? "" }
+  func close() {
+    app.buttons["statistics.done"].click()
+    XCTAssertTrue(
+      app.buttons["activity.statistics"].waitForExistence(timeout: UITestTiming.transition)
     )
   }
 }

@@ -27,6 +27,8 @@ struct DecisionDetailView: View {
         CorrectionControls(model: model, row: row)
       }
       Section {
+        Button("Preview message") { model.previewMessage(row) }.disabled(model.busy)
+        Button("Open in Mail") { model.openInMail(row) }.disabled(model.busy)
         DisclosureGroup("Decision details") { DecisionDiagnosticsView(row: row) }
       }
     }.formStyle(.grouped)
@@ -76,6 +78,9 @@ private struct DecisionDiagnosticsView: View {
 
   var body: some View {
     LabeledContent("Path", value: row.path)
+    LabeledContent("Policy revision", value: row.revision.formatted())
+    LabeledContent("Account", value: row.identity.accountID ?? String(localized: "Unknown"))
+    LabeledContent("Source mailbox", value: row.identity.mailbox ?? String(localized: "Unknown"))
     LabeledContent("Intended action", value: row.decision.action.localizedTitle)
     if let verdict = row.verdict {
       LabeledContent("Confidence") {

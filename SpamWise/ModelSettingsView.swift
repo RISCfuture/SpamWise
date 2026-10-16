@@ -24,11 +24,23 @@ struct ModelSettingsView: View {
 
   var body: some View {
     Section("Classifier") {
+      Toggle("Keep filtering on this Mac", isOn: model.mailBinding(\.localOnly))
+        .accessibilityIdentifier("model.localOnly")
+      if model.state.settings.mailOptions.localOnly {
+        Text(
+          "Requires the on-device provider. Disables external evidence and sidecars. Mail still synchronizes."
+        )
+        .foregroundStyle(.secondary)
+      }
       Picker("Provider", selection: backendBinding) {
         ForEach(ModelBackend.allCases, id: \.self) { backend in
           Text(backend.localizedTitle).tag(backend)
         }
       }.accessibilityIdentifier("model.provider")
+      if model.state.settings.mailOptions.localOnly && backend != .onDevice {
+        Text("Select On-device to classify. The current provider is blocked by local mode.")
+          .accessibilityIdentifier("model.localConflict")
+      }
       LabeledContent(
         "Model",
         value: model.state.settings.advancedOptions.modelID ?? backend.defaultModelID

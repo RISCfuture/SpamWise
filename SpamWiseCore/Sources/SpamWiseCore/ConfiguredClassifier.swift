@@ -23,7 +23,11 @@ public struct ConfiguredClassifier: Classifier {
   }
   /// Executes one explicitly selected backend with conservative spending reservations where applicable.
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
-    let settings = try await StateRepository.load(store).settings.advancedOptions
+    let current = try await StateRepository.load(store).settings
+    let settings = current.advancedOptions
+    guard !current.mailOptions.localOnly || settings.backend == .onDevice else {
+      throw ClassificationError.configuration
+    }
     let modelID = settings.modelID ?? settings.backend.defaultModelID
     switch settings.backend {
       case .onDevice: return try await AppleClassifier(backend: .onDevice).classify(input)

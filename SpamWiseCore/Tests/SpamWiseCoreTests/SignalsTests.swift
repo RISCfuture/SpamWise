@@ -129,3 +129,21 @@ actor StubRDAP: HTTPFetcher {
   #expect(state.settings.bodyTokenBudget == 4000)
   #expect(state.revision == 2)
 }
+
+@Test func `orders content rules and aborts pathological expressions`() throws {
+  var message = try MIMEParser().parse(fixture("filler-spam"))
+  message.subject = "Example newsletter"
+  var older = ContentRule()
+  older.pattern = "NEWSLETTER"; older.disposition = .allow
+  var newer = ContentRule()
+  newer.pattern = "^Example.*"; newer.operation = .regularExpression
+  newer.updatedAt = older.updatedAt.addingTimeInterval(1)
+  #expect(
+    try ContentRules.matches([older, newer], message: message).map(\.id) == [newer.id, older.id]
+  )
+  newer.enabled = false
+  #expect(try ContentRules.matches([older, newer], message: message).map(\.id) == [older.id])
+  newer.enabled = true; newer.pattern = "(a+)+$"
+  message.subject = String(repeating: "a", count: 10_000) + "!"
+  #expect(throws: ContentRuleError.timeout) { try ContentRules.matches([newer], message: message) }
+}

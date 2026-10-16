@@ -16,13 +16,7 @@ extension Pipeline {
     var evidence = relationshipEvidence(message, identity: identity, state: state)
     evidence.auxiliaryFindings = auxiliaryFindings.isEmpty ? nil : auxiliaryFindings
     let verdict: Verdict, path: String
-    if let gate = Gates.evaluate(
-      address: message.fromAddress,
-      domain: evidence.fromDomain,
-      rules: state.rules,
-      contact: evidence.contact,
-      history: evidence.senderHistory
-    ) {
+    if let gate = try await deterministicGate(message, evidence: evidence, state: state) {
       path = "gate"
       verdict = Verdict(
         label: gate.disposition == .allow ? .inbox : .junk,
@@ -47,6 +41,7 @@ extension Pipeline {
         message,
         evidence: evidence,
         settings: advanced,
+        localOnly: state.settings.mailOptions.localOnly,
         timeout: budget.timeout
       )
       if advanced.bayes || advanced.learnedWeights,
@@ -90,6 +85,36 @@ extension Pipeline {
     }
     return Classification(verdict: verdict, evidence: evidence, path: path)
   }
+  private func deterministicGate(
+    _ message: ParsedMessage,
+    evidence: EvidenceBundle,
+    state: AppState
+  ) async throws -> GateResult? {
+    if let senderRule = Gates.evaluate(
+      address: message.fromAddress,
+      domain: evidence.fromDomain,
+      rules: state.rules,
+      contact: nil,
+      history: .init()
+    ) {
+      return senderRule
+    }
+    if let rule = try ContentRules.matches(state.contentRules ?? [], message: message).first {
+      try await StateRepository.update(store) { current in
+        guard current.revision == state.revision else { return }
+        if current.contentRuleHits == nil { current.contentRuleHits = [:] }
+        current.contentRuleHits?[rule.id, default: 0] += 1
+      }
+      return GateResult(rule.disposition, "gate: user content rule \(rule.id.uuidString)")
+    }
+    return Gates.evaluate(
+      address: message.fromAddress,
+      domain: evidence.fromDomain,
+      rules: [],
+      contact: evidence.contact,
+      history: evidence.senderHistory
+    )
+  }
   private func trainPrediction(
     _ message: ParsedMessage,
     evidence: EvidenceBundle,
@@ -117,9 +142,11 @@ extension Pipeline {
     _ message: ParsedMessage,
     evidence: EvidenceBundle,
     settings advanced: AdvancedSettings,
+    localOnly: Bool,
     timeout: Double
   ) async -> EvidenceBundle {
     var evidence = evidence
+    guard !localOnly else { return evidence }
     let domain = DomainResolver().domain(ofAddress: message.fromAddress)
     if let domain, let rdap {
       evidence.domainAgeDays = try? await withDeadline(
@@ -154,14 +181,21 @@ extension Pipeline {
     state: AppState
   ) -> EvidenceBundle {
     let domain = DomainResolver().domain(ofAddress: message.fromAddress)
+    let excluded =
+      state.settings.mailOptions.trustExclusions.contains(message.fromAddress)
+      || (state.settings.mailOptions.excludeOwnAddresses
+        && state.ownAddresses?.contains(message.fromAddress) == true)
     let history =
-      state.histories[identity.accountID ?? ""]?.summary(
+      excluded
+      ? SenderHistory()
+      : state.histories[identity.accountID ?? ""]?.summary(
         address: message.fromAddress,
         domain: domain
       ) ?? .init()
     let contact: Bool? =
-      state.contactsUpdatedAt.map { Date().timeIntervalSince($0) < Self.contactFreshnessSec }
-        == true
+      !excluded
+        && state.contactsUpdatedAt.map { Date().timeIntervalSince($0) < Self.contactFreshnessSec }
+          == true
       ? state.contactAddresses?.contains(message.fromAddress) : nil
     return EvidenceBundle(message: message, history: history, contact: contact)
   }
