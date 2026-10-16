@@ -230,7 +230,8 @@ import MailIntegration
   func testDisposableMessage() {
     run { [self] in
       do {
-        mailStatus = "Testing the selected message, then waiting 30 seconds for Mail to sync…"
+        mailStatus =
+          "Testing the selected message; allowing 30 seconds after each move for Mail to sync…"
         let account = try await adapter.testDisposableMessage()
         if let store {
           try await StateRepository.update(store) { state in
@@ -239,7 +240,7 @@ import MailIntegration
           }
         }
         mailStatus =
-          "Local action checks passed. Verify the probe in Mail before turning off dry run."
+          "Junk, Inbox restoration, and orange flag verified in Mail."
         status = mailStatus
       } catch { mailStatus = Self.describe(error); throw error }
     }

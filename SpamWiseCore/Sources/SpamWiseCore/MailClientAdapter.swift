@@ -8,9 +8,9 @@ public struct MailEnvelope: Sendable {
   /// Creates a MailEnvelope with the supplied configuration.
   public init(identity: MessageIdentity, raw: Data) { self.identity = identity; self.raw = raw }
 }
-/// Whether the adapter acknowledged completion of a requested action.
+/// Whether the adapter observed the requested action's result in its mail client.
 public struct ActionReceipt: Sendable {
-  /// Whether the adapter acknowledged completing the action.
+  /// Client observation of completion, without a separate mail-server acknowledgement.
   public var confirmed: Bool
   /// Creates an ActionReceipt with the supplied configuration.
   public init(confirmed: Bool) { self.confirmed = confirmed }

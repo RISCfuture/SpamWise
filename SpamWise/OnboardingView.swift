@@ -132,8 +132,9 @@ struct MailConnectionView: View {
               """
               Select one disposable Inbox message in Mail with a subject beginning [SpamWise \
               Probe]. The test moves it to that account’s Junk, back to Inbox, and adds an orange \
-              flag. Repeat for each account. If the return fails, restore the test message from \
-              Junk manually.
+              flag, allowing 30 seconds after each move to check the result. Use a message from \
+              another account to avoid an ambiguous Sent copy. Repeat for each account. If the \
+              return fails, restore the test message from Junk manually.
               """
             )
             Button("Test selected disposable message") { model.testDisposableMessage() }.disabled(

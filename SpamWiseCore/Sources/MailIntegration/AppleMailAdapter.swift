@@ -10,6 +10,20 @@ public indirect enum ScriptValue: Sendable, Equatable {
   var string: String? { if case .string(let value) = self { value } else { nil } }
   var integer: Int? { if case .integer(let value) = self { value } else { nil } }
   var list: [ScriptValue]? { if case .list(let value) = self { value } else { nil } }
+  static func decode(_ descriptor: NSAppleEventDescriptor) -> ScriptValue {
+    if descriptor.descriptorType == typeAEList {
+      return .list(
+        (1...max(1, descriptor.numberOfItems)).compactMap { descriptor.atIndex($0) }.map(decode)
+      )
+    }
+    if [typeBoolean, typeTrue, typeFalse].contains(descriptor.descriptorType) {
+      return .boolean(descriptor.booleanValue)
+    }
+    if [typeSInt16, typeSInt32, typeSInt64].contains(descriptor.descriptorType) {
+      return .integer(Int(descriptor.int32Value))
+    }
+    return .string(descriptor.stringValue ?? "")
+  }
 }
 /// Injectable execution boundary for Mail Apple Events.
 public protocol AppleEventRunner: Sendable {
@@ -72,32 +86,21 @@ private actor AppleScriptExecutor {
       "AppleScript returned descriptor type \(result.descriptorType), items \(result.numberOfItems)"
     )
     try Task.checkCancellation()
-    return Self.value(result)
+    return ScriptValue.decode(result)
   }
-  private static func value(_ descriptor: NSAppleEventDescriptor) -> ScriptValue {
-    if descriptor.descriptorType == typeAEList {
-      return .list(
-        (1...max(1, descriptor.numberOfItems)).compactMap { descriptor.atIndex($0) }.map(value)
-      )
-    }
-    if descriptor.descriptorType == typeBoolean { return .boolean(descriptor.booleanValue) }
-    if [typeSInt16, typeSInt32, typeSInt64].contains(descriptor.descriptorType) {
-      return .integer(Int(descriptor.int32Value))
-    }
-    return .string(descriptor.stringValue ?? "")
-  }
+
 }
 /// A Mail account's stable scripting identifier and display name.
 public struct MailAccount: Identifiable, Sendable { public var id: String; public var name: String }
 /// Account-scoped Apple Events integration with exact-source action checks.
 public actor AppleMailAdapter: MailClientAdapter {
   private let runner: any AppleEventRunner
-  private let probeSettlingTime: Duration
+  private let moveSettlingTime: Duration
   private var pageOffsets: [String: Int] = [:]
   /// Creates an AppleMailAdapter with the supplied configuration.
-  public init(runner: any AppleEventRunner, probeSettlingTime: Duration = .seconds(30)) {
+  public init(runner: any AppleEventRunner, moveSettlingTime: Duration = .seconds(30)) {
     self.runner = runner
-    self.probeSettlingTime = max(.zero, probeSettlingTime)
+    self.moveSettlingTime = max(.zero, moveSettlingTime)
   }
   /// Reads Mail account identifiers and display names.
   public func accounts() async throws -> [MailAccount] {
@@ -150,7 +153,7 @@ public actor AppleMailAdapter: MailClientAdapter {
   public func selectedMessage() async throws -> MailEnvelope {
     try Self.envelope(await runner.run(MailScripts.selected))
   }
-  /// Requests a supported action only after identity and content checks.
+  /// Requests an action and observes its result after allowing each move to settle.
   public func perform(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
   {
@@ -163,7 +166,20 @@ public actor AppleMailAdapter: MailClientAdapter {
       MailScripts.lookup(identity, action: action, expectedSource: source)
     )
     guard result == .boolean(true) else { throw IntegrationError.scriptFailed }
+    if action == .moveToJunk || action == .moveToInbox {
+      try await Task.sleep(for: moveSettlingTime)
+    }
+    try await verify(action, for: identity, source: source)
     return .init(confirmed: true)
+  }
+  private func verify(_ action: MailAction, for identity: MessageIdentity, source: String)
+    async throws
+  {
+    try Task.checkCancellation()
+    let observed = try await runner.run(
+      MailScripts.verification(identity, action: action, expectedSource: source)
+    )
+    guard observed == .boolean(true) else { throw IntegrationError.staleMessage }
   }
   /// Imports bounded Inbox and Sent history with explicit partial availability.
   public func importHistory() async throws -> [String: HistoryIndex] {
@@ -228,13 +244,14 @@ public actor AppleMailAdapter: MailClientAdapter {
     let message = try MIMEParser().parse(selected.raw)
     guard message.subject.hasPrefix("[SpamWise Probe]"), let account = selected.identity.accountID
     else { throw IntegrationError.unavailable }
+    guard let source = String(data: selected.raw, encoding: .utf8) else {
+      throw IntegrationError.staleMessage
+    }
+    try await verify(.moveToInbox, for: selected.identity, source: source)
     _ = try await perform(.moveToJunk, for: selected.identity)
     _ = try await perform(.moveToInbox, for: selected.identity)
     _ = try await perform(.orangeFlag, for: selected.identity)
-    try await Task.sleep(for: probeSettlingTime)
-    guard let restored = try await lookup(selected.identity),
-      restored.identity.mailbox == selected.identity.mailbox
-    else { throw IntegrationError.staleMessage }
+    try await verify(.moveToInbox, for: selected.identity, source: source)
     return account
   }
   /// Writes raw messages to a directory without overwriting existing files.

@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import SpamWiseCore
-import MailIntegration
+@testable import MailIntegration
 @Test func `apple script literals cannot become commands`() {
   #expect(
     MailScripts.literal("a\" & do shell script \"bad") == "\"a\\\" & do shell script \\\"bad\""
@@ -21,9 +21,13 @@ import MailIntegration
 }
 actor StubAppleEvents: AppleEventRunner {
   var responses: [ScriptValue]
+  private(set) var moves = 0
   init(_ response: ScriptValue) { responses = [response] }
   init(responses: [ScriptValue]) { self.responses = responses }
-  func run(_ source: String) async throws -> ScriptValue { responses.removeFirst() }
+  func run(_ source: String) async throws -> ScriptValue {
+    if source.contains("move targetMessage") { moves += 1 }
+    return responses.removeFirst()
+  }
 }
 @Test func `adapter rejects changed source and unstable probe restoration`() async throws {
   let runner = StubAppleEvents(
@@ -39,19 +43,43 @@ actor StubAppleEvents: AppleEventRunner {
   let selected = ScriptValue.list([
     .string("account"), .string("Inbox"), .integer(1), .string("id"), .string(raw)
   ])
-  let recovered = ScriptValue.list([
-    .string("account"), .string("Recovered"), .integer(2), .string("id"), .string(raw)
-  ])
-  let probe = AppleMailAdapter(
-    runner: StubAppleEvents(responses: [
-      selected, selected, .boolean(true), selected, .boolean(true), selected, .boolean(true),
-      recovered
-    ]),
-    probeSettlingTime: .zero
+  let unconfirmed = AppleMailAdapter(
+    runner: StubAppleEvents(responses: [selected, .boolean(true), .boolean(false)]),
+    moveSettlingTime: .zero
   )
+  await #expect(throws: IntegrationError.staleMessage) {
+    try await unconfirmed.perform(
+      .moveToJunk,
+      for: MessageIdentity(
+        accountID: "account",
+        messageID: "id",
+        contentHash: stableHash(Data(raw.utf8))
+      )
+    )
+  }
+  let unstable = StubAppleEvents(responses: [
+    selected, .boolean(true), selected, .boolean(true), .boolean(false)
+  ])
+  let probe = AppleMailAdapter(runner: unstable, moveSettlingTime: .zero)
   await #expect(throws: IntegrationError.staleMessage) {
     try await probe.testDisposableMessage()
   }
+  #expect(await unstable.moves == 1)
+  let junk = ScriptValue.list([
+    .string("account"), .string("Junk"), .integer(2), .string("id"), .string(raw)
+  ])
+  let restored = ScriptValue.list([
+    .string("account"), .string("Inbox"), .integer(3), .string("id"), .string(raw)
+  ])
+  let settled = StubAppleEvents(responses: [
+    selected, .boolean(true), selected, .boolean(true), .boolean(true),
+    junk, .boolean(true), .boolean(true), restored, .boolean(true), .boolean(true), .boolean(true)
+  ])
+  #expect(
+    try await AppleMailAdapter(runner: settled, moveSettlingTime: .zero).testDisposableMessage()
+      == "account"
+  )
+  #expect(await settled.moves == 2)
 }
 @Test func `completion invokes exactly once`() async {
   let count = Counter()
@@ -67,7 +95,15 @@ final class Counter: Sendable {
   var value: Int { storage.withLock { $0 } }
   func increment() { storage.withLock { $0 += 1 } }
 }
-@Test @MainActor func `generated scripts compile without executing mail actions`() throws {
+@Test @MainActor func `generated scripts compile and Apple Event booleans decode`() throws {
+  for (source, expected) in [
+    ("return true", ScriptValue.boolean(true)),
+    ("return false", .boolean(false)),
+    ("return {true, false}", .list([.boolean(true), .boolean(false)]))
+  ] {
+    let script = try #require(NSAppleScript(source: source))
+    #expect(ScriptValue.decode(unsafe script.executeAndReturnError(nil)) == expected)
+  }
   let identity = MessageIdentity(
     accountID: "test-account",
     messageID: "test-id",
@@ -76,7 +112,9 @@ final class Counter: Sendable {
   let scripts = [
     MailScripts.accounts, MailScripts.selected, MailScripts.recent(limit: 5, offset: 20),
     try MailScripts.lookup(identity),
-    try MailScripts.lookup(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody")
+    try MailScripts.lookup(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody"),
+    try MailScripts.verification(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody"),
+    try MailScripts.verification(identity, action: .orangeFlag, expectedSource: "From: x\n\nbody")
   ]
   for source in scripts {
     let script = try #require(NSAppleScript(source: source))
