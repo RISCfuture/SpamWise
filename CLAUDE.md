@@ -37,3 +37,9 @@ Evaluation and archive commands are completed with milestones 8–9. Live tests 
 9. Help/packaging — pending signing credentials.
 
 Ruling: work in the clean supplied checkout on a new branch, preserving review visibility; no extra worktree needed. Original brief received after initial inspection, copied verbatim. Shared interfaces follow the module dependency DAG; Store depends on value types, pipeline depends on Store, so Signals never imports Store. Runtime prerequisites do not justify guessing a successful route. Implementation supports explicit runtime validation states rather than claiming either route tested.
+
+### MIME selection
+
+Evaluated https://github.com/miximka/MimeParser (MIT, Swift 5.3 manifest, MIME resources/tests, no Swift 6 Sendable contract or resource bounds promised) and https://github.com/igorrendulic/MimeEmailParser (MIT, latest checkout `0cc9038`, 2020-04-19, Swift 5.2, small XCTest suite, no concurrency contract). Neither establishes bounded adversarial parsing or the five product fixtures. Selected a dependency-free value parser, explicitly limited to 2 MB input, 64 KB headers, 12 nesting levels, 128 parts, text/plain and text/html, QP/base64 and Foundation-supported charsets. Attachments ignored; invalid encodings/ambiguous critical headers fail open. HTML is converted lexically without WebKit or loading resources. The bundled Mozilla Public Suffix List (MPL-2.0, source/license in file) handles wildcard, exception, ICANN and private suffixes; refresh deliberately and rerun boundary tests.
+
+Milestone 2: fixture/domain tests observed failing before implementation, now six test functions (including five fixture cases) pass; warning-free package/app checks pass.
