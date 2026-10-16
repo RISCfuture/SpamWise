@@ -23,12 +23,20 @@ struct GeneralSettingsView: View {
         Toggle("Dry run — do not change mail", isOn: model.settingBinding(\.dryRun))
           .disabled(model.state.settings.validatedAccounts.isEmpty)
           .accessibilityIdentifier("settings.dryRun")
+        Toggle(
+          "Mark as read after a confirmed Junk move",
+          isOn: Binding(
+            get: { model.state.settings.mailOptions.markJunkRead == true },
+            set: { enabled in model.editSettings { $0.mailOptions.markJunkRead = enabled } }
+          )
+        )
         if model.state.settings.validatedAccounts.isEmpty {
           Text("Validate a disposable message in Accounts before enabling mail actions.")
             .foregroundStyle(.secondary)
         }
       }
       Section("Review") {
+        NotificationSettingsView(model: model)
         Toggle("Show a weekly Review digest", isOn: model.advancedBinding(\.weeklyDigest))
         Text(
           "A local summary of unresolved Review items from the last seven days. No email is sent."

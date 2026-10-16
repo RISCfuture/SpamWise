@@ -21,7 +21,10 @@ struct AdvancedSettingsView: View {
             step: 100
           )
           Text(
-            "Body length uses a four-characters-per-token estimate. Quoted reply chains and attachments are omitted."
+            """
+            Body length uses a four-characters-per-token estimate. Quoted replies are omitted. \
+            Attachment text is included only when enabled.
+            """
           )
           .foregroundStyle(.secondary)
         }

@@ -625,6 +625,22 @@
         }
       }
     },
+    "Also include good mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluir también correo válido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inclure aussi les messages légitimes"
+          }
+        }
+      }
+    },
     "An address or domain rule takes precedence.": {
       "localizations": {
         "es": {
@@ -977,6 +993,22 @@
         }
       }
     },
+    "Batch interval: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intervalo de agrupación: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intervalle des résumés : %@"
+          }
+        }
+      }
+    },
     "Block": {
       "localizations": {
         "es": {
@@ -1073,18 +1105,18 @@
         }
       }
     },
-    "Body length uses a four-characters-per-token estimate. Quoted reply chains and attachments are omitted.": {
+    "Body length uses a four-characters-per-token estimate. Quoted replies are omitted. Attachment text is included only when enabled.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "La longitud del cuerpo se estima en cuatro caracteres por token. Se omiten las respuestas citadas y los archivos adjuntos."
+            "value": "La longitud usa una estimación de cuatro caracteres por token. Se omiten las respuestas citadas. El texto adjunto solo se incluye si está activado."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La longueur du corps est estimée à quatre caractères par token. Les réponses citées et les pièces jointes sont omises."
+            "value": "La longueur utilise une estimation de quatre caractères par jeton. Les réponses citées sont omises. Le texte des pièces jointes n’est inclus que si l’option est activée."
           }
         }
       }
@@ -1213,6 +1245,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vérifier la connexion en lecture seule"
+          }
+        }
+      }
+    },
+    "Check setup and Activity in SpamWise. Select one Mail message. Uncertain requests are never replayed.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprueba la configuración y Actividad en SpamWise. Selecciona un mensaje en Mail. Las solicitudes inciertas nunca se repiten."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez la configuration et l’activité dans SpamWise. Sélectionnez un message dans Mail. Les demandes incertaines ne sont jamais répétées."
           }
         }
       }
@@ -1375,6 +1423,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Classificateur"
+          }
+        }
+      }
+    },
+    "Classify one selected Mail message using your configured provider and budget, without moving it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clasifica un mensaje seleccionado en Mail con tu proveedor y presupuesto configurados, sin moverlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classe un message sélectionné dans Mail avec le fournisseur et le budget configurés, sans le déplacer."
           }
         }
       }
@@ -1924,6 +1988,22 @@
         }
       }
     },
+    "Correct Selected Mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corregir correo seleccionado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corriger le message sélectionné"
+          }
+        }
+      }
+    },
     "Correct entire domain…": {
       "localizations": {
         "es": {
@@ -1936,6 +2016,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corriger tout le domaine…"
+          }
+        }
+      }
+    },
+    "Correct selected Mail as ${label} with request ${requestID}": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corregir el correo seleccionado como ${label} con la solicitud ${requestID}"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corriger le message sélectionné en ${label} avec la demande ${requestID}"
           }
         }
       }
@@ -2113,6 +2209,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossible de terminer l’opération IMAP."
+          }
+        }
+      }
+    },
+    "Couldn’t confirm mark-as-read. The Junk move remains recorded; this step will not retry.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo confirmar la marca como leído. El movimiento a No deseado sigue registrado; este paso no se reintentará."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de confirmer le marquage comme lu. Le déplacement vers Indésirables reste enregistré ; cette étape ne sera pas retentée."
           }
         }
       }
@@ -2955,6 +3067,22 @@
         }
       }
     },
+    "Export SpamWise Diagnostics": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar diagnóstico de SpamWise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter le diagnostic SpamWise"
+          }
+        }
+      }
+    },
     "Export content rules…": {
       "localizations": {
         "es": {
@@ -3191,6 +3319,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Filtrage"
+          }
+        }
+      }
+    },
+    "Filtering Status": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estado del filtrado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "État du filtrage"
           }
         }
       }
@@ -3479,6 +3623,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Générer une clé de récupération"
+          }
+        }
+      }
+    },
+    "Get SpamWise Status": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtener estado de SpamWise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtenir l’état de SpamWise"
           }
         }
       }
@@ -4384,6 +4544,22 @@
         }
       }
     },
+    "Local time. Equal hours disable quiet time. Summaries contain counts, never message content.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora local. Horas iguales desactivan el silencio. Los resúmenes contienen cantidades, nunca contenido de mensajes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heure locale. Des heures identiques désactivent le silence. Les résumés contiennent des nombres, jamais le contenu des messages."
+          }
+        }
+      }
+    },
     "Login registration failed. Check Login Items in System Settings.": {
       "localizations": {
         "es": {
@@ -4428,6 +4604,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mail"
+          }
+        }
+      }
+    },
+    "Mail action needs attention": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La acción en Mail requiere atención"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’action dans Mail nécessite votre attention"
           }
         }
       }
@@ -4545,6 +4737,22 @@
         }
       }
     },
+    "Mail label": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etiqueta de correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étiquette de message"
+          }
+        }
+      }
+    },
     "Mail rule": {
       "localizations": {
         "es": {
@@ -4641,6 +4849,38 @@
         }
       }
     },
+    "Mailbox destinations": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destinos de los buzones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destinations des boîtes aux lettres"
+          }
+        }
+      }
+    },
+    "Mailbox roles are missing or ambiguous. Actions remain unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las funciones de los buzones faltan o son ambiguas. Las acciones siguen sin estar disponibles."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les rôles des boîtes aux lettres sont absents ou ambigus. Les actions restent indisponibles."
+          }
+        }
+      }
+    },
     "Mark Good and restore": {
       "localizations": {
         "es": {
@@ -4705,6 +4945,22 @@
         }
       }
     },
+    "Mark as read after a confirmed Junk move": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar como leído tras confirmar el movimiento a No deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer comme lu après un déplacement confirmé vers Indésirables"
+          }
+        }
+      }
+    },
     "Mark for Review": {
       "localizations": {
         "es": {
@@ -4717,6 +4973,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Marquer pour vérification"
+          }
+        }
+      }
+    },
+    "Mark-as-read": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar como leído"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer comme lu"
+          }
+        }
+      }
+    },
+    "Mark-as-read status could not be saved. The confirmed Junk move is retained.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar el estado de lectura. Se conserva el traslado confirmado a correo no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer l’état de lecture. Le déplacement confirmé vers les indésirables est conservé."
           }
         }
       }
@@ -4877,6 +5165,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modèle"
+          }
+        }
+      }
+    },
+    "Model and local evidence disagree": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El modelo y los indicios locales discrepan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le modèle et les indices locaux divergent"
           }
         }
       }
@@ -5253,6 +5557,118 @@
         }
       }
     },
+    "Notification delivery failed. Mail decisions are unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo enviar la notificación. Las decisiones no han cambiado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’envoi de la notification a échoué. Les décisions sont inchangées."
+          }
+        }
+      }
+    },
+    "Notification status unavailable": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estado de notificaciones no disponible"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "État des notifications indisponible"
+          }
+        }
+      }
+    },
+    "Notifications": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        }
+      }
+    },
+    "Notifications allowed": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones permitidas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications autorisées"
+          }
+        }
+      }
+    },
+    "Notifications denied in System Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones denegadas en Ajustes del Sistema"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications refusées dans Réglages Système"
+          }
+        }
+      }
+    },
+    "Notifications not requested": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones no solicitadas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications non demandées"
+          }
+        }
+      }
+    },
+    "Notify me about unresolved Review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificarme sobre revisiones pendientes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "M’avertir des révisions en attente"
+          }
+        }
+      }
+    },
     "OCR reads bounded embedded PNG and JPEG images. It never downloads remote images; unavailable text remains unknown.": {
       "localizations": {
         "es": {
@@ -5573,6 +5989,22 @@
         }
       }
     },
+    "PDF and Office documents remain unread. Attached text is untrusted; scripts and remote resources never run.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los documentos PDF y Office no se leen. El texto adjunto no es de confianza; nunca se ejecutan scripts ni recursos remotos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les documents PDF et Office ne sont pas lus. Le texte joint n’est pas fiable ; les scripts et ressources distantes ne sont jamais exécutés."
+          }
+        }
+      }
+    },
     "Paid requests reserve a maximum cost before starting. Reservations include failed requests and may exceed actual charges.": {
       "localizations": {
         "es": {
@@ -5798,6 +6230,22 @@
         }
       }
     },
+    "Preview Selected Mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa del correo seleccionado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu du message sélectionné"
+          }
+        }
+      }
+    },
     "Preview decisions before changing your mail. Uncertain messages stay in Inbox; SpamWise never deletes mail.": {
       "localizations": {
         "es": {
@@ -5842,6 +6290,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Page d’aperçu : %lld"
+          }
+        }
+      }
+    },
+    "Preview selected Mail with request ${requestID}": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa del correo seleccionado con la solicitud ${requestID}"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu du message sélectionné avec la demande ${requestID}"
           }
         }
       }
@@ -6070,6 +6534,22 @@
         }
       }
     },
+    "Quiet from": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silencio desde"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silence de"
+          }
+        }
+      }
+    },
     "Quit SpamWise": {
       "localizations": {
         "es": {
@@ -6102,6 +6582,22 @@
         }
       }
     },
+    "Read current destinations": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consultar destinos actuales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lire les destinations actuelles"
+          }
+        }
+      }
+    },
     "Read embedded image text with on-device OCR": {
       "localizations": {
         "es": {
@@ -6114,6 +6610,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lire le texte des images intégrées par OCR sur l’appareil"
+          }
+        }
+      }
+    },
+    "Read plain-text and HTML attachments locally": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leer adjuntos de texto y HTML localmente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lire localement les pièces jointes texte et HTML"
           }
         }
       }
@@ -6455,6 +6967,22 @@
         }
       }
     },
+    "Request UUID": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UUID de solicitud"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UUID de la demande"
+          }
+        }
+      }
+    },
     "Requested": {
       "localizations": {
         "es": {
@@ -6775,6 +7303,22 @@
         }
       }
     },
+    "Review decision": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar decisión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Examiner la décision"
+          }
+        }
+      }
+    },
     "Review digest": {
       "localizations": {
         "es": {
@@ -6791,6 +7335,22 @@
         }
       }
     },
+    "Review in SpamWise": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar en SpamWise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Examiner dans SpamWise"
+          }
+        }
+      }
+    },
     "Review treatment": {
       "localizations": {
         "es": {
@@ -6803,6 +7363,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Traitement des messages à vérifier"
+          }
+        }
+      }
+    },
+    "Review: %lld. Good: %lld. Open SpamWise to inspect decisions.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por revisar: %lld. Válidos: %lld. Abre SpamWise para examinar las decisiones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À examiner : %lld. Légitimes : %lld. Ouvrez SpamWise pour consulter les décisions."
           }
         }
       }
@@ -7159,6 +7735,22 @@
         }
       }
     },
+    "Save a sender correction for one selected message, then attempt its action under existing safety settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guarda una corrección de remitente para un mensaje seleccionado e intenta su acción con la configuración de seguridad actual."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistre une correction d’expéditeur pour un message sélectionné, puis tente son action selon les réglages de sécurité actuels."
+          }
+        }
+      }
+    },
     "Save evidence settings": {
       "localizations": {
         "es": {
@@ -7187,6 +7779,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrer la configuration du dossier"
+          }
+        }
+      }
+    },
+    "Save notification preferences": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar preferencias de notificaciones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer les préférences de notification"
           }
         }
       }
@@ -7797,6 +8405,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "SpamWise est en cours d’exécution"
+          }
+        }
+      }
+    },
+    "SpamWise mail summary": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resumen de correo de SpamWise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résumé de courrier SpamWise"
           }
         }
       }
@@ -8814,6 +9438,22 @@
         }
       }
     },
+    "These are Mail.app roles. Matching names do not prove server labels. Keep dry run on while comparing filters.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Son funciones de Mail.app. Los nombres coincidentes no confirman las etiquetas del servidor. Mantén la simulación al comparar filtros."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce sont les rôles de Mail.app. Des noms identiques ne prouvent pas les libellés du serveur. Gardez la simulation activée pour comparer les filtres."
+          }
+        }
+      }
+    },
     "These exclusions do not block mail. Explicit address and domain rules still win.": {
       "localizations": {
         "es": {
@@ -8938,6 +9578,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les tokens sont mesurés lorsque le fournisseur en communique le nombre. Les coûts en dollars sont des estimations ; les frais d’écriture en cache peuvent varier."
+          }
+        }
+      }
+    },
+    "Tools": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herramientas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outils"
           }
         }
       }
@@ -9086,6 +9742,22 @@
         }
       }
     },
+    "Unavailable": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No disponible"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible"
+          }
+        }
+      }
+    },
     "Unavailable or failed evidence never counts as spam.": {
       "localizations": {
         "es": {
@@ -9114,6 +9786,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seuils non étalonnés : Prudent 99 %, Équilibré 95 %, Agressif 90 %. La confiance du modèle n’est pas une probabilité."
+          }
+        }
+      }
+    },
+    "Uncertain classification; confidence is uncalibrated": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clasificación incierta; confianza sin calibrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classement incertain ; confiance non étalonnée"
           }
         }
       }
@@ -9230,6 +9918,22 @@
         }
       }
     },
+    "Until": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hasta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À"
+          }
+        }
+      }
+    },
     "Usage": {
       "localizations": {
         "es": {
@@ -9290,6 +9994,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utiliser un jeton d’accès OAuth"
+          }
+        }
+      }
+    },
+    "Use a generated UUID for each new operation; reuse it only to retry that same request.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa un UUID generado para cada operación nueva; reutilízalo solo para reintentar esa misma solicitud."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez un UUID généré pour chaque nouvelle opération ; réutilisez-le uniquement pour réessayer la même demande."
           }
         }
       }

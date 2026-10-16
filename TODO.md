@@ -80,6 +80,9 @@ Parent items remain open until their full acceptance criteria are met.
   from reviewed, unclassified and classified mail. Pass with zero unexplained gaps
   in controlled delivery tests and measured end-to-end latency, without Mail
   database access or Full Disk Access.
+  - [x] Persist per-account paging and display scan health.
+  - [ ] Run controlled delivery, wake/restart and mutating-mailbox coverage tests.
+
 - [ ] **SS-02 — Validate mailbox roles and multi-filter coexistence.** SpamSieve
   documents [distinguishing its actions from server filtering](https://c-command.com/spamsieve/help/spam-message-colors-in).
   Add per-account destination previews and verify provider semantics, especially
@@ -87,6 +90,9 @@ Parent items remain open until their full acceptance criteria are met.
   server rules and SpamWise without competing moves or duplicate classifications;
   default comparison runs to dry run. Extend the existing slow-server and uncertain
   move tests; preserve source-folder/action provenance and clean up generated probes.
+  - [x] Expose account-specific special-mailbox destination previews.
+  - [ ] Verify concurrent-filter behavior and slow/offline provider synchronization.
+
 - [ ] **SS-03 — Offer a genuinely local filtering mode.** SpamSieve’s
   [documented privacy baseline](https://c-command.com/spamsieve/features) is processing
   mail on the Mac. An on-device model alone does not meet that baseline: SpamWise
@@ -95,6 +101,9 @@ Parent items remain open until their full acceptance criteria are met.
   evidence, while allowing Mail.app to synchronize accounts. Verify with network
   observation and offline fixtures. Evaluate a useful trained local classifier;
   the current five-fixture on-device run returning only Review is not parity.
+  - [x] Block cloud providers and outbound evidence under explicit local mode.
+  - [ ] Observe network isolation and evaluate useful local-model quality.
+
 - [ ] **SS-04 — Correct selected mail without leaving Mail.** Match SpamSieve’s
   [menu-bar/Dock commands and keyboard shortcuts](https://c-command.com/spamsieve/help/train-as-good-spam)
   with accessible Good/Junk/Review actions for selected Mail messages, including
@@ -102,6 +111,9 @@ Parent items remain open until their full acceptance criteria are met.
   result summary. Preserve account identity, explicit domain scope, latest-rule
   precedence, and separate training success from move failure. Verify the entire
   select → correct → locate result flow without switching to Activity first.
+  - [x] Add menu-bar selected-message corrections with individual outcomes.
+  - [ ] Verify selected generated mail through the signed live correction flow.
+
 - [ ] **SS-05 — Demonstrate quality and performance against SpamSieve.** Use its
   [published accuracy statistics](https://c-command.com/spamsieve/help/statistics)
   as a comparison category, not evidence of an achieved target. Build a reviewed,
@@ -114,6 +126,9 @@ Parent items remain open until their full acceptance criteria are met.
   p50/p95 latency, throughput, memory/CPU and cost. Keep campaign duplicates out of
   both training and holdout; do not retune on the holdout. Retain the 0.2% good-mail
   false-positive bound and $150 ceiling above; no new spend is authorized by this item.
+  - [x] Add validated frozen-cohort paired reports and observed performance/review metrics.
+  - [ ] Collect independent labels and execute a frozen SpamSieve comparison.
+
 - [ ] **SS-06 — Make unattended operation a supported setup path.** SpamSieve’s
   [drone workflow](https://c-command.com/spamsieve/help/drone-setup-and-remote)
   filters synchronized accounts while its Mac is running. SpamWise monitoring
@@ -122,6 +137,8 @@ Parent items remain open until their full acceptance criteria are met.
   restart recovery. Validate filtering with windows closed, screen locked, after
   restart and after sleep; explain when the Mac and Mail.app must remain running. Finish
   fresh-user live onboarding and package the actual accepted build.
+  - [x] Keep monitoring independent of windows and provide opt-in login registration.
+  - [ ] Verify screen-lock, restart, sleep/wake and fresh-user acceptance.
 
 ### P1 — daily workflows and control
 
@@ -133,6 +150,9 @@ Parent items remain open until their full acceptance criteria are met.
   filter provenance, avoid rescuing user-blocked senders, and prevent move loops
   with SpamSieve/server filters. Do not treat the user’s growing sample folders as
   permission to move or relabel their contents automatically.
+  - [x] Implement bounded read-only Junk review and explicit restore.
+  - [ ] Verify signed rescue and coexistence on generated messages.
+
 - [ ] **SS-08 — Train through Mail.app’s synchronized folders.** Match
   SpamSieve’s [dedicated training mailboxes](https://c-command.com/spamsieve/help/drone-setup-and-remote)
   with explicitly configured, account-scoped Good/Junk training folders read through
@@ -142,6 +162,9 @@ Parent items remain open until their full acceptance criteria are met.
   intended Inbox/Junk destination, and reconcile reconnects and duplicate deliveries.
   Ordinary Junk moves and server classifications must not count as user training.
   Test from a second device and preserve failures for review.
+  - [x] Implement dedicated-folder baseline, atomic training claims and retained failures.
+  - [ ] Verify deliberate placement from a second device and reconnect behavior.
+
 - [ ] **SS-09 — Select accounts and folders to filter, and refilter deliberately.**
   SpamSieve [filters selected non-Inbox mailboxes](https://c-command.com/spamsieve/help/filter-spam-messages-in)
   and supports [manual refiltering](https://c-command.com/spamsieve/help/requirements).
@@ -150,6 +173,9 @@ Parent items remain open until their full acceptance criteria are met.
   renames/removals without silently broadening scope; keep Junk rescue separate.
   Test server-routed mail and explicit historical refiltering without replaying
   old actions or allowing the message to establish its own trusted history.
+  - [x] Implement exact account/folder plans, date boundaries and cancellable dry-run refiltering.
+  - [ ] Verify server-routed mail, renamed folders and signed historical previews.
+
 - [x] **SS-10 — Expand rules beyond literal sender addresses/domains.** SpamSieve
   has [header/body matchers, regex, rule state and match statistics](https://c-command.com/spamsieve/help/rule-columns-locations).
   Add a staged rule builder for mailing-list headers, recipients, Reply-To,
@@ -192,6 +218,9 @@ Parent items remain open until their full acceptance criteria are met.
   explicit supported preference after a confirmed Junk action. Keep text labels,
   sparse color and uncalibrated-score warnings; do not overwrite users’ flags or
   claim that Apple Mail background colors synchronize to mobile devices.
+  - [x] Implement quiet batched notifications, review ranking and separate post-Junk read status.
+  - [ ] Verify signed notification delivery/deep links and Mail read-status behavior.
+
 - [x] **SS-15 — Protect against own-address and trusted-sender spoofing.** SpamSieve
   has an [own-address exception to Contacts trust](https://c-command.com/spamsieve/help/catch-spam-sent-from-my).
   Add explicit own-address/alias discovery and configurable exclusions from automatic
@@ -216,6 +245,9 @@ Parent items remain open until their full acceptance criteria are met.
   extraction and additional image formats, with malicious, encrypted and oversized
   fixtures. Keep attachment content untrusted, never execute macros or fetch remote
   content, and distinguish unreadable attachments from spam evidence.
+  - [x] Add bounded text/HTML attachments and additional verified still-image formats.
+  - [ ] Complete isolated PDF/document extraction evaluation and encrypted/resource-limit fixtures.
+
 - [ ] **SS-18 — Publish a verified Mail.app/account compatibility matrix.** Use
   SpamSieve’s [requirements](https://c-command.com/spamsieve/help/requirements) as
   a documentation baseline. Verify account types through Mail.app, including
@@ -224,18 +256,26 @@ Parent items remain open until their full acceptance criteria are met.
   Document macOS 27 and hardware requirements; older-macOS support needs a feasibility
   decision rather than an automatic deployment-target downgrade. No additional
   mail-client adapters or direct server integrations are required.
+  - [x] Publish the specific iCloud/Google evidence and unsupported/runtime-pending matrix.
+  - [ ] Complete offline recovery and broader account/hardware acceptance.
+
 - [ ] **SS-19 — Expose documented automation.** SpamSieve supplies an
   [AppleScript interface and integration SDK](https://c-command.com/spamsieve/help/customizing-using-apple).
   Design supported CLI/Shortcuts/Apple Events entry points for SpamWise and Mail.app:
   classify-preview, explicit correction, status and export. Keep account identity, cancellation,
   idempotency, spending limits and action authorization consistent with the app.
   The existing Inbox-trigger URL and evaluator/daemon do not cover these workflows.
+  - [x] Implement documented App Intents and durable UUID replay protection.
+  - [ ] Resolve native intent registration and verify Shortcuts/CLI execution.
+
 - [ ] **SS-20 — Finish maintainable distribution and lifecycle support.** SpamSieve
   has [installation/update, migration and removal workflows](https://c-command.com/spamsieve/help/SpamSieveManual_toc).
   Add a tested signed-update path for direct distribution, clear upgrade/recovery
   guidance, login-item removal and user-controlled data removal on uninstall.
   Finish the existing notarized-release/App Store prerequisites without treating
   archive success as distribution or review approval.
+  - [x] Document upgrade/recovery, login-item removal and optional data removal.
+  - [ ] Finish App Store feasibility gaps and release acceptance; use GitHub Releases with GitHubUpdateChecker only if the store path proves unsuitable.
 
 ### Opportunities to exceed the baseline — prove, then claim
 
@@ -245,18 +285,26 @@ Parent items remain open until their full acceptance criteria are met.
   in actual correspondence/order evidence, retain unknown-history distinctions,
   and test prompt injection and contradictory examples. Policy text and extra
   providers alone are not evidence of better filtering.
+  - [x] Support frozen policy/no-policy comparisons in the offline reporting tool.
+  - [ ] Measure semantic-preference benefit on independently reviewed unseen mail.
+
 - [ ] **SS-22 — Reduce review effort without hiding risk.** Rank Review and rescue
   candidates by disagreement and likely error; explain the specific rule/evidence
   that drove each decision and the effect of a proposed correction. Measure minutes
   and corrections needed per 1,000 messages at the same false-positive bound as the
   baseline. Keep detailed diagnostics behind disclosures and preserve accessible,
   uncluttered English/Spanish/French flows.
+  - [x] Rank review by action failure, disagreement and uncertainty; report observed review effort.
+  - [ ] Measure review effort at the matched false-positive bound.
+
 - [ ] **SS-23 — Make local/cloud tradeoffs explicit and measurable.** After SS-03
   and SS-05, evaluate an opt-in local-first classifier policy with separately
   authorized cloud escalation for uncertain cases. Show what would leave the Mac,
   why, and its estimated cost; allow preview/cancel. Benchmark privacy, quality,
   latency and spend together. Never introduce a silent provider fallback or treat
   the $150 ceiling as a target.
+  - [x] Report paired local/cloud quality, latency, resources, review effort and cost.
+  - [ ] Complete local/quality prerequisites before implementing authorized cloud escalation.
 
 ### Deliberate differences
 

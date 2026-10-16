@@ -67,3 +67,43 @@ labels, include representative wanted mail from each account, exclude generated
 tuning. A Junk-only collection cannot establish a false-positive rate for wanted
 mail. Collection itself requires no model calls; the existing $150 ceiling applies
 to any later authorized paid evaluation.
+
+## Frozen comparisons with SpamSieve or another configuration
+
+`spamwise-eval --compare MANIFEST.json --output comparison.json` computes paired
+metrics offline. It performs no Mail operation, model call, collection or training.
+The version-1 example is
+`SpamWiseCore/Tests/SpamWiseCoreTests/Fixtures/comparison.json`; its synthetic numbers
+exercise reporting only and provide no evidence of product quality.
+
+Freeze the cohort and each system's configuration before predictions. The manifest
+contains `holdoutID`, ISO-8601 `frozenAt`, `humanReviewed`, `trainingCampaigns`,
+`messages`, and `runs`. Each message has an opaque `id`, a campaign group, independent
+human `truth` (`good`, `junk`, `graymail`) and candidate `source`
+(`spamsieve`, `server`, `unknown`, `other`). Source never supplies truth. Keep only one
+representative per campaign in this comparison cohort; training campaign overlap,
+duplicate messages/campaigns and unequal result sets are rejected.
+
+Each run records a distinct `system`, immutable `configurationID`, `learningFrozen`,
+`priorExposure` (`none`, `known`, `unknown`), positive whole-run `elapsedSec`, and a
+result for every message. Results contain `id`, `label` (`inbox`, `junk`, `review`,
+or null for unclassified), optional reason, and optional measured `latencySec`,
+`reviewSec` and `corrections`. Null predictions remain in the denominator. Missing
+rows fail validation. Record zero review time/corrections only when actually observed,
+not as a substitute for missing measurements.
+
+Optional run-level `cpuSec`, `peakMemoryBytes`, `costUSD` and `costBasis`
+(`measured` or `estimated`) preserve their provenance. The report includes paired
+confusion matrices, graymail separately, abstentions, p50/p95 latency, throughput,
+review minutes and corrections per thousand messages, resource figures and cost.
+Percentiles use nearest rank; latency/review aggregates are absent unless every
+message has a measurement. Compare equal concurrency and warm/cache conditions and
+retain machine/OS details with the configuration records.
+
+`eligibleForBoundedComparison` requires every run to attest no prior exposure and
+meet the exact one-sided 95% upper false-positive bound of 0.2%. It is not a
+superiority finding, and attestations are not independently verified. Known/unknown
+prior exposure stays visible. Do not retune on the frozen holdout. This tool also
+supports policy/no-policy and local/cloud experiments once their independent review
+and privacy prerequisites are met; it does not authorize cloud escalation or
+spending. Keep the $150 ceiling and ordinary Junk-folder preservation in force.

@@ -12,8 +12,13 @@ public struct MIMEParser: Sendable {
   private static let maximumBoundaryCharacters = 200
   private static let alternativeChunkCharacters = 128
   private static let maximumURLs = 40
-  /// Creates a MIMEParser with the supplied configuration.
-  public init() {}
+  private static let maximumTextAttachmentBytes = 65_536
+  private static let maximumAttachmentLabelCharacters = 256
+  private let includeTextAttachments: Bool
+  /// Creates a bounded parser with optional plain-text and HTML attachment extraction.
+  public init(includeTextAttachments: Bool = false) {
+    self.includeTextAttachments = includeTextAttachments
+  }
 
   /// Extracts a normalized mailbox address from a header value.
   public static func address(_ value: String) -> String? {
@@ -82,6 +87,20 @@ public struct MIMEParser: Sendable {
       throw ParseError.invalidEncoding
     }
     return text
+  }
+  private static func attachmentMetadata(
+    _ headers: [String: [String]],
+    contentType: String,
+    mime: String
+  ) throws -> [AttachmentMetadata] {
+    let disposition = headers["content-disposition"]?.first ?? ""
+    guard disposition.lowercased().hasPrefix("attachment") else { return [] }
+    let filename = parameter("filename", in: disposition) ?? parameter("name", in: contentType)
+    let decodedName = try filename.map(decodeWords)
+    guard mime.count <= maximumAttachmentLabelCharacters,
+      (decodedName?.count ?? 0) <= maximumAttachmentLabelCharacters
+    else { throw ParseError.tooLarge }
+    return [.init(mediaType: mime, filename: decodedName)]
   }
   private static func quotedPrintable(_ source: String) throws -> Data {
     let bytes = Array(source.unicodeScalars.map { UInt8(truncatingIfNeeded: $0.value) })
@@ -227,7 +246,8 @@ public struct MIMEParser: Sendable {
         String(line[line.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
       )
     }
-    for key in ["content-type", "content-transfer-encoding"] where (headers[key]?.count ?? 0) > 1 {
+    for key in ["content-type", "content-transfer-encoding", "content-disposition"]
+    where (headers[key]?.count ?? 0) > 1 {
       throw ParseError.malformed
     }
     return (headers, String(source[separator.upperBound...]))
@@ -242,16 +262,13 @@ public struct MIMEParser: Sendable {
     let mime = contentType.components(separatedBy: ";")[0].lowercased().trimmingCharacters(
       in: .whitespaces
     )
-    let disposition = headers["content-disposition"]?.first ?? ""
-    if disposition.lowercased().hasPrefix("attachment") {
-      let filename =
-        Self.parameter("filename", in: disposition) ?? Self.parameter("name", in: contentType)
-      return Content(
-        text: "",
-        urls: [],
-        plain: false,
-        attachments: [.init(mediaType: mime, filename: try filename.map(Self.decodeWords))]
-      )
+    let attachments = try Self.attachmentMetadata(headers, contentType: contentType, mime: mime)
+    let isAttachment = !attachments.isEmpty
+    if isAttachment {
+      guard includeTextAttachments, ["text/plain", "text/html"].contains(mime) else {
+        return Content(text: "", urls: [], plain: false, attachments: attachments)
+      }
+      guard raw.utf8.count <= Self.maximumTextAttachmentBytes else { throw ParseError.tooLarge }
     }
     if mime.hasPrefix("multipart/") {
       guard let boundary = Self.parameter("boundary", in: contentType), !boundary.isEmpty,
@@ -304,9 +321,11 @@ public struct MIMEParser: Sendable {
     let text = mime == "text/html" ? Self.htmlText(decoded) : decoded
     urls = urls.filter { URL(string: $0)?.host != nil }
     return Content(
-      text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+      text: (isAttachment ? "Untrusted attached text:\n" : "")
+        + text.trimmingCharacters(in: .whitespacesAndNewlines),
       urls: urls,
-      plain: mime == "text/plain"
+      plain: mime == "text/plain",
+      attachments: attachments
     )
   }
 

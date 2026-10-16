@@ -270,6 +270,18 @@ public actor AppleMailAdapter: MailClientAdapter {
     )
     guard observed == .boolean(true) else { throw IntegrationError.staleMessage }
   }
+  /// Marks read only after rechecking exact source and the account's current Junk membership.
+  public func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
+    guard let message = try await lookup(identity),
+      let source = String(data: message.raw, encoding: .utf8)
+    else {
+      throw IntegrationError.staleMessage
+    }
+    try Task.checkCancellation()
+    let result = try await runner.run(MailScripts.markRead(identity, expectedSource: source))
+    guard result == .boolean(true) else { throw IntegrationError.scriptFailed }
+    return .init(confirmed: true)
+  }
   /// Imports bounded Inbox and Sent history with explicit partial availability.
   public func importHistory() async throws -> [String: HistoryIndex] {
     try await importHistory(previous: [:])

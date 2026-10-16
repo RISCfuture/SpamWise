@@ -36,47 +36,6 @@ import SpamWiseCore
     try Decision.evaluate(.init(label: .junk, confidence: 999, reason: "invalid"))
   }
 }
-actor RecordingAdapter: MailClientAdapter {
-  var actions: [MailAction] = []
-  var fail = false
-  var updatedIdentity: MessageIdentity?
-  var lookups = 0
-  var message: MailEnvelope?
-  func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? {
-    lookups += 1
-    return message
-  }
-  func retain(_ envelope: MailEnvelope) { message = envelope }
-  func recentMessages(limit: Int) async throws -> [MailEnvelope] { [] }
-  func importHistory() async throws -> [String: HistoryIndex] { [:] }
-  func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
-    if fail { throw IntegrationError.permissionDenied }
-    actions.append(action); return .init(confirmed: true, updatedIdentity: updatedIdentity)
-  }
-  func deny() { fail = true }
-  func moveIdentity(to identity: MessageIdentity) { updatedIdentity = identity }
-}
-func testStore() throws -> Store {
-  try Store(
-    url: FileManager.default.temporaryDirectory.appending(
-      path: "SpamWise-tests/\(UUID())/state.store"
-    )
-  )
-}
-func envelope(_ name: String = "filler-spam") throws -> MailEnvelope {
-  let raw = try fixture(name)
-  return MailEnvelope(
-    identity: .init(accountID: "account-A", contentHash: stableHash(raw)),
-    raw: raw
-  )
-}
-func enableActions(_ store: Store) async throws {
-  try await StateRepository.update(store) { state in
-    state.settings.dryRun = false; state.settings.route = .mailRule
-    state.settings.validatedAccounts = ["account-A"]
-  }
-}
-
 @Test func `claims training corrections atomically and keeps uncertain moves claimed`() async throws
 {
   let store = try testStore(), adapter = RecordingAdapter()
@@ -165,11 +124,24 @@ func enableActions(_ store: Store) async throws {
   #expect(first.identity == moved)
   #expect(first.id == second.id)
   #expect(await adapter.actions == [.moveToJunk])
+  #expect(await adapter.readRequests == 0)
+  try await StateRepository.editSettings(store) { $0.mailOptions.markJunkRead = true }
+  let correction = try await pipeline.correct(recordID: first.id, label: .junk, adapter: adapter)
+  #expect(correction.outcome == .applied)
+  #expect(correction.readStatusOutcome == .failed)
+  #expect(correction.readStatusError != nil)
+  _ = await pipeline.process(try envelope(), adapter: adapter)
+  #expect(await adapter.readRequests == 1)
   #expect(try await StateRepository.load(store).records.first?.verdict?.label == .junk)
   let preview = await pipeline.process(try envelope(), adapter: adapter, forceDryRun: true)
   #expect(preview.id != first.id)
   #expect(preview.outcome == .dryRun)
-  #expect(await adapter.actions == [.moveToJunk])
+  #expect(await adapter.actions == [.moveToJunk, .moveToJunk])
+  await adapter.allowMarkRead()
+  let markedRead = try await pipeline.correct(recordID: first.id, label: .junk, adapter: adapter)
+  #expect(markedRead.readStatusOutcome == .applied)
+  #expect(markedRead.outcome == .applied)
+  #expect(await adapter.readRequests == 2)
 }
 @Test func `prevents actions during dry runs pauses and failures`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()

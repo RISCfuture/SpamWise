@@ -24,6 +24,33 @@ func `parses required message fixtures`(_ name: String) throws {
   #expect(message.text.contains("Café"))
   #expect(message.urls.contains("https://shop.example.co.uk/order"))
 }
+
+@Test func `extracts optional text attachments without interpreting active documents`() throws {
+  let source = """
+    From: person@example.org
+    Content-Type: text/html; charset=utf-8
+    Content-Disposition: attachment; filename=invoice.html
+
+    <script>fetch('https://attacker.example')</script><img \
+    src="https://attacker.example/pixel"><p>Invoice offer</p>
+    """
+  let raw = Data(source.utf8)
+  #expect(try MIMEParser().parse(raw).text.isEmpty)
+  let extracted = try MIMEParser(includeTextAttachments: true).parse(raw)
+  #expect(extracted.text.contains("Invoice offer"))
+  #expect(!extracted.text.contains("fetch"))
+  #expect(throws: ParseError.tooLarge) {
+    try MIMEParser(includeTextAttachments: true).parse(
+      Data((source + String(repeating: "x", count: 66_000)).utf8)
+    )
+  }
+  for mediaType in ["application/pdf", "application/vnd.ms-word.document.macroEnabled.12"] {
+    let unsupported = Data(source.replacingOccurrences(of: "text/html", with: mediaType).utf8)
+    let message = try MIMEParser(includeTextAttachments: true).parse(unsupported)
+    #expect(message.text.isEmpty)
+    #expect(message.attachments?.first?.mediaType == mediaType.lowercased())
+  }
+}
 @Test func `rejects malformed senders and oversized messages`() throws {
   for sender in [
     #""friend@example.org"@attacker.example"#, "friend@example.org trailing", "a..b@example.org",

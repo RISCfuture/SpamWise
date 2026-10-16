@@ -30,6 +30,7 @@ struct MailHealthView: View {
           }
         )
       )
+      MailDestinationView(model: model, accountID: account.id)
       if let health = model.scanHealth[account.id] {
         if let date = health.lastSuccess {
           LabeledContent("Last successful page", value: date.formatted())

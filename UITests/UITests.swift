@@ -1,7 +1,28 @@
 import AppIntents
+import AppIntentsTesting
 import XCTest
 
 final class UITests: XCTestCase {
+  @MainActor func testRegisteredAutomationStatus() async throws {
+    try XCTSkipUnless(
+      ProcessInfo.processInfo.environment["SPAMWISE_INTENTS_TEST"] == "1",
+      "Requires the current signed app to be indexed by macOS App Intents."
+    )
+    continueAfterFailure = false
+    _ = ActivityScreen.launchCorrectionFixture()
+    let intent = IntentDefinitions(bundleIdentifier: "codes.tim.SpamWise").intents[
+      "SpamWiseStatusIntent"
+    ]
+    let result = try await intent.makeIntent().run()
+    let status: String = try result.value
+    XCTAssertFalse(status.contains("newsletter@example.org"))
+    let diagnostics = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: Data(status.utf8)) as? [String: Any]
+    )
+    XCTAssertEqual(diagnostics["dryRun"] as? Bool, false)
+    XCTAssertEqual(diagnostics["validatedAccountCount"] as? Int, 1)
+  }
+
   @MainActor func testCorrectionsKeepRulesWhenMailActionFails() throws {
     continueAfterFailure = false
     let activity = ActivityScreen.launchCorrectionFixture()
@@ -78,7 +99,7 @@ enum UITestTiming {
   static let transition: TimeInterval = 5
 }
 
-@MainActor private struct IntroductionScreen {
+@MainActor struct IntroductionScreen {
   let app: XCUIApplication
 
   var isVisible: Bool { app.staticTexts["setup.intro"].exists }
@@ -102,7 +123,7 @@ enum UITestTiming {
   }
 }
 
-@MainActor private struct CredentialScreen {
+@MainActor struct CredentialScreen {
   let app: XCUIApplication
 
   var isVisible: Bool { app.secureTextFields["setup.key"].exists }
@@ -114,7 +135,7 @@ enum UITestTiming {
   }
 }
 
-@MainActor private struct MailSetupScreen {
+@MainActor struct MailSetupScreen {
   let app: XCUIApplication
 
   var hasPermissionDeniedStatus: Bool { app.staticTexts["mail.permissionDenied"].exists }
@@ -133,7 +154,7 @@ enum UITestTiming {
   }
 }
 
-@MainActor private struct FinishSetupScreen {
+@MainActor struct FinishSetupScreen {
   let app: XCUIApplication
 
   func finish() -> ActivityScreen {
@@ -142,82 +163,7 @@ enum UITestTiming {
   }
 }
 
-@MainActor private struct ActivityScreen {
-  let app: XCUIApplication
-
-  var isDryRun: Bool { app.staticTexts["activity.mode"].value as? String == "dryRun" }
-  var isPaused: Bool { app.staticTexts["activity.mode"].value as? String == "paused" }
-
-  static func launchCorrectionFixture() -> Self {
-    let app = XCUIApplication()
-    app.launchArguments = [
-      "--ui-testing", "--ui-corrections", "-AppleLanguages", "(en)"
-    ]
-    app.launch()
-    return waitForLanding(in: app)
-  }
-
-  static func waitForLanding(in app: XCUIApplication) -> Self {
-    XCTAssertTrue(app.staticTexts["activity.mode"].waitForExistence(timeout: UITestTiming.launch))
-    return Self(app: app)
-  }
-
-  func openFixture() -> DecisionScreen {
-    let subject = app.staticTexts["activity.subject.00000000-0000-0000-0000-000000000001"]
-    XCTAssertTrue(subject.waitForExistence(timeout: UITestTiming.transition))
-    subject.click()
-    XCTAssertTrue(app.buttons["correction.good"].waitForExistence(timeout: UITestTiming.transition))
-    return DecisionScreen(app: app)
-  }
-
-  func openRulesSettings() -> RulesScreen {
-    app.typeKey(",", modifierFlags: .command)
-    // Native Settings toolbar tabs expose their titles instead of SwiftUI identifiers.
-    let rules = app.toolbars.buttons["Rules"]
-    XCTAssertTrue(rules.waitForExistence(timeout: UITestTiming.transition))
-    rules.click()
-    XCTAssertTrue(
-      app.descendants(matching: .any)["settings.rules.content"]
-        .waitForExistence(timeout: UITestTiming.transition)
-    )
-    return RulesScreen(app: app)
-  }
-
-  func openStatistics() -> StatisticsScreen {
-    app.buttons["activity.statistics"].click()
-    XCTAssertTrue(
-      app.staticTexts["statistics.decisions"].waitForExistence(timeout: UITestTiming.transition)
-    )
-    return StatisticsScreen(app: app)
-  }
-
-  func openCorpus() -> CorpusScreen {
-    app.menuButtons["activity.filter"].click()
-    app.menuItems["activity.corpus"].click()
-    XCTAssertTrue(
-      app.staticTexts["corpus.title"].waitForExistence(timeout: UITestTiming.transition)
-    )
-    return CorpusScreen(app: app)
-  }
-
-  func pause() {
-    app.buttons["activity.pause"].click()
-    XCTAssertEqual(
-      XCTWaiter.wait(
-        for: [
-          XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "paused"),
-            object: app.staticTexts["activity.mode"]
-          )
-        ],
-        timeout: UITestTiming.transition
-      ),
-      .completed
-    )
-  }
-}
-
-@MainActor private struct DecisionScreen {
+@MainActor struct DecisionScreen {
   let app: XCUIApplication
 
   var correctionSavedWithActionFailure: Bool {
@@ -296,7 +242,7 @@ enum UITestTiming {
   }
 }
 
-@MainActor private struct RulesScreen {
+@MainActor struct RulesScreen {
   let app: XCUIApplication
 
   var addressRule: String { ruleValue("settings.rule.address.newsletter@example.org") }
@@ -348,7 +294,7 @@ enum UITestTiming {
   }
 }
 
-@MainActor private struct RuleFormScreen {
+@MainActor struct RuleFormScreen {
   let app: XCUIApplication
 
   var canSave: Bool { app.buttons["rules.save"].isEnabled }

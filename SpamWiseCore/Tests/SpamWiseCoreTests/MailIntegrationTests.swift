@@ -110,7 +110,8 @@ final class Counter: Sendable {
     contentHash: "test"
   )
   let scripts = [
-    MailScripts.folders,
+    try MailScripts.markRead(identity, expectedSource: "From: x\n\nbody"),
+    MailScripts.folders, MailScripts.destinations(accountID: "test-account"),
     try MailScripts.folderPage(
       .init(accountID: "account", path: ["Parent", "Quot\"ed"]),
       offset: 0,

@@ -49,6 +49,8 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
   public var learnedWeights = false
   /// Enables bounded on-device OCR for embedded image parts.
   public var imageOCR = false
+  /// Opt-in local extraction of bounded text/plain and text/html attachments.
+  public var textAttachments: Bool?
   /// Explicit external evidence configuration; absent disables all lookups and subprocesses.
   public var externalEvidence: ExternalEvidenceSettings?
   /// Presents a local weekly digest of still-unreviewed Review decisions.
@@ -142,6 +144,6 @@ public struct ReviewDigest: Sendable {
     records = latest.filter {
       $0.date >= cutoff && $0.date <= now && $0.decision.label == .review
         && $0.correctedLabel == nil && $0.outcome != .superseded
-    }.sorted { $0.date > $1.date }
+    }.sorted(by: ReviewPriority.precedes)
   }
 }

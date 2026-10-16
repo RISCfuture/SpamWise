@@ -28,10 +28,22 @@ public actor Pipeline {
       var message = try MIMEParser().parse(envelope.raw)
       let current = try await StateRepository.load(store)
       let settings = current.settings.paused ? AdvancedSettings() : current.settings.advancedOptions
+      var findings: [String] = []
+      if settings.textAttachments == true {
+        if let extracted = try? MIMEParser(includeTextAttachments: true).parse(envelope.raw) {
+          message = extracted
+        } else {
+          findings.append("Attachment text unavailable; unknown evidence")
+        }
+        if message.attachments?.contains(where: {
+          !["text/plain", "text/html"].contains($0.mediaType)
+        }) == true {
+          findings.append("Some attachment formats were not read as text; unknown evidence")
+        }
+      }
       if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: envelope.raw) {
         message.text += "\nEmbedded image text (untrusted):\n" + text
       }
-      var findings: [String] = []
       if !current.settings.mailOptions.localOnly, let path = settings.externalEvidence?.rspamcPath {
         findings.append(await RspamdLookup(executablePath: path).lookup(raw: envelope.raw).summary)
       }
@@ -278,7 +290,15 @@ public actor Pipeline {
       }
     }
     try await save(completed)
-    return completed
+    do {
+      return try await markJunkRead(completed, adapter: adapter)
+    } catch {
+      completed.readStatusOutcome = .requested
+      completed.readStatusError = String(
+        localized: "Mark-as-read status could not be saved. The confirmed Junk move is retained."
+      )
+      return completed
+    }
   }
   private func save(_ record: DecisionRecord) async throws {
     try await StateRepository.update(store) { state in

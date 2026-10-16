@@ -214,3 +214,28 @@ server queries verify five in Trash and zero matching probes outside Trash. Futu
 Google cleanup must verify the system label rather than trusting that custom folder.
 Trash was not emptied; ordinary mail and the Junk folders were left untouched.
 No model calls were made.
+
+## SpamSieve parity implementation — 2026-10-16
+
+Mail.app-only parity work is tracked in `TODO.md` and
+`docs/spamsieve-parity-progress.md`. The completed SS-10/11/12/13/15/16 work includes
+content rules, reviewed corpus/undo, searchable Activity/audit, statistics, trust
+exclusions and encrypted backup. Other parent items retain explicit runtime,
+independent-label, hosting or second-device gates; checked child steps identify
+implementation without claiming those gates passed.
+
+The latest batch adds optional count-only notifications, separate post-Junk read
+status, bounded text/HTML attachments and extra still-image formats, account role
+previews, UUID-protected App Intents and frozen paired-comparison reporting. PDF/Office
+extraction, native-intent registry acceptance, a hosted signed updater and actual
+quality comparisons remain open. Development `AppIntentsTesting` reports metadata
+error 400 even though build extraction lists all four intents; the opt-in test records
+that prerequisite separately from normal UI acceptance. No provider calls or new mail
+were needed. The $150 cap and ordinary Junk-folder preservation remain in force.
+
+Current checks: 82 package tests pass; warning-free app/extension builds; strict
+SwiftLint, Swift formatting and Markdown lint; two UI flows pass in 103.196 seconds
+with one explicit intent-test skip. Result bundle is under worker
+`26e096e9-f0a7-465e-90b7-aa67c5b2b2f7`, timestamp `14-56-59`. Activity uses a single
+window so Tools commands do not create duplicate corpus sheets. This batch has not
+yet been accepted as a new notarized distribution or through live Mail workflows.

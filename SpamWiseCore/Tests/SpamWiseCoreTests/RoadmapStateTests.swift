@@ -45,6 +45,10 @@ import SpamWiseCore
   #expect(statistics.reviewedMistakes == 1)
   #expect(statistics.unresolvedReview == 0)
   #expect(statistics.actionFailures == 1)
+  var uncertain = review
+  uncertain.outcome = .noAction; uncertain.correctedLabel = nil
+  uncertain.verdict = .init(label: .review, confidence: 1, reason: "unknown")
+  #expect(ReviewPriority.precedes(review, uncertain))
   let diagnostic = try JSONEncoder().encode(DiagnosticSummary(state: state))
   #expect(!String(decoding: diagnostic, as: UTF8.self).contains("person@example.com"))
 }
@@ -189,4 +193,117 @@ import SpamWiseCore
   await #expect(throws: BudgetError.self) {
     try await EvaluationBudget.reserve(upperBoundUSD: .nan, store: store)
   }
+}
+
+@Test
+func `batches private notifications across restarts while honoring quiet time and corrections`()
+  async throws
+{
+  let store = try testStore()
+  let now = Date(timeIntervalSince1970: 1_800_014_400)
+  var calendar = Calendar(identifier: .gregorian); calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+  var preferences = NotificationPreferences()
+  preferences.enabledSince = now.addingTimeInterval(-3600)
+  preferences.quietStartHour = 0; preferences.quietEndHour = 0
+  let configured = preferences
+  try await StateRepository.update(store) { state in
+    state.settings.dryRun = false
+    state.settings.mailOptions.notifications = configured
+    var record = DecisionRecord(
+      identity: .init(accountID: "a", contentHash: "review"),
+      sender: "private@example.org",
+      subject: "Private subject",
+      decision: .init(label: .review, action: .orangeFlag, reason: "uncertain"),
+      outcome: .applied,
+      path: "model",
+      revision: 0
+    )
+    record.date = now.addingTimeInterval(-60)
+    state.records = [record]
+  }
+  preferences.quietStartHour = 22; preferences.quietEndHour = 8
+  let night = calendar.date(bySettingHour: 23, minute: 0, second: 0, of: now)!
+  let morning = calendar.date(bySettingHour: 7, minute: 0, second: 0, of: now)!
+  #expect(preferences.isQuiet(at: night, calendar: calendar))
+  #expect(preferences.isQuiet(at: morning, calendar: calendar))
+  #expect(
+    !preferences.isQuiet(
+      at: calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now)!,
+      calendar: calendar
+    )
+  )
+  let first = try #require(
+    await NotificationPlanning.claim(store: store, now: now, calendar: calendar)
+  )
+  #expect(first.review == 1 && first.good == 0)
+  let reopened = try await Store(url: store.url)
+  #expect(
+    try await NotificationPlanning.claim(
+      store: reopened,
+      now: now.addingTimeInterval(4000),
+      calendar: calendar
+    ) == nil
+  )
+  try await StateRepository.update(store) { state in
+    var record = state.records[0]
+    record.id = UUID(); record.identity.contentHash = "corrected"; record.correctedLabel = .inbox
+    state.records.append(record)
+  }
+  #expect(
+    try await NotificationPlanning.claim(
+      store: store,
+      now: now.addingTimeInterval(5000),
+      calendar: calendar
+    ) == nil
+  )
+}
+
+@Test func `replays automation receipts without repeating classification or corrections`()
+  async throws
+{
+  let store = try testStore(), adapter = RecordingAdapter()
+  try await enableActions(store)
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "lure"))
+  )
+  let selected = try envelope(), requestID = UUID()
+  let first = try await pipeline.execute(
+    .preview,
+    requestID: requestID,
+    envelope: selected,
+    adapter: adapter
+  )
+  #expect(first.outcome == .dryRun)
+  #expect(
+    try await pipeline.execute(.preview, requestID: requestID, envelope: selected, adapter: adapter)
+      == first
+  )
+  #expect(try await StateRepository.load(store).records.count == 1)
+  await #expect(throws: IntegrationError.staleMessage) {
+    try await pipeline.execute(
+      .correct(.junk),
+      requestID: requestID,
+      envelope: selected,
+      adapter: adapter
+    )
+  }
+  let correctionID = UUID()
+  let corrected = try await pipeline.execute(
+    .correct(.inbox),
+    requestID: correctionID,
+    envelope: selected,
+    adapter: adapter
+  )
+  #expect(corrected.outcome == .applied)
+  #expect(
+    try await pipeline.execute(
+      .correct(.inbox),
+      requestID: correctionID,
+      envelope: selected,
+      adapter: adapter
+    ) == corrected
+  )
+  #expect(await adapter.actions == [.moveToInbox])
+  #expect(try await StateRepository.load(store).corrections.count == 1)
 }

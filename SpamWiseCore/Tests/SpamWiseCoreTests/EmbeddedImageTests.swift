@@ -5,13 +5,18 @@ import SpamWiseCore
 private let pixelPNG =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4y8AAAAASUVORK5CYII="
 
-private func imageMessage(parts: Int = 1, payload: String = pixelPNG, attachment: Bool = false)
+private func imageMessage(
+  parts: Int = 1,
+  payload: String = pixelPNG,
+  attachment: Bool = false,
+  mime: String = "image/png"
+)
   -> Data
 {
   let disposition = attachment ? "attachment" : "inline"
   let image = """
     --images
-    Content-Type: image/png
+    Content-Type: \(mime)
     Content-Disposition: \(disposition)
     Content-Transfer-Encoding: base64
 
@@ -24,13 +29,20 @@ private func imageMessage(parts: Int = 1, payload: String = pixelPNG, attachment
   )
 }
 
-@Test func `recognizes text only from bounded inline image bytes`() async throws {
+@Test func `recognizes text only from bounded embedded image bytes`() async throws {
   let ocr = EmbeddedImageOCR { data in
     #expect(data == Data(base64Encoded: pixelPNG))
     return "Offer shown inside image"
   }
   #expect(await ocr.text(from: imageMessage()) == "Offer shown inside image")
-  #expect(await ocr.text(from: imageMessage(attachment: true)) == nil)
+  #expect(await ocr.text(from: imageMessage(attachment: true)) == "Offer shown inside image")
+  let gif = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+  let additional = EmbeddedImageOCR { _ in "Static image text" }
+  #expect(
+    await additional.text(from: imageMessage(payload: gif, mime: "image/gif"))
+      == "Static image text"
+  )
+  #expect(await additional.text(from: imageMessage(payload: gif, mime: "image/png")) == nil)
   #expect(await ocr.text(from: imageMessage(parts: 5)) == nil)
   #expect(await ocr.text(from: imageMessage(payload: "invalid")) == nil)
   let remote = Data("Content-Type: text/html\n\n<img src=\"https://example.com/pixel.png\">".utf8)

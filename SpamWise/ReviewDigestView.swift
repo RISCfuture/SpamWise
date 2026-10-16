@@ -3,6 +3,8 @@ import SpamWiseCore
 
 struct ReviewDigestView: View {
   @Bindable var model: AppModel
+  @State private var selection: UUID?
+  @State private var showsDecision = false
   private var records: [DecisionRecord] { ReviewDigest(state: model.state).records }
 
   var body: some View {
@@ -20,6 +22,10 @@ struct ReviewDigestView: View {
             Text(record.subject).font(.headline)
             Text(record.sender).foregroundStyle(.secondary)
             Text(record.decision.reason)
+            Text(ReviewPriority.reason(record)).foregroundStyle(.secondary)
+            Button("Review decision") {
+              selection = record.id; showsDecision = true
+            }
           }
         }
       }
@@ -28,6 +34,14 @@ struct ReviewDigestView: View {
         Button("Done") { model.showDigest = false }.keyboardShortcut(.defaultAction)
       }.padding([.horizontal, .bottom])
     }.frame(minWidth: 480, idealWidth: 600, minHeight: 340, idealHeight: 450)
+      .sheet(isPresented: $showsDecision) {
+        VStack {
+          if let record = model.state.records.first(where: { $0.id == selection }) {
+            DecisionDetailView(model: model, row: record)
+          }
+          Button("Done") { showsDecision = false }.padding()
+        }.frame(minWidth: 520, minHeight: 500)
+      }
   }
 }
 

@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "holdoutID": "synthetic-plumbing-only",
+  "frozenAt": "2026-10-16T00:00:00Z",
+  "humanReviewed": true,
+  "trainingCampaigns": ["training-campaign"],
+  "messages": [
+    {"id": "wanted", "campaign": "personal", "truth": "good", "source": "unknown"},
+    {"id": "lure", "campaign": "fraud", "truth": "junk", "source": "spamsieve"},
+    {"id": "newsletter", "campaign": "news", "truth": "graymail", "source": "server"}
+  ],
+  "runs": [
+    {
+      "system": "Synthetic A", "configurationID": "fixture-a", "learningFrozen": true,
+      "priorExposure": "none", "elapsedSec": 6, "cpuSec": 1, "costUSD": 0, "costBasis": "measured",
+      "results": [
+        {"id": "wanted", "label": "inbox", "latencySec": 1, "reviewSec": 0, "corrections": 0},
+        {"id": "lure", "label": "junk", "latencySec": 2, "reviewSec": 0, "corrections": 0},
+        {"id": "newsletter", "label": "review", "latencySec": 3, "reviewSec": 12, "corrections": 1}
+      ]
+    },
+    {
+      "system": "Synthetic B", "configurationID": "fixture-b", "learningFrozen": true,
+      "priorExposure": "unknown", "elapsedSec": 3,
+      "results": [
+        {"id": "wanted", "label": "junk", "latencySec": 0.5},
+        {"id": "lure", "label": null, "reason": "timeout"},
+        {"id": "newsletter", "label": "inbox", "latencySec": 1}
+      ]
+    }
+  ]
+}

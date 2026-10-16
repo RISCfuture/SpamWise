@@ -12,6 +12,10 @@ public struct MailPreferences: Codable, Sendable, Equatable {
   public var excludeOwnAddresses = true
   /// Optional explicitly configured non-Inbox filtering and dedicated-training folders.
   public var folderPlans: [MailFolderPlan]?
+  /// Opt-in read-status follow-up after a confirmed Junk move; nil means disabled.
+  public var markJunkRead: Bool?
+  /// Optional local notification policy, disabled until the user grants permission and enables it.
+  public var notifications: NotificationPreferences?
   /// Creates conservative defaults without changing existing account scope.
   public init() {}
 }

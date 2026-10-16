@@ -27,6 +27,10 @@ struct DecisionDetailView: View {
         if let error = row.actionError {
           Label(error, systemImage: "exclamationmark.triangle")
         }
+        if let outcome = row.readStatusOutcome {
+          LabeledContent("Mark-as-read", value: outcome.localizedTitle)
+        }
+        if let error = row.readStatusError { Text(error) }
       }
       Section("Correct this decision") {
         CorrectionControls(model: model, row: row)

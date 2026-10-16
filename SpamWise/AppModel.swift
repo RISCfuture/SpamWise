@@ -18,6 +18,8 @@ import MailIntegration
   var hasLoadedState = false
   var accounts: [MailAccount] = []
   var showDigest = false
+  var showCorpus = false
+  var showAudit = false
   var showCorrections = false
   var correctionResults: [MailCorrectionResult] = []
   var showJunk = false
@@ -33,6 +35,7 @@ import MailIntegration
   let adapter: AppleMailAdapter
   let preferences: UserDefaults
   let uiTesting: Bool
+  let notifications = LocalNotifications()
   private var work: Task<Void, Never>?
   var lastScan = Date.distantPast
   private var lastContactsRefresh = Date.distantPast
@@ -58,6 +61,7 @@ import MailIntegration
   init(preview: Bool = false) {
     hasLoadedState = preview
     uiTesting = preview || ProcessInfo.processInfo.arguments.contains("--ui-testing")
+    if !uiTesting { notifications.configure() }
     if uiTesting {
       guard let isolated = UserDefaults(suiteName: "codes.tim.SpamWise.ui.\(UUID())") else {
         preconditionFailure("UI fixtures require an isolated preferences suite.")
@@ -67,6 +71,11 @@ import MailIntegration
       preferences = .standard
     }
     #if DEBUG
+      if uiTesting {
+        accounts = [
+          MailAccount(id: "ui-test", name: "Example account", addresses: ["me@example.org"])
+        ]
+      }
       adapter = AppleMailAdapter(
         runner: uiTesting ? DeniedAppleEventRunner() : SystemAppleEventRunner()
       )
@@ -138,6 +147,13 @@ extension AppModel {
       guard !Task.isCancelled else { return }
       await refresh()
       if canMonitorMail {
+        if state.settings.mailOptions.notifications?.enabledSince != nil, let store {
+          do { try await notifications.deliver(store: store) } catch {
+            status = String(
+              localized: "Notification delivery failed. Mail decisions are unchanged."
+            )
+          }
+        }
         if contactsNeedRefresh { try? await refreshContacts() }
         if canScanAutomatically, Date().timeIntervalSince(lastScan) > Self.scanIntervalSec {
           scan(dryRun: state.settings.dryRun, automatic: true)

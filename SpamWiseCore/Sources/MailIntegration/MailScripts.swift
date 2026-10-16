@@ -156,6 +156,24 @@ public enum MailScripts {
       if (count of destinations) is not 1 then error "Account mailbox unresolved" number -1701
       """
   }
+  /// Changes read status only after exact-source and current account-specific Junk membership checks.
+  public static func markRead(_ identity: MessageIdentity, expectedSource: String) throws -> String
+  {
+    let destination = try destination(identity, action: .moveToJunk)
+    return try resolve(
+      identity,
+      operation: """
+        if (source of targetMessage) is not \(literal(expectedSource)) then error "Message \
+        changed" number -1702
+        \(destination)
+        set observedID to id of targetMessage
+        set present to (every message of item 1 of destinations whose id is observedID)
+        if (count of present) is not 1 then error "Message left Junk" number -1702
+        set read status of targetMessage to true
+        return (read status of targetMessage) is true
+        """
+    )
+  }
   static func resolve(_ identity: MessageIdentity, operation: String) throws -> String {
     guard let account = identity.accountID, !account.isEmpty,
       identity.messageID != nil || identity.localID != nil

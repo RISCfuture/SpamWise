@@ -29,6 +29,14 @@ public protocol MailClientAdapter: Sendable {
   func importHistory() async throws -> [String: HistoryIndex]
   /// Performs a supported action and reports the observed client state.
   func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt
+  /// Marks an exact message read only while it remains in this account's Junk mailbox.
+  func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt
+}
+extension MailClientAdapter {
+  /// Unsupported integrations leave read status unchanged.
+  public func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
+    throw IntegrationError.unavailable
+  }
 }
 /// Failures while resolving messages or executing mail-client operations.
 public protocol MailIntegrationFailure: Error {}

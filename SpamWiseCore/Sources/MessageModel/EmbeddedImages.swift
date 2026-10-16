@@ -1,7 +1,7 @@
 public import Foundation
 import ImageIO
 
-/// Bounded extraction of inline base64 PNG and JPEG MIME parts, without remote resources.
+/// Bounded extraction of embedded base64 raster MIME parts, without remote resources.
 public struct EmbeddedImages: Sendable {
   private static let maximumMessageBytes = 2_000_000
   private static let maximumHeaderBytes = 65_536
@@ -11,6 +11,10 @@ public struct EmbeddedImages: Sendable {
   private static let maximumNestingDepth = 12
   private static let maximumParts = 128
   private static let maximumBoundaryCharacters = 200
+  private static let imageTypes = [
+    "image/png": "public.png", "image/jpeg": "public.jpeg",
+    "image/gif": "com.compuserve.gif", "image/tiff": "public.tiff", "image/heic": "public.heic"
+  ]
   /// Maximum inline images accepted for one message.
   public static let maximumImages = 4
   /// Maximum decoded bytes in one image.
@@ -26,7 +30,7 @@ public struct EmbeddedImages: Sendable {
     guard let source = CGImageSourceCreateWithData(data as CFData, options),
       CGImageSourceGetCount(source) == 1,
       let type = CGImageSourceGetType(source) as String?,
-      type == (mime == "image/png" ? "public.png" : "public.jpeg"),
+      type == imageTypes[mime],
       let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, options) as? [CFString: Any],
       let width = properties[kCGImagePropertyPixelWidth] as? Int,
       let height = properties[kCGImagePropertyPixelHeight] as? Int,
@@ -56,7 +60,6 @@ public struct EmbeddedImages: Sendable {
     let mime = contentType.components(separatedBy: ";")[0].lowercased().trimmingCharacters(
       in: .whitespaces
     )
-    if headers["content-disposition"]?.lowercased().hasPrefix("attachment") == true { return }
     if mime.hasPrefix("multipart/") {
       let boundary = try boundary(in: contentType)
       var current: [String]?, closed = false, children = 0
@@ -76,7 +79,7 @@ public struct EmbeddedImages: Sendable {
       guard closed, children > 0 else { throw ParseError.malformed }
       return
     }
-    guard ["image/png", "image/jpeg"].contains(mime) else { return }
+    guard Self.imageTypes[mime] != nil else { return }
     guard headers["content-transfer-encoding"]?.lowercased() == "base64" else {
       throw ParseError.invalidEncoding
     }

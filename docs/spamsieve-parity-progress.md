@@ -114,12 +114,70 @@ SS-05, SS-21, SS-22 and SS-23 need independently reviewed mail and measured comp
 runs. SpamSieve's accumulating Junk folders remain candidate sources, not ground
 truth. No new collection or relabeling has run. The $150 ceiling remains a ceiling.
 
-SS-20 needs an update-feed/download host; this checkout has no Git remote. The host
-question is pending. No updater destination, release or automatic update has been
-invented or enabled.
+SS-20 now follows the owner’s App Store-first decision. The
+[guidelines/code assessment](app-store-feasibility.md) finds a viable path with
+Mail exception review and explicit release gaps. GitHub Releases plus the owner’s
+GitHubUpdateChecker library is the fallback if App Store distribution proves unsuitable.
+No external updater, release or store submission is enabled.
 
 ## API references
 
 - [Apple: launch-at-login registration](https://developer.apple.com/documentation/servicemanagement/smappservice/register())
 - [Apple: MenuBarExtra](https://developer.apple.com/documentation/swiftui/menubarextra)
 - [Apple: regular-expression progress callbacks](https://developer.apple.com/documentation/foundation/nsregularexpression/matchingoptions/reportprogress)
+
+## Notifications, attachments and automation
+
+- SS-14: opt-in local notifications contain counts only, with persistent batching,
+  overnight quiet hours, authorization/denied states and a link to the review queue.
+  Review ranks action failures and model/evidence disagreement before lower confidence;
+  the score remains uncalibrated. Optional mark-as-read runs only after a confirmed Junk
+  move and rechecks source and current account-specific Junk membership. Its outcome is
+  separate from the move and is never automatically retried. Live notification delivery
+  and signed Mail read-status acceptance remain pending.
+- SS-17: opt-in bounded plain-text/HTML attachment extraction uses the existing lexical
+  parser without executing scripts or loading resources. OCR accepts verified static
+  PNG/JPEG/GIF/TIFF/HEIC images within byte, image-count and pixel limits. Animated and
+  multipage images are rejected. PDF/Office content remains unread: safe hard resource
+  limits require a separately isolated extraction boundary. Unreadable optional content
+  is unknown, never independent Junk evidence. Attached text remains untrusted prompt
+  content and can reach the selected cloud provider; local parsing does not imply local
+  classification.
+- SS-19: four App Intents share the app's store, credentials, pipeline, action safety
+  and budget. Persistent caller-UUID claims prevent replay after Activity retention.
+  See [automation](automation.md) for result semantics and the unresolved macOS intent
+  registry acceptance failure. No native automation success is claimed.
+
+Corpus and configuration history now live in Tools, keeping Filter focused on mail
+operations. Direct inspection found readable corpus/content-rule/backup views, including
+Spanish/French corpus at the minimum window size. Folder-plan and transfer-popup visual
+inspection still need completion.
+
+## Destinations, comparison tooling and lifecycle
+
+SS-02 now exposes per-account Inbox/Junk role names behind a disclosure, read through
+the same Mail special-mailbox collections used by actions. Missing/ambiguous roles
+remain visible and names do not certify provider-side labels. No preview enables
+mail actions. Coexistence and slow/offline synchronization acceptance remain open.
+
+SS-05/21/22/23 now have an offline paired-comparison report. It validates human-review
+and frozen-learning attestations, identical cohorts and campaign separation; reports
+abstentions, exact false-positive bounds, latency, throughput, observed review effort,
+resource usage and cost; and preserves unknown prior exposure. A synthetic fixture
+checks plumbing only. No independently labeled personal corpus or comparison outcome
+has been invented, and no paid request is needed to run this reporting path.
+
+The [Mail.app matrix](mail-compatibility.md) documents the specific signed iCloud/Google
+probes and their limits. The [lifecycle guide](lifecycle.md) covers install, manual
+upgrade/recovery, login-item removal and optional personal-data removal. SS-18 remains
+open for offline/account coverage; SS-20 remains open for a hosted signed updater,
+interrupted-update testing and App Store prerequisites.
+
+The current batch passes 82 package tests, warning-free package/app/extension builds,
+strict formatting and SwiftLint. The frozen-comparison CLI smoke test reads only the
+synthetic manifest and produces the expected incomplete-comparison status. XCTest
+passes onboarding and corrections/statistics/undo/corpus flows in 103.196 seconds;
+the native-intent test is explicitly skipped pending registration acceptance.
+Result: `Test-SpamWise-2026.10.16_14-56-59--0700.xcresult`. The UI test exposed duplicate
+Corpus sheets when Tools opened another Activity window; Activity is now a single
+window and Tools brings it forward. No API charges or generated mail were incurred.

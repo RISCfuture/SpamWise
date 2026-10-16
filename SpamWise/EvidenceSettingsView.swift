@@ -18,6 +18,17 @@ struct EvidenceSettingsView: View {
         )
         .frame(maxWidth: .infinity, alignment: .leading)
         Toggle(
+          "Read plain-text and HTML attachments locally",
+          isOn: Binding(
+            get: { model.state.settings.advancedOptions.textAttachments == true },
+            set: { enabled in model.editSettings { $0.advancedOptions.textAttachments = enabled } }
+          )
+        )
+        Text(
+          "PDF and Office documents remain unread. Attached text is untrusted; scripts and remote resources never run."
+        )
+        .foregroundStyle(.secondary)
+        Toggle(
           "Look up sender and link domains in Spamhaus DBL",
           isOn: $configuration.domainBlocklist
         )

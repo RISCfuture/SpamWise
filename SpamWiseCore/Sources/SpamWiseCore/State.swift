@@ -84,6 +84,10 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var correctedLabel: MailLabel?
   /// Whether a later explicit undo restored this correction's rules and learning only.
   public var correctionUndone: Bool?
+  /// Separately recorded read-status follow-up after a confirmed Junk move.
+  public var readStatusOutcome: ActionOutcome?
+  /// Failure of optional mark-as-read, independent of the already completed move.
+  public var readStatusError: String?
   /// Creates a DecisionRecord with the supplied configuration.
   public init(
     identity: MessageIdentity,

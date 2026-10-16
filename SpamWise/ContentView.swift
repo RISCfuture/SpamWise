@@ -24,8 +24,6 @@ private struct ActivityView: View {
   @State private var showsInspector = false
   @State private var query = ActivityQuery()
   @State private var showsStatistics = false
-  @State private var showsAudit = false
-  @State private var showsCorpus = false
   @State private var showsDates = false
 
   private var selected: DecisionRecord? {
@@ -106,10 +104,6 @@ private struct ActivityView: View {
             }
             Button("Date range…") { showsDates = true }
             Button("Clear filters") { query = ActivityQuery() }
-            Divider()
-            Button("Configuration history") { showsAudit = true }
-            Button("Reviewed corpus") { showsCorpus = true }
-              .accessibilityIdentifier("activity.corpus")
           }.accessibilityIdentifier("activity.filter")
         }
         ToolbarItem {
@@ -137,8 +131,8 @@ private struct ActivityView: View {
     .sheet(isPresented: $model.showJunk) { MailReviewView(model: model) }
     .sheet(isPresented: $model.showPreview) { MessagePreviewView(text: model.previewText) }
     .sheet(isPresented: $showsStatistics) { ActivityStatisticsView(model: model) }
-    .sheet(isPresented: $showsAudit) { AuditTrailView(model: model) }
-    .sheet(isPresented: $showsCorpus) { CorpusView(model: model) }
+    .sheet(isPresented: $model.showAudit) { AuditTrailView(model: model) }
+    .sheet(isPresented: $model.showCorpus) { CorpusView(model: model) }
     .sheet(isPresented: $showsDates) { ActivityDateFilterView(query: $query) }
   }
 }

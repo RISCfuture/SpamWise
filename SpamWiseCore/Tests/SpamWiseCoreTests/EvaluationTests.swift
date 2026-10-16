@@ -145,3 +145,35 @@ import SpamWiseCore
     try ReviewedCorpus(labels: labels, partition: .all)
   }
 }
+
+@Test func `compares identical frozen cohorts and rejects leakage or missing results`() throws {
+  let url = try #require(
+    Bundle.module.url(forResource: "comparison", withExtension: "json", subdirectory: "Fixtures")
+  )
+  let data = try Data(contentsOf: url)
+  let report = try ComparisonReport(data: data)
+  #expect(report.systems[0].metrics.binary.falsePositives == 0)
+  #expect(report.systems[1].metrics.binary.falsePositives == 1)
+  #expect(report.systems[1].metrics.binary.falseNegatives == 1)
+  #expect(report.systems[0].latencyP50Sec == 2)
+  #expect(report.systems[0].latencyP95Sec == 3)
+  #expect(report.systems[1].latencyP50Sec == nil)
+  #expect(report.systems[0].reviewMinPerThousand == 12.0 / 60 * 1000 / 3)
+  #expect(report.systems[1].reviewMinPerThousand == nil)
+  #expect(report.systems[0].messagesPerSec == 0.5)
+  #expect(!report.eligibleForBoundedComparison)
+  #expect(report.sourceCounts["spamsieve"] == 1)
+  let original = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+  var leaked = original
+  leaked["trainingCampaigns"] = ["fraud"]
+  #expect(throws: ComparisonError.invalidManifest) {
+    try ComparisonReport(data: JSONSerialization.data(withJSONObject: leaked))
+  }
+  var missing = original
+  var runs = try #require(missing["runs"] as? [[String: Any]])
+  var results = try #require(runs[0]["results"] as? [[String: Any]])
+  results.removeLast(); runs[0]["results"] = results; missing["runs"] = runs
+  #expect(throws: ComparisonError.invalidManifest) {
+    try ComparisonReport(data: JSONSerialization.data(withJSONObject: missing))
+  }
+}
