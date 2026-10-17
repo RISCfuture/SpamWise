@@ -64,6 +64,8 @@ See [roadmap progress](docs/roadmap-progress.md), [evidence](docs/evidence.md), 
 - [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI setup-key storage and read access in login Keychain are verified. Using the existing app budget file explicitly resolved CLI container discovery; one synthetic request returned HTTP 429 (`rateLimited`), with no verdict or reported usage. The existing $150 ledger retains a $1 reservation. Successful classification and operational shared-Keychain import remain pending. Gemini is deferred until its key is supplied. Apple on-device completed five synthetic requests but returned Review for every fixture; quality remains unvalidated. PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
 - [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
 - [ ] Complete signed live onboarding/correction acceptance and incoming MailKit callback/account/deadline observations. Apple Mail's validated account-scoped route remains independent of MailKit's unresolved account bridge.
+  - [x] Verify signed menu-bar Junk correction and Junk-review restore on one generated cross-account message, independently checking source and settled mailbox after each action. See [live corrections](docs/probes/live-corrections.md).
+  - [ ] Complete fresh-user live onboarding and MailKit callback/deadline observations.
 - [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. Existing 30-second cross-account observations are not a separate server acknowledgement; ambiguous same-account Sent copies remain untouched.
 - [ ] Measure automatic sweep latency on large and mutating mailboxes. Bounded repeating scans do not promise immediate coverage.
 - [ ] Calibrate general detectors on source-audited public holdouts and evaluate personalization incrementally on independently reviewed mail. No labeled personal corpus exists yet; it is not a universal-training or initial-use prerequisite. Conservative 99, Balanced 95 and Aggressive 90 remain provisional. Approximately 1,500 independent good examples with zero false positives are needed for a rule-of-three upper bound of 0.2%; this is an accuracy-claim criterion, and mock fixtures do not establish that target.
@@ -135,7 +137,7 @@ Parent items remain open until their full acceptance criteria are met.
   - [x] Block cloud providers and outbound evidence under explicit local mode.
   - [ ] Observe network isolation and evaluate useful local-model quality.
 
-- [ ] **SS-04 — Correct selected mail without leaving Mail.** Match SpamSieve’s
+- [x] **SS-04 — Correct selected mail without leaving Mail.** Match SpamSieve’s
   [menu-bar/Dock commands and keyboard shortcuts](https://c-command.com/spamsieve/help/train-as-good-spam)
   with accessible Good/Junk/Review actions for selected Mail messages, including
   messages absent from Activity. Support bounded multi-selection with a per-message
@@ -143,7 +145,7 @@ Parent items remain open until their full acceptance criteria are met.
   precedence, and separate training success from move failure. Verify the entire
   select → correct → locate result flow without switching to Activity first.
   - [x] Add menu-bar selected-message corrections with individual outcomes.
-  - [ ] Verify selected generated mail through the signed live correction flow.
+  - [x] Verify selected generated mail through the signed live correction flow. One iCloud-received cross-account probe completed the menu-bar Junk action, with unchanged source and independently confirmed Junk location. See [acceptance evidence](docs/probes/live-corrections.md).
 
 - [ ] **SS-05 — Demonstrate quality and performance against SpamSieve.** Use its
   [published accuracy statistics](https://c-command.com/spamsieve/help/statistics)
@@ -183,7 +185,8 @@ Parent items remain open until their full acceptance criteria are met.
   with SpamSieve/server filters. Do not treat the user’s growing sample folders as
   permission to move or relabel their contents automatically.
   - [x] Implement bounded read-only Junk review and explicit restore.
-  - [ ] Verify signed rescue and coexistence on generated messages.
+  - [x] Verify signed rescue on generated mail through Review Junk → Mark Good and restore, with unchanged source and independently confirmed Inbox location.
+  - [ ] Extend coexistence coverage beyond the single settled probe to repeated SpamSieve/server filtering and reconnects.
 
 - [ ] **SS-08 — Train through Mail.app’s synchronized folders.** Match
   SpamSieve’s [dedicated training mailboxes](https://c-command.com/spamsieve/help/drone-setup-and-remote)

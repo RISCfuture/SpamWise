@@ -353,3 +353,35 @@ Markdown lint using the global configuration pass. Independent review found no
 Important or Critical issue. Earlier native automation/UI acceptance in this
 session predates this identity change; the new behavior is covered by the
 extended core correction test.
+
+The correction-identity build was accepted by Apple's notarization service as
+`fb685339-3630-449a-8ca8-53b6180c574b`. Stapling, ticket validation, deep strict
+signature verification and Gatekeeper assessment pass. The stapled artifact is
+`.build/7ae09be2-7487-4cc9-900a-1c1b9fb169c9/SpamWise-notarized.zip`.
+
+## Signed selected-message correction and rescue — 2026-10-16
+
+The existing notarized installation completed menu-bar Mark as Junk and Review
+Junk → Mark Good and restore for one generated Google-to-iCloud probe. Each
+persisted outcome was applied. Independent Apple Events reads confirmed exact
+account/mailbox membership and unchanged source after the adapter's settling
+window. Automatic account scope was empty and provider consent remained off;
+there were no paid model calls or ordinary-mail mutations. Details and limits
+are in `docs/probes/live-corrections.md`.
+
+Both exact generated mail copies were moved to their accounts' Trash for cleanup.
+The test sender rule and reviewed label were removed through the app; two
+captured legacy correction-example UUIDs were removed through a guarded typed
+Store transaction. Independent reads confirm zero remaining probe rules, labels
+and examples. Product mail actions still expose no Trash or delete operation.
+
+Final correction UI test on the rebuilt app passed in 91.363 seconds with zero
+failures, including address/domain precedence, denied-action persistence, undo,
+and Forget retaining sender rules. Result:
+`.build/7ae09be2-7487-4cc9-900a-1c1b9fb169c9/correction-final-ui.xcresult`.
+The notarized update is installed and running at `~/Applications/SpamWise.app`.
+Original settings are restored: paused false, dry run true, all-account scope
+and no folder plans. The temporary test extension registration was removed;
+PlugInKit's selected entry resolves to the installed app. Existing other build
+registrations and the user's Xcode workspace were retained. The app's recorded
+monthly estimate remains $0.000936; no additional paid calls were made.
