@@ -82,3 +82,11 @@ struct FixtureThreatDetector: ThreatDetector {
 
   func assess(_ input: ThreatInput) async throws -> [ThreatFinding] { try await operation(input) }
 }
+
+func enableSpamhausEvidence(in settings: inout Settings) {
+  var evidence = ExternalEvidenceSettings()
+  evidence.domainBlocklist = true
+  evidence.termsAcknowledged = true
+  evidence.spamhausTransport = .https
+  settings.advancedOptions.externalEvidence = evidence
+}

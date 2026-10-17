@@ -1,6 +1,193 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Spamhaus service": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servicio de Spamhaus"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service Spamhaus"
+          }
+        }
+      }
+    },
+    "HTTPS subscription or trial": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suscripción o prueba HTTPS"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abonnement ou essai HTTPS"
+          }
+        }
+      }
+    },
+    "Public DNS mirrors": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réplicas DNS públicas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Miroirs DNS publics"
+          }
+        }
+      }
+    },
+    "Review HTTPS access requirements": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consultar los requisitos de acceso HTTPS"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulter les conditions d’accès HTTPS"
+          }
+        }
+      }
+    },
+    "Requires DNS Blocklists via HTTPS access. Free DNS-query keys may not include it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requiere acceso a DNS Blocklists via HTTPS. Las claves DNS gratuitas pueden no incluirlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nécessite un accès à DNS Blocklists via HTTPS. Les clés DNS gratuites peuvent ne pas l’inclure."
+          }
+        }
+      }
+    },
+    "Spamhaus HTTPS query key": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clave de consulta HTTPS de Spamhaus"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé de requête HTTPS Spamhaus"
+          }
+        }
+      }
+    },
+    "Save query key": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar clave de consulta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer la clé de requête"
+          }
+        }
+      }
+    },
+    "No query key saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay ninguna clave de consulta guardada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune clé de requête enregistrée"
+          }
+        }
+      }
+    },
+    "Query key saved in Keychain": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clave de consulta guardada en el Llavero"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé de requête enregistrée dans le trousseau"
+          }
+        }
+      }
+    },
+    "Could not save the query key in Keychain": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar la clave de consulta en el Llavero"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer la clé de requête dans le trousseau"
+          }
+        }
+      }
+    },
+    "Shares sender and link domains with the selected service. Disabled in local-only mode.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparte los dominios del remitente y de los enlaces con el servicio seleccionado. Desactivado en el modo solo local."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partage les domaines des expéditeurs et des liens avec le service sélectionné. Désactivé en mode local uniquement."
+          }
+        }
+      }
+    },
     "Local Rspamd scanner": {
       "extractionState": "manual",
       "localizations": {

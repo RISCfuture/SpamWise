@@ -23,7 +23,7 @@
       </header>
       <main id="main" class="document" tabindex="-1">
 <h1 id="spamwise-privacy-policy">SpamWise privacy policy</h1>
-<p>Publication draft · Updated October 16, 2026</p>
+<p>Publication draft · Updated October 17, 2026</p>
 <p>SpamWise is developed by Tim Morgan. For privacy questions or requests, contact
 <a href="mailto:tim@tim.codes">tim@tim.codes</a>. This page describes the current implementation;
 the app and this policy have not been published to the Mac App Store.</p>
@@ -83,8 +83,12 @@ Local mode does not prevent Apple Mail or macOS from performing their own networ
 operations. Private Cloud Compute is not an accepted production feature of this
 release.</p>
 <p>Optional domain-age lookups send sender domains to IANA-discovered registration
-services. Optional Spamhaus reputation checks send queried domains through your
-configured DNS resolver. Those services have separate terms. Optional Rspamd
+services. Optional Spamhaus reputation checks send sender/link domains through
+your selected DNS resolver or directly to Spamhaus over HTTPS. HTTPS uses your
+own query key stored in Keychain; mail bodies, full addresses and URL paths are
+not included. These checks are off by default, require acknowledgement of the
+selected service's terms and are blocked in local-only mode. Those services have
+separate terms. Optional Rspamd
 scanning sends bounded raw message data to a separately configured scanner at
 <code>127.0.0.1:11333</code>. Its configuration determines any further processing, including
 outbound lookups. Both distributions support an explicitly selected local HTTP

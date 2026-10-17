@@ -1,6 +1,6 @@
 # SpamWise privacy policy
 
-Publication draft · Updated October 16, 2026
+Publication draft · Updated October 17, 2026
 
 SpamWise is developed by Tim Morgan. For privacy questions or requests, contact
 [tim@tim.codes](mailto:tim@tim.codes). This page describes the current implementation;
@@ -71,8 +71,12 @@ operations. Private Cloud Compute is not an accepted production feature of this
 release.
 
 Optional domain-age lookups send sender domains to IANA-discovered registration
-services. Optional Spamhaus reputation checks send queried domains through your
-configured DNS resolver. Those services have separate terms. Optional Rspamd
+services. Optional Spamhaus reputation checks send sender/link domains through
+your selected DNS resolver or directly to Spamhaus over HTTPS. HTTPS uses your
+own query key stored in Keychain; mail bodies, full addresses and URL paths are
+not included. These checks are off by default, require acknowledgement of the
+selected service's terms and are blocked in local-only mode. Those services have
+separate terms. Optional Rspamd
 scanning sends bounded raw message data to a separately configured scanner at
 `127.0.0.1:11333`. Its configuration determines any further processing, including
 outbound lookups. Both distributions support an explicitly selected local HTTP

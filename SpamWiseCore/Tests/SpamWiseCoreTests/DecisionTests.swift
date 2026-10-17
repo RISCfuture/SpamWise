@@ -104,6 +104,7 @@ import SpamWiseCore
     store: store,
     classifier: MockClassifier(operation: { input in
       #expect(input.evidence.domainAgeDays == nil)
+      #expect(input.evidence.auxiliaryFindings == nil)
       return Verdict(label: .review, confidence: 10, reason: "unknown")
     }),
     rdap: RDAPLookup(fetcher: network)
@@ -116,6 +117,7 @@ import SpamWiseCore
   try await StateRepository.editSettings(store) {
     $0.mailOptions.localOnly = true
     $0.advancedOptions.domainRegistrationLookup = true
+    enableSpamhausEvidence(in: &$0)
   }
   _ = await privatePipeline.process(try envelope(), adapter: adapter, forceDryRun: true)
   #expect(await network.calls == 0)

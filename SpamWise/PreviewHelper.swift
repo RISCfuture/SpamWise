@@ -80,6 +80,12 @@ import SpamWiseCore
   static var rule: SenderRule {
     .init(scope: .address, value: "newsletter@example.org", disposition: .allow)
   }
+  static func spamhaus(_ transport: SpamhausTransport) -> ExternalEvidenceSettings {
+    var configuration = ExternalEvidenceSettings()
+    configuration.spamhausTransport = transport
+    return configuration
+  }
+
   static func model(
     onboarding: Bool = false,
     paused: Bool = false,

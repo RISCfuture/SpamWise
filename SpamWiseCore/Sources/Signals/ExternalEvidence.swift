@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 import MessageModel
 
 /// Optional evidence status, distinct from any mail classification or action.
@@ -43,7 +43,15 @@ public struct ExternalEvidenceFinding: Codable, Sendable, Equatable {
   }
 }
 
-/// Explicit opt-in for public Spamhaus DBL queries through an attributable resolver.
+/// Explicit service selection; a failed transport never falls back to another service.
+public enum SpamhausTransport: String, Codable, Sendable {
+  /// Public mirrors through a user-owned, attributable DNS resolver.
+  case publicDNS
+  /// Subscription or trial access to DNS Blocklists via HTTPS.
+  case https
+}
+
+/// Explicit opt-in for domain-only Spamhaus DBL queries.
 public struct SpamhausConfiguration: Codable, Sendable, Equatable {
   /// Official fair-use conditions that must be reviewed before enabling queries.
   public static let termsURL = "https://www.spamhaus.org/blocklists/dnsbl-fair-use-policy/"
@@ -51,10 +59,17 @@ public struct SpamhausConfiguration: Codable, Sendable, Equatable {
   public var termsAcknowledged: Bool
   /// IPv4 address of the user's configured recursive resolver.
   public var resolverAddress: String
+  /// Service selected independently of credentials and consent.
+  public var transport: SpamhausTransport
 
-  /// Defaults to disabled; a local recursive resolver must be configured separately.
-  public init(termsAcknowledged: Bool = false, resolverAddress: String = "127.0.0.1") {
+  /// Defaults to disabled; DNS access requires a separately configured recursive resolver.
+  public init(
+    termsAcknowledged: Bool = false,
+    resolverAddress: String = "127.0.0.1",
+    transport: SpamhausTransport = .publicDNS
+  ) {
     self.termsAcknowledged = termsAcknowledged; self.resolverAddress = resolverAddress
+    self.transport = transport
   }
 }
 
@@ -62,6 +77,8 @@ public struct SpamhausConfiguration: Codable, Sendable, Equatable {
 public struct SpamhausDomainLookup: Sendable {
   /// Injectable DNS A-record lookup receiving a validated absolute query name and resolver address.
   public typealias Query = @Sendable (String, String) async throws -> DNSAnswer
+  /// Injectable HTTPS boundary receiving a domain, query key and remaining timeout in seconds.
+  public typealias HTTPSQuery = @Sendable (String, String, TimeInterval) async throws -> DNSAnswer
   private static let maximumDomainCandidates = 40
   private static let maximumQueries = 5
   private static let maximumDomainBytes = 253
@@ -70,10 +87,22 @@ public struct SpamhausDomainLookup: Sendable {
   private static let queryTimeoutSec: TimeInterval = 3
   private let configuration: SpamhausConfiguration
   private let query: Query
+  private let key: @Sendable () throws -> String
+  private let httpsQuery: HTTPSQuery
 
-  /// Installs explicit configuration and an optional deterministic DNS boundary.
-  public init(configuration: SpamhausConfiguration, query: Query? = nil) {
+  /// Installs service configuration, credential access and optional transport boundaries.
+  public init(
+    configuration: SpamhausConfiguration,
+    query: Query? = nil,
+    key: @escaping @Sendable () throws -> String = { throw URLError(.userAuthenticationRequired) },
+    httpsQuery: HTTPSQuery? = nil
+  ) {
     self.configuration = configuration; self.query = query ?? Self.query
+    self.key = key
+    self.httpsQuery =
+      httpsQuery ?? { domain, key, timeout in
+        try await SpamhausHTTPS.query(domain: domain, key: key, timeout: timeout)
+      }
   }
 
   private static func validIPv4(_ address: String) -> Bool {
@@ -141,19 +170,35 @@ public struct SpamhausDomainLookup: Sendable {
     return .init(status: .answered, addresses: addresses)
   }
 
-  /// Queries at most five distinct valid domains; DNS and policy failures remain unknown.
-  public func lookup(domains: [String]) async -> [ExternalEvidenceFinding] {
-    guard configuration.termsAcknowledged, Self.validIPv4(configuration.resolverAddress) else {
-      return []
-    }
+  /// Queries at most five distinct valid domains; transport and policy failures remain unknown.
+  public func lookup(domains: [String], timeout: TimeInterval = 3) async
+    -> [ExternalEvidenceFinding]
+  {
+    guard configuration.termsAcknowledged else { return [] }
     let domains = Set(domains.prefix(Self.maximumDomainCandidates).compactMap(Self.validDomain))
       .sorted().prefix(Self.maximumQueries)
+    guard !Task.isCancelled, timeout.isFinite, timeout > 0 else {
+      return domains.map { Self.finding(domain: $0, answer: .init(status: .failed, addresses: [])) }
+    }
+    let timeout = min(timeout, Self.queryTimeoutSec)
     return await withTaskGroup(of: ExternalEvidenceFinding.self) { group in
       for domain in domains {
         group.addTask {
           do {
-            let answer = try await withResourceDeadline(seconds: Self.queryTimeoutSec) {
-              try await query(domain + ".dbl.spamhaus.org", configuration.resolverAddress)
+            let answer: DNSAnswer = try await withResourceDeadline(seconds: timeout) {
+              try Task.checkCancellation()
+              switch configuration.transport {
+                case .publicDNS:
+                  guard Self.validIPv4(configuration.resolverAddress) else {
+                    return .init(status: .failed, addresses: [])
+                  }
+                  return try await query(
+                    domain + ".dbl.spamhaus.org",
+                    configuration.resolverAddress
+                  )
+                case .https:
+                  return try await httpsQuery(domain, key(), timeout)
+              }
             }
             return Self.finding(domain: domain, answer: answer)
           } catch { return .init(source: "Spamhaus DBL", subject: domain, status: .unknown) }

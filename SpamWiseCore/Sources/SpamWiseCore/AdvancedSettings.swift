@@ -73,6 +73,8 @@ public struct ExternalEvidenceSettings: Codable, Sendable, Equatable {
   public var termsAcknowledged = false
   /// Explicit local DNS resolver address meeting the provider's service terms.
   public var resolverAddress = "127.0.0.1"
+  /// Explicit Spamhaus service; absent values retain public DNS for existing configurations.
+  public var spamhausTransport: SpamhausTransport?
   /// Explicit scanner transport; absent values retain a configured executable path.
   public var rspamdTransport: RspamdTransport?
   /// Absolute path to a separately installed local rspamc executable.

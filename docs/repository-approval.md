@@ -10,17 +10,16 @@ external provider usage is billed separately.
 - No site deployment, public visibility change, release upload or store submission.
 - No source-code license has been selected or added.
 
-Automatic tool approval rejected the initial Git push. The remote therefore
-remains empty until the prepared commits are uploaded. The committed project
-baseline is `7cf6c55`; repository setup is committed afterward on `codex/phase-one`.
+The owner uploaded the prepared branches. The remote default branch is `main` at
+baseline `7cf6c55`; setup commit `a584bb0` is available for review in
+[draft PR #1](https://github.com/RISCfuture/SpamWise/pull/1) from `codex/phase-one`.
 Uncommitted Xcode/catalog edits are excluded. A history scan found no matches for
 the checked private-key, provider-key and GitHub-token patterns; this is a bounded
 scan, not a guarantee about every possible credential format.
 
 ## Prepared review
 
-The proposed initial default branch is `main` at `7cf6c55`. The setup changes belong
-in a draft pull request from `codex/phase-one`, allowing a focused publication review.
+The draft PR keeps the setup changes separate from the initial project baseline.
 
 | Item | Proposed result |
 | --- | --- |
@@ -35,7 +34,8 @@ in a draft pull request from `codex/phase-one`, allowing a focused publication r
 The workflow validates generated pages, Python lint/format and publication tests.
 Pull requests and ordinary merges cannot deploy. A manual run defaults to
 validation only. Pages itself must be enabled after approval before a deployment
-can succeed. No remote CI success is claimed before the commits are uploaded.
+can succeed. The setup commit's remote validation passed on 2026-10-17;
+the deployment job was skipped, as intended for a pull request.
 
 ## Owner approval before publication
 

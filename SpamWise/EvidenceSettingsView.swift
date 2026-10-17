@@ -9,7 +9,7 @@ struct EvidenceSettingsView: View {
 
   var body: some View {
     Section {
-      DisclosureGroup("Optional evidence") {
+      DisclosureGroup {
         Toggle(
           "Share sender domains with registration services to check domain age",
           isOn: Binding(
@@ -42,16 +42,9 @@ struct EvidenceSettingsView: View {
           "Look up sender and link domains in Spamhaus DBL",
           isOn: $configuration.domainBlocklist
         )
+        .accessibilityIdentifier("spamhaus.enabled")
         if configuration.domainBlocklist {
-          Link(
-            "Review Spamhaus usage terms",
-            destination: URL(string: "https://www.spamhaus.org/blocklists/dnsbl-fair-use-policy/")!
-          )
-          Toggle("I meet the lookup service’s usage terms", isOn: $configuration.termsAcknowledged)
-          TextField("DNS resolver address", text: $configuration.resolverAddress)
-          Text("Queries share domain names with your resolver and the lookup service.")
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+          SpamhausSettingsView(configuration: $configuration)
         }
         Picker("Local Rspamd scanner", selection: $transport) {
           Text("Off").tag(RspamdTransport?.none)
@@ -76,14 +69,22 @@ struct EvidenceSettingsView: View {
         Text("Unavailable or failed evidence never counts as spam.").foregroundStyle(.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
         Button("Save evidence settings") { save() }
+          .accessibilityIdentifier("evidence.save")
           .disabled(configuration.domainBlocklist && !configuration.termsAcknowledged)
           .frame(maxWidth: .infinity, alignment: .leading)
+      } label: {
+        Text("Optional evidence").accessibilityIdentifier("evidence.disclosure")
       }
     }.onAppear {
       configuration = model.state.settings.advancedOptions.externalEvidence ?? .init()
       path = configuration.rspamcPath ?? ""
       transport = configuration.selectedRspamdTransport
       if transport == .executable && !DistributionCapabilities.externalPrograms { transport = nil }
+      if configuration.spamhausTransport != .https && !DistributionCapabilities.externalPrograms {
+        configuration.domainBlocklist = false
+        configuration.termsAcknowledged = false
+        configuration.spamhausTransport = .https
+      }
     }
   }
 

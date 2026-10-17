@@ -25,6 +25,8 @@ public enum KeychainError: CredentialFailure, Sendable, LocalizedError {
 public struct APIKeychain: Sendable {
   /// Keychain access group shared by the app and extension.
   public static let accessGroup = "2NFSK2WB24.codes.tim.SpamWise.shared"
+  /// Separate credential namespace for the user's Spamhaus HTTPS query key.
+  public static let spamhausService = "codes.tim.SpamWise.spamhaus"
   private let service: String
   private var query: [String: Any] {
     [

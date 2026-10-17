@@ -42,7 +42,7 @@ extension Pipeline {
         evidence: evidence,
         settings: advanced,
         localOnly: state.settings.mailOptions.localOnly,
-        timeout: budget.timeout
+        timeout: budget.timeout - Date().timeIntervalSince(budget.start)
       )
       if advanced.bayes || advanced.learnedWeights,
         let estimate = state.learning?.estimate(message: message, evidence: evidence)
@@ -153,7 +153,8 @@ extension Pipeline {
     timeout: Double
   ) async -> EvidenceBundle {
     var evidence = evidence
-    guard !localOnly else { return evidence }
+    guard !localOnly, !Task.isCancelled, timeout.isFinite, timeout > 0 else { return evidence }
+    let start = Date()
     let domain = DomainResolver().domain(ofAddress: message.fromAddress)
     if advanced.domainRegistrationLookup == true, let domain, let rdap {
       evidence.domainAgeDays = try? await withDeadline(
@@ -165,7 +166,9 @@ extension Pipeline {
         await rdap.ageDays(domain: domain)
       }
     }
-    if let configuration = advanced.externalEvidence, configuration.domainBlocklist {
+    if let configuration = advanced.externalEvidence, configuration.domainBlocklist,
+      configuration.spamhausTransport == .https || DistributionCapabilities.externalPrograms
+    {
       let domains =
         [domain].compactMap { $0 }
         + message.urls.compactMap {
@@ -174,10 +177,15 @@ extension Pipeline {
       let lookup = SpamhausDomainLookup(
         configuration: .init(
           termsAcknowledged: configuration.termsAcknowledged,
-          resolverAddress: configuration.resolverAddress
-        )
+          resolverAddress: configuration.resolverAddress,
+          transport: configuration.spamhausTransport ?? .publicDNS
+        ),
+        key: { try APIKeychain(service: APIKeychain.spamhausService).read() }
       )
-      let findings = await lookup.lookup(domains: domains)
+      let findings = await lookup.lookup(
+        domains: domains,
+        timeout: max(0, timeout - Date().timeIntervalSince(start))
+      )
       evidence.auxiliaryFindings = (evidence.auxiliaryFindings ?? []) + findings.map(\.summary)
     }
     return evidence

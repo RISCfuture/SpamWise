@@ -607,3 +607,48 @@ Current Spamhaus primary-source research distinguishes public mirrors, free keye
 DNS access and quoted commercial access. `docs/spamhaus.md` records eligibility,
 privacy, licensing uncertainty for app-wide access and the current public-DBL-only
 adapter. No Spamhaus registration, agreement, payment or live lookup was performed.
+
+## Optional keyed Spamhaus and repository upload — 2026-10-17
+
+The owner uploaded the prepared branches. Verified private `RISCfuture/SpamWise`,
+default `main` at `7cf6c55`, and setup head `a584bb0`; opened draft PR #1. Remote
+site validation passed and deployment was skipped. No public visibility change,
+Pages activation, merge or release publication occurred.
+
+Implemented explicit DNS Blocklists via HTTPS selection alongside public DNS.
+Official Spamhaus documentation requires an HTTPS-authorized subscription/trial
+query key; free DNS entitlement is not assumed. The key is stored in the shared
+Keychain under `codes.tim.SpamWise.spamhaus`, separate from settings and backups.
+HTTPS sends only validated domains to the fixed API with header authorization,
+normal TLS trust, no redirects/cookies/cache, a 16 KiB response cap, at most five
+queries per message and a deadline capped at three seconds. Only documented DBL
+listing codes count; matching HTTP/JSON 404 means not listed. Errors remain
+unknown. Local-only mode blocks enrichment, service changes reset consent, and
+public DNS execution is excluded from App Store builds. Default configuration
+remains disabled, with no fallback or automatic lookup retry.
+
+Ninety core tests pass, including synthetic URLSession request/response handling,
+invalid service codes, malformed/oversized replies, timeouts, cancellation,
+missing keys, consent and local-only suppression. App/extension builds and the
+unsigned optimized App Store archive pass with warnings treated as errors. Swift
+formatting and strict SwiftLint pass. Two site-publication tests, five generated
+pages and Ruff checks pass. HTTPS access is not live-validated: no Spamhaus key,
+account registration, paid request or real domain query was used. Verification
+artifacts are under `.build/e4799d54-457e-43fd-a3a1-8d584a6daf40/`.
+
+The focused signed UI test passes in 23.628 seconds: HTTPS selection, secure
+empty-key entry, disabled key Save, consent reset on both service changes and
+saved configuration after reopening Settings. The existing onboarding and
+correction UI flows also pass. The focused result is
+`.build/928adef1-98dc-4a43-87e6-c5e72c18ec26/DerivedData/Logs/Test/Test-SpamWise-2026.10.17_00-43-17--0700.xcresult`.
+No test credential was written to shared Keychain. The disclosure identifier is
+on its label to preserve descendant control identifiers. The API request guide's
+2003 code is omitted from the current zone table; it remains unknown in both
+transports, covered by failing-then-passing response tests.
+
+Native Spanish and French HTTPS settings inspection found no overlapping or
+truncated labels. Screenshots and accessibility captures are saved as
+`spamhaus-es` and `spamhaus-fr` under the UI worker directory above. The isolated
+fixture process was closed and its app/extension registrations removed; the UI
+lock is clear. Production settings, credentials and the installed app were not
+changed.

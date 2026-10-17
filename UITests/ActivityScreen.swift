@@ -42,6 +42,14 @@ import XCTest
     return RulesScreen(app: app)
   }
 
+  func openEvidenceSettings() -> EvidenceScreen {
+    app.typeKey(",", modifierFlags: .command)
+    let advanced = app.toolbars.buttons["Advanced"]
+    XCTAssertTrue(advanced.waitForExistence(timeout: UITestTiming.transition))
+    advanced.click()
+    return EvidenceScreen.waitForLanding(in: app)
+  }
+
   func openStatistics() -> StatisticsScreen {
     app.buttons["activity.statistics"].click()
     XCTAssertTrue(
