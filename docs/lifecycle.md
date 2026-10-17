@@ -22,8 +22,9 @@ before resuming actions. API keys remain in Keychain and are excluded from backu
 
 The preferred update path is the Mac App Store, pending the
 [feasibility and release gates](app-store-feasibility.md). A store build must use
-App Store updates. If that distribution proves unsuitable, the authorized fallback
-is GitHub Releases with the owner’s GitHubUpdateChecker library. No external update
+App Store updates. A direct version may coexist, using GitHub Releases with the
+owner’s GitHubUpdateChecker library. The [distribution ledger](distribution-differences.md)
+tracks feature differences and channel-switching requirements. No external update
 mechanism is enabled. SS-20 remains open until the chosen distribution and upgrade
 path are tested; a successful archive alone does not establish this.
 

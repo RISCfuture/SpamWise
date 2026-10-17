@@ -277,7 +277,8 @@ Parent items remain open until their full acceptance criteria are met.
   - [x] Document upgrade/recovery, login-item removal and optional data removal.
   - [x] Research Apple's distribution rules and document the store-first decision, Mail exception and remaining review gates.
   - [x] Add revocable provider mail-sharing permission, opt-in domain-age lookups and store-specific executable/PCC restrictions.
-  - [ ] Finish App Store feasibility gaps and release acceptance; use GitHub Releases with GitHubUpdateChecker only if the store path proves unsuitable.
+  - [x] Maintain a [MAS/direct functionality ledger](docs/distribution-differences.md), separating actual cuts from review gates and preserving dual-release options.
+  - [ ] Finish App Store feasibility gaps and release acceptance; support a possible parallel direct release through GitHub Releases and GitHubUpdateChecker, with tested channel switching and updater separation.
 
 ### Opportunities to exceed the baseline — prove, then claim
 

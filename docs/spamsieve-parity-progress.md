@@ -117,7 +117,9 @@ truth. No new collection or relabeling has run. The $150 ceiling remains a ceili
 SS-20 now follows the owner’s App Store-first decision. The
 [guidelines/code assessment](app-store-feasibility.md) finds a viable path with
 Mail exception review and explicit release gaps. GitHub Releases plus the owner’s
-GitHubUpdateChecker library is the fallback if App Store distribution proves unsuitable.
+GitHubUpdateChecker library can support a parallel direct version or the fallback
+if App Store distribution proves unsuitable. The [distribution ledger](distribution-differences.md)
+tracks actual feature cuts separately from review gates and common acceptance gaps.
 No external updater, release or store submission is enabled.
 
 ## API references
@@ -171,8 +173,8 @@ The [Mail.app matrix](mail-compatibility.md) documents the specific signed iClou
 probes and their limits. The [lifecycle guide](lifecycle.md) covers install, manual
 upgrade/recovery, login-item removal and optional personal-data removal. SS-18 remains
 open for offline/account coverage; SS-20 remains open for App Store prerequisites
-and release acceptance. GitHub Releases and GitHubUpdateChecker are the fallback
-only if the store path proves unsuitable.
+and release acceptance. GitHub Releases and GitHubUpdateChecker are the selected
+approach for a possible parallel direct release or fallback.
 
 The current batch passes 82 package tests, warning-free package/app/extension builds,
 strict formatting and SwiftLint. The frozen-comparison CLI smoke test reads only the

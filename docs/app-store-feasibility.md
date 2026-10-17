@@ -56,8 +56,10 @@ The presence of an exception is not proof of rejection; approval is discretionar
 3. Prepare final policy/support links, pricing, screenshots and review instructions.
 4. Submit only as a deliberate release step, then handle Apple's actual decision.
 
-The fallback authorized by the owner is **GitHub Releases with
-`~/Repositories/Libraries/GitHubUpdateChecker`**, if App Store distribution proves
-unsuitable. The checkout has no Git remote yet. No alternate updater has been added,
+Direct distribution can coexist with the Mac App Store. Its selected update approach
+is **GitHub Releases with `~/Repositories/Libraries/GitHubUpdateChecker`**; it also
+remains the fallback if the store path proves unsuitable. Track actual feature cuts
+and common acceptance gaps in the [distribution ledger](distribution-differences.md).
+The checkout has no Git remote yet. No alternate updater has been added,
 no repository/hosting address has been invented, and no store upload has occurred.
 See [packaging preparation](app-store.md) and [lifecycle](lifecycle.md).

@@ -59,3 +59,11 @@ TEST_RUNNER_SPAMWISE_INTENTS_TEST=1 bash Scripts/ui-check.sh "$(agent-lock worke
 The ordinary UI suite reports this test as skipped; it still exercises onboarding,
 corrections, undo, corpus management and statistics. Never infer native automation
 acceptance from the package tests alone.
+
+The 2026-10-16 continuation under managed tooling could not reproduce the native
+test: SwiftPM manifest execution stopped at `sandbox_apply: Operation not permitted`,
+and the Xcode connector required approval unavailable under the session policy.
+Launch Services inspection from that shell exposed an empty database, which is
+not evidence that the app is absent from the user's desktop session. No registration
+reset or production-app replacement was attempted. Resume the installed-app test
+from a working development session before changing the intent implementation.
