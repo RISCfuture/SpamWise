@@ -67,6 +67,14 @@ with this app change; the library's original clean revision was
 The extraction is committed locally as `eab9c1d` on `codex/release-discovery`;
 check out that revision when reproducing this integration.
 
+Dependency pins live in `SpamWiseCore/Package.resolved` and the library's
+`Package.resolved`, alongside the pinned Claude revision in the core manifest.
+During verification, Xcode repeatedly removed the project-workspace lock file
+for these local package references, including after successful resolution with
+`-onlyUsePackageVersionsFromResolvedFile`. That generated workspace file is not
+maintained separately. Preserve both package-owned lock files and the reviewed
+library checkout when reproducing release builds.
+
 This separation also avoids the original MarkdownUI dependency's Swift 6.4
 `@_implementationOnly` warnings in SpamWise's direct build. Those upstream UI
 warnings remain outside the discovery product; no warning suppression is enabled.
