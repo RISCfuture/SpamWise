@@ -28,12 +28,15 @@ Mail operations already dispatched cannot be recalled.
 ## Command-line and AppleScript bridge
 
 After macOS indexes the installed app, create a shortcut in Shortcuts containing the
-appropriate SpamWise action. For preview/correction, supply the caller's saved UUID
-as the action's Request UUID, rather than generating another UUID during a retry.
-Then invoke the saved shortcut using Apple's CLI, for example:
+appropriate SpamWise action, followed by **Stop and Output**, with the SpamWise
+action's result as its input. Explicit output is required for the verified CLI
+path; returning the last action's implicit output hung on the tested macOS build.
+For preview/correction, supply the caller's saved UUID as the action's Request UUID,
+rather than generating another UUID during a retry. Then invoke the saved shortcut
+using Apple's CLI, for example:
 
 ```sh
-shortcuts run 'SpamWise Status' --output-path status.json
+shortcuts run 'SpamWise Status' --output-path "$PWD/status.json" </dev/null
 ```
 
 An AppleScript can invoke that saved shortcut with `do shell script`. SpamWise does
@@ -43,24 +46,42 @@ existing `spamwise://check-inbox` trigger remains subject to app safety settings
 ## Verification status
 
 Core tests verify preview replay, mismatched UUID rejection and one correction/action
-per completed request. Metadata extraction includes all four intents. On
-2026-10-16 at 21:14 PDT, the signed native `AppIntentsTesting` status test passed
-in 2.207 seconds. It executed the intent out of process against isolated fixture
-state, verified the expected dry-run/account-count values, and checked that the
-fixture sender was absent from the returned JSON. It made no provider calls or
-Mail actions. Preview/correction runtime execution and the saved
-Shortcuts/CLI/AppleScript bridge remain **not yet accepted**.
+per completed request. Metadata extraction includes all four intents. The signed
+native `AppIntentsTesting` flow passed in 7.710 seconds on 2026-10-16, exercising
+all four intents out of process against one isolated fixture app. Preview returned
+the mock Junk verdict with a dry-run outcome, and a repeated request returned
+the identical response. Correction saved an address Allow rule, retained it after
+the denied Mail action, and returned the identical response on replay without
+creating a domain rule. Diagnostics export matched status, including the expected
+outcome counts, and omitted the fixture sender, subject and account identity.
+The fixture used a mock classifier and denied every Mail action: zero provider
+calls and zero actual Mail operations occurred. Evidence is
+`.build/7ae09be2-7487-4cc9-900a-1c1b9fb169c9/automation-native.xcresult`.
+The saved status shortcut also passed direct Shortcuts editor execution, CLI
+execution and the AppleScript `do shell script` bridge. CLI and AppleScript output
+matched the exact redacted fixture schema and values. Those paths used an explicit
+**Stop and Output** action; live Mail/provider behavior is outside this fixture test.
 
-The separate UI acceptance test is opt-in. With the current signed build installed
-and indexed, run:
+The separate UI acceptance test is opt-in. With the current signed debug build
+installed and indexed, pass its absolute path so XCTest launches the same app
+that App Intents resolves:
 
 ```sh
-TEST_RUNNER_SPAMWISE_INTENTS_TEST=1 bash Scripts/ui-check.sh "$(agent-lock worker)"
+TEST_RUNNER_SPAMWISE_INTENTS_TEST=1 \
+TEST_RUNNER_SPAMWISE_INTENTS_APP_PATH="$HOME/Applications/SpamWise.app" \
+  bash Scripts/ui-check.sh "$(agent-lock worker)"
 ```
 
 The ordinary UI suite reports this test as skipped; it still exercises onboarding,
 corrections, undo, corpus management and statistics. Never infer native automation
 acceptance from the package tests alone.
+
+Keep only the test's SpamWise process running during native acceptance. Each
+fixture launch creates a separate temporary store; two apps with the same bundle
+identifier can route intent execution to one process while XCTest inspects the
+other. Explicit app-path selection applies to onboarding, corrections and native
+intent tests throughout the suite. A single running process keeps the intent
+results and UI assertions attached to the same fixture.
 
 ### Registration diagnosis and reproduction
 
@@ -102,7 +123,32 @@ No global registration reset or production-app replacement was performed.
 The Shortcuts CLI itself runs successfully, but `shortcuts run 'Filtering Status'`
 does not locate the App Shortcut as a saved shortcut. Create a named shortcut
 containing **Get SpamWise Status** before running the documented CLI example.
-The current Shortcuts UI is blocked at its **What's New in Shortcuts** panel:
-its accessibility tree is empty and Continue remains disabled. Saved-shortcut
-creation and CLI execution await dismissal of that panel; the native test pass
-does not establish those separate paths.
+After the user dismissed **What's New in Shortcuts**, the action library exposed
+**Get SpamWise Status**. A saved shortcut named
+`SpamWise Status Acceptance 14903120` was created with exactly that action
+(UUID `DEABDD18-AB09-4205-BF0E-89A949A3BC6B`).
+
+At 22:10 PDT, CLI execution failed because `linkd` attempted to communicate with
+the still-running older production app, despite Launch Services resolving the
+temporary fixture app. Its log reported an untrusted application record and
+`LNConnectionErrorDomain Code=1200`, “AppleEvents communication failed.” The
+verified older production process was gracefully quit without changing settings.
+The next run connected to the fixture process, but returned no output during
+approximately 45 seconds of observation; the owned CLI process was interrupted.
+No permission dialog or definitive execution error was observed during that run.
+Logs are preserved as `shortcut-first-failure.log`,
+`shortcut-live-registration.log` and `shortcut-bounded-hang.log` under the same
+worker artifact directory.
+
+A fresh test build reproduced the CLI hang even with stdin closed, an absolute
+output path, and only one fixture process running. App Intents logs confirmed
+`SpamWiseStatusIntent.perform` returned within milliseconds. Running the saved
+shortcut directly in the Shortcuts editor immediately displayed the expected JSON.
+Adding **Stop and Output**, connected to the status action's result, resolved the
+CLI return path. Both the CLI and AppleScript bridge then exited successfully
+and wrote the same decoded JSON values; object key order differed. The output
+artifacts are `shortcut-explicit-status.json`
+and `shortcut-applescript-status.json` under
+`.build/14903120-a82f-4ad9-8b2a-fd2ffef477ae/`. No app implementation change was
+required for this output configuration. The owned acceptance shortcut was deleted
+after verification; the four pre-existing shortcuts retained their original UUIDs.

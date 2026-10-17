@@ -291,7 +291,7 @@ Parent items remain open until their full acceptance criteria are met.
   - [x] Publish the specific iCloud/Google evidence and unsupported/runtime-pending matrix.
   - [ ] Complete offline recovery and broader account/hardware acceptance.
 
-- [ ] **SS-19 — Expose documented automation.** SpamSieve supplies an
+- [x] **SS-19 — Expose documented automation.** SpamSieve supplies an
   [AppleScript interface and integration SDK](https://c-command.com/spamsieve/help/customizing-using-apple).
   Design supported CLI/Shortcuts/Apple Events entry points for SpamWise and Mail.app:
   classify-preview, explicit correction, status and export. Keep account identity, cancellation,
@@ -299,7 +299,8 @@ Parent items remain open until their full acceptance criteria are met.
   The existing Inbox-trigger URL and evaluator/daemon do not cover these workflows.
   - [x] Implement documented App Intents and durable UUID replay protection.
   - [x] Resolve native intent registration and execute the status intent through AppIntentsTesting on the current signed build. Stale installed-app registration caused metadata lookup failure; see [automation acceptance](docs/automation.md).
-  - [ ] Verify a saved shortcut through the Shortcuts CLI, plus native preview/correction/export flows. Shortcuts’ first-run screen currently prevents saved-shortcut creation.
+  - [x] Verify native preview/correction parameter binding, durable replay, retained rules after denied actions, and redacted diagnostics export against one signed fixture process. These checks use synthetic mail and a mock classifier; real selected-mail acceptance remains SS-04.
+  - [x] Run a saved status shortcut in the editor, through the Shortcuts CLI and through its AppleScript bridge. Explicit **Stop and Output** is required for the tested CLI path; implicit output completed the app intent but left the CLI waiting. See [automation acceptance](docs/automation.md).
 
 - [ ] **SS-20 — Finish maintainable distribution and lifecycle support.** SpamSieve
   has [installation/update, migration and removal workflows](https://c-command.com/spamsieve/help/SpamSieveManual_toc).

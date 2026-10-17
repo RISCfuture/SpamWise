@@ -278,11 +278,9 @@ Warning-free direct and APP_STORE builds and binary/resource checks establish
 store exclusion, not signed updater or migration acceptance. Library tests: 30
 pass; discovery-only compilation passes with warnings treated as errors.
 
-The current native status intent passes through AppIntentsTesting (one test,
+The initial native status intent passed through AppIntentsTesting (one test,
 2.207 seconds) after replacing stale Launch Services registration with a current
-signed metadata-bearing fixture app. Original registration was restored and the
-temporary app removed. Saved Shortcut CLI acceptance remains pending the
-Shortcuts first-run screen. See `docs/automation.md`.
+signed metadata-bearing fixture app. Expanded acceptance follows below.
 
 Final integrated checks: 86 package tests pass (paid provider tests remain opt-in),
 app/extension and hardened-runtime archive builds have zero warning/error
@@ -300,3 +298,30 @@ The updated standard Developer ID artifact is
 It has not replaced the installed app or been published. This archive does not
 contain the separate direct-update target. Remaining runtime, quality, release
 hosting and App Review acceptance stays open in `TODO.md`.
+
+## Native automation acceptance — 2026-10-16
+
+All four App Intents pass through the signed application: preview and correction
+parameter binding, durable request replay, a saved address rule after a denied
+mail action, and redacted status/file export. The DEBUG-only automation fixture
+requires both UI-testing and automation arguments, supplies one synthetic
+selection, denies every other Mail script and uses a mock classifier without RDAP.
+Explicit registered-app paths keep XCTest and App Intents on the same temporary
+store; separate running copies previously made the UI assertion inspect the wrong
+fixture. The full suite now uses the supplied path for every app launch.
+
+After dismissing Shortcuts' first-run panel, a saved status shortcut worked in the
+editor. Implicit output left CLI execution waiting even though the app returned
+within milliseconds. Adding **Stop and Output** produced successful CLI and
+AppleScript-bridge runs with matching decoded diagnostics. The temporary shortcut
+was removed; the four original saved shortcuts were retained. No provider calls
+or actual Mail operations occurred. SS-19 is complete for this documented scope;
+live selected-message correction remains separate acceptance.
+
+Fresh checks: 86 package tests pass; app/extension and signed test builds have zero
+warning/error diagnostics; strict SwiftLint and Swift formatting pass. The final
+UI suite passes all three flows with zero failures in 116.075 seconds, including
+the expanded native test in 8.481 seconds. Evidence:
+`.build/7ae09be2-7487-4cc9-900a-1c1b9fb169c9/automation-final-ui.xcresult`.
+Independent review found no Important or Critical issues. See
+`docs/automation.md` for reproduction and CLI artifacts.

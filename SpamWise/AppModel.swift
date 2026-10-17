@@ -76,9 +76,13 @@ import MailIntegration
           MailAccount(id: "ui-test", name: "Example account", addresses: ["me@example.org"])
         ]
       }
-      adapter = AppleMailAdapter(
-        runner: uiTesting ? DeniedAppleEventRunner() : SystemAppleEventRunner()
-      )
+      if uiTesting, ProcessInfo.processInfo.arguments.contains("--ui-automation") {
+        adapter = AppleMailAdapter(runner: SelectedFixtureAppleEventRunner())
+      } else {
+        adapter = AppleMailAdapter(
+          runner: uiTesting ? DeniedAppleEventRunner() : SystemAppleEventRunner()
+        )
+      }
     #else
       adapter = AppleMailAdapter(runner: SystemAppleEventRunner())
     #endif
@@ -96,6 +100,16 @@ import MailIntegration
           cacheURL: url.deletingLastPathComponent().appending(path: "rdap-cache.json")
         )
       )
+      #if DEBUG
+        if uiTesting, ProcessInfo.processInfo.arguments.contains("--ui-automation") {
+          pipeline = Pipeline(
+            store: store,
+            classifier: MockClassifier(
+              verdict: .init(label: .junk, confidence: 99, reason: "Synthetic unwanted newsletter")
+            )
+          )
+        }
+      #endif
       storageReady = true
     } catch {
       status =

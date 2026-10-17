@@ -9,7 +9,20 @@
     }
   }
 
+  struct SelectedFixtureAppleEventRunner: AppleEventRunner {
+    func run(_ source: String) async throws -> ScriptValue {
+      guard source == MailScripts.selected else { throw IntegrationError.permissionDenied }
+      return .list([
+        .string("ui-test"), .string("Inbox"), .integer(1),
+        .string("automation@example.org"), .string(UITestFixture.messageSource)
+      ])
+    }
+  }
+
   enum UITestFixture {
+    static let messageSource =
+      "From: newsletter@example.org\r\nSubject: Your weekly digest\r\n\r\nA synthetic newsletter."
+
     static func seed(arguments: [String], in store: Store) async throws {
       if arguments.contains("--ui-corrections") {
         try await seedCorrections(in: store)
@@ -20,10 +33,7 @@
 
     static func seedCorrections(in store: Store) async throws {
       let message = try MIMEParser().parse(
-        Data(
-          "From: newsletter@example.org\r\nSubject: Your weekly digest\r\n\r\nA synthetic newsletter."
-            .utf8
-        )
+        Data(messageSource.utf8)
       )
       var record = DecisionRecord(
         identity: .init(accountID: "ui-test", contentHash: message.hash),

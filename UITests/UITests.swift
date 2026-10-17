@@ -1,5 +1,3 @@
-import AppIntents
-import AppIntentsTesting
 import XCTest
 
 final class UITests: XCTestCase {
@@ -9,18 +7,43 @@ final class UITests: XCTestCase {
       "Requires the current signed app to be indexed by macOS App Intents."
     )
     continueAfterFailure = false
-    _ = ActivityScreen.launchCorrectionFixture()
-    let intent = IntentDefinitions(bundleIdentifier: "codes.tim.SpamWise").intents[
-      "SpamWiseStatusIntent"
-    ]
-    let result = try await intent.makeIntent().run()
-    let status: String = try result.value
-    XCTAssertFalse(status.contains("newsletter@example.org"))
-    let diagnostics = try XCTUnwrap(
-      JSONSerialization.jsonObject(with: Data(status.utf8)) as? [String: Any]
+    let appPath = try XCTUnwrap(
+      ProcessInfo.processInfo.environment["SPAMWISE_INTENTS_APP_PATH"],
+      "Pass the registered signed fixture app path so UI and intents use the same process."
     )
+    let activity = ActivityScreen.launchCorrectionFixture(
+      automation: true,
+      appURL: URL(filePath: appPath)
+    )
+    let automation = RegisteredAutomation()
+    let diagnostics = try await automation.status()
     XCTAssertEqual(diagnostics["dryRun"] as? Bool, false)
     XCTAssertEqual(diagnostics["validatedAccountCount"] as? Int, 1)
+
+    let preview = automation.preview()
+    let firstPreview = try await automation.reply(to: preview)
+    XCTAssertEqual(firstPreview["label"], "junk")
+    XCTAssertEqual(firstPreview["action"], "moveToJunk")
+    XCTAssertEqual(firstPreview["outcome"], "dryRun")
+    let repeatedPreview = try await automation.reply(to: preview)
+    XCTAssertEqual(repeatedPreview, firstPreview)
+
+    let correction = automation.correctAsGood()
+    let firstCorrection = try await automation.reply(to: correction)
+    XCTAssertEqual(firstCorrection["label"], "inbox")
+    XCTAssertEqual(firstCorrection["action"], "moveToInbox")
+    XCTAssertEqual(firstCorrection["outcome"], "failed")
+    let repeatedCorrection = try await automation.reply(to: correction)
+    XCTAssertEqual(repeatedCorrection, firstCorrection)
+
+    let settings = activity.openRulesSettings()
+    XCTAssertEqual(settings.addressRule, "Allow")
+    XCTAssertFalse(settings.hasDomainRule)
+    settings.close()
+    let status = try await automation.status()
+    let exported = try await automation.exportDiagnostics()
+    XCTAssertTrue(NSDictionary(dictionary: exported).isEqual(to: status))
+    XCTAssertEqual(status["outcomes"] as? [String: Int], ["dryRun": 2, "failed": 1, "noAction": 1])
   }
 
   @MainActor func testCorrectionsKeepRulesWhenMailActionFails() throws {
@@ -111,7 +134,7 @@ enum UITestTiming {
   var isVisible: Bool { app.staticTexts["setup.intro"].exists }
 
   static func launchOffline() -> Self {
-    let app = XCUIApplication()
+    let app = UITestApplication.make()
     app.launchArguments = [
       "--ui-testing", "-AppleLanguages", "(en)"
     ]

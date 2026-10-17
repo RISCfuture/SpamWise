@@ -6,11 +6,12 @@ import XCTest
   var isDryRun: Bool { app.staticTexts["activity.mode"].value as? String == "dryRun" }
   var isPaused: Bool { app.staticTexts["activity.mode"].value as? String == "paused" }
 
-  static func launchCorrectionFixture() -> Self {
-    let app = XCUIApplication()
+  static func launchCorrectionFixture(automation: Bool = false, appURL: URL? = nil) -> Self {
+    let app = UITestApplication.make(url: appURL)
     app.launchArguments = [
       "--ui-testing", "--ui-corrections", "-AppleLanguages", "(en)"
     ]
+    if automation { app.launchArguments.append("--ui-automation") }
     app.launch()
     return waitForLanding(in: app)
   }
@@ -71,5 +72,16 @@ import XCTest
       ),
       .completed
     )
+  }
+}
+
+@MainActor enum UITestApplication {
+  static func make(url: URL? = nil) -> XCUIApplication {
+    let appURL =
+      url
+      ?? ProcessInfo.processInfo.environment["SPAMWISE_INTENTS_APP_PATH"].map {
+        URL(filePath: $0)
+      }
+    return appURL.map { XCUIApplication(url: $0) } ?? XCUIApplication()
   }
 }
