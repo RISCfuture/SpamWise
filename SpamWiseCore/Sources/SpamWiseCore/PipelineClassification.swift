@@ -83,7 +83,14 @@ extension Pipeline {
         )
       }
     }
-    return Classification(verdict: verdict, evidence: evidence, path: path)
+    let threats = try await assessThreats(
+      message: message,
+      identity: identity,
+      evidence: evidence,
+      localOnly: state.settings.mailOptions.localOnly,
+      remainingTimeSec: budget.timeout - Date().timeIntervalSince(budget.start)
+    )
+    return Classification(verdict: verdict, evidence: evidence, path: path, threats: threats)
   }
   private func deterministicGate(
     _ message: ParsedMessage,
@@ -203,5 +210,6 @@ extension Pipeline {
     var verdict: Verdict
     var evidence: EvidenceBundle
     var path: String
+    var threats: ThreatAssessment
   }
 }

@@ -149,3 +149,50 @@ are unknown. Repeated templates also prevent treating all records as independent
 trials. These results, together with the legitimate-payment false alarm above, do
 not support packaging this candidate as the production automatic filter. No model
 or threshold was selected, and no claim of superiority over SpamSieve follows.
+
+## Historical hard-ham development comparison
+
+The [source audit](../training-data.md#historical-difficult-negatives-acquired)
+added 232 usable SpamAssassin hard-ham messages in 225 template groups. The source
+explicitly labels them non-spam and permits filter testing; broader model-training
+permission is unestablished. They are confined to real validation, with
+`spam: false` and other objectives unknown. Eighteen source messages failed text
+extraction and were quarantined. This exclusion can introduce selection bias.
+
+The pinned Horizon-Labs candidate was rerun locally with the same two CPU threads,
+Safetensors and offline-only settings. Each run scored 491 real validation
+records: 181 source spam, 78 source phishing and 232 source non-spam. All 18,201
+original records retain their split; the 259 real and 2,523 synthetic holdout
+records were not scored. No training, paid calls or production setting changes
+were made.
+
+| Hard-ham observation | 384 tokens | 1,024 tokens |
+| --- | ---: | ---: |
+| Top output spam | 152/232 | 159/232 |
+| Top output legitimate | 80/232 | 73/232 |
+| Spam score at least 0.5 | 141/232 (60.8%) | 152/232 (65.5%) |
+| Spam score at least 0.9 | 13/232 | 7/232 |
+| Spam score at least 0.95 | 1/232 | 1/232 |
+| Spam score at least 0.99 | 0/232 | 0/232 |
+| Combined spam/fraud score at least 0.5 | 155/232 | 164/232 |
+| Truncated hard-ham messages | 216/232 | 170/232 |
+
+Aggregate reports pin weights, corpus identity and runtime versions:
+[384 tokens](../../Tools/Corpus/reports/hard-ham-development-384.json) and
+[1,024 tokens](../../Tools/Corpus/reports/hard-ham-development-1024.json).
+Per-record results remain under
+`.build/corpus-negatives-20261016/development-screen-{384,1024}/` and contain
+identities/scores rather than message bodies. Whole-cohort inference median/p95
+was 103/108 ms and 398/604 ms respectively, excluding loading/tokenization;
+observed peak process memory was 1.55 GB and 1.71 GB. Shared-machine timing is
+descriptive, not an application latency guarantee.
+
+Longer input does not resolve this candidate's false alarms on historical
+hard-ham. Raising the spam threshold to 0.95 leaves one false alarm while detecting
+only five of 181 source-spam positives in either run. These observations reject
+this candidate as an automatic production filter; they do not choose a safe
+threshold. The source has no independent phishing/fraud-negative labels, so the
+combined alarm count is not a phishing or fraud false-positive rate. Template
+correlation, historical sampling, unknown pretrained exposure and missing modern
+financial/security and Spanish/French legitimate cohorts prevent generalizing
+these proportions to current personal mail.

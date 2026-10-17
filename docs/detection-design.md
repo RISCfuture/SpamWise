@@ -89,3 +89,12 @@ finding and language, plus preference agreement and final-action errors. Do not
 use a tiny personal corpus to claim universal accuracy. The approximately 1,500
 independent good examples required for a zero-error 0.2% rule-of-three upper bound
 are an accuracy-claim criterion, not a requirement to begin useful personalization.
+
+## Implemented assessment boundary
+
+The independent persistence, bounded detector interface, trusted-mail assessment
+path, coverage inspector, detector cache and objective-report CLI are implemented.
+See [threat assessment behavior](threat-assessments.md). No production detector is
+selected: the app explicitly reports unassessed coverage until model quality and
+runtime integration are established. This does not replace the remaining model,
+calibration, targeting or personalization evaluation steps above.

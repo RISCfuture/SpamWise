@@ -177,3 +177,105 @@ import SpamWiseCore
     try ComparisonReport(data: JSONSerialization.data(withJSONObject: missing))
   }
 }
+
+@Test func `invalidates threat cache across account evidence policy and enriched text`()
+  async throws
+{
+  let message = try MIMEParser().parse(fixture("personal")), calls = Counter()
+  var preferenceEvidence = EvidenceBundle(message: message)
+  preferenceEvidence.bayesLogOdds = 7
+  preferenceEvidence.learnedMargin = 5
+  let independent = ThreatInput(
+    message: message,
+    accountID: "account-A",
+    evidence: preferenceEvidence
+  )
+  #expect(independent.evidence.bayesLogOdds == nil)
+  #expect(independent.evidence.learnedMargin == nil)
+  var input = ThreatInput(
+    message: message,
+    accountID: "account-A",
+    evidence: .init(message: message)
+  )
+  let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+  defer { try? FileManager.default.removeItem(at: directory) }
+  let operation: @Sendable (ThreatInput) async throws -> [ThreatFinding] = { _ in
+    calls.increment()
+    return [
+      .init(kind: .spam, status: .notDetected, reason: "Synthetic negative", coverage: "Text")
+    ]
+  }
+  let cached = try CachedThreatDetector(
+    directory: directory,
+    underlying: FixtureThreatDetector(operation: operation)
+  )
+  _ = try await cached.assess(input)
+  let reused = try await cached.assess(input)
+  #expect(calls.value == 1)
+  #expect(reused.first { $0.kind == .phishing }?.status == .unknown)
+  input.accountID = "account-B"
+  _ = try await cached.assess(input)
+  input.evidence.contact = true
+  _ = try await cached.assess(input)
+  input.message.text += "\nUntrusted OCR addition"
+  _ = try await cached.assess(input)
+  let changed = try CachedThreatDetector(
+    directory: directory,
+    underlying: FixtureThreatDetector(policy: "fixture-policy-v2", operation: operation)
+  )
+  _ = try await changed.assess(input)
+  #expect(calls.value == 5)
+  #expect(await cached.hits == 1)
+}
+
+@Test func `keeps threat truth and unknown coverage separate across objectives and languages`()
+  throws
+{
+  let message = try MIMEParser().parse(fixture("personal"))
+  let input = ThreatInput(message: message, accountID: nil, evidence: .init(message: message))
+  let assessment = try ThreatAssessment(
+    input: input,
+    detector: FixtureThreatDetector { _ in [] }.identity,
+    findings: [
+      .init(
+        kind: .spam,
+        status: .detected,
+        score: 0.7,
+        reason: "Synthetic result",
+        coverage: "English text only"
+      )
+    ]
+  )
+  let rows = [
+    ThreatEvaluationObservation(
+      sampleID: "a",
+      language: "en",
+      truth: ["spam": false],
+      assessment: assessment
+    ),
+    ThreatEvaluationObservation(
+      sampleID: "b",
+      language: "es",
+      truth: ["spam": false],
+      assessment: nil
+    ),
+    ThreatEvaluationObservation(
+      sampleID: "c",
+      language: "fr",
+      truth: ["phishing": true],
+      assessment: nil
+    )
+  ]
+  let report = try ThreatEvaluationReport(observations: rows)
+  #expect(report.objectives["spam"]?.falsePositives == 1)
+  #expect(report.objectives["spam"]?.assessedNegatives == 1)
+  #expect(report.objectives["spam"]?.unassessed == 1)
+  #expect(report.objectives["phishing"]?.negatives == 0)
+  #expect(report.objectives["phishing"]?.unlabeled == 2)
+  #expect(report.objectives["phishing"]?.recall == 0)
+  #expect(report.objectives["phishing"]?.falsePositiveUpper95 == nil)
+  #expect(report.languages["es"]?["spam"]?.assessedNegatives == 0)
+  #expect(throws: ComparisonError.self) {
+    try ThreatEvaluationReport(observations: rows + [rows[0]])
+  }
+}

@@ -39,6 +39,23 @@ func `parses required message fixtures`(_ name: String) throws {
   let extracted = try MIMEParser(includeTextAttachments: true).parse(raw)
   #expect(extracted.text.contains("Invoice offer"))
   #expect(!extracted.text.contains("fetch"))
+  let inspected = try DocumentInspection(raw: raw)
+  #expect(inspected.message == extracted)
+  #expect(inspected.coverage.map(\.status) == [.extracted])
+  let oversized = Data((source + String(repeating: "x", count: 66_000)).utf8)
+  let unavailable = try DocumentInspection(raw: oversized)
+  #expect(unavailable.message.text.isEmpty)
+  #expect(unavailable.coverage.map(\.status) == [.unavailable])
+  let mixed = Data(
+    ("From: person@example.org\nContent-Type: multipart/mixed; boundary=documents\n\n"
+      + "--documents\nContent-Type: text/plain\n\nBody evidence\n"
+      + "--documents\n" + source + String(repeating: "x", count: 66_000)
+      + "\n--documents--\n").utf8
+  )
+  let preserved = try DocumentInspection(raw: mixed)
+  #expect(preserved.message.text.contains("Body evidence"))
+  #expect(!preserved.message.text.contains("Invoice offer"))
+  #expect(preserved.coverage.map(\.status) == [.unavailable])
   #expect(throws: ParseError.tooLarge) {
     try MIMEParser(includeTextAttachments: true).parse(
       Data((source + String(repeating: "x", count: 66_000)).utf8)
@@ -49,7 +66,16 @@ func `parses required message fixtures`(_ name: String) throws {
     let message = try MIMEParser(includeTextAttachments: true).parse(unsupported)
     #expect(message.text.isEmpty)
     #expect(message.attachments?.first?.mediaType == mediaType.lowercased())
+    #expect(try DocumentInspection(raw: unsupported).coverage.map(\.status) == [.unsupported])
   }
+  let malformed = Data(
+    source.replacingOccurrences(of: "\n\n", with: "\nContent-Transfer-Encoding: base64\n\n").utf8
+  )
+  #expect(try DocumentInspection(raw: malformed).coverage.map(\.status) == [.unavailable])
+  let inlinePDF = Data("From: a@example.org\nContent-Type: application/pdf\n\n%PDF-broken".utf8)
+  let inline = try DocumentInspection(raw: inlinePDF)
+  #expect(inline.message.text.isEmpty)
+  #expect(inline.coverage.map(\.status) == [.unsupported])
 }
 @Test func `rejects malformed senders and oversized messages`() throws {
   for sender in [

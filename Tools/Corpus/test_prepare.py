@@ -76,7 +76,7 @@ class CorpusPreparationTests(unittest.TestCase):
                     "scores": {"legitimate": 0.0, "spam": 1.0, "fraud": 0.0},
                 },
             ]
-            negative_report = screen.summarize(
+            negative_summary = screen.summarize(
                 [
                     {
                         **row,
@@ -87,8 +87,11 @@ class CorpusPreparationTests(unittest.TestCase):
                     }
                     for row in negatives
                 ]
-            )["cohorts"]["spam"]
+            )
+            self.assertNotIn("phishing", negative_summary["cohorts"])
+            negative_report = negative_summary["cohorts"]["spam"]
             self.assertEqual(negative_report["negative_records"], 2)
+            self.assertEqual(negative_report["negative_template_groups"], 1)
             self.assertEqual(negative_report["false_positive_rate"], 0.5)
             self.assertEqual(negative_report["spam_or_fraud_at_0.5_negative"], 2)
             self.assertEqual(negative_report["threshold_false_positives"]["0.9"], 0)
@@ -178,7 +181,17 @@ class CorpusPreparationTests(unittest.TestCase):
                 payload = b"Subject: safe\n\nmessage"
                 member.size = len(payload)
                 archive.addfile(member, io.BytesIO(payload))
-            self.assertEqual(list(prepare.archive_messages(path)), [("1", payload)])
+                metadata = tarfile.TarInfo("hard_ham/cmds")
+                metadata.size = len(payload)
+                archive.addfile(metadata, io.BytesIO(payload))
+            source = {
+                "format": "archive",
+                "excluded_archive_members": ["hard_ham/cmds"],
+            }
+            self.assertEqual(
+                list(prepare.source_messages(source, path)), [("1", payload)]
+            )
+            self.assertEqual(len(list(prepare.archive_messages(path))), 2)
             self.assertEqual(
                 sorted(item.name for item in Path(temporary).iterdir()),
                 ["messages.tar"],
@@ -189,7 +202,7 @@ class CorpusPreparationTests(unittest.TestCase):
                 member.linkname = "/private/secret"
                 archive.addfile(member)
             with self.assertRaisesRegex(ValueError, "archive_special_file"):
-                list(prepare.archive_messages(path))
+                list(prepare.archive_messages(path, excluded_members=("link",)))
 
     def test_pinned_source_pipeline_is_private_and_refuses_changed_input(self):
         with tempfile.TemporaryDirectory() as temporary:

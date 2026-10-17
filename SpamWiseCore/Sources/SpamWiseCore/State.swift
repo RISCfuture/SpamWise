@@ -68,6 +68,8 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var evidence: EvidenceBundle?
   /// Model output, absent for errors or explicit corrections.
   public var verdict: Verdict?
+  /// Independent threat coverage; nil on historical, paused, or failed classification records.
+  public var threats: ThreatAssessment?
   /// Intended action, kept separate from the observed outcome.
   public var decision: Decision
   /// Observed action status, including dry run and integration failure.
@@ -95,6 +97,7 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
     subject: String = "Unclassified message",
     evidence: EvidenceBundle? = nil,
     verdict: Verdict? = nil,
+    threats: ThreatAssessment? = nil,
     decision: Decision,
     outcome: ActionOutcome,
     path: String = "error",
@@ -103,6 +106,7 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   ) {
     self.identity = identity; self.sender = sender; self.subject = subject
     self.evidence = evidence; self.verdict = verdict
+    self.threats = threats
     self.decision = decision; self.outcome = outcome; self.path = path; self.latency = latency
     self.revision = revision
   }

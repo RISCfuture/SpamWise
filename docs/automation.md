@@ -43,11 +43,13 @@ existing `spamwise://check-inbox` trigger remains subject to app safety settings
 ## Verification status
 
 Core tests verify preview replay, mismatched UUID rejection and one correction/action
-per completed request. Metadata extraction includes all four intents. Native
-`AppIntentsTesting` execution currently fails with
-`AppIntentsServicesMetadataErrorDomain Code=400`, “codes.tim.SpamWise is not present,”
-in this development setup, even after Launch Services registration and shortcut
-parameter registration. Shortcuts/CLI/AppleScript execution is **not yet accepted**.
+per completed request. Metadata extraction includes all four intents. On
+2026-10-16 at 21:14 PDT, the signed native `AppIntentsTesting` status test passed
+in 2.207 seconds. It executed the intent out of process against isolated fixture
+state, verified the expected dry-run/account-count values, and checked that the
+fixture sender was absent from the returned JSON. It made no provider calls or
+Mail actions. Preview/correction runtime execution and the saved
+Shortcuts/CLI/AppleScript bridge remain **not yet accepted**.
 
 The separate UI acceptance test is opt-in. With the current signed build installed
 and indexed, run:
@@ -60,10 +62,47 @@ The ordinary UI suite reports this test as skipped; it still exercises onboardin
 corrections, undo, corpus management and statistics. Never infer native automation
 acceptance from the package tests alone.
 
-The 2026-10-16 continuation under managed tooling could not reproduce the native
-test: SwiftPM manifest execution stopped at `sandbox_apply: Operation not permitted`,
-and the Xcode connector required approval unavailable under the session policy.
-Launch Services inspection from that shell exposed an empty database, which is
-not evidence that the app is absent from the user's desktop session. No registration
-reset or production-app replacement was attempted. Resume the installed-app test
-from a working development session before changing the intent implementation.
+### Registration diagnosis and reproduction
+
+The native test initially returned `AppIntentsServicesMetadataErrorDomain Code=400`,
+“codes.tim.SpamWise is not present.” Launch Services resolved the bundle identifier
+to `~/Applications/SpamWise.app`, an older build without
+`Contents/Resources/Metadata.appintents`. The current signed build contained all
+four intents, but building and launching it under `.build` did not resolve the
+registration failure. No intent implementation change was needed.
+
+To inspect the selected installation and its metadata:
+
+```sh
+osascript -e 'POSIX path of (path to application id "codes.tim.SpamWise")'
+ls ~/Applications/SpamWise.app/Contents/Resources/Metadata.appintents
+```
+
+The successful probe copied the strictly verified current development-signed app
+to `~/Applications/SpamWise-Automation-14903120.app`. It unregistered only the
+older production app and registered that temporary copy using Launch Services:
+
+```sh
+lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+"$lsregister" -u ~/Applications/SpamWise.app
+"$lsregister" -f ~/Applications/SpamWise-Automation-14903120.app
+open -n ~/Applications/SpamWise-Automation-14903120.app --args --ui-testing --ui-corrections
+```
+
+`linkd` then logged indexing the temporary app's `extract.actionsdata`. Rerunning
+the scoped `UITests/UITests/testRegisteredAutomationStatus` test with
+`TEST_RUNNER_SPAMWISE_INTENTS_TEST=1` passed. Evidence is preserved at
+`.build/14903120-a82f-4ad9-8b2a-fd2ffef477ae/intents-registered.xcresult` and the
+adjacent `intents-registered.log`; `intents-native.xcresult` records the preceding
+failure. The temporary process was stopped, its registration removed, and the
+copy moved back into the worker's build artifacts. The production app was
+registered again, and its original Launch Services resolution was verified.
+No global registration reset or production-app replacement was performed.
+
+The Shortcuts CLI itself runs successfully, but `shortcuts run 'Filtering Status'`
+does not locate the App Shortcut as a saved shortcut. Create a named shortcut
+containing **Get SpamWise Status** before running the documented CLI example.
+The current Shortcuts UI is blocked at its **What's New in Shortcuts** panel:
+its accessibility tree is empty and Continue remains disabled. Saved-shortcut
+creation and CLI execution await dismissal of that panel; the native test pass
+does not establish those separate paths.

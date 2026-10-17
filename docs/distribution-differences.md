@@ -10,7 +10,7 @@ fallback. This is a product/code comparison, not a promise of App Review approva
 | Capability | Mac App Store version | Direct version | Evidence and status |
 | --- | --- | --- | --- |
 | Optional local Rspamd through an external `rspamc` executable | Disabled in settings and the shared pipeline by `APP_STORE`, including restored settings | Implemented as an opt-in; signed sandbox execution still needs acceptance | This is the current functional exclusion. It is our conservative packaging choice under Apple's self-contained-app requirements, not a recorded rejection. The main classifiers do not depend on it. |
-| Automatic updates outside the store | Excluded; updates must use the App Store | Planned GitHub Releases with `~/Repositories/Libraries/GitHubUpdateChecker` | A distribution difference, not a lost filtering feature. No external updater or repository host is configured yet. |
+| Updates outside the store | Updater dependency excluded from the `SpamWise` target; updates must use the App Store | `SpamWiseDirect` links the local GitHubUpdateChecker for manual stable-release discovery and a release-page link | No repository host is configured, so no checks run. Binary download/installation is not enabled: the library does not establish signature/identity verification or safe replacement. See [update acceptance](updating.md). |
 | Private Cloud Compute | Hidden and rejected until the managed entitlement and eligible distribution are verified | Experimental selector exists, but no accepted Developer ID PCC capability | Not functionality sacrificed for MAS. Apple requires App Store distribution for production PCC; eligible testing channels are separate. Do not advertise direct PCC support from the presence of the selector. |
 | Mail source/history, selected-message actions and Inbox/Junk moves | Implemented; temporary Apple Events exception requires review | Implemented; settled generated-message moves verified for iCloud/Google | A review gate, not an excluded feature. If Apple rejects the necessary exception, record the actual scope and reassess viability before removing core Mail functionality. |
 | CLI evaluator and headless executable | Separate developer tools, not bundled or installed as a background service by the app | Existing package executables; not currently packaged with the GUI release | No removed GUI functionality. Standalone IMAP expansion remains outside the Mail.app-only roadmap in both channels. |
@@ -50,3 +50,19 @@ review requirements.
 See [lifecycle](lifecycle.md), [App Store packaging](app-store.md) and
 [direct packaging](packaging.md). Neither channel has a new release published by
 this assessment.
+
+## Build separation
+
+The shared `SpamWiseDirect` scheme builds the additional app target with
+`SPAMWISE_DIRECT_UPDATES`. Only that target links the `GitHubReleaseDiscovery`
+product from the local `../../Libraries/GitHubUpdateChecker` package. It uses the same app sources,
+entitlements, bundle identity and Mail extension. Its product is
+`SpamWiseDirect.app` to keep build/test products distinct; the bundle identity is
+shared, so install only one channel at a time.
+
+Use the existing `SpamWise` target and `APP_STORE` packaging commands for the
+store. That target has no updater product dependency. Building `SpamWiseDirect`
+with `APP_STORE` intentionally fails compilation. The direct dependency may still
+be resolved when Xcode opens the project; resolution does not put it in the store
+app. Validate the final store archive for updater symbols and resources before
+submission, as described in [updating](updating.md).

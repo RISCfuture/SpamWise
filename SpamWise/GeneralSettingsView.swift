@@ -8,6 +8,7 @@ struct GeneralSettingsView: View {
   var body: some View {
     Form {
       StartupSettingsView()
+      UpdateSettingsView()
       Section("Filtering") {
         Picker("Filtering strength", selection: model.settingBinding(\.strength)) {
           ForEach(FilteringStrength.allCases, id: \.self) { strength in

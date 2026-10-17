@@ -94,8 +94,11 @@ public struct MIMEParser: Sendable {
     mime: String
   ) throws -> [AttachmentMetadata] {
     let disposition = headers["content-disposition"]?.first ?? ""
-    guard disposition.lowercased().hasPrefix("attachment") else { return [] }
     let filename = parameter("filename", in: disposition) ?? parameter("name", in: contentType)
+    guard
+      disposition.lowercased().hasPrefix("attachment") || filename != nil
+        || mime.hasPrefix("application/")
+    else { return [] }
     let decodedName = try filename.map(decodeWords)
     guard mime.count <= maximumAttachmentLabelCharacters,
       (decodedName?.count ?? 0) <= maximumAttachmentLabelCharacters

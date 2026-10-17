@@ -44,5 +44,24 @@
     "label_authority": "unlabeled synthetic text",
     "labels": {},
     "expected_records": 16440
+  },
+  {
+    "id": "spamassassin-hard-ham-20030228",
+    "filename": "spamassassin-20030228-hard-ham.tar.bz2",
+    "format": "archive",
+    "excluded_archive_members": ["hard_ham/cmds"],
+    "sha256": "ce2ce67880643dbde65ea7f85bffbfe4417349c4bd80b6b0de56262ae6b0a9c9",
+    "url": "https://spamassassin.apache.org/old/publiccorpus/20030228_hard_ham.tar.bz2",
+    "license": "Original sender copyright retained; source explicitly offers filter testing; training and redistribution permission not established",
+    "terms_url": "https://spamassassin.apache.org/old/publiccorpus/readme.html",
+    "terms_sha256": "9f8cc0c8be6f32b25226d3ece26da775a6e008581b8fb061a679e3acee6b64be",
+    "attribution": "Justin Mason and original message senders, SpamAssassin public corpus",
+    "period": "2003-02-28 corpus assembly; archive updated 2004-12-16; individual headers untrusted",
+    "usage": "evaluationOnly",
+    "synthetic": false,
+    "original_label": "hard_ham",
+    "label_authority": "source non-spam classification, not independently reviewed",
+    "labels": {"spam": false},
+    "expected_records": 250
   }
 ]

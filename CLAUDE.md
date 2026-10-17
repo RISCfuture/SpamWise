@@ -239,3 +239,64 @@ with one explicit intent-test skip. Result bundle is under worker
 `26e096e9-f0a7-465e-90b7-aa67c5b2b2f7`, timestamp `14-56-59`. Activity uses a single
 window so Tools commands do not create duplicate corpus sheets. This batch has not
 yet been accepted as a new notarized distribution or through live Mail workflows.
+
+## Resumed detector, document and distribution work — 2026-10-16
+
+The execution blockers are resolved: native Terminal and resumed agent checks
+run SwiftPM successfully; Xcode MCP works after `XcodeOpenWorkspace` requests its
+agent/project authorization. Earlier sandbox and approval-policy errors were
+execution-environment failures, not Swift source failures.
+
+Independent threat assessments now persist separate spam/phishing/spearphishing/
+fraud/malware states, detector provenance and coverage. Successful gate and model
+paths use the same bounded assessment boundary without changing action rules.
+Preference-derived learned scores are excluded. Missing or failed detection is
+unknown; historical records remain unassessed. The inspector and objective-report
+CLI make that distinction explicit. No production detector is selected. Cache
+keys include effective content, account, evidence and detector/schema identities.
+See `docs/threat-assessments.md`.
+
+Document text coverage is explicit; optional extraction failure preserves the
+body. All ten isolated PDF probe cases pass, including encryption and parent
+termination of a hung worker. No production PDF parser, memory ceiling or
+malware-safety claim follows from that probe. See `docs/probes/document-inspection.md`.
+
+The historical hard-ham development cohort contains 232 accepted messages. The
+candidate local model falsely detects spam in 60.8%/65.5% at threshold 0.5 with
+384/1,024-token inputs; it is unsuitable for production. Reserved holdouts remain
+unscored. The separate twelve-context synthetic graymail probe produced policy-
+consistent model labels in EN/ES/FR; examples gave no categorical improvement.
+All unwanted effective actions remain Review at the unchanged 95 threshold.
+Measured usage: 15,514 input/1,043 output/zero cache tokens; estimated new cost
+$0.0020729 and $1.20 additional conservative commitments in the existing $150
+ledger. No personal mail, fine tuning, new Mail probes or new ledger was used.
+
+`SpamWiseDirect` supports manual release discovery via the local library's
+`GitHubReleaseDiscovery` product, committed as `eab9c1d` on
+`codex/release-discovery`. No host is configured and no installer is linked.
+Warning-free direct and APP_STORE builds and binary/resource checks establish
+store exclusion, not signed updater or migration acceptance. Library tests: 30
+pass; discovery-only compilation passes with warnings treated as errors.
+
+The current native status intent passes through AppIntentsTesting (one test,
+2.207 seconds) after replacing stale Launch Services registration with a current
+signed metadata-bearing fixture app. Original registration was restored and the
+temporary app removed. Saved Shortcut CLI acceptance remains pending the
+Shortcuts first-run screen. See `docs/automation.md`.
+
+Final integrated checks: 86 package tests pass (paid provider tests remain opt-in),
+app/extension and hardened-runtime archive builds have zero warning/error
+diagnostics, and Developer ID export/signature verification passes. Two UI flows
+pass with zero failures in 108.738 seconds, including explicit unassessed coverage;
+the default suite skips the separately passed native-intent test. UI result:
+`.build/ee61ddf4-7935-4486-bad5-b4b2016979cf/DerivedData/Logs/Test/Test-SpamWise-2026.10.16_21-15-00--0700.xcresult`.
+Swift formatting, strict SwiftLint, Python unit/lint checks and Markdown checks
+pass. Independent read-only review found no Important or Critical issues.
+
+Apple accepted notarization `4dca30b7-ae98-47ab-8c78-6679abd9a5bf`. Stapling,
+ticket validation, deep strict signatures and Gatekeeper assessment pass.
+The updated standard Developer ID artifact is
+`.build/ee61ddf4-7935-4486-bad5-b4b2016979cf/SpamWise-notarized.zip`.
+It has not replaced the installed app or been published. This archive does not
+contain the separate direct-update target. Remaining runtime, quality, release
+hosting and App Review acceptance stays open in `TODO.md`.

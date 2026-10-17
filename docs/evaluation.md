@@ -150,3 +150,10 @@ prior exposure stays visible. Do not retune on the frozen holdout. This tool als
 supports policy/no-policy and local/cloud experiments once their independent review
 and privacy prerequisites are met; it does not authorize cloud escalation or
 spending. Keep the $150 ceiling and ordinary Junk-folder preservation in force.
+
+## Independent threat metrics
+
+Use `spamwise-eval --threat-report observations.json --output report.json` for
+independently labeled spam/phishing/spearphishing/fraud/malware observations.
+This report never derives threat labels from Inbox/Junk preferences. See
+[observation format, cache identities and unknown coverage](threat-assessments.md).

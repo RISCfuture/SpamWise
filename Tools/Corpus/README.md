@@ -30,12 +30,14 @@ pyenv exec python prepare.py \
   --output /absolute/private/prepared-corpus
 ```
 
-The input directory must contain all three files named in `sources.json`, with
+The input directory must contain all four files named in `sources.json`, with
 their exact recorded SHA-256 hashes. Preparation refuses changed inputs, incorrect
 record counts, unknown label names, special archive entries, and existing output
 directories. Limits include 2 MB per message, 100,000 text characters, 128 MIME
 parts, 12 nesting levels, 200,000 records per source and 512 MB expanded archives.
-Archive paths are never extracted; attachments are ignored. HTML receives lexical
+Archive paths are never extracted; attachments are ignored. Source-pinned
+`excluded_archive_members` omit only audited metadata files, after archive size
+and member-type checks. HTML receives lexical
 text extraction, without rendering or network access. Corpus extraction uses
 Python's `email` package; it does not claim equivalence to the app's MIME parser.
 
@@ -56,6 +58,8 @@ Guenter's label supplies spam evidence only. Nazario supplies phishing evidence
 only. Neither supplies negative labels for the other objectives. Marketeam text
 has no labels and cannot silently become legitimate training data. Deduplication
 retains each contributing source; conflicting labels abstain for that objective.
+SpamAssassin hard-ham supplies `spam: false` only; its phishing and other threat
+labels remain unknown. The archive's `hard_ham/cmds` metadata is excluded.
 Graymail preferences, fraud, spearphishing and malware remain unknown unless
 separately labeled. Source labels are not independent human review.
 
@@ -103,8 +107,11 @@ latency and model scores; it contains no message text.
 
 The model's outputs are legitimate/spam/fraud. Fraud scores are explicitly a
 proxy on the source-phishing cohort, not an independently trained phishing
-assessment. The initial corpora contain no verified negative labels: detection
-counts cannot establish specificity, calibration or safe Junk thresholds.
-When a source explicitly supplies negatives, the report counts false alarms at
-each score threshold and separately reports combined spam/fraud alarms. Unknown
-labels never enter either denominator.
+assessment. Source-labeled SpamAssassin hard-ham provides a historical non-spam
+development comparison, confined to validation because its source offers filter
+testing and broader training permission has not been established. The report
+counts negative template groups, false alarms at each score threshold and
+combined spam/fraud alarms. Combined alarms on non-spam are not evidence of a
+fraud false-positive rate: that objective has no supplied negative labels.
+Unknown labels never enter either objective's denominator. These data do not
+establish modern specificity, calibration or safe Junk thresholds.

@@ -49,3 +49,25 @@ func enableActions(_ store: Store) async throws {
     state.settings.validatedAccounts = ["account-A"]
   }
 }
+
+struct FixtureThreatDetector: ThreatDetector {
+  var identity: ThreatDetectorIdentity
+  var operation: @Sendable (ThreatInput) async throws -> [ThreatFinding]
+
+  init(
+    usesNetwork: Bool = false,
+    policy: String = "fixture-policy-v1",
+    operation: @escaping @Sendable (ThreatInput) async throws -> [ThreatFinding]
+  ) {
+    identity = .init(
+      implementation: "fixture-v1",
+      model: "synthetic-v1",
+      preprocessing: "bounded-text-v1",
+      policy: policy,
+      usesNetwork: usesNetwork
+    )
+    self.operation = operation
+  }
+
+  func assess(_ input: ThreatInput) async throws -> [ThreatFinding] { try await operation(input) }
+}

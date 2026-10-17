@@ -10,7 +10,9 @@ import Evaluation
     if arguments.isEmpty || arguments == ["--help"] { print(Options.usage); return }
     do {
       let options = try Options(arguments)
-      if options.values["compare"] != nil {
+      if options.values["threat-report"] != nil {
+        try threatReport(options)
+      } else if options.values["compare"] != nil {
         try compare(options)
       } else if options.values["export"] != nil {
         try await export(options)
@@ -22,6 +24,22 @@ import Evaluation
       FileHandle.standardError.write(Data((message + "\n").utf8))
       exit(1)
     }
+  }
+  private static func threatReport(_ options: Options) throws {
+    let url = try URL(filePath: options.required("threat-report"))
+    let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max
+    guard size <= 20_000_000 else { throw ComparisonError.invalidManifest }
+    let observations = try JSONDecoder().decode(
+      [ThreatEvaluationObservation].self,
+      from: Data(contentsOf: url)
+    )
+    let report = try ThreatEvaluationReport(observations: observations)
+    let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    let data = try encoder.encode(report)
+    if let path = options.values["output"] {
+      try data.write(to: URL(filePath: path), options: .atomic)
+    }
+    print(String(decoding: data, as: UTF8.self))
   }
   private static func compare(_ options: Options) throws {
     let url = try URL(filePath: options.required("compare"))

@@ -30,6 +30,7 @@ final class UITests: XCTestCase {
     XCTAssertEqual(statistics.decisionCount, "1")
     statistics.close()
     let detail = activity.openFixture()
+    XCTAssertTrue(detail.threatsAreUnassessed)
     detail.markGood()
     XCTAssertTrue(detail.correctionSavedWithActionFailure)
     let settings = activity.openRulesSettings()
@@ -191,6 +192,12 @@ enum UITestTiming {
 
 @MainActor struct DecisionScreen {
   let app: XCUIApplication
+
+  var threatsAreUnassessed: Bool {
+    let status = app.staticTexts["threats.status"]
+    guard status.waitForExistence(timeout: UITestTiming.transition) else { return false }
+    return (status.value as? String) == "Not assessed" || status.label == "Not assessed"
+  }
 
   var correctionSavedWithActionFailure: Bool {
     let status = app.staticTexts["activity.status"]

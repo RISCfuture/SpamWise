@@ -29,6 +29,28 @@ import SpamWiseCore
     return record
   }
 
+  static var threatAssessment: ThreatAssessment? {
+    let raw = Data("From: example@example.org\r\nSubject: Preview\r\n\r\nSynthetic preview".utf8)
+    guard let message = try? MIMEParser().parse(raw) else { return nil }
+    return try? ThreatAssessment(
+      input: .init(message: message, accountID: "preview", evidence: .init(message: message)),
+      detector: .init(
+        implementation: "Preview",
+        model: "Synthetic",
+        preprocessing: "Text",
+        policy: "Preview"
+      ),
+      findings: [
+        .init(
+          kind: .phishing,
+          status: .detected,
+          reason: "Synthetic credential lure",
+          coverage: "Preview text only"
+        )
+      ]
+    )
+  }
+
   static var corrections: [CorrectionExample] {
     [
       CorrectionExample(

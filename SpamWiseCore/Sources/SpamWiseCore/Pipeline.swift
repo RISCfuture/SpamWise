@@ -11,10 +11,17 @@ public actor Pipeline {
   let store: Store
   let classifier: any Classifier
   let rdap: RDAPLookup?
+  let threatDetector: (any ThreatDetector)?
   private var inFlight: Set<String> = []
   /// Creates a Pipeline with the supplied configuration.
-  public init(store: Store, classifier: any Classifier, rdap: RDAPLookup? = nil) {
+  public init(
+    store: Store,
+    classifier: any Classifier,
+    rdap: RDAPLookup? = nil,
+    threatDetector: (any ThreatDetector)? = nil
+  ) {
     self.store = store; self.classifier = classifier; self.rdap = rdap
+    self.threatDetector = threatDetector
   }
   /// Classifies, persists, then conditionally dispatches one message, failing open on errors.
   public func process(
@@ -30,15 +37,14 @@ public actor Pipeline {
       let settings = current.settings.paused ? AdvancedSettings() : current.settings.advancedOptions
       var findings: [String] = []
       if settings.textAttachments == true {
-        if let extracted = try? MIMEParser(includeTextAttachments: true).parse(envelope.raw) {
-          message = extracted
-        } else {
-          findings.append("Attachment text unavailable; unknown evidence")
-        }
-        if message.attachments?.contains(where: {
-          !["text/plain", "text/html"].contains($0.mediaType)
-        }) == true {
-          findings.append("Some attachment formats were not read as text; unknown evidence")
+        let inspection = try DocumentInspection(raw: envelope.raw)
+        message = inspection.message
+        findings += inspection.coverage.map { item in
+          switch item.status {
+            case .extracted: "Attachment text extracted; payload safety not assessed"
+            case .unsupported: "Unsupported attachment format; content and safety unknown"
+            case .unavailable: "Attachment decoding unavailable; content and safety unknown"
+          }
         }
       }
       if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: envelope.raw) {
@@ -113,6 +119,7 @@ public actor Pipeline {
         subject: message.subject,
         evidence: classification.evidence,
         verdict: classification.verdict,
+        threats: classification.threats,
         decision: decision,
         outcome: .pending,
         path: classification.path,

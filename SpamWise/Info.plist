@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>SpamWiseDistribution</key>
+	<string>$(SPAMWISE_DISTRIBUTION)</string>
+	<key>SpamWiseUpdateOwner</key>
+	<string>$(SPAMWISE_UPDATE_OWNER)</string>
+	<key>SpamWiseUpdateRepository</key>
+	<string>$(SPAMWISE_UPDATE_REPOSITORY)</string>
 	<key>CFBundleHelpBookFolder</key>
 	<string>SpamWise.help</string>
 	<key>CFBundleHelpBookName</key>

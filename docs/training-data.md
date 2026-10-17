@@ -22,6 +22,7 @@ and avoid repeatedly fetching the same file.
 
 | Source | What it actually offers | Disposition |
 | --- | --- | --- |
+| [SpamAssassin hard-ham](https://spamassassin.apache.org/old/publiccorpus/readme.html) | 250 source-labeled non-spam messages assembled in 2003, selected for spam-like HTML and wording; original senders retain copyright | Acquired for offline filter testing only; explicit non-spam label does not establish phishing/fraud negatives, modern coverage, training rights or redistribution rights |
 | [NEST-Phish](https://arxiv.org/html/2609.04474v1), [dataset](https://www.kaggle.com/datasets/emilywinokur/synthetic-email-corpus) | September 2026 paper; 146 retained synthetic emails, 77 legitimate and 69 phishing, matched workplace scenarios and human evaluation | Useful difficult-case evaluation, not bulk training. Verify the dataset's own license; the paper's license does not establish it |
 | [CIC-Trap4Phish](https://www.unb.ca/cic/datasets/trap4phish2025.html) | 20,000 samples each for Word, Excel, PDF and HTML, plus large QR/URL sets; 2026 paper | Attachment/QR-specific follow-up, not a complete-email corpus. Confirm dataset terms and handle samples without execution |
 | [Merged nine-corpus dataset](https://github.com/Manar-ibr/Phishing-Email-Detection-Dataset), [download](https://zenodo.org/records/17314806) | October 2025 release of 1998–2008 mail; 391 MB merged CSV. Authors explicitly combine spam, scams and phishing as “phishing”; Zenodo API declares CC BY 4.0 | Historical baseline only after source/label audit. Do not teach our phishing detector this collapsed label |
@@ -56,9 +57,11 @@ the downloads.
 
 ## Acquisition and training policy
 
-1. Start with Guenter for bulk spam, Nazario for phishing, and synthetic legitimate
-   material for difficult negatives. Supplement with source-audited historical
-   legitimate mail; recent representative legitimate mail remains a coverage gap.
+1. Start with Guenter for bulk spam and Nazario for phishing. Use explicitly
+   labeled legitimate examples for difficult negatives; unlabeled synthetic text
+   remains unlabeled. Source-audited historical legitimate mail supports an
+   offline development comparison; recent representative legitimate mail remains
+   a coverage gap.
 2. Keep original source, revision/hash, license, collection-date evidence, language,
    original label, label authority and real/synthetic provenance on every record.
    Record labels not supplied by a source as unknown, not false.
@@ -79,8 +82,9 @@ the downloads.
 
 ## Reproducible local preparation
 
-The [corpus tools](../Tools/Corpus/README.md) verify all three pinned hashes and
-preserve source attribution and independent labels. The 2026-10-16 run processed
+The [corpus tools](../Tools/Corpus/README.md) verify pinned hashes and
+preserve source attribution and independent labels. The initial three-source
+2026-10-16 run processed
 18,397 input records into 18,201 unique text records, merging 184 normalized-text
 duplicates and quarantining 12 records: six encoding failures, five MIME defects
 and one empty text body. Original downloads remain intact.
@@ -109,16 +113,52 @@ aggregate counts and source metadata belong in repository documentation. Full
 commands, resource limits, output permissions and completion/hash checks are in
 the tool README.
 
+## Historical difficult negatives acquired
+
 An additional check of the
 [original SpamAssassin corpus terms](https://spamassassin.apache.org/old/publiccorpus/readme.html)
 found an explicit invitation to test filters, with message copyright retained by
 senders. Do not inherit a mirror's CC0 claim or the software's Apache license for
 the emails. Its historical hard-ham examples may support an offline development
 comparison; model-training/redistribution permission is not established here.
-The acquisition attempt failed DNS resolution before downloading its archive,
-so no hard-ham result is claimed. The importer supports evaluation-only sources
-and propagates their restriction across duplicate/template groups; the screener
-supports negative cohorts while excluding unknown labels from metric denominators.
+The download succeeded on 2026-10-16 from the original Apache host. It is stored
+under `.build/corpus-negatives-20261016/downloads/`, alongside a snapshot of the
+terms. Nothing was sent through Mail or uploaded to a provider.
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `spamassassin-20030228-hard-ham.tar.bz2` | 1,029,898 | `ce2ce67880643dbde65ea7f85bffbfe4417349c4bd80b6b0de56262ae6b0a9c9` |
+| `spamassassin-terms.html` | 4,566 | `9f8cc0c8be6f32b25226d3ece26da775a6e008581b8fb061a679e3acee6b64be` |
+
+The archive contains 250 messages plus `hard_ham/cmds`, an excluded metadata
+member. This source is real, labeled `spam: false`, and `evaluationOnly` in the
+source manifest. Phishing, fraud, spearphishing, malware and graymail remain
+unknown. Source labels are not an independent review. The importer places these
+messages and any duplicate/template-linked records in validation, never training.
+
+Preparation accepted 232 hard-ham messages in 225 heuristic template groups and
+quarantined 18: 16 text-encoding failures, one MIME defect and one empty text body.
+No additional normalized-text duplicates or label conflicts were found. The full
+four-source corpus contains 18,433 unique records in 17,960 groups from 18,647
+input messages, with 184 duplicates merged and 30 total quarantines. All 232
+non-spam negatives are in real validation; the original split counts above remain
+unchanged. A direct identity/split comparison verified that all 18,201 original
+records retain their split, including all 2,782 reserved holdout records (259 real
+and 2,523 synthetic). The holdout was not scored.
+
+Prepared artifacts are under `.build/corpus-negatives-20261016/prepared-v1/`,
+with corpus SHA-256
+`1f089e1c8f8e7556fb22ab009c5a2bc3d87d05914aabbc2327737ba625f4f2b9`.
+The sibling `split-audit.json` records the membership comparison. The fixed seed
+remains `spamwise-public-2026-10-v1`. A local development comparison is recorded in
+[model screening](probes/local-model-screening.md).
+
+This historical collection addresses one missing development cohort. It does
+not provide contemporary legitimate financial/security workflow coverage or
+verified Spanish/French negatives. The source's age and widespread use also mean
+pretrained exposure cannot be excluded. Broader training permission remains
+unestablished, so these messages are not included in training indices or shipped
+with the application.
 
 No model training or production model selection follows from these downloads.
 Dataset sizes, source availability and published rights above were checked on the

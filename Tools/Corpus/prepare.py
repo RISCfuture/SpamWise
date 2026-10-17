@@ -124,7 +124,7 @@ def template_key(body):
     return digest(text) if len(text) >= 80 else None
 
 
-def archive_messages(path):
+def archive_messages(path, excluded_members=()):
     """Stream archive members through libarchive without extracting member paths."""
     with tempfile.TemporaryFile() as errors:
         process = subprocess.Popen(
@@ -147,6 +147,8 @@ def archive_messages(path):
                         raise ValueError("archive_budget")
                     if not member.isfile():
                         raise ValueError("archive_special_file")
+                    if member.name in excluded_members:
+                        continue
                     with archive.extractfile(member) as stream:
                         yield str(count), stream.read(MAX_MESSAGE + 1)
             if process.wait() != 0:
@@ -163,7 +165,9 @@ def source_messages(source, path):
     """Yield source-local positions and bytes from a pinned supported format."""
     match source["format"]:
         case "archive":
-            yield from archive_messages(path)
+            yield from archive_messages(
+                path, source.get("excluded_archive_members", ())
+            )
         case "mbox":
             box = mailbox.mbox(path, create=False)
             try:
@@ -344,7 +348,7 @@ def write_records(directory, records, rejected, sources, seed):
             "Source labels are not independent human review; unspecified labels remain unknown.",
             "Template hashing only detects some campaigns; this is not a leakage-free benchmark.",
             "Hash splits are provisional, not temporal; do not tune on reserved holdout records.",
-            "No legitimate negative labels, verified languages or pretrained exposure audit supplied.",
+            "Source negative labels do not establish independent threat review; languages and pretrained exposure remain unaudited.",
             "Corpus extraction uses Python email, not the app MIME parser; quarantine is separate.",
         ],
     }

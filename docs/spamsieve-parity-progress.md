@@ -220,3 +220,30 @@ sheet from Tools, and `spamwise://review` reopening the closed Activity window w
 Weekly Review. Notification delivery, live Mail actions, folder-plan layout and
 native intent registration remain distinct pending acceptance checks. No new mail
 or paid API calls were created during this batch.
+
+## Independent assessments and resumed acceptance — 2026-10-16
+
+- Independent threat records, unknown coverage, trusted-path orchestration,
+  cache identity and objective metrics are implemented; no production detector
+  is selected. See [assessment boundaries](threat-assessments.md).
+- The ten-case [isolated document evaluation](probes/document-inspection.md)
+  passes; production PDF isolation and memory containment remain open.
+- [Difficult legitimate-mail screening](probes/local-model-screening.md) rejects
+  the current local candidate. Existing holdouts were preserved and not scored.
+- The [synthetic preference probe](probes/graymail-preferences.md) verifies policy
+  contrasts, not independent quality or fine tuning. Estimated spend was $0.0020729;
+  the existing ledger added $1.20 in conservative reservations.
+- The signed native status intent now executes after correcting stale app
+  registration. Saved Shortcut CLI validation still needs the first-run screen
+  dismissed; see [automation](automation.md).
+- [Direct release discovery](updating.md) is isolated from the store target and
+  installer code. Release hosting, signed installation and channel migration
+  remain pending. The companion library commit is `eab9c1d`.
+
+Integrated verification passes 86 package tests, warning-free app/extension/archive
+builds, two UI flows, separate native intent status execution, strict lint and
+format checks. The updated standard Developer ID archive was notarized and
+stapled under submission `4dca30b7-ae98-47ab-8c78-6679abd9a5bf`; it remains a local
+artifact, with no install or publication. `CLAUDE.md` records exact paths and
+limits. These results do not complete the live Mail, representative quality,
+second-device, updater or App Review acceptance items still open in `TODO.md`.

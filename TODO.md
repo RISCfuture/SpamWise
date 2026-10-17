@@ -23,14 +23,18 @@ out-of-box model or zero-shot preference handling. See
 - [ ] Audit source labels and campaign duplicates; build separate spam/phishing training sets and real/synthetic holdouts with legitimate difficult negatives.
   - [x] Implement hash-pinned corpus preparation, preserved source labels, conflict abstention, bounded MIME/archive handling, duplicate/template grouping and separate objective indices. Six offline behavioral tests pass.
   - [x] Prepare 18,201 unique text records from the three acquired sources; quarantine 12 records and merge 184 duplicates. Reserve 259 real and 2,523 synthetic holdout records without scoring them.
-  - [x] Keep evaluation-only sources and their linked duplicates out of training; count false alarms only against explicitly negative labels. Hard-ham acquisition is pending after shell DNS failures, so no negative-corpus accuracy result is claimed.
+  - [x] Keep evaluation-only sources and their linked duplicates out of training; count false alarms only against explicitly negative labels. Acquire and audit 250 historical hard-ham messages, accept 232 and quarantine 18; preserve every existing holdout assignment.
   - [ ] Review campaign grouping, audit pretrained exposure, add legitimate difficult negatives and establish language/time coverage before declaring training or evaluation sets validated.
 - [ ] Evaluate and package useful pretrained local spam and phishing detection with independently measured thresholds and English/Spanish/French coverage.
   - [x] Run the pinned multilingual candidate on 259 real development records at 384 and 1,024 tokens, preserving the reserved holdout. Record detection counts, truncation, latency and memory; no production model or threshold selected.
-- [ ] Persist independent assessments, provenance and unknown states; keep historical records unassessed and update evaluation/cache identities.
+  - [x] Screen the same candidate against 232 difficult legitimate development messages. Spam false alarms at 0.5 are 60.8%/65.5% at 384/1,024 tokens; reject this candidate for production. Historical evaluation-only negatives do not establish contemporary or multilingual quality.
+- [x] Persist independent assessments, provenance and unknown states; keep historical records unassessed and update evaluation/cache identities. See [assessment behavior](docs/threat-assessments.md).
 - [ ] Assess threats on trusted-contact/history paths without silently overriding explicit action rules or presenting unscanned mail as safe.
+  - [x] Add the bounded independent detector path to all successful classifications, preserve rule actions and exclude preference-derived learning scores; show absent coverage explicitly in the inspector.
+  - [ ] Connect a quality-validated production detector. The current app deliberately reports unassessed coverage; synthetic injected detectors establish orchestration only.
 - [ ] Evaluate targeted impersonation, payment diversion and other fraud using account-scoped context; preserve unknown history.
 - [ ] Evaluate zero-shot graymail preferences and incremental private personalization; distinguish example retrieval from actual model fine-tuning.
+  - [x] Run a reproducible 12-context EN/ES/FR synthetic policy-only/two-example comparison; record labels, effective actions, usage and limitations in [preference results](docs/probes/graymail-preferences.md). Examples showed no categorical improvement; this is not fine tuning or independent real-mail quality.
 - [ ] Establish dedicated attachment/malware coverage without treating text-model predictions as antivirus results.
 
 ## Implemented and verified offline
@@ -273,7 +277,8 @@ Parent items remain open until their full acceptance criteria are met.
   fixtures. Keep attachment content untrusted, never execute macros or fetch remote
   content, and distinguish unreadable attachments from spam evidence.
   - [x] Add bounded text/HTML attachments and additional verified still-image formats.
-  - [ ] Complete isolated PDF/document extraction evaluation and encrypted/resource-limit fixtures.
+  - [x] Complete isolated PDF/document extraction evaluation and encrypted/resource-limit fixtures. See [ten-case probe and limits](docs/probes/document-inspection.md).
+  - [ ] Add a signed restricted XPC worker, establish memory containment and validate adversarial document coverage before enabling production PDF extraction.
 
 - [ ] **SS-18 — Publish a verified Mail.app/account compatibility matrix.** Use
   SpamSieve’s [requirements](https://c-command.com/spamsieve/help/requirements) as
@@ -293,7 +298,8 @@ Parent items remain open until their full acceptance criteria are met.
   idempotency, spending limits and action authorization consistent with the app.
   The existing Inbox-trigger URL and evaluator/daemon do not cover these workflows.
   - [x] Implement documented App Intents and durable UUID replay protection.
-  - [ ] Resolve native intent registration and verify Shortcuts/CLI execution.
+  - [x] Resolve native intent registration and execute the status intent through AppIntentsTesting on the current signed build. Stale installed-app registration caused metadata lookup failure; see [automation acceptance](docs/automation.md).
+  - [ ] Verify a saved shortcut through the Shortcuts CLI, plus native preview/correction/export flows. Shortcuts’ first-run screen currently prevents saved-shortcut creation.
 
 - [ ] **SS-20 — Finish maintainable distribution and lifecycle support.** SpamSieve
   has [installation/update, migration and removal workflows](https://c-command.com/spamsieve/help/SpamSieveManual_toc).
@@ -305,6 +311,7 @@ Parent items remain open until their full acceptance criteria are met.
   - [x] Research Apple's distribution rules and document the store-first decision, Mail exception and remaining review gates.
   - [x] Add revocable provider mail-sharing permission, opt-in domain-age lookups and store-specific executable/PCC restrictions.
   - [x] Maintain a [MAS/direct functionality ledger](docs/distribution-differences.md), separating actual cuts from review gates and preserving dual-release options.
+  - [x] Add a separate direct target using the local library’s release-discovery product, manual checks and repository-derived release links; verify warning-free direct/store builds, configuration rejection and updater exclusion from store binaries. No release host is configured; see [updating](docs/updating.md).
   - [ ] Finish App Store feasibility gaps and release acceptance; support a possible parallel direct release through GitHub Releases and GitHubUpdateChecker, with tested channel switching and updater separation.
 
 ### Opportunities to exceed the baseline — prove, then claim
@@ -317,6 +324,7 @@ Parent items remain open until their full acceptance criteria are met.
   providers alone are not evidence of better filtering.
   - [x] Support frozen policy/no-policy comparisons in the offline reporting tool.
   - [ ] Compare zero-shot preferences with small increments of private corrections; do not require universal training from personal graymail.
+  - [x] Complete the synthetic multilingual policy/example smoke test with $0.0020729 estimated new cost and $1.20 conservative reservations; leave thresholds unchanged.
   - [ ] Measure semantic-preference benefit on independently reviewed unseen mail.
 
 - [ ] **SS-22 — Reduce review effort without hiding risk.** Rank Review and rescue

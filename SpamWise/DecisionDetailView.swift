@@ -32,6 +32,9 @@ struct DecisionDetailView: View {
         }
         if let error = row.readStatusError { Text(error) }
       }
+      Section("Threat assessment") {
+        ThreatAssessmentView(assessment: row.threats)
+      }
       Section("Correct this decision") {
         CorrectionControls(model: model, row: row)
         if row.correctionUndone == true {
@@ -83,6 +86,58 @@ struct DecisionDetailView: View {
       ) {
         if case .failure = $0 { model.status = String(localized: "Message source export failed.") }
       }
+  }
+}
+
+private struct ThreatAssessmentView: View {
+  let assessment: ThreatAssessment?
+
+  private var findings: [ThreatFinding] {
+    assessment?.findings.filter { $0.status == .detected } ?? []
+  }
+
+  var body: some View {
+    if assessment?.findings.contains(where: { $0.status != .unknown }) != true {
+      Text("Not assessed").foregroundStyle(.secondary)
+        .accessibilityIdentifier("threats.status")
+      Text("Mail placement does not establish message safety.")
+    } else {
+      if findings.isEmpty {
+        Text("No threats detected within assessed coverage")
+          .accessibilityIdentifier("threats.status")
+      }
+      ForEach(findings, id: \.kind) { finding in
+        LabeledContent(finding.kind.localizedTitle, value: finding.reason)
+      }
+      DisclosureGroup("Assessment coverage") {
+        ForEach(ThreatKind.allCases, id: \.self) { kind in
+          LabeledContent(kind.localizedTitle) {
+            if let finding = assessment?.finding(for: kind), finding.status != .unknown {
+              Text(finding.coverage)
+            } else {
+              Text("Not assessed")
+            }
+          }
+        }
+        if let detector = assessment?.detector {
+          LabeledContent("Detector", value: detector.implementation)
+          LabeledContent("Model", value: detector.model)
+        }
+        Text("Findings describe assessed content only. Scores are not calibrated probabilities.")
+      }
+    }
+  }
+}
+
+private extension ThreatKind {
+  var localizedTitle: String {
+    switch self {
+      case .spam: String(localized: "Spam")
+      case .phishing: String(localized: "Phishing")
+      case .spearphishing: String(localized: "Spearphishing")
+      case .fraud: String(localized: "Fraud")
+      case .malware: String(localized: "Malware")
+    }
   }
 }
 
@@ -181,3 +236,7 @@ struct VerdictBadge: View {
   Form { CorrectionControls(model: PreviewHelper.model(), row: PreviewHelper.record) }
 }
 #Preview("Diagnostics") { Form { DecisionDiagnosticsView(row: PreviewHelper.record) } }
+#Preview("Unassessed threats") { Form { ThreatAssessmentView(assessment: nil) } }
+#Preview("Threat finding") {
+  Form { ThreatAssessmentView(assessment: PreviewHelper.threatAssessment) }
+}

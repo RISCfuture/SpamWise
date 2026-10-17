@@ -67,6 +67,7 @@ def summarize(rows):
                 for row in selected
             ),
             "negative_records": len(negatives),
+            "negative_template_groups": len({row["group"] for row in negatives}),
             "negative_argmax_counts": dict(
                 Counter(row["prediction"] for row in negatives)
             ),

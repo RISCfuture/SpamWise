@@ -13,6 +13,7 @@ struct Options {
       [--strength conservative|balanced|aggressive] [--cache DIRECTORY] [--output REPORT.json]
     spamwise-eval --export inbox|junk|sent --destination DIRECTORY [--limit 500]
     spamwise-eval --compare FROZEN_MANIFEST.json [--output REPORT.json]
+    spamwise-eval --threat-report OBJECTIVE_OBSERVATIONS.json [--output REPORT.json]
     Models: mock, claude-haiku-5-5, claude-sonnet-5-5, claude-opus-5-5, gpt-5.4-mini,
       gemini-3.8-flash, apple-on-device, apple-private-cloud-compute.
     Live calls require SPAMWISE_LIVE_API=1 and the selected provider's API key environment variable.
@@ -48,7 +49,7 @@ struct Options {
       "input", "model", "strength", "cache", "output", "state", "mock-responses",
       "input-price", "output-price", "cache-price", "export", "destination", "limit",
       "budget-store",
-      "reviewed", "partition", "compare"
+      "reviewed", "partition", "compare", "threat-report"
     ]
     guard arguments.count.isMultiple(of: 2) else { throw EvaluationError.arguments }
     for offset in stride(from: 0, to: arguments.count, by: 2) {
@@ -67,6 +68,9 @@ struct Options {
     }
     _ = try reviewedPartition
     if values["compare"] != nil, !Set(values.keys).isSubset(of: ["compare", "output"]) {
+      throw EvaluationError.arguments
+    }
+    if values["threat-report"] != nil, !Set(values.keys).isSubset(of: ["threat-report", "output"]) {
       throw EvaluationError.arguments
     }
   }
