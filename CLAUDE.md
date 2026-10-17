@@ -325,3 +325,31 @@ the expanded native test in 8.481 seconds. Evidence:
 `.build/7ae09be2-7487-4cc9-900a-1c1b9fb169c9/automation-final-ui.xcresult`.
 Independent review found no Important or Critical issues. See
 `docs/automation.md` for reproduction and CLI artifacts.
+
+## Correction identity and local candidate screening — 2026-10-16
+
+Reviewed corrections now retain an explicit sample identity even when content
+retention and statistical learning are disabled. Enabling content-based learning
+upgrades linked examples to the semantic identity; disabling it preserves that
+identity. Corpus relabel and Forget therefore reach the linked correction
+examples and derived learning while retaining explicit sender rules. The existing
+correction test reproduced four failing assertions before the fix. Already
+persisted legacy examples with no sample identity are not automatically matched
+by sender or subject, because those fields do not uniquely identify a message.
+
+OpenTextShield raw-input screening is recorded in
+`docs/probes/opentextshield-screening.md`. Both token budgets score the same 491
+real development records, plus eleven separate synthetic cases; holdouts remain
+unscored. Difficult legitimate email has 40.5%/43.1% spam false alarms at 96/384
+tokens and a 0.5 score threshold. The synthetic targeted-payment pair is reversed.
+The candidate is rejected for production selection; no calibrated threshold or
+useful local detector is claimed. No paid calls were made.
+
+Verification for the correction-identity change: all 86 package tests pass,
+app/extension and hardened-runtime archive builds pass with warnings treated as
+errors, and Developer ID export passes strict signature verification. Swift
+formatting, strict SwiftLint, all six corpus-tool tests, Ruff, compileall and
+Markdown lint using the global configuration pass. Independent review found no
+Important or Critical issue. Earlier native automation/UI acceptance in this
+session predates this identity change; the new behavior is covered by the
+extended core correction test.

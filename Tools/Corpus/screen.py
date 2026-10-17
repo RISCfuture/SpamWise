@@ -17,6 +17,32 @@ from prepare import SCHEMA, write_json
 MODEL = "Horizon-Labs/phishing-scam-detector-base"
 REVISION = "f1dddff04e7f56dc9f0f068d4e7f0383c583e392"
 LABELS = ("legitimate", "spam", "fraud")
+CANDIDATES = {
+    "horizon": {
+        "model": MODEL,
+        "revision": REVISION,
+        "labels": LABELS,
+        "phishing_output": "fraud",
+        "token_budgets": (384, 1024),
+    },
+    "opentextshield": {
+        "model": "telecomsxchange/OpenTextShield",
+        "revision": "9e839db78bd1daff8062ae2f2638af0b64b416ae",
+        "labels": ("ham", "spam", "phishing"),
+        "phishing_output": "phishing",
+        "token_budgets": (96, 384),
+    },
+}
+
+
+def validate_labels(config, candidate):
+    """Reject changed output semantics before interpreting model scores."""
+    labels = CANDIDATES[candidate]["labels"]
+    if config.id2label != dict(enumerate(labels)):
+        raise ValueError("model_labels")
+    if config.label2id != {label: index for index, label in enumerate(labels)}:
+        raise ValueError("model_labels")
+    return labels
 
 
 def development_records(corpus):
@@ -41,10 +67,12 @@ def development_records(corpus):
     return selected, manifest
 
 
-def summarize(rows):
+def summarize(rows, candidate="horizon"):
     """Report explicitly labeled cohorts and abstain from metrics with unknown labels."""
+    phishing_output = CANDIDATES[candidate]["phishing_output"]
+    combined_key = f"spam_or_{phishing_output}_at_0.5"
     cohorts = {}
-    for task, score_label in (("spam", "spam"), ("phishing", "fraud")):
+    for task, score_label in (("spam", "spam"), ("phishing", phishing_output)):
         selected = [row for row in rows if row["labels"].get(task) is True]
         negatives = [row for row in rows if row["labels"].get(task) is False]
         if not selected and not negatives:
@@ -62,8 +90,8 @@ def summarize(rows):
                 )
                 for threshold in (0.5, 0.9, 0.95, 0.99)
             },
-            "spam_or_fraud_at_0.5": sum(
-                row["scores"]["spam"] + row["scores"]["fraud"] >= 0.5
+            combined_key: sum(
+                row["scores"]["spam"] + row["scores"][phishing_output] >= 0.5
                 for row in selected
             ),
             "negative_records": len(negatives),
@@ -81,8 +109,8 @@ def summarize(rows):
             if negatives
             else None,
             "false_positive_threshold": 0.5,
-            "spam_or_fraud_at_0.5_negative": sum(
-                row["scores"]["spam"] + row["scores"]["fraud"] >= 0.5
+            f"{combined_key}_negative": sum(
+                row["scores"]["spam"] + row["scores"][phishing_output] >= 0.5
                 for row in negatives
             ),
         }
@@ -98,18 +126,25 @@ def summarize(rows):
         "limits": [
             "Development data only; reserved holdout is excluded from scoring.",
             "Positive-only cohorts do not establish false-positive rates; thresholds remain uncalibrated.",
-            "Fraud is a broad model output, not a separately trained phishing score.",
+            (
+                "Fraud is a broad model output, not a separately trained phishing score."
+                if phishing_output == "fraud"
+                else "Phishing is a separate model output; non-spam labels do not establish phishing negatives."
+            ),
             "Template groups are heuristic; records are not assumed independent.",
             "Labels, languages and pretrained exposure have not been independently audited.",
         ],
     }
 
 
-def screen(corpus, snapshot, output, max_tokens=384):
+def screen(
+    corpus, snapshot, output, max_tokens=384, candidate="horizon", synthetic=None
+):
     """Run Safetensors-only CPU inference from an explicit offline model snapshot."""
-    if snapshot.name != REVISION:
+    specification = CANDIDATES[candidate]
+    if snapshot.name != specification["revision"]:
         raise ValueError("model_revision")
-    if max_tokens not in (384, 1024):
+    if max_tokens not in specification["token_budgets"]:
         raise ValueError("token_budget")
     if output.exists():
         raise ValueError("output_exists")
@@ -131,45 +166,67 @@ def screen(corpus, snapshot, output, max_tokens=384):
     model = AutoModelForSequenceClassification.from_pretrained(
         snapshot, use_safetensors=True, attn_implementation="eager", **options
     ).eval()
-    if tuple(model.config.id2label[index] for index in range(3)) != LABELS:
-        raise ValueError("model_labels")
+    labels = validate_labels(model.config, candidate)
+    if max_tokens > model.config.max_position_embeddings:
+        raise ValueError("model_positions")
     weights = snapshot / "model.safetensors"
     with weights.open("rb") as stream:
         weights_hash = hashlib.file_digest(stream, "sha256").hexdigest()
-    rows = []
+
+    def score_record(record):
+        text = record["text"]
+        inputs = tokenizer(
+            text, return_tensors="pt", truncation=True, max_length=max_tokens
+        )
+        length = len(tokenizer(text, truncation=False, verbose=False)["input_ids"])
+        inference_start = time.perf_counter()
+        scores = model(**inputs).logits.softmax(dim=-1)[0].tolist()
+        elapsed = (time.perf_counter() - inference_start) * 1000
+        if len(scores) != len(labels) or not all(
+            math.isfinite(score) and 0 <= score <= 1 for score in scores
+        ):
+            raise ValueError("model_scores")
+        return {
+            "id": record["id"],
+            "group": record["group"],
+            "labels": record["labels"],
+            "prediction": labels[
+                max(range(len(labels)), key=lambda index: scores[index])
+            ],
+            "scores": dict(zip(labels, scores, strict=True)),
+            "input_tokens_before_truncation": length,
+            "truncated": length > max_tokens,
+            "inference_ms": elapsed,
+        }
+
     start = time.perf_counter()
     with torch.inference_mode():
-        for record in records:
-            inputs = tokenizer(
-                record["text"],
-                return_tensors="pt",
-                truncation=True,
-                max_length=max_tokens,
-            )
-            length = len(
-                tokenizer(record["text"], truncation=False, verbose=False)["input_ids"]
-            )
-            inference_start = time.perf_counter()
-            scores = model(**inputs).logits.softmax(dim=-1)[0].tolist()
-            elapsed = (time.perf_counter() - inference_start) * 1000
-            if not all(math.isfinite(score) and 0 <= score <= 1 for score in scores):
-                raise ValueError("model_scores")
-            rows.append(
-                {
-                    "id": record["id"],
-                    "group": record["group"],
-                    "labels": record["labels"],
-                    "prediction": LABELS[
-                        max(range(3), key=lambda index: scores[index])
-                    ],
-                    "scores": dict(zip(LABELS, scores, strict=True)),
-                    "truncated": length > max_tokens,
-                    "inference_ms": elapsed,
-                }
-            )
+        rows = [score_record(record) for record in records]
+    elapsed_seconds = time.perf_counter() - start
+    synthetic_report = None
+    if synthetic is not None:
+        synthetic_bytes = synthetic.read_bytes()
+        cases = json.loads(synthetic_bytes)["results"]
+        with torch.inference_mode():
+            synthetic_rows = [
+                score_record(
+                    {
+                        "id": case["synthetic_case"],
+                        "group": case["synthetic_case"],
+                        "labels": {},
+                        "text": case["subject"] + "\n" + case["body"],
+                    }
+                )
+                for case in cases
+            ]
+        synthetic_report = {
+            "input_sha256": hashlib.sha256(synthetic_bytes).hexdigest(),
+            "purpose": "Separate constructed smoke cases, excluded from corpus metrics.",
+            "results": synthetic_rows,
+        }
     report = {
-        "model": MODEL,
-        "revision": REVISION,
+        "model": specification["model"],
+        "revision": specification["revision"],
         "weights_sha256": weights_hash,
         "corpus_sha256": manifest["records_sha256"],
         "seed": manifest["seed"],
@@ -178,14 +235,22 @@ def screen(corpus, snapshot, output, max_tokens=384):
         "python": platform.python_version(),
         "platform": platform.platform(),
         "max_tokens": max_tokens,
-        "elapsed_seconds_excluding_load": time.perf_counter() - start,
+        "elapsed_seconds_excluding_load": elapsed_seconds,
+        "cpu_seconds_process": resource.getrusage(resource.RUSAGE_SELF).ru_utime
+        + resource.getrusage(resource.RUSAGE_SELF).ru_stime,
+        "preprocessing": "Raw prepared corpus text; no model production normalizer.",
+        "device": "cpu",
+        "threads": 2,
+        "attention": "eager",
         "peak_process_memory_bytes_macos": resource.getrusage(
             resource.RUSAGE_SELF
         ).ru_maxrss,
         "paid_calls": 0,
-        **summarize(rows),
+        **summarize(rows, candidate),
         "results": rows,
     }
+    if synthetic_report is not None:
+        report["synthetic_smoke"] = synthetic_report
     output.mkdir(mode=0o700, parents=True)
     previous_umask = os.umask(0o077)
     try:
@@ -205,9 +270,18 @@ def main():
     parser.add_argument("--corpus", required=True, type=Path)
     parser.add_argument("--snapshot", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--max-tokens", type=int, choices=(384, 1024), default=384)
+    parser.add_argument("--max-tokens", type=int, choices=(96, 384, 1024), default=384)
+    parser.add_argument("--candidate", choices=tuple(CANDIDATES), default="horizon")
+    parser.add_argument("--synthetic", type=Path)
     args = parser.parse_args()
-    report = screen(args.corpus, args.snapshot, args.output, args.max_tokens)
+    report = screen(
+        args.corpus,
+        args.snapshot,
+        args.output,
+        args.max_tokens,
+        args.candidate,
+        args.synthetic,
+    )
     print(
         json.dumps({"evaluated_records": report["evaluated_records"], "paid_calls": 0})
     )

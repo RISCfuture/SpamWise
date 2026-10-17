@@ -269,22 +269,24 @@ func `corrects selected mail without classifying and excludes own addresses from
   #expect(reviewed.corrections.last?.label == .review)
   #expect(await adapter.lookups == 0)
   #expect(reviewed.learning == nil)
+  let reviewedID = try #require(reviewed.reviewedLabels?.first?.id)
+  try await CorpusManagement.relabel(id: reviewedID, label: .inbox, store: store)
+  #expect(try await StateRepository.load(store).corrections.allSatisfy { $0.label == .inbox })
+  try await CorpusManagement.forget(id: reviewedID, store: store)
+  #expect(try await StateRepository.load(store).corrections.isEmpty)
+  #expect(await adapter.lookups == 0)
   await adapter.retain(try envelope())
-  try await StateRepository.update(store) { state in
-    var options = state.settings.advancedOptions
-    options.retainReviewedContent = true
-    state.settings.advanced = options
+  try await StateRepository.editSettings(store) {
+    $0.advancedOptions.retainReviewedContent = true
   }
   _ = try await pipeline.correct(recordID: failed.id, label: .inbox, adapter: adapter)
   let retained = try await StateRepository.load(store)
   #expect(await adapter.lookups == 1)
   #expect(retained.reviewedLabels?.first?.message != nil)
   #expect(retained.learning == nil)
-  try await StateRepository.update(store) { state in
-    var options = state.settings.advancedOptions
-    options.retainReviewedContent = false
-    options.bayes = true
-    state.settings.advanced = options
+  try await StateRepository.editSettings(store) {
+    $0.advancedOptions.retainReviewedContent = false
+    $0.advancedOptions.bayes = true
   }
   _ = try await pipeline.correct(recordID: failed.id, label: .junk, adapter: adapter)
   let learned = try await StateRepository.load(store)
@@ -305,6 +307,14 @@ func `corrects selected mail without classifying and excludes own addresses from
   await #expect(throws: IntegrationError.staleMessage) {
     try await CorrectionUndo.apply(store: store)
   }
+  try await StateRepository.editSettings(store) { $0.advanced?.bayes = false }
+  _ = try await pipeline.correct(recordID: failed.id, label: .inbox, adapter: adapter)
+  let beforeForget = try await StateRepository.load(store)
+  try await CorpusManagement.forget(id: reviewedID, store: store)
+  let forgotten = try await StateRepository.load(store)
+  #expect(forgotten.corrections.isEmpty)
+  #expect(forgotten.learning?.samples.isEmpty == true)
+  #expect(forgotten.rules == beforeForget.rules)
 }
 @Test func `consumes retries only within the selected account`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()

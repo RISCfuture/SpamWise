@@ -7,6 +7,7 @@ import tarfile
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 import prepare
 import screen
@@ -95,6 +96,43 @@ class CorpusPreparationTests(unittest.TestCase):
             self.assertEqual(negative_report["false_positive_rate"], 0.5)
             self.assertEqual(negative_report["spam_or_fraud_at_0.5_negative"], 2)
             self.assertEqual(negative_report["threshold_false_positives"]["0.9"], 0)
+            phishing_rows = [
+                {
+                    **selected[0],
+                    "scores": {"ham": 0.1, "spam": 0.2, "phishing": 0.7},
+                    "prediction": "phishing",
+                    "inference_ms": 3,
+                    "truncated": False,
+                },
+                {
+                    "labels": {"spam": False},
+                    "group": "negative",
+                    "scores": {"ham": 0.1, "spam": 0.1, "phishing": 0.8},
+                    "prediction": "phishing",
+                    "inference_ms": 3,
+                    "truncated": False,
+                },
+            ]
+            direct = screen.summarize(phishing_rows, "opentextshield")["cohorts"]
+            self.assertFalse(direct["phishing"]["output_is_task_proxy"])
+            self.assertEqual(direct["phishing"]["threshold_hits"]["0.5"], 1)
+            self.assertEqual(direct["phishing"]["negative_records"], 0)
+            self.assertIsNone(direct["phishing"]["false_positive_rate"])
+            self.assertEqual(direct["spam"]["false_positive_rate"], 0)
+            self.assertEqual(direct["spam"]["spam_or_phishing_at_0.5_negative"], 1)
+            config = SimpleNamespace(
+                id2label={0: "ham", 1: "spam", 2: "phishing"},
+                label2id={"ham": 0, "spam": 1, "phishing": 2},
+            )
+            self.assertEqual(
+                screen.validate_labels(config, "opentextshield"),
+                ("ham", "spam", "phishing"),
+            )
+            with self.assertRaisesRegex(ValueError, "model_labels"):
+                screen.validate_labels(config, "horizon")
+            config.id2label[1], config.id2label[2] = "phishing", "spam"
+            with self.assertRaisesRegex(ValueError, "model_labels"):
+                screen.validate_labels(config, "opentextshield")
             with (path / "records.jsonl").open("a") as stream:
                 stream.write("{}\n")
             with self.assertRaisesRegex(ValueError, "corpus_hash"):

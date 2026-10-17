@@ -52,15 +52,17 @@ extension Pipeline {
       } else {
         state.rules = Gates.replacing(rule, in: state.rules)
       }
-      state.corrections.append(
-        CorrectionExample(
-          sender: address,
-          domain: domain,
-          subject: previous.subject,
-          gist: previous.decision.reason,
-          label: label
-        )
+      var example = CorrectionExample(
+        sender: address,
+        domain: domain,
+        subject: previous.subject,
+        gist: previous.decision.reason,
+        label: label
       )
+      example.sampleID =
+        state.reviewedLabels?.first { $0.id == previous.identity.contentHash }?
+        .sampleID ?? previous.identity.contentHash
+      state.corrections.append(example)
       state.corrections = Array(state.corrections.suffix(Self.maximumCorrections))
       state.revision += 1
       state.retries.removeAll()  // Any old prompt/evidence generation is stale after a correction.
@@ -121,17 +123,22 @@ extension Pipeline {
     let reviewedMessage = message
     try await StateRepository.update(store) { state in
       guard state.revision == record.revision else { return }
-      if let reviewedMessage, let index = state.corrections.indices.last {
-        state.corrections[index].sampleID = LearningSample.identity(for: reviewedMessage)
-      }
       var labels = state.reviewedLabels ?? []
+      let previousSampleID =
+        labels.first { $0.id == record.identity.contentHash }?.sampleID
+        ?? record.identity.contentHash
+      let sampleID = reviewedMessage.map(LearningSample.identity) ?? previousSampleID
+      for index in state.corrections.indices
+      where state.corrections[index].sampleID == previousSampleID {
+        state.corrections[index].sampleID = sampleID
+      }
       labels.removeAll { $0.id == record.identity.contentHash }
       labels.append(
         ReviewedLabel(
           identity: record.identity,
           label: label,
           message: state.settings.advancedOptions.retainReviewedContent ? reviewedMessage : nil,
-          sampleID: reviewedMessage.map(LearningSample.identity)
+          sampleID: sampleID
         )
       )
       state.reviewedLabels = Array(labels.suffix(Self.maximumReviewedLabels))
