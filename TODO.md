@@ -65,6 +65,12 @@ See [roadmap progress](docs/roadmap-progress.md), [evidence](docs/evidence.md), 
 
 ## Live acceptance and external prerequisites
 
+Owner direction on 2026-10-17: skip provider access, supervised device sessions,
+personal labeling and App Store account steps for now. These items remain open,
+not completed. `RISCfuture/SpamWise` has been created privately; repository/site
+publication setup is prepared for approval. See [the approval checklist](docs/repository-approval.md).
+Spamhaus remains disabled while its [access options](docs/spamhaus.md) are reviewed.
+
 - [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI setup-key storage and read access in login Keychain are verified. Using the existing app budget file explicitly resolved CLI container discovery; one synthetic request returned HTTP 429 (`rateLimited`), with no verdict or reported usage. The existing $150 ledger retains a $1 reservation. Successful classification and operational shared-Keychain import remain pending. Gemini is deferred until its key is supplied. Apple on-device completed five synthetic requests but returned Review for every fixture; quality remains unvalidated. PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
 - [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
   - [x] Verify six synthetic EN/ES/FR PNG/JPEG/GIF/TIFF cases through native Vision in a signed sandboxed harness, with malformed/remote-only inputs unknown. Observe local-mode guards and a network-observer positive control. See [runtime evidence and limits](docs/probes/local-evidence-runtime.md).
@@ -91,7 +97,7 @@ remaining acceptance work without treating missing evidence as success:
 | Gate | Affected work | Needed next |
 | --- | --- | --- |
 | Provider/account access | New-provider acceptance, PCC | Unlock the saved OpenAI setup key for operational import and supply usable quota; provide the Gemini key; obtain Apple's PCC grant if desired |
-| Publisher/release decisions | Store acceptance, SS-20 | Create the Mac App Store app record in App Store Connect; choose the hosting/release repository and real URLs; confirm final privacy answers, reviewer access and Mail exception issue reference; App Review decides eligibility |
+| Publisher/release decisions | Store acceptance, SS-20 | `RISCfuture/SpamWise` is selected and created privately; finish the blocked code upload and review its publication setup. App Store account work is deferred. Final privacy answers, reviewer access and Mail exception approval remain open |
 | Interactive environment coverage | Fresh onboarding, SS-01/02/06/07/08/09/14/18 | A fresh macOS user/permission flow, notification permission, controlled sleep/lock/reboot/offline/reconnect sessions, a second device and additional account/hardware configurations |
 | Independent quality evidence | General spam/phishing, targeted fraud, graymail, calibration, SS-03/05/21/22/23 | Contemporary licensed legitimate negatives, reviewed language/objective labels and unseen campaign-separated evaluation; private preferences need the user's judgments. Current screened models failed specificity, so none is shipped as a universal detector |
 | Technical containment and threat coverage | PDF production, SS-17, malware | Resolve hard memory containment and worker lifecycle/cancellation before app integration; obtain adversarial document/malware evidence. This is unresolved engineering and validation, not a permission checkbox |
@@ -357,6 +363,7 @@ Parent items remain open until their full acceptance criteria are met.
   - [x] Maintain a [MAS/direct functionality ledger](docs/distribution-differences.md), separating actual cuts from review gates and preserving dual-release options.
   - [x] Add a separate direct target using the local library’s release-discovery product, manual checks and repository-derived release links; verify warning-free direct/store builds, configuration rejection and updater exclusion from store binaries. No release host is configured; see [updating](docs/updating.md).
   - [x] Prepare and browser-check five static prerelease pages at desktop and mobile widths, with local assets and no analytics; finish local store signing through an isolated temporary Match keychain.
+  - [x] Create the private `RISCfuture/SpamWise` repository and prepare a manually deployed Pages workflow, restricted site artifact, planned URLs and publication checklist. Local checks pass; code upload and draft PR remain blocked by tool approval, so no remote CI or deployment is claimed.
   - [ ] Finish App Store feasibility gaps and release acceptance; support a possible parallel direct release through GitHub Releases and GitHubUpdateChecker, with tested channel switching and updater separation.
 
 ### Opportunities to exceed the baseline — prove, then claim

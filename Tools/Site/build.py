@@ -3,15 +3,17 @@
 import argparse
 import html
 import re
+import shutil
 from pathlib import Path
 from string import Template
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 from markdown_it import MarkdownIt
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = Path(__file__).resolve().parent
 DOCS = ROOT / "docs"
+SOURCE_URL = "https://github.com/RISCfuture/SpamWise/blob/main/docs/"
 PAGES = {
     "privacy": (
         "SpamWise privacy policy",
@@ -51,6 +53,8 @@ def markdown_content(source):
                     child.attrSet(
                         "href", urlunsplit(href._replace(path=href.path[:-3] + ".html"))
                     )
+                elif not href.scheme and not href.netloc and href.path.endswith(".md"):
+                    child.attrSet("href", urljoin(SOURCE_URL, href.geturl()))
     renderer.renderer.rules["table_open"] = lambda *_: (
         '<div class="table-scroll" role="region" aria-label="Compatibility table" tabindex="0"><table>\n'
     )
@@ -116,7 +120,25 @@ def build(check):
     print(f"{'Checked' if check else 'Generated'} {len(pages)} static pages.")
 
 
+def stage_site(destination):
+    """Copy only public pages and assets into a fresh deployment directory."""
+    build(check=True)
+    names = ["index.html", *(f"{page}.html" for page in PAGES), "site.css", ".nojekyll"]
+    destination.mkdir(parents=True, exist_ok=False)
+    for name in names:
+        source = DOCS / name
+        if source.is_symlink():
+            raise ValueError("Site artifacts must be regular files")
+        shutil.copyfile(source, destination / name)
+    print(f"Staged {len(names)} public files in {destination}.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
-    build(parser.parse_args().check)
+    parser.add_argument("--stage", type=Path)
+    arguments = parser.parse_args()
+    if arguments.stage:
+        stage_site(arguments.stage)
+    else:
+        build(arguments.check)

@@ -7,9 +7,10 @@ repository only after a click. It accepts stable releases, compares the installe
 marketing version, and offers a GitHub releases-page link. There are no startup
 checks, downloads, binary replacement, automatic relaunches or channel switches.
 
-No repository is configured. The checkout has no release host to use, and neither
-publisher identity nor an app name establishes a GitHub owner/repository. An
-unconfigured build shows an unavailable status and constructs no checker. Missing
+`RISCfuture/SpamWise` is the selected release repository, created privately pending
+publication approval. The direct-target build settings remain unconfigured until
+a public release channel is approved. An unconfigured build shows an unavailable
+status and constructs no checker. Missing
 or malformed configuration fails closed; an existing Mac App Store receipt also
 disables direct checks. This receipt-presence guard is not receipt authentication.
 
@@ -23,8 +24,8 @@ path, or update the project reference deliberately when moving the checkout.
 Once the actual public release repository exists, set these direct-target build
 settings to its confirmed values:
 
-- `SPAMWISE_UPDATE_OWNER`: GitHub user or organization.
-- `SPAMWISE_UPDATE_REPOSITORY`: repository name, without a URL or path.
+- `SPAMWISE_UPDATE_OWNER`: `RISCfuture`.
+- `SPAMWISE_UPDATE_REPOSITORY`: `SpamWise`.
 
 They populate `SpamWiseUpdateOwner` and `SpamWiseUpdateRepository` in the signed
 app plist. `SpamWiseDistribution` is `direct`. The defaults are empty. There is
@@ -100,7 +101,7 @@ disable the sandbox or weaken signing to make updates work.
 
 ## Acceptance still required
 
-- Confirm the real release repository and pin a reviewed library revision for
+- Publish the approved `RISCfuture/SpamWise` release channel and pin a reviewed library revision for
   reproducible release builds; the current dependency is a local checkout.
 - Publish an authorized signed/notarized direct artifact and verify discovery,
   offline errors, no releases, rate limiting, prereleases and version ordering.

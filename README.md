@@ -4,6 +4,11 @@ A macOS 27 Apple Mail filter with local sender rules, optional relationship evid
 
 The app starts in dry run. MailKit records incoming dry runs; automatic Apple Events actions require a successful disposable-message probe for each account. Signed live Mail behavior and production thresholds still require the acceptance checks in [the runtime checklist](docs/probes/runtime-checklist.md).
 
+The repository is [RISCfuture/SpamWise](https://github.com/RISCfuture/SpamWise),
+currently private while publication is reviewed. The prepared marketing, privacy
+and support pages have no public deployment or release download yet. See the
+[repository approval checklist](docs/repository-approval.md).
+
 ## Build and verify
 
 Requires Xcode 27, Swift 6.4, macOS 27, `swiftlint`, `xcbeautify`, `shellcheck`, and `markdownlint-cli2`. The provider dependency is pinned in the local package. Preserve bundle identifiers, signing team, App Group, and shared Keychain group.

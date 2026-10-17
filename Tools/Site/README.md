@@ -1,8 +1,10 @@
 # Static prerelease site
 
-The site is prepared under `docs/` for a future static host such as GitHub Pages.
-It is not published, and no repository, domain, release download or App Store URL
-is configured. It uses local CSS and system fonts, with no JavaScript, analytics,
+The site is prepared under `docs/` for GitHub Pages at the planned address
+`https://riscfuture.github.io/SpamWise/`. The repository is
+`RISCfuture/SpamWise`, created privately pending publication approval. The site is
+not published; no release download, custom domain or App Store URL is configured.
+It uses local CSS and system fonts, with no JavaScript, analytics,
 CDN, external images or form backend. The pages contain prerelease language and
 `noindex, nofollow` metadata until publication is deliberately prepared.
 
@@ -21,8 +23,8 @@ Policy and support prose has one source of truth:
 `layout.html` supplies navigation, metadata and the footer. `docs/site.css` is
 maintained directly. The generator renders Markdown without embedded HTML,
 adds heading anchors and rewrites links between the listed documents to their
-HTML equivalents. Deeper implementation references remain links to existing
-Markdown source documents. `.nojekyll` preserves the checked-in static output.
+HTML equivalents. Deeper implementation references link to Markdown in the
+repository's `main` branch. `.nojekyll` preserves the checked-in static output.
 Do not edit generated HTML prose independently of its maintained source.
 
 From `Tools/Site`, create the pyenv environment once, then install and generate:
@@ -34,6 +36,7 @@ pyenv exec ruff check --fix .
 pyenv exec ruff format .
 pyenv exec python build.py
 pyenv exec python build.py --check
+pyenv exec python -m unittest discover
 ```
 
 Skip environment creation when `spamwise-site` already exists. `--check` is
@@ -52,15 +55,20 @@ Open the printed loopback address. This serves local files and does not publish
 them. For automated browser work, use an isolated headless browser and the
 `devtools` resource lock rather than the user's desktop session.
 
-## Publication work still required
+## Deployment artifact and approval
 
-Select the hosting repository/domain, review the policy and support drafts, and
-decide whether these prerelease pages should be public. Set real public URLs only
-after that choice. Remove indexing restrictions only when the owner intends the
-site to be indexed. Replace prerelease/publication-draft statements only when
-they cease to apply, regenerate all pages and rerun browser/link checks. A download
-button or store badge requires a real accepted release URL.
+`build.py --stage /path/to/new/directory` verifies the generated pages and copies
+only the five public HTML pages, stylesheet and `.nojekyll`. Research documents,
+probe records and other files under `docs/` are not uploaded as website content.
+The destination must be new, preventing leftover files from entering an artifact.
 
-Preparing these files does not enable GitHub Pages, change DNS, configure a remote
-or submit App Store metadata. Provider terms and App Privacy questionnaire
-decisions remain the release owner's responsibility.
+`.github/workflows/site.yml` validates relevant pull requests. Deployment requires
+a manual run on `main` with `publish` enabled; merging alone never publishes.
+The workflow uses pinned official actions and grants Pages write permissions only
+to the deployment job. Its default manual run validates without deployment.
+
+Review [the repository approval checklist](../../docs/repository-approval.md)
+before enabling Pages or changing repository visibility. Indexing restrictions and
+prerelease labels remain until separately reviewed. A download button or store
+badge requires an actual accepted release URL. No DNS or App Store metadata is
+changed by this tooling.

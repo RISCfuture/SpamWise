@@ -584,3 +584,26 @@ Owned UI fixtures/registrations are removed and the UI lock is released. No live
 Mail actions, production-setting changes, new notarization or installed-app
 replacement were performed by this follow-up. Unrelated project/catalog changes
 remain unstaged.
+
+## Repository preparation and Spamhaus assessment — 2026-10-17
+
+The owner deferred provider access, supervised device acceptance, personal labels
+and App Store account work. Created `RISCfuture/SpamWise` as a private repository
+and configured the local SSH `origin`. Automatic tool review rejected the Git push
+and the optional repository-settings edit because approval is required while the
+session approval mode is Never. No code upload, draft PR, Pages deployment,
+visibility change or release publication is claimed.
+
+Prepared a focused repository/site approval checklist and a pinned GitHub Actions
+workflow. Pull requests validate the site; deployment requires an explicit manual
+run on `main`. Artifact staging copies exactly five HTML pages, CSS and `.nojekyll`
+into a fresh directory. Other documentation stays in source control and links to
+the repository instead of entering the website artifact. Two publication tests,
+37 staged local link/asset/anchor checks, Ruff, Markdown lint, actionlint and
+yamllint pass. App code and the owner's existing Xcode/catalog edits are untouched.
+Remote CI cannot run before the upload. No new source license was chosen.
+
+Current Spamhaus primary-source research distinguishes public mirrors, free keyed
+DNS access and quoted commercial access. `docs/spamhaus.md` records eligibility,
+privacy, licensing uncertainty for app-wide access and the current public-DBL-only
+adapter. No Spamhaus registration, agreement, payment or live lookup was performed.
