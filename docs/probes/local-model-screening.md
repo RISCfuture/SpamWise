@@ -79,5 +79,37 @@ The first run downloads public model/tokenizer files; inference is local. The
 original run used the worker-specific `.build` directory and explicitly disabled
 implicit Hugging Face authentication and telemetry. It made no paid calls.
 Core ML conversion, signed app runtime, broader datasets and competing models
-remain unverified. Continue selection using the [dataset assessment](../training-data.md)
+remain unverified for this candidate. Continue selection using the [dataset assessment](../training-data.md)
 and [independent detection objectives](../detection-design.md).
+
+## Second candidate: multilingual spam and fraud
+
+[Horizon-Labs/phishing-scam-detector-base](https://huggingface.co/Horizon-Labs/phishing-scam-detector-base)
+declares Apache 2.0 and a 307M-parameter multilingual ModernBERT model. Revision
+`f1dddff04e7f56dc9f0f068d4e7f0383c583e392` explicitly maps output indices to
+`legitimate`, `spam` and `fraud`. Its teacher-generated fraud category combines
+phishing and other scams; it does not independently distinguish spearphishing.
+The model card's reported public benchmarks do not validate the spam/fraud split.
+
+An actual local run used Safetensors, disabled remote code, CPU execution with two
+threads, eager attention and a 384-token limit. It reused the eight inputs above
+and added accented French/Spanish personal messages and a legitimate payment-change
+counterpart that requests independent phone verification. Exact inputs and outputs
+are in [multilingual-model-smoke.json](multilingual-model-smoke.json).
+
+| Case | Observed result |
+| --- | --- |
+| Subscribed newsletter | Legitimate score 0.9522 |
+| Bulk leads offer | Spam score 0.9719 |
+| Password lure | Fraud score 0.9940 |
+| Targeted payment diversion | Fraud score 0.8641 |
+| Legitimate payment change requesting independent confirmation | Fraud score 0.9939 — a concerning false alarm on the constructed counterpart |
+| French/Spanish personal examples, accented and unaccented | Legitimate scores 0.9970–0.9995 |
+
+Inference took approximately 15–50 ms per case, excluding loading/tokenization.
+These eleven synthetic cases support further investigation of this candidate as
+an evidence source, not automatic action eligibility. In particular, the higher
+fraud score on the legitimate payment example means simply raising a threshold
+does not solve this pair. Evaluate legitimate financial workflows and relationship
+context before choosing or fine-tuning a model. No production model was selected,
+no mail action was requested, and no paid API call was used for this screening.

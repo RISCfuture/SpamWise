@@ -18,7 +18,50 @@ Place independently human-labeled `.eml` files in `good/`, `junk/`, and optional
 
 Live calls require `SPAMWISE_LIVE_API=1`. Select `--model claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`, `gpt-5.4-mini`, or `gemini-3.8-flash`, with the corresponding `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` in the process environment. The CLI never saves keys. `apple-on-device` and `apple-private-cloud-compute` use Apple's Foundation Models framework without an API key; PCC requires Apple's managed entitlement and availability. Unsupported or unavailable models fail without fallback. Rates are captured for the selected model; optional `--input-price`, `--output-price`, and `--cache-price` override report estimates in USD per million tokens. Provider cache-write premiums are not separately exposed.
 
-Before each uncached paid request, the CLI atomically reserves a conservative upper bound in the application's shared persistent $150 evaluation budget: $0.10 for Haiku, $1 for other paid models. App, extension and CLI share this ledger by default. Reservations are commitments, not measured billing; failed calls retain their reservation because a timeout cannot prove that the provider did not bill. `--budget-store PATH` selects a separate ledger and therefore requires separate spending authorization; it must not be used to bypass an exhausted shared allowance. The report's measured-token cost estimate is distinct from reserved budget. Neither a custom path nor a report-price override grants permission to spend.
+Before each uncached paid request, the CLI atomically reserves a conservative upper bound in the application's shared persistent $150 evaluation budget: $0.10 for Haiku, $1 for other paid models. App, extension and CLI share this ledger by default. Reservations are commitments, not measured billing; failed calls retain their reservation because a timeout cannot prove that the provider did not bill. `--budget-store PATH` explicitly selects the budget file. Selecting a different ledger requires separate spending authorization; selecting the app's existing file preserves shared accounting. It must not be used to bypass an exhausted shared allowance. The report's measured-token cost estimate is distinct from reserved budget. Neither a custom path nor a report-price override grants permission to spend.
+
+### Using a saved setup key
+
+Save a clipboard credential with `pbpaste | swift Scripts/store-provider-key.swift
+openai` (or `claude`/`gemini`). The setup key is a login-Keychain item, separate from
+the signed app's operational shared-Keychain item. It does not change the app's
+selected provider or grant permission to send ordinary mail.
+
+For an explicitly authorized live evaluation, pass the built evaluator to the
+Keychain launcher:
+
+```sh
+swift Scripts/evaluate-with-keychain.swift /absolute/path/to/spamwise-eval \
+  openai --live --input /private/path/to/corpus \
+  --cache /private/path/to/cache --output /private/path/to/report.json
+```
+
+The launcher supplies the provider's explicit supported model and reads the key
+directly into the child process environment. It never writes a plaintext key or
+places it in command arguments. It removes unrelated provider credentials from
+that environment, requires `--live`, and rejects model/budget overrides.
+The documented `swift` invocation passed a local child-process check for key
+forwarding, removal of other provider keys, and the exact shared budget path;
+missing `--live` and budget/model overrides were rejected without network calls.
+A separately compiled launcher was refused setup-key access by Keychain. Treat
+each executable's Keychain authorization separately; compilation alone does not
+establish credential access.
+
+An unsigned CLI may not resolve the App Group through Foundation. In that case,
+the launcher checks the same group's existing `SpamWise.store` under the current
+user's `Library/Group Containers` directory and passes its path explicitly. It
+refuses to create a replacement ledger when the store is absent. Filesystem
+permission or budget exhaustion still prevents evaluation. The app's budget
+transaction and cross-process lock remain responsible for each reservation.
+
+On 2026-10-16, this path admitted one synthetic OpenAI request through the existing
+evaluator build. The API returned HTTP 429, which the backend reported as
+`rateLimited`; the report recorded no verdict or token usage. The shared ledger
+retained one $1 reservation against its $150 ceiling. No billed amount was
+reported, and no refund or automatic retry was performed. This verifies setup-key
+read access and shared reservation, not successful OpenAI classification or
+signed-app credential access. The report is
+`.build/e85b1d5f-04fe-4493-80a9-6fc7785ec9ad/openai-report.json`.
 
 Optional `--state snapshot.json` reads an `AppState` with rules, corrections, Contacts, and history under account ID `eval`. Each run uses a fresh temporary classification store, forces dry run, and clears action claims and retries. It does not mutate the app's classification state; paid requests update the shared budget ledger. RDAP is unknown, external DNS/Rspamd and image OCR are disabled, and no remote URLs from mail are fetched.
 

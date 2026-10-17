@@ -19,7 +19,7 @@ out-of-box model or zero-shot preference handling. See
 - [x] Specify independent threat findings and personal preferences, separate from Inbox/Review/Junk actions.
 - [x] Research free bulk datasets, checking collection dates, original label meanings and published training terms.
 - [x] Download and inventory September 2026 Guenter spam, 2025 Nazario phishing and the synthetic Marketeam corpus locally; preserve source snapshots and hashes.
-- [x] Run the first pinned compact local-model probe; record newsletter, targeting and multilingual failures in [model screening](docs/probes/local-model-screening.md). This model is not selected for production.
+- [x] Screen pinned tiny and multilingual local models; record newsletter, targeting, multilingual and legitimate-payment results in [model screening](docs/probes/local-model-screening.md). Neither model is selected for automatic actions.
 - [ ] Audit source labels and campaign duplicates; build separate spam/phishing training sets and real/synthetic holdouts with legitimate difficult negatives.
 - [ ] Evaluate and package useful pretrained local spam and phishing detection with independently measured thresholds and English/Spanish/French coverage.
 - [ ] Persist independent assessments, provenance and unknown states; keep historical records unassessed and update evaluation/cache identities.
@@ -51,7 +51,7 @@ See [roadmap progress](docs/roadmap-progress.md), [evidence](docs/evidence.md), 
 
 ## Live acceptance and external prerequisites
 
-- [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI setup-key storage and read access in login Keychain are verified; operational shared-Keychain import and live API validation remain pending. The CLI connection check stopped before a request because its shared App Group budget container is unavailable; no separate spending ledger was substituted. Gemini is deferred until its key is supplied. Apple on-device completed five synthetic requests but returned Review for every fixture; quality remains unvalidated. PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
+- [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI setup-key storage and read access in login Keychain are verified. Using the existing app budget file explicitly resolved CLI container discovery; one synthetic request returned HTTP 429 (`rateLimited`), with no verdict or reported usage. The existing $150 ledger retains a $1 reservation. Successful classification and operational shared-Keychain import remain pending. Gemini is deferred until its key is supplied. Apple on-device completed five synthetic requests but returned Review for every fixture; quality remains unvalidated. PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
 - [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
 - [ ] Complete signed live onboarding/correction acceptance and incoming MailKit callback/account/deadline observations. Apple Mail's validated account-scoped route remains independent of MailKit's unresolved account bridge.
 - [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. Existing 30-second cross-account observations are not a separate server acknowledgement; ambiguous same-account Sent copies remain untouched.

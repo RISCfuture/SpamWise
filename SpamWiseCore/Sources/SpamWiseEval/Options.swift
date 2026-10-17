@@ -22,7 +22,7 @@ struct Options {
     Reviewed exports default to held-out, reject duplicate content, and report missing retained \
     text.
     --state is prohibited for reviewed held-out/all runs; labels never enter model prompts.
-    --budget-store selects separate accounting and requires separate spending authorization.
+    --budget-store selects a ledger; a different ledger requires separate spending authorization.
     """
   var values: [String: String] = [:]
   var reviewedPartition: ReviewedCorpusPartition {
