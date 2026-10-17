@@ -28,6 +28,10 @@ The presence of an exception is not proof of rejection; approval is discretionar
   Keep the exact `com.apple.mail` exception and explain its bounded use accurately.
 - The `APP_STORE` variant disables optional `rspamc` execution and its configuration
   UI, including restored executable settings. The core classifier does not require it.
+  An explicit fixed-loopback HTTP transport supports a separately configured local
+  Rspamd service in either distribution. Signed sandbox probes establish connectivity;
+  they do not establish App Review acceptance. Neither transport is required or
+  enabled by default, and both are blocked in local-only mode.
 - Provider-specific mail-sharing permission defaults off, including existing stores.
   Requests require consent before credentials/reservations and recheck it before
   paid requests. The disclosure includes attachment/OCR text, correction examples

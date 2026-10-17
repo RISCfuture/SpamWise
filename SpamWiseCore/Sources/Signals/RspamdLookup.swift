@@ -1,4 +1,10 @@
 public import Foundation
+import MessageModel
+
+/// Explicit local scanner transport; neither transport falls back to the other.
+public enum RspamdTransport: String, Codable, Sendable {
+  case executable, loopbackHTTP
+}
 
 /// Optional local Rspamd scan; absent executables, sandbox denial and malformed output remain unknown.
 public struct RspamdLookup: Sendable {
@@ -8,30 +14,38 @@ public struct RspamdLookup: Sendable {
   private static let maximumSymbols = 200
   private static let maximumSymbolBytes = 80
   private static let maximumDetails = 20
-  private let executablePath: String
+  private let transport: RspamdTransport
+  private let executablePath: String?
   private let process: EvidenceProcess
 
   /// Selects a local rspamc executable; the daemon endpoint is restricted to IPv4 loopback.
   public init(executablePath: String, process: EvidenceProcess = .live) {
-    self.executablePath = executablePath; self.process = process
+    self.init(transport: .executable, executablePath: executablePath, process: process)
   }
 
-  /// Supplies bounded raw mail through stdin and reports symbols without applying Rspamd's action.
-  public func lookup(raw: Data) async -> ExternalEvidenceFinding {
+  /// Selects an explicit transport to the fixed IPv4-loopback scanner endpoint.
+  public init(
+    transport: RspamdTransport,
+    executablePath: String? = nil,
+    process: EvidenceProcess = .live
+  ) {
+    self.transport = transport; self.executablePath = executablePath; self.process = process
+  }
+
+  /// Reports symbols without applying actions, within three seconds or the shorter caller budget.
+  public func lookup(raw: Data, timeout: TimeInterval = 3) async -> ExternalEvidenceFinding {
     let unknown = ExternalEvidenceFinding(
       source: "Local Rspamd",
       subject: "message",
       status: .unknown
     )
-    guard raw.count <= Self.maximumMessageBytes, executablePath.hasPrefix("/"),
-      URL(fileURLWithPath: executablePath).lastPathComponent == "rspamc"
-    else { return unknown }
+    guard raw.count <= Self.maximumMessageBytes, timeout.isFinite, timeout > 0 else {
+      return unknown
+    }
     do {
-      let data = try await process.run(
-        executable: executablePath,
-        arguments: ["--json", "--connect=127.0.0.1:11333", "--timeout=2", "symbols"],
-        input: raw
-      )
+      let data = try await withResourceDeadline(seconds: min(3, timeout)) {
+        try await scan(raw: raw, timeout: min(3, timeout))
+      }
       guard data.count <= Self.maximumOutputBytes else { return unknown }
       let response = try JSONDecoder().decode(Response.self, from: data)
       guard response.symbols.count <= Self.maximumSymbols,
@@ -48,6 +62,21 @@ public struct RspamdLookup: Sendable {
       }
       return .init(source: "Local Rspamd", subject: "message", status: .observed, details: details)
     } catch { return unknown }
+  }
+
+  private func scan(raw: Data, timeout: TimeInterval) async throws -> Data {
+    switch transport {
+      case .loopbackHTTP: return try await RspamdLoopbackHTTP.scan(raw, timeout: timeout)
+      case .executable:
+        guard let executablePath, executablePath.hasPrefix("/"),
+          URL(fileURLWithPath: executablePath).lastPathComponent == "rspamc"
+        else { throw URLError(.badURL) }
+        return try await process.run(
+          executable: executablePath,
+          arguments: ["--json", "--connect=127.0.0.1:11333", "--timeout=2", "symbols"],
+          input: raw
+        )
+    }
   }
 
   private struct Response: Decodable {

@@ -47,13 +47,28 @@ cache or claim real-time reputation beyond the received DNS answer.
 ## Local Rspamd
 
 Install and configure [Rspamd](https://docs.rspamd.com/getting-started/installation/)
-separately. Select the absolute path of its `rspamc` executable. SpamWise restricts
-the connection to `127.0.0.1:11333`; it does not send mail to a remotely configured
-Rspamd endpoint. The local server may perform its own external checks according
-to your Rspamd configuration, which should be reviewed separately.
+separately, then choose a transport under **Local Rspamd scanner** in Settings.
+Both transports send
+up to 2 MB of complete raw mail to `127.0.0.1:11333`. The local server may log,
+learn from, or perform external checks on that mail according to its own
+configuration. Review that configuration before enabling scans. Local-only mode
+disables both transports because SpamWise cannot enforce the scanner's privacy
+policy. Selecting **Off** clears the transport and executable selection.
 
-The [rspamc client](https://github.com/rspamd/rspamd/blob/master/doc/rspamc.1)
-receives up to 2 MB of raw mail through stdin. There is no shell interpolation,
+The **Local HTTP service** transport sends `POST /checkv2` directly with an ephemeral
+URLSession. It requires no external executable or sandbox exception. The endpoint
+is fixed; redirects and authentication challenges are rejected, proxies are
+disabled, and cookies, credential storage, and caches are unused. The client
+collects at most 64 KiB of response bytes, including responses without a declared
+length. Cancellation and the three-second maximum deadline cancel the session;
+a shorter remaining classification budget shortens the deadline. HTTP errors,
+unavailable services, excess output, and malformed results produce unknown
+evidence. The local endpoint is not authenticated: select this option only for a
+scanner you control, and stop using it if another process takes its port.
+
+The **Command-line client** transport uses the selected absolute path of the
+[rspamc client](https://github.com/rspamd/rspamd/blob/master/doc/rspamc.1), receiving
+raw mail through stdin. There is no shell interpolation,
 temporary message file, or message content in process arguments. The subprocess
 has a three-second deadline and a 64 KiB output cap. Cancellation, timeout and
 excess output terminate the child process. Standard error is discarded.
@@ -66,9 +81,13 @@ side effects configured in the local Rspamd server, such as logging or automatic
 statistical learning.
 
 A missing executable, denied sandbox access, unavailable local server, nonzero
-exit status, or malformed result produces unknown evidence. Successful fixture
-tests do not establish that a particular signed app can launch the installed
-client. Verify that separately before relying on this optional integration.
+exit status, or malformed result produces unknown evidence. Existing executable
+settings retain their transport; failures never switch transports automatically.
+The executable option is unavailable in App Store builds. A
+[signed sandbox runtime probe](probes/rspamd-runtime.md) successfully scanned
+synthetic mail through Local HTTP service against native Rspamd 4.2.2. The same harness
+could not launch the external executable. This validates the transport, not the
+quality or privacy of an independently installed scanner's rules.
 
 ## Embedded-image OCR
 
@@ -110,7 +129,9 @@ fixtures inject recognition results after real MIME and ImageIO validation.
 production recognizer on generated images in a Developer ID signed sandboxed
 harness and observe the local-mode pipeline with process network counters.
 Representative OCR quality, HEIC runtime fixtures, the shipped app bundle and an
-installed Rspamd service remain separate acceptance checks.
+installed Rspamd configuration remain separate acceptance checks. The
+[Rspamd probe](probes/rspamd-runtime.md) covers a temporary native scanner and
+synthetic HTTP redirect, output-limit, failure, timeout and cancellation cases.
 
 No public blocklist lookup, message upload, or service credential is required to
 run the offline suite:

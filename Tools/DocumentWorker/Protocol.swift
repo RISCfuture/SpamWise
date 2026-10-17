@@ -33,7 +33,7 @@ struct DocumentResult: Codable, Sendable, Equatable {
 
   enum Status: String, Codable, Sendable {
     case extracted, encrypted, malformed, inputLimit, pageLimit, unreadable
-    case unavailable, deadline, invalidReply, busy
+    case unavailable, deadline, invalidReply, busy, cancelled
   }
 }
 

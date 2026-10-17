@@ -64,6 +64,36 @@ func `keeps blocklist error codes out of spam evidence`(_ address: String) async
     }
   )
   #expect(await failed.lookup(raw: raw).status == .unknown)
+  for response in [
+    #"{"symbols":{"BAD SYMBOL":{"score":1}}}"#,
+    #"{"symbols":{"SPAM":{"score":10001}}}"#,
+    #"{"action":"reject"}"#,
+    String(repeating: " ", count: 65_537)
+  ] {
+    let malformed = RspamdLookup(
+      executablePath: "/opt/homebrew/bin/rspamc",
+      process: EvidenceProcess { _, _, _ in Data(response.utf8) }
+    )
+    #expect(await malformed.lookup(raw: raw).status == .unknown)
+  }
+  let missingPath = RspamdLookup(
+    transport: .executable,
+    process: EvidenceProcess { _, _, _ in
+      Issue.record("Missing executable selection must not dispatch a scan")
+      return Data()
+    }
+  )
+  #expect(await missingPath.lookup(raw: raw).status == .unknown)
+  let expired = RspamdLookup(
+    executablePath: "/opt/homebrew/bin/rspamc",
+    process: EvidenceProcess { _, _, _ in
+      Issue.record("Expired scan budgets must not dispatch a scan")
+      return Data()
+    }
+  )
+  for timeout in [0, -1, .infinity, .nan] {
+    #expect(await expired.lookup(raw: raw, timeout: timeout).status == .unknown)
+  }
 }
 
 @Test func `preserves process input and stops output floods and timeouts`() async throws {

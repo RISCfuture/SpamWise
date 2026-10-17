@@ -172,3 +172,17 @@ The [2026-10-16 audit](../../docs/probes/corpus-integrity-audit.md) found substa
 development overlap missed by exact-template grouping. Frozen partitions remain
 unchanged; the derived development manifest and inferred language counts support
 further audit, not independent benchmark claims.
+
+## Spanish phishing baseline
+
+`spaphish.py` audits the separately acquired, CC BY 4.0 SpaPhish v5 CSV and trains
+one fixed character TF-IDF/logistic baseline. It accepts only the pinned CSV hash,
+uses subject/body without annotation rationale leakage, and groups templates plus
+at-least-0.8 shingle-overlap components before a fixed development split. It never
+reads the existing corpus or any reserved holdout. Spam and other objectives stay
+unknown. Install `requirements-baseline.txt` in a separate pyenv environment.
+
+See [the measured probe](../../docs/probes/spaphish-baseline.md) for acquisition,
+commands, resource results and limitations. This research tool emits private
+partition/score JSON and an aggregate report; it does not export a production model
+or make its uncalibrated scores available to the application.

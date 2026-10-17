@@ -13,6 +13,7 @@ from unittest.mock import patch
 import audit
 import prepare
 import screen
+import spaphish
 
 
 def record(text, source, labels, synthetic=False, body=None):
@@ -132,6 +133,27 @@ class CorpusPreparationTests(unittest.TestCase):
                 run.return_value.stdout = json.dumps(estimates[:1])
                 with self.assertRaisesRegex(ValueError, "language_membership"):
                     audit.inferred_development_languages(rows, executable)
+        grouped, summary = spaphish.development_partition(
+            [
+                record(body, "spanish", {"phishing": True}),
+                record(
+                    body + " " + " ".join(f"extra{i}" for i in range(10)),
+                    "spanish",
+                    {"phishing": False},
+                ),
+            ]
+        )
+        self.assertEqual(len({row["group"] for row in grouped}), 1)
+        self.assertEqual(len({row["split"] for row in grouped}), 1)
+        self.assertEqual(summary["accepted_cross_split_pairs_after_grouping"], 0)
+        self.assertTrue(all(row["labels"]["spam"] is None for row in grouped))
+        conflicting, _ = spaphish.development_partition(
+            [
+                record(body, "spanish", {"phishing": True}),
+                record(body, "spanish", {"phishing": False}),
+            ]
+        )
+        self.assertIsNone(conflicting[0]["labels"]["phishing"])
         rows[1]["group"] = "a"
         self.assertEqual(audit.development_campaigns(rows)[1], [])
 
@@ -371,6 +393,8 @@ class CorpusPreparationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "output_exists"):
                 prepare.prepare(path, output, manifest, "seed")
             (path / "source.csv").write_bytes(raw + b"changed\n")
+            with self.assertRaisesRegex(ValueError, "source_hash"):
+                spaphish.source_records(path / "source.csv")
             with self.assertRaisesRegex(ValueError, "source_hash"):
                 prepare.prepare(path, path / "second", manifest, "seed")
             self.assertFalse((path / "second").exists())

@@ -72,10 +72,12 @@ release.
 
 Optional domain-age lookups send sender domains to IANA-discovered registration
 services. Optional Spamhaus reputation checks send queried domains through your
-configured DNS resolver. Those services have separate terms. Optional external
-Rspamd scanning is excluded from the App Store variant; in other builds, the
-configured scanner receives bounded message data and its configuration determines
-any further processing. Image OCR and supported text attachment extraction run
+configured DNS resolver. Those services have separate terms. Optional Rspamd
+scanning sends bounded raw message data to a separately configured scanner at
+`127.0.0.1:11333`. Its configuration determines any further processing, including
+outbound lookups. Both distributions support an explicitly selected local HTTP
+service; only direct builds offer external `rspamc` execution. Neither transport
+is enabled by default, and local-only mode blocks both. Image OCR and supported text attachment extraction run
 locally and do not load remote images or execute attachments.
 
 ## Diagnostics, updates and your choices

@@ -17,7 +17,7 @@ promise about every future provider configuration. The public-policy draft is
 | Gemini | `generateContent`, explicit key, bounded request; no account billing/contract eligibility detection |
 | RDAP | Opt-in sender-domain lookup using IANA discovery and registration endpoints |
 | Spamhaus DBL | Opt-in domain queries through an explicitly configured resolver and acknowledged service terms |
-| Rspamd | Optional configured executable receives bounded mail; excluded by `APP_STORE`; deployment-specific scanner behavior needs its own acceptance |
+| Rspamd | Explicit fixed-loopback HTTP or configured executable receives bounded raw mail; only executable transport is excluded by `APP_STORE`. Both default off and local-only mode blocks both. Scanner configuration controls downstream traffic/logging/learning and needs its own acceptance |
 | OCR/text attachments | Local decoding; no remote image loads, macro execution or antivirus claim |
 | GitHub | Direct variant only, manual configured release discovery; no repository currently configured; store product excludes discovery dependency |
 | Support/export | User-initiated files or email; default diagnostics exclude keys and message content; raw/content exports require deliberate selection |

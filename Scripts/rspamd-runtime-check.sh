@@ -10,7 +10,12 @@ evidence_root="$PWD/.build/$worker/rspamd"
 mkdir -p "$evidence_root"
 runtime="$(mktemp -d "$evidence_root/runtime.XXXXXX")"
 daemon_pid=""
+fixture_pid=""
 cleanup() {
+  if [[ -n "$fixture_pid" ]]; then
+    kill "$fixture_pid" 2>/dev/null || true
+    wait "$fixture_pid" 2>/dev/null || true
+  fi
   if [[ -n "$daemon_pid" ]]; then
     kill "$daemon_pid" 2>/dev/null || true
     wait "$daemon_pid" 2>/dev/null || true
@@ -21,8 +26,40 @@ cleanup() {
   rmdir "$runtime"
 }
 trap cleanup EXIT
-if lsof -nP -iTCP:11333 -sTCP:LISTEN >/dev/null 2>&1; then
-  echo 'Port 11333 is already occupied; refusing to change an existing service.' >&2
+if lsof -nP -iTCP:11333 -iTCP:11334 -sTCP:LISTEN >/dev/null 2>&1; then
+  echo 'Port 11333 or 11334 is already occupied; refusing to change an existing service.' >&2
+  exit 1
+fi
+swiftc -swift-version 6 -strict-concurrency=complete -strict-memory-safety -warnings-as-errors \
+  -parse-as-library -module-cache-path "$PWD/.build/$worker/cache" \
+  Scripts/rspamd-http-fixture.swift -o "$evidence_root/http-fixture"
+"$evidence_root/http-fixture" > "$evidence_root/http-fixture.log" 2>&1 &
+fixture_pid=$!
+ready=false
+for _ in {1..50}; do
+  if ! kill -0 "$fixture_pid" 2>/dev/null; then cat "$evidence_root/http-fixture.log" >&2; exit 1; fi
+  if rg -q 'ready 11333' "$evidence_root/http-fixture.log" && \
+    rg -q 'ready 11334' "$evidence_root/http-fixture.log"; then ready=true; break; fi
+  sleep 0.1
+done
+if [[ "$ready" != true ]]; then echo 'HTTP fixture did not become ready.' >&2; exit 1; fi
+"$signed_probe" rspamd-http-faults > "$evidence_root/http-faults.log" 2>&1
+cat "$evidence_root/http-faults.log"
+if rg -q 'redirect-received|invalid-request|failed ' "$evidence_root/http-fixture.log"; then
+  cat "$evidence_root/http-fixture.log" >&2
+  exit 1
+fi
+for expected in redirect-sent overflow-sent failure-sent timeout-closed cancel-closed marker-sent ordinary-sent; do
+  if ! rg -q "^$expected$" "$evidence_root/http-fixture.log"; then
+    echo "Missing HTTP fixture observation: $expected" >&2
+    exit 1
+  fi
+done
+kill "$fixture_pid"
+wait "$fixture_pid" || true
+fixture_pid=""
+if lsof -nP -iTCP:11333 -iTCP:11334 -sTCP:LISTEN >/dev/null 2>&1; then
+  echo 'Fixture port remains occupied after cleanup.' >&2
   exit 1
 fi
 cat > "$runtime/rspamd.conf" <<CONFIG
@@ -86,12 +123,16 @@ cat "$evidence_root/adapter.log"
 "$signed_probe" rspamd "$rspamd_build/src/client/rspamc" unknown \
   > "$evidence_root/signed-adapter.log" 2>&1
 cat "$evidence_root/signed-adapter.log"
+"$signed_probe" rspamd-http observed > "$evidence_root/signed-http.log" 2>&1
+cat "$evidence_root/signed-http.log"
 kill "$daemon_pid"
 wait "$daemon_pid" || true
 daemon_pid=""
 "$probe" rspamd "$rspamd_build/src/client/rspamc" unknown \
   > "$evidence_root/stopped-adapter.log" 2>&1
 cat "$evidence_root/stopped-adapter.log"
+"$signed_probe" rspamd-http unknown > "$evidence_root/stopped-http.log" 2>&1
+cat "$evidence_root/stopped-http.log"
 if lsof -nP -iTCP:11333 -sTCP:LISTEN >/dev/null 2>&1; then
   echo 'Port 11333 remains occupied after cleanup.' >&2
   exit 1

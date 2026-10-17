@@ -25,11 +25,13 @@ out-of-box model or zero-shot preference handling. See
   - [x] Prepare 18,201 unique text records from the three acquired sources; quarantine 12 records and merge 184 duplicates. Reserve 259 real and 2,523 synthetic holdout records without scoring them.
   - [x] Keep evaluation-only sources and their linked duplicates out of training; count false alarms only against explicitly negative labels. Acquire and audit 250 historical hard-ham messages, accept 232 and quarantine 18; preserve every existing holdout assignment.
   - [x] Audit frozen source-label/index fidelity and real/synthetic provenance, preserve all 18,201 original assignments and 2,782 holdouts, derive conservative development campaign groups, and record inferred language/time coverage plus pretrained-exposure disclosures. See [integrity audit](docs/probes/corpus-integrity-audit.md).
+  - [x] Acquire and hash-pin CC BY 4.0 SpaPhish v5: 1,395 Spanish messages with explicit phishing labels, including 664 legitimate examples. Keep this separate development source outside the existing frozen corpus; group duplicates/templates before partitioning. See [source audit and baseline](docs/probes/spaphish-baseline.md).
   - [ ] Independently review source labels, unresolved campaign links and contemporary multilingual legitimate negatives; resolve pretrained exposure or collect unseen evaluation data before declaring the sets validated.
 - [ ] Evaluate and package useful pretrained local spam and phishing detection with independently measured thresholds and English/Spanish/French coverage.
   - [x] Run the pinned multilingual candidate on 259 real development records at 384 and 1,024 tokens, preserving the reserved holdout. Record detection counts, truncation, latency and memory; no production model or threshold selected.
   - [x] Screen the same candidate against 232 difficult legitimate development messages. Spam false alarms at 0.5 are 60.8%/65.5% at 384/1,024 tokens; reject this candidate for production. Historical evaluation-only negatives do not establish contemporary or multilingual quality.
   - [x] Screen pinned OpenTextShield at 96/384 tokens on the same 491 real development messages and 11 separate synthetic cases. Spam false alarms on difficult legitimate mail are 40.5%/43.1%; reject this raw-input candidate for production. See [results and preprocessing limits](docs/probes/opentextshield-screening.md). Reserved holdouts remain unscored.
+  - [x] Train and evaluate a fixed local character-TF-IDF/logistic Spanish phishing baseline using subject/body only. At score 0.5, development validation detects 188/212 phishing messages with 5/176 legitimate false alarms; at 0.9, detection falls to 46/212 with zero observed false alarms. No production threshold or model is selected; frozen holdouts remain untouched and API spend is zero.
 - [x] Persist independent assessments, provenance and unknown states; keep historical records unassessed and update evaluation/cache identities. See [assessment behavior](docs/threat-assessments.md).
 - [ ] Assess threats on trusted-contact/history paths without silently overriding explicit action rules or presenting unscanned mail as safe.
   - [x] Add the bounded independent detector path to all successful classifications, preserve rule actions and exclude preference-derived learning scores; show absent coverage explicitly in the inspector.
@@ -48,12 +50,13 @@ out-of-box model or zero-shot preference handling. See
 - [x] Bounded regularized evidence weights and Bayes as optional weak signals, with minimum reviewed-data gates and held-out statistical samples.
 - [x] Anchored campaign fingerprints from explicit Junk corrections, suppressed by conflicting Good examples.
 - [x] Optional Spamhaus DBL domain lookups with explicit terms acknowledgement and unknown results for service errors.
-- [x] Optional local Rspamd symbols through bounded `rspamc` execution; sandbox denial remains unknown.
+- [x] Optional local Rspamd symbols through explicitly selected fixed-loopback HTTP or bounded `rspamc` execution; errors remain unknown. HTTP works in the signed sandbox harness without new entitlements; executable transport remains excluded from store builds. Both transports default off and are blocked in local-only mode.
 - [x] Bounded Vision OCR of embedded PNG/JPEG parts without remote image loading.
 - [x] TLS IMAP adapter and headless executable, with UIDVALIDITY/UID identity, SPECIAL-USE discovery, capability checks, disposable-message validation and verified move identities. Existing implementation retained; further development and live acceptance are deferred under the Mail.app-only scope.
 - [x] Local weekly digest of unresolved Review items, without sending email.
 - [x] Explicit Good/Junk/Review label collection and optional bounded reviewed-text export for later evaluation.
 - [x] Persistent conservative spending reservations. The authorized additional evaluation ceiling is $150, not a spending target.
+- [x] Retain unstarted persistent retries when cancellation interrupts a batch. Automated pre-cancellation and mid-batch checks reopen the store and resume remaining work; individual atomic claims reject superseded jobs.
 - [x] Mac App Store archive preflight and local export configuration. These do not submit or publish an app.
 - [x] Finish Spanish/French catalog verification, localized Help indexing and UI checks.
 - [x] Finish whole-change review, package/app/UI/archive checks, signed commits and notarized delivery.
@@ -66,6 +69,7 @@ See [roadmap progress](docs/roadmap-progress.md), [evidence](docs/evidence.md), 
 - [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
   - [x] Verify six synthetic EN/ES/FR PNG/JPEG/GIF/TIFF cases through native Vision in a signed sandboxed harness, with malformed/remote-only inputs unknown. Observe local-mode guards and a network-observer positive control. See [runtime evidence and limits](docs/probes/local-evidence-runtime.md).
   - [x] Build pinned Rspamd 4.2.2 and verify production adapter symbols against a disposable local scanner, including empty results and stopped-service unknown. The signed sandbox harness rejects execution safely; shipping execution remains unverified. See [scanner evidence](docs/probes/rspamd-runtime.md).
+  - [x] Verify the explicit loopback HTTP adapter in a signed sandbox with native Rspamd, then test redirects without forwarding, streaming overflow, service errors, shortened deadlines, cancellation, concurrent scans and stopped service. Temporary scanner/listeners are removed; installed service rules and representative quality remain separate acceptance work.
 - [ ] Complete signed live onboarding/correction acceptance and incoming MailKit callback/account/deadline observations. Apple Mail's validated account-scoped route remains independent of MailKit's unresolved account bridge.
   - [x] Verify signed menu-bar Junk correction and Junk-review restore on one generated cross-account message, independently checking source and settled mailbox after each action. See [live corrections](docs/probes/live-corrections.md).
   - [x] Observe a fresh signed MailKit body callback after a graceful Mail restart and controlled delivery; verify post-Junk read status, closed-window scanning and persisted scan progress after app relaunch. See [live follow-up](docs/probes/live-mail-followup.md).
@@ -316,6 +320,8 @@ Parent items remain open until their full acceptance criteria are met.
   - [x] Complete isolated PDF/document extraction evaluation and encrypted/resource-limit fixtures. See [ten-case probe and limits](docs/probes/document-inspection.md).
   - [x] Build and test a signed restricted XPC harness with mutual code requirements, bounded data-only messages, sandbox file/network denial and crash/CPU/wall/resident-watchdog recovery. All 24 native checks pass; see [worker evidence and shipping limits](Tools/DocumentWorker/README.md).
   - [ ] Establish enforceable memory containment, acceptable lifecycle latency and adversarial coverage before integrating production PDF extraction. The sampled watchdog demonstrably overshoots; PDFs remain unsupported in the app.
+  - [x] Research public macOS resource controls and established parser alternatives; document the distinction between allocator budgets and whole-process containment, including MuPDF licensing and a possible bounded WebAssembly experiment. See [containment decision](docs/probes/pdf-containment.md).
+  - [x] Implement cancellation before/during worker requests, first-wins completion, connection-loss termination and recovery in a different process. Keep one document per process to preserve CPU accounting and allocation reclamation; launchd restart latency remains an integration limit.
 
 - [ ] **SS-18 — Publish a verified Mail.app/account compatibility matrix.** Use
   SpamSieve’s [requirements](https://c-command.com/spamsieve/help/requirements) as

@@ -1,6 +1,91 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Local Rspamd scanner": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analizador local Rspamd"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyseur Rspamd local"
+          }
+        }
+      }
+    },
+    "Local HTTP service": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servicio HTTP local"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service HTTP local"
+          }
+        }
+      }
+    },
+    "Command-line client": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliente de línea de comandos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Client en ligne de commande"
+          }
+        }
+      }
+    },
+    "Sends message data to your scanner at 127.0.0.1:11333. Its configuration may use online services. Disabled in local-only mode.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envía los datos del mensaje a su analizador en 127.0.0.1:11333. Su configuración puede usar servicios en línea. Desactivado en el modo solo local."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoie les données du message à votre analyseur sur 127.0.0.1:11333. Sa configuration peut utiliser des services en ligne. Désactivé en mode local uniquement."
+          }
+        }
+      }
+    },
+    "Off": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactivado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivé"
+          }
+        }
+      }
+    },
     "Provider data and retention terms": {
       "extractionState": "manual",
       "localizations": {

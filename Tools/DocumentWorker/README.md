@@ -14,7 +14,8 @@ No personal mail, external model, provider credential or paid API request is inv
 - `Worker.swift` authenticates the caller, accepts one job per process, runs the
   parser off the XPC callback queue, and installs resource watchdogs.
 - `Client.swift` authenticates the worker before sending document bytes, rejects
-  oversized input and malformed responses, and completes each reply exactly once.
+  oversized input and malformed responses, and completes each reply exactly once,
+  including cancellation racing continuation installation.
 - `WorkerProbes.swift` contains fault/access injection compiled only with
   `DOCUMENT_WORKER_PROBE`; it is absent from the production worker build.
 - `Fixtures.swift`, `ProbeHost.swift` and `check.sh` drive the native acceptance
@@ -52,6 +53,7 @@ and the installed `NSXPCConnection.h` comments.
 | Client connection | Twelve-second upper deadline to accommodate observed relaunch throttling |
 | Client request | Four-second reply deadline after authenticated connection |
 | Concurrent work | A client returns busy while active; the service accepts one parsing job per process |
+| Cancellation | An already cancelled task launches no connection; in-flight cancellation closes the connection and active worker exits |
 
 Byte and character checks are protocol acceptance bounds, not promises about
 intermediate allocations. PDFKit can allocate before page and text checks.
@@ -67,7 +69,10 @@ untrusted content, never a malware verdict or evidence that an attachment is saf
 The worker's wall/CPU/memory exits and any XPC failure become unavailable text.
 Invalid JSON or excessive returned text becomes an invalid reply. No document
 retry occurs inside the client. Later independent requests can start a new
-worker. A shutdown message is sent only after a response from a live worker;
+worker. Cancellation closes the active connection; its worker exits on connection
+invalidation. The first terminal completion wins over duplicate/late callbacks.
+`connectionClosed` records transport closure, not an OS process-exit acknowledgement.
+A shutdown message is sent only after a response from a live worker;
 sending one after interruption could launch a replacement solely to shut it down.
 
 ## Reproduce
@@ -154,6 +159,22 @@ evaluation, not a measured safe Mail callback deadline. These delays are visible
 in both the host timings and launchd logs. No undocumented launchd/XPC setting is
 used to bypass the OS behavior.
 
+## Cancellation and lifecycle follow-up
+
+The harness retains one job per process, preserving allocation reclamation and
+per-process CPU accounting. It adds immediate and in-flight cancellation, a
+client busy check, new-process recovery, and direct completion-latch races before
+continuation installation and after completion. The caller must finish within
+one second after in-flight cancellation, independently of launch time. Native
+XPC callbacks are not claimed to reply multiple times; duplicate and late
+completion tests directly drive the same latch used by those callbacks.
+
+See [PDF containment research](../../docs/probes/pdf-containment.md) for evaluated
+public OS mechanisms, allocator-controlled parser alternatives, licensing,
+lifecycle reasoning and the remaining hard-memory gate. Reuse is deliberately
+not adopted: resetting a process CPU limit would not reset accumulated CPU time,
+and reuse requires separate accounting and memory-reclamation acceptance.
+
 ## Concrete shipping integration plan
 
 1. Add a macOS XPC-service target containing `Protocol.swift`, `PDFExtraction.swift`
@@ -168,7 +189,7 @@ used to bypass the OS behavior.
    file URL, bookmark or security-scoped resource. The daemon and Mail extension
    need their own validated hosting design; a service embedded in the app is not
    automatically available to those processes.
-4. Decide the lifecycle/latency policy explicitly. One document per process
+4. Retain the evaluated one-document lifecycle unless a replacement is validated. One document per process
    reclaims the process's allocations but encounters the observed launch delay.
    Reusing one serialized service across successful jobs could reduce latency,
    but requires different per-job CPU accounting, idle/memory recycling and new
@@ -185,3 +206,26 @@ The strict hard-memory-containment requirement remains unresolved. If it remains
 mandatory, keep production PDFs unsupported until a suitable bounded parser or
 enforceable OS containment mechanism is established. A signed sandbox and a
 successful watchdog probe do not close that gate.
+
+## Latest signed cancellation run
+
+On 2026-10-17 the exact-source signed check passed 28 request observations plus
+three direct completion-order checks. In-flight cancellation returned to the
+caller in 0.000156 seconds; recovery extracted the ordinary fixture in a different
+worker. Launchd separately records cancelled PID 83726 being removed 28 ms after
+its successful spawn. That is evidence for this controlled run, not a guaranteed
+OS scheduling or memory-reclamation bound.
+
+The full run also passed the existing document/resource/recovery cases,
+wrong-service and wrong-caller requirements, outside-container and host-container
+file denial, loopback denial, and the worker build excluding diagnostic symbols.
+The memory watchdog recorded 148,439,040 resident bytes against its 134,217,728-byte
+threshold, again demonstrating sampling overshoot.
+
+Evidence is in `.build/594427e7-0238-4e70-ad69-7a5595634c83/document-worker/`:
+`results.log`, `sandbox.log`, `unauthorized.log`, `production.log`,
+`cancellation-evidence.log` and `resource-evidence.log`. The enclosing
+`document-worker-final.log` records the successful signed build/run command.
+Strict Swift compilation, Swift formatting, strict SwiftLint, shellcheck and
+Markdown lint passed. These are isolated harness results; production PDF support
+and hard process-memory containment remain unestablished.

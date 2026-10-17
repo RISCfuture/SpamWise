@@ -24,6 +24,7 @@ enum WorkerResources {
 final class DocumentWorker: NSObject, DocumentWorkerProtocol, Sendable {
   private static let active = Mutex(false)
   private static let logger = Logger(subsystem: DocumentWorkerIdentity.service, category: "limits")
+  private let lifecycle = Mutex(Lifecycle.connected)
 
   func identity(withReply reply: @escaping @Sendable (Int32) -> Void) { reply(getpid()) }
 
@@ -36,6 +37,13 @@ final class DocumentWorker: NSObject, DocumentWorkerProtocol, Sendable {
   }
 
   func terminate() { _exit(0) }
+
+  func connectionInvalidated() {
+    lifecycle.withLock { lifecycle in
+      if lifecycle == .running { _exit(76) }
+      lifecycle = .disconnected
+    }
+  }
 
   private func run(
     reply: @escaping @Sendable (Data) -> Void,
@@ -50,6 +58,10 @@ final class DocumentWorker: NSObject, DocumentWorkerProtocol, Sendable {
     else {
       reply(DocumentResult(status: .busy).encoded())
       return
+    }
+    lifecycle.withLock { lifecycle in
+      guard lifecycle == .connected else { _exit(76) }
+      lifecycle = .running
     }
     let monitor = DispatchSource.makeTimerSource(queue: .global(qos: .userInitiated))
     let deadline = ProcessInfo.processInfo.systemUptime + DocumentWorkerLimits.workerDeadlineSec
@@ -83,6 +95,8 @@ final class DocumentWorker: NSObject, DocumentWorkerProtocol, Sendable {
       run(reply: reply) { WorkerProbes.exercise(data) }
     }
   #endif
+
+  private enum Lifecycle { case connected, running, disconnected }
 }
 
 private final class WorkerListener: NSObject, NSXPCListenerDelegate {
@@ -96,7 +110,10 @@ private final class WorkerListener: NSObject, NSXPCListenerDelegate {
       DocumentWorkerIdentity.requirement(identifier: DocumentWorkerIdentity.caller)
     )
     connection.exportedInterface = NSXPCInterface(with: DocumentWorkerProtocol.self)
-    connection.exportedObject = DocumentWorker()
+    let worker = DocumentWorker()
+    connection.exportedObject = worker
+    connection.invalidationHandler = { worker.connectionInvalidated() }
+    connection.interruptionHandler = { worker.connectionInvalidated() }
     connection.activate()
     return true
   }

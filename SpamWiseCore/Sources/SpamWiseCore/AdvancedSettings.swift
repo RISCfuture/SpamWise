@@ -73,8 +73,14 @@ public struct ExternalEvidenceSettings: Codable, Sendable, Equatable {
   public var termsAcknowledged = false
   /// Explicit local DNS resolver address meeting the provider's service terms.
   public var resolverAddress = "127.0.0.1"
-  /// Absolute path to a separately installed local rspamc; nil disables the sidecar.
+  /// Explicit scanner transport; absent values retain a configured executable path.
+  public var rspamdTransport: RspamdTransport?
+  /// Absolute path to a separately installed local rspamc executable.
   public var rspamcPath: String?
+  /// Resolves an explicit transport or a legacy executable configuration.
+  public var selectedRspamdTransport: RspamdTransport? {
+    rspamdTransport ?? (rspamcPath == nil ? nil : .executable)
+  }
   /// Creates disabled external evidence.
   public init() {}
 }

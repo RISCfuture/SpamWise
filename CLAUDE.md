@@ -511,3 +511,76 @@ test extension registration was removed. PlugInKit's selected entry resolves to
 the installed app. Other workers' build artifacts/registrations and unrelated
 Xcode/catalog edits are preserved. Final lint, site generation and independent
 Rspamd-probe review pass; no further material findings remain in this change.
+
+## Containment, local evaluation and cancellation follow-up — 2026-10-17
+
+The signed PDF-worker harness now handles cancellation before continuation
+installation, during identity/response waiting, and after work starts. A first-wins
+completion latch rejects duplicate and late completions; connection loss exits an
+active worker, and recovery requires a different process. One document per process
+preserves cumulative CPU accounting and allocation reclamation. The exact-source
+signed run passes 28 request observations and three completion-order checks;
+cancellation completion measured 0.000156 seconds. Evidence is
+`.build/594427e7-0238-4e70-ad69-7a5595634c83/document-worker-final.log`.
+
+Public resource-limit, memory-pressure, XPC and established-parser research is in
+`docs/probes/pdf-containment.md`. No evaluated public mechanism establishes the
+required whole-process memory cap. The sampled 128 MiB watchdog again overshot,
+reaching 148,439,040 bytes; launchd restart spacing remains roughly ten seconds.
+MuPDF allocator control and bounded WebAssembly are documented experiments, with
+licensing and host/runtime allocation limits explicit. No new parser or production
+PDF integration is shipped.
+
+SpaPhish v5 supplies a separate CC BY 4.0 Spanish development source: 1,395
+messages, including 664 legitimate examples. A hash-pinned fixed character-TF-IDF
+and logistic baseline fits only development training subject/body text after
+conservative template/campaign grouping. Validation at score 0.5 detects 188/212
+phishing messages with 5/176 legitimate false alarms. At 0.9 it detects 46/212
+with zero observed false alarms. These uncalibrated scores do not justify automatic
+actions. Source, tool, helper, dependency and partition hashes are recorded in
+`Tools/Corpus/reports/spaphish-development.json`; reproduction yielded identical
+scores and partitions. Existing 18,433 records and 2,782 frozen holdouts remain
+untouched. No paid API calls or personal-mail processing were used.
+
+The explicit local HTTP Rspamd transport uses `127.0.0.1:11333/checkv2` only,
+rejects redirects/authentication challenges, disables proxies/cookies/credential
+storage/cache, limits streamed responses to 64 KiB, and respects a three-second
+maximum or shorter caller deadline. A signed sandbox harness scanned native
+Rspamd 4.2.2 and passed redirect-without-forwarding, oversized streaming response,
+service-error, timeout, cancellation, concurrent-request and stopped-service checks.
+Temporary servers/listeners were removed. Evidence is
+`.build/053e029e-a477-4600-94f0-b8d53af1b4d7/rspamd-runtime.log`.
+No new sandbox entitlement is needed. Executable transport remains unavailable in
+store builds and fails safely in the signed harness; neither transport silently
+falls back. Both default off and local-only mode blocks them. Settings, Spanish/
+French labels, privacy text and the distribution-difference ledger reflect this.
+The scanner's own rules, logging and outbound behavior remain a separate acceptance
+boundary.
+
+Cancellation tests reproduced four failed assertions from removing all due retries
+before processing. The pipeline now atomically claims one exact scheduled job at a
+time; cancellation retains unstarted jobs, and Pause/revision changes reject stale
+claims. Pre-cancelled and mid-batch cases reopen the durable store and successfully
+resume remaining jobs. An already claimed job may be consumed by cancellation;
+this does not introduce an automatic retry of a potentially dispatched action.
+
+Final core verification passes 87 tests and warning-free app/extension builds.
+The unsigned optimized `APP_STORE` archive also passes, including the new HTTP
+transport and disabled executable capability. Eight corpus tests, strict SwiftLint,
+Swift formatting, shellcheck, Ruff, Markdown lint and static-site generation checks
+pass. Independent reviews found no important issues in the retry flow, worker
+lifecycle, Rspamd transport/wiring or Spanish baseline. The baseline's helper-hash
+provenance improvement was applied and rerun.
+
+The signed UI suite passes corrections (91.919 seconds) and onboarding (15.997
+seconds), zero failures; the environment-gated registered-intent test is skipped.
+Native English, Spanish and French inspection verifies transport selection,
+conditional path/disclosure layout, and saved selection after reopening Settings.
+An untranslated Off choice was corrected, rebuilt and observed as Desactivado and
+Désactivé. Screenshots/hierarchies are under
+`.build/ec7d754d-4fc0-4434-8b23-c5b48c750b31/rspamd-ui/`; the test result is
+`.build/ec7d754d-4fc0-4434-8b23-c5b48c750b31/DerivedData/Logs/Test/Test-SpamWise-2026.10.17_00-02-04--0700.xcresult`.
+Owned UI fixtures/registrations are removed and the UI lock is released. No live
+Mail actions, production-setting changes, new notarization or installed-app
+replacement were performed by this follow-up. Unrelated project/catalog changes
+remain unstaged.

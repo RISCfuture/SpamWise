@@ -50,10 +50,16 @@ public actor Pipeline {
       if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: envelope.raw) {
         message.text += "\nEmbedded image text (untrusted):\n" + text
       }
-      if DistributionCapabilities.externalPrograms, !current.settings.mailOptions.localOnly,
-        let path = settings.externalEvidence?.rspamcPath
+      if !current.settings.mailOptions.localOnly,
+        let evidence = settings.externalEvidence,
+        let transport = evidence.selectedRspamdTransport,
+        transport == .loopbackHTTP || DistributionCapabilities.externalPrograms
       {
-        findings.append(await RspamdLookup(executablePath: path).lookup(raw: envelope.raw).summary)
+        findings.append(
+          await RspamdLookup(transport: transport, executablePath: evidence.rspamcPath)
+            .lookup(raw: envelope.raw, timeout: max(0, timeout - Date().timeIntervalSince(start)))
+            .summary
+        )
       }
       return await process(
         message,
@@ -214,6 +220,7 @@ public actor Pipeline {
   public func retryDue(adapter: any MailClientAdapter, now: Date = .now, accountID: String? = nil)
     async
   {
+    guard !Task.isCancelled else { return }
     guard
       let jobs = try? await StateRepository.update(
         store,
@@ -225,7 +232,7 @@ public actor Pipeline {
           }
           state.retries.removeAll {
             (accountID == nil || $0.identity.accountID == accountID)
-              && ($0.due <= now || $0.expires <= now || $0.revision != state.revision)
+              && ($0.expires <= now || $0.revision != state.revision)
           }
           return jobs
         }
@@ -233,6 +240,7 @@ public actor Pipeline {
     else { return }
     for job in jobs {
       guard !Task.isCancelled else { return }
+      guard await claimRetry(job, now: now) else { continue }
       _ = await process(
         job.message,
         identity: job.identity,
@@ -241,6 +249,18 @@ public actor Pipeline {
         attempt: job.attempt
       )
     }
+  }
+  private func claimRetry(_ job: RetryJob, now: Date) async -> Bool {
+    (try? await StateRepository.update(store) { state in
+      guard !Task.isCancelled, !state.settings.paused, state.revision == job.revision,
+        let index = state.retries.firstIndex(where: {
+          $0.id == job.id && $0.revision == job.revision && $0.attempt == job.attempt
+            && $0.due == job.due && $0.expires == job.expires && $0.expires > now
+        })
+      else { return false }
+      state.retries.remove(at: index)
+      return true
+    }) ?? false
   }
   func dispatch(
     _ original: DecisionRecord,

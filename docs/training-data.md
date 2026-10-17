@@ -174,3 +174,21 @@ frozen corpus. Local language recognition infers 5 Spanish and 9 French real
 development examples, with none in the legitimate-negative cohort; these are not
 reviewed language labels. The audit preserves every holdout and does not establish
 validated training or benchmark sets.
+
+## Spanish legitimate/phishing development source acquired
+
+A later search identified and verified the original-host CC BY 4.0 terms for
+[SpaPhish v5](https://data.mendeley.com/datasets/hz2d6gz7pc/5). The downloaded CSV
+contains 1,395 Spanish source-labeled emails: 664 phishing negatives and 731
+positives. All source hashes were verified. This supplies explicit Spanish
+phishing-negative development examples; unrelated threat and graymail labels
+remain unknown. The release is anonymized, and its source labels and language
+were not independently reviewed here.
+
+The [acquisition and baseline report](probes/spaphish-baseline.md) records hashes,
+date coverage, conservative grouping and a fixed local character-TFIDF/logistic
+experiment. At 0.5 it detects 188/212 phishing examples with 5/176 legitimate false
+alarms; it is not suitable evidence for automatic Junk. No paid calls or pretrained
+model were used. This source remains separate from the original frozen corpus;
+all its partitions and 2,782 reserved holdouts remain untouched. French legitimate
+coverage and independent cross-source/time evaluation remain open.

@@ -34,6 +34,8 @@ private struct ImageFixture {
       case "privacy": try await inspectPrivacy()
       case "network-control": try await networkControl()
       case "rspamd": try await inspectRspamd()
+      case "rspamd-http": try await inspectRspamdHTTP()
+      case "rspamd-http-faults": try await inspectRspamdHTTPFaults()
       default: throw ProbeFailure.unexpected("Unknown mode")
     }
     try await Task.sleep(for: observerDelay)
@@ -242,14 +244,31 @@ private struct ImageFixture {
       }
     }
     let scanner = RspamdLookup(executablePath: arguments[0], process: boundary)
+    try await inspectRspamd(scanner: scanner, expectedStatus: arguments[1])
+  }
+
+  private static func inspectRspamdHTTP() async throws {
+    guard let expected = CommandLine.arguments.dropFirst(2).first,
+      ["observed", "unknown"].contains(expected)
+    else { throw ProbeFailure.fixture }
+    try await inspectRspamd(
+      scanner: RspamdLookup(transport: .loopbackHTTP),
+      expectedStatus: expected
+    )
+  }
+
+  private static func rawScannerFixture(_ body: String) -> Data {
+    Data(
+      "From: fixture@example.invalid\r\nTo: reader@example.invalid\r\n"
+        .appending("Subject: Synthetic scanner probe\r\nMIME-Version: 1.0\r\n")
+        .appending("Content-Type: text/plain; charset=utf-8\r\n\r\n\(body)\r\n").utf8
+    )
+  }
+
+  private static func inspectRspamd(scanner: RspamdLookup, expectedStatus: String) async throws {
     for (name, body) in [("marker", "spamwiseprobe"), ("ordinary", "Hello reader")] {
-      let raw = Data(
-        "From: fixture@example.invalid\r\nTo: reader@example.invalid\r\n"
-          .appending("Subject: Synthetic scanner probe\r\nMIME-Version: 1.0\r\n")
-          .appending("Content-Type: text/plain; charset=utf-8\r\n\r\n\(body)\r\n").utf8
-      )
-      let finding = await scanner.lookup(raw: raw)
-      guard finding.status.rawValue == arguments[1] else {
+      let finding = await scanner.lookup(raw: rawScannerFixture(body))
+      guard finding.status.rawValue == expectedStatus else {
         throw ProbeFailure.unexpected("Rspamd \(name): \(finding.status.rawValue)")
       }
       if finding.status == .observed {
@@ -264,5 +283,32 @@ private struct ImageFixture {
         text: finding.details.joined(separator: ", ")
       )
     }
+  }
+
+  private static func inspectRspamdHTTPFaults() async throws {
+    let scanner = RspamdLookup(transport: .loopbackHTTP)
+    for mode in ["redirect", "overflow", "failure", "timeout"] {
+      let start = ContinuousClock.now
+      let finding = await scanner.lookup(raw: rawScannerFixture("\(mode)-probe"))
+      guard finding.status == .unknown, start.duration(to: .now) < .seconds(5) else {
+        throw ProbeFailure.unexpected("HTTP \(mode)")
+      }
+      try emit("http-\(mode)", result: "unknown")
+    }
+    let cancellation = Task { await scanner.lookup(raw: rawScannerFixture("cancel-probe")) }
+    try await Task.sleep(for: .milliseconds(200))
+    let start = ContinuousClock.now
+    cancellation.cancel()
+    guard await cancellation.value.status == .unknown, start.duration(to: .now) < .seconds(1) else {
+      throw ProbeFailure.unexpected("HTTP cancellation")
+    }
+    try emit("http-cancellation", result: "unknown")
+    async let marker = scanner.lookup(raw: rawScannerFixture("spamwiseprobe"))
+    async let ordinary = scanner.lookup(raw: rawScannerFixture("Hello reader"))
+    let findings = await (marker, ordinary)
+    guard findings.0.status == .observed, findings.0.details == ["SPAMWISE_PROBE: 1.5"],
+      findings.1.status == .observed, findings.1.details.isEmpty
+    else { throw ProbeFailure.unexpected("HTTP concurrent isolation") }
+    try emit("http-concurrent", result: "isolated")
   }
 }

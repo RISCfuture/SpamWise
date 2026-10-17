@@ -50,6 +50,17 @@ func enableActions(_ store: Store) async throws {
   }
 }
 
+func enqueueFailedRetries(store: Store, accountIDs: [String]) async throws {
+  let failed = Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { _ in throw ClassificationError.rateLimited })
+  )
+  for account in accountIDs {
+    var message = try envelope(); message.identity.accountID = account
+    _ = await failed.process(message)
+  }
+}
+
 struct FixtureThreatDetector: ThreatDetector {
   var identity: ThreatDetectorIdentity
   var operation: @Sendable (ThreatInput) async throws -> [ThreatFinding]

@@ -92,7 +92,7 @@ check alone cannot reject all encrypted documents. The probe checks both
 [PDFDocument.isLocked](https://developer.apple.com/documentation/pdfkit/pdfdocument/islocked).
 
 The isolated evaluation is complete for these synthetic cases. Production PDF
-support, a signed least-privilege helper, hard memory containment and comprehensive
+support, shipping integration of the isolated helper, hard memory containment and comprehensive
 malicious-document acceptance remain unimplemented. No attachment receives a
 "clean" malware result from this feature.
 
@@ -112,3 +112,20 @@ ceiling. `RLIMIT_AS`/`RLIMIT_RSS` configuration returned `EINVAL`; the sampled
 128 MiB watchdog observed a higher resident size before termination. The harness
 documents a concrete shipping integration plan without claiming these unresolved
 limits or signed-distribution acceptance are complete.
+
+## Containment and cancellation follow-up
+
+[PDF containment research](pdf-containment.md) distinguishes protocol bounds,
+parser-allocation budgets and whole-process memory ceilings. The evaluated public
+macOS APIs do not close the hard-memory gate. MuPDF's custom allocator and a
+bounded WebAssembly guest are concrete follow-up experiments; neither has been
+integrated or established as a whole-process cap. Licensing and enabled decoder
+dependencies must be resolved for any chosen parser.
+
+The signed harness retains one document per process and adds cancellation that
+resolves the caller exactly once and invalidates its connection. The active
+worker exits on connection loss. Native probes cover already cancelled requests,
+in-flight cancellation, client serialization, duplicate/late completion handling
+and recovery in a new process. The roughly ten-second relaunch delay remains;
+connection closure is not itself an OS exit acknowledgement. Production support
+and the original hard-memory requirement remain unchanged.
