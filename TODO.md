@@ -7,6 +7,27 @@ Graph integration and standalone IMAP expansion/acceptance are outside the curre
 roadmap. Existing IMAP code is retained; account coverage below means accounts
 configured in Mail.app.
 
+## General detectors and personal preferences
+
+The 2026-10-16 product direction separates spam, graymail, phishing and
+spearphishing, with overlapping fraud and malware findings. Public training data
+supports general detectors; small amounts of reviewed personal mail personalize
+graymail. Collecting thousands of personal labels is not a prerequisite for an
+out-of-box model or zero-shot preference handling. See
+[detection design](docs/detection-design.md) and [dataset research](docs/training-data.md).
+
+- [x] Specify independent threat findings and personal preferences, separate from Inbox/Review/Junk actions.
+- [x] Research free bulk datasets, checking collection dates, original label meanings and published training terms.
+- [x] Download and inventory September 2026 Guenter spam, 2025 Nazario phishing and the synthetic Marketeam corpus locally; preserve source snapshots and hashes.
+- [x] Run the first pinned compact local-model probe; record newsletter, targeting and multilingual failures in [model screening](docs/probes/local-model-screening.md). This model is not selected for production.
+- [ ] Audit source labels and campaign duplicates; build separate spam/phishing training sets and real/synthetic holdouts with legitimate difficult negatives.
+- [ ] Evaluate and package useful pretrained local spam and phishing detection with independently measured thresholds and English/Spanish/French coverage.
+- [ ] Persist independent assessments, provenance and unknown states; keep historical records unassessed and update evaluation/cache identities.
+- [ ] Assess threats on trusted-contact/history paths without silently overriding explicit action rules or presenting unscanned mail as safe.
+- [ ] Evaluate targeted impersonation, payment diversion and other fraud using account-scoped context; preserve unknown history.
+- [ ] Evaluate zero-shot graymail preferences and incremental private personalization; distinguish example retrieval from actual model fine-tuning.
+- [ ] Establish dedicated attachment/malware coverage without treating text-model predictions as antivirus results.
+
 ## Implemented and verified offline
 
 - [x] Explicit Apple on-device, Private Cloud Compute, OpenAI and Gemini classifiers alongside Claude. Fresh sessions, bounded prompts/results, measured usage where available, explicit prices, refusal handling and no fallback. PCC still requires Apple's managed entitlement.
@@ -30,12 +51,12 @@ See [roadmap progress](docs/roadmap-progress.md), [evidence](docs/evidence.md), 
 
 ## Live acceptance and external prerequisites
 
-- [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI/Gemini credentials were not supplied. Apple on-device completed five synthetic requests but returned Review for every fixture; quality remains unvalidated. PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
+- [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. The user supplied an OpenAI key via clipboard, but this session reads an empty clipboard; permanent Keychain storage and a live call remain unverified. Gemini is deferred until its key is supplied. Apple on-device completed five synthetic requests but returned Review for every fixture; quality remains unvalidated. PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
 - [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
 - [ ] Complete signed live onboarding/correction acceptance and incoming MailKit callback/account/deadline observations. Apple Mail's validated account-scoped route remains independent of MailKit's unresolved account bridge.
 - [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. Existing 30-second cross-account observations are not a separate server acknowledgement; ambiguous same-account Sent copies remain untouched.
 - [ ] Measure automatic sweep latency on large and mutating mailboxes. Bounded repeating scans do not promise immediate coverage.
-- [ ] Accumulate independently reviewed labels and calibrate on a representative held-out corpus. No labeled personal corpus exists yet. Conservative 99, Balanced 95 and Aggressive 90 remain provisional. Approximately 1,500 good examples with zero false positives are needed for a rule-of-three upper bound of 0.2%; mock fixtures do not establish that target.
+- [ ] Calibrate general detectors on source-audited public holdouts and evaluate personalization incrementally on independently reviewed mail. No labeled personal corpus exists yet; it is not a universal-training or initial-use prerequisite. Conservative 99, Balanced 95 and Aggressive 90 remain provisional. Approximately 1,500 independent good examples with zero false positives are needed for a rule-of-three upper bound of 0.2%; this is an accuracy-claim criterion, and mock fixtures do not establish that target.
   - The user is accumulating SpamSieve-classified mail in each account’s Junk folder over the coming weeks. Preserve these folders as candidate sources; keep SpamSieve predictions separate from human-confirmed labels. Include reviewed wanted mail and graymail, exclude generated probes, deduplicate, and reserve a holdout before tuning. See `docs/evaluation.md`.
 - [ ] Obtain PCC managed entitlement approval and matching profiles if PCC is desired.
 - [ ] Complete App Store Connect metadata/privacy disclosures, Mail Automation exception justification, signed store export, store validation and App Review. Drafts and a signed archive exist; local export stopped at Apple Distribution Keychain access before producing a package. No upload or publication has been performed.
@@ -117,8 +138,9 @@ Parent items remain open until their full acceptance criteria are met.
 - [ ] **SS-05 — Demonstrate quality and performance against SpamSieve.** Use its
   [published accuracy statistics](https://c-command.com/spamsieve/help/statistics)
   as a comparison category, not evidence of an achieved target. Build a reviewed,
-  representative corpus from both accounts’ accumulating Junk plus wanted mail and
-  graymail. Record SpamSieve/server/unknown provenance separately from human labels;
+  representative general-model corpus from audited public sources. Use both
+  accounts’ accumulating mail for a separate, incremental personal comparison,
+  including wanted mail and graymail. Record SpamSieve/server/unknown provenance separately from human labels;
   never train from Junk membership alone. Compare both products on the same frozen
   holdout with both learning states frozen and auto-training disabled. Record any
   prior exposure; use newly collected unseen mail where that cannot be excluded.
@@ -289,6 +311,7 @@ Parent items remain open until their full acceptance criteria are met.
   and test prompt injection and contradictory examples. Policy text and extra
   providers alone are not evidence of better filtering.
   - [x] Support frozen policy/no-policy comparisons in the offline reporting tool.
+  - [ ] Compare zero-shot preferences with small increments of private corrections; do not require universal training from personal graymail.
   - [ ] Measure semantic-preference benefit on independently reviewed unseen mail.
 
 - [ ] **SS-22 — Reduce review effort without hiding risk.** Rank Review and rescue

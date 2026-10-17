@@ -149,6 +149,9 @@ and [version metadata](https://developer.apple.com/help/app-store-connect/refere
 | Field | Draft |
 | --- | --- |
 | Name | SpamWise |
+| Publisher | Tim Morgan |
+| Contact | <tim@tim.codes> |
+| Price | Free; optional third-party API usage is billed separately by the provider |
 | Subtitle | Mail filtering you control |
 | Primary category | Productivity |
 | Keywords | email,junk,inbox,filter,privacy,mail,review,rules |
@@ -169,8 +172,11 @@ Description draft:
 
 Do not advertise PCC availability until its grant and signed runtime are verified.
 Screenshots must come from the reviewed release build and must use synthetic mail.
-The publisher still needs to supply the public support URL, privacy-policy URL,
-copyright, pricing and territory decisions, and final age-rating answers.
+Publish privacy and support pages with the marketing site under `docs/`, hosted
+through GitHub Pages. Publisher/contact and free pricing are confirmed; the public
+site address, territory choices and final age-rating answers remain release work.
+Use copyright Tim Morgan for the release year. Do not invent a deployed URL before
+the hosting repository and address exist.
 
 ## Privacy-policy and disclosure draft
 

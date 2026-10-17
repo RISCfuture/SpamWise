@@ -17,7 +17,7 @@ fallback. This is a product/code comparison, not a promise of App Review approva
 | Launch at login and monitoring with windows closed | Opt-in, app-owned lifecycle | Same behavior | No current difference. Quitting the app stops its monitor; no always-running service is installed. |
 | Claude/OpenAI/Gemini, on-device model, rules, learning, corpus, review, statistics and backups | Same implementation, subject to common runtime/quality gates | Same implementation and gates | No current feature exclusion. Provider mail-sharing consent and local-mode protection apply to both. |
 | OCR, bounded text/HTML attachments and optional domain lookups | Same opt-in implementation | Same opt-in implementation | PDF/Office extraction and wider fixture acceptance remain common gaps, not store cuts. |
-| Payments, licensing and service access | Business model still undecided; must meet store rules | Business model still undecided | No paid feature or licensing system has been removed. Record concrete differences after the product decision. |
+| Payments, licensing and service access | Free app; third-party provider access remains subject to store review | Free app | Publisher: Tim Morgan, <tim@tim.codes>. Optional API usage is billed by the provider. No paid app feature or licensing system is planned. |
 
 Apple's [Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
 §2.4.5 require sandboxing, self-contained packaging and store-based updates for

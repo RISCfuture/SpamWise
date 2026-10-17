@@ -43,8 +43,9 @@ The presence of an exception is not proof of rejection; approval is discretionar
   release gates; the manifest is not an App Privacy questionnaire submission.
 - Signed store export previously stopped at Distribution-key access. A successful
   Developer ID archive is not evidence of a signed store package or store acceptance.
-- Pricing is undecided. Review the actual business model; do not assume any exception
-  automatically covers third-party AI credits. Offline rules/review remain usable
+- The app will be free, published by Tim Morgan (<tim@tim.codes>). Optional provider
+  usage is paid directly to the provider; verify the complete review flow rather
+  than assuming free app pricing resolves service-access requirements. Offline rules/review remain usable
   without a provider key. A reviewer needs a complete demonstrable flow using
   synthetic mail and appropriate review access, without the owner's personal keys.
 
@@ -53,7 +54,8 @@ The presence of an exception is not proof of rejection; approval is discretionar
 1. Finish the runtime acceptance work and store-specific feature/consent/privacy gaps.
 2. Produce and validate a correctly signed local App Store package with original
    entitlements; supply the Mail exception justification and issue reference.
-3. Prepare final policy/support links, pricing, screenshots and review instructions.
+3. Prepare the GitHub Pages site under `docs/` with policy/support pages, enter the
+   confirmed free pricing, and prepare screenshots and review instructions.
 4. Submit only as a deliberate release step, then handle Apple's actual decision.
 
 Direct distribution can coexist with the Mac App Store. Its selected update approach
