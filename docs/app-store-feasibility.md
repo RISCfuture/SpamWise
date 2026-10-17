@@ -33,16 +33,19 @@ The presence of an exception is not proof of rejection; approval is discretionar
   paid requests. The disclosure includes attachment/OCR text, correction examples
   and sensitive mail. Supplying an API key does not grant mail-sharing permission.
   Domain-age lookups also require a separate opt-in to share sender domains.
-- The privacy policy/support URLs, provider-retention disclosures, required-reason
-  API manifest review and complete App Store metadata remain pending. Do not claim
+- Privacy/support drafts, provider-retention disclosures, a targeted required-reason
+  API audit and static pages are prepared. Public URLs, final privacy answers and
+  complete App Store metadata remain pending. Do not claim
   “data not collected” merely because the user supplies their own provider key.
 - The app lacks the managed PCC entitlement. The store variant omits that choice
   and rejects restored PCC settings without silently changing providers.
 - A privacy manifest declares the app's own UserDefaults access with reason CA92.1.
-  A complete dependency/collection inventory and provider-retention review remain
+  The [privacy audit](privacy-audit.md) records the source/dependency inspection
+  and provider terms. Final artifact validation and publisher privacy answers remain
   release gates; the manifest is not an App Privacy questionnaire submission.
-- Signed store export previously stopped at Distribution-key access. A successful
-  Developer ID archive is not evidence of a signed store package or store acceptance.
+- A local store package now passes app/extension and installer signature checks
+  using the existing Match identities. Authenticated store validation stops because
+  the App Store Connect app record does not exist; this is separate from App Review.
 - The app will be free, published by Tim Morgan (<tim@tim.codes>). Optional provider
   usage is paid directly to the provider; verify the complete review flow rather
   than assuming free app pricing resolves service-access requirements. Offline rules/review remain usable
@@ -54,8 +57,8 @@ The presence of an exception is not proof of rejection; approval is discretionar
 1. Finish the runtime acceptance work and store-specific feature/consent/privacy gaps.
 2. Produce and validate a correctly signed local App Store package with original
    entitlements; supply the Mail exception justification and issue reference.
-3. Prepare the GitHub Pages site under `docs/` with policy/support pages, enter the
-   confirmed free pricing, and prepare screenshots and review instructions.
+3. Publish the prepared static site under `docs/` at a confirmed repository/address,
+   enter the confirmed free pricing, and finish screenshots and review access.
 4. Submit only as a deliberate release step, then handle Apple's actual decision.
 
 Direct distribution can coexist with the Mac App Store. Its selected update approach

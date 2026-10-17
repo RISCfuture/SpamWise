@@ -8,7 +8,9 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
+import audit
 import prepare
 import screen
 
@@ -31,6 +33,108 @@ def record(text, source, labels, synthetic=False, body=None):
 
 
 class CorpusPreparationTests(unittest.TestCase):
+    def test_audit_rejects_changed_labels_indices_and_frozen_membership(self):
+        rows = prepare.group_records(
+            [record("source spam", "source", {"spam": True})], "seed"
+        )
+        sources = [
+            {
+                "id": "source",
+                "labels": {"spam": True},
+                "synthetic": False,
+                "expected_records": 1,
+            }
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary)
+            manifest = prepare.write_records(path, rows, [], sources, "seed")
+            self.assertTrue(
+                audit.verify_metadata(rows, manifest, path)[
+                    "source_labels_and_indices_verified"
+                ]
+            )
+            self.assertEqual(audit.compare_frozen(rows, rows)["preserved_records"], 1)
+            for invalid_kind in ("synthetic", "mixed"):
+                with self.assertRaisesRegex(ValueError, "source_kind_mismatch"):
+                    audit.verify_metadata(
+                        [{**rows[0], "kind": invalid_kind}], manifest, path
+                    )
+            changed = [
+                {
+                    **rows[0],
+                    "split": "holdout" if rows[0]["split"] != "holdout" else "train",
+                }
+            ]
+            with self.assertRaisesRegex(ValueError, "frozen_membership_changed"):
+                audit.compare_frozen(changed, rows)
+            rows[0]["provenance"][0]["labels"] = {"spam": False}
+            with self.assertRaisesRegex(ValueError, "source_label_mismatch"):
+                audit.verify_metadata(rows, manifest, path)
+            rows[0]["provenance"][0]["labels"] = {"spam": True}
+            next((path / "objectives").rglob("*.json")).write_text("[]")
+            with self.assertRaisesRegex(ValueError, "objective_membership_mismatch"):
+                audit.verify_metadata(rows, manifest, path)
+
+    def test_campaign_audit_finds_split_overlap_without_examining_holdout_text(self):
+        body = " ".join(f"word{index}" for index in range(100))
+        rows = [
+            {
+                "id": "a",
+                "group": "a",
+                "provenance": [{"source": "fixture"}],
+                "text": body,
+                "split": "train",
+                "kind": "real",
+            },
+            {
+                "id": "b",
+                "group": "b",
+                "provenance": [{"source": "fixture"}],
+                "text": body + " changed",
+                "split": "validation",
+                "kind": "real",
+            },
+            {"id": "c", "group": "c", "split": "holdout", "kind": "real"},
+            {"id": "d", "group": "d", "split": "train", "kind": "synthetic"},
+        ]
+        summary, pairs = audit.development_campaigns(rows)
+        self.assertEqual(summary["selected_real_non_holdout_records"], 2)
+        self.assertEqual(summary["cross_train_validation_candidate_pairs"], 1)
+        self.assertEqual(pairs[0]["ids"], ["a", "b"])
+        self.assertFalse(summary["holdout_content_examined"])
+        counts, partition = audit.derived_development_partition(rows, pairs)
+        self.assertEqual(counts["train_records_moved_to_validation"], 1)
+        self.assertEqual({row["split"] for row in partition}, {"validation"})
+        self.assertEqual({row["id"] for row in partition}, {"a", "b"})
+        self.assertEqual(rows[0]["split"], "train")
+        self.assertEqual(counts["remaining_lower_overlap_cross_split_pairs"], 0)
+        lower_overlap = [{**pairs[0], "jaccard": 0.9}]
+        counts, _ = audit.derived_development_partition(rows, lower_overlap)
+        self.assertEqual(counts["train_records_moved_to_validation"], 0)
+        self.assertEqual(counts["remaining_lower_overlap_cross_split_pairs"], 1)
+        estimates = [
+            {"id": "a", "language": "en", "confidence": 0.99},
+            {"id": "b", "language": "fr", "confidence": 0.95},
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = Path(temporary) / "language-tool"
+            executable.write_bytes(b"fixture")
+            with patch(
+                "audit.subprocess.run",
+                return_value=SimpleNamespace(stdout=json.dumps(estimates)),
+            ) as run:
+                counts, _ = audit.inferred_development_languages(rows, executable)
+                self.assertEqual(counts["counts"], {"en": 1, "fr": 1})
+                self.assertEqual(
+                    {row["id"] for row in json.loads(run.call_args.kwargs["input"])},
+                    {"a", "b"},
+                )
+                run.return_value.stdout = json.dumps(estimates[:1])
+                with self.assertRaisesRegex(ValueError, "language_membership"):
+                    audit.inferred_development_languages(rows, executable)
+        rows[1]["group"] = "a"
+        self.assertEqual(audit.development_campaigns(rows)[1], [])
+
     def test_screen_excludes_holdout_and_never_treats_unknown_as_negative(self):
         rows = prepare.group_records(
             [

@@ -74,9 +74,10 @@ client. Verify that separately before relying on this optional integration.
 
 `EmbeddedImageOCR` uses Apple's local
 [Vision text recognition](https://developer.apple.com/documentation/vision/recognizetextrequest)
-on embedded inline PNG and JPEG data. It never loads remote image URLs or other
-message resources. Attachment-disposition parts, SVG, GIF, HEIC, unsupported
-transfer encodings, and ordinary HTML image URLs are not OCR inputs.
+on embedded PNG, JPEG, static GIF, single-image TIFF and HEIC data, including
+attachment-disposition parts. It never loads remote image URLs or other message
+resources. SVG, animated or multi-image files, unsupported transfer encodings,
+and ordinary HTML image URLs are not OCR inputs.
 
 The extractor accepts base64 image parts within these limits:
 
@@ -85,7 +86,7 @@ The extractor accepts base64 image parts within these limits:
 | Raw MIME message | 2 MB |
 | Headers per MIME part | 64 KiB |
 | MIME nesting and total parts | 12 levels, 128 parts |
-| Inline images | 4 |
+| Embedded images | 4 |
 | Decoded compressed image bytes | 512 KiB each, 1 MiB total |
 | Image dimensions | 4096 pixels per side |
 | Image pixels | 4 million each, 8 million total |
@@ -103,10 +104,13 @@ the classifier's escaped untrusted message context.
 Offline tests cover DNS error-code rejection and opt-in behavior, isolated
 Rspamd arguments and stdin, process output and time limits, MIME image count,
 byte/pixel limits, and bounded OCR text. The process tests run local `cat`, `yes`,
-and `sleep` fixtures; they do not contact DNSBLs or a Rspamd server. OCR fixtures
-inject recognition results after real MIME and ImageIO validation. Native Vision
-code is compiled against the macOS SDK; representative OCR quality and signed
-app behavior remain separate runtime checks.
+and `sleep` fixtures; they do not contact DNSBLs or a Rspamd server. Unit OCR
+fixtures inject recognition results after real MIME and ImageIO validation.
+[Native runtime probes](probes/local-evidence-runtime.md) additionally run the
+production recognizer on generated images in a Developer ID signed sandboxed
+harness and observe the local-mode pipeline with process network counters.
+Representative OCR quality, HEIC runtime fixtures, the shipped app bundle and an
+installed Rspamd service remain separate acceptance checks.
 
 No public blocklist lookup, message upload, or service credential is required to
 run the offline suite:

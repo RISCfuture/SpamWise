@@ -24,7 +24,8 @@ out-of-box model or zero-shot preference handling. See
   - [x] Implement hash-pinned corpus preparation, preserved source labels, conflict abstention, bounded MIME/archive handling, duplicate/template grouping and separate objective indices. Six offline behavioral tests pass.
   - [x] Prepare 18,201 unique text records from the three acquired sources; quarantine 12 records and merge 184 duplicates. Reserve 259 real and 2,523 synthetic holdout records without scoring them.
   - [x] Keep evaluation-only sources and their linked duplicates out of training; count false alarms only against explicitly negative labels. Acquire and audit 250 historical hard-ham messages, accept 232 and quarantine 18; preserve every existing holdout assignment.
-  - [ ] Review campaign grouping, audit pretrained exposure, add legitimate difficult negatives and establish language/time coverage before declaring training or evaluation sets validated.
+  - [x] Audit frozen source-label/index fidelity and real/synthetic provenance, preserve all 18,201 original assignments and 2,782 holdouts, derive conservative development campaign groups, and record inferred language/time coverage plus pretrained-exposure disclosures. See [integrity audit](docs/probes/corpus-integrity-audit.md).
+  - [ ] Independently review source labels, unresolved campaign links and contemporary multilingual legitimate negatives; resolve pretrained exposure or collect unseen evaluation data before declaring the sets validated.
 - [ ] Evaluate and package useful pretrained local spam and phishing detection with independently measured thresholds and English/Spanish/French coverage.
   - [x] Run the pinned multilingual candidate on 259 real development records at 384 and 1,024 tokens, preserving the reserved holdout. Record detection counts, truncation, latency and memory; no production model or threshold selected.
   - [x] Screen the same candidate against 232 difficult legitimate development messages. Spam false alarms at 0.5 are 60.8%/65.5% at 384/1,024 tokens; reject this candidate for production. Historical evaluation-only negatives do not establish contemporary or multilingual quality.
@@ -63,15 +64,40 @@ See [roadmap progress](docs/roadmap-progress.md), [evidence](docs/evidence.md), 
 
 - [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI setup-key storage and read access in login Keychain are verified. Using the existing app budget file explicitly resolved CLI container discovery; one synthetic request returned HTTP 429 (`rateLimited`), with no verdict or reported usage. The existing $150 ledger retains a $1 reservation. Successful classification and operational shared-Keychain import remain pending. Gemini is deferred until its key is supplied. Apple on-device completed five synthetic requests but returned Review for every fixture; quality remains unvalidated. PCC entitlement/quota remain runtime gates; refusal is never spam evidence.
 - [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
+  - [x] Verify six synthetic EN/ES/FR PNG/JPEG/GIF/TIFF cases through native Vision in a signed sandboxed harness, with malformed/remote-only inputs unknown. Observe local-mode guards and a network-observer positive control. See [runtime evidence and limits](docs/probes/local-evidence-runtime.md).
+  - [x] Build pinned Rspamd 4.2.2 and verify production adapter symbols against a disposable local scanner, including empty results and stopped-service unknown. The signed sandbox harness rejects execution safely; shipping execution remains unverified. See [scanner evidence](docs/probes/rspamd-runtime.md).
 - [ ] Complete signed live onboarding/correction acceptance and incoming MailKit callback/account/deadline observations. Apple Mail's validated account-scoped route remains independent of MailKit's unresolved account bridge.
   - [x] Verify signed menu-bar Junk correction and Junk-review restore on one generated cross-account message, independently checking source and settled mailbox after each action. See [live corrections](docs/probes/live-corrections.md).
-  - [ ] Complete fresh-user live onboarding and MailKit callback/deadline observations.
+  - [x] Observe a fresh signed MailKit body callback after a graceful Mail restart and controlled delivery; verify post-Junk read status, closed-window scanning and persisted scan progress after app relaunch. See [live follow-up](docs/probes/live-mail-followup.md).
+  - [ ] Complete fresh-user live onboarding, account bridging and controlled MailKit network/cancellation deadline observations.
 - [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. Existing 30-second cross-account observations are not a separate server acknowledgement; ambiguous same-account Sent copies remain untouched.
 - [ ] Measure automatic sweep latency on large and mutating mailboxes. Bounded repeating scans do not promise immediate coverage.
 - [ ] Calibrate general detectors on source-audited public holdouts and evaluate personalization incrementally on independently reviewed mail. No labeled personal corpus exists yet; it is not a universal-training or initial-use prerequisite. Conservative 99, Balanced 95 and Aggressive 90 remain provisional. Approximately 1,500 independent good examples with zero false positives are needed for a rule-of-three upper bound of 0.2%; this is an accuracy-claim criterion, and mock fixtures do not establish that target.
   - The user is accumulating SpamSieve-classified mail in each account’s Junk folder over the coming weeks. Preserve these folders as candidate sources; keep SpamSieve predictions separate from human-confirmed labels. Include reviewed wanted mail and graymail, exclude generated probes, deduplicate, and reserve a holdout before tuning. See `docs/evaluation.md`.
 - [ ] Obtain PCC managed entitlement approval and matching profiles if PCC is desired.
-- [ ] Complete App Store Connect metadata/privacy disclosures, Mail Automation exception justification, signed store export, store validation and App Review. Drafts and a signed archive exist; local export stopped at Apple Distribution Keychain access before producing a package. No upload or publication has been performed.
+- [ ] Complete App Store Connect metadata/privacy disclosures, Mail Automation exception justification, signed store export, store validation and App Review. A local Match-signed app/extension and installer now pass signature verification; authenticated server validation stops because the App Store Connect app record is missing (error 19). No upload or publication has been performed. See [packaging evidence](docs/app-store.md).
+  - [x] Prepare provider-retention disclosures, a source/artifact privacy audit, Mail exception/reviewer notes, and a responsive static marketing/privacy/support site under `docs/`. Publication and final privacy answers remain separate steps.
+
+## Remaining gates and who can close them
+
+Checked substeps above record observed results; an unchecked parent is not a
+claim that its implementation is absent. The following groups account for the
+remaining acceptance work without treating missing evidence as success:
+
+| Gate | Affected work | Needed next |
+| --- | --- | --- |
+| Provider/account access | New-provider acceptance, PCC | Unlock the saved OpenAI setup key for operational import and supply usable quota; provide the Gemini key; obtain Apple's PCC grant if desired |
+| Publisher/release decisions | Store acceptance, SS-20 | Create the Mac App Store app record in App Store Connect; choose the hosting/release repository and real URLs; confirm final privacy answers, reviewer access and Mail exception issue reference; App Review decides eligibility |
+| Interactive environment coverage | Fresh onboarding, SS-01/02/06/07/08/09/14/18 | A fresh macOS user/permission flow, notification permission, controlled sleep/lock/reboot/offline/reconnect sessions, a second device and additional account/hardware configurations |
+| Independent quality evidence | General spam/phishing, targeted fraud, graymail, calibration, SS-03/05/21/22/23 | Contemporary licensed legitimate negatives, reviewed language/objective labels and unseen campaign-separated evaluation; private preferences need the user's judgments. Current screened models failed specificity, so none is shipped as a universal detector |
+| Technical containment and threat coverage | PDF production, SS-17, malware | Resolve hard memory containment and worker lifecycle/cancellation before app integration; obtain adversarial document/malware evidence. This is unresolved engineering and validation, not a permission checkbox |
+| Optional evidence services | DNS/Rspamd/OCR acceptance, SS-03 | Service eligibility and a configured resolver for public DNS evidence; representative real images and service-aware network observation. Synthetic signed harnesses establish only their recorded cases |
+| Direct distribution | SS-20 | A real release channel and signed artifacts to exercise update/channel-switch recovery; the current library integration performs manual release discovery, not automatic installation |
+
+No remaining checkbox authorizes importing personal mail as trusted labels,
+weakening sandboxing, spending the remaining API budget merely to exhaust it,
+or turning on automatic mail actions. The held-out corpus and growing Junk folders
+remain preserved.
 
 ## SpamSieve comparison — researched 2026-10-16
 
@@ -115,7 +141,8 @@ Parent items remain open until their full acceptance criteria are met.
   database access or Full Disk Access.
   - [x] Persist per-account paging and display scan health.
   - [x] Keep oversized or unavailable sources from blocking later readable mail; persist unreadable counts, retry on the next sweep and preserve training claims on incomplete reads. Verify scoped decoding, restart progress and traversal boundaries offline. See [paging evidence and limits](docs/probes/unreadable-mail-pages.md).
-  - [ ] Run controlled delivery, wake/restart and mutating-mailbox coverage tests.
+  - [x] Verify controlled incoming delivery and body callback after clearing a stale runtime registration by graceful Mail restart; observe continuing scans with windows closed and after app relaunch.
+  - [ ] Extend coverage to wake, OS restart, offline recovery and sustained mutating-mailbox latency.
 
 - [ ] **SS-02 — Validate mailbox roles and multi-filter coexistence.** SpamSieve
   documents [distinguishing its actions from server filtering](https://c-command.com/spamsieve/help/spam-message-colors-in).
@@ -136,7 +163,8 @@ Parent items remain open until their full acceptance criteria are met.
   observation and offline fixtures. Evaluate a useful trained local classifier;
   the current five-fixture on-device run returning only Review is not parity.
   - [x] Block cloud providers and outbound evidence under explicit local mode.
-  - [ ] Observe network isolation and evaluate useful local-model quality.
+  - [x] Observe the signed local-mode harness with all outbound options enabled: remote backends reject before credential access, on-device inference completes, and process network counters stay empty while the positive control is observed.
+  - [ ] Complete shipping-app/service-aware network observation and useful local-model quality. Per-process counters do not establish absence of delegated traffic.
 
 - [x] **SS-04 — Correct selected mail without leaving Mail.** Match SpamSieve’s
   [menu-bar/Dock commands and keyboard shortcuts](https://c-command.com/spamsieve/help/train-as-good-spam)
@@ -173,7 +201,8 @@ Parent items remain open until their full acceptance criteria are met.
   restart and after sleep; explain when the Mac and Mail.app must remain running. Finish
   fresh-user live onboarding and package the actual accepted build.
   - [x] Keep monitoring independent of windows and provide opt-in login registration.
-  - [ ] Verify screen-lock, restart, sleep/wake and fresh-user acceptance.
+  - [x] Verify scan progress with all app windows closed and persisted scope/progress after app quit/relaunch; first fresh post-launch page was observed after about 62 seconds.
+  - [ ] Verify screen-lock, OS restart, sleep/wake and fresh-user acceptance.
 
 ### P1 — daily workflows and control
 
@@ -210,7 +239,8 @@ Parent items remain open until their full acceptance criteria are met.
   Test server-routed mail and explicit historical refiltering without replaying
   old actions or allowing the message to establish its own trusted history.
   - [x] Implement exact account/folder plans, date boundaries and cancellable dry-run refiltering.
-  - [ ] Verify server-routed mail, renamed folders and signed historical previews.
+  - [x] Verify signed historical preview in a generated folder and fail-closed behavior after renaming that folder; the saved scope remains unchanged and the generated message stays untouched.
+  - [ ] Extend coverage to actual server rules and reconnects.
 
 - [x] **SS-10 — Expand rules beyond literal sender addresses/domains.** SpamSieve
   has [header/body matchers, regex, rule state and match statistics](https://c-command.com/spamsieve/help/rule-columns-locations).
@@ -255,7 +285,8 @@ Parent items remain open until their full acceptance criteria are met.
   sparse color and uncalibrated-score warnings; do not overwrite users’ flags or
   claim that Apple Mail background colors synchronize to mobile devices.
   - [x] Implement quiet batched notifications, review ranking and separate post-Junk read status.
-  - [ ] Verify signed notification delivery/deep links and Mail read-status behavior.
+  - [x] Verify a generated message remains unread during Junk settling, then becomes read only after the confirmed Junk outcome; independently compare unchanged source.
+  - [ ] Verify signed notification delivery and deep links after permission is granted.
 
 - [x] **SS-15 — Protect against own-address and trusted-sender spoofing.** SpamSieve
   has an [own-address exception to Contacts trust](https://c-command.com/spamsieve/help/catch-spam-sent-from-my).
@@ -283,7 +314,8 @@ Parent items remain open until their full acceptance criteria are met.
   content, and distinguish unreadable attachments from spam evidence.
   - [x] Add bounded text/HTML attachments and additional verified still-image formats.
   - [x] Complete isolated PDF/document extraction evaluation and encrypted/resource-limit fixtures. See [ten-case probe and limits](docs/probes/document-inspection.md).
-  - [ ] Add a signed restricted XPC worker, establish memory containment and validate adversarial document coverage before enabling production PDF extraction.
+  - [x] Build and test a signed restricted XPC harness with mutual code requirements, bounded data-only messages, sandbox file/network denial and crash/CPU/wall/resident-watchdog recovery. All 24 native checks pass; see [worker evidence and shipping limits](Tools/DocumentWorker/README.md).
+  - [ ] Establish enforceable memory containment, acceptable lifecycle latency and adversarial coverage before integrating production PDF extraction. The sampled watchdog demonstrably overshoots; PDFs remain unsupported in the app.
 
 - [ ] **SS-18 — Publish a verified Mail.app/account compatibility matrix.** Use
   SpamSieve’s [requirements](https://c-command.com/spamsieve/help/requirements) as
@@ -318,6 +350,7 @@ Parent items remain open until their full acceptance criteria are met.
   - [x] Add revocable provider mail-sharing permission, opt-in domain-age lookups and store-specific executable/PCC restrictions.
   - [x] Maintain a [MAS/direct functionality ledger](docs/distribution-differences.md), separating actual cuts from review gates and preserving dual-release options.
   - [x] Add a separate direct target using the local library’s release-discovery product, manual checks and repository-derived release links; verify warning-free direct/store builds, configuration rejection and updater exclusion from store binaries. No release host is configured; see [updating](docs/updating.md).
+  - [x] Prepare and browser-check five static prerelease pages at desktop and mobile widths, with local assets and no analytics; finish local store signing through an isolated temporary Match keychain.
   - [ ] Finish App Store feasibility gaps and release acceptance; support a possible parallel direct release through GitHub Releases and GitHubUpdateChecker, with tested channel switching and updater separation.
 
 ### Opportunities to exceed the baseline — prove, then claim

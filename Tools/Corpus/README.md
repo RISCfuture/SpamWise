@@ -115,3 +115,60 @@ combined spam/fraud alarms. Combined alarms on non-spam are not evidence of a
 fraud false-positive rate: that objective has no supplied negative labels.
 Unknown labels never enter either objective's denominator. These data do not
 establish modern specificity, calibration or safe Junk thresholds.
+
+## Audit frozen preparation
+
+```sh
+pyenv exec python audit.py \
+  --corpus /absolute/private/prepared-corpus \
+  --baseline /absolute/private/original-prepared-corpus \
+  --downloads /absolute/private/downloads \
+  --output /absolute/private/fresh-audit
+```
+
+This read-only audit verifies both corpus hashes, every original identity/group/
+split, source-label fidelity, conflict abstention, objective-index membership and
+evaluation-only group restrictions. It compares only real training/validation
+text for high-overlap five-word shingles across existing template groups. It
+never runs a detector, examines holdout text for similarity, or changes splits.
+The 10,000-word limit and 0.8 Jaccard threshold identify review candidates, not
+proof of a shared campaign. Short messages and paraphrases can be missed.
+
+The audit also verifies downloaded source hashes and accepted development-origin
+hashes before counting Date and Content-Language headers. These are untrusted
+sender claims, not verified collection dates or language labels. Outputs use
+mode 600 within a fresh mode-700 directory. `audit.json` has aggregate counts;
+`campaign-candidates.json` contains local record identities, split pairs and
+similarity values without message bodies. Keep the latter private.
+
+`development-partition.json` is a separate real-development manifest. It joins
+existing groups connected by at least 0.95 shingle overlap and keeps the complete
+component in validation if any member was already validation or evaluation-only.
+It never promotes validation records to training, changes the frozen corpus, or
+includes holdouts. Previously scored validation remains development data. The
+report counts any remaining cross-split candidates below 0.95; their semantic
+campaign relationship remains unresolved.
+
+For optional local inferred language coverage, compile the installed macOS
+NaturalLanguage helper with an isolated compiler cache, then pass its path as
+`--language-tool` to the audit command:
+
+```sh
+AGENT_WORKER_ID=<worker-token> xcrun swiftc \
+  -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
+  -enable-experimental-feature StrictMemorySafety \
+  -module-cache-path ../../.build/<worker-token>/ModuleCache \
+  language-audit.swift -o ../../.build/<worker-token>/language-audit
+```
+
+The Python tool verifies and selects real non-holdout records before passing text
+to this local executable. Recognition uses at most 20,000 characters and requires
+40 letters, a top hypothesis of at least 0.8 and a margin of 0.2; other inputs stay
+unknown. These hypotheses are neither calibrated language accuracy nor independent
+review. The report pins macOS and executable identity. Per-record annotations go
+to private `inferred-languages.json`; original language fields stay unknown.
+
+The [2026-10-16 audit](../../docs/probes/corpus-integrity-audit.md) found substantial
+development overlap missed by exact-template grouping. Frozen partitions remain
+unchanged; the derived development manifest and inferred language counts support
+further audit, not independent benchmark claims.

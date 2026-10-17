@@ -69,28 +69,51 @@ generate empty extension entitlements when no original code signature records
 them. Build a separate signed archive and compare both exported entitlement sets
 with the source before accepting the package.
 
-The 2026-10-16 inventory decoded 73 installed profiles. SpamWise and its extension
-had device-bound Mac Team profiles and Developer ID profiles, but no Mac App Store
-profiles. The existing Match repository contained 26 profile files and no SpamWise
-profile. The initial local export failed with `No profiles for 'codes.tim.SpamWise'
-were found`, explicitly identifying the missing Mac App Store provisioning profile.
-The log is `.build/7065c63f-e440-403b-882a-0686bdde7442/app-store/export.log`.
+### Verified local package and current validation gate
 
-A subsequent authorized provisioning attempt reached distribution signing. The
-proper development-signed archive passed its warning-free optimized build and
-deep strict signature verification, with the original app and extension
-entitlements present. Its App Store export requested Keychain approval for the
-Apple Distribution private key at 09:57:40 PDT on 2026-10-16. At that observation,
-signing was waiting for the user's Keychain approval and no store package had been
-produced. The archive is
-`.build/7065c63f-e440-403b-882a-0686bdde7442/app-store/SpamWise-signed.xcarchive`;
-the export log is in the same directory as `export-signed.log`.
+On October 16, 2026, a fresh warning-free `APP_STORE` archive was signed inside
+out with the existing Match Apple Distribution and Mac Installer identities.
+The helper addresses a temporary keychain explicitly for each signing command;
+it leaves login-key permissions unchanged, removes only its own search-list
+entry, and deletes decrypted signing material afterward. It verifies profile
+identity, expiry, certificate, sandbox and shared-group compatibility before
+signing. Unexpected nested code requires an explicit signing inventory.
 
-At 10:03 PDT the export parent had exited without a package while its signing child
-still awaited approval. The abandoned signing child was terminated. The signed
-archive remains available; no upload or release occurred. A local export must be
-run again when Keychain access is available. Use a fresh archive for subsequent
-source changes.
+```sh
+PYENV_VERSION=spamwise-corpus pyenv exec python Scripts/export-store-match.py \
+  --certificates /path/to/certificates \
+  --env-file /path/to/existing/fastlane/.env \
+  --archive /path/to/signed/SpamWise.xcarchive \
+  --output /path/to/new/local-package-directory \
+  --app-profile /path/to/app-store-app.provisionprofile \
+  --extension-profile /path/to/app-store-extension.provisionprofile
+```
+
+This is explicit local `codesign`/`productbuild` packaging, not a successful Xcode
+export or App Store acceptance. Deep strict app/extension signature verification
+and installer signature verification passed. The package is
+`.build/cb38d7c0-dd6a-48b3-b59d-6cc4c75083d0/store/package-final/SpamWise.pkg`.
+Its installer timestamp is October 17, 2026 at 06:36:54 UTC. The temporary keychain
+was removed, leaving the original login-keychain search list intact.
+
+The existing Match API key authenticated for an `altool --validate-app` attempt:
+
+```sh
+PYENV_VERSION=spamwise-corpus pyenv exec python Scripts/notarize-match.py \
+  --certificates /path/to/certificates \
+  --env-file /path/to/existing/fastlane/.env \
+  --validate-app /path/to/SpamWise.pkg \
+  --output /path/to/validation.json
+```
+
+Validation stopped with error 19: no Apple ID was found for bundle ID
+`codes.tim.SpamWise` on platform `macOS App`. An App Store Connect app record must
+exist before continuing validation. Apple’s [Apps API documentation](https://developer.apple.com/documentation/appstoreconnectapi/apps)
+directs developers to create new apps on the App Store Connect website; the API
+key does not provide that creation operation. The saved report is
+`.build/cb38d7c0-dd6a-48b3-b59d-6cc4c75083d0/store/validation-final-retry.json`.
+No package was uploaded, published or installed by this check. Signing access is
+resolved; server validation, final metadata and App Review remain open.
 
 For authorized signing preparation, add `-allowProvisioningUpdates` to the local
 export command to let the configured Xcode account create or download matching
@@ -133,9 +156,11 @@ provider and fails open when PCC is unavailable.
 
 ## Remaining acceptance
 
-App Store Connect metadata, privacy disclosures for mail sent to selected external
-providers, required entitlement justification, distribution profiles, local signed
-export, store validation and review remain separate work. The headless CLI is a
+The local signed package and compatible distribution profiles are verified.
+App Store Connect app creation, final metadata/privacy answers, published policy
+and support URLs, the Mail exception issue reference, server validation and review
+remain open. Drafts are in [review notes](app-review-notes.md) and the
+[privacy audit](privacy-audit.md); the static site is prepared under `docs/`. The headless CLI is a
 standalone package executable and is not installed as an automatic background
 service by the app or this script. No production account or mailbox is contacted
 by packaging checks.

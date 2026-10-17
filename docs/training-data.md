@@ -163,3 +163,14 @@ with the application.
 No model training or production model selection follows from these downloads.
 Dataset sizes, source availability and published rights above were checked on the
 audit date; verify the exact version again before redistribution.
+
+The subsequent [integrity/campaign/exposure audit](probes/corpus-integrity-audit.md)
+verifies source-label/index fidelity and every frozen assignment, while finding
+136 high-overlap development pairs across training/validation groups. All language
+labels remain unknown, historical hard-ham dates claim 2002, and none of the three
+screened candidates has demonstrated exposure-free evaluation data. A separate
+development manifest resolves 421 very-high-overlap links without changing the
+frozen corpus. Local language recognition infers 5 Spanish and 9 French real
+development examples, with none in the legitimate-negative cohort; these are not
+reviewed language labels. The audit preserves every holdout and does not establish
+validated training or benchmark sets.

@@ -9,13 +9,13 @@ availability is checked at runtime and never causes a silent model substitution.
 
 ## Observed account behavior
 
-The evidence below is from signed-app probes recorded in `CLAUDE.md` on October 16,
-2026. It describes those probes, not blanket provider certification or acceptance of
-all later parity features.
+The evidence below is from signed-app probes recorded in `CLAUDE.md` and the
+[live Mail follow-up](probes/live-mail-followup.md) on October 16, 2026. It describes
+those probes, not blanket provider certification or acceptance of all parity features.
 
 | Mail.app account | Apple Events connection | Inbox/Junk round trip | Orange flag | Offline/reconnect | New parity workflows |
 | --- | --- | --- | --- | --- | --- |
-| iCloud | Passed | Passed at 08:42 PDT, with 30-second settling per move | Passed | Pending | Pending |
+| iCloud | Passed | Passed at 08:42 PDT, with 30-second settling per move | Passed | Pending | Confirmed Junk/read, historical preview, renamed-folder fail-open, closed-window/relaunch scanning observed |
 | Google | Passed | Passed at 08:45 PDT, with 30-second settling per move | Passed | Pending | Pending |
 | Exchange / Microsoft 365 in Mail | Not tested | Not tested | Not tested | Not tested | Not tested |
 | Other accounts in Mail | Not tested | Not tested | Not tested | Not tested | Not tested |
@@ -41,10 +41,13 @@ sweeps. It needs SpamWise and Mail running on an awake Mac, Automation permissio
 and available message sources. Keep dry run enabled for comparisons with SpamSieve
 and server rules. Their classifications and folder membership are not human labels.
 
-MailKit's principal object launches, but incoming/body callback timestamps were
-absent during the installed-app probe. Stable account identity and timing under
-server-routed Junk, delays and cancellation are still unvalidated. MailKit remains
-dry-run only; a successful extension build does not establish delivery coverage.
+A signed incoming delivery updated both MailKit heartbeat and body timestamps at
+23:21:45 PDT, approximately two seconds after receipt. An earlier delivery encountered
+stale extension generations (PlugInKit “other version in use”); a graceful Mail
+restart and re-registration of the installed extension preceded the successful
+observation. Stable account identity and timing under server-routed Junk, delays
+and cancellation are still unvalidated. MailKit remains dry-run only; one successful
+callback does not establish delivery coverage.
 
 ## Repeatable acceptance matrix
 

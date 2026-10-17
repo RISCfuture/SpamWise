@@ -419,3 +419,95 @@ its extension. The app was already closed and was left closed. Read-only state
 verification confirms paused false, dry run true and unchanged monthly estimated
 spend of $0.000936. Controlled incoming delivery, sleep/wake, offline recovery
 and mutating-mailbox acceptance remain open in TODO.md.
+
+## Acceptance, corpus integrity and release preparation — 2026-10-16
+
+The frozen corpus audit preserves all 18,201 original record/group/split assignments
+and all 2,782 holdouts. Source labels, real/synthetic provenance, objective indices
+and evaluation-only restrictions pass. The separate development partition joins
+421 high-overlap links into 1,311 groups, moving 29 original training records only
+in that derived manifest to validation. Thirty-seven lower-overlap cross-split
+candidates remain unresolved. Inferred real-development language counts are 1,539
+English, five Spanish, nine French, 47 other and 134 unknown; original reviewed
+language fields remain unknown. No held-out text was scored, no model was selected,
+and no additional paid request was made. See `docs/probes/corpus-integrity-audit.md`.
+
+A signed sandboxed harness verifies six native Vision synthetic image cases and
+local-mode rejection of remote providers before credential access. On-device
+classification completes, with empty observed process network counters and a
+successful loopback observer control. Service-aware traffic observation, real-image
+quality and shipping-app acceptance remain distinct. A separate signed XPC document
+harness passes 24 boundary/resource checks, including mutual code requirements,
+file/network denial, invalid replies and crash recovery. Its resident watchdog
+overshoots; public RLIMIT_AS/RSS was rejected with EINVAL. Launchd imposes roughly
+ten-second restart spacing. Production PDF extraction remains disabled pending
+containment and lifecycle work; see `Tools/DocumentWorker/README.md`.
+
+Signed live Mail follow-up at `f7635ac` observes a new body callback two seconds
+after controlled delivery following graceful Mail restart. Generated-message Junk
+and subsequent read status are independently confirmed with unchanged source.
+Historical folder preview requests no action; renamed scope fails closed. Account
+scanning continues with all windows closed and resumes after app relaunch. Four
+exact generated received/Sent copies are confirmed in Trash, without emptying it;
+the temporary folder and generated training state are removed, full preferences
+restored, and the app left closed. No ordinary Junk was relabeled. The saved OpenAI
+setup key could not be read noninteractively, so operational import remains pending.
+See `docs/probes/live-mail-followup.md` for exact scope and artifacts.
+
+The source fix maps unresolved account/folder paths to an actionable folder error
+instead of a misleading duplicate-message error. Provider consent now links to
+retention terms and explains Gemini unpaid-service limitations in EN/ES/FR. Privacy,
+support, reviewer/exception notes and a targeted dependency/required-reason audit
+are prepared. Five script-free static prerelease pages under `docs/` pass generation
+and browser checks at desktop and mobile widths. No host, remote, public URL or
+release was created.
+
+Local App Store packaging now succeeds through existing encrypted Match identities
+in an explicitly addressed temporary keychain. Original app/extension identifiers,
+App Group, sandbox and shared Keychain entitlements are preserved; the final store
+artifact excludes the direct updater and debugging entitlement and includes the
+privacy manifest. App/extension and installer signatures pass. Temporary signing
+material is removed and the original login search list retained. Authenticated
+`altool` validation reports no App Store Connect app record for `codes.tim.SpamWise`
+(error 19). One intervening tool startup failed to read Defaults.properties; after
+checking altool availability, the final retry reproduces the missing-app-record gate.
+No package was uploaded. See `docs/app-store.md` for reproducible commands and results.
+
+Independent review found two Important issues: an unbounded subprocess-cleanup
+wait and missing corpus kind/provenance validation. Both are corrected and their
+behavioral reproductions pass. Three packaging tests and eight corpus tests pass;
+all 86 core tests and app/extension/store archive builds pass with warnings treated
+as errors. The existing correction concurrency test uses explicit start/release
+coordination instead of timing sleeps. The signed document harness was independently
+reviewed with no remaining blocking finding.
+
+The final Developer ID archive/export is notarized under submission
+`3c687cd4-883c-4444-831a-20b33ab62ede`. Stapling, ticket validation, deep strict
+signatures and Gatekeeper acceptance pass. The local distribution artifact is
+`.build/cb38d7c0-dd6a-48b3-b59d-6cc4c75083d0/SpamWise-notarized.zip`.
+
+A pinned native Rspamd 4.2.2 source build validates the production adapter against
+one synthetic marker and an ordinary body: observed score 1.5 and empty symbols,
+respectively. The signed sandbox harness returns unknown before client execution,
+and the stopped service returns unknown outside the sandbox. Zero DNS requests
+were logged. The disposable loopback server/configuration are removed; LuaJIT
+2.2 MB and Ragel 2.4 MB developer dependencies remain installed. Upstream C/C++
+warnings are documented separately; no production sandbox entitlement was changed.
+See `docs/probes/rspamd-runtime.md`.
+
+Direct inspection of the expanded Gemini consent disclosure and retention link
+passes in English, Spanish and French with isolated fixture storage. Initial UI
+suite startup failures coincided with the stopped credential helper's lingering
+Keychain prompt, visible in the failure recording; the prompt expired without
+approval. No production/test wiring was changed to suppress that failure.
+
+The unchanged UI suite then passed corrections in 91.729 seconds and onboarding
+in 16.413 seconds, zero failures. The opt-in registered-intent test was skipped.
+Result: `.build/cb38d7c0-dd6a-48b3-b59d-6cc4c75083d0/DerivedData/Logs/Test/Test-SpamWise-2026.10.16_23-45-12--0700.xcresult`.
+The notarized app is installed at `~/Applications/SpamWise.app`, verified again
+with deep strict signatures and Gatekeeper. It is left closed; the prior app is
+retained under the worker's `previous-installed/` directory. Only this worker's
+test extension registration was removed. PlugInKit's selected entry resolves to
+the installed app. Other workers' build artifacts/registrations and unrelated
+Xcode/catalog edits are preserved. Final lint, site generation and independent
+Rspamd-probe review pass; no further material findings remain in this change.

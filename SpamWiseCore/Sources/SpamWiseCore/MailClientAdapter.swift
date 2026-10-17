@@ -49,6 +49,8 @@ public enum IntegrationError: String, MailIntegrationFailure, LocalizedError, Se
   case unavailable
   /// More than one message matches the requested identity.
   case ambiguous
+  /// The configured account or exact mailbox path cannot be resolved uniquely.
+  case folderUnresolved
   /// The resolved message no longer matches its recorded state.
   case staleMessage
   /// The account has not passed explicit action validation.
@@ -63,6 +65,11 @@ public enum IntegrationError: String, MailIntegrationFailure, LocalizedError, Se
       case .permissionDenied: String(localized: "Permission to control Mail was denied.")
       case .unavailable: String(localized: "The requested message or Mail service is unavailable.")
       case .ambiguous: String(localized: "More than one message matches the requested identity.")
+      case .folderUnresolved:
+        String(
+          localized:
+            "The configured account or folder could not be found uniquely. Select the folder again."
+        )
       case .staleMessage: String(localized: "The message no longer matches its recorded state.")
       case .accountUnverified: String(localized: "The account has not passed action validation.")
       case .scriptFailed: String(localized: "Mail could not complete the requested operation.")

@@ -138,7 +138,11 @@ public actor AppleMailAdapter: MailClientAdapter {
     )
   }
   func runFolderScript(_ source: String) async throws -> ScriptValue {
-    try await runner.run(source)
+    do {
+      return try await runner.run(source)
+    } catch IntegrationError.ambiguous {
+      throw IntegrationError.folderUnresolved
+    }
   }
   /// Reads Mail account identifiers and display names.
   public func accounts() async throws -> [MailAccount] {

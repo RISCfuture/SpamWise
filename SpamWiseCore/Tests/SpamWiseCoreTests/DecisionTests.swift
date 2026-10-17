@@ -288,17 +288,35 @@ func `corrects selected mail without classifying and excludes own addresses from
     classifier: MockClassifier(verdict: .init(label: .inbox, confidence: 99, reason: "good"))
   )
   let record = await initial.process(try envelope(), adapter: adapter)
+  let (started, signalStarted) = AsyncStream<Void>.makeStream()
+  let (released, release) = AsyncStream<Void>.makeStream()
   let delayed = Pipeline(
     store: store,
     classifier: MockClassifier(operation: { _ in
-      try await Task.sleep(for: .milliseconds(150))
+      signalStarted.yield(())
+      signalStarted.finish()
+      for await _ in released { break }
+      try Task.checkCancellation()
       return .init(label: .junk, confidence: 100, reason: "late")
     })
   )
-  let task = Task { await delayed.process(try envelope(), adapter: adapter) }
-  try await Task.sleep(for: .milliseconds(30))
+  let message = try envelope()
+  let task = Task {
+    let result = await delayed.process(message, adapter: adapter)
+    signalStarted.finish()
+    return result
+  }
+  defer {
+    signalStarted.finish()
+    release.finish()
+    task.cancel()
+  }
+  var starts = started.makeAsyncIterator()
+  try #require(await starts.next() != nil)
   _ = try await initial.correct(recordID: record.id, label: .inbox, adapter: adapter)
-  #expect(try await task.value.outcome == .superseded)
+  release.yield(())
+  release.finish()
+  #expect(await task.value.outcome == .superseded)
   #expect(await adapter.actions == [.moveToInbox])
 }
 @Test func `records action failures separately from verdicts`() async throws {

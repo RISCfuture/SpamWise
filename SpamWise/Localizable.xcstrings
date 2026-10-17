@@ -1,6 +1,57 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Provider data and retention terms": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conditions de traitement et de conservation du fournisseur"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condiciones de datos y conservación del proveedor"
+          }
+        }
+      }
+    },
+    "Google’s unpaid-service terms allow model improvement and human review. Do not send personal mail under those terms. Confirm which terms apply to your project and region.": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les conditions des services gratuits de Google autorisent l’amélioration des modèles et l’examen humain. N’envoyez pas de courrier personnel sous ces conditions. Vérifiez les conditions applicables à votre projet et à votre région."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las condiciones de los servicios gratuitos de Google permiten mejorar los modelos y la revisión humana. No envíe correo personal bajo esas condiciones. Confirme qué condiciones se aplican a su proyecto y región."
+          }
+        }
+      }
+    },
+    "The configured account or folder could not be found uniquely. Select the folder again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo identificar de forma única la cuenta o carpeta configurada. Seleccione la carpeta de nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le compte ou le dossier configuré n’a pas pu être identifié de façon unique. Sélectionnez à nouveau le dossier."
+          }
+        }
+      }
+    },
     "Unreadable messages": {
       "extractionState": "manual",
       "localizations": {

@@ -95,3 +95,20 @@ The isolated evaluation is complete for these synthetic cases. Production PDF
 support, a signed least-privilege helper, hard memory containment and comprehensive
 malicious-document acceptance remain unimplemented. No attachment receives a
 "clean" malware result from this feature.
+
+## Signed XPC follow-up
+
+The [DocumentWorker harness](../../Tools/DocumentWorker/README.md) now implements
+and executes a separate Developer ID signed, sandboxed XPC worker with mutual
+code requirements, bounded byte/text messages and worker-owned CPU, wall-time
+and sampled resident-memory limits. It includes document, authentication,
+interruption/recovery and sandbox-access probes, plus a build excluding diagnostic
+entry points. It does not change production attachment support or embed a worker
+in SpamWise's shipping targets.
+
+Two integration constraints remain explicit: macOS throttles repeated XPC process
+launches by roughly ten seconds, and the memory watchdog is not a hard allocation
+ceiling. `RLIMIT_AS`/`RLIMIT_RSS` configuration returned `EINVAL`; the sampled
+128 MiB watchdog observed a higher resident size before termination. The harness
+documents a concrete shipping integration plan without claiming these unresolved
+limits or signed-distribution acceptance are complete.

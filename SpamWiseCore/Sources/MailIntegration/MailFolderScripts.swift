@@ -36,7 +36,7 @@ extension MailScripts {
   {
     guard !folder.accountID.isEmpty, !folder.path.isEmpty, folder.path.count <= maximumFolderDepth,
       folder.path.allSatisfy({ !$0.isEmpty && $0.utf8.count <= maximumFolderNameBytes })
-    else { throw IntegrationError.ambiguous }
+    else { throw IntegrationError.folderUnresolved }
     let names = "{" + folder.path.map(literal).joined(separator: ", ") + "}"
     let candidates =
       since == nil

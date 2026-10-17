@@ -1,0 +1,101 @@
+# SpamWise privacy policy
+
+Publication draft · Updated October 16, 2026
+
+SpamWise is developed by Tim Morgan. For privacy questions or requests, contact
+[tim@tim.codes](mailto:tim@tim.codes). This page describes the current implementation;
+the app and this policy have not been published to the Mac App Store.
+
+## Mail and local storage
+
+SpamWise reads selected mail and bounded mailbox pages through Apple Mail, with
+macOS Automation permission. It uses message text and metadata to suggest or apply
+Inbox, Review and Junk decisions. It does not delete mail or move it to Trash.
+Apple Mail continues to communicate with your configured mail providers under
+their own terms.
+
+Settings, sender rules, decisions, correction examples, retry data, action records
+and spending records are stored on your Mac in SpamWise’s containers. Optional
+learning and reviewed-content retention can store additional bounded message text.
+Credentials are stored in Keychain. Portable backups are encrypted with a recovery
+key that you keep separately; they exclude credentials. Exports may contain personal
+mail information, depending on the export you choose. Keep those files private.
+
+Contacts access is optional. When granted, SpamWise matches addresses locally to
+provide relationship evidence. It does not upload your address book as a list.
+Sender addresses and relationship evidence may still appear in a remote model
+request when you allow mail sharing.
+
+## Optional model providers
+
+Cloud classification requires permission for the selected provider. The request
+can include sender information, subject, shortened message text, available evidence,
+your filtering preferences and selected correction examples. Enabled attachment
+text extraction and image OCR can add text to that context. Email can contain
+personal, confidential or sensitive information about you and other people.
+SpamWise sends requests directly to the selected provider using your API key;
+Tim Morgan does not operate a relay for these requests.
+
+- **Anthropic Claude:** the API’s commercial retention and training terms apply.
+  Standard API inputs and outputs are generally deleted within 30 days, with
+  documented exceptions. A zero-retention arrangement is separate; SpamWise does
+  not enable or verify it. See [Anthropic’s retention policy](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data).
+- **OpenAI:** SpamWise uses the Responses API with `store: false`. This disables
+  normal stored-response state, but does not itself disable abuse monitoring or
+  every form of retention. OpenAI documents default abuse-monitoring retention of
+  up to 30 days, with exceptions and eligible account controls. See
+  [OpenAI’s data controls](https://developers.openai.com/api/docs/guides/your-data).
+- **Google Gemini:** paid and unpaid service terms differ, with regional provisions.
+  Unpaid-service terms permit model improvement and human review and instruct users
+  not to submit personal or confidential information. Confirm which terms apply
+  before enabling mail sharing; SpamWise cannot verify your project’s billing status
+  or contractual terms. See [Gemini’s terms](https://ai.google.dev/gemini-api/terms).
+
+Providers receive ordinary connection and account information such as your IP
+address and API authentication. The Claude SDK also sends app, SDK and operating
+system version information in its request header. Provider terms, account settings,
+retention exceptions and service locations govern their processing. Your provider
+may charge for requests separately from the free app.
+
+You can revoke mail-sharing permission in Account settings. Revocation stops new
+requests; it cannot recall requests already sent or delete a provider’s records.
+Contact the provider for its deletion and account-control options.
+
+## On-device processing and optional evidence
+
+The on-device model performs inference on the Mac when available. Explicit local
+mode also blocks SpamWise’s cloud providers and outbound evidence lookups. Merely
+selecting an on-device model does not turn off separately enabled evidence services.
+Local mode does not prevent Apple Mail or macOS from performing their own network
+operations. Private Cloud Compute is not an accepted production feature of this
+release.
+
+Optional domain-age lookups send sender domains to IANA-discovered registration
+services. Optional Spamhaus reputation checks send queried domains through your
+configured DNS resolver. Those services have separate terms. Optional external
+Rspamd scanning is excluded from the App Store variant; in other builds, the
+configured scanner receives bounded message data and its configuration determines
+any further processing. Image OCR and supported text attachment extraction run
+locally and do not load remote images or execute attachments.
+
+## Diagnostics, updates and your choices
+
+SpamWise contains no advertising or tracking integration. Activity and usage
+statistics are local. A redacted diagnostics export omits keys and message content
+by default; inspect any file before sharing it. Emailing support sends your message
+and any attachments you choose to Tim Morgan through email services.
+
+The direct-distribution variant supports a manual GitHub release check when a
+release repository is configured. That request exposes normal network information
+to GitHub, without mail content or provider credentials. The App Store variant
+does not include that updater. No release repository is currently configured.
+
+Pause stops new processing. Dry run prevents mail actions but can still send
+authorized model requests. Quitting SpamWise stops its background monitor; disable
+the Mail extension separately when you want to stop extension callbacks as well.
+You can forget retained examples, remove rules, revoke permissions or remove the
+app’s stored data. See [support](support.md) and [complete removal instructions](lifecycle.md).
+Removing the app alone leaves its data and Keychain credentials for reinstall.
+
+This policy should be reviewed when data flows or provider terms change. The
+published version will carry its revision date here.
