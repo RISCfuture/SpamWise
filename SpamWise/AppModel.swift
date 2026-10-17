@@ -371,6 +371,7 @@ extension AppModel {
 }
 
 struct ScanBatch {
+  var unavailableCount = 0
   let adapter: any MailClientAdapter
   let messages: [MailEnvelope]
   let retryAccountID: String?

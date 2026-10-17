@@ -66,7 +66,7 @@ extension MailScripts {
               set rows to {}
               if firstIndex <= lastIndex then
                   repeat with i from firstIndex to lastIndex
-                      set end of rows to my envelope(item i of candidates)
+                      set end of rows to my pageEnvelope(item i of candidates)
                   end repeat
               end if
               return {n, rows}

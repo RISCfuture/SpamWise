@@ -36,6 +36,7 @@ struct MailHealthView: View {
           LabeledContent("Last successful page", value: date.formatted())
           LabeledContent("Observed Inbox messages", value: health.observedTotal.formatted())
           LabeledContent("Next page offset", value: health.nextOffset.formatted())
+          UnreadableMailView(count: health.unavailableCount)
         } else {
           Text("No successful scan yet")
         }

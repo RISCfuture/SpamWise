@@ -1,6 +1,57 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Unreadable messages": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes ilegibles"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages illisibles"
+          }
+        }
+      }
+    },
+    "Unreadable mail stays in place and is retried on the next sweep.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los mensajes ilegibles permanecen en su sitio y se vuelven a intentar en el próximo recorrido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les messages illisibles restent en place et seront réessayés au prochain parcours."
+          }
+        }
+      }
+    },
+    "Unreadable messages: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes ilegibles: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages illisibles : %@"
+          }
+        }
+      }
+    },
     "Threat assessment": {
       "extractionState": "manual",
       "localizations": {

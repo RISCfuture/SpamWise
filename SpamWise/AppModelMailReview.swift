@@ -43,6 +43,7 @@ extension AppModel {
       )
       junkMessages = page.messages
       junkTotal = page.total
+      status = page.unavailableCount > 0 ? Self.unreadableStatus(page.unavailableCount) : ""
     }
   }
   func restoreReviewedMessage(_ envelope: MailEnvelope) {

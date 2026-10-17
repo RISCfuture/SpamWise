@@ -212,4 +212,142 @@ private actor PagedEvents: AppleEventRunner {
   #expect(health["account"]?.nextOffset == 0)
   #expect(health["account"]?.lastCompletedSweep != nil)
   #expect(health["other"]?.failure == "unavailable")
+  let oversized = ScriptValue.list([
+    .string("account"), .string("Inbox"), .integer(1), .string("oversized"),
+    .string(String(repeating: "x", count: 2_000_001))
+  ])
+  let readable = ScriptValue.list([
+    .string("account"), .string("Inbox"), .integer(2), .string("readable"),
+    .string("From: person@example.org\nSubject: Later mail\n\nHello")
+  ])
+  let partial = AppleMailAdapter(
+    runner: StubAppleEvents(.list([.integer(2), .list([oversized, readable])]))
+  )
+  let page = try await partial.inboxPage(accountID: "account", offset: 0, limit: 20)
+  #expect(page.messages.map { $0.identity.localID } == [2])
+  #expect(page.visitedCount == 2)
+  #expect(page.unavailableCount == 1)
+  try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
+    $0.complete(count: page.visitedCount, total: 3, unavailable: page.unavailableCount)
+  }
+  let resumed = try await MailHealthRepository.load(Store(url: store.url))["account"]
+  #expect(resumed?.nextOffset == 2)
+  #expect(resumed?.unavailableCount == 1)
+  var completed = try #require(resumed)
+  completed.complete(count: 1, total: 3)
+  #expect(completed.nextOffset == 0)
+  #expect(completed.unavailableCount == 1)
+  completed.complete(count: 0, total: 0)
+  #expect(completed.unavailableCount == 0)
+  let unreadable = ScriptValue.list([
+    .string("account"), .string("Inbox"), .integer(3), .string("missing"), .boolean(false)
+  ])
+  let allUnreadable = try AppleMailAdapter.decodePage(
+    .list([.integer(3), .list([unreadable])]),
+    accountID: "account",
+    offset: 2,
+    limit: 20
+  )
+  #expect(allUnreadable.messages.isEmpty)
+  #expect(allUnreadable.visitedCount == 1)
+  for accountID in ["other", ""] {
+    #expect(throws: IntegrationError.ambiguous) {
+      try AppleMailAdapter.decodePage(
+        .list([.integer(1), .list([unreadable])]),
+        accountID: accountID,
+        offset: 0,
+        limit: 20
+      )
+    }
+  }
+  #expect(throws: IntegrationError.scriptFailed) {
+    try AppleMailAdapter.decodePage(
+      .list([.integer(1), .list([])]),
+      accountID: "account",
+      offset: 0,
+      limit: 20
+    )
+  }
+}
+
+@Test func `claims training corrections atomically and keeps uncertain moves claimed`() async throws
+{
+  let store = try testStore(), adapter = RecordingAdapter()
+  var selected = try envelope()
+  selected.identity.mailbox = "SpamWise Train Good"
+  var plan = MailFolderPlan(
+    folder: .init(accountID: "account-A", path: ["SpamWise Train Good"]),
+    purpose: .trainGood
+  )
+  plan.enabled = true
+  let unvalidated = plan
+  try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [unvalidated] }
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { _ in
+      Issue.record("Deliberate training must not classify first")
+      throw ClassificationError.configuration
+    })
+  )
+  await #expect(throws: IntegrationError.self) {
+    try await pipeline.correct(
+      envelope: selected,
+      label: .inbox,
+      adapter: adapter,
+      trainingPlanID: plan.id
+    )
+  }
+  plan.trainingBaselineValidated = true
+  let validated = plan
+  try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [validated] }
+  let first = try await pipeline.correct(
+    envelope: selected,
+    label: .inbox,
+    adapter: adapter,
+    trainingPlanID: plan.id
+  )
+  await #expect(throws: IntegrationError.staleMessage) {
+    try await pipeline.correct(
+      envelope: selected,
+      label: .inbox,
+      adapter: adapter,
+      trainingPlanID: plan.id
+    )
+  }
+  #expect(try await StateRepository.load(store).corrections.count == 1)
+  try await TrainingFolders.observe(
+    [],
+    planID: plan.id,
+    sweepComplete: true,
+    canReleaseClaims: false,
+    store: store
+  )
+  let incomplete = try await StateRepository.load(store)
+  #expect(incomplete.trainingClaims?.count == 1)
+  #expect(incomplete.trainingObservations?[plan.id]?.isEmpty == true)
+  try await TrainingFolders.observe(
+    [selected.identity],
+    planID: plan.id,
+    sweepComplete: true,
+    canReleaseClaims: false,
+    store: store
+  )
+  #expect(try await StateRepository.load(store).trainingObservations?[plan.id]?.isEmpty == true)
+  try await TrainingFolders.observe([], planID: plan.id, sweepComplete: true, store: store)
+  #expect(try await StateRepository.load(store).trainingClaims?.isEmpty == true)
+  let second = try await pipeline.correct(
+    envelope: selected,
+    label: .inbox,
+    adapter: adapter,
+    trainingPlanID: plan.id
+  )
+  #expect(second.id != first.id)
+  try await StateRepository.update(store) { state in
+    if let index = state.records.firstIndex(where: { $0.id == second.id }) {
+      state.records[index].outcome = .failed
+    }
+  }
+  try await TrainingFolders.observe([], planID: plan.id, sweepComplete: true, store: store)
+  #expect(try await StateRepository.load(store).trainingClaims?.count == 1)
+  #expect(await adapter.actions.isEmpty)
 }

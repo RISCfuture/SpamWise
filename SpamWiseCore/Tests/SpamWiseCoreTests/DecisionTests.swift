@@ -36,69 +36,6 @@ import SpamWiseCore
     try Decision.evaluate(.init(label: .junk, confidence: 999, reason: "invalid"))
   }
 }
-@Test func `claims training corrections atomically and keeps uncertain moves claimed`() async throws
-{
-  let store = try testStore(), adapter = RecordingAdapter()
-  var selected = try envelope()
-  selected.identity.mailbox = "SpamWise Train Good"
-  var plan = MailFolderPlan(
-    folder: .init(accountID: "account-A", path: ["SpamWise Train Good"]),
-    purpose: .trainGood
-  )
-  plan.enabled = true
-  let unvalidated = plan
-  try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [unvalidated] }
-  let pipeline = Pipeline(
-    store: store,
-    classifier: MockClassifier(operation: { _ in
-      Issue.record("Deliberate training must not classify first")
-      throw ClassificationError.configuration
-    })
-  )
-  await #expect(throws: IntegrationError.self) {
-    try await pipeline.correct(
-      envelope: selected,
-      label: .inbox,
-      adapter: adapter,
-      trainingPlanID: plan.id
-    )
-  }
-  plan.trainingBaselineValidated = true
-  let validated = plan
-  try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [validated] }
-  let first = try await pipeline.correct(
-    envelope: selected,
-    label: .inbox,
-    adapter: adapter,
-    trainingPlanID: plan.id
-  )
-  await #expect(throws: IntegrationError.staleMessage) {
-    try await pipeline.correct(
-      envelope: selected,
-      label: .inbox,
-      adapter: adapter,
-      trainingPlanID: plan.id
-    )
-  }
-  #expect(try await StateRepository.load(store).corrections.count == 1)
-  try await TrainingFolders.observe([], planID: plan.id, sweepComplete: true, store: store)
-  #expect(try await StateRepository.load(store).trainingClaims?.isEmpty == true)
-  let second = try await pipeline.correct(
-    envelope: selected,
-    label: .inbox,
-    adapter: adapter,
-    trainingPlanID: plan.id
-  )
-  #expect(second.id != first.id)
-  try await StateRepository.update(store) { state in
-    if let index = state.records.firstIndex(where: { $0.id == second.id }) {
-      state.records[index].outcome = .failed
-    }
-  }
-  try await TrainingFolders.observe([], planID: plan.id, sweepComplete: true, store: store)
-  #expect(try await StateRepository.load(store).trainingClaims?.count == 1)
-  #expect(await adapter.actions.isEmpty)
-}
 @Test func `persists before acting and prevents duplicate actions`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)

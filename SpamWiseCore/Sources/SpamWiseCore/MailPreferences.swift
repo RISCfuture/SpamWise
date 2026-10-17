@@ -28,11 +28,19 @@ public struct MailScanHealth: Codable, Sendable {
   public var nextOffset = 0
   /// Number of messages reported by Mail during the latest page read.
   public var observedTotal = 0
-  /// Number of envelopes processed during the current sweep.
+  /// Number of mailbox positions visited during the current sweep.
   public var scanned = 0
+  /// Unreadable entries observed in the current sweep.
+  public var unavailableInSweep: Int?
+  /// Unreadable entries in the most recently completed traversal.
+  public var lastSweepUnavailable: Int?
+  /// Most recent traversal's unreadable count, without claiming full coverage.
+  public var unavailableCount: Int {
+    (nextOffset == 0 ? lastSweepUnavailable : unavailableInSweep) ?? 0
+  }
   /// Latest attempted page read.
   public var lastAttempt: Date?
-  /// Latest fully processed page.
+  /// Latest page whose readable envelopes were handled and unreadable count recorded.
   public var lastSuccess: Date?
   /// Latest completed sweep; mailbox mutations may require another sweep.
   public var lastCompletedSweep: Date?
@@ -40,9 +48,10 @@ public struct MailScanHealth: Codable, Sendable {
   public var failure: String?
   /// Creates a progress record without claiming any mail was read.
   public init(accountName: String) { self.accountName = accountName }
-  /// Records progress only after every envelope in the page has been handled.
-  public mutating func complete(count: Int, total: Int, now: Date = .now) {
+  /// Records visited positions after handling readable envelopes and counting unavailable entries.
+  public mutating func complete(count: Int, total: Int, unavailable: Int = 0, now: Date = .now) {
     observedTotal = max(0, total)
+    unavailableInSweep = (unavailableInSweep ?? 0) + max(0, unavailable)
     scanned += max(0, count)
     nextOffset += max(0, count)
     lastSuccess = now
@@ -50,6 +59,8 @@ public struct MailScanHealth: Codable, Sendable {
     if count == 0 || nextOffset >= observedTotal {
       nextOffset = 0
       scanned = 0
+      lastSweepUnavailable = unavailableInSweep
+      unavailableInSweep = 0
       lastCompletedSweep = now
     }
   }

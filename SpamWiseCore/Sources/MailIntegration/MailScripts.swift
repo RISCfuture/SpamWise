@@ -31,6 +31,22 @@ public enum MailScripts {
     source of m}
         end tell
     end envelope
+    on pageEnvelope(m)
+        tell application "Mail"
+            set identityFields to {id of account of mailbox of m, name of mailbox of m, id of m, \
+    message id of m}
+            try
+                if message size of m > 2000000 then return identityFields & {false}
+                set rawSource to source of m
+                if (count of characters of rawSource) > 2000000 then return identityFields & {false}
+                return identityFields & {rawSource}
+            on error number failureNumber
+                if failureNumber is -1743 or failureNumber is -10004 or failureNumber is -1712 \
+    then error number failureNumber
+                return identityFields & {false}
+            end try
+        end tell
+    end pageEnvelope
     """
   /// Script requiring exactly one selected message.
   public static let selected =
@@ -239,7 +255,7 @@ public enum MailScripts {
               if lastIndex > n then set lastIndex to n
               if firstIndex <= lastIndex then
                   repeat with i from firstIndex to lastIndex
-                      set end of rows to my envelope(item i of candidates)
+                      set end of rows to my pageEnvelope(item i of candidates)
                   end repeat
               end if
               return {n, rows}

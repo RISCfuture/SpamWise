@@ -18,19 +18,14 @@ extension AppleMailAdapter {
   public func folderPage(_ folder: MailFolder, offset: Int, limit: Int, since: Date? = nil)
     async throws -> MailPage
   {
-    guard
-      let fields = try await runFolderScript(
+    try Self.decodePage(
+      await runFolderScript(
         MailScripts.folderPage(folder, offset: offset, limit: limit, since: since)
-      ).list,
-      fields.count == 2, let total = fields[0].integer, total >= 0,
-      let rows = fields[1].list, rows.count <= max(1, min(1000, limit))
-    else { throw IntegrationError.scriptFailed }
-    let messages = try rows.map(Self.envelope)
-    guard
-      messages.allSatisfy({
-        $0.identity.accountID == folder.accountID && $0.identity.mailbox == folder.path.last
-      })
-    else { throw IntegrationError.ambiguous }
-    return MailPage(messages: messages, total: total)
+      ),
+      accountID: folder.accountID,
+      mailbox: folder.path.last,
+      offset: offset,
+      limit: limit
+    )
   }
 }

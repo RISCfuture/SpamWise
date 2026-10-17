@@ -106,18 +106,11 @@ public struct MailAccount: Identifiable, Sendable {
   }
 }
 
-/// One bounded account-scoped page and Mail's observed mailbox size.
-public struct MailPage: Sendable {
-  /// Envelopes from this page only.
-  public let messages: [MailEnvelope]
-  /// Current observed mailbox size; not a server acknowledgement.
-  public let total: Int
-}
 /// Account-scoped Apple Events integration with exact-source action checks.
 public actor AppleMailAdapter: MailClientAdapter {
-  private static let maximumPageSize = 1000
+  static let maximumPageSize = 1000
   private static let historyPageSize = 100
-  private static let maximumMessageBytes = 2_000_000
+  static let maximumMessageBytes = 2_000_000
   private let runner: any AppleEventRunner
   private let moveSettlingTime: Duration
   private var pageOffsets: [String: Int] = [:]
@@ -187,18 +180,16 @@ public actor AppleMailAdapter: MailClientAdapter {
     guard ["inbox", "junk mailbox", "sent mailbox"].contains(role) else {
       throw IntegrationError.unavailable
     }
-    guard
-      let result = try await runner.run(
+    return try Self.decodePage(
+      await runner.run(
         MailScripts.accountPage(accountID: accountID, offset: offset, limit: limit, role: role)
-      ).list, result.count == 2, let total = result[0].integer, total >= 0,
-      let rows = result[1].list, rows.count <= max(1, min(Self.maximumPageSize, limit))
-    else { throw IntegrationError.scriptFailed }
-    let messages = try rows.map(Self.envelope)
-    guard messages.allSatisfy({ $0.identity.accountID == accountID }) else {
-      throw IntegrationError.ambiguous
-    }
-    return MailPage(messages: messages, total: total)
+      ),
+      accountID: accountID,
+      offset: offset,
+      limit: limit
+    )
   }
+
   private func nextPage(limit: Int, role: String, cursor: String) async throws -> [MailEnvelope] {
     let count = max(1, min(Self.maximumPageSize, limit))
     let offset = pageOffsets[cursor, default: 0]

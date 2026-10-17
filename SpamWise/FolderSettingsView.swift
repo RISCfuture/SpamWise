@@ -27,6 +27,7 @@ struct FolderSettingsView: View {
               if let date = health.lastSuccess {
                 LabeledContent("Last successful page", value: date.formatted())
               }
+              UnreadableMailView(count: health.unavailableCount)
               if let failure = health.failure { Text(failure).textSelection(.enabled) }
             }
             if plan.purpose == .filter {

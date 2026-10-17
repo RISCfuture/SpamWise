@@ -3,6 +3,9 @@ import SpamWiseCore
 import MailIntegration
 
 extension AppModel {
+  static func unreadableStatus(_ count: Int) -> String {
+    String(localized: "Unreadable messages: \(count, format: .number)")
+  }
   func scan(dryRun: Bool = true, automatic: Bool = false, limit: Int = AppModel.defaultScanLimit) {
     guard let pipeline, !automatic || canScanAutomatically else { return }
     run { [self] in
@@ -20,6 +23,7 @@ extension AppModel {
         dryRun
         ? String(localized: "Dry run finished — no mail actions requested")
         : String(localized: "Mail check finished")
+      if batch.unavailableCount > 0 { status = Self.unreadableStatus(batch.unavailableCount) }
     }
   }
   func discoverAccounts() async throws {
@@ -51,7 +55,11 @@ extension AppModel {
         )
         try Task.checkCancellation()
         try await MailHealthRepository.update(store, accountID: account.id, name: account.name) {
-          $0.complete(count: page.messages.count, total: page.total)
+          $0.complete(
+            count: page.visitedCount,
+            total: page.total,
+            unavailable: page.unavailableCount
+          )
         }
         if !dryRun { await pipeline.retryDue(adapter: adapter, accountID: account.id) }
       } catch is CancellationError { throw CancellationError() } catch {
@@ -81,14 +89,20 @@ extension AppModel {
       return ScanBatch(adapter: imap, messages: messages, retryAccountID: imap.accountID)
     }
     try await discoverAccounts()
-    var messages: [MailEnvelope] = []
+    var messages: [MailEnvelope] = [], unavailableCount = 0
     for account in accounts
     where state.settings.mailOptions.accountIDs?.contains(account.id) ?? true {
       try Task.checkCancellation()
-      messages += try await adapter.inboxPage(accountID: account.id, offset: 0, limit: limit)
-        .messages
+      let page = try await adapter.inboxPage(accountID: account.id, offset: 0, limit: limit)
+      messages += page.messages
+      unavailableCount += page.unavailableCount
     }
-    return ScanBatch(adapter: adapter, messages: messages, retryAccountID: nil)
+    return ScanBatch(
+      unavailableCount: unavailableCount,
+      adapter: adapter,
+      messages: messages,
+      retryAccountID: nil
+    )
   }
   func classify(
     _ batch: ScanBatch,

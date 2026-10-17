@@ -91,15 +91,15 @@ creating separate completion criteria for the same work.
 Implementation is underway; see [parity progress and verification](docs/spamsieve-parity-progress.md).
 Parent items remain open until their full acceptance criteria are met.
 
-### Current foundation to retain
+### Implemented foundation; remaining acceptance is tracked below
 
 | Area | SpamWise today | Remaining distinction |
 | --- | --- | --- |
 | Personalized filtering | Explicit provider choice, natural-language policy, correction retrieval, optional Bayes/weights/fingerprints | Learned signals are supporting evidence; neither local nor cloud accuracy is calibrated |
-| Trusted senders and rules | Contacts/history gates, address/domain rules, rule import/export | No rich header/body rules, rule diagnostics, or own-address trust exclusion |
-| Mail integration | Apple Mail adapter and bounded Inbox polling | MailKit acceptance unresolved; no synchronized-folder training or arbitrary-folder selection |
-| Corrections | Good/Junk/Review in the Activity inspector; rules persist despite action failures | No general selected-Mail-message training command, bulk initial training, or correction undo |
-| Inspection and evaluation | Verdict/action/outcome separation, evidence details, CLI metrics/cache, reviewed export | No searchable corpus, app statistics dashboard, safe message preview, or complete backup/restore |
+| Trusted senders and rules | Contacts/history gates, address/domain and content rules, diagnostics, own-address exclusions, import/export | Broader real-mail spoofing and forwarding acceptance remains open |
+| Mail integration | Apple Mail adapter, persisted repeating sweeps, folder plans and dedicated-folder training | MailKit, second-device training and sustained delivery acceptance remain unresolved |
+| Corrections | Activity and selected-Mail commands, reviewed import, undo; rules persist despite action failures | One generated live correction/rescue passed; broader coexistence remains open |
+| Inspection and evaluation | Evidence details, searchable corpus, statistics, safe preview, versioned backup/restore and CLI reports | Representative calibration and observed review-effort comparison remain open |
 | Safety and review | Persist-before-action, fail open, deduplication, dry run, Review stays in Inbox, local weekly digest | Need sustained runtime coverage and faster review workflows; no superiority claim yet |
 
 ### P0 — dependable replacement
@@ -114,6 +114,7 @@ Parent items remain open until their full acceptance criteria are met.
   in controlled delivery tests and measured end-to-end latency, without Mail
   database access or Full Disk Access.
   - [x] Persist per-account paging and display scan health.
+  - [x] Keep oversized or unavailable sources from blocking later readable mail; persist unreadable counts, retry on the next sweep and preserve training claims on incomplete reads. Verify scoped decoding, restart progress and traversal boundaries offline. See [paging evidence and limits](docs/probes/unreadable-mail-pages.md).
   - [ ] Run controlled delivery, wake/restart and mutating-mailbox coverage tests.
 
 - [ ] **SS-02 — Validate mailbox roles and multi-filter coexistence.** SpamSieve

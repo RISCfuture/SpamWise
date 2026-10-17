@@ -385,3 +385,37 @@ and no folder plans. The temporary test extension registration was removed;
 PlugInKit's selected entry resolves to the installed app. Existing other build
 registrations and the user's Xcode workspace were retained. The app's recorded
 monthly estimate remains $0.000936; no additional paid calls were made.
+
+## Unreadable mailbox page recovery — 2026-10-16
+
+Account and configured-folder pages now distinguish visited positions from readable
+envelopes. Oversized, empty and explicitly unavailable sources remain untouched,
+are counted in health and are retried on a subsequent sweep. Permission errors,
+timeouts, ambiguous identities and malformed page responses still fail the page.
+The original paging test reproduced the oversized-message stall before this fix.
+Training observations reset at every traversal boundary, while incomplete coverage
+cannot release action claims; review found and corrected this distinction before
+completion. See `docs/probes/unreadable-mail-pages.md` for behavior and limits.
+
+All 86 package tests pass with warnings treated as errors, including expanded
+paging and training-claim tests. Generated AppleScripts compile without invoking
+Mail. App/extension and signed UI-test builds pass with no compiler warnings.
+Strict SwiftLint and Swift formatting pass. Spanish and French translations cover
+the new unreadable-mail labels. No paid calls or live mail mutations were made.
+
+Independent review found no remaining Important or Critical issues. Xcode component
+previews are readable in English, Spanish and French in the grouped Settings-style
+container. Full Settings navigation remains unverified: a pre-existing Screenshot
+overlay blocked expansion of scan health. See `docs/probes/unreadable-mail-ui.md`.
+The isolated fixture and preview processes were closed; production settings were
+not changed.
+
+The final hardened-runtime archive/export passes. Apple accepted submission
+`cff37898-ec0d-48c5-b19b-fc8e964ef77d`; stapling, ticket validation, deep strict
+signatures and Gatekeeper assessment pass. The distribution is
+`.build/5464e5b9-9f33-4901-b002-8686c83306da/SpamWise-notarized.zip`.
+The update is installed at `~/Applications/SpamWise.app`, and PlugInKit selects
+its extension. The app was already closed and was left closed. Read-only state
+verification confirms paused false, dry run true and unchanged monthly estimated
+spend of $0.000936. Controlled incoming delivery, sleep/wake, offline recovery
+and mutating-mailbox acceptance remain open in TODO.md.

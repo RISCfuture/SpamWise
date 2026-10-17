@@ -35,11 +35,12 @@ public enum TrainingFolders {
     guard state.trainingClaims?[key] == nil else { throw IntegrationError.staleMessage }
     return key
   }
-  /// Releases only completed, observed departures; failed or uncertain actions remain claimed for manual review.
+  /// Resets observations at traversal boundaries; only readable traversals can release completed claims.
   public static func observe(
     _ identities: [MessageIdentity],
     planID: String,
     sweepComplete: Bool,
+    canReleaseClaims: Bool = true,
     store: Store
   ) async throws {
     try await StateRepository.update(store) { state in
@@ -54,7 +55,7 @@ public enum TrainingFolders {
           uniquingKeysWith: { _, last in last }
         )
         state.trainingClaims = state.trainingClaims?.filter { key, recordID in
-          !key.hasPrefix(planID + ":") || observed.contains(key)
+          !canReleaseClaims || !key.hasPrefix(planID + ":") || observed.contains(key)
             || ![ActionOutcome.applied, .noAction, .dryRun].contains(
               outcomes[recordID] ?? .requested
             )

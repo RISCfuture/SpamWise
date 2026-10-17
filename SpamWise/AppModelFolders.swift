@@ -48,6 +48,7 @@ extension AppModel {
         automatic: false
       )
       status = String(localized: "Folder preview finished. No mail actions requested.")
+      if page.unavailableCount > 0 { status = Self.unreadableStatus(page.unavailableCount) }
     }
   }
   func scanConfiguredFolders(with pipeline: Pipeline, dryRun: Bool, limit: Int) async throws {
@@ -59,7 +60,8 @@ extension AppModel {
       guard !state.settings.paused else { return }
       let cursorKey = "folder:" + plan.id
       do {
-        let offset = try await MailHealthRepository.load(store)[cursorKey]?.nextOffset ?? 0
+        let health = try await MailHealthRepository.load(store)[cursorKey]
+        let offset = health?.nextOffset ?? 0
         let page = try await adapter.folderPage(
           plan.folder,
           offset: offset,
@@ -82,16 +84,22 @@ extension AppModel {
           try await TrainingFolders.observe(
             page.messages.map(\.identity),
             planID: plan.id,
-            sweepComplete: offset + page.messages.count >= page.total || page.messages.isEmpty,
+            sweepComplete: offset + page.visitedCount >= page.total || page.visitedCount == 0,
+            canReleaseClaims: page.unavailableCount == 0 && (health?.unavailableInSweep ?? 0) == 0,
             store: store
           )
         }
+        try Task.checkCancellation()
         try await MailHealthRepository.update(
           store,
           accountID: cursorKey,
           name: plan.folder.displayName
         ) {
-          $0.complete(count: page.messages.count, total: page.total)
+          $0.complete(
+            count: page.visitedCount,
+            total: page.total,
+            unavailable: page.unavailableCount
+          )
         }
       } catch is CancellationError { throw CancellationError() } catch {
         let failure = Self.describe(error)

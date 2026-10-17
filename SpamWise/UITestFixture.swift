@@ -63,6 +63,9 @@
     @MainActor private static func seedVisualState(in store: Store) async throws {
       let review = PreviewHelper.record, failed = PreviewHelper.failedRecord
       let corrections = PreviewHelper.corrections
+      try await MailHealthRepository.update(store, accountID: "ui-test", name: "Example account") {
+        $0.complete(count: 20, total: 30, unavailable: 3)
+      }
       try await StateRepository.update(store) { state in
         guard state.records.isEmpty else { return }
         state.settings.onboardingComplete = true
