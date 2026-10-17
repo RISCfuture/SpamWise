@@ -59,6 +59,12 @@ retains each contributing source; conflicting labels abstain for that objective.
 Graymail preferences, fraud, spearphishing and malware remain unknown unless
 separately labeled. Source labels are not independent human review.
 
+A source with `usage: "evaluationOnly"` is confined to validation. Every linked
+duplicate/template record shares that restriction, including records from other
+sources that permit training. Such messages never appear in training indices.
+Unspecified usage retains the audited training permission of the pinned starting
+sources; new sources still require a terms audit before being added.
+
 ## Splits and leakage limits
 
 Unicode/case/whitespace-normalized text identifies exact textual duplicates.
@@ -99,3 +105,6 @@ The model's outputs are legitimate/spam/fraud. Fraud scores are explicitly a
 proxy on the source-phishing cohort, not an independently trained phishing
 assessment. The initial corpora contain no verified negative labels: detection
 counts cannot establish specificity, calibration or safe Junk thresholds.
+When a source explicitly supplies negatives, the report counts false alarms at
+each score threshold and separately reports combined spam/fraud alarms. Unknown
+labels never enter either denominator.

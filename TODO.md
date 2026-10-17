@@ -23,6 +23,7 @@ out-of-box model or zero-shot preference handling. See
 - [ ] Audit source labels and campaign duplicates; build separate spam/phishing training sets and real/synthetic holdouts with legitimate difficult negatives.
   - [x] Implement hash-pinned corpus preparation, preserved source labels, conflict abstention, bounded MIME/archive handling, duplicate/template grouping and separate objective indices. Six offline behavioral tests pass.
   - [x] Prepare 18,201 unique text records from the three acquired sources; quarantine 12 records and merge 184 duplicates. Reserve 259 real and 2,523 synthetic holdout records without scoring them.
+  - [x] Keep evaluation-only sources and their linked duplicates out of training; count false alarms only against explicitly negative labels. Hard-ham acquisition is pending after shell DNS failures, so no negative-corpus accuracy result is claimed.
   - [ ] Review campaign grouping, audit pretrained exposure, add legitimate difficult negatives and establish language/time coverage before declaring training or evaluation sets validated.
 - [ ] Evaluate and package useful pretrained local spam and phishing detection with independently measured thresholds and English/Spanish/French coverage.
   - [x] Run the pinned multilingual candidate on 259 real development records at 384 and 1,024 tokens, preserving the reserved holdout. Record detection counts, truncation, latency and memory; no production model or threshold selected.

@@ -42,12 +42,14 @@ def development_records(corpus):
 
 
 def summarize(rows):
-    """Report positive-source screening, without inventing specificity or phishing labels."""
+    """Report explicitly labeled cohorts and abstain from metrics with unknown labels."""
     cohorts = {}
     for task, score_label in (("spam", "spam"), ("phishing", "fraud")):
         selected = [row for row in rows if row["labels"].get(task) is True]
-        if not selected:
+        negatives = [row for row in rows if row["labels"].get(task) is False]
+        if not selected and not negatives:
             continue
+        false_positives = sum(row["scores"][score_label] >= 0.5 for row in negatives)
         cohorts[task] = {
             "positive_records": len(selected),
             "template_groups": len({row["group"] for row in selected}),
@@ -64,8 +66,24 @@ def summarize(rows):
                 row["scores"]["spam"] + row["scores"]["fraud"] >= 0.5
                 for row in selected
             ),
-            "negative_records": 0,
-            "false_positive_rate": None,
+            "negative_records": len(negatives),
+            "negative_argmax_counts": dict(
+                Counter(row["prediction"] for row in negatives)
+            ),
+            "threshold_false_positives": {
+                str(threshold): sum(
+                    row["scores"][score_label] >= threshold for row in negatives
+                )
+                for threshold in (0.5, 0.9, 0.95, 0.99)
+            },
+            "false_positive_rate": false_positives / len(negatives)
+            if negatives
+            else None,
+            "false_positive_threshold": 0.5,
+            "spam_or_fraud_at_0.5_negative": sum(
+                row["scores"]["spam"] + row["scores"]["fraud"] >= 0.5
+                for row in negatives
+            ),
         }
     timings = sorted(row["inference_ms"] for row in rows)
     return {
@@ -78,7 +96,7 @@ def summarize(rows):
         },
         "limits": [
             "Development data only; reserved holdout is excluded from scoring.",
-            "Source-positive counts do not establish false-positive rates or calibrated action thresholds.",
+            "Positive-only cohorts do not establish false-positive rates; thresholds remain uncalibrated.",
             "Fraud is a broad model output, not a separately trained phishing score.",
             "Template groups are heuristic; records are not assumed independent.",
             "Labels, languages and pretrained exposure have not been independently audited.",

@@ -115,6 +115,10 @@ found an explicit invitation to test filters, with message copyright retained by
 senders. Do not inherit a mirror's CC0 claim or the software's Apache license for
 the emails. Its historical hard-ham examples may support an offline development
 comparison; model-training/redistribution permission is not established here.
+The acquisition attempt failed DNS resolution before downloading its archive,
+so no hard-ham result is claimed. The importer supports evaluation-only sources
+and propagates their restriction across duplicate/template groups; the screener
+supports negative cohorts while excluding unknown labels from metric denominators.
 
 No model training or production model selection follows from these downloads.
 Dataset sizes, source availability and published rights above were checked on the

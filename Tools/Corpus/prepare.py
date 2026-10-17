@@ -200,6 +200,7 @@ def ingest(source, path):
             "raw_sha256": digest(raw) if len(raw) <= MAX_MESSAGE else None,
             "labels": source["labels"],
             "synthetic": source["synthetic"],
+            "usage": source.get("usage", "training"),
         }
         try:
             if len(raw) > MAX_MESSAGE:
@@ -282,11 +283,21 @@ def group_records(records, seed):
         )
         record["language"] = "unknown"
         record["reviewed"] = False
+    evaluation_groups = {
+        record["group"]
+        for record in unique.values()
+        if any(
+            origin.get("usage") == "evaluationOnly" for origin in record["provenance"]
+        )
+    }
+    for record in unique.values():
+        if record["group"] in evaluation_groups:
+            record["split"] = "validation"
     return sorted(unique.values(), key=lambda row: row["id"])
 
 
 def write_json(path, value):
-    """Write a private UTF-8 JSON artifact."""
+    """Write a UTF-8 JSON artifact using the caller's file-creation permissions."""
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
 
 
@@ -354,6 +365,8 @@ def prepare(input_directory, output_directory, source_file, seed):
         ):
             raise ValueError("source_identity")
         identities.add(source["id"])
+        if source.get("usage", "training") not in {"training", "evaluationOnly"}:
+            raise ValueError("source_usage")
         if any(
             task not in TASKS or type(label) is not bool
             for task, label in source["labels"].items()

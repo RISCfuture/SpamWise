@@ -62,6 +62,36 @@ class CorpusPreparationTests(unittest.TestCase):
             self.assertEqual(cohort["threshold_hits"]["0.5"], 1)
             self.assertEqual(cohort["threshold_hits"]["0.9"], 0)
             self.assertIsNone(cohort["false_positive_rate"])
+            negatives = [
+                {
+                    "labels": {"spam": False},
+                    "scores": {"legitimate": 0.1, "spam": 0.2, "fraud": 0.7},
+                },
+                {
+                    "labels": {"spam": False},
+                    "scores": {"legitimate": 0.1, "spam": 0.8, "fraud": 0.1},
+                },
+                {
+                    "labels": {"spam": None},
+                    "scores": {"legitimate": 0.0, "spam": 1.0, "fraud": 0.0},
+                },
+            ]
+            negative_report = screen.summarize(
+                [
+                    {
+                        **row,
+                        "group": "fixture",
+                        "prediction": max(row["scores"], key=row["scores"].get),
+                        "inference_ms": 1,
+                        "truncated": False,
+                    }
+                    for row in negatives
+                ]
+            )["cohorts"]["spam"]
+            self.assertEqual(negative_report["negative_records"], 2)
+            self.assertEqual(negative_report["false_positive_rate"], 0.5)
+            self.assertEqual(negative_report["spam_or_fraud_at_0.5_negative"], 2)
+            self.assertEqual(negative_report["threshold_false_positives"]["0.9"], 0)
             with (path / "records.jsonl").open("a") as stream:
                 stream.write("{}\n")
             with self.assertRaisesRegex(ValueError, "corpus_hash"):
@@ -116,6 +146,9 @@ class CorpusPreparationTests(unittest.TestCase):
             [(row["id"], row["split"]) for row in grouped],
             [(row["id"], row["split"]) for row in reversed_rows],
         )
+        bridge["provenance"] = [{**bridge["provenance"][0], "usage": "evaluationOnly"}]
+        restricted = prepare.group_records([first, second, bridge, third], "seed")
+        self.assertEqual({row["split"] for row in restricted}, {"validation"})
 
     def test_mime_decodes_text_without_attachment_or_hidden_html(self):
         raw = (
