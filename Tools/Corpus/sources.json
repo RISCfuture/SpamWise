@@ -1,0 +1,48 @@
+[
+  {
+    "id": "guenter-2026-09",
+    "filename": "guenter-2026-09.7z",
+    "format": "archive",
+    "sha256": "0e2cd6d56012d66cfc621d2775c118ecbb29754c603f70ed05d763e90616ffda",
+    "url": "https://untroubled.org/spam/2026-09.7z",
+    "license": "Author grants unrestricted use; attribution appreciated",
+    "attribution": "Bruce Guenter, Spam archive",
+    "period": "2026-09 collection archive; individual headers untrusted",
+    "synthetic": false,
+    "original_label": "spam",
+    "label_authority": "source collection, not independently reviewed",
+    "labels": {"spam": true},
+    "expected_records": 1476
+  },
+  {
+    "id": "nazario-2025",
+    "filename": "nazario-2025.mbox",
+    "format": "mbox",
+    "sha256": "f1fa7e0fe35c9a16f36d9aa20ade7e1d3908d1d0c1d917b8c53c8aa799ec1c8f",
+    "url": "https://monkey.org/~jose/phishing/phishing-2025",
+    "license": "CC-BY-4.0",
+    "attribution": "Jose Nazario, phishing corpus",
+    "period": "2025 collection file; individual headers untrusted",
+    "synthetic": false,
+    "original_label": "phishing",
+    "label_authority": "source hand classification, not independently reviewed",
+    "labels": {"phishing": true},
+    "expected_records": 481
+  },
+  {
+    "id": "marketeam-56377f4",
+    "filename": "marketing.csv",
+    "format": "csv",
+    "sha256": "7945198268c8bcded668e6e0e684d36ee241c584bd6e5a4bd76a30359c296a30",
+    "url": "https://huggingface.co/datasets/marketeam/Marketing-Emails/resolve/56377f4213c15921f724add23ab175b0a5a0eea1/train.csv",
+    "revision": "56377f4213c15921f724add23ab175b0a5a0eea1",
+    "license": "MIT declared by dataset card",
+    "attribution": "Marketeam, Marketing-Emails",
+    "period": "Published 2025-11; generation dates unknown",
+    "synthetic": true,
+    "original_label": null,
+    "label_authority": "unlabeled synthetic text",
+    "labels": {},
+    "expected_records": 16440
+  }
+]

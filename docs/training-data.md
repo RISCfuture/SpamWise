@@ -77,6 +77,45 @@ the downloads.
 7. Publish model attribution, source limitations and separate metrics. No monthly
    collection target for the user's personal mailbox blocks initial personalization.
 
+## Reproducible local preparation
+
+The [corpus tools](../Tools/Corpus/README.md) verify all three pinned hashes and
+preserve source attribution and independent labels. The 2026-10-16 run processed
+18,397 input records into 18,201 unique text records, merging 184 normalized-text
+duplicates and quarantining 12 records: six encoding failures, five MIME defects
+and one empty text body. Original downloads remain intact.
+
+There are 17,735 heuristic template groups, including 157 groups with more than
+one distinct record; the largest contains 24. Shared templates stay in one split
+across sources. This detects some repeated campaigns; it is not proof of campaign
+independence. The fixed seed is `spamwise-public-2026-10-v1`.
+
+| Provenance | Training | Validation | Reserved holdout |
+| --- | ---: | ---: | ---: |
+| Real source-labeled spam | 936 | 181 | 202 |
+| Real source-labeled phishing | 307 | 78 | 57 |
+| Unlabeled synthetic | 11,545 | 2,372 | 2,523 |
+
+The source-positive objectives have no independently verified legitimate
+negatives. Missing labels, language and targeting remain unknown; synthetic text
+is not relabeled as wanted mail. Conflicting duplicate labels abstain for that
+objective. The partitions are provisional hash splits, not temporal holdouts;
+campaign review and pretrained exposure checks remain necessary. Development
+screening uses the real validation subset only, leaving reserved holdout records
+out of model inference.
+
+Prepared text and per-record results remain in ignored private output. Only
+aggregate counts and source metadata belong in repository documentation. Full
+commands, resource limits, output permissions and completion/hash checks are in
+the tool README.
+
+An additional check of the
+[original SpamAssassin corpus terms](https://spamassassin.apache.org/old/publiccorpus/readme.html)
+found an explicit invitation to test filters, with message copyright retained by
+senders. Do not inherit a mirror's CC0 claim or the software's Apache license for
+the emails. Its historical hard-ham examples may support an offline development
+comparison; model-training/redistribution permission is not established here.
+
 No model training or production model selection follows from these downloads.
 Dataset sizes, source availability and published rights above were checked on the
 audit date; verify the exact version again before redistribution.

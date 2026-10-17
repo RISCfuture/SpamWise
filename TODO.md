@@ -21,7 +21,11 @@ out-of-box model or zero-shot preference handling. See
 - [x] Download and inventory September 2026 Guenter spam, 2025 Nazario phishing and the synthetic Marketeam corpus locally; preserve source snapshots and hashes.
 - [x] Screen pinned tiny and multilingual local models; record newsletter, targeting, multilingual and legitimate-payment results in [model screening](docs/probes/local-model-screening.md). Neither model is selected for automatic actions.
 - [ ] Audit source labels and campaign duplicates; build separate spam/phishing training sets and real/synthetic holdouts with legitimate difficult negatives.
+  - [x] Implement hash-pinned corpus preparation, preserved source labels, conflict abstention, bounded MIME/archive handling, duplicate/template grouping and separate objective indices. Six offline behavioral tests pass.
+  - [x] Prepare 18,201 unique text records from the three acquired sources; quarantine 12 records and merge 184 duplicates. Reserve 259 real and 2,523 synthetic holdout records without scoring them.
+  - [ ] Review campaign grouping, audit pretrained exposure, add legitimate difficult negatives and establish language/time coverage before declaring training or evaluation sets validated.
 - [ ] Evaluate and package useful pretrained local spam and phishing detection with independently measured thresholds and English/Spanish/French coverage.
+  - [x] Run the pinned multilingual candidate on 259 real development records at 384 and 1,024 tokens, preserving the reserved holdout. Record detection counts, truncation, latency and memory; no production model or threshold selected.
 - [ ] Persist independent assessments, provenance and unknown states; keep historical records unassessed and update evaluation/cache identities.
 - [ ] Assess threats on trusted-contact/history paths without silently overriding explicit action rules or presenting unscanned mail as safe.
 - [ ] Evaluate targeted impersonation, payment diversion and other fraud using account-scoped context; preserve unknown history.

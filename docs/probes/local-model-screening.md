@@ -113,3 +113,39 @@ fraud score on the legitimate payment example means simply raising a threshold
 does not solve this pair. Evaluate legitimate financial workflows and relationship
 context before choosing or fine-tuning a model. No production model was selected,
 no mail action was requested, and no paid API call was used for this screening.
+
+## Real-mail development screening
+
+The [offline corpus tool](../../Tools/Corpus/README.md) prepared source-attributed,
+duplicate/template-grouped splits. Two actual CPU runs scored the same 259 real
+validation messages: 181 Guenter spam records in 123 template groups and 78
+Nazario phishing records in 70 groups. The 259 reserved real holdout messages and
+all synthetic partitions were excluded from inference. Source labels have not
+been independently reviewed; missing labels remain unknown.
+
+| Observation | 384 tokens | 1,024 tokens |
+| --- | ---: | ---: |
+| Spam source: top output spam | 98/181 | 125/181 |
+| Spam source: top output legitimate | 79/181 | 55/181 |
+| Phishing source: top output fraud | 30/78 | 28/78 |
+| Phishing source: top output legitimate | 41/78 | 34/78 |
+| Spam source: spam score at least 0.95 | 5/181 | 5/181 |
+| Phishing source: fraud score at least 0.95 | 5/78 | 5/78 |
+| Truncated messages | 174/259 | 141/259 |
+| Median / p95 inference | 103 / 105 ms | 396 / 400 ms |
+| Peak Python process memory | 1.51 GB | 1.69 GB |
+
+Full aggregate reports pin model weights, corpus hash and library versions:
+[384 tokens](local-model-development-384.json) and
+[1,024 tokens](local-model-development-1024.json). Per-record results remain local
+and contain IDs/scores rather than message bodies. Timing excludes model loading
+and tokenization; memory includes the Python runtime. No paid calls were made.
+
+Longer input improves the model's bulk-spam top-label count in this development
+set, but does not improve its fraud top-label count on phishing. A broad fraud
+score remains a proxy, not a distinct phishing detector. Neither run contains
+verified legitimate negatives, so false-positive rates and safe action thresholds
+are unknown. Repeated templates also prevent treating all records as independent
+trials. These results, together with the legitimate-payment false alarm above, do
+not support packaging this candidate as the production automatic filter. No model
+or threshold was selected, and no claim of superiority over SpamSieve follows.
