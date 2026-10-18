@@ -67,7 +67,7 @@ and attaches the App Store build to its version.
 
 ## App icon and signatures
 
-`Scripts/check-app-icon.sh` fails unless a bundle contains `Contents/Resources/Assets.car` and its `Info.plist` sets `CFBundleIconName` to `AppIcon`. `check.sh` runs it on each edition's Debug app, and the release lanes run it on every archived app. The icon source is the Icon Composer bundle `SpamWise/AppIcon.icon`, which both app targets compile through `ASSETCATALOG_COMPILER_APPICON_NAME`.
+`Scripts/check-app-icon.sh` fails unless a bundle contains `Contents/Resources/Assets.car` and its `Info.plist` sets `CFBundleIconName` to `AppIcon`. `check.sh` runs it on each edition's Debug app, the release lanes run it on every archived app, and the Developer ID lanes run it again on the exported app before notarizing it. The icon source is the Icon Composer bundle `SpamWise/AppIcon.icon`, which both app targets compile through `ASSETCATALOG_COMPILER_APPICON_NAME`.
 
 The app and extension preserve their original identifiers and share `group.codes.tim.SpamWise` plus the Keychain group `2NFSK2WB24.codes.tim.SpamWise.shared`. The app retains Automation and Contacts entitlements. Inspect both nested extension and app signatures before distribution. Never distribute an unsigned or unnotarized download build as a completed release.
 
