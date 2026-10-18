@@ -682,22 +682,6 @@
         }
       }
     },
-    "API keys stay in Keychain. You can complete setup offline.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las claves API permanecen en el Llavero. Puedes completar la configuración sin conexión."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les clés API restent dans le Trousseau. Vous pouvez terminer la configuration hors ligne."
-          }
-        }
-      }
-    },
     "Apple Mail": {
       "localizations": {
         "es": {
@@ -1354,22 +1338,6 @@
         }
       }
     },
-    "Connect your Anthropic account": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conecta tu cuenta de Anthropic"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connecter votre compte Anthropic"
-          }
-        }
-      }
-    },
     "Connection": {
       "localizations": {
         "es": {
@@ -1590,22 +1558,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continuer"
-          }
-        }
-      }
-    },
-    "Continue offline": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Continuar sin conexión"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Continuer hors ligne"
           }
         }
       }
@@ -2072,22 +2024,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Simulation — les messages restent inchangés"
-          }
-        }
-      }
-    },
-    "Dry run 20 recent messages": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Simular con 20 mensajes recientes"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Simuler sur 20 messages récents"
           }
         }
       }
@@ -4220,22 +4156,6 @@
         }
       }
     },
-    "Open Claude Console": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abrir Claude Console"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrir Claude Console"
-          }
-        }
-      }
-    },
     "Open in Mail": {
       "localizations": {
         "es": {
@@ -4712,22 +4632,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher l’aperçu de cette page"
-          }
-        }
-      }
-    },
-    "Preview up to 20 recent Inbox messages without changing them. Eligible messages use your selected provider and may incur API charges.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Previsualiza hasta 20 mensajes recientes de Entrada sin modificarlos. Los mensajes aptos usan el proveedor seleccionado y pueden generar cargos de API."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prévisualisez jusqu’à 20 messages récents de Réception sans les modifier. Les messages admissibles utilisent le fournisseur sélectionné et peuvent entraîner des frais d’API."
           }
         }
       }
@@ -6382,22 +6286,6 @@
         }
       }
     },
-    "Step %@ of %@": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Paso %@ de %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Étape %@ sur %@"
-          }
-        }
-      }
-    },
     "Stored only in Keychain. Saving does not make a paid request; use a dry run to verify.": {
       "localizations": {
         "es": {
@@ -7167,22 +7055,6 @@
         }
       }
     },
-    "Verification sends one synthetic message to Haiku 5.5 and saves your key in Keychain.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La verificación envía un mensaje sintético a Haiku 5.5 y guarda tu clave en el Llavero."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La vérification envoie un message synthétique à Haiku 5.5 et enregistre votre clé dans le Trousseau."
-          }
-        }
-      }
-    },
     "Verified — stored in Keychain": {
       "localizations": {
         "es": {
@@ -7211,22 +7083,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vérifier et enregistrer la clé"
-          }
-        }
-      }
-    },
-    "Verifying Haiku 5.5…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verificando Haiku 5.5…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vérification de Haiku 5.5…"
           }
         }
       }
@@ -7307,22 +7163,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Données partagées"
-          }
-        }
-      }
-    },
-    "You can finish setup offline and return to Settings later.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Puedes terminar la configuración sin conexión y volver a Ajustes más tarde."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vous pouvez terminer la configuration hors ligne et revenir dans Réglages plus tard."
           }
         }
       }
@@ -8733,23 +8573,6 @@
         }
       }
     },
-    "When local rules cannot decide, your selected provider receives a shortened message, your preferences, and up to %@ similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cuando las reglas locales no pueden decidir, el proveedor seleccionado recibe un mensaje abreviado, tus preferencias y hasta %@ correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lorsque les règles locales ne permettent pas de décider, le fournisseur sélectionné reçoit un message abrégé, vos préférences et jusqu’à %@ corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
-          }
-        }
-      }
-    },
     "Includes the message’s sender, subject, shortened text and evidence, your preferences, and up to %@ similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label. Enabled attachment/OCR text may be included. Mail can contain sensitive information.": {
       "extractionState": "manual",
       "localizations": {
@@ -9932,6 +9755,582 @@
           "stringUnit": {
             "state": "translated",
             "value": "Avertissement"
+          }
+        }
+      }
+    },
+    "OpenAI API key": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clave de API de OpenAI"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé API OpenAI"
+          }
+        }
+      }
+    },
+    "Gemini API key": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clave de API de Gemini"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé API Gemini"
+          }
+        }
+      }
+    },
+    "API key": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clave de API"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé API"
+          }
+        }
+      }
+    },
+    "Save key": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar clave"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer la clé"
+          }
+        }
+      }
+    },
+    "Verifying with %@…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verificando con %@…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification avec %@…"
+          }
+        }
+      }
+    },
+    "Get an API key": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtener una clave de API"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtenir une clé API"
+          }
+        }
+      }
+    },
+    "A key is saved in Keychain. Enter a new one to replace it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hay una clave guardada en el Llavero. Introduce una nueva para reemplazarla."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une clé est enregistrée dans le Trousseau. Saisissez-en une nouvelle pour la remplacer."
+          }
+        }
+      }
+    },
+    "SpamWise checks the key with one short test request to %@, which may incur a small API charge, then saves it only in Keychain.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise comprueba la clave con una breve solicitud de prueba a %@, que puede tener un pequeño coste de API, y la guarda solo en el Llavero."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise vérifie la clé avec une courte requête de test à %@, qui peut entraîner un petit coût d’API, puis l’enregistre uniquement dans le Trousseau."
+          }
+        }
+      }
+    },
+    "The key is saved only in Keychain, without a request. A dry run shows whether it works.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clave se guarda solo en el Llavero, sin hacer ninguna solicitud. Una simulación muestra si funciona."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clé est enregistrée uniquement dans le Trousseau, sans requête. Une simulation indique si elle fonctionne."
+          }
+        }
+      }
+    },
+    "Choose how SpamWise classifies mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige cómo clasifica SpamWise el correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez comment SpamWise classe les messages"
+          }
+        }
+      }
+    },
+    "Your rules and known senders decide most mail. The provider you choose classifies the rest.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus reglas y los remitentes conocidos deciden la mayor parte del correo. El proveedor que elijas clasifica el resto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos règles et les expéditeurs connus décident de la plupart des messages. Le fournisseur choisi classe le reste."
+          }
+        }
+      }
+    },
+    "Messages your rules can’t decide are sent to %@ with your API key. Your provider account is charged for each one.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los mensajes que tus reglas no pueden decidir se envían a %@ con tu clave de API. Cada uno se cobra en tu cuenta del proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les messages que vos règles ne peuvent pas trancher sont envoyés à %@ avec votre clé API. Chacun est facturé sur votre compte du fournisseur."
+          }
+        }
+      }
+    },
+    "Mail stays on this Mac, with no API key or charges. Requires Apple Intelligence.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El correo se queda en este Mac, sin clave de API ni costes. Requiere Apple Intelligence."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les messages restent sur ce Mac, sans clé API ni frais. Nécessite Apple Intelligence."
+          }
+        }
+      }
+    },
+    "Ready to classify mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listo para clasificar el correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prêt à classer les messages."
+          }
+        }
+      }
+    },
+    "To classify mail with %@, save an API key and allow mail sharing below.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para clasificar el correo con %@, guarda una clave de API y permite compartir el correo a continuación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour classer les messages avec %@, enregistrez une clé API et autorisez le partage des messages ci-dessous."
+          }
+        }
+      }
+    },
+    "Filtering is set to stay on this Mac, which blocks cloud providers. Choose %@ or change this in Settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El filtrado está configurado para quedarse en este Mac, lo que bloquea los proveedores en la nube. Elige %@ o cámbialo en Ajustes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtrage est configuré pour rester sur ce Mac, ce qui bloque les fournisseurs dans le cloud. Choisissez %@ ou modifiez ce réglage dans Réglages."
+          }
+        }
+      }
+    },
+    "Apple Intelligence isn’t available on this Mac. Turn it on in System Settings, or choose another provider.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence no está disponible en este Mac. Actívalo en Ajustes del Sistema o elige otro proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence n’est pas disponible sur ce Mac. Activez-le dans Réglages Système ou choisissez un autre fournisseur."
+          }
+        }
+      }
+    },
+    "This provider isn’t available. Choose another provider.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este proveedor no está disponible. Elige otro proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fournisseur n’est pas disponible. Choisissez-en un autre."
+          }
+        }
+      }
+    },
+    "See what SpamWise would do with the %lld newest Inbox messages across your accounts. Nothing in Mail changes. Messages you’ve already previewed keep their result without a new request.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mira qué haría SpamWise con los %lld mensajes más recientes de la bandeja de entrada de tus cuentas. Nada cambia en Mail. Los mensajes que ya simulaste conservan su resultado sin una nueva solicitud."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Découvrez ce que SpamWise ferait des %lld messages les plus récents de la boîte de réception de vos comptes. Rien ne change dans Mail. Les messages déjà simulés gardent leur résultat sans nouvelle requête."
+          }
+        }
+      }
+    },
+    "Messages your rules can’t decide are sent to %@ and may incur API charges.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los mensajes que tus reglas no pueden decidir se envían a %@ y pueden tener costes de API."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les messages que vos règles ne peuvent pas trancher sont envoyés à %@ et peuvent entraîner des frais d’API."
+          }
+        }
+      }
+    },
+    "Your provider isn’t set up, so only your rules and known senders decide messages. The rest stay unclassified.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu proveedor no está configurado, así que solo tus reglas y los remitentes conocidos deciden los mensajes. El resto queda sin clasificar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre fournisseur n’est pas configuré : seuls vos règles et les expéditeurs connus décident des messages. Les autres restent non classés."
+          }
+        }
+      }
+    },
+    "Dry run stays on after setup. SpamWise records what it would do without changing mail until you turn dry run off in Settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La simulación sigue activada después de la configuración. SpamWise registra lo que haría sin cambiar el correo hasta que desactives la simulación en Ajustes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La simulation reste activée après la configuration. SpamWise enregistre ce qu’il ferait sans modifier les messages jusqu’à ce que vous désactiviez la simulation dans Réglages."
+          }
+        }
+      }
+    },
+    "Results": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resultados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résultats"
+          }
+        }
+      }
+    },
+    "No recent Inbox mail to preview.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay correo reciente en la bandeja de entrada para simular."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun message récent dans la boîte de réception à simuler."
+          }
+        }
+      }
+    },
+    "Couldn’t be read": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron leer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Illisibles"
+          }
+        }
+      }
+    },
+    "Show in Activity": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar en Actividad"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher dans Activité"
+          }
+        }
+      }
+    },
+    "After setup, Activity shows each decision and why it was made.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Después de la configuración, Actividad muestra cada decisión y su motivo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Après la configuration, Activité affiche chaque décision et son motif."
+          }
+        }
+      }
+    },
+    "Some messages weren’t classified because mail sharing with %@ is off. Go back to allow it or choose another provider.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algunos mensajes no se clasificaron porque compartir el correo con %@ está desactivado. Vuelve atrás para permitirlo o elige otro proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certains messages n’ont pas été classés, car le partage des messages avec %@ est désactivé. Revenez en arrière pour l’autoriser ou choisissez un autre fournisseur."
+          }
+        }
+      }
+    },
+    "Some messages weren’t classified because no %@ API key is saved. Go back to add one.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algunos mensajes no se clasificaron porque no hay ninguna clave de API de %@ guardada. Vuelve atrás para añadirla."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certains messages n’ont pas été classés, car aucune clé API %@ n’est enregistrée. Revenez en arrière pour en ajouter une."
+          }
+        }
+      }
+    },
+    "Some messages weren’t classified because the selected provider isn’t available. Go back to choose another.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algunos mensajes no se clasificaron porque el proveedor seleccionado no está disponible. Vuelve atrás para elegir otro."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certains messages n’ont pas été classés, car le fournisseur sélectionné n’est pas disponible. Revenez en arrière pour en choisir un autre."
+          }
+        }
+      }
+    },
+    "Some messages weren’t classified because this month’s spending limit was reached.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Algunos mensajes no se clasificaron porque se alcanzó el límite de gasto de este mes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certains messages n’ont pas été classés, car la limite de dépenses de ce mois a été atteinte."
+          }
+        }
+      }
+    },
+    "SpamWise Setup": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuración de SpamWise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuration de SpamWise"
+          }
+        }
+      }
+    },
+    "Step %lld of %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paso %lld de %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étape %lld sur %lld"
+          }
+        }
+      }
+    },
+    "Skip for now": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omitir por ahora"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignorer pour l’instant"
+          }
+        }
+      }
+    },
+    "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+          }
+        }
+      }
+    },
+    "API keys are stored only in Keychain.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las claves de API se guardan solo en el Llavero."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les clés API sont enregistrées uniquement dans le Trousseau."
           }
         }
       }

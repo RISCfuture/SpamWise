@@ -16,6 +16,8 @@ import SpamWiseCore
   let providerKey = TrackedOperation()
   /// Reading and saving the Spamhaus query key.
   let spamhausKey = TrackedOperation()
+  /// The providers whose API keys are saved in Keychain, as of the latest check or save.
+  private(set) var savedKeys: Set<ModelBackend> = []
   @ObservationIgnored private let services: AppServices
 
   init(services: AppServices) { self.services = services }
@@ -25,6 +27,14 @@ import SpamWiseCore
   {
     guard let keychain else { throw ClassificationError.configuration }
     try keychain.save(credential)
+  }
+
+  @concurrent private static func providersWithSavedKeys() async -> Set<ModelBackend> {
+    Set(
+      ModelBackend.allCases.filter { backend in
+        (try? APIKeychain(backend: backend)?.exists()) == true
+      }
+    )
   }
 
   @concurrent private static func spamhausKeyStatus() async throws -> String {
@@ -47,30 +57,42 @@ import SpamWiseCore
     try await StateRepository.update(store, loading: StateSlices()) { $0.record(record) }
   }
 
-  /// Sends one synthetic message to Haiku 5.5 with `key`, then saves the key if it works.
-  func verifyClaudeKey(_ key: String) {
+  /// Checks which providers have API keys saved in Keychain.
+  func refreshSavedKeys() async {
+    savedKeys = await Self.providersWithSavedKeys()
+  }
+
+  /// Sends one synthetic message to the Claude `model` with `key`, then saves the key if it works.
+  @discardableResult func verifyClaudeKey(_ key: String, model: ModelIdentifier = .claudeHaiku)
+    -> Task<Void, Never>
+  {
+    precondition(model.backend == .claude, "Only Claude keys are verified with a request.")
     let credential = key.trimmingCharacters(in: .whitespacesAndNewlines)
-    claudeKey.run { [self] in
+    return claudeKey.run { [self] in
       guard !credential.isEmpty else { throw ClassificationError.missingCredential }
       let store = try services.requireStore()
       let message = try MIMEParser().parse(Data(Self.verificationMessage.utf8))
       let verdict = try await SpendingLimitedClassifier(
-        ClaudeClassifier(model: .claudeHaiku, key: { credential }),
-        model: .claudeHaiku,
+        ClaudeClassifier(model: model, key: { credential }),
+        model: model,
         store: store
       ).classify(.init(message: message, evidence: .init(message: message)))
       try await Self.save(credential, in: APIKeychain(backend: .claude))
+      savedKeys.insert(.claude)
       try await Self.recordVerification(verdict, message: message, store: store)
       return String(localized: "Verified — stored in Keychain")
     }
   }
 
   /// Saves `key` for `backend` without making a request.
-  func saveProviderKey(_ key: String, for backend: ModelBackend) {
+  @discardableResult func saveProviderKey(_ key: String, for backend: ModelBackend)
+    -> Task<Void, Never>
+  {
     let credential = key.trimmingCharacters(in: .whitespacesAndNewlines)
-    providerKey.run {
+    return providerKey.run { [self] in
       guard !credential.isEmpty else { throw ClassificationError.missingCredential }
       try await Self.save(credential, in: APIKeychain(backend: backend))
+      savedKeys.insert(backend)
       return String(localized: "Provider key saved in Keychain. Use a dry run to verify.")
     }
   }

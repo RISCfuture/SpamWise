@@ -56,6 +56,16 @@ import SpamWiseCore
     }
   }
 
+  /// Selects `backend` with its default model; reselecting the current provider keeps its model.
+  func selectBackend(_ backend: ModelBackend) {
+    guard backend != settings.advancedOptions.backend else { return }
+    editSettings {
+      var advanced = $0.advancedOptions
+      advanced.select(backend.defaultModel)
+      $0.advancedOptions = advanced
+    }
+  }
+
   /// Sets or removes the monthly spending limit, in order with settings writes.
   func setSpendingLimit(usd: Double?) {
     guard let store = shared.store else { return }

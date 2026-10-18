@@ -144,6 +144,23 @@ import SpamWiseCore
     return model
   }
 
+  /**
+   A dry run with a Junk, a Review and a Good decision and one unreadable message, or, with
+   `consentRequired`, a message left unclassified because mail sharing is off instead.
+   */
+  static func dryRun(consentRequired: Bool = false) -> MailPreview {
+    var junk = failedRecord
+    junk.outcome = .dryRun
+    junk.actionError = nil
+    var good = sharedProviderRecord
+    good.decision = .init(label: .inbox, action: .none, reason: .gate(.contact))
+    good.outcome = .noAction
+    return MailPreview(
+      records: [junk, record, good] + (consentRequired ? [unclassifiedRecord] : []),
+      unavailableCount: consentRequired ? 0 : 1
+    )
+  }
+
   static func spending(limitReached: Bool) -> MonthlySpending {
     var spending = MonthlySpending(month: .init(containing: .now))
     spending.committedMicroUSD = limitReached ? 5_000_000 : 1_380

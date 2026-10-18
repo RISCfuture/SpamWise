@@ -22,6 +22,8 @@ import MailIntegration
   private(set) var lastCompletion: Date?
   /// The user's dry run of recent Inbox mail.
   let preview = TrackedOperation()
+  /// The latest finished dry run of recent Inbox mail, or nil while one runs or after it failed.
+  private(set) var lastPreview: MailPreview?
   @ObservationIgnored private let services: AppServices
   @ObservationIgnored private let shared: SharedStateModel
   @ObservationIgnored private let mail: MailConnectionModel
@@ -72,14 +74,21 @@ import MailIntegration
   /// Stops the sweep in progress; the next one starts at the usual interval.
   func stop() { runner.cancel() }
 
-  /// Previews the newest `limit` Inbox messages across accounts as a dry run.
+  /**
+   Previews the newest `limit` Inbox messages across all accounts in scope as a dry run.
+
+   Messages previewed before with unchanged content and policy keep their decision, so a repeated
+   preview makes no new provider requests.
+   */
   func previewRecent(limit: Int = ScanCoordinator.pageLimit) {
     preview.run { [self] in
+      lastPreview = nil
       await prepare()
       let sweeper = try await services.sweeper(transport: shared.settings.advancedOptions.transport)
       let result = try await sweeper.previewRecent(total: limit) { [shared] _ in
         await shared.refresh()
       }
+      lastPreview = result
       return result.unavailableCount > 0
         ? Self.unreadableStatus(result.unavailableCount)
         : String(localized: "Dry run finished — no mail actions requested")
