@@ -2,16 +2,22 @@ public import Foundation
 
 /// Opt-in local notification policy; content is summarized without subjects or senders.
 public struct NotificationPreferences: Codable, Sendable, Equatable {
+  /// Allowed spacing between notification batches, in minutes.
+  public static let intervalRangeMin = 5...1440
   /// Explicit activation time; earlier Activity is never announced retroactively.
   public var enabledSince: Date?
   /// Whether confirmed Inbox decisions are included alongside unresolved Review.
   public var includeGood = false
-  /// Minimum spacing between notification batches, clamped to 5...1440 minutes.
+  /// Minimum spacing between notification batches, clamped to ``intervalRangeMin``.
   public var intervalMin = 30
   /// Local-clock quiet period start; equal endpoints disable quiet hours.
   public var quietStartHour = 22
   /// Local-clock quiet period end, supporting overnight periods.
   public var quietEndHour = 8
+  /// ``intervalMin`` limited to ``intervalRangeMin``.
+  var boundedIntervalMin: Int {
+    min(Self.intervalRangeMin.upperBound, max(Self.intervalRangeMin.lowerBound, intervalMin))
+  }
   /// Creates disabled, quiet notification defaults.
   public init() {}
   /**
@@ -41,8 +47,6 @@ public struct NotificationBatch: Sendable {
 /// Durable at-most-once announcement claims, independent of action and decision outcomes.
 public enum NotificationPlanning {
   private static let key = "notification-ledger-v1"
-  private static let minimumIntervalMin = 5
-  private static let maximumIntervalMin = 1440
   /**
    Claims eligible records before delivery; failed notification requests do not replay on restart.
 
@@ -57,8 +61,7 @@ public enum NotificationPlanning {
     guard let since = preferences.enabledSince, !settings.paused,
       !settings.dryRun, !preferences.isQuiet(at: now, calendar: calendar)
     else { return nil }
-    let intervalSec =
-      Double(min(maximumIntervalMin, max(minimumIntervalMin, preferences.intervalMin))) * 60
+    let intervalSec = Double(preferences.boundedIntervalMin) * 60
     let lastBatch = try await store.read(key, default: Ledger()).lastBatch
     guard now.timeIntervalSince(lastBatch ?? since) >= intervalSec else { return nil }
     var query = ActivityQuery(); query.start = since

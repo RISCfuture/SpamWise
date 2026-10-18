@@ -35,7 +35,8 @@ public enum RuleManagementError: RuleManagementFailure, Sendable, LocalizedError
 public enum RuleManagement {
   private static let maximumRuleBytes = 254
   private static let maximumRules = RetentionLimits.senderRules
-  private static let maximumArchiveBytes = 2_000_000
+  /// The largest sender-rule archive, in bytes, that SpamWise imports.
+  public static let maximumArchiveBytes = 2_000_000
   /**
    Validates a literal email address or registrable domain without broadening its scope.
 

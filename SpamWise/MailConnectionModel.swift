@@ -129,5 +129,7 @@ import MailIntegration
 enum RuleScriptError: LocalizedError {
   case missing
 
-  var errorDescription: String? { String(localized: "Rule script missing from app bundle") }
+  var errorDescription: String? { String(localized: "Couldn’t show the Mail rule script.") }
+  var failureReason: String? { String(localized: "The script is missing from the SpamWise app.") }
+  var recoverySuggestion: String? { String(localized: "Reinstall SpamWise.") }
 }

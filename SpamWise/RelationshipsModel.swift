@@ -76,7 +76,17 @@ import SpamWiseCore
 enum ContactsRefreshError: LocalizedError {
   case failed
 
-  var errorDescription: String? {
-    String(localized: "Contacts refresh failed — cached evidence expires after 24 hours")
+  var errorDescription: String? { String(localized: "Couldn’t refresh Contacts.") }
+  var failureReason: String? {
+    String(
+      localized:
+        "SpamWise couldn’t read your contacts, so contacts it read earlier soon stop counting."
+    )
+  }
+  var recoverySuggestion: String? {
+    String(
+      localized:
+        "Check that SpamWise is allowed in System Settings → Privacy & Security → Contacts, then try again."
+    )
   }
 }

@@ -38,6 +38,18 @@ public enum StoreError: StorageFailure, Sendable, LocalizedError {
         )
     }
   }
+  /// What the user can do, when the failure is theirs to resolve.
+  public var recoverySuggestion: String? {
+    switch self {
+      case .lockUnavailable: String(localized: "Try again in a moment.", bundle: .module)
+      case .missingAppGroup:
+        String(
+          localized: "Quit and reopen SpamWise. If the problem continues, reinstall SpamWise.",
+          bundle: .module
+        )
+      case .invalidPath, .unloadedChange: nil
+    }
+  }
 }
 
 extension StoreError: Equatable {}

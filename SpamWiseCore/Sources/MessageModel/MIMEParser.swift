@@ -10,6 +10,8 @@ public import Foundation
  ``ParsedMessage/decodingIssues``.
  */
 public struct MIMEParser: Sendable {
+  /// The largest raw message, in bytes, that SpamWise reads; larger messages stay unclassified.
+  public static let maximumMessageBytes = 2_000_000
   private static let maximumTextCharacters = 100_000
   private static let maximumURLs = 40
   private static let maximumTextAttachmentBytes = 65_536

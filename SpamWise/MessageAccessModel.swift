@@ -37,7 +37,7 @@ import MailIntegration
 
   private func envelope(of record: DecisionRecord) async throws -> MailEnvelope {
     guard let envelope = try await services.appleMail.lookup(record.identity) else {
-      throw IntegrationError.unavailable
+      throw IntegrationError.messageNotFound
     }
     return envelope
   }

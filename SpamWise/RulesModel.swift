@@ -5,8 +5,6 @@ import MailIntegration
 
 /// Sender and content rules: editing, transfer and testing against the message selected in Mail.
 @MainActor @Observable final class RulesModel {
-  private static let maximumSenderRuleImportBytes = 2_000_000
-  private static let maximumContentRuleImportBytes = 1_000_000
   /// Removing, importing and exporting sender rules.
   let senderRules = TrackedOperation()
   /// Removing, importing and exporting content rules.
@@ -64,7 +62,7 @@ import MailIntegration
 
   func importSenderRules(from url: URL) {
     senderRules.run { [self] in
-      let data = try SecurityScopedFile.read(url, limit: Self.maximumSenderRuleImportBytes)
+      let data = try url.readSecurityScoped(maximumBytes: RuleManagement.maximumArchiveBytes)
       try await RuleManagement.importRules(data, store: services.requireStore())
       return String(localized: "Rules imported. Pending classifications were invalidated.")
     }
@@ -88,7 +86,9 @@ import MailIntegration
 
   func importContentRules(from url: URL) {
     contentRules.run { [self] in
-      let data = try SecurityScopedFile.read(url, limit: Self.maximumContentRuleImportBytes)
+      let data = try url.readSecurityScoped(
+        maximumBytes: ContentRuleManagement.maximumArchiveBytes
+      )
       try await ContentRuleManagement.importRules(data, store: services.requireStore())
       return nil
     }
@@ -133,18 +133,5 @@ import MailIntegration
         )
     }
     return result
-  }
-
-}
-
-/// Reads user-chosen files through their security scope.
-enum SecurityScopedFile {
-  /// Reads at most `limit` + 1 bytes of `url`, so callers can reject larger files.
-  static func read(_ url: URL, limit: Int) throws -> Data {
-    let scoped = url.startAccessingSecurityScopedResource()
-    defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-    let file = try FileHandle(forReadingFrom: url)
-    defer { try? file.close() }
-    return try file.read(upToCount: limit + 1) ?? Data()
   }
 }

@@ -794,22 +794,6 @@
         }
       }
     },
-    "Automation permission denied. Allow SpamWise in System Settings → Privacy & Security → Automation.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permiso de Automatización denegado. Autoriza SpamWise en Ajustes del Sistema → Privacidad y seguridad → Automatización."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Autorisation Automatisation refusée. Autorisez SpamWise dans Réglages Système → Confidentialité et sécurité → Automatisation."
-          }
-        }
-      }
-    },
     "Back": {
       "localizations": {
         "es": {
@@ -1130,22 +1114,6 @@
         }
       }
     },
-    "Check setup and Activity in SpamWise. Select one Mail message. Uncertain requests are never replayed.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comprueba la configuración y Actividad en SpamWise. Selecciona un mensaje en Mail. Las solicitudes inciertas nunca se repiten."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vérifiez la configuration et l’activité dans SpamWise. Sélectionnez un message dans Mail. Les demandes incertaines ne sont jamais répétées."
-          }
-        }
-      }
-    },
     "Choose account": {
       "localizations": {
         "es": {
@@ -1402,22 +1370,6 @@
         }
       }
     },
-    "Contacts refresh failed — cached evidence expires after 24 hours": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudieron actualizar los contactos — los indicios en caché caducan a las 24 horas"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Échec de l’actualisation des contacts — les indices en cache expirent après 24 heures"
-          }
-        }
-      }
-    },
     "Contacts refreshed": {
       "localizations": {
         "es": {
@@ -1622,22 +1574,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corriger le message sélectionné"
-          }
-        }
-      }
-    },
-    "Correct selected Mail as ${label} with request ${requestID}": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corregir el correo seleccionado como ${label} con la solicitud ${requestID}"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corriger le message sélectionné en ${label} avec la demande ${requestID}"
           }
         }
       }
@@ -3244,22 +3180,6 @@
         }
       }
     },
-    "Keychain unavailable. Check the signed app’s shared Keychain entitlement.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Llavero no disponible. Comprueba la autorización de Llavero compartido de la aplicación firmada."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trousseau indisponible. Vérifiez l’autorisation de Trousseau partagé de l’application signée."
-          }
-        }
-      }
-    },
     "Label": {
       "localizations": {
         "es": {
@@ -3964,22 +3884,6 @@
         }
       }
     },
-    "No unresolved Review items in the last seven days.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay mensajes para Revisar sin resolver en los últimos siete días."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun message À vérifier non résolu au cours des sept derniers jours."
-          }
-        }
-      }
-    },
     "Not retained": {
       "localizations": {
         "es": {
@@ -4600,22 +4504,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aperçu du message sélectionné"
-          }
-        }
-      }
-    },
-    "Preview selected Mail with request ${requestID}": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vista previa del correo seleccionado con la solicitud ${requestID}"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aperçu du message sélectionné avec la demande ${requestID}"
           }
         }
       }
@@ -5597,22 +5485,6 @@
         }
       }
     },
-    "Rule script missing from app bundle": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Falta el script de regla en la aplicación"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Script de règle absent de l’application"
-          }
-        }
-      }
-    },
     "Rules": {
       "localizations": {
         "es": {
@@ -6010,38 +5882,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le stockage partagé est indisponible."
-          }
-        }
-      }
-    },
-    "Shared storage unavailable; mail stays unchanged.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Almacenamiento compartido no disponible; el correo no cambia."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stockage partagé indisponible ; les messages restent inchangés."
-          }
-        }
-      }
-    },
-    "Shared storage unavailable. Check signing and App Group access; mail stays unchanged.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Almacenamiento compartido no disponible. Comprueba la firma y el acceso al grupo de aplicaciones; el correo no cambia."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stockage partagé indisponible. Vérifiez la signature et l’accès au groupe d’applications ; les messages restent inchangés."
           }
         }
       }
@@ -6875,22 +6715,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utilisation et dépenses"
-          }
-        }
-      }
-    },
-    "Use a generated UUID for each new operation; reuse it only to retry that same request.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usa un UUID generado para cada operación nueva; reutilízalo solo para reintentar esa misma solicitud."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Utilisez un UUID généré pour chaque nouvelle opération ; réutilisez-le uniquement pour réessayer la même demande."
           }
         }
       }
@@ -10331,6 +10155,518 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les clés API sont enregistrées uniquement dans le Trousseau."
+          }
+        }
+      }
+    },
+    "%@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
+    "Allow SpamWise to control Mail in System Settings → Privacy & Security → Automation.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite que SpamWise controle Mail en Ajustes del Sistema → Privacidad y seguridad → Automatización."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez SpamWise à contrôler Mail dans Réglages Système → Confidentialité et sécurité → Automatisation."
+          }
+        }
+      }
+    },
+    "Check Activity in SpamWise for details.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulta la Actividad de SpamWise para ver los detalles."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consultez l’Activité de SpamWise pour plus de détails."
+          }
+        }
+      }
+    },
+    "Check Activity in SpamWise, then leave Request UUID empty to start a new request.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulta la Actividad de SpamWise y deja vacío el UUID de solicitud para iniciar una solicitud nueva."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consultez l’Activité de SpamWise, puis laissez l’UUID de la demande vide pour lancer une nouvelle demande."
+          }
+        }
+      }
+    },
+    "Check that SpamWise is allowed in System Settings → Privacy & Security → Contacts, then try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprueba que SpamWise tenga permiso en Ajustes del Sistema → Privacidad y seguridad → Contactos y vuelve a intentarlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez que SpamWise est autorisé dans Réglages Système → Confidentialité et sécurité → Contacts, puis réessayez."
+          }
+        }
+      }
+    },
+    "Choose Apple Mail as the connection in SpamWise Settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige Apple Mail como conexión en los Ajustes de SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez Apple Mail comme connexion dans les Réglages de SpamWise."
+          }
+        }
+      }
+    },
+    "Choose a smaller file.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige un archivo más pequeño."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un fichier plus petit."
+          }
+        }
+      }
+    },
+    "Correct selected Mail as ${label}": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corregir el correo seleccionado como ${label}"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corriger le message sélectionné en ${label}"
+          }
+        }
+      }
+    },
+    "Couldn’t read the file.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer el archivo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de lire le fichier."
+          }
+        }
+      }
+    },
+    "Couldn’t refresh Contacts.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron actualizar los Contactos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’actualiser les Contacts."
+          }
+        }
+      }
+    },
+    "Couldn’t show the Mail rule script.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo mostrar el script de regla de Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’afficher le script de règle Mail."
+          }
+        }
+      }
+    },
+    "Leave Request UUID empty to start a new request, or enter the UUID of an earlier run to retry it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deja vacío el UUID de solicitud para iniciar una solicitud nueva, o introduce el UUID de una ejecución anterior para reintentarla."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissez l’UUID de la demande vide pour lancer une nouvelle demande, ou saisissez l’UUID d’une exécution précédente pour la réessayer."
+          }
+        }
+      }
+    },
+    "Mail doesn’t have exactly one message selected.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no tiene exactamente un mensaje seleccionado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas exactement un message sélectionné."
+          }
+        }
+      }
+    },
+    "No unresolved Review items in the last %lld days.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay elementos de Revisar sin resolver en los últimos %lld días."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun élément À vérifier non résolu au cours des %lld derniers jours."
+          }
+        }
+      }
+    },
+    "Open SpamWise and finish setup.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre SpamWise y termina la configuración."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrez SpamWise et terminez la configuration."
+          }
+        }
+      }
+    },
+    "Preview selected Mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa del correo seleccionado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu du message sélectionné"
+          }
+        }
+      }
+    },
+    "Quit and reopen SpamWise, then try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cierra SpamWise, vuelve a abrirlo y vuelve a intentarlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quittez SpamWise, rouvrez-le, puis réessayez."
+          }
+        }
+      }
+    },
+    "Quit and reopen SpamWise. If the problem continues, restart your Mac or reinstall SpamWise.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cierra SpamWise y vuelve a abrirlo. Si el problema continúa, reinicia el Mac o reinstala SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quittez SpamWise et rouvrez-le. Si le problème persiste, redémarrez votre Mac ou réinstallez SpamWise."
+          }
+        }
+      }
+    },
+    "Reinstall SpamWise.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reinstala SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinstallez SpamWise."
+          }
+        }
+      }
+    },
+    "Select one message in Mail, then try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona un mensaje en Mail y vuelve a intentarlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez un message dans Mail, puis réessayez."
+          }
+        }
+      }
+    },
+    "SpamWise can’t open its data.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no puede abrir sus datos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise ne peut pas ouvrir ses données."
+          }
+        }
+      }
+    },
+    "SpamWise can’t save changes or act on mail; mail stays unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no puede guardar cambios ni actuar sobre el correo; el correo no cambia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise ne peut pas enregistrer de modifications ni agir sur les messages ; les messages restent inchangés."
+          }
+        }
+      }
+    },
+    "SpamWise couldn’t read or save its data.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no pudo leer ni guardar sus datos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas pu lire ni enregistrer ses données."
+          }
+        }
+      }
+    },
+    "SpamWise couldn’t read your contacts, so contacts it read earlier soon stop counting.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no pudo leer tus contactos, así que los contactos que leyó antes dejarán de contar pronto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas pu lire vos contacts ; ceux qu’il a lus auparavant cesseront bientôt de compter."
+          }
+        }
+      }
+    },
+    "SpamWise is set to read mail over IMAP, and this action works only with Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise está configurado para leer el correo por IMAP, y esta acción solo funciona con Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise est configuré pour lire les messages via IMAP, et cette action ne fonctionne qu’avec Mail."
+          }
+        }
+      }
+    },
+    "SpamWise isn’t allowed to control Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no tiene permiso para controlar Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’est pas autorisé à contrôler Mail."
+          }
+        }
+      }
+    },
+    "SpamWise setup isn’t finished.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuración de SpamWise no está terminada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration de SpamWise n’est pas terminée."
+          }
+        }
+      }
+    },
+    "The SpamWise action couldn’t run.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo ejecutar la acción de SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’exécuter l’action SpamWise."
+          }
+        }
+      }
+    },
+    "The script is missing from the SpamWise app.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falta el script en la aplicación SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le script est absent de l’app SpamWise."
+          }
+        }
+      }
+    },
+    "“%@” is larger than %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%1$@» ocupa más de %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %1$@ » dépasse %2$@."
+          }
+        }
+      }
+    },
+    "“%@” isn’t a UUID.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» no es un UUID."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » n’est pas un UUID."
+          }
+        }
+      }
+    },
+    "Advanced. Leave empty for a new request. To retry an interrupted run safely, enter the UUID it used.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avanzado. Déjalo vacío para una solicitud nueva. Para reintentar de forma segura una ejecución interrumpida, introduce el UUID que usó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avancé. Laissez vide pour une nouvelle demande. Pour réessayer sans risque une exécution interrompue, saisissez l’UUID qu’elle a utilisé."
           }
         }
       }

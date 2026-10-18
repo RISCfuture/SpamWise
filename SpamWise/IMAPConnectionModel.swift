@@ -7,7 +7,7 @@ import MailIntegration
 @MainActor @Observable final class IMAPConnectionModel {
   var host = ""
   var username = ""
-  var port = "993"
+  var port = String(IMAPConfiguration.defaultPort)
   var credential = ""
   var oauthBearer = false
   var accountID = "imap:" + UUID().uuidString

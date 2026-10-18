@@ -68,7 +68,9 @@ private struct DigestList: View {
       ContentUnavailableView(
         "Nothing to review",
         systemImage: "tray",
-        description: Text("No unresolved Review items in the last seven days.")
+        description: Text(
+          "No unresolved Review items in the last \(ReviewDigest.lookbackDays) days."
+        )
       )
     } else if let records {
       List(records) { record in

@@ -111,7 +111,7 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
   case notProbeMessage
   /// A non-sensitive description suitable for presentation.
   public var errorDescription: String? {
-    String(localized: "The Mail action is unavailable.", bundle: .module)
+    String(localized: "Couldn’t communicate with Mail.", bundle: .module)
   }
   /// The non-sensitive cause of the unavailable operation.
   public var failureReason: String? {
@@ -125,7 +125,7 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
       case .folderUnresolved:
         String(
           localized:
-            "The configured account or folder could not be found uniquely. Select the folder again.",
+            "The configured account or folder couldn’t be found uniquely.",
           bundle: .module
         )
       case .staleMessage:
@@ -138,6 +138,34 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
       case .scriptFailed:
         String(localized: "Mail could not complete the requested operation.", bundle: .module)
       default: resolutionReason ?? limitReason
+    }
+  }
+  /// What the user can do, when the failure is theirs to resolve.
+  public var recoverySuggestion: String? {
+    switch self {
+      case .permissionDenied:
+        String(
+          localized:
+            "Allow SpamWise to control Mail in System Settings → Privacy & Security → Automation.",
+          bundle: .module
+        )
+      case .folderUnresolved: String(localized: "Select the folder again.", bundle: .module)
+      case .notProbeMessage:
+        String(
+          localized:
+            "Select one message in the account’s Inbox whose subject starts with “[SpamWise Probe]”.",
+          bundle: .module
+        )
+      case .selectionCount(let minimum, let maximum) where minimum == 1 && maximum == 1:
+        String(localized: "Select one message in Mail, then try again.", bundle: .module)
+      case .selectionCount(let minimum, let maximum):
+        String(
+          localized:
+            "Select \(minimum, format: .number) to \(maximum, format: .number) messages in Mail, then try again.",
+          bundle: .module
+        )
+      case .timedOut: String(localized: "Check the message in Mail.", bundle: .module)
+      default: nil
     }
   }
   private var resolutionReason: String? {
@@ -174,8 +202,7 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
         )
       case .notProbeMessage:
         String(
-          localized:
-            "Select one message in the account’s Inbox whose subject starts with “[SpamWise Probe]”.",
+          localized: "The selected message isn’t a SpamWise probe message in an Inbox.",
           bundle: .module
         )
       default: nil
@@ -189,11 +216,11 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
           bundle: .module
         )
       case .selectionCount(let minimum, let maximum) where minimum == 1 && maximum == 1:
-        String(localized: "Select exactly one message in Mail.", bundle: .module)
+        String(localized: "Mail doesn’t have exactly one message selected.", bundle: .module)
       case .selectionCount(let minimum, let maximum):
         String(
           localized:
-            "Select \(minimum, format: .number) to \(maximum, format: .number) messages in Mail.",
+            "Mail doesn’t have \(minimum, format: .number) to \(maximum, format: .number) messages selected.",
           bundle: .module
         )
       case .folderLimit(let count, let depth):
@@ -205,7 +232,7 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
       case .timedOut:
         String(
           localized:
-            "Mail didn’t respond in time. Any requested change may still happen; check the message in Mail.",
+            "Mail didn’t respond in time, so a requested change may still happen.",
           bundle: .module
         )
       case .actionUnconfirmed:

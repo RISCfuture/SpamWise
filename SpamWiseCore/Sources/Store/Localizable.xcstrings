@@ -17,6 +17,22 @@
         }
       }
     },
+    "Enter the key or password again in SpamWise Settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a introducir la clave o la contraseña en los Ajustes de SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez à nouveau la clé ou le mot de passe dans les Réglages de SpamWise."
+          }
+        }
+      }
+    },
     "Keychain returned status %@.": {
       "localizations": {
         "es": {
@@ -33,6 +49,22 @@
         }
       }
     },
+    "Make sure your Mac is unlocked, then try again. If it keeps failing, restart your Mac.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asegúrate de que el Mac esté desbloqueado y vuelve a intentarlo. Si sigue fallando, reinicia el Mac."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez que votre Mac est déverrouillé, puis réessayez. Si l’échec persiste, redémarrez votre Mac."
+          }
+        }
+      }
+    },
     "No nonempty credential was found.": {
       "localizations": {
         "es": {
@@ -45,6 +77,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucun identifiant secret non vide n’a été trouvé."
+          }
+        }
+      }
+    },
+    "Quit and reopen SpamWise. If the problem continues, reinstall SpamWise.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cierra SpamWise y vuelve a abrirlo. Si el problema continúa, reinstala SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quittez SpamWise et rouvrez-le. Si le problème persiste, réinstallez SpamWise."
           }
         }
       }
@@ -125,6 +173,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le chemin de stockage désigne un dossier."
+          }
+        }
+      }
+    },
+    "Try again in a moment.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a intentarlo en un momento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayez dans un instant."
           }
         }
       }

@@ -21,6 +21,7 @@ struct OperationFailure: Equatable {
   init(_ error: any Error, retry: Recovery? = nil) {
     description = Self.describe(error)
     recovery = error as? IntegrationError == .permissionDenied ? .openAutomationSettings : retry
+    DeveloperDiagnostics.record(error)
   }
 
   /// A failure described by `message`.
@@ -34,30 +35,16 @@ struct OperationFailure: Equatable {
     if error is CancellationError {
       return String(localized: "Cancelled — no further actions requested.")
     }
-    if let localizedError = error as? any LocalizedError {
-      var details = [
-        localizedError.errorDescription, localizedError.failureReason,
-        localizedError.recoverySuggestion
-      ].compactMap { $0 }.filter { !$0.isEmpty }
-      if error as? IntegrationError == .permissionDenied {
-        details.append(
-          String(
-            localized:
-              "Automation permission denied. Allow SpamWise in System Settings → Privacy & Security → Automation."
-          )
-        )
-      } else if case .status = error as? KeychainError {
-        details.append(
-          String(
-            localized: "Keychain unavailable. Check the signed app’s shared Keychain entitlement."
-          )
-        )
-      }
-      if !details.isEmpty { return details.joined(separator: " ") }
+    let details = (error as? any LocalizedError).map {
+      [$0.errorDescription, $0.failureReason, $0.recoverySuggestion]
+        .compactMap { $0 }.filter { !$0.isEmpty }
     }
-    return String(
-      localized: "Operation unavailable. Mail stays unchanged; check Help for troubleshooting."
-    )
+    guard let details, !details.isEmpty else {
+      return String(
+        localized: "Operation unavailable. Mail stays unchanged; check Help for troubleshooting."
+      )
+    }
+    return details.joined(separator: " ")
   }
 
   /// An action offered next to a failure.

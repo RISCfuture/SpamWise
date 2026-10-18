@@ -100,7 +100,7 @@ import SpamWiseCore
 
   /// The redacted diagnostics that the status intent also returns.
   func diagnostics() async throws -> Data {
-    guard let store else { throw IntegrationError.unavailable }
+    guard let store else { throw SharedStorageError.unavailable }
     let state = try await StateRepository.load(store, StateSlices(records: .all, retries: .all))
     return try JSONEncoder.pretty.encode(DiagnosticSummary(state: state))
   }

@@ -26,6 +26,19 @@ public enum KeychainError: CredentialFailure, Sendable, LocalizedError {
         )
     }
   }
+  /// What the user can do to make the credential available again.
+  public var recoverySuggestion: String? {
+    switch self {
+      case .missing:
+        String(localized: "Enter the key or password again in SpamWise Settings.", bundle: .module)
+      case .status:
+        String(
+          localized:
+            "Make sure your Mac is unlocked, then try again. If it keeps failing, restart your Mac.",
+          bundle: .module
+        )
+    }
+  }
 }
 /// One credential, such as a model provider or Spamhaus key, in the shared data-protection Keychain group.
 public struct APIKeychain: Sendable {

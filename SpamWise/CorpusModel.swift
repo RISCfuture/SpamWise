@@ -4,8 +4,8 @@ import SpamWiseCore
 
 /// The reviewed corpus: messages the user labeled, imported or corrected.
 @MainActor @Observable final class CorpusModel {
-  private static let maximumImportFiles = 20
-  private static let maximumMessageBytes = 2_000_000
+  /// Files one reviewed-example import accepts.
+  static let maximumImportFiles = 20
   /// Importing, relabeling and forgetting reviewed examples.
   let operation = TrackedOperation()
   @ObservationIgnored private let services: AppServices
@@ -29,7 +29,7 @@ import SpamWiseCore
       var messages: [ParsedMessage] = []
       for url in urls {
         try Task.checkCancellation()
-        let data = try SecurityScopedFile.read(url, limit: Self.maximumMessageBytes)
+        let data = try url.readSecurityScoped(maximumBytes: MIMEParser.maximumMessageBytes)
         messages.append(try MIMEParser().parse(data))
       }
       try await CorpusManagement.importMessages(messages, label: label, store: store)

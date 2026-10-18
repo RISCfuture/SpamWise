@@ -63,14 +63,7 @@ import SpamWiseCore
     self.store = store
     hasLoadedState = store == nil
     if store == nil, reportsMissingStore {
-      storageStatus = .failure(
-        OperationFailure(
-          message: String(
-            localized:
-              "Shared storage unavailable. Check signing and App Group access; mail stays unchanged."
-          )
-        )
-      )
+      storageStatus = .failure(OperationFailure(SharedStorageError.unavailable))
     }
   }
 
@@ -84,11 +77,7 @@ import SpamWiseCore
       try await checkDigest(store)
       if case .failure = storageStatus, !needsRecovery { storageStatus = nil }
     } catch {
-      storageStatus = .failure(
-        OperationFailure(
-          message: String(localized: "Shared storage unavailable; mail stays unchanged.")
-        )
-      )
+      storageStatus = .failure(OperationFailure(error))
     }
   }
 

@@ -3,7 +3,8 @@ public import Foundation
 /// Atomic editing of bounded content rules; sender rules always retain precedence.
 public enum ContentRuleManagement {
   private static let maximumRules = RetentionLimits.contentRules
-  private static let maximumArchiveBytes = 1_000_000
+  /// The largest content-rule archive, in bytes, that SpamWise imports.
+  public static let maximumArchiveBytes = 1_000_000
   /// Exports versioned content rules without message samples or credentials.
   public static func exportRules(_ rules: [ContentRule]) throws -> Data {
     try validate(rules)

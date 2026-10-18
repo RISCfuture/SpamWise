@@ -23,7 +23,7 @@ import MailIntegration
     let arguments = ProcessInfo.processInfo.arguments
     let uiTesting = arguments.contains(uiTestingArgument)
     let automation = uiTesting && arguments.contains(uiAutomationArgument)
-    let store = try? Store(url: uiTesting ? isolatedStoreURL() : Store.sharedURL())
+    let store = openStore { try uiTesting ? isolatedStoreURL() : Store.sharedURL() }
     return Self(
       store: store,
       pipeline: store.map { pipeline(for: $0, automationFixture: automation) },
@@ -42,6 +42,13 @@ import MailIntegration
       preferences: isolatedPreferences(),
       uiTesting: true
     )
+  }
+
+  private static func openStore(at url: () throws -> URL) -> Store? {
+    do { return try Store(url: url()) } catch {
+      DeveloperDiagnostics.recordStorageFailure(error)
+      return nil
+    }
   }
 
   private static func isolatedStoreURL() -> URL {
@@ -85,13 +92,13 @@ import MailIntegration
 
   /// The store, or the error that explains why shared storage is unavailable.
   func requireStore() throws -> Store {
-    guard let store else { throw IntegrationError.unavailable }
+    guard let store else { throw SharedStorageError.unavailable }
     return store
   }
 
   /// The pipeline, or the error that explains why shared storage is unavailable.
   func requirePipeline() throws -> Pipeline {
-    guard let pipeline else { throw IntegrationError.unavailable }
+    guard let pipeline else { throw SharedStorageError.unavailable }
     return pipeline
   }
 }
@@ -99,7 +106,7 @@ import MailIntegration
 extension AppServices {
   /// An adapter for the saved IMAP connection; actions stay gated by the persisted account validation.
   func imapAdapter() async throws -> IMAPAdapter {
-    guard let store else { throw IMAPSetupError.storageUnavailable }
+    let store = try requireStore()
     guard let connection = try await IMAPAppConnection.saved(in: store) else {
       throw IMAPSetupError.noSavedConnection
     }

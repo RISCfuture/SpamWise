@@ -8,8 +8,8 @@ import MessageModel
 public struct RspamdLookup: Sendable {
   /// Longest time a scan may take, even when the caller allows more.
   public static let maximumScanTime = Duration.seconds(3)
-  private static let endpoint = URL(string: "http://127.0.0.1:11333/checkv2")!
-  private static let maximumMessageBytes = 2_000_000
+  /// The fixed loopback address of the scanner's HTTP interface.
+  public static let endpoint = URL(string: "http://127.0.0.1:11333/checkv2")!
   private static let maximumResponseBytes = 65_536
   private static let maximumAbsoluteScore: Double = 10_000
   private static let maximumSymbols = 200
@@ -62,7 +62,7 @@ public struct RspamdLookup: Sendable {
       status: .unknown
     )
     let limit = Self.maximumScanTime / .seconds(1), timeout = timeout ?? limit
-    guard raw.count <= Self.maximumMessageBytes, timeout.isFinite, timeout > 0 else {
+    guard raw.count <= MIMEParser.maximumMessageBytes, timeout.isFinite, timeout > 0 else {
       return unknown
     }
     do {

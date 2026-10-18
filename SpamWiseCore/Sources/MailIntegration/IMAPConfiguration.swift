@@ -3,13 +3,15 @@ import SpamWiseCore
 
 /// Explicit account connection settings. Secrets are supplied separately for each connection.
 public struct IMAPConfiguration: Codable, Sendable, Equatable {
+  /// The implicit-TLS IMAP port used when none is given.
+  public static let defaultPort: UInt16 = 993
   private static let maximumIdentifierBytes = 256
   private static let maximumHostBytes = 253
   /// Stable application account identifier, distinct from Apple Mail account identifiers.
   public var id: String
   /// TLS certificate hostname of the IMAP server.
   public var host: String
-  /// Implicit TLS port; defaults to 993.
+  /// Implicit TLS port; defaults to ``defaultPort``.
   public var port: UInt16
   /// Authentication identity, never inferred from Mail databases.
   public var username: String
@@ -19,7 +21,7 @@ public struct IMAPConfiguration: Codable, Sendable, Equatable {
   public init(
     id: String,
     host: String,
-    port: UInt16 = 993,
+    port: UInt16 = defaultPort,
     username: String,
     allowsActions: Bool = false
   ) {
@@ -31,7 +33,7 @@ public struct IMAPConfiguration: Codable, Sendable, Equatable {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     id = try values.decode(String.self, forKey: .id)
     host = try values.decode(String.self, forKey: .host)
-    port = try values.decodeIfPresent(UInt16.self, forKey: .port) ?? 993
+    port = try values.decodeIfPresent(UInt16.self, forKey: .port) ?? Self.defaultPort
     username = try values.decode(String.self, forKey: .username)
     allowsActions = try values.decodeIfPresent(Bool.self, forKey: .allowsActions) ?? false
     try validate()

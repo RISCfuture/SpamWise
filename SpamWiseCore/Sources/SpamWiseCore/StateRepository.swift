@@ -1,10 +1,9 @@
 import Foundation
 import SwiftData
+import Classifier
 
 /// Typed transactions over the shared application state.
 public enum StateRepository {
-  private static let correctionLimitRange = 0...20
-  private static let bodyTokenBudgetRange = 100...4000
   /**
    Reads the selected slices; every unselected collection is empty.
 
@@ -82,15 +81,18 @@ extension StateRepository {
     }
   }
   private static func clamp(_ settings: inout Settings) {
-    settings.correctionLimit = min(
-      correctionLimitRange.upperBound,
-      max(correctionLimitRange.lowerBound, settings.correctionLimit)
+    settings.correctionLimit = clamped(
+      settings.correctionLimit,
+      to: ClassificationLimits.correctionLimitRange
     )
-    settings.bodyTokenBudget = min(
-      bodyTokenBudgetRange.upperBound,
-      max(bodyTokenBudgetRange.lowerBound, settings.bodyTokenBudget)
+    settings.bodyTokenBudget = clamped(
+      settings.bodyTokenBudget,
+      to: ClassificationLimits.bodyTokenBudgetRange
     )
     if settings.validatedAccounts.isEmpty { settings.dryRun = true }
+  }
+  private static func clamped(_ value: Int, to range: ClosedRange<Int>) -> Int {
+    min(range.upperBound, max(range.lowerBound, value))
   }
 }
 

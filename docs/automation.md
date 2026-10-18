@@ -13,13 +13,15 @@ The Filtering Status App Shortcut exposes status without building a custom short
 
 ## Requests and retries
 
-Preview and correction require a **Request UUID**. Generate a UUID for each new
-operation and retain it for retries. A completed duplicate returns its original
-JSON result without a new classification or action. Reusing a UUID for a different
-operation or selected message fails. An interrupted/uncertain request also fails on
-retry instead of risking another move or charge. Inspect Activity before creating
-another request. Claims survive Activity retention and have a hard 10,000-request
-limit; saturation fails without evicting old protection.
+Each preview or correction runs as a new request unless its optional, advanced
+**Request UUID** parameter is set. To make retries safe, generate a UUID for the
+operation and pass the same value on every retry. A completed duplicate returns
+its original JSON result without a new classification or action. Reusing a UUID
+for a different operation or selected message fails. An interrupted/uncertain
+request also fails on retry instead of risking another move or charge. Inspect
+Activity before creating another request. Claims survive Activity retention and
+have a hard 10,000-request limit; saturation fails without evicting old
+protection.
 
 Replies contain `recordID`, optional `label`, `action`, `outcome` and a bounded
 `reason`. A label is not an action acknowledgement. Cancellation stops pending work;
@@ -33,9 +35,9 @@ action's result as its input. The explicit output is required: with only the las
 action's implicit output, `shortcuts run` waits indefinitely even though the intent
 has returned. The **Filtering Status** App Shortcut is not a saved shortcut, so
 `shortcuts run 'Filtering Status'` cannot find it; save a named shortcut instead.
-For preview/correction, supply the caller's saved UUID as the action's Request UUID,
-rather than generating another UUID during a retry. Then invoke the saved shortcut
-using Apple's CLI, for example:
+For a retryable preview or correction, supply the caller's saved UUID as the
+action's Request UUID rather than generating another UUID during a retry. Then
+invoke the saved shortcut using Apple's CLI, for example:
 
 ```sh
 shortcuts run 'SpamWise Status' --output-path "$PWD/status.json" </dev/null

@@ -1,8 +1,16 @@
 import SwiftUI
 
 @MainActor enum Help {
+  private static let bookNameKey = "CFBundleHelpBookName"
+
+  /// The registered help book, as the app's Info.plist names it.
+  private static var bookName: String? {
+    Bundle.main.object(forInfoDictionaryKey: bookNameKey) as? String
+  }
+
   static func open(_ page: String) {
-    NSHelpManager.shared.openHelpAnchor(page, inBook: "codes.tim.SpamWise.help")
+    guard let bookName else { return }
+    NSHelpManager.shared.openHelpAnchor(page, inBook: bookName)
   }
 }
 

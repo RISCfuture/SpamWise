@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Allow SpamWise to control Mail in System Settings → Privacy & Security → Automation.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite que SpamWise controle Mail en Ajustes del Sistema → Privacidad y seguridad → Automatización."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez SpamWise à contrôler Mail dans Réglages Système → Confidentialité et sécurité → Automatisation."
+          }
+        }
+      }
+    },
     "An account can trust at most eight servers.": {
       "localizations": {
         "es": {
@@ -29,6 +45,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Une tentative précédente avec cet identifiant de demande n’a pas abouti ; elle n’a donc pas été répétée."
+          }
+        }
+      }
+    },
+    "Check the message in Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa el mensaje en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifiez le message dans Mail."
+          }
+        }
+      }
+    },
+    "Couldn’t communicate with Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo comunicar con Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de communiquer avec Mail."
           }
         }
       }
@@ -257,18 +305,18 @@
         }
       }
     },
-    "Mail didn’t respond in time. Any requested change may still happen; check the message in Mail.": {
+    "Mail didn’t respond in time, so a requested change may still happen.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mail no respondió a tiempo. Es posible que el cambio solicitado aún se produzca; revisa el mensaje en Mail."
+            "value": "Mail no respondió a tiempo, así que es posible que el cambio solicitado aún se produzca."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mail n’a pas répondu à temps. La modification demandée peut encore avoir lieu ; vérifiez le message dans Mail."
+            "value": "Mail n’a pas répondu à temps ; la modification demandée peut donc encore avoir lieu."
           }
         }
       }
@@ -285,6 +333,44 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mail n’a pas affiché le résultat attendu avant la fin de la période d’observation."
+          }
+        }
+      }
+    },
+    "Mail doesn’t have %@ to %@ messages selected.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Mail doesn’t have %1$@ to %2$@ messages selected."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no tiene de %@ a %@ mensajes seleccionados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas de %@ à %@ messages sélectionnés."
+          }
+        }
+      }
+    },
+    "Mail doesn’t have exactly one message selected.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no tiene exactamente un mensaje seleccionado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas exactement un message sélectionné."
           }
         }
       }
@@ -503,40 +589,40 @@
         }
       }
     },
-    "Select %@ to %@ messages in Mail.": {
+    "Select %@ to %@ messages in Mail, then try again.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "new",
-            "value": "Select %1$@ to %2$@ messages in Mail."
+            "value": "Select %1$@ to %2$@ messages in Mail, then try again."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Selecciona de %@ a %@ mensajes en Mail."
+            "value": "Selecciona de %@ a %@ mensajes en Mail y vuelve a intentarlo."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sélectionnez de %@ à %@ messages dans Mail."
+            "value": "Sélectionnez de %@ à %@ messages dans Mail, puis réessayez."
           }
         }
       }
     },
-    "Select exactly one message in Mail.": {
+    "Select one message in Mail, then try again.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Selecciona exactamente un mensaje en Mail."
+            "value": "Selecciona un mensaje en Mail y vuelve a intentarlo."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sélectionnez exactement un message dans Mail."
+            "value": "Sélectionnez un message dans Mail, puis réessayez."
           }
         }
       }
@@ -553,6 +639,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sélectionnez un message de la boîte de réception du compte dont l’objet commence par « [SpamWise Probe] »."
+          }
+        }
+      }
+    },
+    "Select the folder again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a seleccionar la carpeta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez à nouveau le dossier."
           }
         }
       }
@@ -675,22 +777,6 @@
         }
       }
     },
-    "The Mail action is unavailable.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La acción de Mail no está disponible."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’action Mail est indisponible."
-          }
-        }
-      }
-    },
     "The Mail action was not attempted; the message is unchanged.": {
       "localizations": {
         "es": {
@@ -755,18 +841,18 @@
         }
       }
     },
-    "The configured account or folder could not be found uniquely. Select the folder again.": {
+    "The configured account or folder couldn’t be found uniquely.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pudo identificar de forma única la cuenta o carpeta configurada. Seleccione la carpeta de nuevo."
+            "value": "No se pudo identificar de forma única la cuenta o carpeta configurada."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le compte ou le dossier configuré n’a pas pu être identifié de façon unique. Sélectionnez à nouveau le dossier."
+            "value": "Le compte ou le dossier configuré n’a pas pu être identifié de façon unique."
           }
         }
       }
@@ -1125,6 +1211,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le fichier de règles est invalide ou dépasse la limite d’importation."
+          }
+        }
+      }
+    },
+    "The selected message isn’t a SpamWise probe message in an Inbox.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje seleccionado no es un mensaje de prueba de SpamWise en una bandeja de entrada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message sélectionné n’est pas un message de test SpamWise dans une boîte de réception."
           }
         }
       }

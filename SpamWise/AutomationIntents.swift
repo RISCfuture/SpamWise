@@ -23,14 +23,17 @@ struct PreviewSelectedMailIntent: AppIntent, CancellableIntent {
   )
   static var supportedModes: IntentModes { .foreground }
   static var authenticationPolicy: IntentAuthenticationPolicy { .requiresLocalDeviceAuthentication }
-  static var parameterSummary: some ParameterSummary {
-    Summary("Preview selected Mail with request \(\.$requestID)")
-  }
-  @Parameter(title: "Request UUID") var requestID: String
+  static var parameterSummary: some ParameterSummary { Summary("Preview selected Mail") }
+  @Parameter(
+    title: "Request UUID",
+    description:
+      "Advanced. Leave empty for a new request. To retry an interrupted run safely, enter the UUID it used."
+  )
+  var requestID: String?
   @Dependency var model: AppModel
 
   func perform() async throws -> some IntentResult & ReturnsValue<String> {
-    guard let id = UUID(uuidString: requestID) else { throw AutomationIntentError.invalidRequest }
+    let id = try AutomationRequestID.resolve(requestID)
     let model = model
     let task = Task { try await AutomationContext.execute(.preview, id: id, model: model) }
     let result = try await withIntentCancellationHandler {
@@ -50,14 +53,19 @@ struct CorrectSelectedMailIntent: AppIntent, CancellableIntent {
   static var supportedModes: IntentModes { .foreground }
   static var authenticationPolicy: IntentAuthenticationPolicy { .requiresLocalDeviceAuthentication }
   static var parameterSummary: some ParameterSummary {
-    Summary("Correct selected Mail as \(\.$label) with request \(\.$requestID)")
+    Summary("Correct selected Mail as \(\.$label)")
   }
   @Parameter(title: "Label") var label: AutomationLabel
-  @Parameter(title: "Request UUID") var requestID: String
+  @Parameter(
+    title: "Request UUID",
+    description:
+      "Advanced. Leave empty for a new request. To retry an interrupted run safely, enter the UUID it used."
+  )
+  var requestID: String?
   @Dependency var model: AppModel
 
   func perform() async throws -> some IntentResult & ReturnsValue<String> {
-    guard let id = UUID(uuidString: requestID) else { throw AutomationIntentError.invalidRequest }
+    let id = try AutomationRequestID.resolve(requestID)
     let operation = AutomationOperation.correct(label.label)
     let model = model
     let task = Task { try await AutomationContext.execute(operation, id: id, model: model) }
@@ -67,6 +75,24 @@ struct CorrectSelectedMailIntent: AppIntent, CancellableIntent {
       task.cancel()
     }
     return .result(value: result)
+  }
+}
+
+/**
+ The identifier that protects one preview or correction against repetition.
+
+ Each run gets a new identifier unless the shortcut supplies one. Running again with the same
+ identifier returns the saved result instead of repeating the work.
+ */
+nonisolated enum AutomationRequestID {
+  /// The identifier in `text`, or a new one when `text` is empty or absent.
+  static func resolve(_ text: String?) throws -> UUID {
+    let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    guard !trimmed.isEmpty else { return UUID() }
+    guard let id = UUID(uuidString: trimmed) else {
+      throw AutomationIntentError.invalidRequestID(trimmed)
+    }
+    return id
   }
 }
 
@@ -100,28 +126,21 @@ struct ExportSpamWiseDiagnosticsIntent: AppIntent {
 
 nonisolated private enum AutomationContext {
   static func diagnostics(model: AppModel) async throws -> Data {
-    do {
-      guard let store = await MainActor.run(body: { model.services.store }) else {
-        throw IntegrationError.unavailable
-      }
-      let state = try await StateRepository.load(store, StateSlices(records: .all, retries: .all))
-      return try JSONEncoder().encode(DiagnosticSummary(state: state))
-    } catch { throw AutomationIntentError.unavailable }
+    do { return try await model.activity.diagnostics() } catch {
+      throw AutomationIntentError(error)
+    }
   }
+
   static func execute(_ operation: AutomationOperation, id: UUID, model: AppModel) async throws
     -> String
   {
     do {
       try Task.checkCancellation()
-      let (store, pipeline, adapter) = await MainActor.run {
-        (model.services.store, model.services.pipeline, model.services.appleMail)
+      let (store, pipeline, adapter) = try await MainActor.run {
+        let services = model.services
+        return (try services.requireStore(), try services.requirePipeline(), services.appleMail)
       }
-      guard let store, let pipeline else { throw IntegrationError.unavailable }
-      let settings = try await StateRepository.load(store, StateSlices()).settings
-      guard settings.onboardingComplete, settings.advancedOptions.transport == .appleMail else {
-        throw IntegrationError.unavailable
-      }
-      let selected = try await adapter.selectedMessage()
+      let selected = try await selectedMessage(from: adapter, store: store)
       let reply = try await pipeline.execute(
         operation,
         requestID: id,
@@ -131,22 +150,19 @@ nonisolated private enum AutomationContext {
       let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
       return String(decoding: try encoder.encode(reply), as: UTF8.self)
     } catch is CancellationError { throw CancellationError() } catch {
-      throw AutomationIntentError.unavailable
+      throw AutomationIntentError(error)
     }
   }
-}
 
-nonisolated private enum AutomationIntentError: MailIntegrationFailure, LocalizedError,
-  CustomLocalizedStringResourceConvertible
-{
-  case invalidRequest, unavailable
-  var localizedStringResource: LocalizedStringResource {
-    switch self {
-      case .invalidRequest:
-        "Use a generated UUID for each new operation; reuse it only to retry that same request."
-      case .unavailable:
-        "Check setup and Activity in SpamWise. Select one Mail message. Uncertain requests are never replayed."
+  /// Mail's one selected message, once setup is finished with Apple Mail as the transport.
+  private static func selectedMessage(from adapter: AppleMailAdapter, store: Store) async throws
+    -> MailEnvelope
+  {
+    let settings = try await StateRepository.load(store, StateSlices()).settings
+    guard settings.onboardingComplete else { throw AutomationIntentError.setupIncomplete }
+    guard settings.advancedOptions.transport == .appleMail else {
+      throw AutomationIntentError.unsupportedTransport
     }
+    return try await adapter.selectedMessage()
   }
-  var errorDescription: String? { String(localized: localizedStringResource) }
 }

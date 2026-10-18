@@ -23,7 +23,8 @@ public enum BackupError: BackupFailure, LocalizedError, Sendable {
 
 /// Encrypted portable learning state; excludes credentials, action claims and account validation.
 public enum StateBackup {
-  private static let maximumBytes = 64 * 1024 * 1024
+  /// The largest backup file, in bytes, that ``restore(_:recoveryKey:store:)`` reads.
+  public static let maximumBytes = 64 * 1024 * 1024
   private static let keyBytes = 32
   private static let slices = StateSlices(
     [.rules, .contentRules, .corrections, .learning, .undo],

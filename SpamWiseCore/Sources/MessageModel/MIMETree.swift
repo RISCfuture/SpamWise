@@ -87,7 +87,6 @@ extension MIMETree {
 
   /// The part count and issues accumulated while reading one message.
   private struct Reader {
-    private static let maximumMessageBytes = 2_000_000
     private static let maximumHeaderBytes = 65_536
     private static let maximumNestingDepth = 12
     private static let maximumParts = 128
@@ -100,7 +99,7 @@ extension MIMETree {
 
     /// Converts bytes to the parser's byte-preserving Latin-1 text with LF line endings.
     static func source(_ data: Data) throws -> String {
-      guard data.count <= maximumMessageBytes else { throw ParseError.tooLarge }
+      guard data.count <= MIMEParser.maximumMessageBytes else { throw ParseError.tooLarge }
       return String(String.UnicodeScalarView(data.map(Unicode.Scalar.init)))
         .replacingOccurrences(of: "\r\n", with: "\n")
     }

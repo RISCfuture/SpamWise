@@ -181,7 +181,8 @@ public struct ReviewedLabel: Codable, Sendable, Equatable, Identifiable {
 
 /// Local weekly summary; it never sends mail or changes message state.
 public struct ReviewDigest: Sendable {
-  private static let lookbackDays = 7
+  /// Days of Activity the digest covers.
+  public static let lookbackDays = 7
   /// Calendar week identity used to avoid repeated automatic presentation.
   public let week: String
   /// Latest still-unreviewed decisions in the preceding seven days.
