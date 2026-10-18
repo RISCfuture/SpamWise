@@ -131,7 +131,7 @@ def evaluate(executable, output, run, budget_store):
     """Invoke one isolated CLI run, live when an evaluation budget store is supplied."""
     directory = output / run["id"]
     arguments = [
-        "--input",
+        "corpus",
         str(directory / "corpus"),
         "--state",
         str(directory / "state.json"),
@@ -147,15 +147,14 @@ def evaluate(executable, output, run, budget_store):
             str(executable),
             "claude",
             "--live",
+            *arguments,
             "--budget-store",
             str(budget_store),
         ]
         if budget_store
-        else [str(executable), "--model", "mock"]
+        else [str(executable), *arguments, "--model", "mock"]
     )
-    completed = subprocess.run(
-        command + arguments, capture_output=True, timeout=90, check=False
-    )
+    completed = subprocess.run(command, capture_output=True, timeout=90, check=False)
     if completed.returncode != 0:
         return {
             **run,

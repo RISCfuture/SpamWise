@@ -10,7 +10,7 @@ import SpamWiseCore
       truth: .good,
       label: .junk,
       confidence: 96,
-      path: "model",
+      path: .model,
       reason: "wrong"
     ),
     EvaluationObservation(
@@ -18,7 +18,7 @@ import SpamWiseCore
       truth: .good,
       label: nil,
       confidence: nil,
-      path: "error",
+      path: .error,
       reason: "timeout"
     ),
     EvaluationObservation(
@@ -26,7 +26,7 @@ import SpamWiseCore
       truth: .junk,
       label: .junk,
       confidence: 99,
-      path: "model",
+      path: .model,
       reason: "lure"
     ),
     EvaluationObservation(
@@ -34,7 +34,7 @@ import SpamWiseCore
       truth: .graymail,
       label: .junk,
       confidence: 99,
-      path: "model",
+      path: .model,
       reason: "bulk"
     )
   ]
@@ -43,8 +43,13 @@ import SpamWiseCore
   #expect(report.binary.falsePositives == 1)
   #expect(report.binary.junkPrecision == 0.5)
   #expect(report.unclassified == 1)
-  #expect(report.calibration.reduce(0) { $0 + $1.count } == 2)
   #expect(report.misclassifications.count == 3)
+  #expect(report.perPath[.model]?.falsePositives == 1)
+  let calibration = ThresholdCalibration(observations: observations)
+  #expect(calibration.curve.first?.modelJunkVerdicts == 2)
+  let strict = try #require(calibration.curve.first { $0.threshold == 97 })
+  #expect(strict.modelJunkVerdicts == 1 && strict.cumulativePrecision == 1)
+  #expect(strict.metrics.falsePositives == 0 && strict.metrics.truePositives == 1)
   #expect(try #require(BinomialBound.upper95(errors: 0, trials: 1500)) <= 0.002)
   #expect(try #require(BinomialBound.upper95(errors: 1, trials: 2)) > 0.97)
   #expect(BinomialBound.upper95(errors: 0, trials: 0) == nil)
@@ -171,14 +176,16 @@ import SpamWiseCore
   let original = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
   var leaked = original
   leaked["trainingCampaigns"] = ["fraud"]
-  #expect(throws: ComparisonError.invalidManifest) {
+  #expect(throws: ComparisonManifestError.trainingCampaign("fraud")) {
     try ComparisonReport(data: JSONSerialization.data(withJSONObject: leaked))
   }
   var missing = original
   var runs = try #require(missing["runs"] as? [[String: Any]])
   var results = try #require(runs[0]["results"] as? [[String: Any]])
   results.removeLast(); runs[0]["results"] = results; missing["runs"] = runs
-  #expect(throws: ComparisonError.invalidManifest) {
+  #expect(
+    throws: ComparisonManifestError.missingResult(system: "Synthetic A", messageID: "newsletter")
+  ) {
     try ComparisonReport(data: JSONSerialization.data(withJSONObject: missing))
   }
 }
@@ -255,32 +262,32 @@ import SpamWiseCore
     ThreatEvaluationObservation(
       sampleID: "a",
       language: "en",
-      truth: ["spam": false],
+      truth: [.spam: false],
       assessment: assessment
     ),
     ThreatEvaluationObservation(
       sampleID: "b",
       language: "es",
-      truth: ["spam": false],
+      truth: [.spam: false],
       assessment: nil
     ),
     ThreatEvaluationObservation(
       sampleID: "c",
       language: "fr",
-      truth: ["phishing": true],
+      truth: [.phishing: true],
       assessment: nil
     )
   ]
   let report = try ThreatEvaluationReport(observations: rows)
-  #expect(report.objectives["spam"]?.falsePositives == 1)
-  #expect(report.objectives["spam"]?.assessedNegatives == 1)
-  #expect(report.objectives["spam"]?.unassessed == 1)
-  #expect(report.objectives["phishing"]?.negatives == 0)
-  #expect(report.objectives["phishing"]?.unlabeled == 2)
-  #expect(report.objectives["phishing"]?.recall == 0)
-  #expect(report.objectives["phishing"]?.falsePositiveUpper95 == nil)
-  #expect(report.languages["es"]?["spam"]?.assessedNegatives == 0)
-  #expect(throws: ComparisonError.self) {
+  #expect(report.objectives[.spam]?.falsePositives == 1)
+  #expect(report.objectives[.spam]?.assessedNegatives == 1)
+  #expect(report.objectives[.spam]?.unassessed == 1)
+  #expect(report.objectives[.phishing]?.negatives == 0)
+  #expect(report.objectives[.phishing]?.unlabeled == 2)
+  #expect(report.objectives[.phishing]?.recall == 0)
+  #expect(report.objectives[.phishing]?.falsePositiveUpper95 == nil)
+  #expect(report.languages["es"]?[.spam]?.assessedNegatives == 0)
+  #expect(throws: ThreatReportError.duplicateSample("a")) {
     try ThreatEvaluationReport(observations: rows + [rows[0]])
   }
 }
@@ -310,4 +317,84 @@ func `refuses evaluation spending without an explicit ledger and ceiling and sto
   }
   let ledger = try #require(try await EvaluationBudget.load(store))
   #expect(ledger.committedUSD == 0.5 && ledger.calls == 2)
+  let message = try MIMEParser().parse(fixture("filler-spam"))
+  let calls = Counter()
+  let cached = try CachedClassifier(
+    directory: url.deletingLastPathComponent().appending(path: "cache"),
+    model: "budgeted",
+    underlying: BudgetedClassifier(
+      MockClassifier { _ in
+        calls.increment()
+        return Verdict(label: .junk, confidence: 99, reason: "lure")
+      },
+      store: store,
+      upperBoundUSD: 0.25
+    )
+  )
+  await #expect(throws: BudgetError.exhausted) {
+    _ = try await cached.classify(.init(message: message, evidence: .init(message: message)))
+  }
+  #expect(calls.value == 0)
+  #expect(await cached.providerCalls == 0)
+  #expect(await cached.refusal is BudgetError)
+}
+
+@Test func `selects the lowest threshold meeting each target on training data and validates it`() {
+  let training =
+    rows(3000, truth: .good, label: .inbox, partition: .training)
+    + rows(2, truth: .good, label: .junk, confidence: 92, partition: .training)
+    + rows(10, truth: .junk, label: .junk, confidence: 95, partition: .training)
+  let heldOut =
+    rows(3000, truth: .good, label: .inbox, partition: .heldOut)
+    + rows(1, truth: .good, label: .junk, confidence: 96, partition: .heldOut)
+  let calibration = ThresholdCalibration(observations: training + heldOut)
+  let selected = Dictionary(
+    uniqueKeysWithValues: calibration.strengths.map { ($0.strength, $0) }
+  )
+  #expect(selected[.aggressive]?.selectedThreshold == 85)
+  #expect(selected[.balanced]?.selectedThreshold == 93)
+  #expect(selected[.conservative]?.selectedThreshold == 93)
+  #expect(selected[.balanced]?.validated == true)
+  #expect(selected[.conservative]?.validated == false)
+  #expect(selected[.balanced]?.current.falsePositives == 1)
+  #expect(calibration.curve.first { $0.threshold == 93 }?.cumulativePrecision == 10.0 / 11)
+}
+
+@Test func `seeds receipt history for the order-confirmation fixture sender`() throws {
+  let url = URL(filePath: #filePath).deletingLastPathComponent()
+    .appending(path: "../../../eval/fixture-state.json").standardized
+  let state = try JSONDecoder().decode(AppState.self, from: Data(contentsOf: url))
+  let message = try MIMEParser().parse(
+    Data(
+      contentsOf: url.deletingLastPathComponent().appending(
+        path: "fixtures/good/order-confirmation.eml"
+      )
+    )
+  )
+  let history = try #require(state.histories["eval"]).summary(
+    address: message.fromAddress,
+    domain: DomainResolver().domain(ofAddress: message.fromAddress)
+  )
+  #expect(history.receiptCount > 0)
+  #expect((history.authenticatedReceiptCount ?? 0) > 0)
+}
+
+private func rows(
+  _ count: Int,
+  truth: EvaluationTruth,
+  label: MailLabel,
+  confidence: Int = 90,
+  partition: LearningPartition
+) -> [EvaluationObservation] {
+  (0..<count).map {
+    EvaluationObservation(
+      file: "\(truth.rawValue)/\(partition.rawValue)/\($0)",
+      truth: truth,
+      label: label,
+      confidence: confidence,
+      path: .model,
+      reason: "synthetic",
+      partition: partition
+    )
+  }
 }

@@ -120,9 +120,36 @@ public struct Decision: Codable, Sendable, Equatable {
     review: ReviewTreatment = .orangeFlag,
     concealsContent: Bool = false
   ) throws -> Decision {
+    try evaluate(
+      verdict,
+      reason: reason,
+      junkThreshold: strength.threshold,
+      review: review,
+      concealsContent: concealsContent
+    )
+  }
+  /**
+   Applies deterministic policy at an explicit Junk confidence threshold, as calibration
+   reports do when they score thresholds between the named strengths.
+
+   - Parameters:
+     - verdict: The validated classification.
+     - reason: Why the verdict was reached; defaults to the verdict's own explanation.
+     - junkThreshold: The minimum confidence for a Junk action; lower Junk verdicts become Review.
+     - review: The annotation for Review messages.
+     - concealsContent: Whether part of the message couldn't be read reliably; an Inbox verdict
+       then becomes Review for ``DecisionReason/concealedContent``.
+   */
+  public static func evaluate(
+    _ verdict: Verdict,
+    reason: DecisionReason? = nil,
+    junkThreshold: Int,
+    review: ReviewTreatment = .orangeFlag,
+    concealsContent: Bool = false
+  ) throws -> Decision {
     _ = try verdict.validated()
     var label =
-      verdict.label == .junk && verdict.confidence < strength.threshold
+      verdict.label == .junk && verdict.confidence < junkThreshold
       ? MailLabel.review : verdict.label
     var reason = reason ?? .model(verdict.reason)
     if concealsContent, label == .inbox { (label, reason) = (.review, .concealedContent) }

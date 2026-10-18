@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 public import SpamWiseCore
 
 /// One independently labeled sample; omitted objectives have no known truth label.
@@ -8,7 +8,7 @@ public struct ThreatEvaluationObservation: Codable, Sendable {
   /// Independently recorded language code, or unknown.
   public var language: String
   /// Explicit objective labels; never inferred from mail-folder membership or another objective.
-  public var truth: [String: Bool]
+  public var truth: [ThreatKind: Bool]
   /// Detector result; nil means no assessment, including historical records.
   public var assessment: ThreatAssessment?
 
@@ -16,7 +16,7 @@ public struct ThreatEvaluationObservation: Codable, Sendable {
   public init(
     sampleID: String,
     language: String,
-    truth: [String: Bool],
+    truth: [ThreatKind: Bool],
     assessment: ThreatAssessment?
   ) {
     self.sampleID = sampleID; self.language = language; self.truth = truth
@@ -48,8 +48,8 @@ public struct ThreatMetrics: Codable, Sendable {
   public var falsePositiveUpper95: Double?
 
   init(kind: ThreatKind, observations: [ThreatEvaluationObservation]) {
-    let positive = observations.filter { $0.truth[kind.rawValue] == true }
-    let negative = observations.filter { $0.truth[kind.rawValue] == false }
+    let positive = observations.filter { $0.truth[kind] == true }
+    let negative = observations.filter { $0.truth[kind] == false }
     positives = positive.count; negatives = negative.count
     unlabeled = observations.count - positives - negatives
     let labeled = positive + negative
@@ -72,36 +72,124 @@ public struct ThreatMetrics: Codable, Sendable {
 
 /// Independent objective metrics; Inbox/Junk preference labels never supply threat truth.
 public struct ThreatEvaluationReport: Codable, Sendable {
+  /// Largest observations file accepted.
+  public static let maximumInputBytes = 20_000_000
   /// Assessment schema used by this report.
   public var schema: String
   /// Metrics by objective.
-  public var objectives: [String: ThreatMetrics]
+  public var objectives: [ThreatKind: ThreatMetrics]
   /// Metrics by language and objective, preserving unknown language as its own group.
-  public var languages: [String: [String: ThreatMetrics]]
+  public var languages: [String: [ThreatKind: ThreatMetrics]]
 
-  /// Rejects duplicate samples, invalid findings and unknown objective names before reporting.
+  /// Rejects duplicate samples, blank identities and invalid findings before reporting.
   public init(observations: [ThreatEvaluationObservation]) throws {
-    guard !observations.isEmpty,
-      Set(observations.map(\.sampleID)).count == observations.count,
-      observations.allSatisfy({ row in
-        !row.sampleID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-          && !row.language.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-          && row.truth.keys.allSatisfy { ThreatKind(rawValue: $0) != nil }
-      })
-    else { throw ComparisonError.invalidManifest }
-    for observation in observations { try observation.assessment?.validate() }
+    try Self.validate(observations)
     schema = ThreatAssessment.schemaID
     objectives = Self.metrics(observations)
     languages = Dictionary(grouping: observations, by: \.language).mapValues(Self.metrics)
   }
 
-  private static func metrics(_ observations: [ThreatEvaluationObservation]) -> [String:
+  /// Loads and validates a bounded JSON array of observations.
+  public init(contentsOf url: URL) throws {
+    let data = try ThreatReportError.boundedContents(of: url, limit: Self.maximumInputBytes)
+    try self.init(
+      observations: JSONDecoder().decode([ThreatEvaluationObservation].self, from: data)
+    )
+  }
+
+  private static func validate(_ observations: [ThreatEvaluationObservation]) throws {
+    guard !observations.isEmpty else { throw ThreatReportError.noObservations }
+    var seen: Set<String> = []
+    for observation in observations {
+      try requireIdentity(observation)
+      guard seen.insert(observation.sampleID).inserted else {
+        throw ThreatReportError.duplicateSample(observation.sampleID)
+      }
+      try requireValidAssessment(observation)
+    }
+  }
+
+  private static func requireIdentity(_ observation: ThreatEvaluationObservation) throws {
+    guard !isBlank(observation.sampleID) else { throw ThreatReportError.blankSampleID }
+    guard !isBlank(observation.language) else {
+      throw ThreatReportError.blankLanguage(sampleID: observation.sampleID)
+    }
+  }
+
+  private static func requireValidAssessment(_ observation: ThreatEvaluationObservation) throws {
+    do { try observation.assessment?.validate() } catch {
+      throw ThreatReportError.invalidAssessment(sampleID: observation.sampleID)
+    }
+  }
+
+  private static func isBlank(_ text: String) -> Bool {
+    text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  private static func metrics(_ observations: [ThreatEvaluationObservation]) -> [ThreatKind:
     ThreatMetrics]
   {
     Dictionary(
       uniqueKeysWithValues: ThreatKind.allCases.map {
-        ($0.rawValue, ThreatMetrics(kind: $0, observations: observations))
+        ($0, ThreatMetrics(kind: $0, observations: observations))
       }
     )
+  }
+}
+
+/// Objective observations that can't produce a threat report; no detector or Mail access occurs.
+public enum ThreatReportError: CorpusEvaluationError, BoundedInputError, Sendable, Equatable,
+  LocalizedError
+{
+  /// The observations array is empty.
+  case noObservations
+  /// Two observations share one sample identifier.
+  case duplicateSample(String)
+  /// An observation has a blank sample identifier.
+  case blankSampleID
+  /// An observation has a blank language code.
+  case blankLanguage(sampleID: String)
+  /// An observation's assessment has invalid findings or coverage.
+  case invalidAssessment(sampleID: String)
+  /// The observations path names a directory or other non-regular file.
+  case notRegularFile(URL)
+  /// The observations file is larger than the report accepts.
+  case fileTooLarge(URL, limit: Int)
+
+  /// General description of the failed report.
+  public var errorDescription: String? {
+    String(localized: "Couldn’t build the threat report.")
+  }
+  /// The observation that prevents a valid report.
+  public var failureReason: String? {
+    switch self {
+      case .noObservations: String(localized: "The observations file contains no samples.")
+      case .duplicateSample(let id): String(localized: "Sample \(id) appears more than once.")
+      case .blankSampleID: String(localized: "An observation has a blank sample ID.")
+      case .blankLanguage(let id): String(localized: "Sample \(id) has a blank language code.")
+      case .invalidAssessment(let id):
+        String(localized: "Sample \(id) has an invalid assessment.")
+      case .notRegularFile(let url): String(localized: "\(url.path) isn’t a regular file.")
+      case let .fileTooLarge(url, limit):
+        String(
+          localized:
+            "\(url.path) exceeds the \(limit.formatted(.byteCount(style: .file))) input limit."
+        )
+    }
+  }
+  /// The correction to make to the observations.
+  public var recoverySuggestion: String? {
+    switch self {
+      case .noObservations, .notRegularFile:
+        String(localized: "Pass a JSON array of labeled observations.")
+      case .duplicateSample: String(localized: "Merge or remove the repeated observations.")
+      case .blankSampleID, .blankLanguage:
+        String(localized: "Record a sample ID and a language code, or “unknown”, for every sample.")
+      case .invalidAssessment:
+        String(
+          localized: "Regenerate the assessment, or omit it to report the sample as unassessed."
+        )
+      case .fileTooLarge: String(localized: "Split the observations into smaller files.")
+    }
   }
 }

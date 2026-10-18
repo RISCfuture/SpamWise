@@ -69,7 +69,7 @@ public struct Settings: Codable, Sendable, Equatable {
   }
 }
 /// What produced a decision record.
-public enum DecisionPath: String, Codable, Sendable, CaseIterable {
+public enum DecisionPath: String, Codable, CodingKeyRepresentable, Sendable, CaseIterable {
   /// A sender rule, content rule or trusted relationship.
   case gate
   /// A match to a campaign the user marked as junk.

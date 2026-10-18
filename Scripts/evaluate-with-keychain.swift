@@ -10,7 +10,7 @@ enum EvaluationSetupError: EvaluationSetupFailure, LocalizedError {
   var failureReason: String? {
     switch self {
       case .usage:
-        "Usage: swift Scripts/evaluate-with-keychain.swift EXECUTABLE claude|openai|gemini --live --budget-store PATH EVAL_ARGUMENTS"
+        "Usage: swift Scripts/evaluate-with-keychain.swift EXECUTABLE claude|openai|gemini --live corpus|reviewed INPUT --budget-store PATH EVAL_OPTIONS"
       case .missingExecutable: "The supplied evaluation executable is unavailable."
       case .credential(let status):
         "The provider setup key is unavailable; Keychain status \(status)."
@@ -54,9 +54,10 @@ struct EvaluationProvider {
 
 func runEvaluation() throws -> Int32 {
   let arguments = Array(CommandLine.arguments.dropFirst())
-  guard arguments.count >= 5, arguments[2] == "--live",
-    arguments.dropFirst(3).contains("--budget-store"),
-    !arguments.dropFirst(3).contains("--model")
+  guard arguments.count >= 6, arguments[2] == "--live",
+    ["corpus", "reviewed"].contains(arguments[3]),
+    arguments.dropFirst(4).contains("--budget-store"),
+    !arguments.dropFirst(4).contains("--model")
   else { throw EvaluationSetupError.usage }
   let executable = URL(filePath: arguments[0]), provider = try EvaluationProvider(arguments[1])
   guard FileManager.default.isExecutableFile(atPath: executable.path) else {
@@ -71,7 +72,7 @@ func runEvaluation() throws -> Int32 {
   let process = Process()
   process.executableURL = executable
   process.arguments =
-    ["--model", provider.model] + arguments.dropFirst(3)
+    [arguments[3], "--model", provider.model] + arguments.dropFirst(4)
   process.environment = environment
   try process.run()
   process.waitUntilExit()

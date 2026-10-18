@@ -22,6 +22,21 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
   /// Date the source was verified, in ISO calendar format.
   public let verified: String
 
+  /**
+   Creates rates in USD per million tokens.
+
+   - Parameters:
+     - input: Uncached input rate.
+     - output: Output rate, including billed reasoning tokens.
+     - cached: Cached input rate.
+     - source: Where the rates came from, such as an official pricing page.
+     - verified: Date the source was verified, in ISO calendar format.
+   */
+  public init(input: Double, output: Double, cached: Double, source: String, verified: String) {
+    self.input = input; self.output = output; self.cached = cached
+    self.source = source; self.verified = verified
+  }
+
   /// Returns the standard rates captured for a supported model at `date`.
   public static func rates(for model: ModelIdentifier, at date: Date = .now) -> Self {
     let anthropic = "https://platform.claude.com/docs/en/about-claude/pricing"

@@ -16,22 +16,85 @@ public struct EvaluationObservation: Codable, Sendable {
   public var modelLabel: MailLabel?
   /// Uncalibrated model confidence, absent for failures.
   public var confidence: Int?
-  /// Gate, model, or error source.
-  public var path: String
+  /// What decided the message; nil for results supplied by another system.
+  public var path: DecisionPath?
+  /// Whether part of the message couldn't be read reliably, which keeps an Inbox verdict in Review.
+  public var concealsContent: Bool
+  /// Statistical split used to select thresholds; nil when the source assigns none.
+  public var partition: LearningPartition?
   /// Explanation retained for misclassification review.
   public var reason: String
-  /// Records one independently labeled result.
+  /**
+   Records one independently labeled result.
+
+   - Parameters:
+     - file: Relative corpus path or sample identifier.
+     - truth: The human label.
+     - label: The effective decision label, or nil when unclassified.
+     - confidence: The verdict's confidence, or nil without a verdict.
+     - path: What decided the message.
+     - reason: Explanation retained for misclassification review.
+     - modelLabel: The verdict's label; defaults to `label`.
+     - concealsContent: Whether policy kept an Inbox verdict in Review for unreadable content.
+     - partition: The statistical split, when the source assigns one.
+   */
   public init(
     file: String,
     truth: EvaluationTruth,
     label: MailLabel?,
     confidence: Int?,
-    path: String,
+    path: DecisionPath?,
     reason: String,
-    modelLabel: MailLabel? = nil
+    modelLabel: MailLabel? = nil,
+    concealsContent: Bool = false,
+    partition: LearningPartition? = nil
   ) {
     self.file = file; self.truth = truth; self.label = label; self.confidence = confidence
     self.path = path; self.reason = reason; self.modelLabel = modelLabel ?? label
+    self.concealsContent = concealsContent; self.partition = partition
+  }
+
+  /// Records the pipeline's persisted result for one labeled message.
+  public init(
+    file: String,
+    truth: EvaluationTruth,
+    partition: LearningPartition?,
+    record: DecisionRecord
+  ) {
+    self.init(
+      file: file,
+      truth: truth,
+      label: record.decision.label,
+      confidence: record.verdict?.confidence,
+      path: record.path,
+      reason: record.decision.reason.diagnosticDescription,
+      modelLabel: record.verdict?.label,
+      concealsContent: record.decision.reason == .concealedContent,
+      partition: partition
+    )
+  }
+
+  /// This result as ``Decision`` would label it at `strength`; results without a verdict are unchanged.
+  public func decided(strength: FilteringStrength) -> Self {
+    decided { verdict in
+      try Decision.evaluate(verdict, strength: strength, concealsContent: concealsContent)
+    }
+  }
+
+  /// This result as ``Decision`` would label it at an explicit Junk confidence threshold.
+  public func decided(junkThreshold: Int) -> Self {
+    decided { verdict in
+      try Decision.evaluate(verdict, junkThreshold: junkThreshold, concealsContent: concealsContent)
+    }
+  }
+
+  private func decided(by policy: (Verdict) throws -> Decision) -> Self {
+    guard let modelLabel, let confidence,
+      let decision = try? policy(Verdict(label: modelLabel, confidence: confidence, reason: reason))
+    else { return self }
+    var row = self
+    row.label = decision.label
+    return row
   }
 }
 
@@ -58,7 +121,8 @@ public struct BinaryMetrics: Codable, Sendable {
   /// Rule-of-three approximation for zero false positives only.
   public var ruleOfThreeUpper95: Double?
 
-  init(_ rows: [EvaluationObservation]) {
+  /// Counts binary outcomes, excluding graymail.
+  public init(_ rows: [EvaluationObservation]) {
     let binary = rows.filter { $0.truth != .graymail }
     good = binary.filter { $0.truth == .good }.count
     junk = binary.filter { $0.truth == .junk }.count
@@ -74,28 +138,14 @@ public struct BinaryMetrics: Codable, Sendable {
   }
 }
 
-/// Precision observed among model Junk decisions in one stated-confidence range.
-public struct CalibrationBucket: Codable, Sendable {
-  /// Inclusive lower bound of the confidence bucket.
-  public var lower: Int
-  /// Inclusive upper bound of the confidence bucket.
-  public var upper: Int
-  /// Number of binary-labeled model Junk decisions in this bucket.
-  public var count: Int
-  /// Observed Junk precision; nil for an empty bucket.
-  public var precision: Double?
-}
-
-/// Recomputed metrics with model calibration kept separate from deterministic gates.
+/// Recomputed metrics with deterministic gates kept separate from the model by decision path.
 public struct EvaluationReport: Codable, Sendable {
   /// Confusion matrix indexed by true label then effective label or unclassified.
   public var confusion: [String: [String: Int]]
   /// Overall binary good/junk metrics.
   public var binary: BinaryMetrics
-  /// Binary metrics split by decision source.
-  public var perPath: [String: BinaryMetrics]
-  /// Model Junk precision buckets, excluding gates and graymail.
-  public var calibration: [CalibrationBucket]
+  /// Binary metrics split by decision source; results supplied by another system have none.
+  public var perPath: [DecisionPath: BinaryMetrics]
   /// Number of inputs with no classification result.
   public var unclassified: Int
   /// Every result that differs from the expected label, including classification failures.
@@ -110,25 +160,13 @@ public struct EvaluationReport: Codable, Sendable {
       ] += 1
     }
     binary = BinaryMetrics(observations)
-    perPath = Dictionary(grouping: observations, by: \.path).mapValues(BinaryMetrics.init)
+    perPath = observations.reduce(into: [DecisionPath: [EvaluationObservation]]()) { groups, row in
+      if let path = row.path { groups[path, default: []].append(row) }
+    }.mapValues(BinaryMetrics.init)
     unclassified = observations.filter { $0.label == nil }.count
     misclassifications = observations.filter {
       let expected: MailLabel = $0.truth == .good ? .inbox : $0.truth == .junk ? .junk : .review
       return $0.label != expected
-    }
-    calibration = stride(from: 0, through: 90, by: 10).map { lower in
-      let upper = lower == 90 ? 100 : lower + 9
-      let rows = observations.filter {
-        $0.path == DecisionPath.model.rawValue && $0.truth != .graymail && $0.modelLabel == .junk
-          && (lower...upper).contains($0.confidence ?? -1)
-      }
-      return CalibrationBucket(
-        lower: lower,
-        upper: upper,
-        count: rows.count,
-        precision: rows.isEmpty
-          ? nil : Double(rows.filter { $0.truth == .junk }.count) / Double(rows.count)
-      )
     }
   }
 }

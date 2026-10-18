@@ -23,6 +23,7 @@ let package = Package(
       url: "https://github.com/anthropics/ClaudeForFoundationModels.git",
       revision: "0262e1a766c461a4268dcec656eca95dd74cebf8"
     ),
+    .package(url: "https://github.com/apple/swift-argument-parser.git", exact: "1.8.2"),
     .package(url: "https://github.com/apple/swift-nio.git", exact: "2.103.0"),
     .package(url: "https://github.com/apple/swift-nio-imap.git", exact: "0.4.0"),
     .package(url: "https://github.com/apple/swift-nio-transport-services.git", exact: "1.28.0")
@@ -57,7 +58,10 @@ let package = Package(
     .target(name: "Evaluation", dependencies: ["SpamWiseCore"]),
     .executableTarget(
       name: "SpamWiseEval",
-      dependencies: ["SpamWiseCore", "MailIntegration", "Evaluation"]
+      dependencies: [
+        "SpamWiseCore", "MailIntegration", "Evaluation",
+        .product(name: "ArgumentParser", package: "swift-argument-parser")
+      ]
     ),
     .executableTarget(name: "SpamWiseDaemon", dependencies: ["SpamWiseCore", "MailIntegration"]),
     .testTarget(

@@ -1,5 +1,5 @@
 {
-  "originHash" : "d7797e0a514c902682ef2688ccb801aaa009ee9ba4cf8a7bdde583777efff95f",
+  "originHash" : "decdac5716bdd9cde5188fd8e1c46259e921dbb9c45ddde15682def42091fe4c",
   "pins" : [
     {
       "identity" : "claudeforfoundationmodels",
@@ -7,6 +7,15 @@
       "location" : "https://github.com/anthropics/ClaudeForFoundationModels.git",
       "state" : {
         "revision" : "0262e1a766c461a4268dcec656eca95dd74cebf8"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser.git",
+      "state" : {
+        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+        "version" : "1.8.2"
       }
     },
     {

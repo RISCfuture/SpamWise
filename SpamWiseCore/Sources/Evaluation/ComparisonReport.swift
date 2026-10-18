@@ -3,11 +3,17 @@ import SpamWiseCore
 
 /// Offline paired-system metrics from an explicitly reviewed, frozen comparison manifest.
 public struct ComparisonReport: Codable, Sendable {
-  private static let maximumMessages = 10_000
-  private static let maximumRuns = 8
-  private static let falsePositiveTarget = 0.002
+  /// Largest manifest accepted.
+  public static let maximumManifestBytes = 20_000_000
+  /// Supported manifest schema version.
+  public static let schema = 1
+  static let messageCounts = 1...10_000
+  static let runCounts = 2...8
+  private static let falsePositiveTarget = ThresholdCalibration.falsePositiveTarget(for: .balanced)
   /// Caller-supplied identifier of the immutable holdout.
   public let holdoutID: String
+  /// When the compared systems' learning was frozen.
+  public let frozenAt: Date
   /// Hash of the complete input manifest for reproducibility.
   public let manifestHash: String
   /// Cohort size shared by every system; missing predictions must be explicit abstentions.
@@ -23,10 +29,12 @@ public struct ComparisonReport: Codable, Sendable {
 
   /// Validates a bounded manifest and recomputes all metrics without mail or provider access.
   public init(data: Data) throws {
-    guard data.count <= 20_000_000 else { throw ComparisonError.invalidManifest }
-    let manifest = try JSONDecoder().decode(ComparisonManifest.self, from: data)
-    try Self.validate(manifest)
-    holdoutID = manifest.holdoutID
+    guard data.count <= Self.maximumManifestBytes else {
+      throw ComparisonManifestError.manifestTooLarge(limit: Self.maximumManifestBytes)
+    }
+    let manifest = try ComparisonManifest.decoder.decode(ComparisonManifest.self, from: data)
+    try manifest.validate()
+    holdoutID = manifest.holdoutID; frozenAt = manifest.frozenAt
     manifestHash = stableHash(data)
     messages = manifest.messages.count
     sourceCounts = Dictionary(grouping: manifest.messages, by: { $0.source.rawValue }).mapValues(
@@ -34,7 +42,7 @@ public struct ComparisonReport: Codable, Sendable {
     )
     systems = try manifest.runs.map { try SystemComparison(run: $0, messages: manifest.messages) }
     eligibleForBoundedComparison = systems.allSatisfy {
-      $0.priorExposure == "none"
+      $0.priorExposure == PriorExposure.none
         && ($0.metrics.binary.falsePositiveUpper95 ?? 1) <= Self.falsePositiveTarget
     }
     caveat = """
@@ -45,30 +53,45 @@ public struct ComparisonReport: Codable, Sendable {
       superiority from a small sample. Review time is observed effort, not a predicted saving.
       """
   }
-  private static func validate(_ manifest: ComparisonManifest) throws {
-    let ids = manifest.messages.map(\.id), campaigns = manifest.messages.map(\.campaign)
-    guard manifest.schema == 1, manifest.humanReviewed, !manifest.holdoutID.isEmpty,
-      ISO8601DateFormatter().date(from: manifest.frozenAt) != nil,
-      (1...maximumMessages).contains(ids.count), (2...maximumRuns).contains(manifest.runs.count),
-      Set(ids).count == ids.count, Set(campaigns).count == campaigns.count,
-      ids.allSatisfy({ !$0.isEmpty }), campaigns.allSatisfy({ !$0.isEmpty }),
-      Set(campaigns).isDisjoint(with: manifest.trainingCampaigns),
-      Set(manifest.runs.map(\.system)).count == manifest.runs.count,
-      manifest.runs.allSatisfy({
-        $0.learningFrozen && !$0.system.isEmpty && !$0.configurationID.isEmpty
-      })
-    else { throw ComparisonError.invalidManifest }
+
+  /// Loads and validates a bounded manifest file.
+  public init(contentsOf url: URL) throws {
+    try self.init(
+      data: ComparisonManifestError.boundedContents(of: url, limit: Self.maximumManifestBytes)
+    )
   }
+}
+
+/// How much a compared system may have seen the holdout before the frozen run.
+public enum PriorExposure: String, Codable, Sendable {
+  /// The system never saw any holdout message.
+  case none
+  /// The system saw some holdout messages.
+  case known
+  /// Whether the system saw holdout messages is unknown.
+  case unknown
+}
+
+/// Provenance of a compared system's reported charge.
+public enum CostBasis: String, Codable, Sendable {
+  /// Billed or metered by the provider.
+  case measured
+  /// Computed from token counts and published rates.
+  case estimated
 }
 
 /// Quality, operational effort and performance for one frozen system configuration.
 public struct SystemComparison: Codable, Sendable {
+  private static let secondsPerMinute = 60.0
+  private static let perThousand = 1000.0
+  private static let medianFraction = 0.5
+  private static let tailFraction = 0.95
   /// Product or experiment name supplied by the evaluator.
   public let system: String
   /// Immutable model, policy, learning-state and cache-mode identity supplied by the evaluator.
   public let configurationID: String
-  /// Declared prior exposure: none, known, or unknown.
-  public let priorExposure: String
+  /// Declared prior exposure to the holdout.
+  public let priorExposure: PriorExposure
   /// Recomputed quality metrics using the manifest's human labels.
   public let metrics: EvaluationReport
   /// Count of explicit Review and unclassified outputs.
@@ -86,109 +109,50 @@ public struct SystemComparison: Codable, Sendable {
   /// Measured or estimated provider charge, if provided.
   public let costUSD: Double?
   /// Declared cost provenance, required when a charge is provided.
-  public let costBasis: String?
+  public let costBasis: CostBasis?
   /// Review minutes per thousand messages, absent unless every message has an observation.
   public let reviewMinPerThousand: Double?
   /// Corrections per thousand messages, absent unless every message has an observation.
   public let correctionsPerThousand: Double?
 
-  fileprivate init(run: ComparisonRun, messages: [ComparisonMessage]) throws {
-    let ids = run.results.map(\.id)
-    guard Set(ids).count == ids.count, Set(ids) == Set(messages.map(\.id)),
-      ["none", "known", "unknown"].contains(run.priorExposure),
-      run.elapsedSec.isFinite, run.elapsedSec > 0,
-      [run.cpuSec, run.costUSD].compactMap({ $0 }).allSatisfy(Self.validMeasurement),
-      run.costUSD == nil || ["measured", "estimated"].contains(run.costBasis ?? ""),
-      run.results.allSatisfy({ result in
-        [result.latencySec, result.reviewSec].compactMap({ $0 }).allSatisfy(Self.validMeasurement)
-      })
-    else { throw ComparisonError.invalidManifest }
+  init(run: ComparisonRun, messages: [ComparisonMessage]) throws {
+    try run.validate(against: messages)
     let truths = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0.truth) })
     system = run.system; configurationID = run.configurationID; priorExposure = run.priorExposure
     metrics = EvaluationReport(
-      observations: run.results.map {
-        EvaluationObservation(
-          file: $0.id,
-          truth: truths[$0.id]!,
-          label: $0.label,
-          confidence: nil,
-          path: "comparison",
-          reason: $0.reason ?? "No reason supplied"
-        )
+      observations: run.results.compactMap { result in
+        truths[result.id].map {
+          EvaluationObservation(
+            file: result.id,
+            truth: $0,
+            label: result.label,
+            confidence: nil,
+            path: nil,
+            reason: result.reason ?? "No reason supplied"
+          )
+        }
       }
     )
     abstentions = run.results.filter { $0.label == nil || $0.label == .review }.count
     let latencies = run.results.compactMap(\.latencySec).sorted()
-    latencyP50Sec =
-      latencies.count == messages.count ? Self.percentile(latencies, fraction: 0.5) : nil
-    latencyP95Sec =
-      latencies.count == messages.count ? Self.percentile(latencies, fraction: 0.95) : nil
+    let complete = latencies.count == messages.count
+    latencyP50Sec = complete ? Self.percentile(latencies, fraction: Self.medianFraction) : nil
+    latencyP95Sec = complete ? Self.percentile(latencies, fraction: Self.tailFraction) : nil
     messagesPerSec = Double(messages.count) / run.elapsedSec
     cpuSec = run.cpuSec; peakMemoryBytes = run.peakMemoryBytes
     costUSD = run.costUSD; costBasis = run.costBasis
     let review = run.results.compactMap(\.reviewSec),
       corrections = run.results.compactMap(\.corrections)
+    let count = Double(messages.count)
     reviewMinPerThousand =
       review.count == messages.count
-      ? review.reduce(0, +) / 60 * 1000 / Double(messages.count) : nil
+      ? review.reduce(0, +) / Self.secondsPerMinute * Self.perThousand / count : nil
     correctionsPerThousand =
       corrections.count == messages.count
-      ? corrections.reduce(0) { $0 + Double($1) } * 1000 / Double(messages.count) : nil
+      ? corrections.reduce(0) { $0 + Double($1) } * Self.perThousand / count : nil
   }
-  private static func validMeasurement(_ value: Double) -> Bool { value.isFinite && value >= 0 }
+
   private static func percentile(_ values: [Double], fraction: Double) -> Double {
     values[max(0, Int(ceil(Double(values.count) * fraction)) - 1)]
-  }
-}
-
-private struct ComparisonManifest: Decodable {
-  let schema: Int
-  let holdoutID: String
-  let frozenAt: String
-  let humanReviewed: Bool
-  let trainingCampaigns: Set<String>
-  let messages: [ComparisonMessage]
-  let runs: [ComparisonRun]
-}
-private struct ComparisonMessage: Decodable {
-  let id: String
-  let campaign: String
-  let truth: EvaluationTruth
-  let source: Source
-  enum Source: String, Decodable { case spamsieve, server, unknown, other }
-}
-private struct ComparisonRun: Decodable {
-  let system: String
-  let configurationID: String
-  let learningFrozen: Bool
-  let priorExposure: String
-  let elapsedSec: Double
-  let cpuSec: Double?
-  let peakMemoryBytes: UInt64?
-  let costUSD: Double?
-  let costBasis: String?
-  let results: [Result]
-  struct Result: Decodable {
-    let id: String
-    let label: MailLabel?
-    let latencySec: Double?
-    let reviewSec: Double?
-    let corrections: UInt?
-    let reason: String?
-  }
-}
-
-/// Manifest validation failures; no provider or Mail operation is performed.
-public enum ComparisonError: CorpusEvaluationError, LocalizedError {
-  /// The cohort, measurements or freeze attestations are incomplete or inconsistent.
-  case invalidManifest
-  /// General description of the failed comparison.
-  public var errorDescription: String? { String(localized: "Couldn’t compare the frozen runs.") }
-  /// Required comparison boundaries that must hold before metrics are produced.
-  public var failureReason: String? {
-    String(
-      localized:
-        "Use human-reviewed, campaign-disjoint messages and complete paired results with frozen learning."
-    )
   }
 }

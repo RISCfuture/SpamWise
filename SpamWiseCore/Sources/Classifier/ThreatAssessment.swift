@@ -3,7 +3,7 @@ public import MessageModel
 public import Signals
 
 /// Independent detection objectives, separate from personal mail preferences and actions.
-public enum ThreatKind: String, Codable, Sendable, CaseIterable {
+public enum ThreatKind: String, Codable, CodingKeyRepresentable, Sendable, CaseIterable {
   /// Unsolicited bulk abuse.
   case spam
   /// Deceptive requests for credentials, money, or harmful interaction.
