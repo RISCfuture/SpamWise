@@ -9,18 +9,18 @@ public struct ConfiguredClassifier: Classifier {
   public init(
     store: Store,
     http: ModelHTTPClient = .live,
-    credential: @escaping @Sendable (ModelBackend) throws -> String = { backend in
-      try APIKeychain(service: ConfiguredClassifier.credentialService(for: backend)).read()
-    }
+    credential: @escaping @Sendable (ModelBackend) throws -> String = Self.keychainCredential
   ) {
     self.store = store
     self.http = http
     self.credential = credential
   }
-  /// Returns the credential service for a paid provider; credentials are never persisted in preferences.
-  public static func credentialService(for backend: ModelBackend) -> String {
-    backend == .claude
-      ? "codes.tim.SpamWise.anthropic" : "codes.tim.SpamWise." + backend.rawValue.lowercased()
+  /// Reads the shared-Keychain API key for a paid provider; credentials are never persisted in preferences.
+  public static func keychainCredential(for backend: ModelBackend) throws -> String {
+    guard let keychain = APIKeychain(backend: backend) else {
+      throw ClassificationError.configuration
+    }
+    return try keychain.read()
   }
   /// Executes one explicitly selected backend, counting paid requests toward the monthly spending limit.
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
@@ -35,32 +35,33 @@ public struct ConfiguredClassifier: Classifier {
     else {
       throw ClassificationError.consentRequired
     }
-    let modelID = settings.modelID ?? settings.backend.defaultModelID
-    switch settings.backend {
-      case .onDevice: return try await AppleClassifier(backend: .onDevice).classify(input)
-      case .privateCloudCompute:
-        guard DistributionCapabilities.privateCloudCompute else {
-          throw ClassificationError.configuration
-        }
-        return try await AppleClassifier(backend: .privateCloudCompute).classify(input)
-      case .claude, .openAI, .gemini:
-        let key = try credential(settings.backend)
-        guard !key.isEmpty else { throw ClassificationError.configuration }
-        let classifier: any Classifier
-        switch settings.backend {
-          case .claude: classifier = try ClaudeClassifier(modelID: modelID, key: { key })
-          case .openAI:
-            classifier = try OpenAIClassifier(modelID: modelID, key: { key }, http: http)
-          case .gemini:
-            classifier = try GeminiClassifier(modelID: modelID, key: { key }, http: http)
-          default: throw ClassificationError.configuration
-        }
-        return try await SpendingLimitedClassifier(
-          ConsentCheckedClassifier(underlying: classifier, store: store, backend: settings.backend),
-          modelID: modelID,
-          store: store
-        ).classify(input)
+    guard settings.backend != .privateCloudCompute || DistributionCapabilities.privateCloudCompute
+    else {
+      throw ClassificationError.configuration
     }
+    let model = settings.model
+    guard model.reservationUSD != nil else {
+      return try await ClassifierFactory.make(model, credential: { "" }).classify(input)
+    }
+    let key = try providerKey(settings.backend)
+    return try await SpendingLimitedClassifier(
+      ConsentCheckedClassifier(
+        underlying: ClassifierFactory.make(model, credential: { key }, http: http),
+        store: store,
+        backend: settings.backend
+      ),
+      model: model,
+      store: store
+    ).classify(input)
+  }
+
+  private func providerKey(_ backend: ModelBackend) throws -> String {
+    let key: String
+    do { key = try credential(backend) } catch KeychainError.missing {
+      throw ClassificationError.missingCredential
+    }
+    guard !key.isEmpty else { throw ClassificationError.missingCredential }
+    return key
   }
 }
 

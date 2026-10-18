@@ -27,7 +27,7 @@ public struct Settings: Codable, Sendable, Equatable {
   /// The user's bounded plain-English filtering preferences.
   public var policy = PromptBuilder.defaultPolicy
   /// Maximum number of correction examples included in a prompt.
-  public var correctionLimit = 40
+  public var correctionLimit = 5
   /// Approximate body budget, using four characters per token.
   public var bodyTokenBudget = 1500
   /// Whether the user completed the setup flow.
@@ -305,7 +305,7 @@ extension AppState {
 }
 /// Typed transactions for the shared application snapshot.
 public enum StateRepository {
-  private static let correctionLimitRange = 0...100
+  private static let correctionLimitRange = 0...20
   private static let bodyTokenBudgetRange = 100...4000
   /// Stable storage or deduplication key.
   public static let key = "application-v1"

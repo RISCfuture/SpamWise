@@ -8,11 +8,11 @@ public enum AppleModelBackend: String, Codable, CaseIterable, Sendable {
   /// Executes using the explicitly authorized Private Cloud Compute model.
   case privateCloudCompute
 
-  /// Stable cache and usage identity for the selected execution location.
-  public var modelID: String {
+  /// Model identity recorded with usage and cache keys for this execution location.
+  public var model: ModelIdentifier {
     switch self {
-      case .onDevice: "apple-on-device"
-      case .privateCloudCompute: "apple-private-cloud-compute"
+      case .onDevice: .appleOnDevice
+      case .privateCloudCompute: .applePrivateCloudCompute
     }
   }
 }
@@ -49,29 +49,11 @@ public struct AppleClassifier: Classifier {
     }
     let response = try await session.respond(
       to: prompt,
-      generating: AppleGuidedVerdict.self,
+      generating: GuidedVerdict.self,
       options: GenerationOptions(maximumResponseTokens: limit)
     )
     try Task.checkCancellation()
-    guard let label = MailLabel(rawValue: response.content.label.rawValue),
-      response.content.reason.count <= ClassificationLimits.maximumReasonCharacters
-    else {
-      throw ClassificationError.invalidOutput
-    }
-    let usage = session.usage
-    return try Verdict(
-      label: label,
-      confidence: response.content.confidence,
-      reason: response.content.reason,
-      usage: .init(
-        input: usage.input.totalTokenCount,
-        output: usage.output.totalTokenCount,
-        cached: usage.input.cachedTokenCount,
-        estimated: false,
-        modelID: backend.modelID,
-        pricing: try .rates(for: backend.modelID)
-      )
-    ).validated()
+    return try Verdict(guided: response.content, session: session, model: backend.model)
   }
   /// Produces a validated result within fifteen seconds; availability, quota and refusal errors fail open.
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
@@ -90,32 +72,6 @@ public struct AppleClassifier: Classifier {
           ClassificationLimits.maximumResponseTokens
         ).validated()
       }
-    } catch is CancellationError { throw ClassificationError.cancelled } catch let error
-      as ClassificationError
-    { throw error } catch let error as LanguageModelError {
-      switch error {
-        case .contextSizeExceeded: throw ClassificationError.contextExceeded
-        case .rateLimited: throw ClassificationError.rateLimited
-        case .guardrailViolation, .refusal: throw ClassificationError.refused
-        case .timeout: throw ClassificationError.timeout
-        default: throw ClassificationError.configuration
-      }
-    } catch let error as PrivateCloudComputeLanguageModel.Error {
-      switch error {
-        case .quotaLimitReached: throw ClassificationError.rateLimited
-        case .networkFailure, .serviceUnavailable: throw ClassificationError.network
-        @unknown default: throw ClassificationError.configuration
-      }
-    } catch { throw ClassificationError.configuration }
+    } catch { throw ClassificationError(mapping: error) }
   }
-
-}
-
-@Generable private enum AppleGuidedLabel: String { case inbox, review, junk }
-@Generable private struct AppleGuidedVerdict {
-  var label: AppleGuidedLabel
-  @Guide(description: "Uncalibrated confidence from 0 through 100", .range(0...100))
-  var confidence: Int
-  @Guide(description: "One short evidence-grounded sentence, at most 240 characters")
-  var reason: String
 }

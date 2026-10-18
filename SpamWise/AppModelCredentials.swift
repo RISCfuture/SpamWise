@@ -18,7 +18,7 @@ extension AppModel {
         guard let store else { throw IntegrationError.unavailable }
         let message = try MIMEParser().parse(Data(Self.verificationMessage.utf8))
         let verdict = try await verifyCredential(credential, message: message, store: store)
-        try APIKeychain().save(credential)
+        try APIKeychain(backend: .claude)?.save(credential)
         try await recordVerification(verdict, message: message, store: store)
         keyStatus = String(localized: "Verified — stored in Keychain")
         status = String(localized: "Haiku 5.5 is ready")
@@ -35,8 +35,8 @@ extension AppModel {
     store: Store
   ) async throws -> Verdict {
     try await SpendingLimitedClassifier(
-      ClaudeClassifier(key: { credential }),
-      modelID: ClaudeClassifier.modelID,
+      ClaudeClassifier(model: .claudeHaiku, key: { credential }),
+      model: .claudeHaiku,
       store: store
     ).classify(.init(message: message, evidence: .init(message: message)))
   }

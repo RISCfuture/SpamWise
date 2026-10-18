@@ -76,20 +76,12 @@ enum RemoteModelRequest {
   {
     do {
       return try await withDeadline(seconds: boundedTimeout(timeout), operation: operation)
-    } catch is CancellationError { throw ClassificationError.cancelled } catch let error
-      as ClassificationError
-    { throw error } catch is DecodingError { throw ClassificationError.invalidOutput } catch let
-      error as URLError
-    {
-      switch error.code {
-        case .timedOut: throw ClassificationError.timeout
-        case .cancelled: throw ClassificationError.cancelled
-        default: throw ClassificationError.network
-      }
-    } catch { throw ClassificationError.network }
+    } catch { throw ClassificationError(mapping: error) }
   }
 
-  static func usage(input: Int, output: Int, cached: Int, modelID: String) throws -> TokenUsage {
+  static func usage(input: Int, output: Int, cached: Int, model: ModelIdentifier) throws
+    -> TokenUsage
+  {
     guard input >= 0, output >= 0, cached >= 0, cached <= input,
       input <= ClassificationLimits.maximumInputTokens,
       output <= ClassificationLimits.maximumOutputTokens
@@ -99,8 +91,8 @@ enum RemoteModelRequest {
       output: output,
       cached: cached,
       estimated: false,
-      modelID: modelID,
-      pricing: try .rates(for: modelID)
+      modelID: model.rawValue,
+      pricing: .rates(for: model)
     )
   }
 }

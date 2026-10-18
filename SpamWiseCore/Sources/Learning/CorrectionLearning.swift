@@ -16,7 +16,7 @@ public enum CorrectionRetrieval {
   ) -> [CorrectionExample] {
     let candidates = LearningText.uniqueCorrections(corrections)
     let query = Set(LearningText.tokens(message.subject + " " + message.text))
-    let documents = candidates.map { Set(LearningText.tokens($0.subject + " " + $0.gist)) }
+    let documents = candidates.map { Set(LearningText.tokens($0.subject + " " + $0.excerpt)) }
     var frequencies: [String: Int] = [:]
     for document in documents {
       for token in document { frequencies[token, default: 0] += 1 }
@@ -126,7 +126,7 @@ enum LearningText {
     var seen: Set<String> = []
     return corrections.sorted(by: newer).prefix(maximumCorrections).filter {
       seen.insert(
-        $0.sender.lowercased() + "\n" + $0.subject.lowercased() + "\n" + $0.gist.lowercased()
+        $0.sender.lowercased() + "\n" + $0.subject.lowercased() + "\n" + $0.excerpt.lowercased()
       ).inserted
     }
   }

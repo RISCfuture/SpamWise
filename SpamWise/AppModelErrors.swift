@@ -18,7 +18,7 @@ extension AppModel {
               "Automation permission denied. Allow SpamWise in System Settings → Privacy & Security → Automation."
           )
         )
-      } else if error is KeychainError {
+      } else if case .status = error as? KeychainError {
         details.append(
           String(
             localized: "Keychain unavailable. Check the signed app’s shared Keychain entitlement."

@@ -301,8 +301,9 @@ private func correction(
     sender: sender,
     domain: DomainResolver().domain(ofAddress: sender),
     subject: text,
-    gist: text,
-    label: label
+    excerpt: text,
+    label: label,
+    promptScope: .everyAccount
   )
   example.date = Date(timeIntervalSince1970: date)
   return example

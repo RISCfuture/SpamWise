@@ -9,7 +9,6 @@ struct LearningSettingsView: View {
   var body: some View {
     Section {
       DisclosureGroup("Learning from corrections") {
-        Toggle("Retrieve similar corrections", isOn: model.advancedBinding(\.retrieveExamples))
         Toggle("Match explicitly junked campaigns", isOn: model.advancedBinding(\.fingerprints))
         Toggle("Use Bayes as supporting evidence", isOn: model.advancedBinding(\.bayes))
         Toggle("Use learned evidence weights", isOn: model.advancedBinding(\.learnedWeights))

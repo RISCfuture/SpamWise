@@ -90,22 +90,25 @@ import SpamWiseCore
         sender: "offers@shop.example",
         domain: "shop.example",
         subject: "Weekend clearance",
-        gist: "An unsolicited weekend promotion",
-        label: .junk
+        excerpt: "Save on every order this weekend only.",
+        label: .junk,
+        promptScope: .account("preview")
       ),
       CorrectionExample(
         sender: "newsletter@shop.example",
         domain: "shop.example",
         subject: "A new collection",
-        gist: "An unsolicited collection announcement",
-        label: .junk
+        excerpt: "Meet our new autumn collection.",
+        label: .junk,
+        promptScope: .account("preview")
       ),
       CorrectionExample(
         sender: "offers@shop.example",
         domain: "shop.example",
         subject: "Last chance savings",
-        gist: "An unsolicited reminder about a sale",
-        label: .junk
+        excerpt: "Your last chance to save ends tonight.",
+        label: .junk,
+        promptScope: .account("preview")
       )
     ]
   }

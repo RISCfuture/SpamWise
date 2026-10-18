@@ -22,16 +22,16 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
   /// Date the source was verified, in ISO calendar format.
   public let verified: String
 
-  /// Returns explicit supported-model rates, rejecting unknown model names.
-  public static func rates(for modelID: String, at date: Date = .now) throws -> Self {
+  /// Returns the standard rates captured for a supported model at `date`.
+  public static func rates(for model: ModelIdentifier, at date: Date = .now) -> Self {
     let anthropic = "https://platform.claude.com/docs/en/about-claude/pricing"
-    switch modelID {
-      case "claude-haiku-5-5": return .legacyHaiku
-      case "claude-sonnet-5-5":
+    switch model {
+      case .claudeHaiku: return .legacyHaiku
+      case .claudeSonnet:
         return .init(input: 2, output: 10, cached: 0.10, source: anthropic, verified: "2026-10-16")
-      case "claude-opus-5-5":
+      case .claudeOpus:
         return .init(input: 4, output: 20, cached: 0.20, source: anthropic, verified: "2026-10-16")
-      case "gpt-5.4-mini":
+      case .gptMini:
         return .init(
           input: 0.75,
           output: 4.50,
@@ -39,7 +39,7 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
           source: "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
           verified: "2026-10-16"
         )
-      case "gemini-3.8-flash":
+      case .geminiFlash:
         let multiplier = date < geminiStandardPricingDate ? 1.0 : geminiStandardPriceMultiplier
         return .init(
           input: 0.75 * multiplier,
@@ -48,7 +48,7 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
           source: "https://ai.google.dev/gemini-api/docs/pricing",
           verified: "2026-10-16"
         )
-      case "apple-on-device", "apple-private-cloud-compute":
+      case .appleOnDevice, .applePrivateCloudCompute:
         return .init(
           input: 0,
           output: 0,
@@ -56,7 +56,6 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
           source: "https://developer.apple.com/documentation/foundationmodels",
           verified: "2026-10-16"
         )
-      default: throw ClassificationError.configuration
     }
   }
 }

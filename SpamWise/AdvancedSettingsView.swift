@@ -9,10 +9,9 @@ struct AdvancedSettingsView: View {
       Section {
         DisclosureGroup("Context limits") {
           Stepper(
-            "Recent corrections: \(model.state.settings.correctionLimit, format: .number)",
+            "Similar corrections: \(model.state.settings.correctionLimit, format: .number)",
             value: model.settingBinding(\.correctionLimit),
-            in: 0...100,
-            step: 5
+            in: 0...20
           )
           Stepper(
             "Body budget: ~\(model.state.settings.bodyTokenBudget, format: .number) tokens",
@@ -22,8 +21,8 @@ struct AdvancedSettingsView: View {
           )
           Text(
             """
-            Body length uses a four-characters-per-token estimate. Quoted replies are omitted. \
-            Attachment text is included only when enabled.
+            Body length uses a four-characters-per-token estimate. Quoted text in replies is \
+            shortened. Attachment text is included only when enabled.
             """
           )
           .foregroundStyle(.secondary)

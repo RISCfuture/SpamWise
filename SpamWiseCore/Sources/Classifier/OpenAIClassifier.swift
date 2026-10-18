@@ -2,20 +2,18 @@ import Foundation
 
 /// Explicit OpenAI Responses backend using strict structured output and a fresh request per message.
 public struct OpenAIClassifier: Classifier {
-  /// Supported model whose standard pricing is captured with each response.
-  public static let modelID = "gpt-5.4-mini"
-  private let selectedModel: String
+  private let model: ModelIdentifier
   private let key: @Sendable () throws -> String
   private let http: ModelHTTPClient
 
-  /// Selects a supported model and injects credentials and an optional HTTP boundary.
+  /// Selects a supported OpenAI model and injects credentials and an optional HTTP boundary.
   public init(
-    modelID: String,
+    model: ModelIdentifier = ModelBackend.openAI.defaultModel,
     key: @escaping @Sendable () throws -> String,
     http: ModelHTTPClient = .live
-  ) throws {
-    guard modelID == Self.modelID else { throw ClassificationError.configuration }
-    selectedModel = modelID; self.key = key; self.http = http
+  ) {
+    precondition(model.backend == .openAI, "\(model.rawValue) is not an OpenAI model")
+    self.model = model; self.key = key; self.http = http
   }
 
   /// Returns a complete validated response; refusals and incomplete output leave mail unclassified.
@@ -25,7 +23,7 @@ public struct OpenAIClassifier: Classifier {
       key: key(),
       header: "Authorization",
       body: [
-        "model": selectedModel, "store": false, "service_tier": "default",
+        "model": model.rawValue, "store": false, "service_tier": "default",
         "max_output_tokens": ClassificationLimits.maximumResponseTokens,
         "reasoning": ["effort": "low"], "instructions": PromptBuilder.instructions,
         "input": try PromptBuilder.prompt(input),
@@ -60,7 +58,7 @@ public struct OpenAIClassifier: Classifier {
         input: measured.inputTokens,
         output: measured.outputTokens,
         cached: measured.inputTokensDetails?.cachedTokens ?? 0,
-        modelID: selectedModel
+        model: model
       )
       return try RemoteVerdict.decode(text, usage: usage)
     }

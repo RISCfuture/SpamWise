@@ -50,8 +50,9 @@ public enum CorpusManagement {
           sender: message.fromAddress,
           domain: DomainResolver().domain(ofAddress: message.fromAddress),
           subject: message.subject,
-          gist: message.text,
-          label: label
+          excerpt: message.text,
+          label: label,
+          promptScope: .everyAccount
         )
         example.sampleID = sampleID
         state.corrections.append(example)

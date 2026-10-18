@@ -12,8 +12,7 @@ struct ModelSettingsView: View {
       set: { value in
         model.editSettings {
           var advanced = $0.advancedOptions
-          advanced.backend = value
-          advanced.modelID = nil
+          advanced.select(value.defaultModel)
           $0.advancedOptions = advanced
         }
         key = ""
@@ -51,10 +50,7 @@ struct ModelSettingsView: View {
       if backend != .onDevice {
         ProviderConsentView(model: model, backend: backend)
       }
-      LabeledContent(
-        "Model",
-        value: model.state.settings.advancedOptions.modelID ?? backend.defaultModelID
-      )
+      LabeledContent("Model", value: model.state.settings.advancedOptions.model.displayName)
       if backend == .claude {
         KeyEntryView(model: model)
       } else if [.openAI, .gemini].contains(backend) {

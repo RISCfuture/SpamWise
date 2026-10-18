@@ -2,27 +2,25 @@ import Foundation
 
 /// Explicit Gemini REST backend with a single candidate, bounded output and isolated instructions.
 public struct GeminiClassifier: Classifier {
-  /// Supported model whose standard pricing is captured with each response.
-  public static let modelID = "gemini-3.8-flash"
-  private let selectedModel: String
+  private let model: ModelIdentifier
   private let key: @Sendable () throws -> String
   private let http: ModelHTTPClient
 
-  /// Selects a supported model and injects credentials and an optional HTTP boundary.
+  /// Selects a supported Gemini model and injects credentials and an optional HTTP boundary.
   public init(
-    modelID: String,
+    model: ModelIdentifier = ModelBackend.gemini.defaultModel,
     key: @escaping @Sendable () throws -> String,
     http: ModelHTTPClient = .live
-  ) throws {
-    guard modelID == Self.modelID else { throw ClassificationError.configuration }
-    selectedModel = modelID; self.key = key; self.http = http
+  ) {
+    precondition(model.backend == .gemini, "\(model.rawValue) is not a Gemini model")
+    self.model = model; self.key = key; self.http = http
   }
 
   /// Returns only a completed, non-blocked verdict; blocked or truncated output fails open.
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
     let request = try RemoteModelRequest.make(
       url:
-        "https://generativelanguage.googleapis.com/v1beta/models/\(selectedModel):generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/\(model.rawValue):generateContent",
       key: key(),
       header: "x-goog-api-key",
       body: [
@@ -64,7 +62,7 @@ public struct GeminiClassifier: Classifier {
         input: measured.promptTokenCount,
         output: measured.candidatesTokenCount + thoughts,
         cached: measured.cachedContentTokenCount ?? 0,
-        modelID: selectedModel
+        model: model
       )
       return try RemoteVerdict.decode(text, usage: usage)
     }

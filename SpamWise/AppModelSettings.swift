@@ -17,9 +17,10 @@ extension AppModel {
     run { [self] in
       let credential = key.trimmingCharacters(in: .whitespacesAndNewlines)
       guard !credential.isEmpty else { throw ClassificationError.missingCredential }
-      try APIKeychain(service: ConfiguredClassifier.credentialService(for: backend)).save(
-        credential
-      )
+      guard let keychain = APIKeychain(backend: backend) else {
+        throw ClassificationError.configuration
+      }
+      try keychain.save(credential)
       status = String(localized: "Provider key saved in Keychain. Use a dry run to verify.")
     }
   }

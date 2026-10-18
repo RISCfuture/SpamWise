@@ -5,11 +5,16 @@ enum ClassificationLimits {
   static let maximumReasonCharacters = 240
   static let confidenceRange = 0...100
   static let timeoutRange: ClosedRange<TimeInterval> = 0.01...15
-  static let correctionLimitRange = 0...100
+  static let correctionLimitRange = 0...20
   static let bodyTokenBudgetRange = 100...4000
   static let maximumPolicyCharacters = 4000
   static let maximumSubjectCharacters = 500
   static let charactersPerToken = 4
   static let maximumInputTokens = 1_000_000
   static let maximumOutputTokens = 100_000
+}
+
+extension ClosedRange {
+  /// Returns `value` limited to this range.
+  func clamp(_ value: Bound) -> Bound { Swift.min(upperBound, Swift.max(lowerBound, value)) }
 }

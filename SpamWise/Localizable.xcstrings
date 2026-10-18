@@ -1527,22 +1527,6 @@
         }
       }
     },
-    "Body length uses a four-characters-per-token estimate. Quoted replies are omitted. Attachment text is included only when enabled.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La longitud usa una estimación de cuatro caracteres por token. Se omiten las respuestas citadas. El texto adjunto solo se incluye si está activado."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La longueur utilise une estimation de quatre caractères par jeton. Les réponses citées sont omises. Le texte des pièces jointes n’est inclus que si l’option est activée."
-          }
-        }
-      }
-    },
     "Cached tokens": {
       "localizations": {
         "es": {
@@ -4516,22 +4500,6 @@
         }
       }
     },
-    "Includes sender, subject, shortened text, evidence, preferences and correction examples. Enabled attachment/OCR text may be included. Mail can contain sensitive information.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Incluye remitente, asunto, texto abreviado, indicios, preferencias y ejemplos corregidos. Puede incluir texto de adjuntos y OCR si están activados. El correo puede contener información sensible."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comprend l’expéditeur, l’objet, le texte abrégé, les indices, les préférences et les exemples corrigés. Le texte des pièces jointes et de l’OCR peut être inclus si activé. Les messages peuvent contenir des données sensibles."
-          }
-        }
-      }
-    },
     "Incoming route": {
       "localizations": {
         "es": {
@@ -6981,39 +6949,6 @@
         }
       }
     },
-    "Recent corrections: %@": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correcciones recientes: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corrections récentes : %@"
-          }
-        }
-      }
-    },
-    "Recent corrections: %lld": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correcciones recientes: %lld"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corrections récentes : %lld"
-          }
-        }
-      }
-    },
     "Recipients": {
       "localizations": {
         "es": {
@@ -7511,22 +7446,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Conserve localement jusqu’à 500 messages révisés de taille limitée. La désactivation supprime le texte conservé ; les étiquettes et l’apprentissage dérivé restent enregistrés."
-          }
-        }
-      }
-    },
-    "Retrieve similar corrections": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buscar correcciones similares"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rechercher des corrections similaires"
           }
         }
       }
@@ -10551,22 +10470,6 @@
         }
       }
     },
-    "Your selected provider receives a shortened message, your preferences, and relevant examples when local rules cannot decide.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El proveedor seleccionado recibe un mensaje abreviado, tus preferencias y ejemplos relevantes cuando las reglas locales no pueden decidir."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le fournisseur sélectionné reçoit un message abrégé, vos préférences et des exemples pertinents lorsque les règles locales ne permettent pas de décider."
-          }
-        }
-      }
-    },
     "Your selected provider receives your policy, correction examples, evidence, and a shortened message only when local rules do not decide it.": {
       "extractionState": "stale",
       "localizations": {
@@ -12858,6 +12761,159 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ est un fournisseur de messagerie partagé : cette règle s’applique donc aussi à des personnes sans lien qui l’utilisent. Expéditeurs connus sur ce domaine : %2$@"
+          }
+        }
+      }
+    },
+    "Apple Private Cloud Compute model": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelo de Private Cloud Compute de Apple"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle Private Cloud Compute d’Apple"
+          }
+        }
+      }
+    },
+    "Apple on-device model": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelo de Apple en el dispositivo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle Apple sur l’appareil"
+          }
+        }
+      }
+    },
+    "Similar corrections: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correcciones similares: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrections similaires : %@"
+          }
+        }
+      }
+    },
+    "When local rules cannot decide, your selected provider receives a shortened message, your preferences, and up to %@ similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando las reglas locales no pueden decidir, el proveedor seleccionado recibe un mensaje abreviado, tus preferencias y hasta %@ correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorsque les règles locales ne permettent pas de décider, le fournisseur sélectionné reçoit un message abrégé, vos préférences et jusqu’à %@ corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+          }
+        }
+      }
+    },
+    "Similar corrections: %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correcciones similares: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrections similaires : %lld"
+          }
+        }
+      }
+    },
+    "When local rules cannot decide, your selected provider receives a shortened message, your preferences, and up to %lld similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando las reglas locales no pueden decidir, el proveedor seleccionado recibe un mensaje abreviado, tus preferencias y hasta %lld correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorsque les règles locales ne permettent pas de décider, le fournisseur sélectionné reçoit un message abrégé, vos préférences et jusqu’à %lld corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+          }
+        }
+      }
+    },
+    "Includes the message’s sender, subject, shortened text and evidence, your preferences, and up to %@ similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label. Enabled attachment/OCR text may be included. Mail can contain sensitive information.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluye el remitente, el asunto, el texto abreviado y los indicios del mensaje, tus preferencias y hasta %@ correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta. Puede incluir texto de adjuntos y OCR si están activados. El correo puede contener información sensible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprend l’expéditeur, l’objet, le texte abrégé et les indices du message, vos préférences et jusqu’à %@ corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette. Le texte des pièces jointes et de l’OCR peut être inclus si activé. Les messages peuvent contenir des données sensibles."
+          }
+        }
+      }
+    },
+    "Includes the message’s sender, subject, shortened text and evidence, your preferences, and up to %lld similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label. Enabled attachment/OCR text may be included. Mail can contain sensitive information.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluye el remitente, el asunto, el texto abreviado y los indicios del mensaje, tus preferencias y hasta %lld correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta. Puede incluir texto de adjuntos y OCR si están activados. El correo puede contener información sensible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprend l’expéditeur, l’objet, le texte abrégé et les indices du message, vos préférences et jusqu’à %lld corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette. Le texte des pièces jointes et de l’OCR peut être inclus si activé. Les messages peuvent contenir des données sensibles."
+          }
+        }
+      }
+    },
+    "Body length uses a four-characters-per-token estimate. Quoted text in replies is shortened. Attachment text is included only when enabled.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La longitud usa una estimación de cuatro caracteres por token. El texto citado en las respuestas se abrevia. El texto adjunto solo se incluye si está activado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La longueur utilise une estimation de quatre caractères par jeton. Le texte cité dans les réponses est abrégé. Le texte des pièces jointes n’est inclus que si l’option est activée."
           }
         }
       }

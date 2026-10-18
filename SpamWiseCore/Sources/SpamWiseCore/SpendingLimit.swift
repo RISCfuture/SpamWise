@@ -166,12 +166,12 @@ public struct SpendingLimitedClassifier: Classifier {
   ]
   private static let settlementRetryDelay = Duration.milliseconds(50)
   private let classifier: any Classifier
-  private let modelID: String
+  private let model: ModelIdentifier
   private let store: Store
 
-  /// Wraps a paid classifier whose request bounds are priced with `modelID`’s rates.
-  public init(_ classifier: any Classifier, modelID: String, store: Store) {
-    self.classifier = classifier; self.modelID = modelID; self.store = store
+  /// Wraps a paid classifier whose request bounds are priced with `model`’s rates.
+  public init(_ classifier: any Classifier, model: ModelIdentifier, store: Store) {
+    self.classifier = classifier; self.model = model; self.store = store
   }
 
   private static func cannotHaveBilled(_ error: any Error) -> Bool {
@@ -191,7 +191,7 @@ public struct SpendingLimitedClassifier: Classifier {
    */
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
     try Task.checkCancellation()
-    let estimate = try ModelTokenPricing.rates(for: modelID).maximumCost(of: input)
+    let estimate = try ModelTokenPricing.rates(for: model).maximumCost(of: input)
     let reservation = try await SpendingLimit.reserve(usd: estimate, store: store)
     do {
       let verdict = try await classifier.classify(input)

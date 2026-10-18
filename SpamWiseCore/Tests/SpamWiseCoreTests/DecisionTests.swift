@@ -196,9 +196,8 @@ func `corrects selected mail without classifying and excludes own addresses from
   _ = try await pipeline.correct(recordID: failed.id, label: .inbox, adapter: adapter)
   let state = try await StateRepository.load(store)
   #expect(state.retries.isEmpty)
-  #expect(state.rules.count == 1)
-  #expect(state.rules[0].scope == .address)
-  #expect(state.corrections.count == 1)
+  #expect(state.rules.map(\.scope) == [.address])
+  #expect(state.corrections.map(\.promptScope) == [.account("account-A")])
   #expect(await adapter.actions.isEmpty)
   let review = try await pipeline.correct(recordID: failed.id, label: .review, adapter: adapter)
   let reviewed = try await StateRepository.load(store)
@@ -222,6 +221,7 @@ func `corrects selected mail without classifying and excludes own addresses from
   let retained = try await StateRepository.load(store)
   #expect(await adapter.lookups == 1)
   #expect(retained.reviewedLabels?.first?.message != nil)
+  #expect(retained.corrections.last?.excerpt.isEmpty == false)
   #expect(retained.learning == nil)
   try await StateRepository.editSettings(store) {
     $0.advancedOptions.retainReviewedContent = false

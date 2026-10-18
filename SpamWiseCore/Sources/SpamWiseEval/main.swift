@@ -101,32 +101,33 @@ import Evaluation
     guard ProcessInfo.processInfo.environment["SPAMWISE_LIVE_API"] == "1" else {
       throw EvaluationError.liveDisabled
     }
-    if options.model == "apple-on-device" { return AppleClassifier(backend: .onDevice) }
-    if options.model == "apple-private-cloud-compute" {
-      return AppleClassifier(backend: .privateCloudCompute)
+    guard let model = ModelIdentifier(rawValue: options.model) else {
+      throw ClassificationError.configuration
     }
-    _ = try ModelTokenPricing.rates(for: options.model)
-    let variable =
-      options.model.hasPrefix("claude-")
-      ? "ANTHROPIC_API_KEY"
-      : options.model.hasPrefix("gpt-") ? "OPENAI_API_KEY" : "GEMINI_API_KEY"
-    guard let key = ProcessInfo.processInfo.environment[variable], !key.isEmpty else {
+    guard let reservationUSD = model.reservationUSD else {
+      return ClassifierFactory.make(model, credential: { "" })
+    }
+    guard let variable = apiKeyVariable(for: model.backend),
+      let key = ProcessInfo.processInfo.environment[variable], !key.isEmpty
+    else {
       throw EvaluationError.missingKey
     }
-    let classifier: any Classifier
-    switch variable {
-      case "OPENAI_API_KEY": classifier = try OpenAIClassifier(modelID: options.model, key: { key })
-      case "GEMINI_API_KEY": classifier = try GeminiClassifier(modelID: options.model, key: { key })
-      default: classifier = try ClaudeClassifier(modelID: options.model, key: { key })
-    }
     return BudgetedClassifier(
-      classifier,
+      ClassifierFactory.make(model, credential: { key }),
       store: try await EvaluationBudget.ledgerStore(
         at: options.values["budget-store"].map { URL(filePath: $0) },
         limitUSD: options.price("budget-limit", default: nil)
       ),
-      upperBoundUSD: options.model == "claude-haiku-5-5" ? 0.10 : 1.0
+      upperBoundUSD: reservationUSD
     )
+  }
+  private static func apiKeyVariable(for backend: ModelBackend) -> String? {
+    switch backend {
+      case .claude: "ANTHROPIC_API_KEY"
+      case .openAI: "OPENAI_API_KEY"
+      case .gemini: "GEMINI_API_KEY"
+      case .onDevice, .privateCloudCompute: nil
+    }
   }
   private static func evaluate(_ options: Options) async throws {
     let reviewed = try options.values["reviewed"].map {

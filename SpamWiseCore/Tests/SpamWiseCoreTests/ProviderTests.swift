@@ -28,6 +28,10 @@ func `reads only the configured provider credential and fails without fallback`(
   await #expect(throws: CredentialProbe.requested) {
     _ = try await classifier.classify(providerInput())
   }
+  let unsaved = ConfiguredClassifier(store: store) { _ in throw KeychainError.missing }
+  await #expect(throws: ClassificationError.missingCredential) {
+    _ = try await unsaved.classify(providerInput())
+  }
   try await StateRepository.editSettings(store) { settings in
     settings.advancedOptions.mailSharingConsent = []
   }
@@ -69,7 +73,7 @@ func `reserves each paid request’s maximum cost and refunds only requests that
 {
   let store = try testStore()
   let input = try providerInput()
-  let rates = try ModelTokenPricing.rates(for: spendingModelID)
+  let rates = ModelTokenPricing.rates(for: spendingModel)
   let maximum = try rates.maximumCost(of: input)
   let measured = Verdict(
     label: .inbox,
@@ -80,7 +84,7 @@ func `reserves each paid request’s maximum cost and refunds only requests that
       output: 100,
       cached: 200,
       estimated: false,
-      modelID: spendingModelID,
+      modelID: spendingModel.rawValue,
       pricing: rates
     )
   )
@@ -144,7 +148,7 @@ func `reserves each paid request’s maximum cost and refunds only requests that
   #expect(abs(legacy.estimatedCost - 0.000132) < 0.00000001)
 }
 
-private func providerInput(timeout: TimeInterval = 15) throws -> ClassificationInput {
+func providerInput(timeout: TimeInterval = 15) throws -> ClassificationInput {
   let message = try MIMEParser().parse(fixture("personal"))
   return .init(message: message, evidence: .init(message: message), timeout: timeout)
 }
@@ -153,7 +157,7 @@ private func configuredOpenAI(store: Store, response: ModelHTTPClient) -> Config
   ConfiguredClassifier(store: store, http: response, credential: { _ in "test-key" })
 }
 
-private let spendingModelID = "gpt-5.4-mini"
+private let spendingModel = ModelIdentifier.gptMini
 
 private func spendingLimited(
   _ store: Store,
@@ -161,7 +165,7 @@ private func spendingLimited(
 ) -> SpendingLimitedClassifier {
   SpendingLimitedClassifier(
     MockClassifier { _ in try await outcome() },
-    modelID: spendingModelID,
+    model: spendingModel,
     store: store
   )
 }
@@ -188,8 +192,7 @@ private let geminiResponse =
 @Test func `encodes isolated provider requests and accounts for billed tokens`()
   async throws
 {
-  let openAI = try OpenAIClassifier(
-    modelID: "gpt-5.4-mini",
+  let openAI = OpenAIClassifier(
     key: { "fixture" },
     http: ModelHTTPClient { request in
       #expect(request.url?.absoluteString == "https://api.openai.com/v1/responses")
@@ -208,8 +211,7 @@ private let geminiResponse =
   #expect(result.usage.output == 100)
   #expect(result.usage.modelID == "gpt-5.4-mini")
   #expect(abs(result.usage.estimatedCost - 0.001065) < 0.00000001)
-  let gemini = try GeminiClassifier(
-    modelID: "gemini-3.8-flash",
+  let gemini = GeminiClassifier(
     key: { "fixture" },
     http: ModelHTTPClient { request in
       #expect(request.url?.query == nil)
@@ -231,8 +233,7 @@ private let geminiResponse =
   openAIResponse.replacingOccurrences(of: "\"cached_tokens\":200", with: "\"cached_tokens\":2000")
 ])
 func `rejects malformed or incomplete OpenAI verdicts`(_ response: String) async throws {
-  let classifier = try OpenAIClassifier(
-    modelID: "gpt-5.4-mini",
+  let classifier = OpenAIClassifier(
     key: { "fixture" },
     http: providerHTTP(response)
   )
@@ -252,8 +253,7 @@ func `rejects malformed or incomplete OpenAI verdicts`(_ response: String) async
 func `rejects malformed truncated and invalid Gemini usage responses`(_ response: String)
   async throws
 {
-  let classifier = try GeminiClassifier(
-    modelID: "gemini-3.8-flash",
+  let classifier = GeminiClassifier(
     key: { "fixture" },
     http: providerHTTP(response)
   )
@@ -263,12 +263,12 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
 }
 
 @Test func `retains billing provenance after introductory rates end`() throws {
-  let introductory = try ModelTokenPricing.rates(
-    for: "gemini-3.8-flash",
+  let introductory = ModelTokenPricing.rates(
+    for: .geminiFlash,
     at: Date(timeIntervalSince1970: 1_798_761_599)
   )
-  let standard = try ModelTokenPricing.rates(
-    for: "gemini-3.8-flash",
+  let standard = ModelTokenPricing.rates(
+    for: .geminiFlash,
     at: Date(timeIntervalSince1970: 1_798_761_600)
   )
   let usage = TokenUsage(
@@ -287,7 +287,7 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
     output: 100,
     cached: 200,
     modelID: "claude-sonnet-5-5",
-    pricing: try .rates(for: "claude-sonnet-5-5")
+    pricing: .rates(for: .claudeSonnet)
   )
   #expect(abs(sonnet.estimatedCost - 0.00262) < 0.00000001)
 }
@@ -295,20 +295,17 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
 @Test func `rejects provider refusals and rate limits without a verdict`() async throws {
   let refused =
     #"{"status":"completed","output":[{"type":"message","content":[{"type":"refusal","refusal":"No"}]}]}"#
-  let openAI = try OpenAIClassifier(
-    modelID: "gpt-5.4-mini",
+  let openAI = OpenAIClassifier(
     key: { "fixture" },
     http: providerHTTP(refused)
   )
   await #expect(throws: ClassificationError.refused) { try await openAI.classify(providerInput()) }
-  let gemini = try GeminiClassifier(
-    modelID: "gemini-3.8-flash",
+  let gemini = GeminiClassifier(
     key: { "fixture" },
     http: providerHTTP(#"{"promptFeedback":{"blockReason":"SAFETY"}}"#)
   )
   await #expect(throws: ClassificationError.refused) { try await gemini.classify(providerInput()) }
-  let limited = try GeminiClassifier(
-    modelID: "gemini-3.8-flash",
+  let limited = GeminiClassifier(
     key: { "fixture" },
     http: providerHTTP("", status: 429)
   )
@@ -317,10 +314,8 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
   }
 }
 
-@Test func `enforces provider deadlines response limits and explicit model selection`() async throws
-{
-  let slow = try OpenAIClassifier(
-    modelID: "gpt-5.4-mini",
+@Test func `enforces provider deadlines and response limits`() async throws {
+  let slow = OpenAIClassifier(
     key: { "fixture" },
     http: ModelHTTPClient { _ in
       try? await Task.sleep(for: .seconds(1))
@@ -330,19 +325,12 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
   await #expect(throws: ClassificationError.timeout) {
     try await slow.classify(providerInput(timeout: 0.01))
   }
-  let oversized = try GeminiClassifier(
-    modelID: "gemini-3.8-flash",
+  let oversized = GeminiClassifier(
     key: { "fixture" },
     http: providerHTTP(String(repeating: " ", count: 65_537))
   )
   await #expect(throws: ClassificationError.invalidOutput) {
     try await oversized.classify(providerInput())
-  }
-  #expect(throws: ClassificationError.configuration) {
-    try OpenAIClassifier(modelID: "other", key: { "fixture" })
-  }
-  #expect(throws: ClassificationError.configuration) {
-    try GeminiClassifier(modelID: "../models/other", key: { "fixture" })
   }
 }
 

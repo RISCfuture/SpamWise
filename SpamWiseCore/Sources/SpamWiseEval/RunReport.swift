@@ -56,7 +56,7 @@ struct RunReport: Encodable {
     cacheHits = await cache.hits
     providerCalls = await cache.misses
     newUsage = await cache.newUsage
-    let pricing = try? ModelTokenPricing.rates(for: model)
+    let pricing = ModelIdentifier(rawValue: model).map { ModelTokenPricing.rates(for: $0) }
     let inputPrice = try options.price("input-price", default: pricing?.input)
     let outputPrice = try options.price("output-price", default: pricing?.output)
     let cachePrice = try options.price("cache-price", default: pricing?.cached)

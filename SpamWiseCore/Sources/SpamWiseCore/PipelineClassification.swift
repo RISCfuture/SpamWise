@@ -43,7 +43,13 @@ extension Pipeline {
       verdict = Self.deterministicVerdict(.review, reason)
     } else {
       path = .model
-      verdict = try await modelVerdict(message, evidence: &evidence, state: state, budget: budget)
+      verdict = try await modelVerdict(
+        message,
+        identity: identity,
+        evidence: &evidence,
+        state: state,
+        budget: budget
+      )
       reason = .model(verdict.reason)
     }
     let threats = try await assessThreats(
@@ -63,6 +69,7 @@ extension Pipeline {
   }
   private func modelVerdict(
     _ message: ParsedMessage,
+    identity: MessageIdentity,
     evidence: inout EvidenceBundle,
     state: AppState,
     budget: (start: Date, timeout: Double)
@@ -90,13 +97,11 @@ extension Pipeline {
       message: message,
       evidence: evidence,
       policy: state.settings.policy,
-      corrections: advanced.retrieveExamples
-        ? CorrectionRetrieval.examples(
-          for: message,
-          from: state.corrections,
-          limit: state.settings.correctionLimit
-        )
-        : state.corrections,
+      corrections: CorrectionRetrieval.examples(
+        for: message,
+        from: state.corrections.filter { $0.isQuotable(inAccount: identity.accountID) },
+        limit: state.settings.correctionLimit
+      ),
       correctionLimit: state.settings.correctionLimit,
       bodyTokenBudget: state.settings.bodyTokenBudget,
       timeout: remaining

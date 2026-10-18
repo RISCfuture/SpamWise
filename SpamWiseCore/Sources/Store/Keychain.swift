@@ -1,4 +1,5 @@
 public import Foundation
+public import Classifier
 import Security
 
 /// Failures while accessing or storing credentials.
@@ -26,18 +27,29 @@ public struct APIKeychain: Sendable {
   /// Keychain access group shared by the app and extension.
   public static let accessGroup = "2NFSK2WB24.codes.tim.SpamWise.shared"
   /// Separate credential namespace for the user's Spamhaus HTTPS query key.
-  public static let spamhausService = "codes.tim.SpamWise.spamhaus"
+  public static let spamhausService = servicePrefix + "spamhaus"
+  private static let servicePrefix = "codes.tim.SpamWise."
+  private static let account = "user-api-key"
   private let service: String
   private var query: [String: Any] {
     [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: service,
-      kSecAttrAccount as String: "user-api-key", kSecAttrAccessGroup as String: Self.accessGroup,
+      kSecAttrAccount as String: Self.account, kSecAttrAccessGroup as String: Self.accessGroup,
       kSecUseDataProtectionKeychain as String: true
     ]
   }
-  /// Creates an APIKeychain with the supplied configuration.
-  public init(service: String = "codes.tim.SpamWise.anthropic") { self.service = service }
+  /// Accesses the credential stored under an explicit service name.
+  public init(service: String) { self.service = service }
+  /// Accesses a paid provider's API key; nil for Apple models, which need no credential.
+  public init?(backend: ModelBackend) {
+    switch backend {
+      case .claude: self.init(service: Self.servicePrefix + "anthropic")
+      case .openAI: self.init(service: Self.servicePrefix + "openai")
+      case .gemini: self.init(service: Self.servicePrefix + "gemini")
+      case .onDevice, .privateCloudCompute: return nil
+    }
+  }
   /// Reads durable state or credentials, throwing when access is unavailable.
   public func read() throws -> String {
     var query = query; query[kSecReturnData as String] = true

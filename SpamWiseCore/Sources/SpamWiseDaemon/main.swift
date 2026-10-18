@@ -27,6 +27,7 @@ struct SpamWiseDaemon {
     arguments.
     --model selects an explicit supported model in this store; providerCredentials can reference
     provider-specific environment or login Keychain secrets. No provider or credential fallback.
+    Models: \(ModelIdentifier.allCases.map(\.rawValue).joined(separator: ", ")).
     """
 
   static func main() async {
@@ -82,7 +83,7 @@ struct SpamWiseDaemon {
     if let references = configuration.providerCredentials {
       classifier = ConfiguredClassifier(store: store) { backend in
         guard let reference = references[backend.rawValue] else {
-          throw ClassificationError.configuration
+          throw ClassificationError.missingCredential
         }
         return try reference.resolvedSecret()
       }
@@ -144,29 +145,15 @@ struct SpamWiseDaemon {
     return processed
   }
 
-  private static func selectModel(_ model: String?, store: Store) async throws {
+  private static func selectModel(_ model: ModelIdentifier?, store: Store) async throws {
     guard let model else { return }
-    let backend = try backend(for: model)
-    let current = try await StateRepository.load(store).settings.advancedOptions
-    guard current.backend != backend || (current.modelID ?? current.backend.defaultModelID) != model
-    else {
+    guard try await StateRepository.load(store).settings.advancedOptions.model != model else {
       return
     }
     try await StateRepository.editSettings(store) { settings in
       var advanced = settings.advancedOptions
-      advanced.backend = backend; advanced.modelID = model
+      advanced.select(model)
       settings.advancedOptions = advanced
-    }
-  }
-
-  private static func backend(for model: String) throws -> ModelBackend {
-    switch model {
-      case "apple-on-device": return .onDevice
-      case "apple-private-cloud-compute": return .privateCloudCompute
-      case "claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5": return .claude
-      case "gpt-5.4-mini": return .openAI
-      case "gemini-3.8-flash": return .gemini
-      default: throw IMAPError.invalidConfiguration
     }
   }
 
@@ -180,7 +167,7 @@ struct SpamWiseDaemon {
     var probe: UInt32?
     var poll: Int?
     var limit = Self.defaultPageSize
-    var model: String?
+    var model: ModelIdentifier?
     init(_ arguments: [String]) throws {
       var values: [String: String] = [:], flags: Set<String> = []
       var offset = 0
@@ -201,8 +188,12 @@ struct SpamWiseDaemon {
       self.path = path
       actions = flags.contains("--actions")
       validate = flags.contains("--validate")
-      model = values["--model"]
-      if let model { _ = try SpamWiseDaemon.backend(for: model) }
+      if let identifier = values["--model"] {
+        guard let model = ModelIdentifier(rawValue: identifier) else {
+          throw IMAPError.invalidConfiguration
+        }
+        self.model = model
+      }
       if let value = values["--probe"] {
         guard let uid = UInt32(value), uid > 0 else { throw IMAPError.invalidConfiguration }
         probe = uid

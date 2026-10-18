@@ -1,28 +1,5 @@
 public import Foundation
 
-/// Explicit classifier selection; unavailable backends never fall back to another provider.
-public enum ModelBackend: String, Codable, Sendable, CaseIterable {
-  /// Uses the explicitly selected Claude model.
-  case claude
-  /// Uses Apple’s available on-device model.
-  case onDevice
-  /// Uses Apple’s explicitly authorized Private Cloud Compute model.
-  case privateCloudCompute
-  /// Uses the supported OpenAI Responses model.
-  case openAI
-  /// Uses the supported Gemini model.
-  case gemini
-  /// Default explicit model identity for a newly selected provider.
-  public var defaultModelID: String {
-    switch self {
-      case .claude: "claude-haiku-5-5"
-      case .onDevice: "apple-on-device"
-      case .privateCloudCompute: "apple-private-cloud-compute"
-      case .openAI: "gpt-5.4-mini"
-      case .gemini: "gemini-3.8-flash"
-    }
-  }
-}
 /// Incoming integration chosen independently of the classifier provider.
 public enum MailTransport: String, Codable, Sendable, CaseIterable {
   /// Accesses mail through the Apple Mail integration.
@@ -39,12 +16,10 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
   public var mailSharingConsent: Set<ModelBackend>?
   /// Opt-in sender-domain disclosure to registration-data services.
   public var domainRegistrationLookup: Bool?
-  /// Explicit override for providers that support selectable model identities.
-  public var modelID: String?
+  /// Persisted model identity, parsed leniently by ``model``.
+  private var modelID: String?
   /// Account access method; IMAP requires separate credentials and validation.
   public var transport: MailTransport = .appleMail
-  /// Selects similar reviewed examples instead of a purely chronological window.
-  public var retrieveExamples = false
   /// Enables anchored signatures derived from explicit Junk corrections.
   public var fingerprints = false
   /// Enables sufficiently trained Bayes weak evidence.
@@ -61,8 +36,18 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
   public var weeklyDigest = false
   /// Retains bounded reviewed text locally to support later labeled export.
   public var retainReviewedContent = false
+  /// The selected model, or the provider default when the stored identity is unknown or foreign.
+  public var model: ModelIdentifier {
+    guard let stored = modelID.flatMap(ModelIdentifier.init(rawValue:)), stored.backend == backend
+    else { return backend.defaultModel }
+    return stored
+  }
   /// Creates disabled optional capabilities with Claude as the default provider.
   public init() {}
+  /// Selects `model` together with the provider that serves it.
+  public mutating func select(_ model: ModelIdentifier) {
+    backend = model.backend; modelID = model.rawValue
+  }
 }
 
 /// Opt-in network reputation and local sidecar configuration.

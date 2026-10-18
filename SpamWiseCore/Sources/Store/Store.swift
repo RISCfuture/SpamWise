@@ -34,6 +34,8 @@ public enum StoreError: StorageFailure, Sendable, LocalizedError {
  No actor suspension occurs between reading and saving a transaction.
  */
 public actor Store {
+  /// App Group shared by the app and extension.
+  public static let appGroupIdentifier = "group.codes.tim.SpamWise"
   /// Location of the durable shared store.
   public let url: URL
   /// Creates a Store with the supplied configuration.
@@ -49,7 +51,7 @@ public actor Store {
   public static func sharedURL() throws -> URL {
     guard
       let url = FileManager.default.containerURL(
-        forSecurityApplicationGroupIdentifier: "group.codes.tim.SpamWise"
+        forSecurityApplicationGroupIdentifier: appGroupIdentifier
       )
     else { throw StoreError.missingAppGroup }
     return url.appending(path: "SpamWise.store")

@@ -17,7 +17,8 @@ struct OnboardingView: View {
       }.padding()
       Form {
         switch step {
-          case .welcome: SetupIntroductionView()
+          case .welcome:
+            SetupIntroductionView(correctionLimit: model.state.settings.correctionLimit)
           case .account:
             Section("Connect your Anthropic account") {
               KeyEntryView(model: model)
@@ -63,6 +64,8 @@ struct OnboardingView: View {
 }
 
 private struct SetupIntroductionView: View {
+  let correctionLimit: Int
+
   var body: some View {
     Section {
       Text("Your Inbox, with fewer distractions").font(.headline)
@@ -74,8 +77,9 @@ private struct SetupIntroductionView: View {
     Section("Your privacy") {
       Text(
         """
-        Your selected provider receives a shortened message, your preferences, and relevant \
-        examples when local rules cannot decide.
+        When local rules cannot decide, your selected provider receives a shortened message, your \
+        preferences, and up to \(correctionLimit, format: .number) similar corrections from the \
+        same account, each with its sender domain, subject, a short excerpt and your label.
         """
       )
       Text(
@@ -115,5 +119,7 @@ private struct SetupPreviewView: View {
 }
 
 #Preview("Onboarding") { OnboardingView(model: PreviewHelper.model(onboarding: true)) }
-#Preview("Introduction") { Form { SetupIntroductionView() }.formStyle(.grouped) }
+#Preview("Introduction") {
+  Form { SetupIntroductionView(correctionLimit: 5) }.formStyle(.grouped)
+}
 #Preview("Dry run") { Form { SetupPreviewView(model: PreviewHelper.model()) }.formStyle(.grouped) }

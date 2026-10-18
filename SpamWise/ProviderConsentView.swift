@@ -35,7 +35,9 @@ struct ProviderConsentView: View {
     DisclosureGroup("What is shared") {
       Text(
         """
-        Includes sender, subject, shortened text, evidence, preferences and correction examples. \
+        Includes the message’s sender, subject, shortened text and evidence, your preferences, and \
+        up to \(model.state.settings.correctionLimit, format: .number) similar corrections from \
+        the same account, each with its sender domain, subject, a short excerpt and your label. \
         Enabled attachment/OCR text may be included. Mail can contain sensitive information.
         """
       ).foregroundStyle(.secondary)

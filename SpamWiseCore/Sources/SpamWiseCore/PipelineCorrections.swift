@@ -56,8 +56,9 @@ extension Pipeline {
         sender: address,
         domain: domain,
         subject: previous.subject ?? "",
-        gist: previous.decision.reason.diagnosticDescription,
-        label: label
+        excerpt: "",
+        label: label,
+        promptScope: previous.identity.accountID.map(CorrectionExample.PromptScope.account)
       )
       example.sampleID =
         state.reviewedLabels?.first { $0.id == previous.identity.contentHash }?
@@ -131,6 +132,7 @@ extension Pipeline {
       for index in state.corrections.indices
       where state.corrections[index].sampleID == previousSampleID {
         state.corrections[index].sampleID = sampleID
+        if let reviewedMessage { state.corrections[index].quote(reviewedMessage.text) }
       }
       labels.removeAll { $0.id == record.identity.contentHash }
       labels.append(

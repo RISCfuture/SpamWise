@@ -3,6 +3,8 @@ import SpamWiseCore
 import Evaluation
 
 struct Options {
+  private static let models = (["mock"] + ModelIdentifier.allCases.map(\.rawValue))
+    .joined(separator: ", ")
   static let usage = """
     spamwise-eval --input CORPUS --model MODEL
       [--strength conservative|balanced|aggressive] [--cache DIRECTORY] [--output REPORT.json]
@@ -14,8 +16,7 @@ struct Options {
     spamwise-eval --export inbox|junk|sent --destination DIRECTORY [--limit 500]
     spamwise-eval --compare FROZEN_MANIFEST.json [--output REPORT.json]
     spamwise-eval --threat-report OBJECTIVE_OBSERVATIONS.json [--output REPORT.json]
-    Models: mock, claude-haiku-5-5, claude-sonnet-5-5, claude-opus-5-5, gpt-5.4-mini,
-      gemini-3.8-flash, apple-on-device, apple-private-cloud-compute.
+    Models: \(models).
     Live calls require SPAMWISE_LIVE_API=1 and the selected provider's API key environment variable.
     Paid models require --budget-store, where each call reserves a conservative bound first.
     Corpus folders: good/, junk/, and optional graymail/. Reports contain filenames and reasons.
