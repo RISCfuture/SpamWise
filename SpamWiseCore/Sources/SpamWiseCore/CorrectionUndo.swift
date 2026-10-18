@@ -8,10 +8,15 @@ public enum UndoError: UndoFailure, Sendable, Equatable, LocalizedError {
   /// A later change superseded the correction, or its label was never recorded.
   case unavailable
   /// A general description of the refused undo.
-  public var errorDescription: String? { String(localized: "The correction couldn’t be undone.") }
+  public var errorDescription: String? {
+    String(localized: "The correction couldn’t be undone.", bundle: .module)
+  }
   /// Why the undo is no longer available.
   public var failureReason: String? {
-    String(localized: "Rules, labels or settings changed after the correction was saved.")
+    String(
+      localized: "Rules, labels or settings changed after the correction was saved.",
+      bundle: .module
+    )
   }
 }
 

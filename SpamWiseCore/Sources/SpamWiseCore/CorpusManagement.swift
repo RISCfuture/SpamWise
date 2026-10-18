@@ -13,25 +13,33 @@ public enum CorpusError: CorpusFailure, Sendable, Equatable, LocalizedError {
   case labelNotFound
   /// A general description of the rejected operation.
   public var errorDescription: String? {
-    String(localized: "The reviewed examples couldn’t be updated.")
+    String(localized: "The reviewed examples couldn’t be updated.", bundle: .module)
   }
   /// The constraint that rejected the operation.
   public var failureReason: String? {
     switch self {
       case .batchTooLarge(let limit):
-        String(localized: "Import at most \(limit, format: .number) messages at a time.")
+        String(
+          localized: "Import at most \(limit, format: .number) messages at a time.",
+          bundle: .module
+        )
       case .labelLimitReached(let limit, let remaining):
         String(
           localized:
-            "SpamWise keeps at most \(limit, format: .number) imported labels; \(remaining, format: .number) more can be imported."
+            "SpamWise keeps at most \(limit, format: .number) imported labels; \(remaining, format: .number) more can be imported.",
+          bundle: .module
         )
-      case .labelNotFound: String(localized: "The reviewed example is no longer available.")
+      case .labelNotFound:
+        String(localized: "The reviewed example is no longer available.", bundle: .module)
     }
   }
   /// The action that makes room for more imported labels.
   public var recoverySuggestion: String? {
     guard case .labelLimitReached = self else { return nil }
-    return String(localized: "Forget imported examples you no longer need, then import again.")
+    return String(
+      localized: "Forget imported examples you no longer need, then import again.",
+      bundle: .module
+    )
   }
 }
 

@@ -140,20 +140,29 @@ struct ClassifierOptions: ParsableArguments {
       let providerOnly = [budgetStore != nil, budgetLimit != nil, pricingOverridden]
       guard !providerOnly.contains(true) else {
         throw ValidationError(
-          String(localized: "Budget and price options apply only to provider models.")
+          String(
+            localized: "Budget and price options apply only to provider models.",
+            bundle: .module
+          )
         )
       }
     } else if mockResponses != nil {
-      throw ValidationError(String(localized: "--mock-responses requires --model mock."))
+      throw ValidationError(
+        String(localized: "--mock-responses requires --model mock.", bundle: .module)
+      )
     }
   }
 
   private func requireBudgetLedger() throws {
     if budgetLimit != nil, budgetStore == nil {
-      throw ValidationError(String(localized: "--budget-limit requires --budget-store."))
+      throw ValidationError(
+        String(localized: "--budget-limit requires --budget-store.", bundle: .module)
+      )
     }
     if model.reservationUSD != nil, budgetStore == nil {
-      throw ValidationError(String(localized: "Paid models require --budget-store PATH."))
+      throw ValidationError(
+        String(localized: "Paid models require --budget-store PATH.", bundle: .module)
+      )
     }
   }
 
@@ -163,7 +172,9 @@ struct ClassifierOptions: ParsableArguments {
       ("--output-price", outputPrice), ("--cache-price", cachePrice)
     ]
     for case let (flag, amount?) in amounts where !(amount.isFinite && amount >= 0) {
-      throw ValidationError(String(localized: "\(flag) must be a nonnegative amount in USD."))
+      throw ValidationError(
+        String(localized: "\(flag) must be a nonnegative amount in USD.", bundle: .module)
+      )
     }
   }
 

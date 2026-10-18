@@ -13,10 +13,11 @@ public enum SpendingLimitError: BudgetFailure, Sendable, Equatable, LocalizedErr
   /// General description of the spending-limit failure.
   public var errorDescription: String? {
     switch self {
-      case .invalidAmount: String(localized: "Couldn’t save the spending limit.")
+      case .invalidAmount: String(localized: "Couldn’t save the spending limit.", bundle: .module)
       case .limitReached:
         String(
-          localized: "Your monthly spending limit prevented this request. Mail was left unchanged."
+          localized: "Your monthly spending limit prevented this request. Mail was left unchanged.",
+          bundle: .module
         )
     }
   }
@@ -26,9 +27,11 @@ public enum SpendingLimitError: BudgetFailure, Sendable, Equatable, LocalizedErr
       case .invalidAmount:
         String(
           localized:
-            "The spending limit must be a positive amount no greater than \(MonthlySpending.maximumUSD, format: .currency(code: "USD"))."
+            "The spending limit must be a positive amount no greater than \(MonthlySpending.maximumUSD, format: .currency(code: "USD")).",
+          bundle: .module
         )
-      case .limitReached: String(localized: "This month’s spending limit has been reached.")
+      case .limitReached:
+        String(localized: "This month’s spending limit has been reached.", bundle: .module)
     }
   }
   /// How the user can resume paid classification.
@@ -36,7 +39,7 @@ public enum SpendingLimitError: BudgetFailure, Sendable, Equatable, LocalizedErr
     switch self {
       case .invalidAmount: nil
       case .limitReached:
-        String(localized: "Raise the limit in Settings, or wait until next month.")
+        String(localized: "Raise the limit in Settings, or wait until next month.", bundle: .module)
     }
   }
 }

@@ -13,17 +13,17 @@ public enum TrustExclusionError: TrustExclusionFailure, Sendable, Equatable, Loc
   case invalidAddress(String)
   /// A general description of the rejected exclusion list.
   public var errorDescription: String? {
-    String(localized: "The trust exclusions couldn’t be saved.")
+    String(localized: "The trust exclusions couldn’t be saved.", bundle: .module)
   }
   /// The constraint that rejected the list.
   public var failureReason: String? {
     switch self {
       case .inputTooLong(let limit):
-        String(localized: "Enter at most \(limit, format: .number) characters.")
+        String(localized: "Enter at most \(limit, format: .number) characters.", bundle: .module)
       case .tooManyAddresses(let limit):
-        String(localized: "Enter at most \(limit, format: .number) addresses.")
+        String(localized: "Enter at most \(limit, format: .number) addresses.", bundle: .module)
       case .invalidAddress(let line):
-        String(localized: "“\(line)” is not a complete email address.")
+        String(localized: "“\(line)” is not a complete email address.", bundle: .module)
     }
   }
 }

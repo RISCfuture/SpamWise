@@ -58,7 +58,10 @@ public struct ActionNotAttempted: MailIntegrationFailure, LocalizedError {
   public let cause: any Error
   /// A non-sensitive description suitable for presentation.
   public var errorDescription: String? {
-    String(localized: "The Mail action was not attempted; the message is unchanged.")
+    String(
+      localized: "The Mail action was not attempted; the message is unchanged.",
+      bundle: .module
+    )
   }
   /// The non-sensitive cause, when the underlying failure provides one.
   public var failureReason: String? { (cause as? any LocalizedError)?.failureReason }
@@ -107,51 +110,73 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
   /// The selected message is not an Inbox message named as a disposable SpamWise probe.
   case notProbeMessage
   /// A non-sensitive description suitable for presentation.
-  public var errorDescription: String? { String(localized: "The Mail action is unavailable.") }
+  public var errorDescription: String? {
+    String(localized: "The Mail action is unavailable.", bundle: .module)
+  }
   /// The non-sensitive cause of the unavailable operation.
   public var failureReason: String? {
     switch self {
-      case .permissionDenied: String(localized: "Permission to control Mail was denied.")
-      case .unavailable: String(localized: "The requested message or Mail service is unavailable.")
-      case .ambiguous: String(localized: "More than one message matches the requested identity.")
+      case .permissionDenied:
+        String(localized: "Permission to control Mail was denied.", bundle: .module)
+      case .unavailable:
+        String(localized: "The requested message or Mail service is unavailable.", bundle: .module)
+      case .ambiguous:
+        String(localized: "More than one message matches the requested identity.", bundle: .module)
       case .folderUnresolved:
         String(
           localized:
-            "The configured account or folder could not be found uniquely. Select the folder again."
+            "The configured account or folder could not be found uniquely. Select the folder again.",
+          bundle: .module
         )
-      case .staleMessage: String(localized: "The message no longer matches its recorded state.")
+      case .staleMessage:
+        String(localized: "The message no longer matches its recorded state.", bundle: .module)
       case .accountUnverified:
-        String(localized: "The account’s Inbox and Junk mailboxes haven’t been validated.")
-      case .scriptFailed: String(localized: "Mail could not complete the requested operation.")
+        String(
+          localized: "The account’s Inbox and Junk mailboxes haven’t been validated.",
+          bundle: .module
+        )
+      case .scriptFailed:
+        String(localized: "Mail could not complete the requested operation.", bundle: .module)
       default: resolutionReason ?? limitReason
     }
   }
   private var resolutionReason: String? {
     switch self {
       case .accountUnresolved:
-        String(localized: "Mail has no unique account with the recorded identifier.")
+        String(
+          localized: "Mail has no unique account with the recorded identifier.",
+          bundle: .module
+        )
       case .mailboxUnresolved:
-        String(localized: "Mail couldn’t identify this account’s mailbox uniquely.")
-      case .messageNotFound: String(localized: "The message couldn’t be found in Mail.")
+        String(
+          localized: "Mail couldn’t identify this account’s mailbox uniquely.",
+          bundle: .module
+        )
+      case .messageNotFound:
+        String(localized: "The message couldn’t be found in Mail.", bundle: .module)
       case .messageMoved:
         String(
           localized:
-            "The message is no longer in the mailbox where SpamWise found it, so it was left in place."
+            "The message is no longer in the mailbox where SpamWise found it, so it was left in place.",
+          bundle: .module
         )
       case .missingMessageID:
         String(
           localized:
-            "The message has no Message-ID, so SpamWise can’t confirm a move and left it in place."
+            "The message has no Message-ID, so SpamWise can’t confirm a move and left it in place.",
+          bundle: .module
         )
       case .existingAnnotation:
         String(
           localized:
-            "The message already has a flag or color you set, so SpamWise left it unchanged."
+            "The message already has a flag or color you set, so SpamWise left it unchanged.",
+          bundle: .module
         )
       case .notProbeMessage:
         String(
           localized:
-            "Select one message in the account’s Inbox whose subject starts with “[SpamWise Probe]”."
+            "Select one message in the account’s Inbox whose subject starts with “[SpamWise Probe]”.",
+          bundle: .module
         )
       default: nil
     }
@@ -160,29 +185,34 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
     switch self {
       case .messageTooLarge:
         String(
-          localized: "The message is too large for SpamWise to read, so it was left unchanged."
+          localized: "The message is too large for SpamWise to read, so it was left unchanged.",
+          bundle: .module
         )
       case .selectionCount(let minimum, let maximum) where minimum == 1 && maximum == 1:
-        String(localized: "Select exactly one message in Mail.")
+        String(localized: "Select exactly one message in Mail.", bundle: .module)
       case .selectionCount(let minimum, let maximum):
         String(
           localized:
-            "Select \(minimum, format: .number) to \(maximum, format: .number) messages in Mail."
+            "Select \(minimum, format: .number) to \(maximum, format: .number) messages in Mail.",
+          bundle: .module
         )
       case .folderLimit(let count, let depth):
         String(
           localized:
-            "Mail has more than \(count, format: .number) mailboxes or folders nested more than \(depth, format: .number) levels deep."
+            "Mail has more than \(count, format: .number) mailboxes or folders nested more than \(depth, format: .number) levels deep.",
+          bundle: .module
         )
       case .timedOut:
         String(
           localized:
-            "Mail didn’t respond in time. Any requested change may still happen; check the message in Mail."
+            "Mail didn’t respond in time. Any requested change may still happen; check the message in Mail.",
+          bundle: .module
         )
       case .actionUnconfirmed:
         String(
           localized:
-            "Mail didn’t show the expected result before the observation window ended."
+            "Mail didn’t show the expected result before the observation window ended.",
+          bundle: .module
         )
       default: nil
     }

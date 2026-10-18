@@ -65,8 +65,9 @@ public enum ModelIdentifier: String, Codable, Sendable, CaseIterable {
       case .claudeOpus: "Claude Opus 5.5"
       case .gptMini: "GPT-5.4 mini"
       case .geminiFlash: "Gemini 3.8 Flash"
-      case .appleOnDevice: String(localized: "Apple on-device model")
-      case .applePrivateCloudCompute: String(localized: "Apple Private Cloud Compute model")
+      case .appleOnDevice: String(localized: "Apple on-device model", bundle: .module)
+      case .applePrivateCloudCompute:
+        String(localized: "Apple Private Cloud Compute model", bundle: .module)
     }
   }
 

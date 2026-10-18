@@ -115,14 +115,17 @@ public enum ParseError: MessageParsingError, Sendable, LocalizedError {
   case unreadableSender
 
   /// General description of the parsing failure.
-  public var errorDescription: String? { String(localized: "Couldn’t read the message.") }
+  public var errorDescription: String? {
+    String(localized: "Couldn’t read the message.", bundle: .module)
+  }
 
   /// The unsupported content or resource limit that prevented parsing.
   public var failureReason: String? {
     switch self {
-      case .tooLarge: String(localized: "The message exceeds the supported content limits.")
+      case .tooLarge:
+        String(localized: "The message exceeds the supported content limits.", bundle: .module)
       case .unreadableSender:
-        String(localized: "The message has no single readable sender address.")
+        String(localized: "The message has no single readable sender address.", bundle: .module)
     }
   }
 }

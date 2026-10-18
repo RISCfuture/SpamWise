@@ -8,7 +8,9 @@ public protocol OperationDeadlineError: Error {}
 public enum ResourceDeadlineError: OperationDeadlineError, Sendable, LocalizedError {
   case timeout
   /// Non-sensitive description of the deadline failure.
-  public var errorDescription: String? { String(localized: "The operation timed out.") }
+  public var errorDescription: String? {
+    String(localized: "The operation timed out.", bundle: .module)
+  }
 }
 
 private final class DeadlineRace<T: Sendable>: Sendable {

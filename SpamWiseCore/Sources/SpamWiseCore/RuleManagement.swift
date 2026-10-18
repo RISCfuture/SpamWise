@@ -13,16 +13,20 @@ public enum RuleManagementError: RuleManagementFailure, Sendable, LocalizedError
   case tooManyRules
   /// A user-visible explanation of the rejected rule operation.
   public var errorDescription: String? {
-    String(localized: "The sender rules could not be updated.")
+    String(localized: "The sender rules could not be updated.", bundle: .module)
   }
   /// The validation constraint that rejected the operation.
   public var failureReason: String? {
     switch self {
       case .invalidRule:
-        String(localized: "Enter a complete email address or a registrable domain.")
+        String(
+          localized: "Enter a complete email address or a registrable domain.",
+          bundle: .module
+        )
       case .invalidArchive:
-        String(localized: "The rule file is invalid or exceeds the import limit.")
-      case .tooManyRules: String(localized: "The maximum of 10,000 sender rules has been reached.")
+        String(localized: "The rule file is invalid or exceeds the import limit.", bundle: .module)
+      case .tooManyRules:
+        String(localized: "The maximum of 10,000 sender rules has been reached.", bundle: .module)
     }
   }
 }

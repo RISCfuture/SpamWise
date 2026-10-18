@@ -80,30 +80,46 @@ extension DecisionReason {
   public var localizedDescription: String {
     switch self {
       case .gate(let gate): gate.localizedDescription
-      case .campaign: String(localized: "Review: matches a campaign you marked as junk")
+      case .campaign:
+        String(localized: "Review: matches a campaign you marked as junk", bundle: .module)
       case .model(let text), .legacy(let text): text
-      case .userCorrection(.address): String(localized: "Your correction for this sender’s address")
-      case .userCorrection(.domain): String(localized: "Your correction for this sender’s domain")
-      case .selectedForCorrection: String(localized: "Selected in Mail for correction")
-      case .connectionVerified: String(localized: "Haiku 5.5 connection verified")
-      case .paused: String(localized: "Filtering paused")
-      case .messageUnreadable: String(localized: "Not classified: the message couldn’t be read.")
-      case .unreadableSender: String(localized: "Review: the sender’s address couldn’t be read")
+      case .userCorrection(.address):
+        String(localized: "Your correction for this sender’s address", bundle: .module)
+      case .userCorrection(.domain):
+        String(localized: "Your correction for this sender’s domain", bundle: .module)
+      case .selectedForCorrection:
+        String(localized: "Selected in Mail for correction", bundle: .module)
+      case .connectionVerified: String(localized: "Haiku 5.5 connection verified", bundle: .module)
+      case .paused: String(localized: "Filtering paused", bundle: .module)
+      case .messageUnreadable:
+        String(localized: "Not classified: the message couldn’t be read.", bundle: .module)
+      case .unreadableSender:
+        String(localized: "Review: the sender’s address couldn’t be read", bundle: .module)
       case .concealedContent:
-        String(localized: "Review: part of the message couldn’t be read reliably")
+        String(localized: "Review: part of the message couldn’t be read reliably", bundle: .module)
       case .classificationFailed(let error):
-        String(localized: "Not classified: \(error.failureReason ?? error.localizedDescription)")
+        String(
+          localized: "Not classified: \(error.failureReason ?? error.localizedDescription)",
+          bundle: .module
+        )
       case .spendingLimitReached:
         String(
           localized:
-            "Not classified: the monthly spending limit was reached, so nothing was sent to the provider."
+            "Not classified: the monthly spending limit was reached, so nothing was sent to the provider.",
+          bundle: .module
         )
-      case .storageUnavailable: String(localized: "Not classified: shared storage was unavailable.")
+      case .storageUnavailable:
+        String(localized: "Not classified: shared storage was unavailable.", bundle: .module)
       case .processingFailed:
-        String(localized: "Not classified: processing failed. Mail was left unchanged.")
-      case .duplicateCallback: String(localized: "Already being processed")
-      case .actionAlreadyClaimed: String(localized: "Already handled; the earlier decision is kept")
-      case .unrecognized: String(localized: "Reason recorded by a different version of SpamWise")
+        String(
+          localized: "Not classified: processing failed. Mail was left unchanged.",
+          bundle: .module
+        )
+      case .duplicateCallback: String(localized: "Already being processed", bundle: .module)
+      case .actionAlreadyClaimed:
+        String(localized: "Already handled; the earlier decision is kept", bundle: .module)
+      case .unrecognized:
+        String(localized: "Reason recorded by a different version of SpamWise", bundle: .module)
     }
   }
 
@@ -150,23 +166,29 @@ extension GateReason {
   public var localizedDescription: String {
     switch self {
       case .senderRule(.address, .allow):
-        String(localized: "Allowed by your rule for this sender’s address")
+        String(localized: "Allowed by your rule for this sender’s address", bundle: .module)
       case .senderRule(.address, .block):
-        String(localized: "Blocked by your rule for this sender’s address")
+        String(localized: "Blocked by your rule for this sender’s address", bundle: .module)
       case .senderRule(.domain, .allow):
-        String(localized: "Allowed by your rule for this sender’s domain")
+        String(localized: "Allowed by your rule for this sender’s domain", bundle: .module)
       case .senderRule(.domain, .block):
-        String(localized: "Blocked by your rule for this sender’s domain")
+        String(localized: "Blocked by your rule for this sender’s domain", bundle: .module)
       case .contentRule(_, .allow, let note?):
-        String(localized: "Allowed by your content rule “\(note)”")
+        String(localized: "Allowed by your content rule “\(note)”", bundle: .module)
       case .contentRule(_, .block, let note?):
-        String(localized: "Blocked by your content rule “\(note)”")
-      case .contentRule(_, .allow, nil): String(localized: "Allowed by one of your content rules")
-      case .contentRule(_, .block, nil): String(localized: "Blocked by one of your content rules")
-      case .contact: String(localized: "Allowed: the sender is in your Contacts")
-      case .priorCorrespondence: String(localized: "Allowed: you have replied to this sender")
+        String(localized: "Blocked by your content rule “\(note)”", bundle: .module)
+      case .contentRule(_, .allow, nil):
+        String(localized: "Allowed by one of your content rules", bundle: .module)
+      case .contentRule(_, .block, nil):
+        String(localized: "Blocked by one of your content rules", bundle: .module)
+      case .contact: String(localized: "Allowed: the sender is in your Contacts", bundle: .module)
+      case .priorCorrespondence:
+        String(localized: "Allowed: you have replied to this sender", bundle: .module)
       case .orderHistory:
-        String(localized: "Allowed: this sender has sent authenticated order mail before")
+        String(
+          localized: "Allowed: this sender has sent authenticated order mail before",
+          bundle: .module
+        )
     }
   }
 }

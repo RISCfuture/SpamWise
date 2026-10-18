@@ -1,0 +1,134 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "A storage update changed “%@” without reading it first.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una actualización del almacenamiento modificó «%@» sin leerlo antes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une mise à jour du stockage a modifié « %@ » sans l’avoir lu au préalable."
+          }
+        }
+      }
+    },
+    "Keychain returned status %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El Llavero devolvió el estado %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le Trousseau a renvoyé le statut %@."
+          }
+        }
+      }
+    },
+    "No nonempty credential was found.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró ninguna credencial que no esté vacía."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun identifiant secret non vide n’a été trouvé."
+          }
+        }
+      }
+    },
+    "Shared storage is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El almacenamiento compartido no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le stockage partagé est indisponible."
+          }
+        }
+      }
+    },
+    "The credential is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La credencial no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’identifiant secret est indisponible."
+          }
+        }
+      }
+    },
+    "The shared app container is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El contenedor compartido de la app no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le conteneur partagé de l’app est indisponible."
+          }
+        }
+      }
+    },
+    "The shared storage lock could not be acquired.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo obtener el bloqueo del almacenamiento compartido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’obtenir le verrou du stockage partagé."
+          }
+        }
+      }
+    },
+    "The storage path refers to a directory.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La ruta de almacenamiento corresponde a una carpeta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le chemin de stockage désigne un dossier."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

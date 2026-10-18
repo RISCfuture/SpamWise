@@ -158,22 +158,28 @@ public enum ThreatReportError: CorpusEvaluationError, BoundedInputError, Sendabl
 
   /// General description of the failed report.
   public var errorDescription: String? {
-    String(localized: "Couldn’t build the threat report.")
+    String(localized: "Couldn’t build the threat report.", bundle: .module)
   }
   /// The observation that prevents a valid report.
   public var failureReason: String? {
     switch self {
-      case .noObservations: String(localized: "The observations file contains no samples.")
-      case .duplicateSample(let id): String(localized: "Sample \(id) appears more than once.")
-      case .blankSampleID: String(localized: "An observation has a blank sample ID.")
-      case .blankLanguage(let id): String(localized: "Sample \(id) has a blank language code.")
+      case .noObservations:
+        String(localized: "The observations file contains no samples.", bundle: .module)
+      case .duplicateSample(let id):
+        String(localized: "Sample \(id) appears more than once.", bundle: .module)
+      case .blankSampleID:
+        String(localized: "An observation has a blank sample ID.", bundle: .module)
+      case .blankLanguage(let id):
+        String(localized: "Sample \(id) has a blank language code.", bundle: .module)
       case .invalidAssessment(let id):
-        String(localized: "Sample \(id) has an invalid assessment.")
-      case .notRegularFile(let url): String(localized: "\(url.path) isn’t a regular file.")
+        String(localized: "Sample \(id) has an invalid assessment.", bundle: .module)
+      case .notRegularFile(let url):
+        String(localized: "\(url.path) isn’t a regular file.", bundle: .module)
       case let .fileTooLarge(url, limit):
         String(
           localized:
-            "\(url.path) exceeds the \(limit.formatted(.byteCount(style: .file))) input limit."
+            "\(url.path) exceeds the \(limit.formatted(.byteCount(style: .file))) input limit.",
+          bundle: .module
         )
     }
   }
@@ -181,15 +187,21 @@ public enum ThreatReportError: CorpusEvaluationError, BoundedInputError, Sendabl
   public var recoverySuggestion: String? {
     switch self {
       case .noObservations, .notRegularFile:
-        String(localized: "Pass a JSON array of labeled observations.")
-      case .duplicateSample: String(localized: "Merge or remove the repeated observations.")
+        String(localized: "Pass a JSON array of labeled observations.", bundle: .module)
+      case .duplicateSample:
+        String(localized: "Merge or remove the repeated observations.", bundle: .module)
       case .blankSampleID, .blankLanguage:
-        String(localized: "Record a sample ID and a language code, or “unknown”, for every sample.")
+        String(
+          localized: "Record a sample ID and a language code, or “unknown”, for every sample.",
+          bundle: .module
+        )
       case .invalidAssessment:
         String(
-          localized: "Regenerate the assessment, or omit it to report the sample as unassessed."
+          localized: "Regenerate the assessment, or omit it to report the sample as unassessed.",
+          bundle: .module
         )
-      case .fileTooLarge: String(localized: "Split the observations into smaller files.")
+      case .fileTooLarge:
+        String(localized: "Split the observations into smaller files.", bundle: .module)
     }
   }
 }

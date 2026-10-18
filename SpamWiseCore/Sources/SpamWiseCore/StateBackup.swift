@@ -9,10 +9,15 @@ public enum BackupError: BackupFailure, LocalizedError, Sendable {
   /// The archive, recovery key or schema cannot be accepted.
   case invalidArchive
   /// General explanation without leaking decrypted content.
-  public var errorDescription: String? { String(localized: "The backup could not be opened.") }
+  public var errorDescription: String? {
+    String(localized: "The backup could not be opened.", bundle: .module)
+  }
   /// Describes the authentication or format requirement.
   public var failureReason: String? {
-    String(localized: "Use the matching recovery key and a supported SpamWise backup.")
+    String(
+      localized: "Use the matching recovery key and a supported SpamWise backup.",
+      bundle: .module
+    )
   }
 }
 

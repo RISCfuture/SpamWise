@@ -35,7 +35,8 @@ extension Pipeline {
       outcome = .failed
       failure = String(
         localized:
-          "Couldn’t confirm mark-as-read. The Junk move remains recorded; this step will not retry."
+          "Couldn’t confirm mark-as-read. The Junk move remains recorded; this step will not retry.",
+        bundle: .module
       )
     }
     return try await finishReadStatus(claimed, outcome: outcome, failure: failure)

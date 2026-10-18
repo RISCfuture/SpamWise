@@ -15,18 +15,28 @@ public enum TrainingFolderError: TrainingFolderFailure, Sendable, Equatable, Loc
   case observationLimitReached
   /// A general description of the skipped placement.
   public var errorDescription: String? {
-    String(localized: "The training folder placement couldn’t be applied.")
+    String(localized: "The training folder placement couldn’t be applied.", bundle: .module)
   }
   /// The condition that skipped this placement.
   public var failureReason: String? {
     switch self {
       case .planInactive:
-        String(localized: "Filtering is paused, or the training folder plan is off or unvalidated.")
+        String(
+          localized: "Filtering is paused, or the training folder plan is off or unvalidated.",
+          bundle: .module
+        )
       case .placementMismatch:
-        String(localized: "The message isn’t in the training folder its plan names.")
-      case .alreadyClaimed: String(localized: "This placement was already applied.")
+        String(
+          localized: "The message isn’t in the training folder its plan names.",
+          bundle: .module
+        )
+      case .alreadyClaimed:
+        String(localized: "This placement was already applied.", bundle: .module)
       case .observationLimitReached:
-        String(localized: "The training folder holds more messages than SpamWise tracks.")
+        String(
+          localized: "The training folder holds more messages than SpamWise tracks.",
+          bundle: .module
+        )
     }
   }
 }

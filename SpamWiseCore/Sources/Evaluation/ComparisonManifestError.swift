@@ -50,7 +50,9 @@ public enum ComparisonManifestError: CorpusEvaluationError, BoundedInputError, S
   case fileTooLarge(URL, limit: Int)
 
   /// General description of the failed comparison.
-  public var errorDescription: String? { String(localized: "Couldn’t compare the frozen runs.") }
+  public var errorDescription: String? {
+    String(localized: "Couldn’t compare the frozen runs.", bundle: .module)
+  }
   /// The manifest condition that prevents a valid comparison.
   public var failureReason: String? {
     headerReason ?? cohortReason ?? runReason ?? inputReason
@@ -60,15 +62,23 @@ public enum ComparisonManifestError: CorpusEvaluationError, BoundedInputError, S
     switch self {
       case .duplicateCampaign, .trainingCampaign:
         String(
-          localized: "Keep one message per campaign, and none from a campaign used in training."
+          localized: "Keep one message per campaign, and none from a campaign used in training.",
+          bundle: .module
         )
       case .missingResult:
-        String(localized: "Record every message in every run, using a null label to abstain.")
-      case .missingCostBasis: String(localized: "Set costBasis to measured or estimated.")
+        String(
+          localized: "Record every message in every run, using a null label to abstain.",
+          bundle: .module
+        )
+      case .missingCostBasis:
+        String(localized: "Set costBasis to measured or estimated.", bundle: .module)
       case .learningNotFrozen:
-        String(localized: "Freeze learning before the run, then set learningFrozen to true.")
+        String(
+          localized: "Freeze learning before the run, then set learningFrozen to true.",
+          bundle: .module
+        )
       case .manifestTooLarge, .fileTooLarge:
-        String(localized: "Compare fewer messages or runs in each manifest.")
+        String(localized: "Compare fewer messages or runs in each manifest.", bundle: .module)
       default: nil
     }
   }
@@ -76,9 +86,13 @@ public enum ComparisonManifestError: CorpusEvaluationError, BoundedInputError, S
   private var headerReason: String? {
     switch self {
       case .unsupportedSchema(let schema):
-        String(localized: "Manifest schema \(schema, format: .number) isn’t supported.")
-      case .notHumanReviewed: String(localized: "The manifest doesn’t attest human review.")
-      case .missingHoldoutID: String(localized: "The manifest has no holdout ID.")
+        String(
+          localized: "Manifest schema \(schema, format: .number) isn’t supported.",
+          bundle: .module
+        )
+      case .notHumanReviewed:
+        String(localized: "The manifest doesn’t attest human review.", bundle: .module)
+      case .missingHoldoutID: String(localized: "The manifest has no holdout ID.", bundle: .module)
       default: nil
     }
   }
@@ -88,15 +102,18 @@ public enum ComparisonManifestError: CorpusEvaluationError, BoundedInputError, S
       case let .messageCount(count, allowed):
         String(
           localized:
-            "The cohort has \(count, format: .number) messages; \(allowed.lowerBound, format: .number) to \(allowed.upperBound, format: .number) are supported."
+            "The cohort has \(count, format: .number) messages; \(allowed.lowerBound, format: .number) to \(allowed.upperBound, format: .number) are supported.",
+          bundle: .module
         )
-      case .blankMessageID: String(localized: "A message has a blank ID.")
-      case .blankCampaign(let id): String(localized: "Message \(id) has a blank campaign.")
-      case .duplicateMessage(let id): String(localized: "Message \(id) appears more than once.")
+      case .blankMessageID: String(localized: "A message has a blank ID.", bundle: .module)
+      case .blankCampaign(let id):
+        String(localized: "Message \(id) has a blank campaign.", bundle: .module)
+      case .duplicateMessage(let id):
+        String(localized: "Message \(id) appears more than once.", bundle: .module)
       case .duplicateCampaign(let campaign):
-        String(localized: "Campaign \(campaign) appears in more than one message.")
+        String(localized: "Campaign \(campaign) appears in more than one message.", bundle: .module)
       case .trainingCampaign(let campaign):
-        String(localized: "Campaign \(campaign) is also a training campaign.")
+        String(localized: "Campaign \(campaign) is also a training campaign.", bundle: .module)
       default: nil
     }
   }
@@ -106,25 +123,29 @@ public enum ComparisonManifestError: CorpusEvaluationError, BoundedInputError, S
       case let .runCount(count, allowed):
         String(
           localized:
-            "The manifest has \(count, format: .number) runs; \(allowed.lowerBound, format: .number) to \(allowed.upperBound, format: .number) are supported."
+            "The manifest has \(count, format: .number) runs; \(allowed.lowerBound, format: .number) to \(allowed.upperBound, format: .number) are supported.",
+          bundle: .module
         )
-      case .blankSystem: String(localized: "A run has a blank system name.")
+      case .blankSystem: String(localized: "A run has a blank system name.", bundle: .module)
       case .duplicateSystem(let system):
-        String(localized: "System \(system) appears in more than one run.")
+        String(localized: "System \(system) appears in more than one run.", bundle: .module)
       case .blankConfigurationID(let system):
-        String(localized: "System \(system) has a blank configuration ID.")
+        String(localized: "System \(system) has a blank configuration ID.", bundle: .module)
       case .learningNotFrozen(let system):
-        String(localized: "System \(system) doesn’t attest frozen learning.")
+        String(localized: "System \(system) doesn’t attest frozen learning.", bundle: .module)
       case let .duplicateResult(system, id):
-        String(localized: "System \(system) reports message \(id) more than once.")
+        String(localized: "System \(system) reports message \(id) more than once.", bundle: .module)
       case let .unknownResult(system, id):
-        String(localized: "System \(system) reports message \(id), which isn’t in the cohort.")
+        String(
+          localized: "System \(system) reports message \(id), which isn’t in the cohort.",
+          bundle: .module
+        )
       case let .missingResult(system, id):
-        String(localized: "System \(system) has no result for message \(id).")
+        String(localized: "System \(system) has no result for message \(id).", bundle: .module)
       case let .invalidMeasurement(system, field):
-        String(localized: "System \(system) reports an invalid \(field).")
+        String(localized: "System \(system) reports an invalid \(field).", bundle: .module)
       case .missingCostBasis(let system):
-        String(localized: "System \(system) reports a cost without a costBasis.")
+        String(localized: "System \(system) reports a cost without a costBasis.", bundle: .module)
       default: nil
     }
   }
@@ -133,13 +154,16 @@ public enum ComparisonManifestError: CorpusEvaluationError, BoundedInputError, S
     switch self {
       case .manifestTooLarge(let limit):
         String(
-          localized: "The manifest exceeds the \(limit.formatted(.byteCount(style: .file))) limit."
+          localized: "The manifest exceeds the \(limit.formatted(.byteCount(style: .file))) limit.",
+          bundle: .module
         )
-      case .notRegularFile(let url): String(localized: "\(url.path) isn’t a regular file.")
+      case .notRegularFile(let url):
+        String(localized: "\(url.path) isn’t a regular file.", bundle: .module)
       case let .fileTooLarge(url, limit):
         String(
           localized:
-            "\(url.path) exceeds the \(limit.formatted(.byteCount(style: .file))) manifest limit."
+            "\(url.path) exceeds the \(limit.formatted(.byteCount(style: .file))) manifest limit.",
+          bundle: .module
         )
       default: nil
     }

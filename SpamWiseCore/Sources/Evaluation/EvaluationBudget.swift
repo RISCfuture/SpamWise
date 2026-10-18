@@ -13,16 +13,25 @@ public enum BudgetError: BudgetFailure, Sendable, LocalizedError {
   case exhausted
   /// User-visible reason that classification was not attempted.
   public var errorDescription: String? {
-    String(localized: "Evaluation spending is unavailable. No provider call was made.")
+    String(
+      localized: "Evaluation spending is unavailable. No provider call was made.",
+      bundle: .module
+    )
   }
   /// The budget constraint that prevented the operation.
   public var failureReason: String? {
     switch self {
-      case .missingStore: String(localized: "Paid models require --budget-store PATH.")
-      case .invalidAmount: String(localized: "The requested spending amount is invalid.")
+      case .missingStore:
+        String(localized: "Paid models require --budget-store PATH.", bundle: .module)
+      case .invalidAmount:
+        String(localized: "The requested spending amount is invalid.", bundle: .module)
       case .unconfigured:
-        String(localized: "The budget store has no ceiling. Set one with --budget-limit USD.")
-      case .exhausted: String(localized: "The evaluation spending limit has been reached.")
+        String(
+          localized: "The budget store has no ceiling. Set one with --budget-limit USD.",
+          bundle: .module
+        )
+      case .exhausted:
+        String(localized: "The evaluation spending limit has been reached.", bundle: .module)
     }
   }
 }

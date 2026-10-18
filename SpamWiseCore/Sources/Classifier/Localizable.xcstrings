@@ -1,0 +1,214 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Allow mail sharing with the selected provider in Account settings first.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primero permite compartir el correo con el proveedor elegido en los ajustes de Cuenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez d’abord le partage des messages avec le fournisseur choisi dans les réglages du compte."
+          }
+        }
+      }
+    },
+    "Apple Private Cloud Compute model": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelo de Private Cloud Compute de Apple"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle Private Cloud Compute d’Apple"
+          }
+        }
+      }
+    },
+    "Apple on-device model": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelo de Apple en el dispositivo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle Apple sur l’appareil"
+          }
+        }
+      }
+    },
+    "Classification is unavailable. Mail was left unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clasificación no está disponible. El correo no se ha modificado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La classification est indisponible. Le courrier n’a pas été modifié."
+          }
+        }
+      }
+    },
+    "Classification was cancelled.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se canceló la clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La classification a été annulée."
+          }
+        }
+      }
+    },
+    "The classification deadline expired.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se agotó el plazo de clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le délai de classification a expiré."
+          }
+        }
+      }
+    },
+    "The message context exceeds the classification limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El contexto del mensaje supera el límite de clasificación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le contexte du message dépasse la limite de classification."
+          }
+        }
+      }
+    },
+    "The provider could not be reached.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo conectar con el proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de joindre le fournisseur."
+          }
+        }
+      }
+    },
+    "The provider credential is missing or invalid.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La credencial del proveedor falta o no es válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’identifiant secret du fournisseur est absent ou non valide."
+          }
+        }
+      }
+    },
+    "The provider declined to classify the message.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proveedor rechazó clasificar el mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fournisseur a refusé de classer le message."
+          }
+        }
+      }
+    },
+    "The provider returned an invalid classification.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proveedor devolvió una clasificación no válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fournisseur a renvoyé une classification non valide."
+          }
+        }
+      }
+    },
+    "The provider’s request limit was reached.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha alcanzado el límite de solicitudes del proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de requêtes du fournisseur a été atteinte."
+          }
+        }
+      }
+    },
+    "The selected model configuration is unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuración del modelo seleccionado no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration du modèle sélectionné est indisponible."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

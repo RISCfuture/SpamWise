@@ -82,7 +82,7 @@ struct ReviewedCommand: AsyncParsableCommand {
   func validate() throws {
     guard state == nil || partition == .training else {
       throw ValidationError(
-        String(localized: "--state is allowed only with --partition training.")
+        String(localized: "--state is allowed only with --partition training.", bundle: .module)
       )
     }
   }
@@ -128,7 +128,8 @@ struct ExportCommand: AsyncParsableCommand {
       throw ValidationError(
         String(
           localized:
-            "--limit must be from \(Self.limits.lowerBound, format: .number) to \(Self.limits.upperBound, format: .number)."
+            "--limit must be from \(Self.limits.lowerBound, format: .number) to \(Self.limits.upperBound, format: .number).",
+          bundle: .module
         )
       )
     }
@@ -145,7 +146,8 @@ struct ExportCommand: AsyncParsableCommand {
       print(
         String(
           localized:
-            "Exported \(count, format: .number) messages. Assign human labels before evaluating."
+            "Exported \(count, format: .number) messages. Assign human labels before evaluating.",
+          bundle: .module
         )
       )
     }

@@ -19,15 +19,23 @@ public enum StoreError: StorageFailure, Sendable, LocalizedError {
   /// Whether repeating the operation later can succeed without any configuration change.
   public var retryable: Bool { self == .lockUnavailable }
   /// General description of the failed storage operation.
-  public var errorDescription: String? { String(localized: "Shared storage is unavailable.") }
+  public var errorDescription: String? {
+    String(localized: "Shared storage is unavailable.", bundle: .module)
+  }
   /// The storage prerequisite that could not be satisfied.
   public var failureReason: String? {
     switch self {
-      case .lockUnavailable: String(localized: "The shared storage lock could not be acquired.")
-      case .missingAppGroup: String(localized: "The shared app container is unavailable.")
-      case .invalidPath: String(localized: "The storage path refers to a directory.")
+      case .lockUnavailable:
+        String(localized: "The shared storage lock could not be acquired.", bundle: .module)
+      case .missingAppGroup:
+        String(localized: "The shared app container is unavailable.", bundle: .module)
+      case .invalidPath:
+        String(localized: "The storage path refers to a directory.", bundle: .module)
       case .unloadedChange(let slice):
-        String(localized: "A storage update changed “\(slice)” without reading it first.")
+        String(
+          localized: "A storage update changed “\(slice)” without reading it first.",
+          bundle: .module
+        )
     }
   }
 }

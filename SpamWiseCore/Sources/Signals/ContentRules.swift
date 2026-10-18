@@ -42,13 +42,15 @@ public enum ContentRuleError: ContentRuleFailure, LocalizedError, Sendable {
   case timeout
   /// General user-visible rule failure.
   public var errorDescription: String? {
-    String(localized: "Content rules could not be evaluated.")
+    String(localized: "Content rules could not be evaluated.", bundle: .module)
   }
   /// Specific constraint preventing a decision.
   public var failureReason: String? {
     switch self {
-      case .invalid: String(localized: "Check the rule expression and size limits.")
-      case .timeout: String(localized: "A rule exceeded the time limit and did not match.")
+      case .invalid:
+        String(localized: "Check the rule expression and size limits.", bundle: .module)
+      case .timeout:
+        String(localized: "A rule exceeded the time limit and did not match.", bundle: .module)
     }
   }
 }

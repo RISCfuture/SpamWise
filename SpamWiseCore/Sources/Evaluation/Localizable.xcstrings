@@ -1,0 +1,920 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ exceeds the %@ export limit.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ exceeds the %2$@ export limit."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ supera el límite de exportación de %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ dépasse la limite d’exportation de %2$@."
+          }
+        }
+      }
+    },
+    "%@ exceeds the %@ input limit.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ exceeds the %2$@ input limit."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ supera el límite de entrada de %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ dépasse la limite d’entrée de %2$@."
+          }
+        }
+      }
+    },
+    "%@ exceeds the %@ manifest limit.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ exceeds the %2$@ manifest limit."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ supera el límite de manifiesto de %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ dépasse la limite de manifeste de %2$@."
+          }
+        }
+      }
+    },
+    "%@ isn’t a regular file.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ no es un archivo normal."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ n’est pas un fichier ordinaire."
+          }
+        }
+      }
+    },
+    "A message has a blank ID.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un mensaje tiene un ID vacío."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un message a un identifiant vide."
+          }
+        }
+      }
+    },
+    "A run has a blank system name.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una ejecución tiene un nombre de sistema vacío."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une exécution a un nom de système vide."
+          }
+        }
+      }
+    },
+    "An observation has a blank sample ID.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una observación tiene un ID de muestra vacío."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une observation a un identifiant d’échantillon vide."
+          }
+        }
+      }
+    },
+    "Campaign %@ appears in more than one message.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La campaña %@ aparece en más de un mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La campagne %@ figure dans plusieurs messages."
+          }
+        }
+      }
+    },
+    "Campaign %@ is also a training campaign.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La campaña %@ también es una campaña de entrenamiento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La campagne %@ est aussi une campagne d’entraînement."
+          }
+        }
+      }
+    },
+    "Compare fewer messages or runs in each manifest.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compara menos mensajes o ejecuciones en cada manifiesto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparez moins de messages ou d’exécutions dans chaque manifeste."
+          }
+        }
+      }
+    },
+    "Couldn’t build the threat report.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo generar el informe de amenazas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de générer le rapport sur les menaces."
+          }
+        }
+      }
+    },
+    "Couldn’t compare the frozen runs.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron comparar las ejecuciones congeladas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de comparer les exécutions figées."
+          }
+        }
+      }
+    },
+    "Couldn’t evaluate the reviewed corpus.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo evaluar el corpus revisado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’évaluer le corpus révisé."
+          }
+        }
+      }
+    },
+    "Evaluation spending is unavailable. No provider call was made.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El gasto de evaluación no está disponible. No se realizó ninguna llamada al proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les dépenses d’évaluation sont indisponibles. Aucun appel au fournisseur n’a été effectué."
+          }
+        }
+      }
+    },
+    "Freeze learning before the run, then set learningFrozen to true.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Congela el aprendizaje antes de la ejecución y luego establece learningFrozen en true."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Figez l’apprentissage avant l’exécution, puis définissez learningFrozen sur true."
+          }
+        }
+      }
+    },
+    "Keep one message per campaign, and none from a campaign used in training.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conserva un mensaje por campaña y ninguno de una campaña usada en el entrenamiento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conservez un message par campagne, et aucun d’une campagne utilisée pour l’entraînement."
+          }
+        }
+      }
+    },
+    "Manifest schema %@ isn’t supported.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El esquema de manifiesto %@ no es compatible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le schéma de manifeste %@ n’est pas pris en charge."
+          }
+        }
+      }
+    },
+    "Merge or remove the repeated observations.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Combina o elimina las observaciones repetidas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fusionnez ou supprimez les observations répétées."
+          }
+        }
+      }
+    },
+    "Message %@ appears more than once.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje %@ aparece más de una vez."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message %@ figure plusieurs fois."
+          }
+        }
+      }
+    },
+    "Message %@ has a blank campaign.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje %@ tiene una campaña vacía."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message %@ a une campagne vide."
+          }
+        }
+      }
+    },
+    "Paid models require --budget-store PATH.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los modelos de pago requieren --budget-store RUTA."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les modèles payants exigent --budget-store CHEMIN."
+          }
+        }
+      }
+    },
+    "Pass a JSON array of labeled observations.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proporciona un array JSON de observaciones etiquetadas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fournissez un tableau JSON d’observations étiquetées."
+          }
+        }
+      }
+    },
+    "Pass the exported labels JSON file itself.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proporciona el propio archivo JSON de etiquetas exportado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fournissez le fichier JSON d’étiquettes exporté lui-même."
+          }
+        }
+      }
+    },
+    "Record a sample ID and a language code, or “unknown”, for every sample.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra un ID de muestra y un código de idioma, o “unknown”, para cada muestra."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indiquez un identifiant d’échantillon et un code de langue, ou « unknown », pour chaque échantillon."
+          }
+        }
+      }
+    },
+    "Record every message in every run, using a null label to abstain.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra cada mensaje en cada ejecución; usa una etiqueta null para abstenerte."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrez chaque message dans chaque exécution, avec une étiquette null pour vous abstenir."
+          }
+        }
+      }
+    },
+    "Regenerate the assessment, or omit it to report the sample as unassessed.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a generar la evaluación u omítela para indicar que la muestra no se ha evaluado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Régénérez l’évaluation, ou omettez-la pour signaler l’échantillon comme non évalué."
+          }
+        }
+      }
+    },
+    "Relabel or forget the conflicting examples, then export again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a etiquetar u olvida los ejemplos en conflicto y exporta de nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réétiquetez ou oubliez les exemples en conflit, puis exportez à nouveau."
+          }
+        }
+      }
+    },
+    "Sample %@ appears more than once.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La muestra %@ aparece más de una vez."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’échantillon %@ figure plusieurs fois."
+          }
+        }
+      }
+    },
+    "Sample %@ exceeds the %@ message limit.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Sample %1$@ exceeds the %2$@ message limit."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La muestra %1$@ supera el límite de mensaje de %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’échantillon %1$@ dépasse la limite de message de %2$@."
+          }
+        }
+      }
+    },
+    "Sample %@ has a blank language code.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La muestra %@ tiene un código de idioma vacío."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’échantillon %@ a un code de langue vide."
+          }
+        }
+      }
+    },
+    "Sample %@ has an invalid assessment.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La muestra %@ tiene una evaluación no válida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’échantillon %@ a une évaluation non valide."
+          }
+        }
+      }
+    },
+    "Set costBasis to measured or estimated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Establece costBasis en measured o estimated."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définissez costBasis sur measured ou estimated."
+          }
+        }
+      }
+    },
+    "Split the export into smaller files.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Divide la exportación en archivos más pequeños."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Divisez l’exportation en fichiers plus petits."
+          }
+        }
+      }
+    },
+    "Split the observations into smaller files.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Divide las observaciones en archivos más pequeños."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Divisez les observations en fichiers plus petits."
+          }
+        }
+      }
+    },
+    "System %@ appears in more than one run.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El sistema %@ aparece en más de una ejecución."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le système %@ figure dans plusieurs exécutions."
+          }
+        }
+      }
+    },
+    "System %@ doesn’t attest frozen learning.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El sistema %@ no certifica un aprendizaje congelado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le système %@ n’atteste pas d’un apprentissage figé."
+          }
+        }
+      }
+    },
+    "System %@ has a blank configuration ID.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El sistema %@ tiene un ID de configuración vacío."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le système %@ a un identifiant de configuration vide."
+          }
+        }
+      }
+    },
+    "System %@ has no result for message %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "System %1$@ has no result for message %2$@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El sistema %1$@ no tiene resultado para el mensaje %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le système %1$@ n’a aucun résultat pour le message %2$@."
+          }
+        }
+      }
+    },
+    "System %@ reports a cost without a costBasis.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El sistema %@ indica un coste sin costBasis."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le système %@ indique un coût sans costBasis."
+          }
+        }
+      }
+    },
+    "System %@ reports an invalid %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "System %1$@ reports an invalid %2$@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El sistema %1$@ indica un valor de %2$@ no válido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le système %1$@ indique une valeur %2$@ non valide."
+          }
+        }
+      }
+    },
+    "System %@ reports message %@ more than once.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "System %1$@ reports message %2$@ more than once."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El sistema %1$@ indica el mensaje %2$@ más de una vez."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le système %1$@ signale le message %2$@ plusieurs fois."
+          }
+        }
+      }
+    },
+    "System %@ reports message %@, which isn’t in the cohort.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "System %1$@ reports message %2$@, which isn’t in the cohort."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El sistema %1$@ indica el mensaje %2$@, que no está en la cohorte."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le système %1$@ signale le message %2$@, qui ne fait pas partie de la cohorte."
+          }
+        }
+      }
+    },
+    "The budget store has no ceiling. Set one with --budget-limit USD.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El almacén de presupuesto no tiene límite. Establécelo con --budget-limit USD."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le magasin de budget n’a pas de plafond. Définissez-le avec --budget-limit USD."
+          }
+        }
+      }
+    },
+    "The cohort has %@ messages; %@ to %@ are supported.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The cohort has %1$@ messages; %2$@ to %3$@ are supported."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cohorte tiene %1$@ mensajes; se admiten de %2$@ a %3$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cohorte contient %1$@ messages ; de %2$@ à %3$@ sont pris en charge."
+          }
+        }
+      }
+    },
+    "The evaluation spending limit has been reached.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha alcanzado el límite de gasto de evaluación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de dépenses d’évaluation a été atteinte."
+          }
+        }
+      }
+    },
+    "The export has %@ labels; at most %@ are supported.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The export has %1$@ labels; at most %2$@ are supported."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La exportación tiene %1$@ etiquetas; se admiten como máximo %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exportation contient %1$@ étiquettes ; au maximum %2$@ sont prises en charge."
+          }
+        }
+      }
+    },
+    "The manifest doesn’t attest human review.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El manifiesto no certifica una revisión humana."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le manifeste n’atteste pas d’une vérification humaine."
+          }
+        }
+      }
+    },
+    "The manifest exceeds the %@ limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El manifiesto supera el límite de %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le manifeste dépasse la limite de %@."
+          }
+        }
+      }
+    },
+    "The manifest has %@ runs; %@ to %@ are supported.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The manifest has %1$@ runs; %2$@ to %3$@ are supported."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El manifiesto tiene %1$@ ejecuciones; se admiten de %2$@ a %3$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le manifeste contient %1$@ exécutions ; de %2$@ à %3$@ sont prises en charge."
+          }
+        }
+      }
+    },
+    "The manifest has no holdout ID.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El manifiesto no tiene ID de reserva."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le manifeste n’a pas d’identifiant de réserve."
+          }
+        }
+      }
+    },
+    "The observations file contains no samples.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El archivo de observaciones no contiene muestras."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fichier d’observations ne contient aucun échantillon."
+          }
+        }
+      }
+    },
+    "The requested spending amount is invalid.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El importe de gasto solicitado no es válido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le montant de dépense demandé n’est pas valide."
+          }
+        }
+      }
+    },
+    "The reviewed corpus labels the same content differently: %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El corpus revisado etiqueta el mismo contenido de forma distinta: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le corpus vérifié étiquette différemment le même contenu : %@."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

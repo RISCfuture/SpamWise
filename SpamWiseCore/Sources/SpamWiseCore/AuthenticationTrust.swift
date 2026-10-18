@@ -75,17 +75,22 @@ public enum AuthenticationTrustError: AuthenticationTrustFailure, Sendable, Loca
   case notDetected
   /// A user-visible explanation of the rejected change.
   public var errorDescription: String? {
-    String(localized: "The trusted mail servers could not be updated.")
+    String(localized: "The trusted mail servers could not be updated.", bundle: .module)
   }
   /// The validation constraint that rejected the change.
   public var failureReason: String? {
     switch self {
       case .invalidServer:
-        String(localized: "Enter each server as a single name, such as mx.google.com.")
-      case .tooManyServers: String(localized: "An account can trust at most eight servers.")
+        String(
+          localized: "Enter each server as a single name, such as mx.google.com.",
+          bundle: .module
+        )
+      case .tooManyServers:
+        String(localized: "An account can trust at most eight servers.", bundle: .module)
       case .notDetected:
         String(
-          localized: "SpamWise hasn’t seen enough of this account’s mail to detect its servers."
+          localized: "SpamWise hasn’t seen enough of this account’s mail to detect its servers.",
+          bundle: .module
         )
     }
   }

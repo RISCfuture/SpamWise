@@ -11,20 +11,26 @@ public enum IMAPError: String, IMAPOperationError, LocalizedError, Sendable {
   case unsupported, rejected, deadlineExceeded
   /// A non-sensitive category suitable for presentation.
   public var errorDescription: String? {
-    String(localized: "Couldn’t complete the IMAP operation.")
+    String(localized: "Couldn’t complete the IMAP operation.", bundle: .module)
   }
   /// The connection or protocol failure, without server text or credentials.
   public var failureReason: String? {
     switch self {
-      case .invalidConfiguration: String(localized: "The IMAP configuration is invalid.")
-      case .unavailable: String(localized: "The IMAP connection is unavailable.")
-      case .authenticationFailed: String(localized: "IMAP authentication failed.")
-      case .malformedResponse: String(localized: "The IMAP server returned an invalid response.")
+      case .invalidConfiguration:
+        String(localized: "The IMAP configuration is invalid.", bundle: .module)
+      case .unavailable: String(localized: "The IMAP connection is unavailable.", bundle: .module)
+      case .authenticationFailed: String(localized: "IMAP authentication failed.", bundle: .module)
+      case .malformedResponse:
+        String(localized: "The IMAP server returned an invalid response.", bundle: .module)
       case .limitExceeded:
-        String(localized: "The IMAP response exceeds the supported resource limits.")
-      case .unsupported: String(localized: "The IMAP server does not support this operation.")
-      case .rejected: String(localized: "The IMAP server rejected the operation.")
-      case .deadlineExceeded: String(localized: "The IMAP operation timed out.")
+        String(
+          localized: "The IMAP response exceeds the supported resource limits.",
+          bundle: .module
+        )
+      case .unsupported:
+        String(localized: "The IMAP server does not support this operation.", bundle: .module)
+      case .rejected: String(localized: "The IMAP server rejected the operation.", bundle: .module)
+      case .deadlineExceeded: String(localized: "The IMAP operation timed out.", bundle: .module)
     }
   }
 

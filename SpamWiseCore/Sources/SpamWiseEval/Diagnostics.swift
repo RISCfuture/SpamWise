@@ -22,34 +22,51 @@ enum CorpusRunError: CorpusEvaluationError, LocalizedError {
   /// Evaluation stopped because a message couldn't be evaluated as the cohort requires.
   case stopped(file: String, cause: String)
 
-  var errorDescription: String? { String(localized: "Couldn’t evaluate the corpus.") }
+  var errorDescription: String? {
+    String(localized: "Couldn’t evaluate the corpus.", bundle: .module)
+  }
   var failureReason: String? {
     switch self {
       case .emptyCorpus(let url):
-        String(localized: "\(url.path) has no .eml files in good/, junk/ or graymail/.")
+        String(
+          localized: "\(url.path) has no .eml files in good/, junk/ or graymail/.",
+          bundle: .module
+        )
       case let .duplicateMessage(file, original):
-        String(localized: "\(file) has the same bytes as \(original).")
-      case .notRegularFile(let file): String(localized: "\(file) isn’t a regular file.")
+        String(localized: "\(file) has the same bytes as \(original).", bundle: .module)
+      case .notRegularFile(let file):
+        String(localized: "\(file) isn’t a regular file.", bundle: .module)
       case let .messageTooLarge(file, limit):
         String(
           localized:
-            "\(file) exceeds the \(limit.formatted(.byteCount(style: .file))) parser limit."
+            "\(file) exceeds the \(limit.formatted(.byteCount(style: .file))) parser limit.",
+          bundle: .module
         )
-      case .missingMock(let hash): String(localized: "No mock response exists for hash \(hash).")
+      case .missingMock(let hash):
+        String(localized: "No mock response exists for hash \(hash).", bundle: .module)
       case .liveDisabled(let variable):
-        String(localized: "Live evaluation requires \(variable)=1. No provider call was made.")
+        String(
+          localized: "Live evaluation requires \(variable)=1. No provider call was made.",
+          bundle: .module
+        )
       case .missingKey(let variable):
-        String(localized: "\(variable) isn’t set for this process. The CLI never saves keys.")
-      case let .stopped(file, cause): String(localized: "Stopped at \(file): \(cause)")
+        String(
+          localized: "\(variable) isn’t set for this process. The CLI never saves keys.",
+          bundle: .module
+        )
+      case let .stopped(file, cause):
+        String(localized: "Stopped at \(file): \(cause)", bundle: .module)
     }
   }
   var recoverySuggestion: String? {
     switch self {
-      case .duplicateMessage: String(localized: "Remove duplicates before calibration.")
+      case .duplicateMessage:
+        String(localized: "Remove duplicates before calibration.", bundle: .module)
       case .stopped:
         String(
           localized:
-            "No report was written, because its metrics would cover only part of the corpus."
+            "No report was written, because its metrics would cover only part of the corpus.",
+          bundle: .module
         )
       default: nil
     }
@@ -90,9 +107,10 @@ enum Diagnostics {
     let path = context.codingPath.map { key in
       key.intValue.map { "[\($0)]" } ?? "." + key.stringValue
     }.joined()
+    let location = path.isEmpty ? String(localized: "the top level", bundle: .module) : path
     return String(
-      localized:
-        "The JSON input is invalid at \(path.isEmpty ? "the top level" : path): \(context.debugDescription)"
+      localized: "The JSON input is invalid at \(location): \(context.debugDescription)",
+      bundle: .module
     )
   }
 }

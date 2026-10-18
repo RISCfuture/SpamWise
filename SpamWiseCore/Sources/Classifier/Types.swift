@@ -213,25 +213,31 @@ public enum ClassificationError: String, ClassificationFailure, Codable, Sendabl
   public var retryable: Bool { [.rateLimited, .timeout, .network].contains(self) }
   /// A non-sensitive description suitable for presentation.
   public var errorDescription: String? {
-    String(localized: "Classification is unavailable. Mail was left unchanged.")
+    String(localized: "Classification is unavailable. Mail was left unchanged.", bundle: .module)
   }
   /// The non-sensitive cause of the failed classification.
   public var failureReason: String? {
     switch self {
-      case .missingCredential: String(localized: "The provider credential is missing or invalid.")
-      case .configuration: String(localized: "The selected model configuration is unavailable.")
+      case .missingCredential:
+        String(localized: "The provider credential is missing or invalid.", bundle: .module)
+      case .configuration:
+        String(localized: "The selected model configuration is unavailable.", bundle: .module)
       case .consentRequired:
         String(
-          localized: "Allow mail sharing with the selected provider in Account settings first."
+          localized: "Allow mail sharing with the selected provider in Account settings first.",
+          bundle: .module
         )
-      case .rateLimited: String(localized: "The provider’s request limit was reached.")
-      case .timeout: String(localized: "The classification deadline expired.")
-      case .network: String(localized: "The provider could not be reached.")
+      case .rateLimited:
+        String(localized: "The provider’s request limit was reached.", bundle: .module)
+      case .timeout: String(localized: "The classification deadline expired.", bundle: .module)
+      case .network: String(localized: "The provider could not be reached.", bundle: .module)
       case .contextExceeded:
-        String(localized: "The message context exceeds the classification limit.")
-      case .refused: String(localized: "The provider declined to classify the message.")
-      case .invalidOutput: String(localized: "The provider returned an invalid classification.")
-      case .cancelled: String(localized: "Classification was cancelled.")
+        String(localized: "The message context exceeds the classification limit.", bundle: .module)
+      case .refused:
+        String(localized: "The provider declined to classify the message.", bundle: .module)
+      case .invalidOutput:
+        String(localized: "The provider returned an invalid classification.", bundle: .module)
+      case .cancelled: String(localized: "Classification was cancelled.", bundle: .module)
     }
   }
 }

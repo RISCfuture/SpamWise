@@ -1,0 +1,438 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Allowed by one of your content rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido por una de tus reglas de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé par l’une de vos règles de contenu"
+          }
+        }
+      }
+    },
+    "Allowed by your content rule “%@”": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido por tu regla de contenido «%@»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé par votre règle de contenu « %@ »"
+          }
+        }
+      }
+    },
+    "Allowed by your rule for this sender’s address": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido por tu regla para la dirección de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé par votre règle pour l’adresse de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Allowed by your rule for this sender’s domain": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido por tu regla para el dominio de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé par votre règle pour le domaine de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Allowed: the sender is in your Contacts": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido: el remitente está en tus Contactos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé : l’expéditeur figure dans vos Contacts"
+          }
+        }
+      }
+    },
+    "Allowed: this sender has sent authenticated order mail before": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido: este remitente ya envió correo de pedidos autenticado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé : cet expéditeur a déjà envoyé des messages de commande authentifiés"
+          }
+        }
+      }
+    },
+    "Allowed: you have replied to this sender": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido: has respondido a este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé : vous avez déjà répondu à cet expéditeur"
+          }
+        }
+      }
+    },
+    "Already being processed": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya se está procesando"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà en cours de traitement"
+          }
+        }
+      }
+    },
+    "Already handled; the earlier decision is kept": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya gestionado; se conserva la decisión anterior"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà traité ; la décision précédente est conservée"
+          }
+        }
+      }
+    },
+    "Blocked by one of your content rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado por una de tus reglas de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué par l’une de vos règles de contenu"
+          }
+        }
+      }
+    },
+    "Blocked by your content rule “%@”": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado por tu regla de contenido «%@»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué par votre règle de contenu « %@ »"
+          }
+        }
+      }
+    },
+    "Blocked by your rule for this sender’s address": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado por tu regla para la dirección de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué par votre règle pour l’adresse de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Blocked by your rule for this sender’s domain": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado por tu regla para el dominio de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué par votre règle pour le domaine de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Filtering paused": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrado en pausa"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrage en pause"
+          }
+        }
+      }
+    },
+    "Haiku 5.5 connection verified": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conexión con Haiku 5.5 verificada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion à Haiku 5.5 vérifiée"
+          }
+        }
+      }
+    },
+    "Not classified: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : %@"
+          }
+        }
+      }
+    },
+    "Not classified: processing failed. Mail was left unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: el procesamiento falló. El correo no se modificó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : le traitement a échoué. Le message n’a pas été modifié."
+          }
+        }
+      }
+    },
+    "Not classified: shared storage was unavailable.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: el almacenamiento compartido no estaba disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : le stockage partagé était indisponible."
+          }
+        }
+      }
+    },
+    "Not classified: the message couldn’t be read.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: no se pudo leer el mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : impossible de lire le message."
+          }
+        }
+      }
+    },
+    "Not classified: the monthly spending limit was reached, so nothing was sent to the provider.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: se alcanzó el límite de gasto mensual, así que no se envió nada al proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : la limite de dépenses mensuelle a été atteinte, donc rien n’a été envoyé au fournisseur."
+          }
+        }
+      }
+    },
+    "Reason recorded by a different version of SpamWise": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motivo registrado por otra versión de SpamWise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motif enregistré par une autre version de SpamWise"
+          }
+        }
+      }
+    },
+    "Review: matches a campaign you marked as junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar: coincide con una campaña que marcaste como no deseada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier : correspond à une campagne que vous avez marquée comme indésirable"
+          }
+        }
+      }
+    },
+    "Review: part of the message couldn’t be read reliably": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar: no se pudo leer parte del mensaje de forma fiable"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier : une partie du message n’a pas pu être lue de façon fiable"
+          }
+        }
+      }
+    },
+    "Review: the sender’s address couldn’t be read": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar: no se pudo leer la dirección del remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier : impossible de lire l’adresse de l’expéditeur"
+          }
+        }
+      }
+    },
+    "Selected in Mail for correction": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionado en Mail para corregirlo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionné dans Mail pour être corrigé"
+          }
+        }
+      }
+    },
+    "Your correction for this sender’s address": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu corrección para la dirección de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre correction pour l’adresse de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Your correction for this sender’s domain": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu corrección para el dominio de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre correction pour le domaine de cet expéditeur"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -12,29 +12,40 @@ public enum FolderPlanError: Error, LocalizedError, Sendable, Equatable {
   case notFound
 
   /// A general description of the failure.
-  public var errorDescription: String? { String(localized: "Couldn’t save the folder plan.") }
+  public var errorDescription: String? {
+    String(localized: "Couldn’t save the folder plan.", bundle: .module)
+  }
   /// The specific cause.
   public var failureReason: String? {
     switch self {
       case .misnamed(let folder, let required):
-        String(localized: "The folder “\(folder)” isn’t named “\(required)”.")
+        String(localized: "The folder “\(folder)” isn’t named “\(required)”.", bundle: .module)
       case .notEmpty(let folder, _):
-        String(localized: "The folder “\(folder)” isn’t empty.")
+        String(localized: "The folder “\(folder)” isn’t empty.", bundle: .module)
       case .limitReached(let limit):
-        String(localized: "SpamWise keeps at most \(limit, format: .number) folder plans.")
-      case .notFound: String(localized: "The folder plan no longer exists.")
+        String(
+          localized: "SpamWise keeps at most \(limit, format: .number) folder plans.",
+          bundle: .module
+        )
+      case .notFound: String(localized: "The folder plan no longer exists.", bundle: .module)
     }
   }
   /// What the user can do about it.
   public var recoverySuggestion: String? {
     switch self {
       case .misnamed(_, let required):
-        String(localized: "Create a dedicated folder named “\(required)” in Mail, then select it.")
+        String(
+          localized: "Create a dedicated folder named “\(required)” in Mail, then select it.",
+          bundle: .module
+        )
       case .notEmpty:
         String(
-          localized: "Move its messages elsewhere so the folder is empty, then save the plan again."
+          localized:
+            "Move its messages elsewhere so the folder is empty, then save the plan again.",
+          bundle: .module
         )
-      case .limitReached: String(localized: "Remove a plan you no longer use, then try again.")
+      case .limitReached:
+        String(localized: "Remove a plan you no longer use, then try again.", bundle: .module)
       case .notFound: nil
     }
   }

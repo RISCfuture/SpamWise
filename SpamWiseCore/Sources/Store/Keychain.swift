@@ -12,13 +12,18 @@ public enum KeychainError: CredentialFailure, Sendable, LocalizedError {
   /// No nonempty credential is available.
   case missing
   /// General description of the failed credential operation.
-  public var errorDescription: String? { String(localized: "The credential is unavailable.") }
+  public var errorDescription: String? {
+    String(localized: "The credential is unavailable.", bundle: .module)
+  }
   /// The credential prerequisite or Keychain status that caused the failure.
   public var failureReason: String? {
     switch self {
-      case .missing: String(localized: "No nonempty credential was found.")
+      case .missing: String(localized: "No nonempty credential was found.", bundle: .module)
       case .status(let status):
-        String(localized: "Keychain returned status \(status, format: .number.grouping(.never)).")
+        String(
+          localized: "Keychain returned status \(status, format: .number.grouping(.never)).",
+          bundle: .module
+        )
     }
   }
 }

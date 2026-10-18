@@ -34,7 +34,8 @@ extension Pipeline {
         .joined(separator: " ")
     }
     return String(
-      localized: "The Mail action failed or was cancelled; its result is unknown. Not retried."
+      localized: "The Mail action failed or was cancelled; its result is unknown. Not retried.",
+      bundle: .module
     )
   }
 
@@ -75,7 +76,8 @@ extension Pipeline {
       var unconfirmed = completed
       unconfirmed.readStatusOutcome = .requested
       unconfirmed.readStatusError = String(
-        localized: "Mark-as-read status could not be saved. The confirmed Junk move is retained."
+        localized: "Mark-as-read status could not be saved. The confirmed Junk move is retained.",
+        bundle: .module
       )
       return unconfirmed
     }
@@ -109,7 +111,8 @@ extension Pipeline {
       } else if !supported {
         record.outcome = .noAction
         record.actionError = String(
-          localized: "This mail connection can’t perform the action, so it was not attempted."
+          localized: "This mail connection can’t perform the action, so it was not attempted.",
+          bundle: .module
         )
       } else if forceDryRun || state.settings.dryRun {
         record.outcome = .dryRun

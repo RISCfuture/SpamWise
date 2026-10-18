@@ -15,23 +15,31 @@ public enum AutomationError: AutomationFailure, Sendable, Equatable, LocalizedEr
   case tooManyRequests(limit: Int)
   /// A general description of the refused request.
   public var errorDescription: String? {
-    String(localized: "The automation request couldn’t be completed.")
+    String(localized: "The automation request couldn’t be completed.", bundle: .module)
   }
   /// The condition that refused the request.
   public var failureReason: String? {
     switch self {
       case .messageChanged:
-        String(localized: "The message has no account or changed since it was selected.")
+        String(
+          localized: "The message has no account or changed since it was selected.",
+          bundle: .module
+        )
       case .requestReused:
-        String(localized: "This request identifier was already used for a different request.")
+        String(
+          localized: "This request identifier was already used for a different request.",
+          bundle: .module
+        )
       case .resultUnknown:
         String(
           localized:
-            "An earlier attempt with this request identifier did not finish, so it was not repeated."
+            "An earlier attempt with this request identifier did not finish, so it was not repeated.",
+          bundle: .module
         )
       case .tooManyRequests(let limit):
         String(
-          localized: "SpamWise remembers at most \(limit, format: .number) automation requests."
+          localized: "SpamWise remembers at most \(limit, format: .number) automation requests.",
+          bundle: .module
         )
     }
   }

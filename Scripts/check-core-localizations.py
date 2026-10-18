@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Fail when a SpamWiseCore String(localized:) key lacks translated es/fr catalog entries.
+"""Fail when a SpamWiseCore module's localized strings don't resolve from its own catalog.
 
-Xcode extracts strings only from app targets, so package sources reach the app's
-catalog by hand. Interpolations match any format specifier in a catalog key.
+Every String(localized:) call passes `bundle: .module`, and the module's
+Localizable.xcstrings holds each key with translated es/fr values whose format
+specifiers match the key. Interpolations match any format specifier in a catalog
+key. Catalog keys that no call uses are reported too.
 """
 
 import json
@@ -12,12 +14,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = ROOT / "SpamWiseCore/Sources"
-CATALOG = ROOT / "SpamWise/Localizable.xcstrings"
-UNLINKED_MODULES = {"Evaluation", "SpamWiseEval", "SpamWiseDaemon"}
 LANGUAGES = ("es", "fr")
 PLACEHOLDER = "\0"
 CALL = re.compile(r"String\(\s*localized:\s*(?=\")")
+MODULE_BUNDLE = re.compile(r"\s*,\s*bundle:\s*\.module\s*\)")
 SPECIFIER = re.compile(r"%(?:\d+\$)?(?:@|ll[du]|l[du]|[dufgesx]|lf)")
+POSITION = re.compile(r"%\d+\$")
 ESCAPES = {"n": "\n", "t": "\t", "r": "\r", "0": "\0", '"': '"', "'": "'", "\\": "\\"}
 
 
@@ -92,18 +94,20 @@ def read_literal(text, index):
     return read_single_line(text, index)
 
 
-def source_keys():
-    """Map each localized key in modules the app links to its first location."""
-    keys = {}
+def module_calls():
+    """Map each module with localized calls to its keys' first locations and unbundled calls."""
+    modules = {}
     for path in sorted(SOURCES.rglob("*.swift")):
-        if path.relative_to(SOURCES).parts[0] in UNLINKED_MODULES:
-            continue
         text = path.read_text()
+        module = modules.setdefault(path.relative_to(SOURCES).parts[0], ({}, []))
         for match in CALL.finditer(text):
-            key, _ = read_literal(text, match.end())
+            key, end = read_literal(text, match.end())
             line = text.count("\n", 0, match.start()) + 1
-            keys.setdefault(key, f"{path.relative_to(ROOT)}:{line}")
-    return keys
+            location = f"{path.relative_to(ROOT)}:{line}"
+            module[0].setdefault(key, location)
+            if not MODULE_BUNDLE.match(text, end):
+                module[1].append(location)
+    return {name: calls for name, calls in modules.items() if calls[0]}
 
 
 def translated(entry, language):
@@ -111,42 +115,81 @@ def translated(entry, language):
     localization = entry.get("localizations", {}).get(language)
     if localization is None:
         return False
-    units = []
-
-    def collect(node):
-        if "stringUnit" in node:
-            units.append(node["stringUnit"])
-        for variants in node.get("variations", {}).values():
-            for variant in variants.values():
-                collect(variant)
-
-    collect(localization)
+    units = string_units(localization)
     return bool(units) and all(unit.get("state") == "translated" for unit in units)
 
 
-def catalog_entries():
-    """Map normalized catalog keys to their entries."""
-    strings = json.loads(CATALOG.read_text())["strings"]
-    return {
-        SPECIFIER.sub(PLACEHOLDER, key).replace("%%", "%"): entry
-        for key, entry in strings.items()
-    }
+def string_units(node):
+    """Collect the string units of a localization, including every variation."""
+    units = [node["stringUnit"]] if "stringUnit" in node else []
+    for variants in node.get("variations", {}).values():
+        for variant in variants.values():
+            units.extend(string_units(variant))
+    return units
+
+
+def specifier_types(text):
+    """The sorted conversion types of a format string, ignoring argument positions."""
+    return sorted(
+        POSITION.sub("%", specifier)
+        for specifier in SPECIFIER.findall(text.replace("%%", ""))
+    )
+
+
+def normalized(key):
+    """A catalog key with every format specifier replaced by the interpolation placeholder."""
+    return SPECIFIER.sub(PLACEHOLDER, key).replace("%%", "%")
+
+
+def entry_problems(key, entry):
+    """Describe missing translations and format mismatches in one catalog entry."""
+    missing = [language for language in LANGUAGES if not translated(entry, language)]
+    problems = [f"{', '.join(missing)} missing"] if missing else []
+    expected = specifier_types(key)
+    for language, localization in entry.get("localizations", {}).items():
+        if any(
+            specifier_types(unit["value"]) != expected
+            for unit in string_units(localization)
+        ):
+            problems.append(f"{language} format specifiers differ from the key")
+    return problems
+
+
+def module_problems(module, keys, unbundled):
+    """Report a module's unbundled calls and its catalog's coverage of its keys."""
+    problems = [f"{location}: pass bundle: .module" for location in unbundled]
+    catalog = SOURCES / module / "Localizable.xcstrings"
+    if not catalog.exists():
+        return problems + [f"{catalog.relative_to(ROOT)}: missing catalog"]
+    strings = json.loads(catalog.read_text())["strings"]
+    entries = {normalized(key): (key, entry) for key, entry in strings.items()}
+    for key, location in keys.items():
+        shown = key.replace(PLACEHOLDER, "%@")
+        if key not in entries:
+            problems.append(
+                f"{location}: “{shown}” missing from {catalog.relative_to(ROOT)}"
+            )
+            continue
+        catalog_key, entry = entries[key]
+        problems += [
+            f"{location}: {problem} for “{catalog_key}”"
+            for problem in entry_problems(catalog_key, entry)
+        ]
+    problems += [
+        f"{catalog.relative_to(ROOT)}: “{catalog_key}” is unused"
+        for normalized_key, (catalog_key, _) in entries.items()
+        if normalized_key not in keys
+    ]
+    return problems
 
 
 def main():
-    """Report every missing or untranslated key and exit nonzero when any exists."""
-    entries = catalog_entries()
-    problems = []
-    for key, location in source_keys().items():
-        entry = entries.get(key)
-        missing = (
-            list(LANGUAGES)
-            if entry is None
-            else [language for language in LANGUAGES if not translated(entry, language)]
-        )
-        if missing:
-            shown = key.replace(PLACEHOLDER, "%@")
-            problems.append(f"{location}: {', '.join(missing)} missing for “{shown}”")
+    """Report every catalog problem and exit nonzero when any exists."""
+    problems = [
+        problem
+        for module, (keys, unbundled) in module_calls().items()
+        for problem in module_problems(module, keys, unbundled)
+    ]
     for problem in problems:
         print(problem, file=sys.stderr)
     return 1 if problems else 0

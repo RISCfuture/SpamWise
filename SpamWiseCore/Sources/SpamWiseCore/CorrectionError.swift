@@ -14,18 +14,26 @@ public enum CorrectionError: CorrectionFailure, Sendable, Equatable, LocalizedEr
   /// The sender's address has no registrable domain for a domain-wide rule.
   case noRegistrableDomain(sender: String)
   /// A general description of the rejected correction.
-  public var errorDescription: String? { String(localized: "The correction couldn’t be saved.") }
+  public var errorDescription: String? {
+    String(localized: "The correction couldn’t be saved.", bundle: .module)
+  }
   /// The condition that rejected this correction.
   public var failureReason: String? {
     switch self {
       case .recordNotFound:
-        String(localized: "The message’s Activity record is no longer available.")
+        String(localized: "The message’s Activity record is no longer available.", bundle: .module)
       case .reviewRequiresAddressScope:
-        String(localized: "Review corrections apply only to the sender’s address, not its domain.")
+        String(
+          localized: "Review corrections apply only to the sender’s address, not its domain.",
+          bundle: .module
+        )
       case .unreadableSender:
-        String(localized: "The message has no single readable sender address.")
+        String(localized: "The message has no single readable sender address.", bundle: .module)
       case .noRegistrableDomain(let sender):
-        String(localized: "“\(sender)” has no registrable domain for a domain-wide rule.")
+        String(
+          localized: "“\(sender)” has no registrable domain for a domain-wide rule.",
+          bundle: .module
+        )
     }
   }
 }
@@ -45,17 +53,19 @@ public enum DecisionRecordError: DecisionRecordFailure, Sendable, Equatable, Loc
   case messageUnavailable
   /// A general description of the failed record operation.
   public var errorDescription: String? {
-    String(localized: "The Activity record couldn’t be used.")
+    String(localized: "The Activity record couldn’t be used.", bundle: .module)
   }
   /// The record state that prevented the operation.
   public var failureReason: String? {
     switch self {
-      case .notFound: String(localized: "The Activity record is no longer available.")
+      case .notFound:
+        String(localized: "The Activity record is no longer available.", bundle: .module)
       case .notPreview:
-        String(localized: "Only an uncorrected dry-run preview can be applied.")
-      case .notUnclassified: String(localized: "Only an unclassified message can be retried.")
+        String(localized: "Only an uncorrected dry-run preview can be applied.", bundle: .module)
+      case .notUnclassified:
+        String(localized: "Only an unclassified message can be retried.", bundle: .module)
       case .messageUnavailable:
-        String(localized: "The message is no longer available in the mail client.")
+        String(localized: "The message is no longer available in the mail client.", bundle: .module)
     }
   }
 }

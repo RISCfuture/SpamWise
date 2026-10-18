@@ -5,9 +5,10 @@ public enum ReviewPriority {
   /// A human-readable reason for appearing earlier in the digest.
   public static func reason(_ record: DecisionRecord) -> String {
     switch rank(record) {
-      case 0: String(localized: "Mail action needs attention")
-      case 1: String(localized: "Model and local evidence disagree")
-      default: String(localized: "Uncertain classification; confidence is uncalibrated")
+      case 0: String(localized: "Mail action needs attention", bundle: .module)
+      case 1: String(localized: "Model and local evidence disagree", bundle: .module)
+      default:
+        String(localized: "Uncertain classification; confidence is uncalibrated", bundle: .module)
     }
   }
   /// Orders action failures, evidence disagreements, then lower model confidence and recency.

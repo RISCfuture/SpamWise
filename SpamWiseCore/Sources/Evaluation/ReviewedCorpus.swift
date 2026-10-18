@@ -26,7 +26,7 @@ public enum ReviewedCorpusError: CorpusEvaluationError, BoundedInputError, Senda
   case notRegularFile(URL)
   /// Non-sensitive input failure explanation.
   public var errorDescription: String? {
-    String(localized: "Couldn’t evaluate the reviewed corpus.")
+    String(localized: "Couldn’t evaluate the reviewed corpus.", bundle: .module)
   }
   /// The input condition that prevents a valid evaluation.
   public var failureReason: String? {
@@ -34,34 +34,44 @@ public enum ReviewedCorpusError: CorpusEvaluationError, BoundedInputError, Senda
       case .conflictingLabels(let samples):
         String(
           localized:
-            "The reviewed corpus labels the same content differently: \(samples.formatted(.list(type: .and)))."
+            "The reviewed corpus labels the same content differently: \(samples.formatted(.list(type: .and))).",
+          bundle: .module
         )
       case let .tooManyLabels(count, limit):
         String(
           localized:
-            "The export has \(count, format: .number) labels; at most \(limit, format: .number) are supported."
+            "The export has \(count, format: .number) labels; at most \(limit, format: .number) are supported.",
+          bundle: .module
         )
       case let .messageTooLarge(sampleID, limit):
         String(
           localized:
-            "Sample \(sampleID) exceeds the \(limit.formatted(.byteCount(style: .file))) message limit."
+            "Sample \(sampleID) exceeds the \(limit.formatted(.byteCount(style: .file))) message limit.",
+          bundle: .module
         )
       case let .fileTooLarge(url, limit):
         String(
           localized:
-            "\(url.path) exceeds the \(limit.formatted(.byteCount(style: .file))) export limit."
+            "\(url.path) exceeds the \(limit.formatted(.byteCount(style: .file))) export limit.",
+          bundle: .module
         )
-      case .notRegularFile(let url): String(localized: "\(url.path) isn’t a regular file.")
+      case .notRegularFile(let url):
+        String(localized: "\(url.path) isn’t a regular file.", bundle: .module)
     }
   }
   /// An available correction to the supplied corpus.
   public var recoverySuggestion: String? {
     switch self {
       case .conflictingLabels:
-        String(localized: "Relabel or forget the conflicting examples, then export again.")
-      case .tooManyLabels, .fileTooLarge: String(localized: "Split the export into smaller files.")
+        String(
+          localized: "Relabel or forget the conflicting examples, then export again.",
+          bundle: .module
+        )
+      case .tooManyLabels, .fileTooLarge:
+        String(localized: "Split the export into smaller files.", bundle: .module)
       case .messageTooLarge: nil
-      case .notRegularFile: String(localized: "Pass the exported labels JSON file itself.")
+      case .notRegularFile:
+        String(localized: "Pass the exported labels JSON file itself.", bundle: .module)
     }
   }
 }

@@ -99,7 +99,7 @@ public actor MailSweeper {
   /// The error's localized description, reason and recovery suggestion, which carry no secrets.
   public static func describe(_ error: any Error) -> String {
     guard let error = error as? any LocalizedError else {
-      return String(localized: "The mail operation failed. Mail stays unchanged.")
+      return String(localized: "The mail operation failed. Mail stays unchanged.", bundle: .module)
     }
     return [error.errorDescription, error.failureReason, error.recoverySuggestion]
       .compactMap(\.self).filter { !$0.isEmpty }.joined(separator: " ")

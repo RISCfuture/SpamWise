@@ -9,8 +9,10 @@ let swiftSettings: [SwiftSetting] = [
   .enableUpcomingFeature("InternalImportsByDefault"),
   .strictMemorySafety()
 ]
+let localizedStrings: [Resource] = [.process("Localizable.xcstrings")]
 let package = Package(
   name: "SpamWiseCore",
+  defaultLocalization: "en",
   platforms: [.macOS("27.0")],
   products: [
     .library(name: "SpamWiseCore", targets: ["SpamWiseCore"]),
@@ -29,22 +31,35 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-nio-transport-services.git", exact: "1.28.0")
   ],
   targets: [
-    .target(name: "MessageModel", resources: [.copy("Resources/public_suffix_list.dat")]),
+    .target(
+      name: "MessageModel",
+      resources: [.copy("Resources/public_suffix_list.dat")] + localizedStrings
+    ),
     .systemLibrary(name: "CResolver"),
-    .target(name: "Signals", dependencies: ["MessageModel", "CResolver"]),
+    .target(
+      name: "Signals",
+      dependencies: ["MessageModel", "CResolver"],
+      resources: localizedStrings
+    ),
     .target(
       name: "Classifier",
       dependencies: [
         "MessageModel", "Signals",
         .product(name: "ClaudeForFoundationModels", package: "ClaudeForFoundationModels")
-      ]
+      ],
+      resources: localizedStrings
     ),
-    .target(name: "Decision", dependencies: ["Classifier", "Signals"]),
+    .target(name: "Decision", dependencies: ["Classifier", "Signals"], resources: localizedStrings),
     .target(name: "Learning", dependencies: ["Classifier", "Signals", "MessageModel"]),
-    .target(name: "Store", dependencies: ["MessageModel", "Signals", "Classifier", "Decision"]),
+    .target(
+      name: "Store",
+      dependencies: ["MessageModel", "Signals", "Classifier", "Decision"],
+      resources: localizedStrings
+    ),
     .target(
       name: "SpamWiseCore",
-      dependencies: ["MessageModel", "Signals", "Classifier", "Decision", "Store", "Learning"]
+      dependencies: ["MessageModel", "Signals", "Classifier", "Decision", "Store", "Learning"],
+      resources: localizedStrings
     ),
     .target(
       name: "MailIntegration",
@@ -53,15 +68,17 @@ let package = Package(
         .product(name: "NIOCore", package: "swift-nio"),
         .product(name: "NIOIMAP", package: "swift-nio-imap"),
         .product(name: "NIOTransportServices", package: "swift-nio-transport-services")
-      ]
+      ],
+      resources: localizedStrings
     ),
-    .target(name: "Evaluation", dependencies: ["SpamWiseCore"]),
+    .target(name: "Evaluation", dependencies: ["SpamWiseCore"], resources: localizedStrings),
     .executableTarget(
       name: "SpamWiseEval",
       dependencies: [
         "SpamWiseCore", "MailIntegration", "Evaluation",
         .product(name: "ArgumentParser", package: "swift-argument-parser")
-      ]
+      ],
+      resources: localizedStrings
     ),
     .executableTarget(
       name: "SpamWiseDaemon",
