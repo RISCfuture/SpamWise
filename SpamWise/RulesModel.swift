@@ -7,7 +7,7 @@ import MailIntegration
 @MainActor @Observable final class RulesModel {
   /// Removing, importing and exporting sender rules.
   let senderRules = TrackedOperation()
-  /// Removing, importing and exporting content rules.
+  /// Removing, importing, exporting and turning content rules on or off.
   let contentRules = TrackedOperation()
   @ObservationIgnored private let services: AppServices
   @ObservationIgnored private let shared: SharedStateModel
@@ -23,16 +23,19 @@ import MailIntegration
     overridden: Bool
   ) -> String {
     if overridden {
-      String(localized: "An address or domain rule takes precedence.")
+      String(localized: "A sender rule decides this message first, so this rule isn’t used.")
     } else if evaluation.skipped[rule.id] != nil {
-      String(
-        localized: "This rule could not be evaluated for the selected message and does not match."
-      )
+      String(localized: "This rule took too long to check, so it doesn’t match this message.")
     } else if evaluation.decisive?.id == rule.id {
-      String(localized: "This rule wins for the selected message.")
+      String(localized: "This rule decides the selected message.")
     } else {
-      String(localized: "This rule does not win for the selected message.")
+      String(localized: "This rule doesn’t decide the selected message.")
     }
+  }
+
+  /// Parses `envelope` away from the main actor.
+  @concurrent private static func parse(_ envelope: MailEnvelope) async throws -> ParsedMessage {
+    try MIMEParser().parse(envelope.raw)
   }
 
   /// Saves a sender rule, replacing any rule of the same scope and value.
@@ -43,6 +46,7 @@ import MailIntegration
       disposition: disposition,
       store: services.requireStore()
     )
+    await shared.refresh()
   }
 
   /// Saves a suggested domain rule.
@@ -53,9 +57,12 @@ import MailIntegration
     }
   }
 
-  func removeSenderRule(_ id: String) {
+  /// Removes the sender rules `ids`; mail already filtered stays where it is.
+  func removeSenderRules(_ ids: Set<String>) {
     senderRules.run { [self] in
-      try await RuleManagement.remove(id: id, store: services.requireStore())
+      let store = try services.requireStore()
+      for id in ids { try await RuleManagement.remove(id: id, store: store) }
+      await shared.refresh()
       return nil
     }
   }
@@ -64,6 +71,7 @@ import MailIntegration
     senderRules.run { [self] in
       let data = try url.readSecurityScoped(maximumBytes: RuleManagement.maximumArchiveBytes)
       try await RuleManagement.importRules(data, store: services.requireStore())
+      await shared.refresh()
       return String(localized: "Rules imported. Pending classifications were invalidated.")
     }
   }
@@ -75,11 +83,35 @@ import MailIntegration
 
   func saveContentRule(_ rule: ContentRule) async throws {
     try await ContentRuleManagement.save(rule, store: services.requireStore())
+    await shared.refresh()
   }
 
-  func removeContentRule(_ id: UUID) {
+  /// Turns content rule `id` on or off, showing the change before it is saved.
+  func setContentRule(_ id: UUID, enabled: Bool) {
+    showContentRule(id, enabled: enabled)
     contentRules.run { [self] in
-      try await ContentRuleManagement.remove(id, store: services.requireStore())
+      do {
+        try await ContentRuleManagement.setEnabled(id, enabled, store: services.requireStore())
+      } catch {
+        showContentRule(id, enabled: !enabled)
+        throw error
+      }
+      await shared.refresh()
+      return nil
+    }
+  }
+
+  private func showContentRule(_ id: UUID, enabled: Bool) {
+    guard let index = shared.state.contentRules.firstIndex(where: { $0.id == id }) else { return }
+    shared.state.contentRules[index].enabled = enabled
+  }
+
+  /// Removes the content rules `ids`; mail already filtered stays where it is.
+  func removeContentRules(_ ids: Set<UUID>) {
+    contentRules.run { [self] in
+      let store = try services.requireStore()
+      for id in ids { try await ContentRuleManagement.remove(id, store: store) }
+      await shared.refresh()
       return nil
     }
   }
@@ -90,7 +122,8 @@ import MailIntegration
         maximumBytes: ContentRuleManagement.maximumArchiveBytes
       )
       try await ContentRuleManagement.importRules(data, store: services.requireStore())
-      return nil
+      await shared.refresh()
+      return String(localized: "Content rules imported. Pending classifications were invalidated.")
     }
   }
 
@@ -102,7 +135,7 @@ import MailIntegration
   /// Describes how `draft` would decide the message selected in Mail, alongside the saved rules.
   func test(_ draft: ContentRule) async throws -> String {
     let envelope = try await services.appleMail.selectedMessage()
-    let message = try MIMEParser().parse(envelope.raw)
+    let message = try await Self.parse(envelope)
     var candidate = draft
     candidate.updatedAt = .now
     let state = shared.state
@@ -129,7 +162,7 @@ import MailIntegration
       result +=
         " "
         + String(
-          localized: "Matching content rules: \(evaluation.matching.count). Newest wins."
+          localized: "\(evaluation.matching.count) content rules match; the newest one decides."
         )
     }
     return result

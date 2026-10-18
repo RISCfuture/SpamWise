@@ -89,6 +89,17 @@ import SpamWiseCore
   #expect(try await StateRepository.load(store).contentRules.count == 1)
 }
 
+@Test func `turns a content rule off without changing its precedence`() async throws {
+  let store = try testStore()
+  var rule = ContentRule(); rule.pattern = "newsletter"
+  try await ContentRuleManagement.save(rule, store: store)
+  let saved = try #require(try await StateRepository.load(store).contentRules.first)
+  try await ContentRuleManagement.setEnabled(rule.id, false, store: store)
+  let disabled = try #require(try await StateRepository.load(store).contentRules.first)
+  #expect(!disabled.enabled)
+  #expect(disabled.updatedAt == saved.updatedAt)
+}
+
 @Test func `refuses to export an invalid regular expression`() {
   var rule = ContentRule(); rule.pattern = "["; rule.operation = .regularExpression
   #expect(throws: ContentRuleError.invalid) { try ContentRuleManagement.exportRules([rule]) }

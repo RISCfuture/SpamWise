@@ -252,6 +252,9 @@ enum UITestTiming {
 
   func markJunk() {
     app.buttons["correction.junk"].click()
+    let blockAnyway = app.buttons["correction.warning.confirm"]
+    XCTAssertTrue(blockAnyway.waitForExistence(timeout: UITestTiming.transition))
+    blockAnyway.click()
     waitForCorrection("junk")
   }
 

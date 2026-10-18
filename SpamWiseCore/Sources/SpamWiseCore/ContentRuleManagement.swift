@@ -51,6 +51,22 @@ public enum ContentRuleManagement {
       )
     }
   }
+  /**
+   Turns one rule on or off without changing its edit date, so its precedence among matching
+   rules stays the same; pending classifications are invalidated.
+   */
+  public static func setEnabled(_ id: UUID, _ enabled: Bool, store: Store) async throws {
+    try await StateRepository.update(store, loading: StateSlices([.contentRules])) { state in
+      guard let index = state.contentRules.firstIndex(where: { $0.id == id }),
+        state.contentRules[index].enabled != enabled
+      else { return }
+      state.contentRules[index].enabled = enabled
+      let rule = state.contentRules[index]
+      state.invalidatePendingWork(
+        .contentRuleSaved(field: rule.field, pattern: rule.pattern, disposition: rule.disposition)
+      )
+    }
+  }
   /// Removes one rule without modifying mail or other rules.
   public static func remove(_ id: UUID, store: Store) async throws {
     try await StateRepository.update(store, loading: StateSlices([.contentRules])) { state in

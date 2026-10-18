@@ -41,6 +41,7 @@ struct DecisionDetailView: View {
       }
       Section("Correct this decision") {
         CorrectionControls(corrections: corrections, activity: activity, row: row)
+        CorrectionPrompts(corrections: corrections, row: row)
         if row.correctionUndone {
           Text("Correction undone; the recorded Mail action was not reversed.")
         }

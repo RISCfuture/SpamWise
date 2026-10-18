@@ -71,3 +71,21 @@ func `filters Activity by case-insensitive text and exact account`(
   #expect(!diagnostic.contains("person@example.com"))
   #expect(!diagnostic.contains("uncertain"))
 }
+
+@Test func `reads the records of chosen messages newest first`() async throws {
+  let store = try testStore()
+  let older = reviewRecord()
+  var newer = reviewRecord(outcome: .applied)
+  newer.date = older.date.addingTimeInterval(1)
+  let other = DecisionRecord(
+    identity: MessageIdentity(accountID: "account", contentHash: "other"),
+    decision: .init(label: nil, action: .none, reason: .selectedForCorrection),
+    outcome: .noAction
+  )
+  let recorded = [older, other, newer]
+  try await StateRepository.update(store, loading: StateSlices()) { state in
+    for record in recorded { state.record(record) }
+  }
+  let records = try await StateRepository.records(store, identityKeys: [older.identity.key])
+  #expect(records.map(\.id) == [newer.id, older.id])
+}

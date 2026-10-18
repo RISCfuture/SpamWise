@@ -141,6 +141,24 @@ extension StateRepository {
       }
     }
   }
+  /// The Activity records of the messages with these identity keys, newest first.
+  public static func records(_ store: Store, identityKeys: Set<String>) async throws
+    -> [DecisionRecord]
+  {
+    guard !identityKeys.isEmpty else { return [] }
+    let keys = Array(identityKeys)
+    try await StatePersistence.prepared(store)
+    return try await store.snapshot { context in
+      let descriptor = FetchDescriptor<RecordRow>(
+        predicate: #Predicate { keys.contains($0.identityKey) },
+        sortBy: [SortDescriptor(\.date, order: .reverse)]
+      )
+      let decoder = JSONDecoder()
+      return try context.fetch(descriptor).compactMap {
+        try? decoder.decode(DecisionRecord.self, from: $0.payload)
+      }
+    }
+  }
   /// Number of Activity records matching `query`.
   public static func activityCount(_ store: Store, matching query: ActivityQuery = .init())
     async throws -> Int

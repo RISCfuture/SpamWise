@@ -11,15 +11,18 @@ struct RuleFormView: View {
   @State private var saving = TrackedOperation()
 
   private var isValid: Bool { (try? RuleManagement.normalized(value, scope: scope)) != nil }
+  private var valuePrompt: Text {
+    scope == .address ? Text(verbatim: "name@example.com") : Text(verbatim: "example.com")
+  }
 
   var body: some View {
     NavigationStack {
       Form {
-        Picker("Rule scope", selection: $scope) {
+        Picker("Applies to", selection: $scope) {
           Text("Email address").tag(RuleScope.address)
           Text("Entire domain").tag(RuleScope.domain)
         }.disabled(rule != nil).accessibilityIdentifier("rules.scope")
-        TextField("Address or registrable domain", text: $value)
+        TextField(scope == .address ? "Address" : "Domain", text: $value, prompt: valuePrompt)
           .disabled(rule != nil).accessibilityIdentifier("rules.value")
         Picker("Action", selection: $disposition) {
           Text("Allow").tag(RuleDisposition.allow).accessibilityIdentifier("rules.action.allow")
@@ -28,7 +31,7 @@ struct RuleFormView: View {
         OperationStatusView(operation: saving, identifier: "rules.saveError")
       }
       .formStyle(.grouped)
-      .navigationTitle(rule == nil ? "Add rule" : "Edit rule")
+      .navigationTitle(rule == nil ? "Add Sender Rule" : "Edit Sender Rule")
       .toolbar {
         ConfirmationToolbarItems(
           confirmTitle: "Save",

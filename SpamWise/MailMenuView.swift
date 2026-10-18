@@ -22,14 +22,7 @@ struct MailMenuView: View {
       Button("Review digest") { show(.digest) }
         .badge(digest.records.count)
     }
-    Section("Selected messages in Mail") {
-      Button("Mark as Good") { correctSelection(.inbox) }
-        .keyboardShortcut("g", modifiers: [.command, .option])
-      Button("Mark as Junk") { correctSelection(.junk) }
-        .keyboardShortcut("j", modifiers: [.command, .option])
-      Button("Mark for Review") { correctSelection(.review) }
-        .keyboardShortcut("r", modifiers: [.command, .option])
-    }.disabled(!canActOnMail)
+    SelectionCorrectionMenu(corrections: corrections, canActOnMail: canActOnMail, show: show)
     Button(shared.settings.paused ? "Resume filtering" : "Pause filtering") {
       settings.togglePause()
     }
@@ -37,11 +30,6 @@ struct MailMenuView: View {
     SettingsLink()
     Divider()
     Button("Quit SpamWise") { NSApplication.shared.terminate(nil) }
-  }
-
-  private func correctSelection(_ label: MailLabel) {
-    corrections.correctSelection(label)
-    show(.selectionCorrections)
   }
 
   private func show(_ sheet: ActivitySheet) {

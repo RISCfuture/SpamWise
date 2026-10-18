@@ -64,7 +64,8 @@ public struct ReviewedLabelCapacity: Sendable, Equatable {
 
 /// Explicit labeled corpus operations that never create sender rules or request mail actions.
 public enum CorpusManagement {
-  private static let maximumBatch = 20
+  /// The most messages one import accepts.
+  public static let maximumBatch = 20
   private static let slices = StateSlices([.corrections, .learning], reviewedLabels: .all)
   /// Current reviewed-label usage under the shared retention policy.
   public static func capacity(store: Store) async throws -> ReviewedLabelCapacity {

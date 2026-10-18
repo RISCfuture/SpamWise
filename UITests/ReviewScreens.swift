@@ -20,6 +20,9 @@ import XCTest
   func forgetFirstExample() {
     labels.firstMatch.click()
     app.buttons["corpus.forget"].click()
+    let confirm = app.buttons["corpus.forget.confirm"]
+    XCTAssertTrue(confirm.waitForExistence(timeout: UITestTiming.transition))
+    confirm.click()
     XCTAssertEqual(
       XCTWaiter.wait(
         for: [

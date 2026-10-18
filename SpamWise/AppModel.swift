@@ -58,7 +58,7 @@ import MailIntegration
       services.store.map { ActivityModel(store: $0, shared: shared) }
       ?? ActivityModel(fixtures: activityFixtures, shared: shared)
     corrections = CorrectionsModel(services: services)
-    junkReview = JunkReviewModel(services: services, mail: mail)
+    junkReview = JunkReviewModel(services: services, mail: mail, shared: shared)
     messages = MessageAccessModel(services: services)
     rules = RulesModel(services: services, shared: shared)
     folders = FolderPlansModel(services: services, shared: shared, mail: mail)

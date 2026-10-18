@@ -2,57 +2,34 @@ import SwiftUI
 import SpamWiseCore
 import MailIntegration
 
+/// Reviews one account’s Junk mailbox and restores the messages that aren’t junk.
 struct MailReviewView: View {
   let review: JunkReviewModel
-  @State private var accountID = ""
-  @State private var offset = 0
-  @State private var selection: String?
+  @State private var selection: JunkReviewRow.ID?
   @Environment(\.dismiss) private var dismiss
 
-  private var selected: ReviewMessage? { review.messages.first { $0.id == selection } }
-
-  private var selectedText: String {
-    guard let selected else { return String(localized: "Select a message") }
-    return selected.text ?? String(localized: "Couldn’t read the message.")
+  private var selected: JunkReviewRow? { review.rows.first { $0.id == selection } }
+  private var account: Binding<String?> {
+    Binding(get: { review.accountID }, set: { review.choose(accountID: $0) })
   }
 
   var body: some View {
     NavigationStack {
       VStack(alignment: .leading) {
-        Text(
-          "Folder membership is not a confirmed label. Reading this list does not classify or move mail."
-        )
-        .foregroundStyle(.secondary)
-        HStack {
-          Picker("Account", selection: $accountID) {
-            Text("Choose account").tag("")
-            ForEach(review.accounts) { Text($0.name).tag($0.id) }
-          }
-          Button("Load page") { review.load(accountID: accountID, offset: offset) }
-            .disabled(accountID.isEmpty)
+        Text("Restore anything that isn’t junk. Nothing moves unless you choose Mark as Good.")
+          .foregroundStyle(.secondary)
+        Picker("Account", selection: account) {
+          Text("Choose an account").tag(String?.none)
+          ForEach(review.accounts) { Text($0.name).tag(Optional($0.id)) }
         }
+        .fixedSize()
+        .accessibilityIdentifier("junk.account")
         HSplitView {
-          List(review.messages, selection: $selection) { message in
-            Text(message.displaySubject).tag(message.id)
-          }.frame(minWidth: 220)
-          ScrollView {
-            Text(selectedText)
-              .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding()
-          }.frame(minWidth: 300)
+          JunkMessageList(review: review, selection: $selection).frame(minWidth: 240)
+          JunkMessageDetail(review: review, row: selected).frame(minWidth: 320)
         }
-        HStack {
-          Button("Previous page") { showPage(at: max(0, offset - JunkReviewModel.pageSize)) }
-            .disabled(offset == 0)
-          Button("Next page") { showPage(at: offset + JunkReviewModel.pageSize) }
-            .disabled(offset + JunkReviewModel.pageSize >= review.total)
-          Spacer()
-          if review.operation.isBusy { ProgressView().controlSize(.small) }
-          Button("Mark Good and restore") {
-            if let selected { review.restore(selected.envelope) }
-          }
-          .disabled(selected == nil)
-        }
-        OperationStatusView(operation: review.operation)
+        JunkPager(review: review)
+        OperationStatusView(operation: review.loading)
       }
       .padding()
       .navigationTitle("Review Junk")
@@ -60,50 +37,155 @@ struct MailReviewView: View {
     }
     .frame(minWidth: 720, minHeight: 480)
     .task { review.discoverAccounts() }
-    .onChange(of: accountID) { _, _ in
-      offset = 0; selection = nil; review.clear()
-    }
-  }
-
-  private func showPage(at offset: Int) {
-    self.offset = offset
-    review.load(accountID: accountID, offset: offset)
+    .onDisappear { review.choose(accountID: nil) }
+    .onChange(of: review.accountID) { selection = nil }
   }
 }
 
-struct CorrectionResultsView: View {
-  let corrections: CorrectionsModel
-  @Environment(\.dismiss) private var dismiss
+private struct JunkMessageList: View {
+  let review: JunkReviewModel
+  @Binding var selection: JunkReviewRow.ID?
 
   var body: some View {
-    NavigationStack {
+    List(review.rows, selection: $selection) { row in
       VStack(alignment: .leading) {
-        List(corrections.selectionResults) { result in
-          VStack(alignment: .leading) {
-            Text(result.subject)
-            if let record = result.record {
-              Text("Correction saved. Mail action: \(record.outcome.localizedTitle).")
-              if let error = record.actionError { Text(error) }
-            } else {
-              Text(result.error ?? String(localized: "Correction unavailable"))
-            }
-          }
-        }
-        .overlay {
-          if corrections.selection.isBusy, corrections.selectionResults.isEmpty {
-            ProgressView()
-          }
-        }
-        OperationStatusView(operation: corrections.selection).padding(.horizontal)
+        Text(row.message.displaySubject)
+        if let sender = row.message.sender { Text(sender).foregroundStyle(.secondary) }
       }
-      .navigationTitle("Selected-message corrections")
-      .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "corrections.done") }
     }
-    .frame(minWidth: 520, minHeight: 320)
+    .overlay { JunkListPlaceholder(review: review) }
   }
 }
 
-/// A message's text in its own sheet.
+private struct JunkListPlaceholder: View {
+  let review: JunkReviewModel
+
+  var body: some View {
+    if review.accountID == nil {
+      ContentUnavailableView(
+        "Choose an Account",
+        systemImage: "tray",
+        description: Text("Pick an account to see the messages in its Junk mailbox.")
+      )
+    } else if !review.hasLoaded, review.loading.isBusy {
+      ProgressView()
+    } else if review.hasLoaded, review.rows.isEmpty {
+      ContentUnavailableView(
+        "Nothing in Junk",
+        systemImage: "tray",
+        description: Text("This page has no messages to review.")
+      )
+    }
+  }
+}
+
+private struct JunkMessageDetail: View {
+  let review: JunkReviewModel
+  let row: JunkReviewRow?
+  @State private var confirmingRestore = false
+
+  var body: some View {
+    if let row {
+      VStack(alignment: .leading) {
+        Text(row.message.displaySubject).font(.headline).textSelection(.enabled)
+        if let sender = row.message.sender {
+          Text(sender).foregroundStyle(.secondary).textSelection(.enabled)
+        }
+        Text(row.provenance.localizedDescription)
+        if let rule = review.blockingRule(for: row) {
+          Text("Your Block rule for \(rule.value) matches this sender.")
+        }
+        MessageTextView(
+          text: row.message.text ?? String(localized: "SpamWise couldn’t read this message.")
+        )
+        HStack {
+          OperationStatusView(operation: review.restoring)
+          Spacer()
+          if review.restoring.isBusy { ProgressView().controlSize(.small) }
+          Button("Mark as Good and Restore") { restore(row) }
+            .disabled(review.restoring.isBusy)
+            .accessibilityIdentifier("junk.restore")
+        }
+      }
+      .padding()
+      .confirmationDialog(
+        "Allow mail from \(row.message.sender ?? "")?",
+        isPresented: $confirmingRestore,
+        presenting: review.blockingRule(for: row)
+      ) { rule in
+        Button(rule.scope == .address ? "Replace Rule and Restore" : "Allow Sender and Restore") {
+          review.restore(row)
+        }
+      } message: { rule in
+        Text(rule.restoreConsequence(sender: row.message.sender ?? ""))
+      }
+    } else {
+      ContentUnavailableView("No Message Selected", systemImage: "envelope")
+    }
+  }
+
+  private func restore(_ row: JunkReviewRow) {
+    if review.blockingRule(for: row) == nil {
+      review.restore(row)
+    } else {
+      confirmingRestore = true
+    }
+  }
+}
+
+private struct JunkPager: View {
+  let review: JunkReviewModel
+
+  var body: some View {
+    HStack {
+      Button("Previous Page") { review.showPage(review.pageIndex - 1) }
+        .disabled(!review.hasPreviousPage || review.loading.isBusy)
+      if review.hasLoaded {
+        Text("Page \(review.pageIndex + 1) of \(review.pageCount)").foregroundStyle(.secondary)
+      }
+      Button("Next Page") { review.showPage(review.pageIndex + 1) }
+        .disabled(!review.hasNextPage || review.loading.isBusy)
+      if review.loading.isBusy { ProgressView().controlSize(.small) }
+    }
+  }
+}
+
+extension JunkProvenance {
+  var localizedDescription: String {
+    switch self {
+      case .spamWise(let reason):
+        String(localized: "SpamWise moved this message to Junk: \(reason.localizedDescription)")
+      case .userCorrection: String(localized: "You marked this message as Junk.")
+      case .elsewhere:
+        String(
+          localized:
+            "SpamWise didn’t put this message in Junk. Another filter or the mail server did."
+        )
+      case .unknown:
+        String(
+          localized: """
+            SpamWise has no record of this message. It may have arrived before SpamWise started, \
+            or another filter or the mail server moved it.
+            """
+        )
+    }
+  }
+}
+
+private extension SenderRule {
+  /// What restoring a message from a sender this Block rule matches does to the rule.
+  func restoreConsequence(sender: String) -> String {
+    scope == .address
+      ? String(
+        localized: "Marking it as Good replaces your Block rule for \(value) with an Allow rule."
+      )
+      : String(
+        localized: "Your Block rule for \(value) stays, but mail from \(sender) will be allowed."
+      )
+  }
+}
+
+/// A message’s text in its own sheet.
 struct MessagePreviewSheet: View {
   let preview: MessagePreview
   @Environment(\.dismiss) private var dismiss
@@ -118,7 +200,7 @@ struct MessagePreviewSheet: View {
   }
 }
 
-/// A message's plain text, selectable and scrollable.
+/// A message’s plain text, selectable and scrollable.
 struct MessageTextView: View {
   let text: String
 
@@ -130,8 +212,8 @@ struct MessageTextView: View {
   }
 }
 
-#Preview("Junk review") { MailReviewView(review: PreviewHelper.model().junkReview) }
-#Preview("Corrections") { CorrectionResultsView(corrections: PreviewHelper.model().corrections) }
+#Preview("No account") { MailReviewView(review: PreviewHelper.model().junkReview) }
+#Preview("Junk page") { MailReviewView(review: PreviewHelper.junkReview()) }
 #Preview("Plain-text preview") {
   MessagePreviewSheet(preview: MessagePreview(text: "A safe local message preview."))
 }

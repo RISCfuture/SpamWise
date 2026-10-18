@@ -8,6 +8,7 @@ struct LearningSettingsView: View {
   let rules: RulesModel
   let activity: ActivityModel
   @State private var exporting = false
+  @State private var exportDocument: RulesDocument?
   @State private var exportStatus: OperationStatus?
 
   var body: some View {
@@ -39,7 +40,7 @@ struct LearningSettingsView: View {
         "Retain reviewed text for evaluation export",
         isOn: settings.advancedBinding(\.retainReviewedContent)
       )
-      Button("Export reviewed labels…") { exporting = true }
+      Button("Export reviewed labels…") { exportLabels() }
         .disabled(shared.state.reviewedLabels.isEmpty)
       StatusLabel(status: exportStatus)
     } header: {
@@ -55,13 +56,23 @@ struct LearningSettingsView: View {
     }
     .fileExporter(
       isPresented: $exporting,
-      document: RulesDocument(
-        data: (try? JSONEncoder.pretty.encode(shared.state.reviewedLabels)) ?? Data()
-      ),
+      document: exportDocument,
       contentType: .json,
       defaultFilename: "SpamWise-reviewed-labels"
     ) {
       exportStatus = ExportResult.status(of: $0, failure: "Reviewed labels could not be exported.")
+    }
+  }
+
+  private func exportLabels() {
+    do {
+      exportDocument = RulesDocument(
+        data: try JSONEncoder.pretty.encode(shared.state.reviewedLabels)
+      )
+      exportStatus = nil
+      exporting = true
+    } catch {
+      exportStatus = .failure(OperationFailure(error))
     }
   }
 }

@@ -116,6 +116,69 @@ import SpamWiseCore
   static var rule: SenderRule {
     .init(scope: .address, value: "newsletter@example.org", disposition: .allow)
   }
+  static var contentRule: ContentRule {
+    var rule = ContentRule()
+    rule.pattern = "weekend clearance"
+    return rule
+  }
+
+  static var reviewedLabels: [ReviewedLabel] {
+    var imported = ReviewedLabel(
+      identity: .init(accountID: nil, contentHash: "imported-preview"),
+      label: .junk
+    )
+    imported.origin = .reviewedImport
+    return [
+      ReviewedLabel(identity: .init(accountID: "preview", contentHash: "preview"), label: .inbox),
+      imported
+    ]
+  }
+
+  /// Parsed selected or Junk messages: a promotion, a newsletter and an unreadable message.
+  static var reviewMessages: [ReviewMessage] {
+    [
+      reviewMessage("offers@shop.example", "Weekend clearance", "Save on every order."),
+      reviewMessage("news@club.example", "Club news", "Our autumn meeting is on Friday."),
+      ReviewMessage(
+        envelope: MailEnvelope(
+          identity: .init(accountID: "preview", contentHash: "unreadable"),
+          raw: Data()
+        ),
+        subject: nil,
+        sender: nil,
+        text: nil
+      )
+    ]
+  }
+
+  static var selectionResults: [SelectionCorrectionResult] {
+    let messages = reviewMessages
+    var moved = record
+    moved.outcome = .applied
+    return [
+      .init(message: messages[0], outcome: .corrected(moved, conflict: nil)),
+      .init(
+        message: messages[1],
+        outcome: .corrected(
+          failedRecord,
+          conflict: SenderRule(scope: .domain, value: "club.example", disposition: .allow)
+        )
+      ),
+      .init(message: messages[2], outcome: .skipped(.unreadable))
+    ]
+  }
+
+  static var unverifiedSelection: SelectionBatch {
+    let messages = reviewMessages
+    return SelectionBatch(
+      label: .junk,
+      scope: .address,
+      messages: messages,
+      unverifiedIDs: [messages[0].id],
+      unreadableCount: 0
+    )
+  }
+
   static func spamhaus(_ transport: SpamhausTransport) -> ExternalEvidenceSettings {
     var configuration = ExternalEvidenceSettings()
     configuration.spamhausTransport = transport
@@ -130,6 +193,7 @@ import SpamWiseCore
     transport: MailTransport = .appleMail,
     backend: ModelBackend = .claude,
     suggestions: Bool = false,
+    reviewed: Bool = false,
     spendingLimitReached: Bool = false
   ) -> AppModel {
     let model = AppModel(services: .preview(), activityFixtures: empty ? [] : [record])
@@ -141,6 +205,7 @@ import SpamWiseCore
     shared.state.settings.advancedOptions.backend = backend
     shared.state.rules = empty ? [] : [rule]
     shared.state.corrections = suggestions ? corrections : []
+    shared.state.reviewedLabels = reviewed ? reviewedLabels : []
     return model
   }
 
@@ -158,6 +223,36 @@ import SpamWiseCore
     return MailPreview(
       records: [junk, record, good] + (consentRequired ? [unclassifiedRecord] : []),
       unavailableCount: consentRequired ? 0 : 1
+    )
+  }
+
+  /// A Junk review showing one page with each kind of provenance.
+  static func junkReview() -> JunkReviewModel {
+    let review = model().junkReview
+    let messages = reviewMessages
+    review.preview(
+      accountID: "preview",
+      rows: [
+        JunkReviewRow(message: messages[0], provenance: .spamWise(.model("Repeated promotion"))),
+        JunkReviewRow(message: messages[1], provenance: .elsewhere),
+        JunkReviewRow(message: messages[2], provenance: .unknown)
+      ],
+      total: 45
+    )
+    return review
+  }
+
+  private static func reviewMessage(_ sender: String, _ subject: String, _ text: String)
+    -> ReviewMessage
+  {
+    ReviewMessage(
+      envelope: MailEnvelope(
+        identity: .init(accountID: "preview", contentHash: subject),
+        raw: Data()
+      ),
+      subject: subject,
+      sender: sender,
+      text: text
     )
   }
 

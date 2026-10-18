@@ -362,70 +362,6 @@
         }
       }
     },
-    "Add rule": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añadir regla"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter une règle"
-          }
-        }
-      }
-    },
-    "Address or registrable domain": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dirección o dominio registrable"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adresse ou domaine enregistrable"
-          }
-        }
-      }
-    },
-    "Address rules take precedence over domain rules and trusted relationships.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las reglas de dirección tienen prioridad sobre las de dominio y las relaciones de confianza."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les règles d’adresse ont priorité sur les règles de domaine et les relations de confiance."
-          }
-        }
-      }
-    },
-    "Address, then domain, then newest matching content rule, then trusted relationships.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dirección, dominio, regla de contenido coincidente más reciente y relaciones de confianza, en ese orden."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adresse, domaine, règle de contenu correspondante la plus récente, puis relations de confiance."
-          }
-        }
-      }
-    },
     "Addresses excluded from automatic trust": {
       "localizations": {
         "es": {
@@ -598,22 +534,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inclure aussi les messages légitimes"
-          }
-        }
-      }
-    },
-    "An address or domain rule takes precedence.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una regla de dirección o dominio tiene prioridad."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Une règle d’adresse ou de domaine est prioritaire."
           }
         }
       }
@@ -1066,22 +986,6 @@
         }
       }
     },
-    "Choose account": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elegir cuenta"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisir un compte"
-          }
-        }
-      }
-    },
     "Choose folder": {
       "localizations": {
         "es": {
@@ -1386,22 +1290,6 @@
         }
       }
     },
-    "Content rules…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reglas de contenido…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Règles de contenu…"
-          }
-        }
-      }
-    },
     "Content type": {
       "localizations": {
         "es": {
@@ -1446,22 +1334,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Copier la clé de récupération"
-          }
-        }
-      }
-    },
-    "Corpus export failed.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo exportar el corpus."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’exportation du corpus a échoué."
           }
         }
       }
@@ -1575,22 +1447,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Correction enregistrée. Action sur le message : %@."
-          }
-        }
-      }
-    },
-    "Correction unavailable": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corrección no disponible"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correction indisponible"
           }
         }
       }
@@ -1948,22 +1804,6 @@
         }
       }
     },
-    "Edit rule": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Editar regla"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modifier la règle"
-          }
-        }
-      }
-    },
     "Email address": {
       "localizations": {
         "es": {
@@ -2156,22 +1996,6 @@
         }
       }
     },
-    "Export content rules…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportar reglas de contenido…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter les règles de contenu…"
-          }
-        }
-      }
-    },
     "Export encrypted backup": {
       "localizations": {
         "es": {
@@ -2220,22 +2044,6 @@
         }
       }
     },
-    "Export reviewed corpus": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportar corpus revisado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter le corpus vérifié"
-          }
-        }
-      }
-    },
     "Export reviewed labels…": {
       "localizations": {
         "es": {
@@ -2248,22 +2056,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exporter les étiquettes révisées…"
-          }
-        }
-      }
-    },
-    "Export rules…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportar reglas…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter les règles…"
           }
         }
       }
@@ -2312,22 +2104,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Expression"
-          }
-        }
-      }
-    },
-    "Expressions are case-insensitive and bounded. A timed-out rule leaves mail unchanged.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las expresiones ignoran mayúsculas y tienen límites. Si una regla agota el tiempo, el correo no cambia."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les expressions ignorent la casse et sont limitées. Un dépassement du délai laisse le courrier inchangé."
           }
         }
       }
@@ -2524,22 +2300,6 @@
         }
       }
     },
-    "Folder membership is not a confirmed label. Reading this list does not classify or move mail.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La carpeta no confirma la etiqueta. Leer esta lista no clasifica ni mueve mensajes."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le dossier ne confirme pas l’étiquette. Consulter cette liste ne classe ni ne déplace les messages."
-          }
-        }
-      }
-    },
     "Folder plan saved. Existing dry-run and account validation still apply.": {
       "localizations": {
         "es": {
@@ -2700,38 +2460,6 @@
         }
       }
     },
-    "Held out": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reservado para evaluación"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réservé à l’évaluation"
-          }
-        }
-      }
-    },
-    "Held out: %lld": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reservados: %lld"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réservés : %lld"
-          }
-        }
-      }
-    },
     "Help for %@": {
       "localizations": {
         "es": {
@@ -2844,22 +2572,6 @@
         }
       }
     },
-    "Import content rules…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importar reglas de contenido…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importer des règles de contenu…"
-          }
-        }
-      }
-    },
     "Import Inbox and Sent history": {
       "localizations": {
         "es": {
@@ -2872,54 +2584,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Importer l’historique de Réception et Envoyés"
-          }
-        }
-      }
-    },
-    "Import only messages you reviewed. Mailbox membership and SpamSieve predictions are not human labels.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importa solo mensajes que hayas revisado. Su carpeta y las predicciones de SpamSieve no son etiquetas humanas."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importez uniquement des messages que vous avez vérifiés. Leur dossier et les prédictions de SpamSieve ne constituent pas des étiquettes humaines."
-          }
-        }
-      }
-    },
-    "Import reviewed .eml files…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importar archivos .eml revisados…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importer des fichiers .eml vérifiés…"
-          }
-        }
-      }
-    },
-    "Import rules…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importar reglas…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importer des règles…"
           }
         }
       }
@@ -3164,22 +2828,6 @@
         }
       }
     },
-    "Load page": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargar página"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Charger la page"
-          }
-        }
-      }
-    },
     "Login registration failed. Check Login Items in System Settings.": {
       "localizations": {
         "es": {
@@ -3420,22 +3068,6 @@
         }
       }
     },
-    "Mark Good and restore": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marcar como válido y restaurar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marquer comme bon et restaurer"
-          }
-        }
-      }
-    },
     "Mark-as-read": {
       "localizations": {
         "es": {
@@ -3496,22 +3128,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Correspondances"
-          }
-        }
-      }
-    },
-    "Matching content rules: %lld. Newest wins.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reglas de contenido coincidentes: %lld. La más reciente tiene prioridad."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Règles de contenu correspondantes : %lld. La plus récente est prioritaire."
           }
         }
       }
@@ -3628,22 +3244,6 @@
         }
       }
     },
-    "Next page": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Página siguiente"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Page suivante"
-          }
-        }
-      }
-    },
     "No account addresses discovered yet.": {
       "localizations": {
         "es": {
@@ -3692,22 +3292,6 @@
         }
       }
     },
-    "No sender rules": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay reglas de remitentes"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune règle d’expéditeur"
-          }
-        }
-      }
-    },
     "No successful scan yet": {
       "localizations": {
         "es": {
@@ -3720,22 +3304,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune analyse réussie"
-          }
-        }
-      }
-    },
-    "Not retained": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No conservado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Non conservé"
           }
         }
       }
@@ -4076,22 +3644,6 @@
         }
       }
     },
-    "Partition": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Partición"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Partition"
-          }
-        }
-      }
-    },
     "Password or bearer token": {
       "localizations": {
         "es": {
@@ -4312,22 +3864,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les aperçus recalculent les décisions sans répéter les actions sur les messages. Chaque page contient jusqu’à 20 messages."
-          }
-        }
-      }
-    },
-    "Previous page": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Página anterior"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Page précédente"
           }
         }
       }
@@ -4584,22 +4120,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Expression régulière"
-          }
-        }
-      }
-    },
-    "Relabel": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cambiar etiqueta"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réétiqueter"
           }
         }
       }
@@ -4861,22 +4381,6 @@
         }
       }
     },
-    "Retained locally": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conservado localmente"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conservé localement"
-          }
-        }
-      }
-    },
     "Retained log only. Selective corrections do not measure accuracy or calibration.": {
       "localizations": {
         "es": {
@@ -5053,54 +4557,6 @@
         }
       }
     },
-    "Reviewed examples imported. No sender rules or mail actions were created.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ejemplos revisados importados. No se crearon reglas de remitente ni acciones en Mail."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exemples vérifiés importés. Aucune règle d’expéditeur ni action sur les messages n’a été créée."
-          }
-        }
-      }
-    },
-    "Reviewed import": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importación revisada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Import vérifié"
-          }
-        }
-      }
-    },
-    "Reviewed label": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Etiqueta revisada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Étiquette vérifiée"
-          }
-        }
-      }
-    },
     "Reviewed labels": {
       "localizations": {
         "es": {
@@ -5133,22 +4589,6 @@
         }
       }
     },
-    "Rule export failed.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudieron exportar las reglas."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’exportation des règles a échoué."
-          }
-        }
-      }
-    },
     "Rule saved. Pending classifications were invalidated.": {
       "localizations": {
         "es": {
@@ -5165,22 +4605,6 @@
         }
       }
     },
-    "Rule scope": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ámbito de la regla"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portée de la règle"
-          }
-        }
-      }
-    },
     "Rules": {
       "localizations": {
         "es": {
@@ -5193,22 +4617,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Règles"
-          }
-        }
-      }
-    },
-    "Rules could not be exported.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudieron exportar las reglas."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossible d’exporter les règles."
           }
         }
       }
@@ -5373,22 +4781,6 @@
         }
       }
     },
-    "Select a message": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selecciona un mensaje"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sélectionnez un message"
-          }
-        }
-      }
-    },
     "Selected messages in Mail": {
       "localizations": {
         "es": {
@@ -5401,22 +4793,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Messages sélectionnés dans Mail"
-          }
-        }
-      }
-    },
-    "Selected-message corrections": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correcciones de mensajes seleccionados"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corrections des messages sélectionnés"
           }
         }
       }
@@ -5774,22 +5150,6 @@
         }
       }
     },
-    "Test selected Mail message": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probar el mensaje seleccionado en Mail"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tester le message sélectionné dans Mail"
-          }
-        }
-      }
-    },
     "These are Mail.app roles. Matching names do not prove server labels. Keep dry run on while comparing filters.": {
       "localizations": {
         "es": {
@@ -5818,54 +5178,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ces exclusions ne bloquent pas les messages. Les règles explicites d’adresse et de domaine restent prioritaires."
-          }
-        }
-      }
-    },
-    "This rule could not be evaluated for the selected message and does not match.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Esta regla no se pudo evaluar para el mensaje seleccionado y no coincide."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cette règle n’a pas pu être évaluée pour le message sélectionné et ne correspond pas."
-          }
-        }
-      }
-    },
-    "This rule does not win for the selected message.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Esta regla no prevalece para el mensaje seleccionado."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cette règle ne prévaut pas pour le message sélectionné."
-          }
-        }
-      }
-    },
-    "This rule wins for the selected message.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Esta regla prevalece para el mensaje seleccionado."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cette règle prévaut pour le message sélectionné."
           }
         }
       }
@@ -5998,22 +5310,6 @@
         }
       }
     },
-    "Training": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Entrenamiento"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Entraînement"
-          }
-        }
-      }
-    },
     "Transfer": {
       "localizations": {
         "es": {
@@ -6026,22 +5322,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Transfert"
-          }
-        }
-      }
-    },
-    "Transfer rules": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transferir reglas"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transférer les règles"
           }
         }
       }
@@ -6122,22 +5402,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Non classé"
-          }
-        }
-      }
-    },
-    "Unclassified message": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mensaje sin clasificar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Message non classé"
           }
         }
       }
@@ -8127,38 +7391,6 @@
         }
       }
     },
-    "Your rule for the domain %@ still decides this sender’s mail.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu regla para el dominio %@ sigue decidiendo el correo de este remitente."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre règle pour le domaine %@ décide toujours du courrier de cet expéditeur."
-          }
-        }
-      }
-    },
-    "Your rule for %@ still decides this sender’s mail.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu regla para %@ sigue decidiendo el correo de este remitente."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre règle pour %@ décide toujours du courrier de cet expéditeur."
-          }
-        }
-      }
-    },
     "Removed the rule for sender %@": {
       "localizations": {
         "es": {
@@ -8495,22 +7727,6 @@
         }
       }
     },
-    "Add content rule": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añadir regla de contenido"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter une règle de contenu"
-          }
-        }
-      }
-    },
     "Checking mail…": {
       "localizations": {
         "es": {
@@ -8559,22 +7775,6 @@
         }
       }
     },
-    "Corrections and imported reviewed messages appear here.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aquí aparecen las correcciones y los mensajes revisados importados."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les corrections et les messages vérifiés importés apparaissent ici."
-          }
-        }
-      }
-    },
     "Date range": {
       "localizations": {
         "es": {
@@ -8587,22 +7787,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Période"
-          }
-        }
-      }
-    },
-    "Edit content rule": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Editar regla de contenido"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modifier la règle de contenu"
           }
         }
       }
@@ -8683,38 +7867,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune modification de la configuration"
-          }
-        }
-      }
-    },
-    "No content rules": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay reglas de contenido"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune règle de contenu"
-          }
-        }
-      }
-    },
-    "No reviewed examples": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay ejemplos revisados"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun exemple vérifié"
           }
         }
       }
@@ -8971,6 +8123,2070 @@
           "stringUnit": {
             "state": "translated",
             "value": "Avertissement"
+          }
+        }
+      }
+    },
+    "%lld content rules match; the newest one decides.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coinciden %lld reglas de contenido; decide la más reciente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld règles de contenu correspondent ; la plus récente l’emporte."
+          }
+        }
+      }
+    },
+    "%lld couldn’t be corrected.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld no se pudieron corregir."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld n’ont pas pu être corrigés."
+          }
+        }
+      }
+    },
+    "%lld messages couldn’t be read and were skipped, such as messages over %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron leer %lld mensajes y se omitieron, por ejemplo los de más de %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages n’ont pas pu être lus et ont été ignorés, par exemple ceux de plus de %@."
+          }
+        }
+      }
+    },
+    "%lld of %lld kept. You can import %lld more.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se conservan %lld de %lld. Puedes importar %lld más."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sur %lld conservés. Vous pouvez en importer %lld de plus."
+          }
+        }
+      }
+    },
+    "A rule for an address wins over a rule for its domain. Allow rules apply only to mail SpamWise can verify.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una regla para una dirección prevalece sobre la de su dominio. Las reglas de permitir solo se aplican al correo que SpamWise puede verificar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une règle pour une adresse l’emporte sur celle de son domaine. Les règles d’autorisation ne s’appliquent qu’aux messages que SpamWise peut vérifier."
+          }
+        }
+      }
+    },
+    "A sender rule decides this message first, so this rule isn’t used.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una regla de remitente decide primero este mensaje, así que esta regla no se usa."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une règle d’expéditeur décide d’abord de ce message ; cette règle n’est donc pas utilisée."
+          }
+        }
+      }
+    },
+    "Add Content Rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir regla de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une règle de contenu"
+          }
+        }
+      }
+    },
+    "Add Rule…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir regla…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une règle…"
+          }
+        }
+      }
+    },
+    "Add Sender Rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir regla de remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une règle d’expéditeur"
+          }
+        }
+      }
+    },
+    "Address": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dirección"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse"
+          }
+        }
+      }
+    },
+    "Allow Sender and Restore": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir remitente y restaurar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser l’expéditeur et restaurer"
+          }
+        }
+      }
+    },
+    "Allow Senders’ Domains": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir dominios de los remitentes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser les domaines des expéditeurs"
+          }
+        }
+      }
+    },
+    "Allow mail from %@?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Permitir el correo de %@?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser les messages de %@ ?"
+          }
+        }
+      }
+    },
+    "Applies To": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se aplica a"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S’applique à"
+          }
+        }
+      }
+    },
+    "Applies to": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se aplica a"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S’applique à"
+          }
+        }
+      }
+    },
+    "Block All": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquear todos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout bloquer"
+          }
+        }
+      }
+    },
+    "Block Domain Anyway": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquear el dominio de todos modos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquer le domaine quand même"
+          }
+        }
+      }
+    },
+    "Block Sender Anyway": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquear el remitente de todos modos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquer l’expéditeur quand même"
+          }
+        }
+      }
+    },
+    "Block Senders’ Domains": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquear dominios de los remitentes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquer les domaines des expéditeurs"
+          }
+        }
+      }
+    },
+    "Choose .eml files saved from Mail, each no larger than %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige archivos .eml guardados desde Mail, de %@ como máximo cada uno."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez des fichiers .eml enregistrés depuis Mail, de %@ au maximum chacun."
+          }
+        }
+      }
+    },
+    "Choose an Account": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una cuenta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un compte"
+          }
+        }
+      }
+    },
+    "Choose an account": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una cuenta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un compte"
+          }
+        }
+      }
+    },
+    "Confirm Unverified Senders…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmar remitentes no verificados…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmer les expéditeurs non vérifiés…"
+          }
+        }
+      }
+    },
+    "Content Rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles de contenu"
+          }
+        }
+      }
+    },
+    "Content rules apply after sender rules. When several match, the newest one decides.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las reglas de contenido se aplican después de las de remitente. Si coinciden varias, decide la más reciente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les règles de contenu s’appliquent après les règles d’expéditeur. Si plusieurs correspondent, la plus récente l’emporte."
+          }
+        }
+      }
+    },
+    "Content rules couldn’t be exported.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron exportar las reglas de contenido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’exporter les règles de contenu."
+          }
+        }
+      }
+    },
+    "Content rules imported. Pending classifications were invalidated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas de contenido importadas. Se invalidaron las clasificaciones pendientes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles de contenu importées. Les classements en attente ont été invalidés."
+          }
+        }
+      }
+    },
+    "Correct Senders’ Domains": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corregir dominios de los remitentes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corriger les domaines des expéditeurs"
+          }
+        }
+      }
+    },
+    "Correcting %lld of %lld…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrigiendo %lld de %lld…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correction de %lld sur %lld…"
+          }
+        }
+      }
+    },
+    "Couldn’t read %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de lire %@."
+          }
+        }
+      }
+    },
+    "Couldn’t read message": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer el mensaje"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Message illisible"
+          }
+        }
+      }
+    },
+    "Domain": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dominio"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domaine"
+          }
+        }
+      }
+    },
+    "Edit Content Rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar regla de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier la règle de contenu"
+          }
+        }
+      }
+    },
+    "Edit Sender Rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar regla de remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier la règle d’expéditeur"
+          }
+        }
+      }
+    },
+    "Edit…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier…"
+          }
+        }
+      }
+    },
+    "Export Content Rules…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar reglas de contenido…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter les règles de contenu…"
+          }
+        }
+      }
+    },
+    "Export Reviewed Messages…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar mensajes revisados…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter les messages vérifiés…"
+          }
+        }
+      }
+    },
+    "Export Rules…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar reglas…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporter les règles…"
+          }
+        }
+      }
+    },
+    "Forget %lld reviewed messages?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Olvidar %lld mensajes revisados?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oublier %lld messages vérifiés ?"
+          }
+        }
+      }
+    },
+    "Forget…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Olvidar…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oublier…"
+          }
+        }
+      }
+    },
+    "Import": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer"
+          }
+        }
+      }
+    },
+    "Import Content Rules…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar reglas de contenido…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer des règles de contenu…"
+          }
+        }
+      }
+    },
+    "Import Messages…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar mensajes…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer des messages…"
+          }
+        }
+      }
+    },
+    "Import Rules…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar reglas…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer des règles…"
+          }
+        }
+      }
+    },
+    "Import as": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar como"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer comme"
+          }
+        }
+      }
+    },
+    "Import over older corrections?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Importar en lugar de correcciones antiguas?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer à la place d’anciennes corrections ?"
+          }
+        }
+      }
+    },
+    "Import up to %lld .eml files at a time.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importa hasta %lld archivos .eml a la vez."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importez jusqu’à %lld fichiers .eml à la fois."
+          }
+        }
+      }
+    },
+    "Imported": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importé"
+          }
+        }
+      }
+    },
+    "Imported %lld messages as Good.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se importaron %lld mensajes como deseados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages importés comme légitimes."
+          }
+        }
+      }
+    },
+    "Imported %lld messages as Junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se importaron %lld mensajes como no deseados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages importés comme indésirables."
+          }
+        }
+      }
+    },
+    "Imported %lld messages as Review.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se importaron %lld mensajes para revisar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages importés comme à vérifier."
+          }
+        }
+      }
+    },
+    "Keep Rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantener regla"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conserver la règle"
+          }
+        }
+      }
+    },
+    "Label As": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etiquetar como"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étiqueter comme"
+          }
+        }
+      }
+    },
+    "Learning rebuilt from your reviewed examples.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprendizaje reconstruido a partir de tus ejemplos revisados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apprentissage reconstruit à partir de vos exemples vérifiés."
+          }
+        }
+      }
+    },
+    "Mail already filtered stays where it is.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El correo ya filtrado se queda donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les messages déjà filtrés restent où ils sont."
+          }
+        }
+      }
+    },
+    "Mail couldn’t move %lld of them.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no pudo mover %lld de ellos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas pu en déplacer %lld."
+          }
+        }
+      }
+    },
+    "Mark as Good and Restore": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar como deseado y restaurar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer comme légitime et restaurer"
+          }
+        }
+      }
+    },
+    "Marked %lld of %lld messages as Good.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marcaron %lld de %lld mensajes como deseados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages sur %lld marqués comme légitimes."
+          }
+        }
+      }
+    },
+    "Marked %lld of %lld messages as Junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marcaron %lld de %lld mensajes como no deseados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages sur %lld marqués comme indésirables."
+          }
+        }
+      }
+    },
+    "Marked %lld of %lld messages for Review.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marcaron %lld de %lld mensajes para revisión."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages sur %lld marqués pour vérification."
+          }
+        }
+      }
+    },
+    "Marked as Good and moved to the Inbox.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcado como deseado y movido a la bandeja de entrada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marqué comme légitime et déplacé dans la boîte de réception."
+          }
+        }
+      }
+    },
+    "Marked as Good, but Mail couldn’t move the message. Move it in Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcado como deseado, pero Mail no pudo mover el mensaje. Muévelo en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marqué comme légitime, mais Mail n’a pas pu déplacer le message. Déplacez-le dans Mail."
+          }
+        }
+      }
+    },
+    "Marked as Good. Dry run is on, so the message stays in Junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcado como deseado. La simulación está activada, así que el mensaje se queda en no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marqué comme légitime. La simulation est activée ; le message reste dans les indésirables."
+          }
+        }
+      }
+    },
+    "Marked as Good. Filtering is paused, so the message stays in Junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcado como deseado. El filtrado está en pausa, así que el mensaje se queda en no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marqué comme légitime. Le filtrage est suspendu ; le message reste dans les indésirables."
+          }
+        }
+      }
+    },
+    "Marked as Good. Mail action: %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcado como deseado. Acción de correo: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marqué comme légitime. Action sur le message : %@."
+          }
+        }
+      }
+    },
+    "Marking it as Good replaces your Block rule for %@ with an Allow rule.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcarlo como deseado sustituye tu regla de bloqueo para %@ por una regla de permitir."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le marquer comme légitime remplace votre règle de blocage pour %@ par une règle d’autorisation."
+          }
+        }
+      }
+    },
+    "Matching ignores capitalization. A rule that takes too long to check doesn’t match.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La coincidencia no distingue mayúsculas. Una regla que tarda demasiado en comprobarse no coincide."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La correspondance ignore les majuscules. Une règle trop longue à vérifier ne correspond pas."
+          }
+        }
+      }
+    },
+    "More": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus"
+          }
+        }
+      }
+    },
+    "Next Page": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Página siguiente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page suivante"
+          }
+        }
+      }
+    },
+    "No Content Rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay reglas de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune règle de contenu"
+          }
+        }
+      }
+    },
+    "No Message Selected": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ningún mensaje seleccionado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun message sélectionné"
+          }
+        }
+      }
+    },
+    "No Reviewed Messages": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay mensajes revisados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun message vérifié"
+          }
+        }
+      }
+    },
+    "No Sender Rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay reglas de remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune règle d’expéditeur"
+          }
+        }
+      }
+    },
+    "Nothing in Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nada en no deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun indésirable"
+          }
+        }
+      }
+    },
+    "On": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active"
+          }
+        }
+      }
+    },
+    "Page %lld of %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Página %lld de %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page %lld sur %lld"
+          }
+        }
+      }
+    },
+    "Pick an account to see the messages in its Junk mailbox.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una cuenta para ver los mensajes de su buzón de correo no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez un compte pour voir les messages de sa boîte des indésirables."
+          }
+        }
+      }
+    },
+    "Previous Page": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Página anterior"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page précédente"
+          }
+        }
+      }
+    },
+    "Rebuild Learning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconstruir aprendizaje"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconstruire l’apprentissage"
+          }
+        }
+      }
+    },
+    "Relearns from the examples listed here and drops anything else.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a aprender de los ejemplos de esta lista y descarta todo lo demás."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réapprend à partir des exemples listés ici et abandonne tout le reste."
+          }
+        }
+      }
+    },
+    "Remove %lld content rules?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar %lld reglas de contenido?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer %lld règles de contenu ?"
+          }
+        }
+      }
+    },
+    "Remove %lld rules?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar %lld reglas?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer %lld règles ?"
+          }
+        }
+      }
+    },
+    "Remove Rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar regla"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la règle"
+          }
+        }
+      }
+    },
+    "Remove the rule for %@?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar la regla para %@?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la règle pour %@ ?"
+          }
+        }
+      }
+    },
+    "Removed your rule for %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se eliminó tu regla para %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre règle pour %@ a été supprimée."
+          }
+        }
+      }
+    },
+    "Remove…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer…"
+          }
+        }
+      }
+    },
+    "Replace Rule and Restore": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sustituir regla y restaurar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacer la règle et restaurer"
+          }
+        }
+      }
+    },
+    "Restore anything that isn’t junk. Nothing moves unless you choose Mark as Good.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaura lo que no sea correo no deseado. Nada se mueve a menos que elijas Marcar como deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurez tout ce qui n’est pas indésirable. Rien ne bouge tant que vous ne choisissez pas Marquer comme légitime."
+          }
+        }
+      }
+    },
+    "Reviewed Messages": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes revisados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages vérifiés"
+          }
+        }
+      }
+    },
+    "Reviewed messages couldn’t be exported.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron exportar los mensajes revisados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’exporter les messages vérifiés."
+          }
+        }
+      }
+    },
+    "Rules couldn’t be exported.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron exportar las reglas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’exporter les règles."
+          }
+        }
+      }
+    },
+    "Selected Message Corrections": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correcciones de mensajes seleccionados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrections des messages sélectionnés"
+          }
+        }
+      }
+    },
+    "Sender Rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas de remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles d’expéditeur"
+          }
+        }
+      }
+    },
+    "Show Correction Results…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar resultados de la corrección…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher les résultats de la correction…"
+          }
+        }
+      }
+    },
+    "Skip Unverified Senders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omitir remitentes no verificados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignorer les expéditeurs non vérifiés"
+          }
+        }
+      }
+    },
+    "Skipped %lld.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se omitieron %lld."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ignorés."
+          }
+        }
+      }
+    },
+    "Skipped: SpamWise couldn’t read this message.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omitido: SpamWise no pudo leer este mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignoré : SpamWise n’a pas pu lire ce message."
+          }
+        }
+      }
+    },
+    "Skipped: SpamWise couldn’t verify the sender, so it wasn’t blocked.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omitido: SpamWise no pudo verificar el remitente, así que no se bloqueó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignoré : SpamWise n’a pas pu vérifier l’expéditeur, qui n’a donc pas été bloqué."
+          }
+        }
+      }
+    },
+    "Skipped: the sender has no domain that a rule can name.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omitido: el remitente no tiene un dominio que una regla pueda indicar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignoré : l’expéditeur n’a pas de domaine qu’une règle puisse désigner."
+          }
+        }
+      }
+    },
+    "Skipped: unrelated people use %@. Correct this sender’s address from Activity instead.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omitido: personas sin relación usan %@. Corrige la dirección de este remitente desde Actividad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignoré : des personnes sans lien utilisent %@. Corrigez plutôt l’adresse de cet expéditeur depuis Activité."
+          }
+        }
+      }
+    },
+    "SpamWise also forgets what it learned from them. Your sender rules stay.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise también olvida lo que aprendió de ellos. Tus reglas de remitente se mantienen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise oublie aussi ce qu’il en a appris. Vos règles d’expéditeur sont conservées."
+          }
+        }
+      }
+    },
+    "SpamWise couldn’t read %@ as email messages.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no pudo leer %@ como mensajes de correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas pu lire %@ comme des e-mails."
+          }
+        }
+      }
+    },
+    "SpamWise couldn’t read this message.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no pudo leer este mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas pu lire ce message."
+          }
+        }
+      }
+    },
+    "SpamWise couldn’t verify that this message came from %@. If the address is forged, blocking it also sends the real sender’s mail to Junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no pudo verificar que este mensaje venga de %@. Si la dirección está falsificada, bloquearla también envía a no deseado el correo del remitente real."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas pu vérifier que ce message vient de %@. Si l’adresse est usurpée, la bloquer envoie aussi les messages du véritable expéditeur dans les indésirables."
+          }
+        }
+      }
+    },
+    "SpamWise couldn’t verify the senders of %lld of the %lld selected messages. If an address is forged, blocking it also sends the real sender’s mail to Junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no pudo verificar los remitentes de %lld de los %lld mensajes seleccionados. Si una dirección está falsificada, bloquearla también envía a no deseado el correo del remitente real."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas pu vérifier les expéditeurs de %lld des %lld messages sélectionnés. Si une adresse est usurpée, la bloquer envoie aussi les messages du véritable expéditeur dans les indésirables."
+          }
+        }
+      }
+    },
+    "SpamWise decides new mail from these senders without the rule. Mail already filtered stays where it is.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise decide el correo nuevo de estos remitentes sin la regla. El correo ya filtrado se queda donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise traite les nouveaux messages de ces expéditeurs sans la règle. Les messages déjà filtrés restent où ils sont."
+          }
+        }
+      }
+    },
+    "SpamWise didn’t put this message in Junk. Another filter or the mail server did.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no puso este mensaje en no deseado. Lo hizo otro filtro o el servidor de correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas placé ce message dans les indésirables. Un autre filtre ou le serveur de messagerie l’a fait."
+          }
+        }
+      }
+    },
+    "SpamWise has no record of this message. It may have arrived before SpamWise started, or another filter or the mail server moved it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no tiene registro de este mensaje. Puede que llegara antes de que SpamWise empezara, o que lo moviera otro filtro o el servidor de correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a aucune trace de ce message. Il est peut-être arrivé avant le démarrage de SpamWise, ou un autre filtre ou le serveur de messagerie l’a déplacé."
+          }
+        }
+      }
+    },
+    "SpamWise learns from messages you’ve checked yourself. Importing them never creates rules or moves mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise aprende de los mensajes que has revisado tú. Importarlos nunca crea reglas ni mueve correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise apprend des messages que vous avez vérifiés vous-même. Les importer ne crée jamais de règles et ne déplace aucun message."
+          }
+        }
+      }
+    },
+    "SpamWise moved this message to Junk: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise movió este mensaje a no deseado: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise a déplacé ce message dans les indésirables : %@"
+          }
+        }
+      }
+    },
+    "Stop Correcting": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener la corrección"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la correction"
+          }
+        }
+      }
+    },
+    "Stopped after %lld of %lld messages.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se detuvo tras %lld de %lld mensajes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêté après %lld messages sur %lld."
+          }
+        }
+      }
+    },
+    "Test with Message Selected in Mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probar con el mensaje seleccionado en Mail"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tester avec le message sélectionné dans Mail"
+          }
+        }
+      }
+    },
+    "Text not kept": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texto no conservado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texte non conservé"
+          }
+        }
+      }
+    },
+    "The messages couldn’t be imported.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron importar los mensajes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’importer les messages."
+          }
+        }
+      }
+    },
+    "This page has no messages to review.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta página no tiene mensajes que revisar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette page ne contient aucun message à vérifier."
+          }
+        }
+      }
+    },
+    "This rule decides the selected message.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta regla decide el mensaje seleccionado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette règle décide du message sélectionné."
+          }
+        }
+      }
+    },
+    "This rule doesn’t decide the selected message.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta regla no decide el mensaje seleccionado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette règle ne décide pas du message sélectionné."
+          }
+        }
+      }
+    },
+    "This rule took too long to check, so it doesn’t match this message.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta regla tardó demasiado en comprobarse, así que no coincide con este mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette règle a été trop longue à vérifier ; elle ne correspond donc pas à ce message."
+          }
+        }
+      }
+    },
+    "To stay within %lld examples, SpamWise forgets up to %lld of your oldest corrections as learning examples. Your sender rules stay.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para no superar %lld ejemplos, SpamWise olvida hasta %lld de tus correcciones más antiguas como ejemplos de aprendizaje. Tus reglas de remitente se mantienen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour ne pas dépasser %lld exemples, SpamWise oublie jusqu’à %lld de vos plus anciennes corrections comme exemples d’apprentissage. Vos règles d’expéditeur sont conservées."
+          }
+        }
+      }
+    },
+    "Transfer Rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transferir reglas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transférer les règles"
+          }
+        }
+      }
+    },
+    "Use this rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar esta regla"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser cette règle"
+          }
+        }
+      }
+    },
+    "You marked this message as Junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcaste este mensaje como no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous avez marqué ce message comme indésirable."
+          }
+        }
+      }
+    },
+    "Your Allow rule for %@ still sends this sender’s mail to the Inbox.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu regla de permitir para %@ sigue enviando el correo de este remitente a la bandeja de entrada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre règle d’autorisation pour %@ envoie toujours les messages de cet expéditeur dans la boîte de réception."
+          }
+        }
+      }
+    },
+    "Your Block rule for %@ matches this sender.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu regla de bloqueo para %@ coincide con este remitente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre règle de blocage pour %@ correspond à cet expéditeur."
+          }
+        }
+      }
+    },
+    "Your Block rule for %@ stays, but mail from %@ will be allowed.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu regla de bloqueo para %@ se mantiene, pero se permitirá el correo de %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre règle de blocage pour %@ est conservée, mais les messages de %@ seront autorisés."
+          }
+        }
+      }
+    },
+    "Your Block rule for %@ still sends this sender’s mail to Junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu regla de bloqueo para %@ sigue enviando el correo de este remitente a no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre règle de blocage pour %@ envoie toujours les messages de cet expéditeur dans les indésirables."
+          }
+        }
+      }
+    },
+    "Your correction": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu corrección"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre correction"
+          }
+        }
+      }
+    },
+    "Your corrections and the messages you import appear here.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aquí aparecen tus correcciones y los mensajes que importes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos corrections et les messages que vous importez apparaissent ici."
           }
         }
       }
