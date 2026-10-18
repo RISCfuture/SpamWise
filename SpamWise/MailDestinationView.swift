@@ -1,4 +1,5 @@
 import SwiftUI
+import SpamWiseCore
 import MailIntegration
 
 struct MailDestinationView: View {
@@ -9,10 +10,15 @@ struct MailDestinationView: View {
 
   var body: some View {
     DisclosureGroup("Mailbox destinations") {
+      LabeledContent(
+        "Inbox and Junk",
+        value: model.state.settings.validatedAccounts.contains(accountID)
+          ? String(localized: "Validated") : String(localized: "Not validated")
+      )
       Button("Read current destinations") {
         destinations = nil; failure = nil
         model.run {
-          do { destinations = try await model.adapter.destinations(accountID: accountID) } catch {
+          do { destinations = try await model.readDestinations(accountID: accountID) } catch {
             failure = AppModel.describe(error)
           }
         }

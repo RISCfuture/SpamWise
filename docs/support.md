@@ -8,14 +8,14 @@ There is no published download or App Store listing to link yet.
 
 ## Getting started
 
-1. Open SpamWise and complete its setup. Enable SpamWise in Mail → Settings →
-   Extensions, and allow SpamWise to control Mail when macOS asks.
+1. Open SpamWise and complete its setup, and allow SpamWise to control Mail when
+   macOS asks. The Mail extension is needed only for its optional preview route.
 2. Start with dry run enabled. Choose an available on-device model or configure an
    explicit provider. Enter API keys only in SpamWise, where they are saved in
    Keychain; grant mail-sharing permission separately for a remote provider.
-3. Use Account settings to connect Mail and inspect account destinations. Live
-   moves require the disposable-message account check. Keep dry run on until you
-   have reviewed its results.
+3. Use Account settings to connect Mail; the check validates each account’s Inbox
+   and Junk mailboxes without changing mail. Keep dry run on until you have
+   reviewed its results, then turn it off in General and confirm.
 4. Inspect Activity. Decisions, attempted mail actions and action failures are
    separate. Confidence thresholds are provisional and do not promise a particular
    accuracy rate.
@@ -34,9 +34,9 @@ Permission failures and timeouts leave mail untouched. In System Settings →
 Privacy & Security → Automation, check SpamWise’s Mail permission. Contacts access
 is optional and is separate from Mail access.
 
-The extension alone does not establish complete incoming coverage. The account
-sweep route supplies additional coverage; large or changing mailboxes may take
-several sweeps. See the [tested compatibility matrix](mail-compatibility.md).
+The optional Mail extension preview cannot filter by account and never moves
+mail. The account sweep route supplies filtering; large or changing mailboxes may
+take several sweeps. See the [tested compatibility matrix](mail-compatibility.md).
 
 ## Correcting a decision
 

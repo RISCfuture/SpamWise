@@ -193,8 +193,12 @@ private struct ImageFixture {
       let record = await pipeline.process(envelope, forceDryRun: true)
       if backend != .onDevice {
         guard record.outcome == .unclassified,
-          record.decision.reason == "unclassified: configuration"
-        else { throw ProbeFailure.unexpected(backend.rawValue + ": " + record.decision.reason) }
+          record.decision.reason == .classificationFailed(.configuration)
+        else {
+          throw ProbeFailure.unexpected(
+            backend.rawValue + ": " + record.decision.reason.diagnosticDescription
+          )
+        }
       } else {
         guard record.outcome == .dryRun, record.verdict != nil else {
           throw ProbeFailure.unexpected("On-device classification did not complete")
@@ -203,10 +207,14 @@ private struct ImageFixture {
       guard record.evidence?.domainAgeDays == nil,
         record.evidence?.auxiliaryFindings?.isEmpty != false
       else { throw ProbeFailure.unexpected("External evidence") }
-      try emit(backend.rawValue, result: record.outcome.rawValue, text: record.decision.reason)
+      try emit(
+        backend.rawValue,
+        result: record.outcome.rawValue,
+        text: record.decision.reason.diagnosticDescription
+      )
     }
-    let ledger = try await EvaluationBudget.load(store)
-    guard ledger.calls == 0, ledger.committedUSD == 0 else {
+    let spending = try await SpendingLimit.load(store)
+    guard spending.requests == 0, spending.committedMicroUSD == 0 else {
       throw ProbeFailure.unexpected("Paid request reservation")
     }
     try emit("paid-reservations", result: "zero")

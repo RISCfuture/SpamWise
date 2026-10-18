@@ -1,6 +1,7 @@
 public import Classifier
 public import Foundation
 public import MessageModel
+public import Signals
 
 /// Retrieves bounded explicit examples using deterministic lexical similarity.
 public enum CorrectionRetrieval {
@@ -58,13 +59,21 @@ public enum PolicyDistiller {
   private static let minimumCorrections = 3
   private static let minimumAddresses = 2
   private static let maximumSuggestions = 10
-  /// Requires at least three distinct corrections from at least two addresses and no contrary label.
-  public static func suggestions(from corrections: [CorrectionExample], limit: Int = 10)
-    -> [PolicySuggestion]
-  {
+  /**
+   Requires at least three distinct corrections from at least two addresses and no contrary label.
+
+   Shared mailbox providers and domains that already have a domain rule are never suggested.
+   */
+  public static func suggestions(
+    from corrections: [CorrectionExample],
+    rules: [SenderRule],
+    limit: Int = 10
+  ) -> [PolicySuggestion] {
+    let decided = Set(rules.filter { $0.scope == .domain }.map(\.value))
     let groups = Dictionary(grouping: LearningText.uniqueCorrections(corrections)) { $0.domain }
     return groups.compactMap { domain, examples -> PolicySuggestion? in
-      guard let domain, !domain.isEmpty, examples.count >= minimumCorrections,
+      guard let domain, !domain.isEmpty, !decided.contains(domain.lowercased()),
+        !SharedMailboxDomains.contains(domain), examples.count >= minimumCorrections,
         Set(examples.map { $0.sender.lowercased() }).count >= minimumAddresses,
         let label = examples.first?.label, label != .review,
         examples.allSatisfy({ $0.label == label })

@@ -119,7 +119,7 @@ public struct EvaluationReport: Codable, Sendable {
     calibration = stride(from: 0, through: 90, by: 10).map { lower in
       let upper = lower == 90 ? 100 : lower + 9
       let rows = observations.filter {
-        $0.path == "model" && $0.truth != .graymail && $0.modelLabel == .junk
+        $0.path == DecisionPath.model.rawValue && $0.truth != .graymail && $0.modelLabel == .junk
           && (lower...upper).contains($0.confidence ?? -1)
       }
       return CalibrationBucket(

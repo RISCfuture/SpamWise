@@ -86,7 +86,6 @@ public enum StateBackup {
       state.settings.paused = true
       state.settings.dryRun = true
       state.settings.validatedAccounts = []
-      state.settings.route = .unverified
       state.retries = []
       state.revision += 1
       state.audit(

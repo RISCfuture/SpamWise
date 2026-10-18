@@ -19,9 +19,9 @@ struct ReviewDigestView: View {
       } else {
         List(records) { record in
           VStack(alignment: .leading) {
-            Text(record.subject).font(.headline)
-            Text(record.sender).foregroundStyle(.secondary)
-            Text(record.decision.reason)
+            Text(record.displaySubject).font(.headline)
+            Text(record.displaySender).foregroundStyle(.secondary)
+            Text(record.decision.reason.localizedDescription)
             Text(ReviewPriority.reason(record)).foregroundStyle(.secondary)
             Button("Review decision") {
               selection = record.id; showsDecision = true

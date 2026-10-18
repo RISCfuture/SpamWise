@@ -6,7 +6,7 @@ struct MailMenuView: View {
   @Environment(\.openWindow) private var openWindow
 
   var body: some View {
-    Text(model.state.settings.paused ? "Filtering paused" : "SpamWise is running")
+    Text(model.filteringStatus.localizedTitle)
     Button("Show Activity") { openWindow(id: "activity") }
     Section("Selected messages in Mail") {
       Button("Mark as Good") {

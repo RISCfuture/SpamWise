@@ -4,7 +4,6 @@ import SpamWiseCore
 struct ModelSettingsView: View {
   @Bindable var model: AppModel
   @State private var key = ""
-  @State private var budget = BudgetLedger()
 
   private var backend: ModelBackend { model.state.settings.advancedOptions.backend }
   private var backendBinding: Binding<ModelBackend> {
@@ -78,35 +77,7 @@ struct ModelSettingsView: View {
       }
     }
     Section {
-      DisclosureGroup("Usage and spending") {
-        LabeledContent(
-          "Month-to-date estimated API cost",
-          value: model.monthCost.formatted(.currency(code: "USD"))
-        )
-        LabeledContent(
-          "Authorized ceiling",
-          value: budget.limitUSD.formatted(.currency(code: "USD"))
-        )
-        LabeledContent(
-          "Conservative commitments",
-          value: budget.committedUSD.formatted(.currency(code: "USD"))
-        )
-        HStack(alignment: .top) {
-          Text(
-            """
-            Paid requests reserve a maximum cost before starting. Reservations include failed \
-            requests and may exceed actual charges.
-            """
-          )
-          .foregroundStyle(.secondary)
-          Spacer()
-          HelpButton(page: "what-data-is-sent")
-        }
-      }
-    }.task(id: model.busy) {
-      if let store = model.store, let ledger = try? await EvaluationBudget.load(store) {
-        budget = ledger
-      }
+      DisclosureGroup("Usage and spending") { SpendingSettingsView(model: model) }
     }
   }
 }

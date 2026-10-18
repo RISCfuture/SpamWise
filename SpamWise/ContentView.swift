@@ -36,9 +36,9 @@ private struct ActivityView: View {
         TableColumn("Time") { row in
           Text(row.date, format: .dateTime.hour().minute())
         }.width(min: 60, ideal: 75)
-        TableColumn("Sender", value: \.sender).width(min: 120, ideal: 180)
+        TableColumn("Sender") { row in Text(row.displaySender) }.width(min: 120, ideal: 180)
         TableColumn("Subject") { row in
-          Text(row.subject).accessibilityIdentifier("activity.subject.\(row.id)")
+          Text(row.displaySubject).accessibilityIdentifier("activity.subject.\(row.id)")
         }.width(min: 160, ideal: 320)
         TableColumn("Verdict") { row in
           VerdictBadge(label: row.decision.label)
@@ -82,9 +82,12 @@ private struct ActivityView: View {
               }
             }
             Picker("Path", selection: $query.path) {
-              Text("All paths").tag(String?.none)
-              ForEach(Array(Set(model.state.records.map(\.path))).sorted(), id: \.self) {
-                Text($0).tag(Optional($0))
+              Text("All paths").tag(DecisionPath?.none)
+              ForEach(
+                DecisionPath.allCases.filter(Set(model.state.records.map(\.path)).contains),
+                id: \.self
+              ) {
+                Text($0.localizedTitle).tag(Optional($0))
               }
             }
             Picker("Outcome", selection: $query.outcome) {
@@ -140,22 +143,12 @@ private struct ActivityView: View {
 private struct ActivityStatusView: View {
   let model: AppModel
 
-  private var mode: LocalizedStringKey {
-    if model.state.settings.paused { return "Filtering paused" }
-    return model.state.settings.dryRun
-      ? "Dry run — mail stays unchanged" : "Filtering validated accounts"
-  }
-
-  private var modeValue: String {
-    if model.state.settings.paused { return "paused" }
-    return model.state.settings.dryRun ? "dryRun" : "active"
-  }
-
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       Divider()
       HStack {
-        Text(mode).accessibilityIdentifier("activity.mode").accessibilityValue(modeValue)
+        Text(model.filteringStatus.localizedTitle).accessibilityIdentifier("activity.mode")
+          .accessibilityValue(model.filteringStatus.rawValue)
         if model.busy {
           ProgressView().controlSize(.small)
           Button("Cancel") { model.cancel() }
@@ -167,6 +160,13 @@ private struct ActivityStatusView: View {
           )
         Text("Month: \(model.monthCost, format: .currency(code: "USD"))")
           .help("Estimated API cost this month")
+      }
+      if model.spendingLimitReached {
+        Text(
+          "Monthly spending limit reached — new mail isn’t sent to the provider until next month or a higher limit."
+        )
+        .foregroundStyle(.primary)
+        .accessibilityIdentifier("activity.spendingLimit")
       }
       if !model.status.isEmpty {
         Text(model.status).textSelection(.enabled).accessibilityIdentifier("activity.status")
@@ -183,5 +183,8 @@ private struct ActivityStatusView: View {
 #Preview("Paused") { ContentView(model: PreviewHelper.model(paused: true)) }
 
 #Preview("Activity status") { ActivityStatusView(model: PreviewHelper.model()) }
+#Preview("Spending limit reached") {
+  ActivityStatusView(model: PreviewHelper.model(spendingLimitReached: true))
+}
 
 #Preview("Activity table") { ActivityView(model: PreviewHelper.model()) }

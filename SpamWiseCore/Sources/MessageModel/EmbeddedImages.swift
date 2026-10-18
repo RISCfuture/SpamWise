@@ -123,21 +123,10 @@ public struct EmbeddedImages: Sendable {
   }
 
   private func boundary(in contentType: String) throws -> String {
-    let expression = try NSRegularExpression(
-      pattern: #"(?:^|;)\s*boundary\s*=\s*(?:"([^"]*)"|([^;\s]+))"#,
-      options: .caseInsensitive
-    )
-    let matches = expression.matches(
-      in: contentType,
-      range: NSRange(contentType.startIndex..., in: contentType)
-    )
-    guard matches.count == 1, let match = matches.first else { throw ParseError.malformed }
-    let range = match.range(at: 1).location == NSNotFound ? match.range(at: 2) : match.range(at: 1)
-    guard let range = Range(range, in: contentType) else { throw ParseError.malformed }
-    let value = String(contentType[range])
-    guard !value.isEmpty, value.count <= Self.maximumBoundaryCharacters else {
-      throw ParseError.malformed
-    }
+    let boundaries = MIMEParser.parameterValues("boundary", in: contentType)
+    guard boundaries.count == 1, let value = boundaries.first, !value.isEmpty,
+      value.count <= Self.maximumBoundaryCharacters
+    else { throw ParseError.malformed }
     return value
   }
 

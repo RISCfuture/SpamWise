@@ -10,6 +10,7 @@ struct AccountSettingsView: View {
       IMAPSettingsView(model: model)
       if model.state.settings.advancedOptions.transport == .appleMail {
         MailConnectionView(model: model)
+        MailRouteView(model: model)
       }
     }.formStyle(.grouped)
   }

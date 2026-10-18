@@ -60,3 +60,24 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
     }
   }
 }
+
+extension ModelTokenPricing {
+  private static let requestFramingTokens = 1_024
+
+  /**
+   Upper-bound USD for one request at these rates.
+
+   Each prompt and instruction byte counts as an uncached input token, plus an allowance for
+   request framing and the output schema, and the full response-token limit counts as output.
+   */
+  public func maximumCost(of input: ClassificationInput) throws -> Double {
+    let inputTokens =
+      try PromptBuilder.prompt(input).utf8.count + PromptBuilder.instructions.utf8.count
+      + Self.requestFramingTokens
+    return TokenUsage(
+      input: inputTokens,
+      output: ClassificationLimits.maximumResponseTokens,
+      pricing: self
+    ).estimatedCost
+  }
+}

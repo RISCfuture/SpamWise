@@ -30,7 +30,7 @@ struct CorpusView: View {
         Text("Held out: \(labels.filter(\.heldOut).count)")
       }
       Table(labels, selection: $selection) {
-        TableColumn("Subject") { Text($0.message?.subject ?? String($0.id.prefix(12))) }
+        TableColumn("Subject") { Text($0.message?.displaySubject ?? String($0.id.prefix(12))) }
         TableColumn("Label") {
           Text($0.label.localizedTitle).accessibilityIdentifier("corpus.label.\($0.id)")
         }

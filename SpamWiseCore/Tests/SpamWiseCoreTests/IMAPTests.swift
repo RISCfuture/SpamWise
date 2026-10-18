@@ -204,74 +204,6 @@ struct `integrates bounded IMAP messages` {
   }
 
   @Test
-  func `advances persistent Inbox pages and restarts the sweep`() async throws {
-    let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let store = try Store(url: directory.appending(path: "cursor.store"))
-    let page =
-      Self.selected(validity: 33).replacingOccurrences(of: "* 1 EXISTS", with: "* 3 EXISTS")
-      + "S5 OK metadata\r\n"
-    let transport = IMAPFixtureTransport(response: page + page + page, fragment: 1)
-    let configuration = IMAPConfiguration(id: "account", host: "imap.example.com", username: "user")
-    for _ in 0..<3 {
-      let adapter = IMAPAdapter(
-        configuration: configuration,
-        credentials: { .password("secret") },
-        transport: { _ in transport }
-      )
-      _ = try await adapter.nextInboxMessages(limit: 2, cursorStore: store)
-    }
-    let ranges = await transport.commands.filter { $0.hasPrefix("S5 FETCH") }
-    #expect(
-      ranges == [
-        "S5 FETCH 2:3 (UID RFC822.SIZE)\r\n", "S5 FETCH 1:1 (UID RFC822.SIZE)\r\n",
-        "S5 FETCH 2:3 (UID RFC822.SIZE)\r\n"
-      ]
-    )
-  }
-
-  @Test
-  func `resumes supported messages deferred by the page byte budget`() async throws {
-    let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let store = try Store(url: directory.appending(path: "cursor.store"))
-    let prefix = "From: sender@example.com\r\n\r\n"
-    let raw = prefix + String(repeating: "a", count: 1_000_000 - prefix.utf8.count)
-    let selected = Self.selected(validity: 33).replacingOccurrences(
-      of: "* 1 EXISTS",
-      with: "* 5 EXISTS"
-    )
-    let metadata = (1...5).reversed().map { "* \($0) FETCH (UID \($0) RFC822.SIZE 1000000)\r\n" }
-      .joined()
-    let bodies = (2...5).reversed().enumerated().map {
-      Self.fetched(raw, uid: $0.element, tag: $0.offset + 6)
-    }.joined()
-    let firstTransport = IMAPFixtureTransport(
-      response: selected + metadata + "S5 OK metadata\r\n" + bodies
-    )
-    let lastTransport = IMAPFixtureTransport(
-      response: selected + "* 1 FETCH (UID 1 RFC822.SIZE 1000000)\r\nS5 OK metadata\r\n"
-        + Self.fetched(raw, uid: 1, tag: 6)
-    )
-    let configuration = IMAPConfiguration(id: "account", host: "imap.example.com", username: "user")
-    let first = IMAPAdapter(
-      configuration: configuration,
-      credentials: { .password("secret") },
-      transport: { _ in firstTransport }
-    )
-    let last = IMAPAdapter(
-      configuration: configuration,
-      credentials: { .password("secret") },
-      transport: { _ in lastTransport }
-    )
-    let firstPage = try await first.nextInboxMessages(limit: 20, cursorStore: store)
-    let lastPage = try await last.nextInboxMessages(limit: 20, cursorStore: store)
-    #expect(firstPage.map(\.identity.localID) == [5, 4, 3, 2])
-    #expect(lastPage.map(\.identity.localID) == [1])
-    #expect(await lastTransport.commands.contains("S5 FETCH 1:1 (UID RFC822.SIZE)\r\n"))
-  }
-
-  @Test
   func `refuses credential injection and cancelled parsing without reading more bytes`()
     async throws
   {
@@ -334,7 +266,9 @@ struct `integrates bounded IMAP messages` {
   }
 
   @Test
-  func `binds headless action validation to the probed endpoint`() async throws {
+  func `binds validation to the endpoint, keeps it through Apple Mail checks and revokes it`()
+    async throws
+  {
     let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: directory) }
     let store = try Store(url: directory.appending(path: "state.store"))
@@ -343,12 +277,34 @@ struct `integrates bounded IMAP messages` {
       host: "imap.example.com",
       username: "user"
     )
+    var check = IMAPValidation(
+      supportsMove: true,
+      junkMailbox: "Junk",
+      sentMailbox: nil,
+      inboxValidity: 33
+    )
     #expect(try await !IMAPAccountValidation.isValidated(configuration, store: store))
-    try await IMAPAccountValidation.record(configuration, store: store)
+    #expect(try await IMAPAccountValidation.record(check, for: configuration, store: store))
+    #expect(try await IMAPAccountValidation.isValidated(configuration, store: store))
+    #expect(try await StateRepository.load(store).settings.dryRun)
+    try await StateRepository.recordMailboxRoles(["mail:removed": true], in: store)
+    try await StateRepository.recordAppleMailRoles(
+      ["mail:current": false],
+      in: store,
+      reportedAccounts: ["mail:current"]
+    )
+    #expect(try await StateRepository.load(store).settings.validatedAccounts == ["imap:test"])
     #expect(try await IMAPAccountValidation.isValidated(configuration, store: store))
     configuration.host = "other.example.com"
     #expect(try await !IMAPAccountValidation.isValidated(configuration, store: store))
-    #expect(try await StateRepository.load(store).settings.dryRun)
+    configuration.host = "imap.example.com"
+    try await StateRepository.editSettings(store) { $0.dryRun = false }
+    check.junkMailbox = nil
+    #expect(try await !IMAPAccountValidation.record(check, for: configuration, store: store))
+    #expect(try await !IMAPAccountValidation.isValidated(configuration, store: store))
+    let settings = try await StateRepository.load(store).settings
+    #expect(settings.validatedAccounts.isEmpty)
+    #expect(settings.dryRun)
   }
 
   @Test
@@ -388,7 +344,7 @@ struct `integrates bounded IMAP messages` {
       credentials: { .password("secret") },
       transport: { _ in deniedTransport }
     )
-    await #expect(throws: IntegrationError.staleMessage) {
+    await #expect(throws: IntegrationError.notProbeMessage) {
       _ = try await denied.testDisposableMessage(uid: 7)
     }
     #expect(await !deniedTransport.commands.contains { $0.contains("UID MOVE") })

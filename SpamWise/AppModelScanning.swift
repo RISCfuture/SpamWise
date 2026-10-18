@@ -34,6 +34,19 @@ extension AppModel {
       try await StateRepository.update(store) { $0.ownAddresses = addresses }
     }
   }
+  /// Records now as the Inbox start boundary for the accounts, keeping existing boundaries unless `replacing`.
+  func startInboxFiltering(for accounts: [MailAccount], replacing: Bool) {
+    guard let store, !accounts.isEmpty else { return }
+    let now = Date.now
+    Task {
+      for account in accounts {
+        try? await MailHealthRepository.update(store, accountID: account.id, name: account.name) {
+          if replacing || $0.inboxStart == nil { $0.inboxStart = now }
+        }
+      }
+      await refresh()
+    }
+  }
   private func scanMailAccounts(with pipeline: Pipeline, dryRun: Bool, limit: Int) async throws {
     guard let store else { throw IntegrationError.unavailable }
     try await discoverAccounts()
@@ -41,26 +54,12 @@ extension AppModel {
     where state.settings.mailOptions.accountIDs?.contains(account.id) ?? true {
       try Task.checkCancellation()
       guard !state.settings.paused else { return }
-      try await MailHealthRepository.update(store, accountID: account.id, name: account.name) {
-        $0.lastAttempt = .now
-      }
       do {
-        let offset = try await MailHealthRepository.load(store)[account.id]?.nextOffset ?? 0
-        let page = try await adapter.inboxPage(accountID: account.id, offset: offset, limit: limit)
-        try await classify(
-          ScanBatch(adapter: adapter, messages: page.messages, retryAccountID: account.id),
-          with: pipeline,
+        try await AppleMailInboxSweep(adapter: adapter, pipeline: pipeline, store: store).run(
+          account: account,
           dryRun: dryRun,
-          automatic: true
-        )
-        try Task.checkCancellation()
-        try await MailHealthRepository.update(store, accountID: account.id, name: account.name) {
-          $0.complete(
-            count: page.visitedCount,
-            total: page.total,
-            unavailable: page.unavailableCount
-          )
-        }
+          limit: limit
+        ) { count, total in await self.showProgress(count, of: total) }
         if !dryRun { await pipeline.retryDue(adapter: adapter, accountID: account.id) }
       } catch is CancellationError { throw CancellationError() } catch {
         let description = Self.describe(error)
@@ -82,11 +81,14 @@ extension AppModel {
   private func scanBatch(automatic: Bool, limit: Int) async throws -> ScanBatch {
     if state.settings.advancedOptions.transport == .imap {
       let imap = try await configuredIMAPAdapter()
-      let messages =
-        try await automatic
-        ? imap.nextInboxMessages(limit: limit, cursorStore: store)
-        : imap.recentMessages(limit: limit)
-      return ScanBatch(adapter: imap, messages: messages, retryAccountID: imap.accountID)
+      guard automatic else {
+        let messages = try await imap.recentMessages(limit: limit)
+        return ScanBatch(adapter: imap, messages: messages, retryAccountID: imap.accountID)
+      }
+      let sweep = try await imap.nextInboxSweep(limit: limit, cursorStore: store)
+      return ScanBatch(adapter: imap, messages: sweep.messages, retryAccountID: imap.accountID) {
+        [store] in try await imap.commit(sweep, cursorStore: store)
+      }
     }
     try await discoverAccounts()
     var messages: [MailEnvelope] = [], unavailableCount = 0
@@ -104,36 +106,26 @@ extension AppModel {
       retryAccountID: nil
     )
   }
-  func classify(
+  @discardableResult func classify(
     _ batch: ScanBatch,
     with pipeline: Pipeline,
     dryRun: Bool,
     automatic: Bool
-  ) async throws {
-    let seen = Set(
-      state.records.filter {
-        $0.outcome != .paused && $0.outcome != .superseded
-          && (dryRun || $0.outcome != .dryRun)
-          && ($0.verdict != nil || $0.correctedLabel != nil || $0.revision == state.revision)
-      }.map { $0.identity.key }
+  ) async throws -> [DecisionRecord] {
+    let total = batch.messages.count
+    return try await pipeline.processBatch(
+      batch.messages,
+      adapter: batch.adapter,
+      dryRun: dryRun,
+      skipsSettled: automatic,
+      progress: { count in await self.showProgress(count, of: total) },
+      onCompletion: batch.commit
     )
-    var count: UInt = 0
-    for message in batch.messages where !automatic || !seen.contains(message.identity.key) {
-      try Task.checkCancellation()
-      if automatic, state.settings.paused { throw CancellationError() }
-      let record = await pipeline.process(message, adapter: batch.adapter, forceDryRun: dryRun)
-      if let store {
-        let saved = try await StateRepository.load(store)
-        guard saved.records.contains(where: { $0.id == record.id }) else {
-          throw IntegrationError.unavailable
-        }
-      }
-      count += 1
-      status = String(
-        localized:
-          "Classified \(count, format: .number) of \(batch.messages.count, format: .number) messages"
-      )
-      await refresh()
-    }
+  }
+  private func showProgress(_ count: Int, of total: Int) async {
+    status = String(
+      localized: "Classified \(count, format: .number) of \(total, format: .number) messages"
+    )
+    await refresh()
   }
 }

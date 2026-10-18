@@ -45,7 +45,7 @@ func envelope(_ name: String = "filler-spam") throws -> MailEnvelope {
 }
 func enableActions(_ store: Store) async throws {
   try await StateRepository.update(store) { state in
-    state.settings.dryRun = false; state.settings.route = .mailRule
+    state.settings.dryRun = false
     state.settings.validatedAccounts = ["account-A"]
   }
 }

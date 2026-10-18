@@ -66,9 +66,10 @@ The presence of an exception is not proof of rejection; approval is discretionar
 4. Submit only as a deliberate release step, then handle Apple's actual decision.
 
 Direct distribution can coexist with the Mac App Store. Its selected update approach
-is **GitHub Releases with `~/Repositories/Libraries/GitHubUpdateChecker`**; it also
-remains the fallback if the store path proves unsuitable. Track actual feature cuts
-and common acceptance gaps in the [distribution ledger](distribution-differences.md).
-The checkout has no Git remote yet. No alternate updater has been added,
-no repository/hosting address has been invented, and no store upload has occurred.
+is **GitHub Releases with
+[GitHubUpdateChecker](https://github.com/RISCfuture/GitHubUpdateChecker)** 2.3.0 or
+later, resolved as a remote package; it also remains the fallback if the store path
+proves unsuitable. Track actual feature cuts and common acceptance gaps in the
+[distribution ledger](distribution-differences.md). No alternate updater has been
+added, no release hosting address has been invented, and no store upload has occurred.
 See [packaging preparation](app-store.md) and [lifecycle](lifecycle.md).

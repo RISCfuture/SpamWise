@@ -12,14 +12,39 @@ public struct AuthResult: Codable, Sendable, Equatable {
   public var result: String
   /// Whether the reporting server is in the configured trust set.
   public var trusted: Bool
+  /// The authenticated domain: DKIM `header.d`, DMARC `header.from` or SPF `smtp.mailfrom`.
+  public var domain: String?
+}
+/// How the reporting servers the user trusts authenticated the From domain.
+public enum SenderAuthentication: Sendable, Equatable {
+  /// A trusted DMARC pass, or a trusted DKIM pass aligned with the From domain.
+  case alignedPass
+  /// A trusted DMARC failure, or a trusted SPF or DKIM failure without an aligned pass.
+  case failed
+  /// No trusted result decides the From domain either way.
+  case unverified
 }
 /// Optional evidence supplied to classification; missing values mean unknown.
 public struct EvidenceBundle: Codable, Sendable, Equatable {
   private static let maximumLinkDomains = 20
+  private static let displayNameSeparators = CharacterSet.whitespaces.union(
+    CharacterSet(charactersIn: "<>()[]\"',;:")
+  )
+  private static let lookalikeAtSigns = ["\u{FF20}", "\u{FE6B}"]
+  private static let surroundingPunctuation = CharacterSet.alphanumerics.inverted
   /// Normalized sender email address.
   public var fromAddress: String
   /// Decoded sender display name; this is an untrusted claim.
   public var fromDisplayName: String
+  /**
+   An address claimed in the From display name or comments at a registrable domain other than the
+   sender's; a phishing signal.
+
+   Claims at the sender's own registrable domain are excluded: forging one also forges that domain,
+   which sender authentication evidence covers, and organizations commonly show one of their own
+   addresses over another, such as a support address over a no-reply sender.
+   */
+  public var mismatchedDisplayNameAddress: String?
   /// Registrable domain of the sender, or nil if unresolved.
   public var fromDomain: String?
   /// Registrable domain of Reply-To, or nil if unresolved.
@@ -58,7 +83,14 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   ) {
     let resolver = DomainResolver()
     fromAddress = message.fromAddress; fromDisplayName = message.fromDisplayName
-    fromDomain = resolver.domain(ofAddress: message.fromAddress)
+    let fromDomain = resolver.domain(ofAddress: message.fromAddress)
+    self.fromDomain = fromDomain
+    mismatchedDisplayNameAddress = Self.claimedAddresses(
+      in: message.fromDisplayName + " " + message.fromComments
+    ).first {
+      $0 != message.fromAddress
+        && (fromDomain == nil || resolver.domain(ofAddress: $0) != fromDomain)
+    }
     replyToDomain = message.header("reply-to").flatMap(MIMEParser.address).flatMap(resolver.domain)
     returnPathDomain = message.header("return-path").flatMap(MIMEParser.address).flatMap(
       resolver.domain
@@ -76,36 +108,96 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
     listUnsubscribePresent = message.header("list-unsubscribe") != nil
     senderHistory = history; self.contact = contact
   }
+
+  private static func claimedAddresses(in displayName: String) -> [String] {
+    lookalikeAtSigns.reduce(displayName) { $0.replacingOccurrences(of: $1, with: "@") }
+      .components(separatedBy: displayNameSeparators)
+      .compactMap { MIMEParser.address($0.trimmingCharacters(in: surroundingPunctuation)) }
+  }
 }
 /// Parses authentication claims without trusting arbitrary sender headers.
 public enum AuthenticationHeaders {
   private static let maximumHeaders = 10
-  /// Parses SPF, DKIM, and DMARC claims with explicit reporting-server trust.
+  private static let methodPattern =
+    #"^\s*(spf|dkim|dmarc)\s*=\s*(pass|fail|softfail|neutral|none|temperror|permerror)\b"#
+  private static let domainProperties = [
+    "dkim": ["header.d", "header.i"], "dmarc": ["header.from"], "spf": ["smtp.mailfrom"]
+  ]
+  /**
+   Parses SPF, DKIM, and DMARC claims with explicit reporting-server trust.
+
+   Only the topmost header from each trusted server is trusted, and only while no untrusted or
+   repeated server appears above it, because a sender can add lower headers naming any server.
+   A header without a reporting-server identifier keeps its results, untrusted.
+   */
   public static func parse(_ headers: [String], trustedServers: Set<String>) -> [AuthResult] {
     // Header claims remain untrusted by default; no recomputation of SPF/DKIM/DMARC.
-    headers.prefix(maximumHeaders).flatMap { header -> [AuthResult] in
-      let fields = header.lowercased().components(separatedBy: ";")
-      let server = (fields.first ?? "").trimmingCharacters(in: .whitespaces).components(
-        separatedBy: " "
-      )[0]
-      let regex = try? NSRegularExpression(
-        pattern:
-          #"\b(spf|dkim|dmarc)\s*=\s*(pass|fail|softfail|neutral|none|temperror|permerror)\b"#
-      )
-      return
-        (regex?.matches(
-          in: header.lowercased(),
-          range: NSRange(header.lowercased().startIndex..., in: header.lowercased())
-        ) ?? []).map { match in
-          let lower = header.lowercased()
-          return AuthResult(
-            server: server,
-            mechanism: String(lower[Range(match.range(at: 1), in: lower)!]),
-            result: String(lower[Range(match.range(at: 2), in: lower)!]),
-            trusted: trustedServers.contains(server)
-          )
-        }
+    let reports = headers.prefix(maximumHeaders).map(report)
+    let trusted = topmostTrusted(reports.map(\.server), trustedServers: trustedServers)
+    return reports.indices.flatMap { index in
+      reports[index].results.compactMap { field in
+        result(field, server: reports[index].server, trusted: trusted[index])
+      }
     }
+  }
+  /// Splits a header into its reporting server, empty when absent, and its result fields.
+  private static func report(_ header: String) -> (server: String, results: ArraySlice<String>) {
+    let fields = header.lowercased().components(separatedBy: ";")
+    guard captures(methodPattern, in: fields[0]) == nil else { return ("", fields[...]) }
+    let server = fields[0].trimmingCharacters(in: .whitespaces).components(separatedBy: " ")[0]
+    return (server, fields.dropFirst())
+  }
+  private static func topmostTrusted(_ servers: [String], trustedServers: Set<String>) -> [Bool] {
+    let trusted = Set(trustedServers.map { $0.lowercased() })
+    var seen: Set<String> = [], leading = true
+    return servers.map { server in
+      leading =
+        leading && !server.isEmpty && trusted.contains(server)
+        && seen.insert(server).inserted
+      return leading
+    }
+  }
+  private static func result(_ field: String, server: String, trusted: Bool) -> AuthResult? {
+    guard let match = captures(methodPattern, in: field), match.count == 2 else { return nil }
+    let domain = domainProperties[match[0], default: []].lazy
+      .compactMap { captures(propertyPattern($0), in: field)?.first }
+      .first?.split(separator: "@").last.map(String.init)
+    return AuthResult(
+      server: server,
+      mechanism: match[0],
+      result: match[1],
+      trusted: trusted,
+      domain: domain
+    )
+  }
+  private static func propertyPattern(_ property: String) -> String {
+    #"\b"# + NSRegularExpression.escapedPattern(for: property) + #"\s*=\s*([^\s;()]+)"#
+  }
+  private static func captures(_ pattern: String, in text: String) -> [String]? {
+    guard let regex = try? NSRegularExpression(pattern: pattern),
+      let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text))
+    else { return nil }
+    return (1..<match.numberOfRanges).compactMap { index in
+      Range(match.range(at: index), in: text).map { String(text[$0]) }
+    }
+  }
+}
+extension EvidenceBundle {
+  private static let failureResults: Set<String> = ["fail", "softfail"]
+  /// Trusted authentication of the From domain; untrusted claims never decide it.
+  public var senderAuthentication: SenderAuthentication {
+    let trusted = authResults.filter(\.trusted)
+    if trusted.contains(where: { $0.mechanism == "dmarc" && $0.result == "fail" }) {
+      return .failed
+    }
+    if trusted.contains(where: { $0.result == "pass" && isAligned($0) }) { return .alignedPass }
+    if trusted.contains(where: { Self.failureResults.contains($0.result) }) { return .failed }
+    return .unverified
+  }
+  private func isAligned(_ result: AuthResult) -> Bool {
+    guard ["dkim", "dmarc"].contains(result.mechanism), let fromDomain, let domain = result.domain
+    else { return false }
+    return DomainResolver().registrableDomain(domain) == fromDomain
   }
 }
 /// Reads contact email addresses only when permission is available.

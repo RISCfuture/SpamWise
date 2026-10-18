@@ -37,7 +37,7 @@ extension Pipeline {
         identity: previous.identity,
         state: state
       )
-      guard let address = MIMEParser.address(previous.sender) else {
+      guard let address = previous.sender.flatMap(MIMEParser.address) else {
         throw IntegrationError.unavailable
       }
       let domain = DomainResolver().domain(ofAddress: address)
@@ -55,8 +55,8 @@ extension Pipeline {
       var example = CorrectionExample(
         sender: address,
         domain: domain,
-        subject: previous.subject,
-        gist: previous.decision.reason,
+        subject: previous.subject ?? "",
+        gist: previous.decision.reason.diagnosticDescription,
         label: label
       )
       example.sampleID =
@@ -75,10 +75,10 @@ extension Pipeline {
         decision: .init(
           label: label,
           action: Self.correctionAction(label, review: state.settings.review),
-          reason: "User correction (\(scope.rawValue))"
+          reason: .userCorrection(scope: scope)
         ),
         outcome: .pending,
-        path: "correction",
+        path: .correction,
         revision: state.revision
       )
       correction.correctedLabel = label

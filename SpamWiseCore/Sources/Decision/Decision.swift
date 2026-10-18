@@ -21,6 +21,8 @@ public enum ReviewTreatment: String, Codable, Sendable, CaseIterable {
   case orangeFlag
   /// Marks Review messages with an orange background.
   case orangeBackground
+  /// The mail action that applies this annotation.
+  public var action: MailAction { self == .orangeFlag ? .orangeFlag : .orangeBackground }
 }
 /// The supported action vocabulary deliberately contains no deletion or Trash operation.
 public enum MailAction: String, Codable, Sendable {
@@ -66,15 +68,39 @@ public struct Decision: Codable, Sendable, Equatable {
   public var label: MailLabel?
   /// The intended supported Mail operation.
   public var action: MailAction
-  /// Short explanation of the evidence or policy behind this result.
-  public var reason: String
+  /// The evidence or policy behind this result.
+  public var reason: DecisionReason
   /// Creates a Decision with the supplied configuration.
-  public init(label: MailLabel?, action: MailAction, reason: String) {
+  public init(label: MailLabel?, action: MailAction, reason: DecisionReason) {
     self.label = label; self.action = action; self.reason = reason
   }
-  /// Applies deterministic policy without requesting a mail action.
+  /**
+   Decodes a stored decision, mapping a reason saved as text to ``DecisionReason`` and a reason
+   this version cannot decode to ``DecisionReason/unrecognized``.
+   */
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    label = try container.decodeIfPresent(MailLabel.self, forKey: .label)
+    action = try container.decode(MailAction.self, forKey: .action)
+    reason =
+      if let text = try? container.decode(String.self, forKey: .reason) {
+        DecisionReason(legacy: text, label: label)
+      } else {
+        (try? container.decode(DecisionReason.self, forKey: .reason)) ?? .unrecognized
+      }
+  }
+  /**
+   Applies deterministic policy without requesting a mail action.
+
+   - Parameters:
+     - verdict: The validated classification.
+     - reason: Why the verdict was reached; defaults to the verdict's own explanation.
+     - strength: The Junk confidence threshold.
+     - review: The annotation for Review messages.
+   */
   public static func evaluate(
     _ verdict: Verdict,
+    reason: DecisionReason? = nil,
     strength: FilteringStrength = .balanced,
     review: ReviewTreatment = .orangeFlag
   ) throws -> Decision {
@@ -85,9 +111,10 @@ public struct Decision: Codable, Sendable, Equatable {
     let action: MailAction
     switch label {
       case .inbox: action = .none
-      case .review: action = review == .orangeFlag ? .orangeFlag : .orangeBackground
+      case .review: action = review.action
       case .junk: action = .moveToJunk
     }
-    return .init(label: label, action: action, reason: verdict.reason)
+    return .init(label: label, action: action, reason: reason ?? .model(verdict.reason))
   }
+  private enum CodingKeys: String, CodingKey { case label, action, reason }
 }

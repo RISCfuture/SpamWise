@@ -23,6 +23,17 @@ extension AppModel {
       status = String(localized: "Provider key saved in Keychain. Use a dry run to verify.")
     }
   }
+  func setSpendingLimit(usd: Double?) {
+    guard let store else { return }
+    enqueueSettingsWrite { [self] in
+      do {
+        try await SpendingLimit.setLimit(usd: usd, store: store)
+        spendingLimitError = nil
+      } catch {
+        spendingLimitError = Self.describe(error)
+      }
+    }
+  }
   func advancedBinding<T: Sendable>(
     _ key: any WritableKeyPath<AdvancedSettings, T> & Sendable
   ) -> Binding<T> {

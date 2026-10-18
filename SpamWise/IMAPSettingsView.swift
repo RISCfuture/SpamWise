@@ -9,12 +9,13 @@ struct IMAPSettingsView: View {
     Binding(
       get: { model.state.settings.advancedOptions.transport },
       set: { value in
+        guard value != model.state.settings.advancedOptions.transport else { return }
         model.editSettings { settings in
           var advanced = settings.advancedOptions
           advanced.transport = value
           settings.advancedOptions = advanced
           settings.dryRun = true
-          settings.route = .unverified
+          settings.validatedAccounts = []
         }
       }
     )
@@ -52,24 +53,6 @@ struct IMAPSettingsView: View {
         }
         Text(connection.status).textSelection(.enabled).accessibilityIdentifier("imap.status")
         if connection.busy { ProgressView() }
-      }.disabled(connection.busy || !model.storageReady)
-      Section {
-        DisclosureGroup("Enable mail actions") {
-          Text(
-            "Place a disposable [SpamWise Probe] message in Inbox. Enter its IMAP UID, not Apple Mail’s message number."
-          )
-          TextField("Inbox UID", text: $connection.probeUID).accessibilityIdentifier(
-            "imap.probeUID"
-          )
-          Button("Test Junk and restore Inbox") { connection.probe() }.accessibilityIdentifier(
-            "imap.probe"
-          )
-          .disabled(UInt32(connection.probeUID).map { $0 > 0 } != true)
-          Text(
-            "The test moves to Junk and back. Verified restoration validates the account. Dry run stays unchanged."
-          )
-          .foregroundStyle(.secondary)
-        }
       }.disabled(connection.busy || !model.storageReady)
     }
   }

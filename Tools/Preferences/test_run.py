@@ -42,7 +42,9 @@ class PreferenceProbeTests(unittest.TestCase):
             with patch.object(
                 run, "evaluate", return_value={"status": "classification_failed"}
             ) as evaluator:
-                results = run.execute(Path("/unused"), output, runs, True)
+                results = run.execute(
+                    Path("/unused"), output, runs, Path("/private/budget.store")
+                )
             self.assertEqual(len(results), 1)
             evaluator.assert_called_once()
             report = json.loads((output / "results.json").read_text())

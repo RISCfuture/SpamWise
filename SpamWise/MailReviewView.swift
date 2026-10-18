@@ -9,7 +9,12 @@ struct MailReviewView: View {
   @State private var selection: String?
   @Environment(\.dismiss) private var dismiss
 
-  private var selected: MailEnvelope? { model.junkMessages.first { $0.identity.key == selection } }
+  private var selected: ReviewMessage? { model.junkMessages.first { $0.id == selection } }
+
+  private var selectedText: String {
+    guard let selected else { return String(localized: "Select a message") }
+    return selected.text ?? String(localized: "Couldn’t read the message.")
+  }
 
   var body: some View {
     VStack(alignment: .leading) {
@@ -27,19 +32,12 @@ struct MailReviewView: View {
           .disabled(accountID.isEmpty || model.busy)
       }
       HSplitView {
-        List(model.junkMessages, id: \.identity.key, selection: $selection) { envelope in
-          Text(
-            (try? MIMEParser().parse(envelope.raw).subject)
-              ?? String(localized: "Unclassified message")
-          )
-          .tag(envelope.identity.key)
+        List(model.junkMessages, selection: $selection) { message in
+          Text(message.displaySubject).tag(message.id)
         }.frame(minWidth: 220)
         ScrollView {
-          Text(
-            selected.flatMap { try? MIMEParser().parse($0.raw).text }
-              ?? String(localized: "Select a message")
-          )
-          .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding()
+          Text(selectedText)
+            .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding()
         }.frame(minWidth: 300)
       }
       HStack {
@@ -53,7 +51,7 @@ struct MailReviewView: View {
         .disabled(offset + 20 >= model.junkTotal || model.busy)
         Spacer()
         Button("Mark Good and restore") {
-          if let selected { model.restoreReviewedMessage(selected) }
+          if let selected { model.restoreReviewedMessage(selected.envelope) }
         }
         .disabled(selected == nil || model.busy)
         Button("Done") { dismiss() }

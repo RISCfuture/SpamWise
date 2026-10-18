@@ -117,9 +117,14 @@ final class UITests: XCTestCase {
     XCTAssertTrue(mail.hasPermissionDeniedStatus)
     let finish = mail.continueSetup()
     let activity = finish.finish()
-    XCTAssertTrue(activity.isDryRun)
-    activity.pause()
-    XCTAssertTrue(activity.isPaused)
+    XCTAssertEqual(activity.mode, "mailNotAuthorized")
+    let settings = activity.openGeneralSettings()
+    XCTAssertTrue(settings.isDryRun)
+    XCTAssertFalse(settings.canChangeDryRun)
+    settings.checkMailConnection()
+    XCTAssertTrue(settings.hasMailPermissionDeniedStatus)
+    settings.close().pause()
+    XCTAssertEqual(activity.mode, "paused")
   }
 }
 

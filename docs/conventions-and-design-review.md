@@ -209,7 +209,7 @@ inspection result, not an omitted file.
 | `SpamWiseCore/Sources/SpamWiseCore/AdvancedSettings.swift` | Public case DocC and named digest lookback; persisted keys/defaults unchanged. |
 | `SpamWiseCore/Sources/SpamWiseCore/CompletionOnce.swift` | Correct multiline DocC; reviewed lock ownership and legacy callback exception. |
 | `SpamWiseCore/Sources/SpamWiseCore/ConfiguredClassifier.swift` | Named model spending reservation amounts; explicit provider selection unchanged. |
-| `SpamWiseCore/Sources/SpamWiseCore/EvaluationBudget.swift` | Budget error category protocol and localized category/detail; error-case DocC. |
+| `SpamWiseCore/Sources/Evaluation/EvaluationBudget.swift` | Budget error category protocol and localized category/detail; error-case DocC. |
 | `SpamWiseCore/Sources/SpamWiseCore/Exports.swift` | Assessed; compatibility reexports only, no runtime code or undocumented declarations. No change needed. |
 | `SpamWiseCore/Sources/SpamWiseCore/MailClientAdapter.swift` | Protocol requirement DocC; mail error category and localized category/detail plus case DocC. |
 | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift` | Named retry bounds and backoff values; preserves localized failure detail when recording integration errors. |

@@ -54,7 +54,9 @@ import Evaluation
     print(String(decoding: data, as: UTF8.self))
   }
   private static func diagnostic(for error: any Error) -> String {
-    guard error is any CorpusEvaluationError || error is ClassificationError,
+    guard
+      error is any CorpusEvaluationError || error is ClassificationError
+        || error is any BudgetFailure,
       let localized = error as? any LocalizedError
     else {
       return String(localized: "Evaluation failed. Check paths, input format, and permissions.")
@@ -82,7 +84,7 @@ import Evaluation
     )
     print("Exported \(count) messages. Assign human labels before evaluating.")
   }
-  private static func classifier(_ options: Options) throws -> any Classifier {
+  private static func classifier(_ options: Options) async throws -> any Classifier {
     if options.model == "mock" {
       if let path = options.values["mock-responses"] {
         let responses = try JSONDecoder().decode(
@@ -121,11 +123,12 @@ import Evaluation
       case "GEMINI_API_KEY": classifier = try GeminiClassifier(modelID: options.model, key: { key })
       default: classifier = try ClaudeClassifier(modelID: options.model, key: { key })
     }
-    let budgetURL =
-      try options.values["budget-store"].map { URL(filePath: $0) } ?? Store.sharedURL()
     return BudgetedClassifier(
       classifier,
-      store: try Store(url: budgetURL),
+      store: try await EvaluationBudget.ledgerStore(
+        at: options.values["budget-store"].map { URL(filePath: $0) },
+        limitUSD: options.price("budget-limit", default: nil)
+      ),
       upperBoundUSD: options.model == "claude-haiku-5-5" ? 0.10 : 1.0
     )
   }
@@ -139,7 +142,7 @@ import Evaluation
     let cache = try CachedClassifier(
       directory: URL(filePath: options.values["cache"] ?? ".spamwise-eval-cache"),
       model: options.model + (try mockIdentity(options)),
-      underlying: classifier(options)
+      underlying: await classifier(options)
     )
     let temporary = FileManager.default.temporaryDirectory.appending(
       path: "SpamWise-eval-\(UUID())"
@@ -205,8 +208,8 @@ import Evaluation
           truth: entry.truth,
           label: result.decision.label,
           confidence: result.verdict?.confidence,
-          path: result.path,
-          reason: result.decision.reason,
+          path: result.path.rawValue,
+          reason: result.decision.reason.diagnosticDescription,
           modelLabel: result.verdict?.label
         )
       )
@@ -248,8 +251,8 @@ import Evaluation
             truth: truth,
             label: result.decision.label,
             confidence: result.verdict?.confidence,
-            path: result.path,
-            reason: result.decision.reason,
+            path: result.path.rawValue,
+            reason: result.decision.reason.diagnosticDescription,
             modelLabel: result.verdict?.label
           )
         )

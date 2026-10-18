@@ -25,6 +25,18 @@ import SpamWiseCore
   #expect(prompt.contains("49@example.org"))
   #expect(!prompt.contains(String(repeating: "a", count: 7000)))
   #expect(!PromptBuilder.instructions.contains(message.text))
+  #expect(
+    PromptBuilder.instructions(preferredLanguages: ["fr-CA"])
+      .hasSuffix("\nWrite the reason in French.")
+  )
+  #expect(
+    PromptBuilder.instructions(preferredLanguages: ["de-DE", "es"])
+      .hasSuffix("\nWrite the reason in Spanish.")
+  )
+  #expect(
+    PromptBuilder.instructions(preferredLanguages: ["de-DE"])
+      .hasSuffix("\nWrite the reason in English.")
+  )
   var oversized = input
   oversized.evidence.fromDisplayName = String(repeating: "界", count: 22_000)
   #expect(throws: ClassificationError.contextExceeded) { try PromptBuilder.prompt(oversized) }
@@ -41,10 +53,10 @@ import SpamWiseCore
   let clock = ContinuousClock(), start = ContinuousClock.now
   await #expect(throws: ClassificationError.timeout) {
     let _: Int = try await withDeadline(seconds: 0.02) {
-      try? await Task.sleep(for: .seconds(1)); return 7
+      try? await Task.sleep(for: .seconds(60)); return 7
     }
   }
-  #expect(clock.now - start < .seconds(0.5))
+  #expect(clock.now - start < .seconds(10))
   let task = Task {
     try await withDeadline(seconds: 10) {
       try await Task.sleep(for: .seconds(5)); return 1

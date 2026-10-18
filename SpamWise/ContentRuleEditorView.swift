@@ -27,6 +27,7 @@ struct ContentRuleEditorView: View {
         TableColumn("Action") { Text($0.disposition.localizedTitle) }
         TableColumn("State") { Text($0.enabled ? "Enabled" : "Disabled") }
         TableColumn("Matches") { Text((model.state.contentRuleHits?[$0.id] ?? 0).formatted()) }
+        TableColumn("Skipped") { Text((model.state.contentRuleSkips?[$0.id] ?? 0).formatted()) }
       }
       HStack {
         Button("Add rule") {
@@ -135,7 +136,8 @@ struct ContentRuleFormView: View {
       let message = try MIMEParser().parse(envelope.raw)
       var draft = rule; draft.updatedAt = .now
       let candidates = (model.state.contentRules ?? []).filter { $0.id != draft.id } + [draft]
-      let matches = try ContentRules.matches(candidates, message: message)
+      let evaluation = ContentRules.evaluate(candidates, message: message)
+      let matches = evaluation.matching
       let senderRule = Gates.evaluate(
         address: message.fromAddress,
         domain: DomainResolver().domain(ofAddress: message.fromAddress),
@@ -145,7 +147,11 @@ struct ContentRuleFormView: View {
       )
       if senderRule != nil {
         result = String(localized: "An address or domain rule takes precedence.")
-      } else if matches.first?.id == draft.id {
+      } else if evaluation.skipped[draft.id] != nil {
+        result = String(
+          localized: "This rule could not be evaluated for the selected message and does not match."
+        )
+      } else if evaluation.decisive?.id == draft.id {
         result = String(localized: "This rule wins for the selected message.")
       } else {
         result = String(localized: "This rule does not win for the selected message.")

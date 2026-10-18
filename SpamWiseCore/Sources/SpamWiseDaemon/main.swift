@@ -7,6 +7,8 @@ import MailIntegration
 @main
 struct SpamWiseDaemon {
   private static let maximumConfigurationBytes = 65_536
+  private static let dryRunNote =
+    "dry run; previewed mail counts as processed, so live filtering in this store skips it"
   private static let usage = """
     spamwise-daemon --config path [--once | --poll-seconds 60...3600] [--limit 1...100] [--actions]
       [--model MODEL]
@@ -14,11 +16,13 @@ struct SpamWiseDaemon {
     spamwise-daemon --config path --probe UID
 
     Default: one bounded dry run. Classification can send bounded message context to the explicitly
-    selected provider and consumes the selected store's evaluation budget. Actions also require a \
-    successful
-    disposable-message probe, the IMAP route, and dry run disabled in shared settings.
-    --probe moves only an Inbox message whose subject starts with [SpamWise Probe], then restores \
-    it.
+    selected provider; paid requests count toward the store's monthly spending limit, if one is set.
+    Actions also require validation recorded for this exact endpoint, the IMAP route and dry run
+    disabled in shared settings. --validate records validation and selects the IMAP route when the
+    server supports MOVE and has a unique Junk mailbox; otherwise it revokes validation.
+    Mail a dry run previews counts as processed: live filtering that shares the store skips it.
+    Optional --probe moves only an Inbox message whose subject starts with [SpamWise Probe], then \
+    restores it.
     No launch service is installed. SIGINT/SIGTERM cancel pending work. Secrets are never CLI \
     arguments.
     --model selects an explicit supported model in this store; providerCredentials can reference
@@ -62,9 +66,9 @@ struct SpamWiseDaemon {
     account.allowsActions = options.actions
     let credential = configuration.credential
     let adapter = IMAPAdapter(configuration: account, credentials: { try credential.resolve() })
-    _ = try await adapter.validateReadOnly()
+    let check = try await adapter.validateReadOnly()
     if options.validate {
-      print("Read-only IMAP validation passed. Mail actions remain separately gated."); return
+      try await recordValidation(check, for: account, store: store); return
     }
     if let uid = options.probe {
       _ = try await adapter.testDisposableMessage(uid: uid)
@@ -93,22 +97,51 @@ struct SpamWiseDaemon {
           throw IntegrationError.accountUnverified
         }
       }
-      let messages = try await adapter.nextInboxMessages(limit: options.limit, cursorStore: store)
-      let state = try await StateRepository.load(store)
-      let seen = Set(state.records.map { $0.identity.key })
-      var processed = 0
-      for message in messages where !seen.contains(message.identity.key) {
-        try Task.checkCancellation()
-        _ = await pipeline.process(message, adapter: adapter, forceDryRun: !options.actions)
-        processed += 1
+      if try await StateRepository.load(store).settings.paused {
+        print("Filtering paused; Inbox not read.")
+      } else {
+        let processed = try await sweep(adapter, with: pipeline, store: store, options: options)
+        print(
+          "Processed \(processed) messages; \(options.actions ? "shared action gates applied" : Self.dryRunNote)."
+        )
       }
-      if options.actions { await pipeline.retryDue(adapter: adapter, accountID: account.id) }
-      print(
-        "Processed \(processed) messages; \(options.actions ? "shared action gates applied" : "dry run")."
-      )
       guard let interval = options.poll else { return }
       try await Task.sleep(for: .seconds(interval))
     } while !Task.isCancelled
+  }
+
+  private static func recordValidation(
+    _ check: IMAPValidation,
+    for account: IMAPConfiguration,
+    store: Store
+  ) async throws {
+    if try await IMAPAccountValidation.record(check, for: account, store: store) {
+      print(
+        "Read-only check passed; Inbox and Junk validated for this endpoint. Dry run unchanged."
+      )
+    } else {
+      print(
+        "Read-only check passed, but the server lacks MOVE or a unique Junk mailbox; not validated."
+      )
+    }
+  }
+
+  private static func sweep(
+    _ adapter: IMAPAdapter,
+    with pipeline: Pipeline,
+    store: Store,
+    options: Options
+  ) async throws -> Int {
+    let sweep = try await adapter.nextInboxSweep(limit: options.limit, cursorStore: store)
+    let processed = try await pipeline.processBatch(
+      sweep.messages,
+      adapter: adapter,
+      dryRun: !options.actions,
+      skipsSettled: true,
+      onCompletion: { try await adapter.commit(sweep, cursorStore: store) }
+    ).count
+    if options.actions { await pipeline.retryDue(adapter: adapter, accountID: adapter.accountID) }
+    return processed
   }
 
   private static func selectModel(_ model: String?, store: Store) async throws {

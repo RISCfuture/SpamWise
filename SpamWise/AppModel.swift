@@ -12,6 +12,8 @@ import MailIntegration
   var keyStatus = ""
   var mailStatus = String(localized: "Mail connection not checked")
   var mailPermissionDenied = false
+  var mailAutomation = MailAutomationStatus.unknown
+  var moveTestStatus = ""
   var contactsStatus = String(localized: "Contacts optional — not requested")
   var busy = false
   var storageReady = false
@@ -24,11 +26,15 @@ import MailIntegration
   var correctionResults: [MailCorrectionResult] = []
   var showJunk = false
   var folders: [MailFolder] = []
-  var junkMessages: [MailEnvelope] = []
+  var junkMessages: [ReviewMessage] = []
   var junkTotal = 0
   var previewText = ""
   var showPreview = false
   var scanHealth: [String: MailScanHealth] = [:]
+  var spending: MonthlySpending?
+  var spendingLimitError: String?
+  var historicalPreview: [String: [UUID]] = [:]
+  private var inboxCheckPending = false
   private var monitoring: Task<Void, Never>?
   var store: Store?
   var pipeline: Pipeline?
@@ -48,15 +54,26 @@ import MailIntegration
         Calendar.current.isDate($0.date, equalTo: .now, toGranularity: .month)
       }.reduce(0) { $0 + ($1.verdict?.usage.estimatedCost ?? 0) }
   }
+  var spendingLimitReached: Bool {
+    spending?.limitReached == true
+      && [.claude, .openAI, .gemini].contains(state.settings.advancedOptions.backend)
+  }
   private var canMonitorMail: Bool {
     !uiTesting && !busy && state.settings.onboardingComplete
   }
   var contactsNeedRefresh: Bool {
     Date().timeIntervalSince(lastContactsRefresh) >= Self.contactsRefreshIntervalSec
   }
+  var filteringStatus: FilteringStatus {
+    FilteringStatus(settings: state.settings, mailAutomation: mailAutomation)
+  }
   var canScanAutomatically: Bool {
-    state.settings.onboardingComplete && [.mailRule, .mailKit, .imap].contains(state.settings.route)
-      && !state.settings.paused
+    filteringStatus.allowsAutomaticChecks
+      && (state.settings.advancedOptions.transport == .imap || mailAutomation == .granted)
+  }
+  private var canReadMailAutomation: Bool {
+    !uiTesting && state.settings.onboardingComplete
+      && state.settings.advancedOptions.transport == .appleMail
   }
   init(preview: Bool = false) {
     hasLoadedState = preview
@@ -130,6 +147,13 @@ extension AppModel {
       if pendingSettings > 0 { loaded.settings = state.settings }
       state = loaded
       scanHealth = try await MailHealthRepository.load(store)
+      do {
+        spending = try await SpendingLimit.load(store)
+      } catch StoreError.lockUnavailable {
+        // Keeps the last reading while another process holds the store.
+      } catch {
+        spending = nil
+      }
       if state.settings.advancedOptions.weeklyDigest, state.settings.onboardingComplete {
         let digest = ReviewDigest(state: state)
         if state.lastDigestWeek != digest.week, !digest.records.isEmpty {
@@ -160,6 +184,9 @@ extension AppModel {
       try? await Task.sleep(for: Self.monitorInterval)
       guard !Task.isCancelled else { return }
       await refresh()
+      if canReadMailAutomation {
+        mailAutomation = await SystemAppleEventRunner.mailAutomationStatus()
+      }
       if canMonitorMail {
         if state.settings.mailOptions.notifications?.enabledSince != nil, let store {
           do { try await notifications.deliver(store: store) } catch {
@@ -182,13 +209,19 @@ extension AppModel {
     guard let store else { return }
     edit(&state.settings)
     pendingSettings += 1
-    let previous = settingsWork
-    settingsWork = Task {
-      await previous?.value
+    enqueueSettingsWrite { [self] in
       do { try await StateRepository.editSettings(store, edit) } catch {
         status = String(localized: "Settings could not be saved; mail stays unchanged.")
       }
       pendingSettings -= 1
+    }
+  }
+  /// Runs `write` after every earlier settings write, then refreshes from shared storage.
+  func enqueueSettingsWrite(_ write: @escaping @MainActor () async -> Void) {
+    let previous = settingsWork
+    settingsWork = Task {
+      await previous?.value
+      await write()
       await refresh()
     }
   }
@@ -200,8 +233,11 @@ extension AppModel {
   }
   func finishSetup() {
     editSettings {
-      $0.onboardingComplete = true; $0.dryRun = true
+      if !$0.onboardingComplete { $0.dryRun = true }
+      $0.onboardingComplete = true
     }
+    let scope = state.settings.mailOptions.accountIDs
+    startInboxFiltering(for: accounts.filter { scope?.contains($0.id) ?? true }, replacing: false)
   }
   func togglePause() {
     setSetting(\.paused, to: !state.settings.paused)
@@ -218,10 +254,19 @@ extension AppModel {
   func run(_ operation: @escaping @MainActor () async throws -> Void) {
     guard !busy else { return }; busy = true
     work = Task {
-      defer { busy = false }
       do { try await operation() } catch { status = Self.describe(error) }
       await refresh()
+      busy = false
+      if inboxCheckPending {
+        inboxCheckPending = false
+        requestInboxCheck()
+      }
     }
+  }
+  /// Checks the newest Inbox mail now, or once the operation in progress finishes.
+  func requestInboxCheck() {
+    guard !busy else { inboxCheckPending = true; return }
+    scan(dryRun: state.settings.dryRun, automatic: true)
   }
 }
 
@@ -233,15 +278,18 @@ extension AppModel {
         if uiTesting { throw IntegrationError.permissionDenied }
         mailStatus = String(localized: "Waiting for Mail Automation permission…")
         try await SystemAppleEventRunner.requestMailPermission()
+        mailAutomation = .granted
         try await discoverAccounts()
+        let validated = try await validateMailboxRoles()
         mailStatus =
           String(
             localized:
-              "Connected — \(accounts.count, format: .number) accounts readable. Actions need a disposable-message test."
+              "Connected — \(accounts.count, format: .number) accounts readable; Inbox and Junk mailboxes validated for \(validated, format: .number)."
           )
         status = String(localized: "Mail connection checked")
       } catch IntegrationError.permissionDenied {
         mailPermissionDenied = true
+        mailAutomation = .notAuthorized
         mailStatus = Self.describe(IntegrationError.permissionDenied)
         throw IntegrationError.permissionDenied
       } catch {
@@ -282,18 +330,13 @@ extension AppModel {
     guard let store else { return }
     do {
       let current = try await StateRepository.load(store)
-      let eligible = Set(
-        current.records.filter {
-          $0.decision.label == .inbox && $0.outcome != .superseded
-        }.map { $0.identity.key }
-      ).subtracting(current.retries.map { $0.identity.key })
       let histories: [String: HistoryIndex]
       if state.settings.advancedOptions.transport == .imap {
         histories = try await configuredIMAPAdapter().importHistory()
       } else {
         histories = try await adapter.importHistory(
           previous: current.histories,
-          eligibleInbox: eligible,
+          eligibleInbox: current.historyEligibleInbox,
           incremental: true
         )
       }
@@ -312,7 +355,12 @@ extension AppModel {
       if state.settings.advancedOptions.transport == .imap {
         histories = try await configuredIMAPAdapter().importHistory()
       } else {
-        histories = try await adapter.importHistory(previous: state.histories)
+        var current = state
+        if let store { current = try await StateRepository.load(store) }
+        histories = try await adapter.importHistory(
+          previous: current.histories,
+          eligibleInbox: current.historyEligibleInbox
+        )
       }
       if let store {
         try await StateRepository.update(store) { state in
@@ -324,50 +372,6 @@ extension AppModel {
       )
     }
   }
-  func testDisposableMessage() {
-    run { [self] in
-      do {
-        mailStatus =
-          String(
-            localized:
-              "Testing the selected message; allowing 30 seconds after each move for Mail to sync…"
-          )
-        let account = try await adapter.testDisposableMessage()
-        if let store {
-          try await StateRepository.update(store) { state in
-            state.settings.validatedAccounts.insert(account); state.settings.route = .mailRule
-            state.revision += 1
-          }
-        }
-        mailStatus =
-          String(localized: "Junk, Inbox restoration, and orange flag verified in Mail.")
-        status = mailStatus
-      } catch { mailStatus = Self.describe(error); throw error }
-    }
-  }
-}
-
-extension AppModel {
-  func correct(_ record: DecisionRecord, label: MailLabel, scope: RuleScope = .address) {
-    guard let pipeline else { return }
-    run { [self] in
-      let activeAdapter: (any MailClientAdapter)?
-      if record.identity.mailboxValidity != nil {
-        activeAdapter = try? await configuredIMAPCorrectionAdapter()
-      } else {
-        activeAdapter = adapter
-      }
-      let result = try await pipeline.correct(
-        recordID: record.id,
-        label: label,
-        scope: scope,
-        adapter: activeAdapter
-      )
-      status =
-        String(localized: "Correction saved. Mail action: \(result.outcome.localizedTitle).")
-        + (result.actionError.map { " " + $0 } ?? "")
-    }
-  }
 }
 
 struct ScanBatch {
@@ -375,4 +379,6 @@ struct ScanBatch {
   let adapter: any MailClientAdapter
   let messages: [MailEnvelope]
   let retryAccountID: String?
+  /// Records discovery progress once every message has been handled.
+  var commit: @Sendable () async throws -> Void = {}
 }

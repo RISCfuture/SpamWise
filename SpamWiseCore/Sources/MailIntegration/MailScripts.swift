@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 public import SpamWiseCore
 
 /// Escaped AppleScript programs for bounded, account-scoped Mail access.
@@ -47,6 +47,22 @@ public enum MailScripts {
             end try
         end tell
     end pageEnvelope
+    on pageHeaders(m)
+        tell application "Mail"
+            set identityFields to {id of account of mailbox of m, name of mailbox of m, id of m, \
+    message id of m}
+            try
+                set rawHeaders to all headers of m
+                if (count of characters of rawHeaders) > 2000000 then return identityFields & \
+    {false}
+                return identityFields & {rawHeaders}
+            on error number failureNumber
+                if failureNumber is -1743 or failureNumber is -10004 or failureNumber is -1712 \
+    then error number failureNumber
+                return identityFields & {false}
+            end try
+        end tell
+    end pageHeaders
     """
   /// Script requiring exactly one selected message.
   public static let selected =
@@ -54,7 +70,7 @@ public enum MailScripts {
       with timeout of 8 seconds
           tell application "Mail"
               set selectedMessages to selection
-              if (count of selectedMessages) is not 1 then error "Select one disposable probe" \
+              if (count of selectedMessages) is not 1 then error "Select exactly one message" \
       number -1701
               return my envelope(item 1 of selectedMessages)
           end tell
@@ -230,14 +246,33 @@ public enum MailScripts {
       end timeout
       """
   }
-  /// Reads one account's Inbox and reports its size without modifying messages.
+  /// Reads one account's mailbox, or only its headers, optionally limited to mail received in a date range and then ordered newest first, and reports its size without modifying messages.
   public static func accountPage(
     accountID: String,
     offset: Int,
     limit: Int,
-    role: String = "inbox"
+    role: String = "inbox",
+    headersOnly: Bool = false,
+    since: Date? = nil,
+    before: Date? = nil
   ) -> String {
     let role = ["inbox", "junk mailbox", "sent mailbox"].contains(role) ? role : "inbox"
+    let reader = headersOnly ? "pageHeaders" : "pageEnvelope"
+    let conditions =
+      [
+        since.map { _ in "date received ≥ sinceDate" },
+        before.map { _ in "date received < beforeDate" }
+      ]
+      .compactMap { $0 }
+    let candidates =
+      conditions.isEmpty
+      ? "messages of item 1 of boxes"
+      : "(every message of item 1 of boxes whose \(conditions.joined(separator: " and ")))"
+    let orderCheck =
+      conditions.isEmpty
+      ? ""
+      : "if n > 1 then set newestFirst to (date received of item 1 of candidates) ≥ "
+        + "(date received of item n of candidates)"
     return helpers + "\n" + """
       with timeout of 8 seconds
           tell application "Mail"
@@ -247,15 +282,21 @@ public enum MailScripts {
       contents of b
               end repeat
               if (count of boxes) is not 1 then error "Account Inbox unresolved" number -1701
+              \(since.map { dateVariable("sinceDate", $0) } ?? "")
+              \(before.map { dateVariable("beforeDate", $0) } ?? "")
               set rows to {}
-              set candidates to messages of item 1 of boxes
+              set candidates to \(candidates)
               set n to count of candidates
+              set newestFirst to true
+              \(orderCheck)
               set firstIndex to \(max(0, offset) + 1)
               set lastIndex to firstIndex + \(max(1, min(maximumPageSize, limit))) - 1
               if lastIndex > n then set lastIndex to n
               if firstIndex <= lastIndex then
                   repeat with i from firstIndex to lastIndex
-                      set end of rows to my pageEnvelope(item i of candidates)
+                      set pageIndex to i
+                      if not newestFirst then set pageIndex to n - i + 1
+                      set end of rows to my \(reader)(item pageIndex of candidates)
                   end repeat
               end if
               return {n, rows}

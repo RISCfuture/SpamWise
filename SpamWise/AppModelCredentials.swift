@@ -2,7 +2,6 @@ import SwiftUI
 import SpamWiseCore
 
 extension AppModel {
-  private static let verificationBudgetUSD = 0.10
   private static let verificationMessage = """
     From: setup@example.org
     Subject: API connection check
@@ -35,10 +34,10 @@ extension AppModel {
     message: ParsedMessage,
     store: Store
   ) async throws -> Verdict {
-    try await BudgetedClassifier(
+    try await SpendingLimitedClassifier(
       ClaudeClassifier(key: { credential }),
-      store: store,
-      upperBoundUSD: Self.verificationBudgetUSD
+      modelID: ClaudeClassifier.modelID,
+      store: store
     ).classify(.init(message: message, evidence: .init(message: message)))
   }
 
@@ -49,16 +48,10 @@ extension AppModel {
   ) async throws {
     let record = DecisionRecord(
       identity: .init(accountID: nil, contentHash: message.hash),
-      sender: String(localized: "SpamWise setup"),
-      subject: String(localized: "API connection verification"),
       verdict: verdict,
-      decision: .init(
-        label: .inbox,
-        action: .none,
-        reason: String(localized: "Haiku 5.5 connection verified")
-      ),
+      decision: .init(label: .inbox, action: .none, reason: .connectionVerified),
       outcome: .noAction,
-      path: "verification"
+      path: .verification
     )
     try await StateRepository.update(store) { $0.record(record) }
   }

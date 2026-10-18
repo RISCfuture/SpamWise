@@ -53,8 +53,10 @@ public enum IntegrationError: String, MailIntegrationFailure, LocalizedError, Se
   case folderUnresolved
   /// The resolved message no longer matches its recorded state.
   case staleMessage
-  /// The account has not passed explicit action validation.
+  /// The account's Inbox and Junk mailboxes have not been validated.
   case accountUnverified
+  /// The message selected for the optional move test is not a `[SpamWise Probe]` message.
+  case notProbeMessage
   /// The mail client could not execute the requested operation.
   case scriptFailed
   /// A non-sensitive description suitable for presentation.
@@ -71,7 +73,10 @@ public enum IntegrationError: String, MailIntegrationFailure, LocalizedError, Se
             "The configured account or folder could not be found uniquely. Select the folder again."
         )
       case .staleMessage: String(localized: "The message no longer matches its recorded state.")
-      case .accountUnverified: String(localized: "The account has not passed action validation.")
+      case .accountUnverified:
+        String(localized: "The account’s Inbox and Junk mailboxes haven’t been validated.")
+      case .notProbeMessage:
+        String(localized: "The selected message’s subject doesn’t begin with “[SpamWise Probe]”.")
       case .scriptFailed: String(localized: "Mail could not complete the requested operation.")
     }
   }

@@ -8,7 +8,7 @@ struct Options {
       [--strength conservative|balanced|aggressive] [--cache DIRECTORY] [--output REPORT.json]
       [--state STATE.json] [--mock-responses RESPONSES.json]
       [--input-price USD_PER_M] [--output-price USD_PER_M] [--cache-price USD_PER_M]
-      [--budget-store PATH]
+      [--budget-store PATH [--budget-limit USD]]
     spamwise-eval --reviewed LABELS.json [--partition held-out|training|all] --model MODEL
       [--strength conservative|balanced|aggressive] [--cache DIRECTORY] [--output REPORT.json]
     spamwise-eval --export inbox|junk|sent --destination DIRECTORY [--limit 500]
@@ -17,13 +17,14 @@ struct Options {
     Models: mock, claude-haiku-5-5, claude-sonnet-5-5, claude-opus-5-5, gpt-5.4-mini,
       gemini-3.8-flash, apple-on-device, apple-private-cloud-compute.
     Live calls require SPAMWISE_LIVE_API=1 and the selected provider's API key environment variable.
-    Paid calls reserve a conservative bound in the persistent budget store before sending.
+    Paid models require --budget-store, where each call reserves a conservative bound first.
     Corpus folders: good/, junk/, and optional graymail/. Reports contain filenames and reasons.
     Exported messages require independent human labels; mailbox placement is not ground truth.
     Reviewed exports default to held-out, reject duplicate content, and report missing retained \
     text.
     --state is prohibited for reviewed held-out/all runs; labels never enter model prompts.
-    --budget-store selects a ledger; a different ledger requires separate spending authorization.
+    --budget-store selects an evaluation ledger, never the app's store by default. A new ledger
+      refuses calls until --budget-limit records its ceiling; changing a ceiling keeps commitments.
     """
   var values: [String: String] = [:]
   var reviewedPartition: ReviewedCorpusPartition {
@@ -48,7 +49,7 @@ struct Options {
     let allowed: Set<String> = [
       "input", "model", "strength", "cache", "output", "state", "mock-responses",
       "input-price", "output-price", "cache-price", "export", "destination", "limit",
-      "budget-store",
+      "budget-store", "budget-limit",
       "reviewed", "partition", "compare", "threat-report"
     ]
     guard arguments.count.isMultiple(of: 2) else { throw EvaluationError.arguments }
@@ -67,6 +68,9 @@ struct Options {
       throw EvaluationError.arguments
     }
     _ = try reviewedPartition
+    if values["budget-limit"] != nil, values["budget-store"] == nil {
+      throw EvaluationError.arguments
+    }
     if values["compare"] != nil, !Set(values.keys).isSubset(of: ["compare", "output"]) {
       throw EvaluationError.arguments
     }

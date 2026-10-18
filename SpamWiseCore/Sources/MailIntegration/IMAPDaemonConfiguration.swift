@@ -138,20 +138,71 @@ public struct IMAPDaemonConfiguration: Codable, Sendable {
   }
 }
 
-/// Binds a successful explicit probe to its exact endpoint, account and authentication identity.
+extension StateRepository {
+  /// Records Apple Mail's Inbox and Junk role checks keyed by account.
+  ///
+  /// Validated accounts Mail no longer reports lose validation; IMAP accounts with saved
+  /// validation evidence keep theirs.
+  /// - Parameters:
+  ///   - unambiguousByAccount: Whether each checked account's roles resolved uniquely.
+  ///   - store: The shared state store.
+  ///   - reportedAccounts: Every account Apple Mail currently reports.
+  public static func recordAppleMailRoles(
+    _ unambiguousByAccount: [String: Bool],
+    in store: Store,
+    reportedAccounts: Set<String>
+  ) async throws {
+    let imapAccounts = try await IMAPAccountValidation.accountIDs(in: store)
+    try await recordMailboxRoles(
+      unambiguousByAccount,
+      in: store,
+      currentAccounts: reportedAccounts.union(imapAccounts)
+    )
+  }
+}
+
+/// Binds a successful mailbox validation to its exact endpoint, account and authentication identity.
 public enum IMAPAccountValidation {
   private static let key = "imap-probe-validations-v1"
-  /// Saves probe evidence only after the caller observed the disposable message restored to Inbox.
+  /// Saves validation evidence and selects the IMAP transport.
+  ///
+  /// Call only after observing a unique Junk mailbox with MOVE support, or a probe message
+  /// restored to Inbox.
   public static func record(_ configuration: IMAPConfiguration, store: Store) async throws {
     let fingerprint = fingerprint(configuration)
     try await store.update(key, default: [String: String]()) { $0[configuration.id] = fingerprint }
     try await StateRepository.editSettings(store) { settings in
       settings.validatedAccounts.insert(configuration.id)
-      settings.route = .imap
       var advanced = settings.advancedOptions
       advanced.transport = .imap
       settings.advancedOptions = advanced
     }
+  }
+  /// Records validation when a read-only check found MOVE support and a unique Junk mailbox,
+  /// and revokes it otherwise.
+  ///
+  /// - Returns: Whether the account is validated after the check.
+  @discardableResult
+  public static func record(
+    _ check: IMAPValidation,
+    for configuration: IMAPConfiguration,
+    store: Store
+  ) async throws -> Bool {
+    guard check.movesToJunk else {
+      try await revoke(configuration, store: store)
+      return false
+    }
+    try await record(configuration, store: store)
+    return true
+  }
+  /// The accounts with saved validation evidence.
+  static func accountIDs(in store: Store) async throws -> Set<String> {
+    Set(try await store.read(key, default: [String: String]()).keys)
+  }
+  /// Removes validation evidence; dry run turns back on when no validated account remains.
+  public static func revoke(_ configuration: IMAPConfiguration, store: Store) async throws {
+    try await store.update(key, default: [String: String]()) { $0[configuration.id] = nil }
+    try await StateRepository.recordMailboxRoles([configuration.id: false], in: store)
   }
   /// Requires both persisted endpoint evidence and the ordinary shared-state validation gate.
   public static func isValidated(_ configuration: IMAPConfiguration, store: Store) async throws
@@ -161,7 +212,7 @@ public enum IMAPAccountValidation {
     let state = try await StateRepository.load(store)
     return validations[configuration.id] == fingerprint(configuration)
       && state.settings.validatedAccounts.contains(configuration.id)
-      && state.settings.route == .imap
+      && state.settings.incomingRoute == .imap
   }
   private static func fingerprint(_ configuration: IMAPConfiguration) -> String {
     stableHash(

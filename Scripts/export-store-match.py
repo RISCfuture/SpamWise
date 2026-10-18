@@ -244,6 +244,7 @@ def package_archive(options, application, installer, keychain, directory):
         app, options.app_profile, "codes.tim.SpamWise", application, keychain, directory
     )
     run(["codesign", "--verify", "--deep", "--strict", str(app)])
+    run(["bash", str(Path(__file__).with_name("check-app-icon.sh")), str(app)])
     package = options.output / "SpamWise.pkg"
     run(
         [

@@ -16,7 +16,7 @@ public struct AutomationReply: Codable, Sendable, Equatable {
   public let action: MailAction
   /// Observed action status; callers must not infer success from the label.
   public let outcome: ActionOutcome
-  /// Bounded explanation from the decision pipeline.
+  /// Bounded explanation from the decision pipeline, in the user's language.
   public let reason: String
 }
 
@@ -66,7 +66,9 @@ extension Pipeline {
       label: record.decision.label,
       action: record.decision.action,
       outcome: record.outcome,
-      reason: String(record.decision.reason.prefix(Self.maximumAutomationReasonCharacters))
+      reason: String(
+        record.decision.reason.localizedDescription.prefix(Self.maximumAutomationReasonCharacters)
+      )
     )
     try await store.update(Self.automationKey, default: [UUID: Claim]()) { claims in
       guard claims[requestID]?.fingerprint == fingerprint else {

@@ -6,14 +6,13 @@ extension AppModel {
   func correctSelection(_ label: MailLabel) {
     guard let pipeline else { return }
     run { [self] in
-      let messages = try await adapter.selectedMessages()
+      let messages = await ReviewMessage.load(try await adapter.selectedMessages())
       correctionResults = []
       showCorrections = true
-      for message in messages {
+      for reviewed in messages {
         try Task.checkCancellation()
-        let subject =
-          (try? MIMEParser().parse(message.raw).subject)
-          ?? String(localized: "Unclassified message")
+        let message = reviewed.envelope
+        let subject = reviewed.displaySubject
         do {
           let record = try await pipeline.correct(envelope: message, label: label, adapter: adapter)
           correctionResults.append(
@@ -41,7 +40,7 @@ extension AppModel {
         limit: 20,
         role: "junk mailbox"
       )
-      junkMessages = page.messages
+      junkMessages = await ReviewMessage.load(page.messages)
       junkTotal = page.total
       status = page.unavailableCount > 0 ? Self.unreadableStatus(page.unavailableCount) : ""
     }
@@ -52,7 +51,7 @@ extension AppModel {
       let record = try await pipeline.correct(envelope: envelope, label: .inbox, adapter: adapter)
       status = String(localized: "Correction saved. Mail action: \(record.outcome.localizedTitle).")
       if record.outcome == .applied {
-        junkMessages.removeAll { $0.identity.key == envelope.identity.key }
+        junkMessages.removeAll { $0.id == envelope.identity.key }
       }
     }
   }
@@ -64,8 +63,56 @@ extension AppModel {
       guard let envelope = try await adapter.lookup(record.identity) else {
         throw IntegrationError.unavailable
       }
-      previewText = try MIMEParser().parse(envelope.raw).text
+      previewText = try await ReviewMessage.text(of: envelope)
       showPreview = true
+    }
+  }
+}
+
+/// A message parsed once for review display; nil fields mean the message is unreadable.
+struct ReviewMessage: Identifiable, Sendable {
+  let envelope: MailEnvelope
+  let subject: String?
+  let text: String?
+  var id: String { envelope.identity.key }
+  var displaySubject: String {
+    guard let subject else { return String(localized: "Unclassified message") }
+    return subject.isEmpty ? String(localized: "No subject") : subject
+  }
+
+  /// Parses each envelope away from the main actor.
+  @concurrent static func load(_ envelopes: [MailEnvelope]) async -> [Self] {
+    envelopes.map { envelope in
+      let message = try? MIMEParser().parse(envelope.raw)
+      return Self(envelope: envelope, subject: message?.subject, text: message?.text)
+    }
+  }
+
+  /// Parses one message's body text away from the main actor.
+  @concurrent static func text(of envelope: MailEnvelope) async throws -> String {
+    try MIMEParser().parse(envelope.raw).text
+  }
+}
+
+extension AppModel {
+  func correct(_ record: DecisionRecord, label: MailLabel, scope: RuleScope = .address) {
+    guard let pipeline else { return }
+    run { [self] in
+      let activeAdapter: (any MailClientAdapter)?
+      if record.identity.mailboxValidity != nil {
+        activeAdapter = try? await configuredIMAPCorrectionAdapter()
+      } else {
+        activeAdapter = adapter
+      }
+      let result = try await pipeline.correct(
+        recordID: record.id,
+        label: label,
+        scope: scope,
+        adapter: activeAdapter
+      )
+      status =
+        String(localized: "Correction saved. Mail action: \(result.outcome.localizedTitle).")
+        + (result.actionError.map { " " + $0 } ?? "")
     }
   }
 }

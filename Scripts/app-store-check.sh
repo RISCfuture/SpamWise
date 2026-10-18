@@ -46,4 +46,5 @@ xcodebuild -project SpamWise.xcodeproj -scheme SpamWise -destination 'generic/pl
 if rg -n 'warning:|error:' "$build_root/archive.log"; then
   exit 1
 fi
+bash Scripts/check-app-icon.sh "$build_root/SpamWise.xcarchive/Products/Applications/SpamWise.app"
 echo 'Unsigned optimized archive passed. Provisioning, App Review and store acceptance remain unverified.'

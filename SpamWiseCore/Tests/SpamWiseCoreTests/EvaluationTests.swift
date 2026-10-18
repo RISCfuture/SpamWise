@@ -279,3 +279,30 @@ import SpamWiseCore
     try ThreatEvaluationReport(observations: rows + [rows[0]])
   }
 }
+
+@Test
+func `refuses evaluation spending without an explicit ledger and ceiling and stops at it`()
+  async throws
+{
+  let url = FileManager.default.temporaryDirectory.appending(
+    path: "SpamWise-tests/\(UUID())/budget.store"
+  )
+  await #expect(throws: BudgetError.missingStore) {
+    _ = try await EvaluationBudget.ledgerStore(at: nil, limitUSD: 0.5)
+  }
+  await #expect(throws: BudgetError.unconfigured) {
+    _ = try await EvaluationBudget.ledgerStore(at: url, limitUSD: nil)
+  }
+  let store = try Store(url: url)
+  await #expect(throws: BudgetError.unconfigured) {
+    try await EvaluationBudget.reserve(upperBoundUSD: 0.25, store: store)
+  }
+  #expect(try await EvaluationBudget.load(store) == nil)
+  _ = try await EvaluationBudget.ledgerStore(at: url, limitUSD: 0.5)
+  for _ in 0..<2 { try await EvaluationBudget.reserve(upperBoundUSD: 0.25, store: store) }
+  await #expect(throws: BudgetError.self) {
+    try await EvaluationBudget.reserve(upperBoundUSD: 0.25, store: store)
+  }
+  let ledger = try #require(try await EvaluationBudget.load(store))
+  #expect(ledger.committedUSD == 0.5 && ledger.calls == 2)
+}

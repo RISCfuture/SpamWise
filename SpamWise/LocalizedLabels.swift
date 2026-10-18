@@ -90,13 +90,62 @@ extension RuleDisposition {
   }
 }
 
+extension DecisionPath {
+  var localizedTitle: String {
+    switch self {
+      case .gate: String(localized: "Rule or relationship")
+      case .fingerprint: String(localized: "Campaign match")
+      case .model: String(localized: "Model")
+      case .correction: String(localized: "Correction")
+      case .selection: String(localized: "Selected in Mail")
+      case .verification: String(localized: "Connection check")
+      case .unreadableSender: String(localized: "Unreadable sender")
+      case .error: String(localized: "Not classified")
+    }
+  }
+}
+
+extension DecisionRecord {
+  var displaySender: String {
+    sender
+      ?? (path == .verification
+        ? String(localized: "SpamWise setup") : String(localized: "Unknown sender"))
+  }
+  var displaySubject: String {
+    subject
+      ?? (path == .verification
+        ? String(localized: "API connection verification") : String(localized: "No subject"))
+  }
+}
+
+extension ParsedMessage {
+  var displaySubject: String { subject.isEmpty ? String(localized: "No subject") : subject }
+}
+
 extension IncomingRoute {
   var localizedTitle: String {
     switch self {
-      case .unverified: String(localized: "Not verified")
-      case .mailKit: String(localized: "MailKit")
-      case .mailRule: String(localized: "Mail rule")
+      case .mailKit: String(localized: "Mail extension preview")
+      case .mailRule: String(localized: "Automation checks")
       case .imap: String(localized: "IMAP")
+    }
+  }
+}
+
+extension FilteringStatus {
+  var localizedTitle: String {
+    switch self {
+      case .setupIncomplete: String(localized: "Setup not finished")
+      case .paused: String(localized: "Filtering paused")
+      case .mailNotAuthorized:
+        String(localized: "Mail Automation not allowed — mail stays unchanged")
+      case .mailNotRunning: String(localized: "Mail isn’t running — checks resume when it opens")
+      case .extensionPreview: String(localized: "Mail extension preview — mail stays unchanged")
+      case .extensionScoped:
+        String(localized: "Mail extension preview off — include all accounts to use it")
+      case .rolesNotValidated: String(localized: "Dry run — Inbox and Junk mailboxes not validated")
+      case .dryRun: String(localized: "Dry run — mail stays unchanged")
+      case .filtering: String(localized: "Filtering validated accounts")
     }
   }
 }

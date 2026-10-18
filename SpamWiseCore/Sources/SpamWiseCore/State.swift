@@ -1,15 +1,18 @@
 public import Foundation
 
-/// The explicitly validated incoming-mail integration route.
+/// How SpamWise receives incoming mail.
 public enum IncomingRoute: String, Codable, Sendable, CaseIterable {
-  /// No incoming-message integration has been validated.
-  case unverified
-  /// Uses the MailKit extension callback.
+  /// Previews incoming Apple Mail through the MailKit extension, which has no account identity.
   case mailKit
-  /// Uses the validated Apple Mail automation route.
+  /// Checks each included Apple Mail account's Inbox through Automation.
   case mailRule
-  /// Uses an explicitly configured IMAP account.
+  /// Checks an explicitly configured IMAP account.
   case imap
+
+  /// Decodes values this version does not recognize as the default Automation route.
+  public init(from decoder: any Decoder) throws {
+    self = Self(rawValue: try decoder.singleValueContainer().decode(String.self)) ?? .mailRule
+  }
 }
 /// Persisted filtering preferences with dry run enabled by default.
 public struct Settings: Codable, Sendable, Equatable {
@@ -29,12 +32,10 @@ public struct Settings: Codable, Sendable, Equatable {
   public var bodyTokenBudget = 1500
   /// Whether the user completed the setup flow.
   public var onboardingComplete = false
-  /// The recorded incoming-message integration route.
-  public var route: IncomingRoute = .unverified
-  /// Accounts that passed the explicit disposable-message action probe.
+  /// The Apple Mail route the user chose; ``incomingRoute`` also accounts for the transport.
+  public var route: IncomingRoute = .mailRule
+  /// Accounts whose Inbox and Junk mailboxes resolved uniquely in a read-only check.
   public var validatedAccounts: Set<String> = []
-  /// Provisional callback budget in seconds; requires runtime calibration.
-  public var callbackDeadline: Double = 10
   /// Optional advanced preferences; absent in Phase 1 stores.
   public var advanced: AdvancedSettings?
   /// Mail.app workflow preferences, with defaults for existing stores.
@@ -49,8 +50,37 @@ public struct Settings: Codable, Sendable, Equatable {
     get { advanced ?? AdvancedSettings() }
     set { advanced = newValue }
   }
+  /// The effective route: IMAP for the IMAP transport, otherwise the chosen Apple Mail route.
+  public var incomingRoute: IncomingRoute {
+    if advancedOptions.transport == .imap { return .imap }
+    return route == .mailKit ? .mailKit : .mailRule
+  }
   /// Creates a Settings with the supplied configuration.
   public init() {}
+}
+/// What produced a decision record.
+public enum DecisionPath: String, Codable, Sendable, CaseIterable {
+  /// A sender rule, content rule or trusted relationship.
+  case gate
+  /// A match to a campaign the user marked as junk.
+  case fingerprint
+  /// The classifier.
+  case model
+  /// An explicit user correction.
+  case correction
+  /// A message the user selected in Mail for correction.
+  case selection
+  /// A provider connection check.
+  case verification
+  /// A message without one readable sender, flagged for Review instead of classified.
+  case unreadableSender
+  /// A failure that left the message unclassified.
+  case error
+
+  /// Decodes values this version does not recognize as ``error``.
+  public init(from decoder: any Decoder) throws {
+    self = Self(rawValue: try decoder.singleValueContainer().decode(String.self)) ?? .error
+  }
 }
 /// A durable explanation and the independently recorded action outcome.
 public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
@@ -60,10 +90,10 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var date = Date()
   /// Account and content identity used to resolve this message safely.
   public var identity: MessageIdentity
-  /// Sender address retained for corrections and activity display.
-  public var sender: String
-  /// Decoded message subject.
-  public var subject: String
+  /// Sender address retained for corrections and activity display; nil when unknown.
+  public var sender: String?
+  /// Decoded message subject; nil when the message has none or could not be read.
+  public var subject: String?
   /// Signals available when the decision was made.
   public var evidence: EvidenceBundle?
   /// Model output, absent for errors or explicit corrections.
@@ -76,8 +106,8 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var outcome: ActionOutcome
   /// Sanitized action failure separate from the classification explanation.
   public var actionError: String?
-  /// Decision source, such as gate, model, correction, or error.
-  public var path: String
+  /// What produced the decision.
+  public var path: DecisionPath
   /// Elapsed decision time in seconds.
   public var latency: Double
   /// Policy generation used to invalidate stale work after corrections.
@@ -90,25 +120,58 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var readStatusOutcome: ActionOutcome?
   /// Failure of optional mark-as-read, independent of the already completed move.
   public var readStatusError: String?
-  /// Creates a DecisionRecord with the supplied configuration.
+  /// Creates a DecisionRecord with the supplied configuration; an empty subject is stored as nil.
   public init(
     identity: MessageIdentity,
-    sender: String = "Unknown",
-    subject: String = "Unclassified message",
+    sender: String? = nil,
+    subject: String? = nil,
     evidence: EvidenceBundle? = nil,
     verdict: Verdict? = nil,
     threats: ThreatAssessment? = nil,
     decision: Decision,
     outcome: ActionOutcome,
-    path: String = "error",
+    path: DecisionPath = .error,
     latency: Double = 0,
     revision: Int = 0
   ) {
-    self.identity = identity; self.sender = sender; self.subject = subject
+    self.identity = identity; self.sender = sender
+    self.subject = subject?.isEmpty == false ? subject : nil
     self.evidence = evidence; self.verdict = verdict
     self.threats = threats
     self.decision = decision; self.outcome = outcome; self.path = path; self.latency = latency
     self.revision = revision
+  }
+}
+extension DecisionRecord {
+  private static let legacyUnknownSender = "Unknown"
+  private static let legacyUnreadableSubject = "Unclassified message"
+  private static let legacyMissingSubject = "(No subject)"
+
+  /// Whether the monthly spending limit refused this message before any provider request.
+  public var deferredBySpendingLimit: Bool {
+    outcome == .unclassified && correctedLabel == nil && decision.reason == .spendingLimitReached
+  }
+
+  /// Clears English placeholder text that earlier versions stored for a missing sender or subject.
+  mutating func clearLegacyPlaceholders() {
+    if subject == Self.legacyMissingSubject { subject = nil }
+    guard path == .error else { return }
+    if sender == Self.legacyUnknownSender { sender = nil }
+    if subject == Self.legacyUnreadableSubject { subject = nil }
+  }
+}
+extension DecisionReason {
+  /// The reason recorded when processing fails with `error`.
+  init(failure error: any Error) {
+    self =
+      switch error {
+        case is any BudgetFailure: .spendingLimitReached
+        case let error as ClassificationError: .classificationFailed(error)
+        case is CancellationError: .classificationFailed(.cancelled)
+        case is any MessageParsingError: .messageUnreadable
+        case is any StorageFailure, is DecodingError, is EncodingError: .storageUnavailable
+        default: .processingFailed
+      }
   }
 }
 /// A bounded, revision-specific classification retry.
@@ -134,12 +197,15 @@ public struct RetryJob: Codable, Sendable, Identifiable {
 public struct HistoryIndex: Codable, Sendable {
   /// The completeness of the available history.
   public var availability: HistoryAvailability = .unavailable
-  /// Distinct received-message counts by registrable domain.
+  /// Distinct received-message counts by registrable domain, or by exact address for shared
+  /// mailbox providers.
   public var received: [String: Int] = [:]
   /// Reply counts by recipient address.
   public var replied: [String: Int] = [:]
-  /// Heuristic receipt counts by registrable domain.
-  public var receipts: [String: Int] = [:]
+  /// Eligible receipt counts by exact sender address; nil before any receipt.
+  public var senderReceipts: [String: Int]?
+  /// User-confirmed receipts that trusted servers authenticated, by exact sender address.
+  public var authenticatedSenderReceipts: [String: Int]?
   /// Account-scoped identities already included in this history snapshot.
   public var importedIDs: Set<String> = []
   /// Timestamp of the latest stored update.
@@ -150,9 +216,10 @@ public struct HistoryIndex: Codable, Sendable {
   public func summary(address: String, domain: String?) -> SenderHistory {
     .init(
       availability: availability,
-      receivedCount: received[domain ?? address, default: 0],
+      receivedCount: received[Self.receivedKey(address: address, domain: domain), default: 0],
       replyCount: replied[address, default: 0],
-      receiptCount: receipts[domain ?? "", default: 0]
+      receiptCount: senderReceipts?[address] ?? 0,
+      authenticatedReceiptCount: authenticatedSenderReceipts?[address]
     )
   }
 }
@@ -171,6 +238,8 @@ public struct AppState: Codable, Sendable {
   public var contentRules: [ContentRule]?
   /// Counts of winning content rules, independent of Activity retention.
   public var contentRuleHits: [UUID: Int]?
+  /// Per-rule counts of messages where the rule was invalid or timed out, since its last save.
+  public var contentRuleSkips: [UUID: Int]?
   /// At-most-once corrections for observed placements in dedicated training folders.
   public var trainingClaims: [String: UUID]?
   /// Identities observed during an unfinished training-folder sweep.
@@ -195,10 +264,6 @@ public struct AppState: Codable, Sendable {
   public var contactsUpdatedAt: Date?
   /// Own addresses discovered through Mail.app, used only to exclude implicit trust.
   public var ownAddresses: Set<String>?
-  /// Last observed extension callback heartbeat.
-  public var lastExtensionCallback: Date?
-  /// Last callback in which raw message bytes were available.
-  public var lastBodyCallback: Date?
   /// Estimated charges retained independently of the bounded activity log.
   public var costByMonth: [String: Double]?
   /// Bounded derived learning data from explicit corrections and eligible predictions.
@@ -234,6 +299,9 @@ extension AppState {
     }
     records = Array(records.suffix(Self.maximumActivityRecords))
   }
+  mutating func clearLegacyPlaceholders() {
+    records.indices.forEach { records[$0].clearLegacyPlaceholders() }
+  }
 }
 /// Typed transactions for the shared application snapshot.
 public enum StateRepository {
@@ -243,7 +311,9 @@ public enum StateRepository {
   public static let key = "application-v1"
   /// Reads the current shared application snapshot.
   public static func load(_ store: Store) async throws -> AppState {
-    try await store.read(key, default: AppState())
+    var state = try await store.read(key, default: AppState())
+    state.clearLegacyPlaceholders()
+    return state
   }
   /// Applies a field-level edit to current preferences and invalidates stale classification work.
   public static func editSettings(
@@ -277,6 +347,9 @@ public enum StateRepository {
     _ store: Store,
     _ body: @Sendable (inout AppState) throws -> R
   ) async throws -> R {
-    try await store.update(key, default: AppState(), body)
+    try await store.update(key, default: AppState()) { state in
+      state.clearLegacyPlaceholders()
+      return try body(&state)
+    }
   }
 }

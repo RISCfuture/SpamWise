@@ -41,6 +41,18 @@ public struct SystemAppleEventRunner: AppleEventRunner {
   public static func requestMailPermission() async throws {
     try await AppleScriptExecutor.shared.checkPermission(askUser: true)
   }
+  /// Reads Mail Automation consent without prompting, launching Mail or waiting for a script.
+  @concurrent public static func mailAutomationStatus() async -> MailAutomationStatus {
+    let target = NSAppleEventDescriptor(bundleIdentifier: "com.apple.mail")
+    let status = unsafe AEDeterminePermissionToAutomateTarget(
+      target.aeDesc,
+      typeWildCard,
+      typeWildCard,
+      false
+    )
+    if status == noErr { return .granted }
+    return status == procNotFound ? .mailNotRunning : .notAuthorized
+  }
   /// Executes the supplied Mail script and returns a sendable result.
   public func run(_ source: String) async throws -> ScriptValue {
     try await AppleScriptExecutor.shared.run(source)
@@ -109,11 +121,12 @@ public struct MailAccount: Identifiable, Sendable {
 /// Account-scoped Apple Events integration with exact-source action checks.
 public actor AppleMailAdapter: MailClientAdapter {
   static let maximumPageSize = 1000
-  private static let historyPageSize = 100
   static let maximumMessageBytes = 2_000_000
-  private let runner: any AppleEventRunner
+  let runner: any AppleEventRunner
   private let moveSettlingTime: Duration
-  private var pageOffsets: [String: Int] = [:]
+  var pageOffsets: [String: Int] = [:]
+  /// Consecutive failed reads of each history cursor's current page.
+  var historyPageFailures: [String: Int] = [:]
   /// Creates an AppleMailAdapter with the supplied configuration.
   public init(runner: any AppleEventRunner, moveSettlingTime: Duration = .seconds(30)) {
     self.runner = runner
@@ -169,24 +182,42 @@ public actor AppleMailAdapter: MailClientAdapter {
   public func recentMessages(limit: Int) async throws -> [MailEnvelope] {
     try await messages(limit: limit, role: "inbox")
   }
-  /// Advances a bounded Inbox sweep, restarting at the beginning after its last page.
-  public func nextInboxMessages(limit: Int) async throws -> [MailEnvelope] {
-    try await nextPage(limit: limit, role: "inbox", cursor: "filter")
-  }
-  /// Reads a page within one account without advancing the caller's durable cursor.
-  public func inboxPage(accountID: String, offset: Int, limit: Int) async throws -> MailPage {
-    try await accountPage(accountID: accountID, offset: offset, limit: limit)
+  /// Reads an Inbox page within one account, optionally limited to mail received on or after `since` or before `before`, without advancing the caller's durable cursor.
+  public func inboxPage(
+    accountID: String,
+    offset: Int,
+    limit: Int,
+    since: Date? = nil,
+    before: Date? = nil
+  ) async throws -> MailPage {
+    try await accountPage(
+      accountID: accountID,
+      offset: offset,
+      limit: limit,
+      received: (since, before)
+    )
   }
   /// Reads a special mailbox through Mail.app without inferring a label from its membership.
-  public func accountPage(accountID: String, offset: Int, limit: Int, role: String = "inbox")
-    async throws -> MailPage
-  {
+  public func accountPage(
+    accountID: String,
+    offset: Int,
+    limit: Int,
+    role: String = "inbox",
+    received: (since: Date?, before: Date?) = (nil, nil)
+  ) async throws -> MailPage {
     guard ["inbox", "junk mailbox", "sent mailbox"].contains(role) else {
       throw IntegrationError.unavailable
     }
     return try Self.decodePage(
       await runner.run(
-        MailScripts.accountPage(accountID: accountID, offset: offset, limit: limit, role: role)
+        MailScripts.accountPage(
+          accountID: accountID,
+          offset: offset,
+          limit: limit,
+          role: role,
+          since: received.since,
+          before: received.before
+        )
       ),
       accountID: accountID,
       offset: offset,
@@ -194,18 +225,6 @@ public actor AppleMailAdapter: MailClientAdapter {
     )
   }
 
-  private func nextPage(limit: Int, role: String, cursor: String) async throws -> [MailEnvelope] {
-    let count = max(1, min(Self.maximumPageSize, limit))
-    let offset = pageOffsets[cursor, default: 0]
-    guard
-      let rows = try await runner.run(
-        MailScripts.recent(limit: count, mailbox: role, offset: offset)
-      ).list
-    else { throw IntegrationError.scriptFailed }
-    let envelopes = try rows.map(Self.envelope)
-    pageOffsets[cursor] = rows.count < count ? 0 : offset + rows.count
-    return envelopes
-  }
   /// Reads a bounded window from the specified special mailbox role.
   public func messages(limit: Int, role: String) async throws -> [MailEnvelope] {
     guard ["inbox", "junk mailbox", "sent mailbox"].contains(role),
@@ -277,69 +296,18 @@ public actor AppleMailAdapter: MailClientAdapter {
     guard result == .boolean(true) else { throw IntegrationError.scriptFailed }
     return .init(confirmed: true)
   }
-  /// Imports bounded Inbox and Sent history with explicit partial availability.
+  /// Imports bounded Sent history; Inbox mail needs an explicit eligibility set.
   public func importHistory() async throws -> [String: HistoryIndex] {
-    try await importHistory(previous: [:])
+    try await importHistory(previous: [:], eligibleInbox: [:])
   }
-  /// Adds only unseen messages to an account-scoped history snapshot.
-  public func importHistory(
-    previous: [String: HistoryIndex],
-    eligibleInbox: Set<String>? = nil,
-    incremental: Bool = false
-  ) async throws -> [String: HistoryIndex] {
-    // Automatic imports accept only previously classified Inbox mail, never a new message's own claims.
-    let sent =
-      try await
-      (incremental
-      ? nextPage(limit: Self.historyPageSize, role: "sent mailbox", cursor: "history-sent")
-      : messages(limit: Self.maximumPageSize, role: "sent mailbox"))
-    let inboxPage =
-      try await
-      (incremental
-      ? nextPage(limit: Self.historyPageSize, role: "inbox", cursor: "history-inbox")
-      : messages(limit: Self.maximumPageSize, role: "inbox"))
-    let inbox = inboxPage.filter { eligibleInbox?.contains($0.identity.key) ?? true }
-    var indexes = previous
-    let sentKeys = Set(sent.map { $0.identity.key })
-    for envelope in inbox + sent {
-      guard let account = envelope.identity.accountID,
-        let message = try? MIMEParser().parse(envelope.raw)
-      else { continue }
-      var index = indexes[account] ?? HistoryIndex()
-      index.availability = .partial; index.updatedAt = .now
-      let isSent = sentKeys.contains(envelope.identity.key)
-      let id = (isSent ? "sent:" : "inbox:") + envelope.identity.key
-      guard index.importedIDs.insert(id).inserted else { continue }
-      if isSent {
-        if message.header("in-reply-to") != nil {
-          for value in (message.headers["to"] ?? []) + (message.headers["cc"] ?? []) {
-            for address in value.components(separatedBy: ",").compactMap(MIMEParser.address) {
-              index.replied[address, default: 0] += 1
-            }
-          }
-        }
-      } else if let domain = DomainResolver().domain(ofAddress: message.fromAddress) {
-        index.received[domain, default: 0] += 1
-        // Conservative receipt heuristic; current incoming claims never establish their own gate.
-        let subject = message.subject.lowercased(), body = message.text.lowercased()
-        if subject.contains("order confirmation") || subject.contains("your receipt"),
-          body.contains("order"),
-          body.range(of: #"(?:\$|USD|EUR)\s*\d"#, options: [.regularExpression, .caseInsensitive])
-            != nil
-        {
-          index.receipts[domain, default: 0] += 1
-        }
-      }
-      indexes[account] = index
-    }
-    return indexes
-  }
-  /// Explicit UI probe: only a message deliberately named [SpamWise Probe] is eligible.
+  /// Optional move test: only a message deliberately named [SpamWise Probe] is eligible.
   public func testDisposableMessage() async throws -> String {
     let selected = try await selectedMessage()
     let message = try MIMEParser().parse(selected.raw)
-    guard message.subject.hasPrefix("[SpamWise Probe]"), let account = selected.identity.accountID
-    else { throw IntegrationError.unavailable }
+    guard message.subject.hasPrefix("[SpamWise Probe]") else {
+      throw IntegrationError.notProbeMessage
+    }
+    guard let account = selected.identity.accountID else { throw IntegrationError.unavailable }
     guard let source = String(data: selected.raw, encoding: .utf8) else {
       throw IntegrationError.staleMessage
     }

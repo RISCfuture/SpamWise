@@ -41,9 +41,9 @@
         subject: "Your weekly digest",
         evidence: .init(message: message),
         verdict: .init(label: .junk, confidence: 99, reason: "Unwanted newsletter"),
-        decision: .init(label: .junk, action: .moveToJunk, reason: "Unwanted newsletter"),
+        decision: .init(label: .junk, action: .moveToJunk, reason: .model("Unwanted newsletter")),
         outcome: .dryRun,
-        path: "model"
+        path: .model
       )
       guard let identity = UUID(uuidString: "00000000-0000-0000-0000-000000000001") else {
         preconditionFailure("The correction fixture requires a valid UUID.")
@@ -54,7 +54,6 @@
         guard state.records.isEmpty else { return }
         state.settings.onboardingComplete = true
         state.settings.dryRun = false
-        state.settings.route = .mailRule
         state.settings.validatedAccounts = ["ui-test"]
         state.record(initial)
       }

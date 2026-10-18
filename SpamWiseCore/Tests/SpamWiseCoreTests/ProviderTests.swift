@@ -34,7 +34,96 @@ func `reads only the configured provider credential and fails without fallback`(
   await #expect(throws: ClassificationError.consentRequired) {
     _ = try await classifier.classify(providerInput())
   }
-  #expect(try await EvaluationBudget.load(store).committedUSD == 0)
+  #expect(try await SpendingLimit.load(store).requests == 0)
+}
+
+@Test func `classifies thousands of paid requests by default and settles each to measured usage`()
+  async throws
+{
+  let store = try testStore()
+  try await StateRepository.editSettings(store) { settings in
+    settings.advancedOptions.backend = .openAI
+    settings.advancedOptions.mailSharingConsent = [.openAI]
+  }
+  let classifier = configuredOpenAI(store: store, response: providerHTTP(openAIResponse))
+  let input = try providerInput()
+  let requests: UInt = 2_000
+  for _ in 0..<requests { _ = try await classifier.classify(input) }
+  let measuredMicroUSD: UInt64 = 1_065
+  var spending = try await SpendingLimit.load(store)
+  #expect(spending.requests == requests)
+  #expect(spending.committedMicroUSD == UInt64(requests) * measuredMicroUSD)
+  #expect(spending.limitMicroUSD == nil && !spending.limitReached)
+
+  let rateLimited = configuredOpenAI(store: store, response: providerHTTP("", status: 429))
+  await #expect(throws: ClassificationError.rateLimited) {
+    _ = try await rateLimited.classify(input)
+  }
+  spending = try await SpendingLimit.load(store)
+  #expect(spending.committedMicroUSD == UInt64(requests) * measuredMicroUSD)
+}
+
+@Test
+func `reserves each paid request’s maximum cost and refunds only requests that cannot have billed`()
+  async throws
+{
+  let store = try testStore()
+  let input = try providerInput()
+  let rates = try ModelTokenPricing.rates(for: spendingModelID)
+  let maximum = try rates.maximumCost(of: input)
+  let measured = Verdict(
+    label: .inbox,
+    confidence: 93,
+    reason: "Personal correspondence",
+    usage: .init(
+      input: 1_000,
+      output: 100,
+      cached: 200,
+      estimated: false,
+      modelID: spendingModelID,
+      pricing: rates
+    )
+  )
+  let lastMonth = try #require(
+    Calendar(identifier: .gregorian).date(byAdding: .month, value: -1, to: .now)
+  )
+  try await SpendingLimit.setLimit(usd: 2 * maximum, store: store, at: lastMonth)
+  _ = try await SpendingLimit.reserve(usd: 2 * maximum, store: store, at: lastMonth)
+
+  _ = try await spendingLimited(store) {
+    let reserved = try await SpendingLimit.load(store).committedUSD
+    #expect(abs(reserved - maximum) < 0.000_001)
+    return measured
+  }
+  .classify(input)
+  #expect(try await SpendingLimit.load(store).committedMicroUSD == 1_065)
+
+  let unbilled: [any Error & Sendable] = [
+    ClassificationError.missingCredential, ClassificationError.consentRequired,
+    ClassificationError.rateLimited, ClassificationError.contextExceeded, CancellationError(),
+    StoreError.lockUnavailable
+  ]
+  for failure in unbilled {
+    let thrown = await #expect(throws: (any Error).self) {
+      _ = try await spendingLimited(store) { throw failure }.classify(input)
+    }
+    #expect(thrown.map { String(reflecting: $0) } == String(reflecting: failure))
+  }
+  #expect(try await SpendingLimit.load(store).committedMicroUSD == 1_065)
+
+  await #expect(throws: ClassificationError.network) {
+    _ = try await spendingLimited(store) { throw ClassificationError.network }.classify(input)
+  }
+  await #expect(throws: SpendingLimitError.limitReached) {
+    _ = try await spendingLimited(store) {
+      Issue.record("The spending limit must refuse the request before dispatch")
+      return measured
+    }
+    .classify(input)
+  }
+  let spending = try await SpendingLimit.load(store)
+  #expect(abs(spending.committedUSD - 0.001_065 - maximum) < 0.000_001)
+  #expect(spending.limitReached && spending.requests == 8)
 }
 
 @Test func `preserves provider pricing through persistence and migrates legacy usage`() throws {
@@ -58,6 +147,23 @@ func `reads only the configured provider credential and fails without fallback`(
 private func providerInput(timeout: TimeInterval = 15) throws -> ClassificationInput {
   let message = try MIMEParser().parse(fixture("personal"))
   return .init(message: message, evidence: .init(message: message), timeout: timeout)
+}
+
+private func configuredOpenAI(store: Store, response: ModelHTTPClient) -> ConfiguredClassifier {
+  ConfiguredClassifier(store: store, http: response, credential: { _ in "test-key" })
+}
+
+private let spendingModelID = "gpt-5.4-mini"
+
+private func spendingLimited(
+  _ store: Store,
+  outcome: @escaping @Sendable () async throws -> Verdict
+) -> SpendingLimitedClassifier {
+  SpendingLimitedClassifier(
+    MockClassifier { _ in try await outcome() },
+    modelID: spendingModelID,
+    store: store
+  )
 }
 
 private func providerHTTP(_ body: String, status: Int = 200) -> ModelHTTPClient {

@@ -30,18 +30,22 @@ public enum HistoryAvailability: String, Codable, Sendable { case unavailable, p
 public struct SenderHistory: Codable, Sendable, Equatable {
   /// The completeness of the available history.
   public var availability: HistoryAvailability = .unavailable
-  /// Number of distinct imported messages from this sender domain.
+  /// Number of distinct imported messages from this sender's domain, or from this exact address
+  /// at a shared mailbox provider.
   public var receivedCount: Int = 0
   /// Number of imported replies sent to this address.
   public var replyCount: Int = 0
-  /// Number of imported messages matching the receipt heuristic.
+  /// Number of eligible imported receipts from this exact address, used only as model evidence.
   public var receiptCount: Int = 0
+  /// Number of those receipts that the user confirmed and trusted servers authenticated for the
+  /// From domain; nil means none.
+  public var authenticatedReceiptCount: Int?
   /// Timestamp of the most recent known receipt, when available.
   public var lastReceipt: Date?
   /// Human-readable history with unknown and partial states preserved.
   public var summary: String {
     if replyCount > 0 { return "User replied to this sender \(replyCount) times" }
-    if receiptCount > 0 { return "\(receiptCount) order confirmations from this domain" }
+    if receiptCount > 0 { return "\(receiptCount) order confirmations from this sender" }
     if availability == .unavailable { return "History unavailable; relationship unknown" }
     if receivedCount > 0 {
       return "\(receivedCount) prior messages; no confirmed reply or order in imported history"
@@ -55,32 +59,68 @@ public struct SenderHistory: Codable, Sendable, Equatable {
     availability: HistoryAvailability = .unavailable,
     receivedCount: Int = 0,
     replyCount: Int = 0,
-    receiptCount: Int = 0
+    receiptCount: Int = 0,
+    authenticatedReceiptCount: Int? = nil
   ) {
     self.availability = availability; self.receivedCount = receivedCount
     self.replyCount = replyCount; self.receiptCount = receiptCount
+    self.authenticatedReceiptCount = authenticatedReceiptCount
+  }
+}
+/// The rule or relationship that decided a deterministic gate.
+public enum GateReason: Codable, Sendable, Equatable {
+  /// The user's address or domain rule.
+  case senderRule(scope: RuleScope, disposition: RuleDisposition)
+  /// The user's header or body rule, with the rule's note when it has one.
+  case contentRule(id: UUID, disposition: RuleDisposition, note: String?)
+  /// The sender is in the user's Contacts.
+  case contact
+  /// The user has replied to the sender.
+  case priorCorrespondence
+  /// The sender previously sent authenticated order mail.
+  case orderHistory
+
+  /// Stable English form for logs, reports and model correction examples.
+  public var diagnosticDescription: String {
+    switch self {
+      case let .senderRule(scope, disposition):
+        "gate: user \(scope.rawValue) \(disposition.rawValue) rule"
+      case let .contentRule(id, _, _): "gate: user content rule \(id.uuidString)"
+      case .contact: "gate: contact"
+      case .priorCorrespondence: "gate: prior correspondence"
+      case .orderHistory: "gate: order history"
+    }
   }
 }
 /// A deterministic rule or trusted-relationship decision.
 public struct GateResult: Codable, Sendable, Equatable {
   /// Whether the matching sender is allowed or blocked.
   public var disposition: RuleDisposition
-  /// Short explanation of the evidence or policy behind this result.
-  public var reason: String
+  /// The rule or relationship behind this result.
+  public var reason: GateReason
   /// Creates a GateResult with the supplied configuration.
-  public init(_ disposition: RuleDisposition, _ reason: String) {
+  public init(_ disposition: RuleDisposition, _ reason: GateReason) {
     self.disposition = disposition; self.reason = reason
   }
 }
 /// Resolves address rules, domain rules, then trusted relationships in that order.
 public enum Gates {
-  /// Applies deterministic policy without requesting a mail action.
+  /**
+   Applies deterministic policy without requesting a mail action.
+
+   Relationship gates never allow a sender whose trusted authentication failed. Receipt history
+   allows only an authenticated sender outside the shared mailbox providers, and only on the
+   strength of receipts that were themselves authenticated. One such receipt is enough: it is
+   keyed to the exact address and confirmed by the user, and both it and the current message
+   must pass aligned trusted authentication, which together stand in for a count threshold.
+   */
   public static func evaluate(
     address: String,
     domain: String?,
     rules: [SenderRule],
     contact: Bool?,
-    history: SenderHistory
+    history: SenderHistory,
+    authentication: SenderAuthentication = .unverified
   ) -> GateResult? {
     let normalized = address.lowercased()
     for scope in [RuleScope.address, .domain] {
@@ -90,13 +130,18 @@ public enum Gates {
       }) {
         return GateResult(
           rule.disposition,
-          "gate: user \(scope.rawValue) \(rule.disposition.rawValue) rule"
+          .senderRule(scope: scope, disposition: rule.disposition)
         )
       }
     }
-    if contact == true { return GateResult(.allow, "gate: contact") }
-    if history.replyCount > 0 { return GateResult(.allow, "gate: prior correspondence") }
-    if history.receiptCount > 0 { return GateResult(.allow, "gate: order history") }
+    guard authentication != .failed else { return nil }
+    if contact == true { return GateResult(.allow, .contact) }
+    if history.replyCount > 0 { return GateResult(.allow, .priorCorrespondence) }
+    if (history.authenticatedReceiptCount ?? 0) > 0, authentication == .alignedPass, let domain,
+      !SharedMailboxDomains.contains(domain)
+    {
+      return GateResult(.allow, .orderHistory)
+    }
     return nil
   }
   /// Replaces any conflicting rule at the same scope and normalized value.

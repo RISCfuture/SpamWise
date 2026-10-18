@@ -57,7 +57,7 @@ extension MailScripts {
                   set targetBox to item 1 of foundBoxes
                   set boxes to mailboxes of targetBox
               end repeat
-              \(since.map(dateBoundary) ?? "")
+              \(since.map { dateVariable("sinceDate", $0) } ?? "")
               set candidates to \(candidates)
               set n to count of candidates
               set firstIndex to \(max(0, offset) + 1)
@@ -74,19 +74,19 @@ extension MailScripts {
       end timeout
       """
   }
-  private static func dateBoundary(_ date: Date) -> String {
+  static func dateVariable(_ name: String, _ date: Date) -> String {
     let parts = Calendar.current.dateComponents(
       [.year, .month, .day, .hour, .minute, .second],
       from: date
     )
     let seconds = (parts.hour ?? 0) * 3600 + (parts.minute ?? 0) * 60 + (parts.second ?? 0)
     return """
-      set sinceDate to current date
-      set day of sinceDate to 1
-      set year of sinceDate to \(parts.year ?? 2000)
-      set month of sinceDate to \(parts.month ?? 1)
-      set day of sinceDate to \(parts.day ?? 1)
-      set time of sinceDate to \(seconds)
+      set \(name) to current date
+      set day of \(name) to 1
+      set year of \(name) to \(parts.year ?? 2000)
+      set month of \(name) to \(parts.month ?? 1)
+      set day of \(name) to \(parts.day ?? 1)
+      set time of \(name) to \(seconds)
       """
   }
 }

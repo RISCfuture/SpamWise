@@ -9,9 +9,13 @@ import SpamWiseCore
       sender: "newsletter@example.org",
       subject: "Your weekly digest",
       verdict: .init(label: .review, confidence: 73, reason: "Relationship is unknown"),
-      decision: .init(label: .review, action: .orangeFlag, reason: "Relationship is unknown"),
+      decision: .init(
+        label: .review,
+        action: .orangeFlag,
+        reason: .model("Relationship is unknown")
+      ),
       outcome: .dryRun,
-      path: "model"
+      path: .model
     )
   }
 
@@ -21,12 +25,41 @@ import SpamWiseCore
       sender: "offers@shop.example",
       subject: "An unwanted offer",
       verdict: .init(label: .junk, confidence: 99, reason: "Repeated unwanted promotion"),
-      decision: .init(label: .junk, action: .moveToJunk, reason: "Repeated unwanted promotion"),
+      decision: .init(
+        label: .junk,
+        action: .moveToJunk,
+        reason: .model("Repeated unwanted promotion")
+      ),
       outcome: .failed,
-      path: "model"
+      path: .model
     )
     record.actionError = "Mail could not confirm the action."
     return record
+  }
+
+  static var sharedProviderRecord: DecisionRecord {
+    let raw = Data("From: friend@gmail.com\r\nSubject: Dinner\r\n\r\nSee you at seven".utf8)
+    return DecisionRecord(
+      identity: .init(accountID: "preview", contentHash: "shared-provider-preview"),
+      sender: "friend@gmail.com",
+      subject: "Dinner",
+      evidence: (try? MIMEParser().parse(raw)).map { EvidenceBundle(message: $0) },
+      decision: .init(
+        label: .review,
+        action: .orangeFlag,
+        reason: .model("Relationship is unknown")
+      ),
+      outcome: .dryRun,
+      path: .model
+    )
+  }
+
+  static var unclassifiedRecord: DecisionRecord {
+    DecisionRecord(
+      identity: .init(accountID: "preview", contentHash: "unclassified-preview"),
+      decision: .init(label: nil, action: .none, reason: .classificationFailed(.consentRequired)),
+      outcome: .unclassified
+    )
   }
 
   static var threatAssessment: ThreatAssessment? {
@@ -92,9 +125,11 @@ import SpamWiseCore
     empty: Bool = false,
     transport: MailTransport = .appleMail,
     backend: ModelBackend = .claude,
-    suggestions: Bool = false
+    suggestions: Bool = false,
+    spendingLimitReached: Bool = false
   ) -> AppModel {
     let model = AppModel(preview: true)
+    model.spending = spending(limitReached: spendingLimitReached)
     model.state.settings.onboardingComplete = !onboarding
     model.state.settings.paused = paused
     model.state.settings.advancedOptions.transport = transport
@@ -105,4 +140,11 @@ import SpamWiseCore
     return model
   }
 
+  static func spending(limitReached: Bool) -> MonthlySpending {
+    var spending = MonthlySpending(month: .init(containing: .now))
+    spending.committedMicroUSD = limitReached ? 5_000_000 : 1_380
+    spending.limitMicroUSD = limitReached ? 5_000_000 : nil
+    spending.limitReached = limitReached
+    return spending
+  }
 }

@@ -34,7 +34,10 @@ struct AdvancedSettingsView: View {
       Section { BackupSettingsView(model: model) }
       Section {
         DisclosureGroup("Integration details") {
-          LabeledContent("Incoming route", value: model.state.settings.route.localizedTitle)
+          LabeledContent(
+            "Incoming route",
+            value: model.state.settings.incomingRoute.localizedTitle
+          )
           LabeledContent("Pending retries", value: model.state.retries.count.formatted())
           HStack(alignment: .top) {
             Text(
@@ -45,9 +48,32 @@ struct AdvancedSettingsView: View {
             HelpButton(page: "troubleshooting-mail-integration")
           }
         }
+        if model.state.settings.advancedOptions.transport == .appleMail {
+          DisclosureGroup("Optional move test") { MoveTestView(model: model) }
+        }
       }
     }.formStyle(.grouped)
   }
 }
 
+private struct MoveTestView: View {
+  let model: AppModel
+
+  var body: some View {
+    Text(
+      """
+      Select one Inbox message whose subject begins “[SpamWise Probe]”. SpamWise moves it to Junk \
+      and back, then adds an orange flag, checking each move after 30 seconds. Dry run and \
+      validation stay unchanged.
+      """
+    )
+    Button("Test selected message") { model.testDisposableMessage() }
+      .disabled(model.busy)
+    if !model.moveTestStatus.isEmpty {
+      Text(model.moveTestStatus).textSelection(.enabled)
+    }
+  }
+}
+
 #Preview("Advanced") { AdvancedSettingsView(model: PreviewHelper.model()) }
+#Preview("Move test") { Form { MoveTestView(model: PreviewHelper.model()) }.formStyle(.grouped) }

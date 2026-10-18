@@ -2,12 +2,12 @@ public import Foundation
 
 /// Filters the bounded local log without reclassifying messages.
 public struct ActivityQuery: Sendable {
-  /// Case-insensitive sender, subject, reason or account search.
+  /// Case-insensitive search over sender, subject, account and the reason as displayed.
   public var text = ""
   /// Exact account scope; nil includes all accounts.
   public var accountID: String?
   /// Exact decision path; nil includes all paths.
-  public var path: String?
+  public var path: DecisionPath?
   /// Exact action outcome; nil includes every outcome.
   public var outcome: ActionOutcome?
   /// Inclusive lower date boundary.
@@ -29,9 +29,9 @@ public struct ActivityQuery: Sendable {
         && (!correctionsOnly || record.correctedLabel != nil)
         && (text.isEmpty
           || [
-            record.sender, record.subject, record.decision.reason,
-            record.identity.accountID ?? ""
-          ].contains { $0.localizedCaseInsensitiveContains(text) })
+            record.sender, record.subject, record.decision.reason.localizedDescription,
+            record.identity.accountID
+          ].contains { $0?.localizedCaseInsensitiveContains(text) == true })
     }.sorted { $0.date > $1.date }
   }
 }
@@ -82,19 +82,24 @@ public struct DiagnosticSummary: Encodable, Sendable {
   public let paused: Bool
   /// Whether mail mutations are suppressed.
   public let dryRun: Bool
-  /// Configured incoming route, independent of runtime validation.
+  /// Effective incoming route from the current configuration.
   public let route: IncomingRoute
   /// Number of accounts authorized for actions on this installation.
   public let validatedAccountCount: Int
   /// Outcome totals without message or account identity.
   public let outcomes: [String: Int]
+  /// Decision reason totals keyed by content-free diagnostic category.
+  public let reasons: [String: Int]
   /// Number of pending retries, without retained message content.
   public let retryCount: Int
   /// Exports only fixed-schema operational values, never arbitrary error text.
   public init(state: AppState) {
     paused = state.settings.paused; dryRun = state.settings.dryRun
-    route = state.settings.route; validatedAccountCount = state.settings.validatedAccounts.count
+    route = state.settings.incomingRoute
+    validatedAccountCount = state.settings.validatedAccounts.count
     outcomes = Dictionary(grouping: state.records, by: { $0.outcome.rawValue }).mapValues(\.count)
+    reasons = Dictionary(grouping: state.records, by: \.decision.reason.diagnosticCategory)
+      .mapValues(\.count)
     retryCount = state.retries.count
   }
 }

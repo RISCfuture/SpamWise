@@ -34,7 +34,7 @@ let package = Package(
         .product(name: "ClaudeForFoundationModels", package: "ClaudeForFoundationModels")
       ]
     ),
-    .target(name: "Decision", dependencies: ["Classifier"]),
+    .target(name: "Decision", dependencies: ["Classifier", "Signals"]),
     .target(name: "Learning", dependencies: ["Classifier", "Signals", "MessageModel"]),
     .target(name: "Store", dependencies: ["MessageModel", "Signals", "Classifier", "Decision"]),
     .target(

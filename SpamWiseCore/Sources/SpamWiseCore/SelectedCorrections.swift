@@ -14,9 +14,9 @@ extension Pipeline {
         sender: message.fromAddress,
         subject: message.subject,
         evidence: EvidenceBundle(message: message),
-        decision: .init(label: nil, action: .none, reason: "Explicitly selected for correction"),
+        decision: .init(label: nil, action: .none, reason: .selectedForCorrection),
         outcome: .noAction,
-        path: "selection",
+        path: .selection,
         revision: state.revision
       )
       state.record(record)

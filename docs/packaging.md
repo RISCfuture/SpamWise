@@ -19,6 +19,8 @@ bash Scripts/archive.sh <worker-token> signed
 
 Unsigned mode validates an optimized hardened-runtime archive. Signed mode uses automatic development provisioning for the archive, then exports with the `developer-id` method and team `2NFSK2WB24`. Xcode may need account access to create or download profiles. A valid certificate alone does not prove that required App Group and Keychain entitlements are authorized. The script fails if compilation, provisioning, export, or signature verification fails.
 
+`check.sh` runs `Scripts/check-app-icon.sh` on the Debug app. Both `archive.sh` and `app-store-check.sh archive` run it on the archived app, `archive.sh` runs it again on the exported app, and `export-store-match.py` runs it on the re-signed app before building the installer package. It fails unless the bundle contains `Contents/Resources/Assets.car` and its `Info.plist` sets `CFBundleIconName` to `AppIcon`. The icon source is the Icon Composer bundle `SpamWise/AppIcon.icon`, shared by the SpamWise and SpamWiseDirect targets through `ASSETCATALOG_COMPILER_APPICON_NAME`.
+
 Artifacts are under `.build/<worker-token>/`: `SpamWise.xcarchive`, `export/SpamWise.app`, and command logs. The app and extension preserve their original identifiers and share `group.codes.tim.SpamWise` plus the Keychain group `2NFSK2WB24.codes.tim.SpamWise.shared`. The app retains Automation and Contacts entitlements. Inspect both nested extension and app signatures before distribution.
 
 ## Notarization
@@ -30,6 +32,14 @@ bash Scripts/archive.sh <worker-token> signed <notary-keychain-profile>
 ```
 
 This uploads the Developer ID archive to Apple, waits for acceptance, staples the ticket, and checks Gatekeeper assessment. Credentials remain in Keychain. Without a profile, the script stops after Developer ID export and does not claim notarization. Never distribute an unsigned or unnotarized build as a completed release.
+
+## Release checklist
+
+Confirm each item on the exported bundle you will distribute:
+
+- `bash Scripts/check-app-icon.sh .build/<worker-token>/export/SpamWise.app` passes: `Assets.car` is present and `CFBundleIconName` is `AppIcon`.
+- `codesign --verify --deep --strict` passes for the app and its nested extension.
+- Notarization is accepted, the ticket is stapled, and `spctl --assess --type execute` reports a notarized Developer ID.
 
 ## Acceptance on a fresh setup
 

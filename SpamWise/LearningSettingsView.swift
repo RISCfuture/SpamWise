@@ -58,16 +58,18 @@ struct LearningSettingsView: View {
 
 private struct DomainSuggestionsView: View {
   let model: AppModel
-  private var suggestions: [PolicySuggestion] {
-    PolicyDistiller.suggestions(from: model.state.corrections)
-  }
 
   var body: some View {
+    let suggestions = PolicyDistiller.suggestions(
+      from: model.state.corrections,
+      rules: model.state.rules
+    )
     if !suggestions.isEmpty {
+      let senderCounts = model.state.knownSenderCounts(atDomains: Set(suggestions.map(\.domain)))
       Text("Suggested domain preferences").font(.headline)
         .frame(maxWidth: .infinity, alignment: .leading)
       ForEach(suggestions) { suggestion in
-        LabeledContent(suggestion.domain) {
+        LabeledContent {
           Button(suggestion.label == .inbox ? "Allow domain" : "Block domain") {
             model.saveRule(
               scope: .domain,
@@ -75,6 +77,11 @@ private struct DomainSuggestionsView: View {
               disposition: suggestion.label == .inbox ? .allow : .block
             )
           }
+        } label: {
+          Text(suggestion.domain)
+          Text(
+            "Known senders: \(senderCounts[suggestion.domain, default: 0], format: .number)"
+          )
         }
       }
     }

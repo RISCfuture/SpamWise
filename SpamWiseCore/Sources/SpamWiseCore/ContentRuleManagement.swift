@@ -22,6 +22,7 @@ public enum ContentRuleManagement {
         (state.contentRules ?? []).filter { !importedIDs.contains($0.id) } + archive.rules
       try validate(combined)
       state.contentRules = combined
+      for id in importedIDs { state.contentRuleSkips?[id] = nil }
       state.revision += 1; state.retries.removeAll()
       state.audit(
         .contentRule,
@@ -46,6 +47,7 @@ public enum ContentRuleManagement {
       rules.append(saved)
       guard rules.count <= maximumRules else { throw ContentRuleError.invalid }
       state.contentRules = rules
+      state.contentRuleSkips?[saved.id] = nil
       state.revision += 1; state.retries.removeAll()
       state.audit(
         .contentRule,
@@ -57,6 +59,7 @@ public enum ContentRuleManagement {
   public static func remove(_ id: UUID, store: Store) async throws {
     try await StateRepository.update(store) {
       $0.contentRules?.removeAll { $0.id == id }
+      $0.contentRuleSkips?[id] = nil
       $0.revision += 1; $0.retries.removeAll()
       $0.audit(.contentRule, detail: String(localized: "Removed \(id.uuidString)"))
     }

@@ -55,13 +55,13 @@ An unsigned standalone executable should supply explicit environment or login
 Keychain references for paid providers. Apple on-device and PCC models need no
 API key; PCC still requires Apple's managed entitlement and runtime availability.
 
-Provider calls reserve conservative upper bounds in the persistent evaluation
-budget of the selected state store: $0.10 per Haiku request and $1 per other paid
-request, against its $150 allowance. Reservations are not measured billing and
-remain committed after uncertain failures. A private `statePath` creates separate
-accounting from the app's shared ledger and requires separate spending
-authorization; it must not bypass an exhausted shared allowance. Dry run still
-permits paid model calls and does not grant spending authorization.
+Paid provider calls count toward the selected state store's monthly spending, the
+same ledger the app shows under Usage and spending. Each request first counts its
+largest possible cost, then its measured cost; requests the provider could not
+have billed are refunded. If the user has set a monthly limit, a request that
+would exceed it is not sent and its message stays unclassified. A private
+`statePath` keeps separate monthly accounting with no limit until one is set. Dry
+run still permits paid model calls.
 
 ## Read-only check and dry run
 
@@ -85,23 +85,50 @@ cannot be combined with `--validate` or `--probe`, and unsupported models fail
 before connecting to IMAP.
 
 `--validate` authenticates, discovers mailbox roles and examines Inbox. It never
-fetches message bodies, marks messages read, moves messages or enables actions.
-The default run processes one bounded Inbox page in dry run. Dry run suppresses mail
-actions but may send bounded message context to the explicitly selected provider.
-Polling accepts intervals from 60 to 3,600 seconds and skips previously recorded
-identities. It advances persisted bounded pages and restarts after reaching the
-oldest page; UIDVALIDITY changes reset progress. Messages deferred by the 4 MB
-page budget resume on the next page. Action-enabled polling also processes due
-classification retries for the configured account. Mailbox mutations can defer a
-message until the next sweep. Polling does not use IMAP IDLE. SIGINT and SIGTERM
-cancel pending work. Nothing installs a launch daemon
-or enables automatic startup.
+fetches message bodies, marks messages read or moves messages. When the server
+supports `UID MOVE` and designates a unique Junk mailbox, it records validation
+for the exact account ID, host, port and username and selects the IMAP route in
+the shared settings; otherwise it revokes any validation recorded for that
+endpoint. It never turns off dry run.
+The default run is a dry run. On a fresh store, and after a UIDVALIDITY change, the
+first run records the highest existing UID as the start boundary and reads nothing;
+later runs process only new mail above it. The highest UID comes from `UIDNEXT`, or
+from the newest message when the server omits `UIDNEXT`. Mail that arrives after the
+last run but before a UIDVALIDITY change falls below the new boundary and is not
+filtered automatically. IMAP has no preview or refilter for mail below the boundary;
+the older-mail preview in Settings covers Apple Mail accounts only. Dry run
+suppresses mail actions but may send bounded message context to the explicitly
+selected provider. Polling accepts intervals from 60 to 3,600 seconds and skips
+previously processed identities.
 
-## Explicit disposable probe and actions
+A dry run counts the mail it previews as processed. Live filtering that shares the
+store, including the app, then skips that mail instead of acting on it. While the
+app filters live, give dry-run polling its own `statePath`.
 
-First place a disposable message whose subject starts with `[SpamWise Probe]` in
-Inbox. Obtain its current Inbox UID from your IMAP tooling; an Apple Mail local
-message ID is not an IMAP UID. No email is sent by this command.
+Activity shows decision reasons in the viewer's language. Mail action failures are
+saved as text in the language of the process that recorded them, so failures the
+daemon records, having no string catalog, read in English.
+
+Each run first reads every message above the highest UID already read, oldest first,
+up to five pages and the 4 MB byte budget; the rest resumes on the next run. Once new
+mail is caught up, the run reads one persisted backfill page that restarts after
+reaching the boundary or the newest 10,000 messages. That progress is saved only
+after every message the run read has been processed, so mail from a cancelled,
+failed or paused run is read again as new mail. While filtering is paused, runs read
+nothing. Action-enabled polling also processes due classification retries for the
+configured account. Mailbox mutations can defer a message until the next sweep.
+Polling does not use IMAP IDLE. SIGINT and SIGTERM cancel pending work. Nothing
+installs a launch daemon or enables automatic startup.
+
+## Optional disposable probe and actions
+
+Validation comes from `--validate`, or from a passing read-only check in the app
+for the same endpoint. The probe is an optional end-to-end move test. To run it,
+place a disposable message whose subject starts with `[SpamWise Probe]` in Inbox
+and obtain its current Inbox UID from your IMAP tooling; an Apple Mail local
+message ID is not an IMAP UID. SpamWise neither sends nor deletes the message:
+it never sends mail from your account, and it exposes no Trash or delete
+operation, so you supply the message and delete it afterward.
 
 ```sh
 spamwise-daemon --config imap.json --probe 123
@@ -112,8 +139,8 @@ server-designated Junk mailbox, verifies its new identity using COPYUID, then
 moves and verifies it back in Inbox. Each move changes the UID. Failure or a
 missing UID mapping stops the probe; uncertain moves are never automatically
 reversed or retried. Inspect the disposable message manually if the probe fails.
-Only a verified restoration records validation for the exact account ID, host,
-port and username. This leaves the shared dry-run setting unchanged.
+A verified restoration also records validation for the exact endpoint. Neither
+the probe nor `--validate` changes the shared dry-run setting.
 
 ```sh
 spamwise-daemon --config imap.json --once --actions

@@ -235,14 +235,19 @@ public enum PromptBuilder {
     stores with no order history are unwanted. Shipping notices are wanted only if they match an \
     order in my history. Anything from people I've corresponded with is wanted.
     """
-  /// Fixed classifier instructions kept separate from untrusted message data.
-  public static let instructions = """
+  private static let reasonLanguages = ["en", "es", "fr"]
+  /// Fixed classifier instructions for the user's preferred app language.
+  public static var instructions: String {
+    instructions(preferredLanguages: Locale.preferredLanguages)
+  }
+  private static let fixedInstructions = """
     Classify email as inbox, review, or junk. Prioritize precision: uncertain messages belong in \
     review.
     Return a confidence integer 0–100 and a short reason grounded in the supplied evidence.
     Authentication pass and unsubscribe links are weak evidence: spammers routinely provide both.
-    Trusted authentication failures, young domains, abuse-heavy TLDs, and brand/domain mismatch \
-    are stronger evidence, never decisive alone.
+    Trusted authentication failures, young domains, abuse-heavy TLDs, a display name claiming \
+    another domain's address, and brand/domain mismatch are stronger evidence, never decisive alone.
+    Platforms that notify on a person's behalf may show that person's address in the display name.
     History unavailable or partial means unknown, not no relationship. Do not infer a purchase \
     from a shipping claim.
     Look for benign filler unrelated to a lure, stranger cart reminders, and unsolicited marketing.
@@ -253,6 +258,19 @@ public enum PromptBuilder {
     Gate decisions happen outside you and cannot be overridden. Your confidence is not a \
     calibrated probability.
     """
+  /**
+   Fixed classifier instructions kept separate from untrusted message data.
+
+   - Parameter preferredLanguages: BCP 47 language identifiers in preference order. The model
+     writes its reason in the first app language they match, or in English when none match.
+   */
+  public static func instructions(preferredLanguages: [String]) -> String {
+    let code =
+      Bundle.preferredLocalizations(from: reasonLanguages, forPreferences: preferredLanguages)
+      .first ?? reasonLanguages[0]
+    let name = Locale(identifier: "en").localizedString(forLanguageCode: code) ?? code
+    return fixedInstructions + "\nWrite the reason in \(name)."
+  }
   /// Builds escaped JSON preferences and message context within the configured budgets.
   public static func prompt(_ input: ClassificationInput) throws -> String {
     let prompt =

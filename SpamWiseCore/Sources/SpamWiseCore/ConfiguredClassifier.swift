@@ -2,18 +2,19 @@ import Foundation
 
 /// Resolves explicit provider settings for every request without silently changing backends.
 public struct ConfiguredClassifier: Classifier {
-  private static let haikuReservationUSD = 0.10
-  private static let otherModelReservationUSD = 1.0
   private let store: Store
+  private let http: ModelHTTPClient
   private let credential: @Sendable (ModelBackend) throws -> String
-  /// Reads current settings with an optional provider-specific credential boundary.
+  /// Reads current settings with optional HTTP and provider-specific credential boundaries.
   public init(
     store: Store,
+    http: ModelHTTPClient = .live,
     credential: @escaping @Sendable (ModelBackend) throws -> String = { backend in
       try APIKeychain(service: ConfiguredClassifier.credentialService(for: backend)).read()
     }
   ) {
     self.store = store
+    self.http = http
     self.credential = credential
   }
   /// Returns the credential service for a paid provider; credentials are never persisted in preferences.
@@ -21,7 +22,7 @@ public struct ConfiguredClassifier: Classifier {
     backend == .claude
       ? "codes.tim.SpamWise.anthropic" : "codes.tim.SpamWise." + backend.rawValue.lowercased()
   }
-  /// Executes one explicitly selected backend with conservative spending reservations where applicable.
+  /// Executes one explicitly selected backend, counting paid requests toward the monthly spending limit.
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
     let current = try await StateRepository.load(store).settings
     let settings = current.advancedOptions
@@ -48,16 +49,16 @@ public struct ConfiguredClassifier: Classifier {
         let classifier: any Classifier
         switch settings.backend {
           case .claude: classifier = try ClaudeClassifier(modelID: modelID, key: { key })
-          case .openAI: classifier = try OpenAIClassifier(modelID: modelID, key: { key })
-          case .gemini: classifier = try GeminiClassifier(modelID: modelID, key: { key })
+          case .openAI:
+            classifier = try OpenAIClassifier(modelID: modelID, key: { key }, http: http)
+          case .gemini:
+            classifier = try GeminiClassifier(modelID: modelID, key: { key }, http: http)
           default: throw ClassificationError.configuration
         }
-        _ = try PromptBuilder.prompt(input)
-        return try await BudgetedClassifier(
+        return try await SpendingLimitedClassifier(
           ConsentCheckedClassifier(underlying: classifier, store: store, backend: settings.backend),
-          store: store,
-          upperBoundUSD: modelID == "claude-haiku-5-5"
-            ? Self.haikuReservationUSD : Self.otherModelReservationUSD
+          modelID: modelID,
+          store: store
         ).classify(input)
     }
   }

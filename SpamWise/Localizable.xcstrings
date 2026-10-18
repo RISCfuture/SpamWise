@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Backfill position": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posición de la revisión anterior"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position de la reprise antérieure"
+          }
+        }
+      }
+    },
+    "Messages since start": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes desde el inicio"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages depuis le début"
+          }
+        }
+      }
+    },
     "Off": {
       "extractionState": "manual",
       "localizations": {
@@ -371,19 +403,19 @@
         }
       }
     },
-    "A rule exceeded the time limit. Mail remains unchanged.": {
-      "extractionState": "stale",
+    "A rule exceeded the time limit and did not match.": {
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Una regla superó el límite de tiempo. El correo no cambia."
+            "value": "Una regla superó el límite de tiempo y no coincidió."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une règle a dépassé le délai. Le courrier reste inchangé."
+            "value": "Une règle a dépassé le délai et n’a pas correspondu."
           }
         }
       }
@@ -612,22 +644,6 @@
         }
       }
     },
-    "After validation, inspect the message before turning off dry run in General.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tras la validación, revisa el mensaje antes de desactivar la simulación en General."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Après la validation, vérifiez le message avant de désactiver la simulation dans Général."
-          }
-        }
-      }
-    },
     "Aggressive": {
       "localizations": {
         "es": {
@@ -681,13 +697,13 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Todos los métodos"
+            "value": "Todas las rutas"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toutes les méthodes"
+            "value": "Tous les circuits"
           }
         }
       }
@@ -704,22 +720,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autoriser"
-          }
-        }
-      }
-    },
-    "Allow Automation when asked. Enable SpamWise in Mail → Settings → Extensions.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permite la automatización cuando se solicite. Activa SpamWise en Mail → Ajustes → Extensiones."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Autorisez l’automatisation lorsque cela vous est demandé. Activez SpamWise dans Mail → Réglages → Extensions."
           }
         }
       }
@@ -774,7 +774,7 @@
       }
     },
     "Allow mail sharing with the selected provider in Account settings first.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -1078,22 +1078,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Types des pièces jointes"
-          }
-        }
-      }
-    },
-    "Authorized ceiling": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Límite autorizado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plafond autorisé"
           }
         }
       }
@@ -1517,7 +1501,7 @@
       }
     },
     "Check the rule expression and size limits.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -1876,22 +1860,6 @@
         }
       }
     },
-    "Connected — %@ accounts readable. Actions need a disposable-message test.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conectado — %@ cuentas accesibles. Las acciones requieren una prueba con un mensaje desechable."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connecté — %@ comptes accessibles. Les actions nécessitent un test avec un message jetable."
-          }
-        }
-      }
-    },
     "Connected — %lld accounts readable. Actions need a disposable-message test.": {
       "extractionState": "stale",
       "localizations": {
@@ -1941,22 +1909,6 @@
         }
       }
     },
-    "Connection saved. Dry run is enabled; validate the account before actions.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conexión guardada. La simulación está activada; valida la cuenta antes de realizar acciones."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connexion enregistrée. La simulation est activée ; validez le compte avant d’effectuer des actions."
-          }
-        }
-      }
-    },
     "Conservative": {
       "localizations": {
         "es": {
@@ -1969,22 +1921,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Prudent"
-          }
-        }
-      }
-    },
-    "Conservative commitments": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reservas conservadoras"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réservations prudentes"
           }
         }
       }
@@ -2102,7 +2038,7 @@
       }
     },
     "Content rules could not be evaluated.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -2474,7 +2410,7 @@
       }
     },
     "Couldn’t confirm mark-as-read. The Junk move remains recorded; this step will not retry.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -2914,22 +2850,6 @@
         }
       }
     },
-    "Each move is checked after 30 seconds. If restoration fails, restore the message manually. Repeat for each account.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cada traslado se comprueba después de 30 segundos. Si la restauración falla, devuelve el mensaje manualmente. Repite la prueba para cada cuenta."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chaque déplacement est vérifié après 30 secondes. Si la restauration échoue, restaurez le message manuellement. Répétez l’opération pour chaque compte."
-          }
-        }
-      }
-    },
     "Each paid call reserves an upper bound before it starts. Commitments include failed calls and exceed estimated actual charges. Calls stop when the ceiling would be exceeded.": {
       "extractionState": "stale",
       "localizations": {
@@ -3029,22 +2949,6 @@
         }
       }
     },
-    "Enable mail actions": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activar acciones de correo"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activer les actions sur le courrier"
-          }
-        }
-      }
-    },
     "Enabled": {
       "localizations": {
         "es": {
@@ -3062,7 +2966,7 @@
       }
     },
     "Enter a complete email address or a registrable domain.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -3629,7 +3533,7 @@
       }
     },
     "Filtering or integration settings changed": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -3840,7 +3744,7 @@
       }
     },
     "Forgot linked corpus sample %@": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -4003,6 +3907,7 @@
       }
     },
     "Haiku 5.5 connection verified": {
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -4326,7 +4231,7 @@
       }
     },
     "Imported %lld content rules": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -4360,7 +4265,7 @@
       }
     },
     "Imported %lld sender rules": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -4404,22 +4309,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réception"
-          }
-        }
-      }
-    },
-    "Inbox UID": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "UID de Entrada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "UID dans Réception"
           }
         }
       }
@@ -4930,7 +4819,7 @@
       }
     },
     "Mail action needs attention": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5124,22 +5013,6 @@
         }
       }
     },
-    "Mailbox changes can shift pages. Repeating sweeps revisit them; counts do not guarantee delivery.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los cambios de buzón pueden desplazar páginas. Los análisis las revisitan; los recuentos no garantizan la entrega."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les changements de boîte peuvent décaler les pages. Les analyses les revisitent ; les comptes ne garantissent pas la livraison."
-          }
-        }
-      }
-    },
     "Mailbox destinations": {
       "localizations": {
         "es": {
@@ -5168,22 +5041,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les rôles des boîtes aux lettres sont absents ou ambigus. Les actions restent indisponibles."
-          }
-        }
-      }
-    },
-    "MailKit": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MailKit"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MailKit"
           }
         }
       }
@@ -5317,7 +5174,7 @@
       }
     },
     "Mark-as-read status could not be saved. The confirmed Junk move is retained.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5513,7 +5370,7 @@
       }
     },
     "Model and local evidence disagree": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5656,22 +5513,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Page suivante"
-          }
-        }
-      }
-    },
-    "Next page offset": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Posición de la página siguiente"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Position de la page suivante"
           }
         }
       }
@@ -5856,22 +5697,6 @@
         }
       }
     },
-    "Not verified": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin verificar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Non vérifié"
-          }
-        }
-      }
-    },
     "Notes": {
       "localizations": {
         "es": {
@@ -6012,22 +5837,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "M’avertir des révisions en attente"
-          }
-        }
-      }
-    },
-    "Observed Inbox messages": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mensajes observados en Entrada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Messages observés dans Réception"
           }
         }
       }
@@ -6356,22 +6165,6 @@
         }
       }
     },
-    "Paid requests reserve a maximum cost before starting. Reservations include failed requests and may exceed actual charges.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las solicitudes de pago reservan un coste máximo antes de empezar. Las reservas incluyen solicitudes fallidas y pueden superar los cargos reales."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les requêtes payantes réservent un coût maximal avant de commencer. Les réservations incluent les requêtes échouées et peuvent dépasser les frais réels."
-          }
-        }
-      }
-    },
     "Partition": {
       "localizations": {
         "es": {
@@ -6530,22 +6323,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "L’autorisation de contrôler Mail a été refusée."
-          }
-        }
-      }
-    },
-    "Place a disposable [SpamWise Probe] message in Inbox. Enter its IMAP UID, not Apple Mail’s message number.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Coloca un mensaje prescindible [SpamWise Probe] en Entrada. Introduce su UID de IMAP, no el número de mensaje de Apple Mail."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Placez un message de test [SpamWise Probe] dans Réception. Saisissez son UID IMAP, pas le numéro de message d’Apple Mail."
           }
         }
       }
@@ -6774,38 +6551,6 @@
         }
       }
     },
-    "Probe failed or its outcome is uncertain. Inspect the message manually; no uncertain move is retried.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La prueba falló o su resultado es incierto. Inspecciona el mensaje manualmente; no se reintenta ningún movimiento incierto."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le test a échoué ou son résultat est incertain. Vérifiez le message manuellement ; aucun déplacement incertain n’est retenté."
-          }
-        }
-      }
-    },
-    "Probe restored to Inbox. Account validated; inspect the message before disabling dry run.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mensaje de prueba restaurado en Entrada. Cuenta validada; inspecciona el mensaje antes de desactivar la simulación."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Message de test restauré dans Réception. Compte validé ; vérifiez le message avant de désactiver la simulation."
-          }
-        }
-      }
-    },
     "Process this folder automatically": {
       "localizations": {
         "es": {
@@ -7016,22 +6761,6 @@
         }
       }
     },
-    "Read-only check passed. Disposable-message validation is still required for actions.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comprobación de solo lectura superada. Las acciones aún requieren validación con un mensaje prescindible."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vérification en lecture seule réussie. Les actions exigent encore une validation avec un message de test."
-          }
-        }
-      }
-    },
     "Read-only check passed. This server lacks a supported MOVE capability or unique Junk mailbox.": {
       "localizations": {
         "es": {
@@ -7212,7 +6941,7 @@
       }
     },
     "Relabeled reviewed example: %@": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -7279,7 +7008,7 @@
       }
     },
     "Removed %@": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -7520,7 +7249,7 @@
       }
     },
     "Restored portable learning state; actions paused": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -8261,7 +7990,7 @@
       }
     },
     "Saved %@: %@": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -8369,22 +8098,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sélectionnez Sur l’appareil pour classer. Le mode local bloque le fournisseur actuel."
-          }
-        }
-      }
-    },
-    "Select one disposable Inbox message from another account with a subject beginning [SpamWise Probe]. The test moves it to Junk and back, then adds an orange flag.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selecciona en Entrada un mensaje de prueba de otra cuenta cuyo asunto empiece por [SpamWise Probe]. La prueba lo traslada a No deseado y de vuelta, y luego añade una bandera naranja."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sélectionnez dans Réception un message de test provenant d’un autre compte dont l’objet commence par [SpamWise Probe]. Le test le déplace vers Indésirables puis le ramène, avant d’ajouter un drapeau orange."
           }
         }
       }
@@ -8732,6 +8445,22 @@
         }
       }
     },
+    "Skipped": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omitidas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignorées"
+          }
+        }
+      }
+    },
     "Source": {
       "localizations": {
         "es": {
@@ -8809,22 +8538,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aide SpamWise"
-          }
-        }
-      }
-    },
-    "SpamWise is running": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise está funcionando"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise est en cours d’exécution"
           }
         }
       }
@@ -9091,38 +8804,6 @@
         }
       }
     },
-    "Test Junk and restore Inbox": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probar No deseado y restaurar Entrada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tester Indésirables et restaurer Réception"
-          }
-        }
-      }
-    },
-    "Test selected disposable message": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probar con el mensaje seleccionado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tester le message sélectionné"
-          }
-        }
-      }
-    },
     "Test selected Mail message": {
       "localizations": {
         "es": {
@@ -9155,25 +8836,8 @@
         }
       }
     },
-    "The account has not passed action validation.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La cuenta no ha superado la validación de acciones."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le compte n’a pas réussi la validation des actions."
-          }
-        }
-      }
-    },
     "The backup could not be opened.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -9428,7 +9092,7 @@
       }
     },
     "The maximum of 10,000 sender rules has been reached.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -9542,23 +9206,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "La structure du message n’est pas valide ou est ambiguë."
-          }
-        }
-      }
-    },
-    "The message uses an unsupported character set.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El mensaje usa un conjunto de caracteres no admitido."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le message utilise un jeu de caractères non pris en charge."
           }
         }
       }
@@ -9734,7 +9381,7 @@
       }
     },
     "The rule file is invalid or exceeds the import limit.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -9835,22 +9482,6 @@
         }
       }
     },
-    "The test moves to Junk and back. Verified restoration validates the account. Dry run stays unchanged.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La prueba mueve el mensaje a No deseado y lo devuelve. La restauración verificada valida la cuenta. La simulación no cambia."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le test déplace le message vers Indésirables puis le ramène. La restauration vérifiée valide le compte. La simulation reste inchangée."
-          }
-        }
-      }
-    },
     "These are Mail.app roles. Matching names do not prove server labels. Keep dry run on while comparing filters.": {
       "localizations": {
         "es": {
@@ -9879,6 +9510,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ces exclusions ne bloquent pas les messages. Les règles explicites d’adresse et de domaine restent prioritaires."
+          }
+        }
+      }
+    },
+    "This rule could not be evaluated for the selected message and does not match.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta regla no se pudo evaluar para el mensaje seleccionado y no coincide."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette règle n’a pas pu être évaluée pour le message sélectionné et ne correspond pas."
           }
         }
       }
@@ -10239,7 +9886,7 @@
       }
     },
     "Uncertain classification; confidence is uncalibrated": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -10288,7 +9935,7 @@
       }
     },
     "Undid correction rules and learning; Mail action unchanged": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -10497,7 +10144,7 @@
       }
     },
     "Use the matching recovery key and a supported SpamWise backup.": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -10574,22 +10221,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nom d’utilisateur"
-          }
-        }
-      }
-    },
-    "Validate a disposable message in Accounts before enabling mail actions.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Valida un mensaje de prueba en Cuentas antes de activar las acciones de correo."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Validez un message de test dans Comptes avant d’activer les actions sur le courrier."
           }
         }
       }
@@ -11635,6 +11266,1562 @@
           "stringUnit": {
             "state": "translated",
             "value": "Partage les domaines des expéditeurs et des liens avec le service sélectionné. Désactivé en mode local uniquement."
+          }
+        }
+      }
+    },
+    "Your monthly spending limit prevented this request. Mail was left unchanged.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu límite de gasto mensual impidió esta solicitud. El correo no se ha modificado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre limite de dépenses mensuelle a empêché cette requête. Le message n’a pas été modifié."
+          }
+        }
+      }
+    },
+    "The spending limit must be a positive amount no greater than %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El límite de gasto debe ser un importe positivo no superior a %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de dépenses doit être un montant positif ne dépassant pas %@."
+          }
+        }
+      }
+    },
+    "This month’s spending limit has been reached.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha alcanzado el límite de gasto de este mes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de dépenses de ce mois-ci est atteinte."
+          }
+        }
+      }
+    },
+    "Raise the limit in Settings, or wait until next month.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aumenta el límite en Ajustes o espera al próximo mes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Augmentez la limite dans les Réglages ou attendez le mois prochain."
+          }
+        }
+      }
+    },
+    "The budget store has no ceiling. Set one with --budget-limit USD.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El almacén de presupuesto no tiene límite. Establécelo con --budget-limit USD."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le magasin de budget n’a pas de plafond. Définissez-le avec --budget-limit USD."
+          }
+        }
+      }
+    },
+    "Paid models require --budget-store PATH.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los modelos de pago requieren --budget-store RUTA."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les modèles payants exigent --budget-store CHEMIN."
+          }
+        }
+      }
+    },
+    "Limit monthly spending": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limitar el gasto mensual"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limiter les dépenses mensuelles"
+          }
+        }
+      }
+    },
+    "Monthly limit": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Límite mensual"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite mensuelle"
+          }
+        }
+      }
+    },
+    "Counted toward this month’s limit": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Computado en el límite de este mes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décompté de la limite de ce mois-ci"
+          }
+        }
+      }
+    },
+    "This month’s limit has been reached. Paid classification resumes next month or when you raise the limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha alcanzado el límite de este mes. La clasificación de pago se reanudará el próximo mes o cuando aumentes el límite."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite de ce mois-ci est atteinte. La classification payante reprendra le mois prochain ou lorsque vous augmenterez la limite."
+          }
+        }
+      }
+    },
+    "Spending information is unavailable. Shared storage could not be read.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La información de gasto no está disponible. No se pudo leer el almacenamiento compartido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les informations de dépenses sont indisponibles. Le stockage partagé n’a pas pu être lu."
+          }
+        }
+      }
+    },
+    "Each paid request counts its largest possible cost until it finishes, then its measured cost. The limit starts over each calendar month.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cada solicitud de pago computa su coste máximo posible hasta que termina y, después, su coste medido. El límite se reinicia cada mes natural."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque requête payante compte son coût maximal possible jusqu’à sa fin, puis son coût mesuré. La limite repart à zéro à chaque mois civil."
+          }
+        }
+      }
+    },
+    "Monthly spending limit reached — new mail isn’t sent to the provider until next month or a higher limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Límite de gasto mensual alcanzado: el correo nuevo no se envía al proveedor hasta el próximo mes o hasta que aumentes el límite."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite de dépenses mensuelle atteinte : les nouveaux messages ne sont pas envoyés au fournisseur avant le mois prochain ou une limite plus élevée."
+          }
+        }
+      }
+    },
+    "Couldn’t save the spending limit.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar el límite de gasto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer la limite de dépenses."
+          }
+        }
+      }
+    },
+    "Known senders: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remitentes conocidos: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expéditeurs connus : %@"
+          }
+        }
+      }
+    },
+    "Previewed mail keeps its recorded decision after dry run ends. Correct it from Activity to act on it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El correo previsualizado conserva su decisión registrada al terminar la simulación. Corríjalo desde Actividad para actuar sobre él."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le courrier prévisualisé conserve sa décision enregistrée après la fin de la simulation. Corrigez-le depuis Activité pour agir dessus."
+          }
+        }
+      }
+    },
+    "Automatic filtering starts": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El filtrado automático empieza"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtrage automatique commence"
+          }
+        }
+      }
+    },
+    "Older mail page: %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Página de correo anterior: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page de messages antérieurs : %lld"
+          }
+        }
+      }
+    },
+    "Preview older Inbox mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa del correo anterior de Entrada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu des messages antérieurs de Réception"
+          }
+        }
+      }
+    },
+    "Apply previewed decisions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aplicar las decisiones previsualizadas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer les décisions prévisualisées"
+          }
+        }
+      }
+    },
+    "Older mail preview finished. No mail actions requested. Review it in Activity, then apply.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa del correo anterior completada. No se solicitaron acciones en Mail. Revísela en Actividad y luego aplíquela."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu des messages antérieurs terminé. Aucune action sur les messages n’a été demandée. Vérifiez-le dans Activité, puis appliquez-le."
+          }
+        }
+      }
+    },
+    "Requested mail actions for %@ previewed messages.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se solicitaron acciones en Mail para %@ mensajes previsualizados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions demandées pour %@ messages prévisualisés."
+          }
+        }
+      }
+    },
+    "Checks read the newest Inbox mail first, then earlier pages. Counts do not guarantee delivery.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las comprobaciones leen primero el correo más reciente de Entrada y luego las páginas anteriores. Los recuentos no garantizan la entrega."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les vérifications lisent d’abord les messages les plus récents de Réception, puis les pages précédentes. Les comptes ne garantissent pas la livraison."
+          }
+        }
+      }
+    },
+    "Automatic filtering reads only mail received after this date.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El filtrado automático solo lee el correo recibido después de esta fecha."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtrage automatique ne lit que les messages reçus après cette date."
+          }
+        }
+      }
+    },
+    "Previewing and applying older mail require dry run off. Any settings change discards the preview.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para previsualizar y aplicar el correo anterior, la simulación debe estar desactivada. Cualquier cambio de ajustes descarta la vista previa."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour prévisualiser et appliquer des messages antérieurs, la simulation doit être désactivée. Toute modification des réglages annule l’aperçu."
+          }
+        }
+      }
+    },
+    "The account’s Inbox and Junk mailboxes haven’t been validated.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los buzones de Entrada y No deseado de la cuenta no se han validado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les boîtes Réception et Indésirables du compte n’ont pas été validées."
+          }
+        }
+      }
+    },
+    "The selected message’s subject doesn’t begin with “[SpamWise Probe]”.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El asunto del mensaje seleccionado no empieza por «[SpamWise Probe]»."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’objet du message sélectionné ne commence pas par « [SpamWise Probe] »."
+          }
+        }
+      }
+    },
+    "Connected — %@ accounts readable; Inbox and Junk mailboxes validated for %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectado — %@ cuentas accesibles; buzones de Entrada y No deseado validados en %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecté — %@ comptes accessibles ; boîtes Réception et Indésirables validées pour %@."
+          }
+        }
+      }
+    },
+    "Inbox and Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrada y No deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réception et Indésirables"
+          }
+        }
+      }
+    },
+    "Validated": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Validados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Validées"
+          }
+        }
+      }
+    },
+    "Not validated": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin validar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non validées"
+          }
+        }
+      }
+    },
+    "Turn off dry run?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Desactivar la simulación?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactiver la simulation ?"
+          }
+        }
+      }
+    },
+    "Turn off dry run": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactivar la simulación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactiver la simulation"
+          }
+        }
+      }
+    },
+    "SpamWise will move new Junk to each validated account’s Junk mailbox and mark Review messages in Inbox. It checks every move afterward. If Mail doesn’t confirm a move, SpamWise doesn’t retry or reverse it, and Activity shows the failure so you can check the message in Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise moverá el correo no deseado nuevo al buzón No deseado de cada cuenta validada y marcará en Entrada los mensajes para Revisar. Comprueba cada movimiento después de hacerlo. Si Mail no confirma un movimiento, SpamWise no lo reintenta ni lo revierte, y Actividad muestra el fallo para que puedas revisar el mensaje en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise déplacera les nouveaux messages indésirables vers la boîte Indésirables de chaque compte validé et marquera dans Réception les messages À vérifier. Il vérifie chaque déplacement après coup. Si Mail ne confirme pas un déplacement, SpamWise ne le relance pas et ne l’annule pas, et Activité indique l’échec pour que vous puissiez vérifier le message dans Mail."
+          }
+        }
+      }
+    },
+    "Validate the Inbox and Junk mailboxes before turning off dry run.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valida los buzones de Entrada y No deseado antes de desactivar la simulación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Validez les boîtes Réception et Indésirables avant de désactiver la simulation."
+          }
+        }
+      }
+    },
+    "Optionally run the bundled script from a Mail rule so new mail is checked as it arrives.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si quieres, ejecuta el script incluido desde una regla de Mail para comprobar el correo nuevo en cuanto llegue."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous pouvez exécuter le script fourni depuis une règle Mail pour vérifier les nouveaux messages dès leur arrivée."
+          }
+        }
+      }
+    },
+    "Optional move test": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba de movimiento opcional"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test de déplacement facultatif"
+          }
+        }
+      }
+    },
+    "Select one Inbox message whose subject begins “[SpamWise Probe]”. SpamWise moves it to Junk and back, then adds an orange flag, checking each move after 30 seconds. Dry run and validation stay unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona un mensaje de Entrada cuyo asunto empiece por «[SpamWise Probe]». SpamWise lo mueve a No deseado y de vuelta, y luego añade una bandera naranja, comprobando cada movimiento a los 30 segundos. La simulación y la validación no cambian."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez un message de Réception dont l’objet commence par « [SpamWise Probe] ». SpamWise le déplace vers Indésirables puis le ramène, et ajoute un drapeau orange, en vérifiant chaque déplacement après 30 secondes. La simulation et la validation restent inchangées."
+          }
+        }
+      }
+    },
+    "Test selected message": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probar el mensaje seleccionado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tester le message sélectionné"
+          }
+        }
+      }
+    },
+    "Connection saved. Dry run is enabled; check the connection to validate its mailboxes.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conexión guardada. La simulación está activada; comprueba la conexión para validar sus buzones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion enregistrée. La simulation est activée ; vérifiez la connexion pour valider ses boîtes."
+          }
+        }
+      }
+    },
+    "Read-only check passed. Inbox and Junk mailboxes are validated.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobación de solo lectura superada. Los buzones de Entrada y No deseado están validados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification en lecture seule réussie. Les boîtes Réception et Indésirables sont validées."
+          }
+        }
+      }
+    },
+    "Setup not finished": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuración sin terminar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuration non terminée"
+          }
+        }
+      }
+    },
+    "Mail Automation not allowed — mail stays unchanged": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatización de Mail no permitida — el correo no cambia"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisation de Mail non autorisée — les messages restent inchangés"
+          }
+        }
+      }
+    },
+    "Mail isn’t running — checks resume when it opens": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no está abierto — las comprobaciones se reanudan al abrirlo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’est pas ouvert — les vérifications reprennent à son ouverture"
+          }
+        }
+      }
+    },
+    "Mail extension preview — mail stays unchanged": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa de la extensión de Mail — el correo no cambia"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu de l’extension Mail — les messages restent inchangés"
+          }
+        }
+      }
+    },
+    "Dry run — Inbox and Junk mailboxes not validated": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulación — buzones de Entrada y No deseado sin validar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulation — boîtes Réception et Indésirables non validées"
+          }
+        }
+      }
+    },
+    "Incoming mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo entrante"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages entrants"
+          }
+        }
+      }
+    },
+    "Automation checks": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobaciones por Automatización"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifications par Automatisation"
+          }
+        }
+      }
+    },
+    "Mail extension preview": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa de la extensión de Mail"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu de l’extension Mail"
+          }
+        }
+      }
+    },
+    "The Mail extension can’t tell which account a message belongs to, so it can’t filter by account. It previews decisions only when all accounts are included, and it never moves mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La extensión de Mail no puede saber a qué cuenta pertenece un mensaje, así que no puede filtrar por cuenta. Solo previsualiza decisiones cuando se incluyen todas las cuentas y nunca mueve correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’extension Mail ne peut pas savoir à quel compte appartient un message ; elle ne peut donc pas filtrer par compte. Elle ne prévisualise des décisions que si tous les comptes sont inclus, et ne déplace jamais de messages."
+          }
+        }
+      }
+    },
+    "Enable SpamWise in Mail → Settings → Extensions. Automatic Inbox checks stay off while the extension previews incoming mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa SpamWise en Mail → Ajustes → Extensiones. Las comprobaciones automáticas de Entrada se detienen mientras la extensión previsualiza el correo entrante."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez SpamWise dans Mail → Réglages → Extensions. Les vérifications automatiques de Réception sont suspendues tant que l’extension prévisualise les messages entrants."
+          }
+        }
+      }
+    },
+    "Allow Automation when asked.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite Automatización cuando se solicite."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisez Automatisation lorsque vous y êtes invité."
+          }
+        }
+      }
+    },
+    "Mail extension preview off — include all accounts to use it": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa de la extensión de Mail desactivada — incluye todas las cuentas para usarla"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu de l’extension Mail désactivé — incluez tous les comptes pour l’utiliser"
+          }
+        }
+      }
+    },
+    "Only some accounts are included, so the extension previews nothing and no mail is checked. Include all accounts or choose Automation checks.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se incluyen algunas cuentas, así que la extensión no previsualiza nada y no se comprueba ningún mensaje. Incluye todas las cuentas o elige Comprobaciones por Automatización."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuls certains comptes sont inclus : l’extension ne prévisualise donc rien et aucun message n’est vérifié. Incluez tous les comptes ou choisissez Vérifications par Automatisation."
+          }
+        }
+      }
+    },
+    "Blocked: matches a campaign you marked as junk": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado: coincide con una campaña que marcaste como no deseada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué : correspond à une campagne que vous avez marquée comme indésirable"
+          }
+        }
+      }
+    },
+    "Your correction for this sender’s address": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu corrección para la dirección de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre correction pour l’adresse de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Your correction for this sender’s domain": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu corrección para el dominio de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre correction pour le domaine de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Selected in Mail for correction": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionado en Mail para corregirlo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionné dans Mail pour être corrigé"
+          }
+        }
+      }
+    },
+    "Not classified: the message couldn’t be read.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: no se pudo leer el mensaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : impossible de lire le message."
+          }
+        }
+      }
+    },
+    "Not classified: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : %@"
+          }
+        }
+      }
+    },
+    "Not classified: the monthly spending limit was reached, so nothing was sent to the provider.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: se alcanzó el límite de gasto mensual, así que no se envió nada al proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : la limite de dépenses mensuelle a été atteinte, donc rien n’a été envoyé au fournisseur."
+          }
+        }
+      }
+    },
+    "Not classified: shared storage was unavailable.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: el almacenamiento compartido no estaba disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : le stockage partagé était indisponible."
+          }
+        }
+      }
+    },
+    "Not classified: processing failed. Mail was left unchanged.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar: el procesamiento falló. El correo no se modificó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé : le traitement a échoué. Le message n’a pas été modifié."
+          }
+        }
+      }
+    },
+    "Already being processed": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya se está procesando"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà en cours de traitement"
+          }
+        }
+      }
+    },
+    "Already handled; the earlier decision is kept": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya gestionado; se conserva la decisión anterior"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà traité ; la décision précédente est conservée"
+          }
+        }
+      }
+    },
+    "Allowed by your rule for this sender’s address": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido por tu regla para la dirección de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé par votre règle pour l’adresse de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Blocked by your rule for this sender’s address": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado por tu regla para la dirección de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué par votre règle pour l’adresse de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Allowed by your rule for this sender’s domain": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido por tu regla para el dominio de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé par votre règle pour le domaine de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Blocked by your rule for this sender’s domain": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado por tu regla para el dominio de este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué par votre règle pour le domaine de cet expéditeur"
+          }
+        }
+      }
+    },
+    "Allowed by your content rule “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido por tu regla de contenido «%@»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé par votre règle de contenu « %@ »"
+          }
+        }
+      }
+    },
+    "Blocked by your content rule “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado por tu regla de contenido «%@»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué par votre règle de contenu « %@ »"
+          }
+        }
+      }
+    },
+    "Allowed by one of your content rules": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido por una de tus reglas de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé par l’une de vos règles de contenu"
+          }
+        }
+      }
+    },
+    "Blocked by one of your content rules": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueado por una de tus reglas de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué par l’une de vos règles de contenu"
+          }
+        }
+      }
+    },
+    "Allowed: the sender is in your Contacts": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido: el remitente está en tus Contactos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé : l’expéditeur figure dans vos Contacts"
+          }
+        }
+      }
+    },
+    "Allowed: you have replied to this sender": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido: has respondido a este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé : vous avez déjà répondu à cet expéditeur"
+          }
+        }
+      }
+    },
+    "Allowed: this sender has sent authenticated order mail before": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitido: este remitente ya envió correo de pedidos autenticado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisé : cet expéditeur a déjà envoyé des messages de commande authentifiés"
+          }
+        }
+      }
+    },
+    "Rule or relationship": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regla o relación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle ou relation"
+          }
+        }
+      }
+    },
+    "Campaign match": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coincidencia con campaña"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correspondance de campagne"
+          }
+        }
+      }
+    },
+    "Selected in Mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionado en Mail"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionné dans Mail"
+          }
+        }
+      }
+    },
+    "Connection check": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobación de conexión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification de la connexion"
+          }
+        }
+      }
+    },
+    "Not classified": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clasificar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé"
+          }
+        }
+      }
+    },
+    "Unknown sender": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remitente desconocido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expéditeur inconnu"
+          }
+        }
+      }
+    },
+    "No subject": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin asunto"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans objet"
+          }
+        }
+      }
+    },
+    "The Mail action failed or was cancelled; its result is unknown. Not retried.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La acción de Mail falló o se canceló; se desconoce su resultado. No se reintentará."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’action Mail a échoué ou a été annulée ; son résultat est inconnu. Aucune nouvelle tentative."
+          }
+        }
+      }
+    },
+    "Reason recorded by a different version of SpamWise": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motivo registrado por otra versión de SpamWise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motif enregistré par une autre version de SpamWise"
+          }
+        }
+      }
+    },
+    "The message has no single readable sender address.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje no tiene una única dirección de remitente legible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message n’a pas d’adresse d’expéditeur unique lisible."
+          }
+        }
+      }
+    },
+    "Review: the sender’s address couldn’t be read": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar: no se pudo leer la dirección del remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier : impossible de lire l’adresse de l’expéditeur"
+          }
+        }
+      }
+    },
+    "Unreadable sender": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remitente ilegible"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expéditeur illisible"
+          }
+        }
+      }
+    },
+    "Automatic filtering covers only mail received after setup. Older mail is sent to your provider only when you preview it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El filtrado automático solo cubre el correo recibido después de la configuración. El correo anterior solo se envía a tu proveedor cuando lo previsualizas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtrage automatique ne couvre que les messages reçus après la configuration. Les messages antérieurs ne sont envoyés à votre fournisseur que lorsque vous les prévisualisez."
+          }
+        }
+      }
+    },
+    "Previewing sends eligible older messages to your selected provider and may incur API charges.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La vista previa envía los mensajes anteriores aptos al proveedor seleccionado y puede generar cargos de API."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’aperçu envoie les messages antérieurs admissibles au fournisseur sélectionné et peut entraîner des frais d’API."
+          }
+        }
+      }
+    },
+    "Corrections need the sender’s address, which this message doesn’t have. Move it in Mail instead.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las correcciones necesitan la dirección del remitente, y este mensaje no la tiene. Muévelo en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les corrections nécessitent l’adresse de l’expéditeur, que ce message n’a pas. Déplacez-le plutôt dans Mail."
+          }
+        }
+      }
+    },
+    "Create a rule for every sender at %@?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Crear una regla para todos los remitentes de %@?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une règle pour tous les expéditeurs de %@ ?"
+          }
+        }
+      }
+    },
+    "Allow every sender at %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir todos los remitentes de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser tous les expéditeurs de %@"
+          }
+        }
+      }
+    },
+    "Block every sender at %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquear todos los remitentes de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquer tous les expéditeurs de %@"
+          }
+        }
+      }
+    },
+    "%@ is a shared mail provider, so this rule also applies to unrelated people who use it. Known senders at this domain: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ es un proveedor de correo compartido, así que esta regla también se aplica a personas sin relación que lo usan. Remitentes conocidos en este dominio: %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ est un fournisseur de messagerie partagé : cette règle s’applique donc aussi à des personnes sans lien qui l’utilisent. Expéditeurs connus sur ce domaine : %2$@"
           }
         }
       }

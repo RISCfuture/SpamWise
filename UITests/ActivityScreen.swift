@@ -3,8 +3,7 @@ import XCTest
 @MainActor struct ActivityScreen {
   let app: XCUIApplication
 
-  var isDryRun: Bool { app.staticTexts["activity.mode"].value as? String == "dryRun" }
-  var isPaused: Bool { app.staticTexts["activity.mode"].value as? String == "paused" }
+  var mode: String? { app.staticTexts["activity.mode"].value as? String }
 
   static func launchCorrectionFixture(automation: Bool = false, appURL: URL? = nil) -> Self {
     let app = UITestApplication.make(url: appURL)
@@ -40,6 +39,14 @@ import XCTest
         .waitForExistence(timeout: UITestTiming.transition)
     )
     return RulesScreen(app: app)
+  }
+
+  func openGeneralSettings() -> GeneralSettingsScreen {
+    app.typeKey(",", modifierFlags: .command)
+    let general = app.toolbars.buttons["General"]
+    XCTAssertTrue(general.waitForExistence(timeout: UITestTiming.transition))
+    general.click()
+    return GeneralSettingsScreen.waitForLanding(in: app)
   }
 
   func openEvidenceSettings() -> EvidenceScreen {

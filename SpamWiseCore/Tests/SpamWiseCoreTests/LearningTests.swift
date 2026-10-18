@@ -30,13 +30,39 @@ struct `learns from bounded corrections` {
     let examples = (0..<3).map {
       correction("advertisement \($0)", sender: "sender\($0)@shop.example", date: Double($0))
     }
-    let suggestions = PolicyDistiller.suggestions(from: examples)
+    let suggestions = PolicyDistiller.suggestions(from: examples, rules: [])
     #expect(suggestions.count == 1)
     #expect(suggestions.first?.domain == "shop.example")
     #expect(suggestions.first?.label == .junk)
     let good = correction("receipt", sender: "orders@shop.example", label: .inbox, date: 5)
-    #expect(PolicyDistiller.suggestions(from: examples + [good]).isEmpty)
-    #expect(PolicyDistiller.suggestions(from: Array(repeating: examples[0], count: 8)).isEmpty)
+    #expect(PolicyDistiller.suggestions(from: examples + [good], rules: []).isEmpty)
+    #expect(
+      PolicyDistiller.suggestions(from: Array(repeating: examples[0], count: 8), rules: []).isEmpty
+    )
+    let friends = (0..<3).flatMap { index in
+      ["gmail.com", "outlook.co.uk"].map {
+        correction(
+          "dinner \(index)",
+          sender: "friend\(index)@\($0)",
+          label: .inbox,
+          date: Double(index)
+        )
+      }
+    }
+    #expect(PolicyDistiller.suggestions(from: friends, rules: []).isEmpty)
+    let decided = [SenderRule(scope: .domain, value: "shop.example", disposition: .allow)]
+    #expect(PolicyDistiller.suggestions(from: examples, rules: decided).isEmpty)
+    var state = AppState()
+    state.corrections = examples + friends
+    state.record(
+      .init(
+        identity: .init(accountID: "account", contentHash: "news"),
+        sender: "news@shop.example",
+        decision: .init(label: .junk, action: .none, reason: .model("Unwanted")),
+        outcome: .dryRun
+      )
+    )
+    #expect(state.knownSenderCounts(atDomains: ["shop.example"]) == ["shop.example": 4])
   }
 
   @Test func `matches anchored campaigns and invalidates them after explicit good`() throws {
@@ -243,7 +269,7 @@ private func correction(
 ) -> CorrectionExample {
   var example = CorrectionExample(
     sender: sender,
-    domain: "shop.example",
+    domain: DomainResolver().domain(ofAddress: sender),
     subject: text,
     gist: text,
     label: label

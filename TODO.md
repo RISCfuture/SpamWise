@@ -56,7 +56,7 @@ out-of-box model or zero-shot preference handling. See
 - [x] TLS IMAP adapter and headless executable, with UIDVALIDITY/UID identity, SPECIAL-USE discovery, capability checks, disposable-message validation and verified move identities. Existing implementation retained; further development and live acceptance are deferred under the Mail.app-only scope.
 - [x] Local weekly digest of unresolved Review items, without sending email.
 - [x] Explicit Good/Junk/Review label collection and optional bounded reviewed-text export for later evaluation.
-- [x] Persistent conservative spending reservations. The authorized additional evaluation ceiling is $150, not a spending target.
+- [x] Production spending: an optional user-set monthly limit, off by default, reserves each paid request's token-bound maximum and settles it to measured usage. The conservative lifetime ledger is confined to `spamwise-eval`, which requires an explicit `--budget-store`; its authorized additional evaluation ceiling is $150, not a spending target.
 - [x] Retain unstarted persistent retries when cancellation interrupts a batch. Automated pre-cancellation and mid-batch checks reopen the store and resume remaining work; individual atomic claims reject superseded jobs.
 - [x] Mac App Store archive preflight and local export configuration. These do not submit or publish an app.
 - [x] Finish Spanish/French catalog verification, localized Help indexing and UI checks.
@@ -81,6 +81,7 @@ Spamhaus remains disabled until an eligible user configures [optional access](do
   - [x] Verify signed menu-bar Junk correction and Junk-review restore on one generated cross-account message, independently checking source and settled mailbox after each action. See [live corrections](docs/probes/live-corrections.md).
   - [x] Observe a fresh signed MailKit body callback after a graceful Mail restart and controlled delivery; verify post-Junk read status, closed-window scanning and persisted scan progress after app relaunch. See [live follow-up](docs/probes/live-mail-followup.md).
   - [ ] Complete fresh-user live onboarding, account bridging and controlled MailKit network/cancellation deadline observations.
+- [ ] Configure trusted authentication servers per account so the receipt-history gate can allow mail. Classification and history import supply none, so that gate never fires. Each account may trust only its own receiving servers, identified from real Authentication-Results headers. Before enabling it, make an address lose its authenticated receipt credit when one of its messages is later labeled Junk or Review, including corpus relabels, which create no block rule. Then confirm through the pipeline that a persisted receipt count without trusted aligned authentication never allows a sender.
 - [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. Existing 30-second cross-account observations are not a separate server acknowledgement; ambiguous same-account Sent copies remain untouched.
 - [ ] Measure automatic sweep latency on large and mutating mailboxes. Bounded repeating scans do not promise immediate coverage.
 - [ ] Calibrate general detectors on source-audited public holdouts and evaluate personalization incrementally on independently reviewed mail. No labeled personal corpus exists yet; it is not a universal-training or initial-use prerequisite. Conservative 99, Balanced 95 and Aggressive 90 remain provisional. Approximately 1,500 independent good examples with zero false positives are needed for a rule-of-three upper bound of 0.2%; this is an accuracy-claim criterion, and mock fixtures do not establish that target.
@@ -151,9 +152,12 @@ Parent items remain open until their full acceptance criteria are met.
   in controlled delivery tests and measured end-to-end latency, without Mail
   database access or Full Disk Access.
   - [x] Persist per-account paging and display scan health.
+  - [x] Check each account’s new Inbox mail first on every tick and Mail-rule trigger, then continue a bounded backfill to a per-account start boundary: setup completion, the time a later account is first checked or included, or the upgrade time for existing installations; IMAP reads UIDs above a per-UIDVALIDITY high-water mark first. Queue triggers that arrive during a scan, keep processed identities in a durable index independent of Activity, and filter older mail only through an explicit dry-run preview before applying. Verified offline against date-filtered fixtures. The page script orders date-filtered mail newest first by comparing its first and last received dates.
+  - [ ] Confirm in a live run that the date-filtered page script orders mail newest first and that Mail filters a large Inbox within the 8-second script limit; until then, a timeout on every tick would leave that account unfiltered.
   - [x] Keep oversized or unavailable sources from blocking later readable mail; persist unreadable counts, retry on the next sweep and preserve training claims on incomplete reads. Verify scoped decoding, restart progress and traversal boundaries offline. See [paging evidence and limits](docs/probes/unreadable-mail-pages.md).
   - [x] Verify controlled incoming delivery and body callback after clearing a stale runtime registration by graceful Mail restart; observe continuing scans with windows closed and after app relaunch.
   - [ ] Extend coverage to wake, OS restart, offline recovery and sustained mutating-mailbox latency.
+  - [ ] Add a Retry unclassified action to Activity so automatic discovery reconsiders mail that a persistent failure or exhausted transient retries settled, such as missing consent or credentials, without an unrelated settings change.
 
 - [ ] **SS-02 — Validate mailbox roles and multi-filter coexistence.** SpamSieve
   documents [distinguishing its actions from server filtering](https://c-command.com/spamsieve/help/spam-message-colors-in).
@@ -249,7 +253,7 @@ Parent items remain open until their full acceptance criteria are met.
   renames/removals without silently broadening scope; keep Junk rescue separate.
   Test server-routed mail and explicit historical refiltering without replaying
   old actions or allowing the message to establish its own trusted history.
-  - [x] Implement exact account/folder plans, date boundaries and cancellable dry-run refiltering.
+  - [x] Implement exact account/folder plans, folder-plan date boundaries and cancellable dry-run refiltering.
   - [x] Verify signed historical preview in a generated folder and fail-closed behavior after renaming that folder; the saved scope remains unchanged and the generated message stays untouched.
   - [ ] Extend coverage to actual server rules and reconnects.
 
@@ -362,7 +366,7 @@ Parent items remain open until their full acceptance criteria are met.
   - [x] Research Apple's distribution rules and document the store-first decision, Mail exception and remaining review gates.
   - [x] Add revocable provider mail-sharing permission, opt-in domain-age lookups and store-specific executable/PCC restrictions.
   - [x] Maintain a [MAS/direct functionality ledger](docs/distribution-differences.md), separating actual cuts from review gates and preserving dual-release options.
-  - [x] Add a separate direct target using the local library’s release-discovery product, manual checks and repository-derived release links; verify warning-free direct/store builds, configuration rejection and updater exclusion from store binaries. No release host is configured; see [updating](docs/updating.md).
+  - [x] Add a separate direct target using GitHubUpdateChecker’s release-discovery product, manual checks and repository-derived release links; verify warning-free direct/store builds, configuration rejection and updater exclusion from store binaries. No release host is configured; see [updating](docs/updating.md).
   - [x] Prepare and browser-check five static prerelease pages at desktop and mobile widths, with local assets and no analytics; finish local store signing through an isolated temporary Match keychain.
   - [x] Create the private `RISCfuture/SpamWise` repository and prepare a manually deployed Pages workflow, restricted site artifact, planned URLs and publication checklist. The owner uploaded both branches; [draft PR #1](https://github.com/RISCfuture/SpamWise/pull/1) is open and remote site validation passed. Deployment was skipped; publication remains subject to review.
   - [ ] Finish App Store feasibility gaps and release acceptance; support a possible parallel direct release through GitHub Releases and GitHubUpdateChecker, with tested channel switching and updater separation.

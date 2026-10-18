@@ -12,7 +12,10 @@ public actor Pipeline {
   let classifier: any Classifier
   let rdap: RDAPLookup?
   let threatDetector: (any ThreatDetector)?
-  private var inFlight: Set<String> = []
+  var inFlight: Set<String> = []
+  /// Processed-message index entries whose write failed, keyed by identity, awaiting another attempt.
+  var unrecordedResults: [String: (record: DecisionRecord, failure: ProcessingFailure?)] = [:]
+  var importedLegacyActivity = false
   /// Creates a Pipeline with the supplied configuration.
   public init(
     store: Store,
@@ -23,61 +26,94 @@ public actor Pipeline {
     self.store = store; self.classifier = classifier; self.rdap = rdap
     self.threatDetector = threatDetector
   }
-  /// Classifies, persists, then conditionally dispatches one message, failing open on errors.
+  /**
+   Classifies, persists, then conditionally dispatches one message, failing open on errors.
+
+   - Parameters:
+     - envelope: The message to process.
+     - adapter: The client that can act on the message.
+     - forceDryRun: Whether to suppress mail actions regardless of settings.
+     - timeout: Seconds allowed for classification.
+     - discovered: Whether automatic discovery found the message. Its result then settles in
+       the processed-message index even when a forced dry run previews it while filtering is
+       live; other forced previews leave the message due for live filtering.
+   */
   public func process(
     _ envelope: MailEnvelope,
     adapter: (any MailClientAdapter)? = nil,
     forceDryRun: Bool = false,
-    timeout: Double = 15
+    timeout: Double = 15,
+    discovered: Bool = false
   ) async -> DecisionRecord {
     let start = Date()
+    let current: AppState
+    do { current = try await StateRepository.load(store) } catch {
+      return await unprocessed(
+        envelope,
+        reason: DecisionReason(failure: error),
+        failure: Self.failureKind(error),
+        settles: discovered || !forceDryRun
+      )
+    }
+    let settings = current.settings.paused ? AdvancedSettings() : current.settings.advancedOptions
+    var (message, findings): (ParsedMessage, [String])
     do {
-      var message = try MIMEParser().parse(envelope.raw)
-      let current = try await StateRepository.load(store)
-      let settings = current.settings.paused ? AdvancedSettings() : current.settings.advancedOptions
-      var findings: [String] = []
-      if settings.textAttachments == true {
-        let inspection = try DocumentInspection(raw: envelope.raw)
-        message = inspection.message
-        findings += inspection.coverage.map { item in
-          switch item.status {
-            case .extracted: "Attachment text extracted; payload safety not assessed"
-            case .unsupported: "Unsupported attachment format; content and safety unknown"
-            case .unavailable: "Attachment decoding unavailable; content and safety unknown"
-          }
-        }
-      }
-      if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: envelope.raw) {
-        message.text += "\nEmbedded image text (untrusted):\n" + text
-      }
-      if !current.settings.mailOptions.localOnly,
-        let evidence = settings.externalEvidence,
-        let transport = evidence.selectedRspamdTransport,
-        transport == .loopbackHTTP || DistributionCapabilities.externalPrograms
-      {
-        findings.append(
-          await RspamdLookup(transport: transport, executablePath: evidence.rspamcPath)
-            .lookup(raw: envelope.raw, timeout: max(0, timeout - Date().timeIntervalSince(start)))
-            .summary
-        )
-      }
-      return await process(
-        message,
-        identity: envelope.identity,
+      (message, findings) = try Self.parse(envelope.raw, settings: settings)
+    } catch ParseError.unreadableSender {
+      return await reviewUnreadableSender(
+        envelope,
+        state: current,
         adapter: adapter,
         forceDryRun: forceDryRun,
-        timeout: max(0, timeout - Date().timeIntervalSince(start)),
-        auxiliaryFindings: findings
+        discovered: discovered
       )
     } catch {
-      let record = failure(
-        identity: envelope.identity,
-        reason: "unclassified: message parsing failed"
+      return await unprocessed(
+        envelope,
+        reason: .messageUnreadable,
+        failure: .unparseable,
+        settles: true,
+        revision: current.revision
       )
-      try? await save(record); return record
     }
+    if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: envelope.raw) {
+      message.text += "\nEmbedded image text (untrusted):\n" + text
+    }
+    if !current.settings.mailOptions.localOnly,
+      let evidence = settings.externalEvidence,
+      let transport = evidence.selectedRspamdTransport,
+      transport == .loopbackHTTP || DistributionCapabilities.externalPrograms
+    {
+      findings.append(
+        await RspamdLookup(transport: transport, executablePath: evidence.rspamcPath)
+          .lookup(raw: envelope.raw, timeout: max(0, timeout - Date().timeIntervalSince(start)))
+          .summary
+      )
+    }
+    return await process(
+      message,
+      identity: envelope.identity,
+      adapter: adapter,
+      forceDryRun: forceDryRun,
+      timeout: max(0, timeout - Date().timeIntervalSince(start)),
+      auxiliaryFindings: findings,
+      discovered: discovered
+    )
   }
-  /// Classifies, persists, then conditionally dispatches one message, failing open on errors.
+  /**
+   Classifies, persists, then conditionally dispatches one parsed message, failing open on errors.
+
+   - Parameters:
+     - message: The parsed message to process.
+     - identity: The message's client identity.
+     - adapter: The client that can act on the message.
+     - forceDryRun: Whether to suppress mail actions regardless of settings.
+     - timeout: Seconds allowed for classification.
+     - attempt: The retry attempt this call represents.
+     - auxiliaryFindings: Additional evidence summaries supplied to the classifier.
+     - discovered: Whether automatic discovery found the message; see
+       ``process(_:adapter:forceDryRun:timeout:discovered:)``.
+   */
   public func process(
     _ message: ParsedMessage,
     identity: MessageIdentity,
@@ -85,25 +121,33 @@ public actor Pipeline {
     forceDryRun: Bool = false,
     timeout: Double = 15,
     attempt: Int = 0,
-    auxiliaryFindings: [String] = []
+    auxiliaryFindings: [String] = [],
+    discovered: Bool = false
   ) async -> DecisionRecord {
     guard inFlight.insert(identity.key).inserted else {
-      var record = failure(identity: identity, reason: "Duplicate callback already in progress")
+      var record = failure(identity: identity, reason: .duplicateCallback)
       record.outcome = .duplicate; return record
     }
     defer { inFlight.remove(identity.key) }
     let start = Date()
     var revision = 0
+    var settles = discovered || !forceDryRun
     do {
       try Task.checkCancellation()
       let state = try await StateRepository.load(store); revision = state.revision
-      if !forceDryRun, let id = state.claimedActions[identity.key],
-        let previous = state.records.first(where: { $0.id == id })
-      {
-        return previous
+      settles = settles || state.settings.dryRun
+      if !forceDryRun, let id = state.claimedActions[identity.key] {
+        let claimed = await claimedResult(id, identity: identity, state: state)
+        await remember(claimed, discoveredAs: identity)
+        return claimed
       }
       if state.settings.paused {
-        return try await paused(message, identity: identity, revision: revision)
+        return try await paused(
+          identity: identity,
+          sender: message.fromAddress,
+          subject: message.subject,
+          revision: revision
+        )
       }
       let classification = try await classify(
         message,
@@ -116,6 +160,7 @@ public actor Pipeline {
       guard Date().timeIntervalSince(start) < timeout else { throw ClassificationError.timeout }
       let decision = try Decision.evaluate(
         classification.verdict,
+        reason: classification.reason,
         strength: state.settings.strength,
         review: state.settings.review
       )
@@ -135,28 +180,20 @@ public actor Pipeline {
       // Persist the explanation before an external action can be claimed.
       try await save(record)
       record = try await dispatch(record, adapter: adapter, forceDryRun: forceDryRun)
+      if settles { await remember(record, discoveredAs: identity) }
       return record
     } catch {
-      let reason: String
-      if let error = error as? ClassificationError {
-        reason = error.rawValue
-      } else if error is ContentRuleError {
-        reason = "content rule invalid or exceeded its evaluation deadline"
-      } else if error is BudgetError {
-        reason = "spending limit reached; no provider request was made"
-      } else if error is CancellationError {
-        reason = "cancelled"
-      } else {
-        reason = "persistence or integration unavailable"
-      }
       let record = failure(
         identity: identity,
         sender: message.fromAddress,
         subject: message.subject,
-        reason: "unclassified: " + reason,
+        reason: DecisionReason(failure: error),
         revision: revision
       )
-      try? await save(record)
+      try? await saveFailure(record)
+      if settles {
+        await remember(record, discoveredAs: identity, failure: Self.failureKind(error))
+      }
       await scheduleRetry(
         error: error,
         message: message,
@@ -166,20 +203,6 @@ public actor Pipeline {
       )
       return record
     }
-  }
-  private func paused(_ message: ParsedMessage, identity: MessageIdentity, revision: Int)
-    async throws -> DecisionRecord
-  {
-    let record = DecisionRecord(
-      identity: identity,
-      sender: message.fromAddress,
-      subject: message.subject,
-      decision: .init(label: nil, action: .none, reason: "Filtering paused"),
-      outcome: .paused,
-      revision: revision
-    )
-    try await save(record)
-    return record
   }
   private func scheduleRetry(
     error: any Error,
@@ -285,7 +308,6 @@ public actor Pipeline {
         record.outcome = .duplicate
       } else if adapter == nil || record.identity.accountID == nil
         || !state.settings.validatedAccounts.contains(record.identity.accountID ?? "")
-        || state.settings.route == .unverified
       {
         record.outcome = .integrationUnavailable
       } else {
@@ -314,8 +336,9 @@ public actor Pipeline {
         completed.actionError = [error.errorDescription, error.failureReason].compactMap { $0 }
           .joined(separator: " ")
       } else {
-        completed.actionError =
-          "Action failed or was cancelled; delivery status unknown. Not retried."
+        completed.actionError = String(
+          localized: "The Mail action failed or was cancelled; its result is unknown. Not retried."
+        )
       }
     }
     try await save(completed)
@@ -329,16 +352,38 @@ public actor Pipeline {
       return completed
     }
   }
-  private func save(_ record: DecisionRecord) async throws {
+  func save(_ record: DecisionRecord) async throws {
     try await StateRepository.update(store) { state in
       state.record(record)
     }
   }
-  private func failure(
+  func saveFailure(_ record: DecisionRecord) async throws {
+    try await StateRepository.update(store) { state in
+      if record.deferredBySpendingLimit {
+        state.records.removeAll {
+          $0.deferredBySpendingLimit && $0.identity.key == record.identity.key
+        }
+      }
+      state.record(record)
+    }
+  }
+  private func unprocessed(
+    _ envelope: MailEnvelope,
+    reason: DecisionReason,
+    failure kind: ProcessingFailure,
+    settles: Bool,
+    revision: Int = 0
+  ) async -> DecisionRecord {
+    let record = failure(identity: envelope.identity, reason: reason, revision: revision)
+    try? await save(record)
+    if settles { await remember(record, discoveredAs: envelope.identity, failure: kind) }
+    return record
+  }
+  func failure(
     identity: MessageIdentity,
-    sender: String = "Unknown",
-    subject: String = "Unclassified message",
-    reason: String,
+    sender: String? = nil,
+    subject: String? = nil,
+    reason: DecisionReason,
     revision: Int = 0
   ) -> DecisionRecord {
     DecisionRecord(

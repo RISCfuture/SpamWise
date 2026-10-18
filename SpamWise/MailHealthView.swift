@@ -25,8 +25,9 @@ struct MailHealthView: View {
             model.editSettings {
               var selected = $0.mailOptions.accountIDs ?? all
               if included { selected.insert(account.id) } else { selected.remove(account.id) }
-              $0.mailOptions.accountIDs = selected
+              $0.mailOptions.accountIDs = selected.isSuperset(of: all) ? nil : selected
             }
+            if included { model.startInboxFiltering(for: [account], replacing: true) }
           }
         )
       )
@@ -34,17 +35,18 @@ struct MailHealthView: View {
       if let health = model.scanHealth[account.id] {
         if let date = health.lastSuccess {
           LabeledContent("Last successful page", value: date.formatted())
-          LabeledContent("Observed Inbox messages", value: health.observedTotal.formatted())
-          LabeledContent("Next page offset", value: health.nextOffset.formatted())
+          LabeledContent("Messages since start", value: health.observedTotal.formatted())
+          LabeledContent("Backfill position", value: health.nextOffset.formatted())
           UnreadableMailView(count: health.unavailableCount)
         } else {
           Text("No successful scan yet")
         }
         if let failure = health.failure { Text(failure).textSelection(.enabled) }
       }
+      HistoricalInboxView(model: model, accountID: account.id)
     }
     Text(
-      "Mailbox changes can shift pages. Repeating sweeps revisit them; counts do not guarantee delivery."
+      "Checks read the newest Inbox mail first, then earlier pages. Counts do not guarantee delivery."
     )
     .foregroundStyle(.secondary)
   }

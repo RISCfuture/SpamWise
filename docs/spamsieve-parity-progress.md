@@ -42,8 +42,10 @@ No live API calls or test messages have been needed for this implementation batc
 - SS-10: staged content rules support subject, body, List-ID, recipients, Reply-To
   top-level content type, attachment names and attachment MIME types. Attachment
   metadata is an untrusted header claim and never opens a file. Sender rules precede content rules; newest matching
-  content rules precede relationship trust. Expressions have bounded input and a
-  shared evaluation deadline. Preview uses the selected Mail message without moving
+  content rules precede relationship trust. Each rule matches overlapping windows of
+  a bounded field prefix under its own time limit; an invalid or timed-out rule does
+  not match, is counted as skipped and keeps lower-precedence content rules from
+  deciding, so classification continues to relationship trust and the model. Preview uses the selected Mail message without moving
   it. Per-rule counts survive Activity truncation. Versioned content-rule import/export
   validates the entire archive before a single merge; repeated imports deduplicate.
 - SS-11: the reviewed corpus shows class balance, partition, label source and content
@@ -238,7 +240,8 @@ or paid API calls were created during this batch.
   dismissed; see [automation](automation.md).
 - [Direct release discovery](updating.md) is isolated from the store target and
   installer code. Release hosting, signed installation and channel migration
-  remain pending. The companion library commit is `eab9c1d`.
+  remain pending. The companion library release is
+  GitHubUpdateChecker 2.3.0 (`3ee903e`).
 
 Integrated verification passes 86 package tests, warning-free app/extension/archive
 builds, two UI flows, separate native intent status execution, strict lint and

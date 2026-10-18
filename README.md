@@ -2,7 +2,7 @@
 
 A macOS 27 Apple Mail filter with local sender rules, optional relationship evidence, and guided Claude classification. It never deletes mail. Inbox means no action, Review stays in Inbox with an annotation, and eligible Junk moves only to that account's resolved Junk mailbox.
 
-The app starts in dry run. MailKit records incoming dry runs; automatic Apple Events actions require a successful disposable-message probe for each account. Signed live Mail behavior and production thresholds still require the acceptance checks in [the runtime checklist](docs/probes/runtime-checklist.md).
+The app starts in dry run, and dry-run checks begin once Mail Automation is allowed. Leaving dry run requires an explicit confirmation after a read-only check that each account's Inbox and Junk mailboxes resolve uniquely; every live move is verified afterward and fails open. Signed live Mail behavior and production thresholds still require the acceptance checks in [the runtime checklist](docs/probes/runtime-checklist.md).
 
 The repository is [RISCfuture/SpamWise](https://github.com/RISCfuture/SpamWise),
 currently private while publication is reviewed. The prepared marketing, privacy
@@ -41,7 +41,7 @@ Use `swift format format -i -r SpamWise SpamWiseCore/Sources SpamWiseCore/Tests 
 
 Open `SpamWise.xcodeproj` and run the SpamWise scheme with signing configured for team `2NFSK2WB24`. Complete the four setup steps. API verification sends a synthetic message; recent-mail dry run sends eligible message context to Anthropic. The key is stored in Keychain only after successful verification. Contacts is optional. Do not grant Full Disk Access.
 
-For mail actions, select an explicitly disposable message beginning `[SpamWise Probe]`, run the account probe in Settings, install the bundled Mail rule script as described in Help, and review dry-run results before disabling dry run. Keep SpamWise running. Automatic scans advance through Inbox pages and repeat sweeps; large mailboxes and mailbox changes can delay discovery. Authorized Contacts refresh hourly, and bounded Sent/Inbox history updates run with automatic scans. The Inbox scanner does not automatically process server-routed Junk.
+For mail actions, check the Mail connection in Settings → Accounts to validate each account's mailboxes, optionally install the bundled Mail rule script as described in Help, and review dry-run results before turning off dry run. An optional `[SpamWise Probe]` move test is in Settings → Advanced. Keep SpamWise running. Automatic scans consider only mail received after setup (or after a later account is added or included), read each account's new Inbox mail first on every check, and then continue a bounded backfill; mailbox changes can delay discovery of backfilled mail. Older mail is filtered only through an explicit preview in Settings. Authorized Contacts refresh hourly, and bounded Sent/Inbox history updates run with automatic scans. The Inbox scanner does not automatically process server-routed Junk.
 
 ## Evaluation and packaging
 

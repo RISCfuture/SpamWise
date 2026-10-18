@@ -51,9 +51,8 @@ def state_for(case, preference, condition):
             "correctionLimit": 2,
             "bodyTokenBudget": 1500,
             "onboardingComplete": False,
-            "route": "unverified",
+            "route": "mailRule",
             "validatedAccounts": [],
-            "callbackDeadline": 10,
         },
         "rules": [],
         "corrections": examples,
@@ -128,8 +127,8 @@ def prepare(output):
     return runs
 
 
-def evaluate(executable, output, run, live):
-    """Invoke one isolated CLI run; credentials remain inside the Keychain helper."""
+def evaluate(executable, output, run, budget_store):
+    """Invoke one isolated CLI run, live when an evaluation budget store is supplied."""
     directory = output / run["id"]
     arguments = [
         "--input",
@@ -148,8 +147,10 @@ def evaluate(executable, output, run, live):
             str(executable),
             "claude",
             "--live",
+            "--budget-store",
+            str(budget_store),
         ]
-        if live
+        if budget_store
         else [str(executable), "--model", "mock"]
     )
     completed = subprocess.run(
@@ -186,12 +187,12 @@ def evaluate(executable, output, run, live):
     return result
 
 
-def execute(executable, output, runs, live):
+def execute(executable, output, runs, budget_store):
     """Stop after any unsuccessful case without retries, fallback or extra calls."""
     results = []
     for run in runs:
         try:
-            result = evaluate(executable, output, run, live)
+            result = evaluate(executable, output, run, budget_store)
         except (OSError, ValueError, KeyError, subprocess.TimeoutExpired):
             result = {**run, "status": "evaluation_interrupted"}
         results.append(result)
@@ -199,11 +200,11 @@ def execute(executable, output, runs, live):
             output / "results.json",
             {
                 "synthetic": True,
-                "mode": "live" if live else "offline_mock",
+                "mode": "live" if budget_store else "offline_mock",
                 "fine_tuning": False,
-                "model": "claude-haiku-5-5" if live else "mock",
+                "model": "claude-haiku-5-5" if budget_store else "mock",
                 "maximum_reservation_usd": round(len(results) * RESERVATION_USD, 2)
-                if live
+                if budget_store
                 else 0,
                 "completed": len(results) == len(runs)
                 and result["status"] == "classified",
@@ -221,13 +222,19 @@ def main():
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--live", action="store_true")
+    parser.add_argument("--budget-store", type=Path)
     args = parser.parse_args()
+    if args.live != (args.budget_store is not None):
+        parser.error("--live and --budget-store must be supplied together")
     previous_umask = os.umask(0o077)
     try:
         args.output.mkdir(mode=0o700, parents=True, exist_ok=False)
         runs = prepare(args.output)
         results = execute(
-            args.executable.resolve(), args.output.resolve(), runs, args.live
+            args.executable.resolve(),
+            args.output.resolve(),
+            runs,
+            args.budget_store.resolve() if args.live else None,
         )
     finally:
         os.umask(previous_umask)

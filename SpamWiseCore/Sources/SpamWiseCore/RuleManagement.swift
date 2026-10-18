@@ -112,3 +112,23 @@ public enum RuleManagement {
   }
   private struct Archive: Codable { var version = 1; var rules: [SenderRule] }
 }
+
+extension AppState {
+  /// Counts the distinct senders seen in Activity or corrections at each registrable domain.
+  public func knownSenderCounts(atDomains domains: Set<String>) -> [String: Int] {
+    let domains = Set(domains.map { $0.lowercased() })
+    guard !domains.isEmpty else { return [:] }
+    let resolver = DomainResolver()
+    let senders = Set(
+      (records.compactMap(\.sender) + corrections.map(\.sender)).map { $0.lowercased() }
+    )
+    var counts: [String: Int] = [:]
+    for sender in senders {
+      guard let domain = resolver.domain(ofAddress: sender), domains.contains(domain) else {
+        continue
+      }
+      counts[domain, default: 0] += 1
+    }
+    return counts
+  }
+}

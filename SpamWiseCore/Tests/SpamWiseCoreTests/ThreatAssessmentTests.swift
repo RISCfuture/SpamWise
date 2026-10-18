@@ -33,7 +33,7 @@ import SpamWiseCore
     threatDetector: detector
   )
   let trusted = await pipeline.process(selected, adapter: adapter)
-  #expect(trusted.path == "gate")
+  #expect(trusted.path == .gate)
   #expect(trusted.decision.action == .none)
   #expect(trusted.threats?.finding(for: .phishing)?.status == .detected)
   #expect(trusted.threats?.finding(for: .malware)?.status == .unknown)

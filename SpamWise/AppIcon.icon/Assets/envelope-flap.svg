@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <mask id="shield-gap" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#FFFFFF"/>
+      <path d="M754,447 C822,486.1 878.8,497.4 924,497.4 L924,648.6 C924,760.7 844.8,827.9 754,867 C663.2,827.9 584,760.7 584,648.6 L584,497.4 C629.2,497.4 686,486.1 754,447 Z" fill="#000000" stroke="#000000" stroke-width="72" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <path d="M164,215 L445,425.8 L726,215" fill="none" stroke="#7896CC" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" mask="url(#shield-gap)"/>
+</svg>

@@ -39,6 +39,12 @@ struct ProviderConsentView: View {
         Enabled attachment/OCR text may be included. Mail can contain sensitive information.
         """
       ).foregroundStyle(.secondary)
+      Text(
+        """
+        Automatic filtering covers only mail received after setup. Older mail is sent to your \
+        provider only when you preview it.
+        """
+      ).foregroundStyle(.secondary)
       if backend == .gemini {
         Text(
           """

@@ -10,7 +10,6 @@ import MailIntegration
   var port = "993"
   var credential = ""
   var oauthBearer = false
-  var probeUID = ""
   var accountID = "imap:" + UUID().uuidString
   var status = String(localized: "Configure a separate IMAP connection.")
   var busy = false
@@ -37,7 +36,8 @@ import MailIntegration
         try await save(connection, secret: secret, store: store)
         await model.refresh()
         status = String(
-          localized: "Connection saved. Dry run is enabled; validate the account before actions."
+          localized:
+            "Connection saved. Dry run is enabled; check the connection to validate its mailboxes."
         )
       } catch {
         status = String(
@@ -47,18 +47,23 @@ import MailIntegration
     }
   }
   func check() {
+    guard let store = model.store else { return }
     busy = true
     Task {
       defer { busy = false }
       do {
         let adapter = try await model.configuredIMAPAdapter(validateConnection: false)
         let result = try await adapter.validateReadOnly()
+        let connection = try await IMAPAppConnection.load(from: store)
+        let validated = try await IMAPAccountValidation.record(
+          result,
+          for: connection.account,
+          store: store
+        )
+        await model.refresh()
         status =
-          result.supportsMove && result.junkMailbox != nil
-          ? String(
-            localized:
-              "Read-only check passed. Disposable-message validation is still required for actions."
-          )
+          validated
+          ? String(localized: "Read-only check passed. Inbox and Junk mailboxes are validated.")
           : String(
             localized:
               "Read-only check passed. This server lacks a supported MOVE capability or unique Junk mailbox."
@@ -67,29 +72,6 @@ import MailIntegration
         status = String(
           localized:
             "IMAP check failed. Verify the saved endpoint, credentials and server capabilities."
-        )
-      }
-    }
-  }
-  func probe() {
-    guard let uid = UInt32(probeUID), uid > 0, let store = model.store else { return }
-    busy = true
-    Task {
-      defer { busy = false }
-      do {
-        let connection = try await IMAPAppConnection.load(from: store)
-        let adapter = try await model.configuredIMAPAdapter()
-        _ = try await adapter.testDisposableMessage(uid: uid)
-        try await IMAPAccountValidation.record(connection.account, store: store)
-        await model.refresh()
-        status = String(
-          localized:
-            "Probe restored to Inbox. Account validated; inspect the message before disabling dry run."
-        )
-      } catch {
-        status = String(
-          localized:
-            "Probe failed or its outcome is uncertain. Inspect the message manually; no uncertain move is retried."
         )
       }
     }

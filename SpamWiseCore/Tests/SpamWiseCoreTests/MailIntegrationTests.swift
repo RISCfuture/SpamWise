@@ -66,6 +66,13 @@ actor StubAppleEvents: AppleEventRunner {
     try await probe.testDisposableMessage()
   }
   #expect(await unstable.moves == 1)
+  let ordinary = ScriptValue.list([
+    .string("account"), .string("Inbox"), .integer(1), .string("id"),
+    .string(raw.replacingOccurrences(of: "[SpamWise Probe]", with: "Ordinary"))
+  ])
+  await #expect(throws: IntegrationError.notProbeMessage) {
+    try await AppleMailAdapter(runner: StubAppleEvents(ordinary)).testDisposableMessage()
+  }
   let junk = ScriptValue.list([
     .string("account"), .string("Junk"), .integer(2), .string("id"), .string(raw)
   ])
@@ -81,6 +88,62 @@ actor StubAppleEvents: AppleEventRunner {
       == "account"
   )
   #expect(await settled.moves == 2)
+}
+@Test func `previews extension mail only on the chosen all-account Apple Mail route`() async throws
+{
+  let store = try testStore(), calls = Counter()
+  let classifier = MockClassifier { _ in
+    calls.increment()
+    return .init(label: .junk, confidence: 99, reason: "Synthetic spam")
+  }
+  let raw = try fixture("filler-spam")
+  func preview(_ edit: @Sendable (inout Settings) -> Void) async throws -> DecisionRecord? {
+    try await StateRepository.update(store) { state in
+      state.settings = Settings(); state.settings.onboardingComplete = true
+      edit(&state.settings)
+    }
+    return try await MailExtensionPreview.process(
+      raw: raw,
+      store: store,
+      classifier: classifier,
+      timeout: 1
+    )
+  }
+  #expect(try await preview { _ in } == nil)
+  #expect(
+    try await preview {
+      $0.route = .mailKit; $0.mailOptions.accountIDs = ["work"]
+    } == nil
+  )
+  #expect(
+    try await preview {
+      $0.route = .mailKit; $0.advancedOptions.transport = .imap
+    } == nil
+  )
+  #expect(
+    try await preview {
+      $0.route = .mailKit; $0.paused = true
+    } == nil
+  )
+  #expect(
+    try await preview {
+      $0.route = .mailKit; $0.onboardingComplete = false
+    } == nil
+  )
+  #expect(calls.value == 0)
+  #expect(try await StateRepository.load(store).records.isEmpty)
+
+  let previewed = try await preview {
+    $0.route = .mailKit; $0.dryRun = false
+  }
+  #expect(previewed?.outcome == .dryRun)
+  #expect(calls.value == 1)
+
+  var settings = try await StateRepository.load(store).settings
+  #expect(FilteringStatus(settings: settings, mailAutomation: .granted) == .extensionPreview)
+  settings.mailOptions.accountIDs = ["work"]
+  #expect(FilteringStatus(settings: settings, mailAutomation: .granted) == .extensionScoped)
+  #expect(!FilteringStatus(settings: settings, mailAutomation: .granted).allowsAutomaticChecks)
 }
 @Test func `invokes completion exactly once under concurrent calls`() async {
   let count = Counter()
@@ -122,6 +185,15 @@ final class Counter: Sendable {
     MailScripts.recent(limit: 5, offset: 20),
     MailScripts.accountPage(accountID: "test-account", offset: 20, limit: 5),
     MailScripts.accountPage(accountID: "test-account", offset: 0, limit: 5, role: "junk mailbox"),
+    MailScripts.accountPage(
+      accountID: "test-account",
+      offset: 0,
+      limit: 5,
+      role: "sent mailbox",
+      headersOnly: true
+    ),
+    MailScripts.accountPage(accountID: "test-account", offset: 0, limit: 5, since: Date()),
+    MailScripts.accountPage(accountID: "test-account", offset: 20, limit: 5, before: Date()),
     try MailScripts.resolve(identity, operation: "open targetMessage\nreturn true"),
     try MailScripts.lookup(identity),
     try MailScripts.lookup(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody"),
@@ -138,64 +210,9 @@ final class Counter: Sendable {
   }
 }
 
-private struct HistoryEvents: AppleEventRunner {
-  func run(_ source: String) async throws -> ScriptValue {
-    if source.contains("messages of sent mailbox") { return .list([]) }
-    return .list([
-      .list([
-        .string("account"), .string("Inbox"), .integer(1), .string("receipt"),
-        .string("From: orders@shop.example.org\nSubject: Your receipt\n\nOrder 123 total USD 10")
-      ])
-    ])
-  }
-}
-@Test func `retains prior history and deduplicates repeated imports`() async throws {
-  let adapter = AppleMailAdapter(runner: HistoryEvents())
-  var old = HistoryIndex()
-  old.received["prior.example"] = 4
-  let excluded = try await adapter.importHistory(
-    previous: ["account": old],
-    eligibleInbox: [],
-    incremental: true
-  )
-  #expect(excluded["account"]?.receipts.isEmpty == true)
-  let first = try await adapter.importHistory(previous: ["account": old])
-  let second = try await adapter.importHistory(previous: first)
-  #expect(second["account"]?.received["prior.example"] == 4)
-  #expect(second["account"]?.received["example.org"] == 1)
-  #expect(second["account"]?.receipts["example.org"] == 1)
-  #expect(second["account"]?.availability == .partial)
-}
-
-private actor PagedEvents: AppleEventRunner {
-  private var offsets: [Int] = []
-  func run(_ source: String) async throws -> ScriptValue {
-    let marker = "set firstIndex to "
-    guard let start = source.range(of: marker)?.upperBound,
-      let first = Int(source[start...].prefix(while: \.isNumber))
-    else {
-      throw IntegrationError.scriptFailed
-    }
-    offsets.append(first)
-    if first > 21 { return .list([]) }
-    return .list(
-      (first...min(21, first + 19)).map { index in
-        .list([
-          .string("account"), .string("Inbox"), .integer(index), .string("id-\(index)"),
-          .string("From: person@example.org\nSubject: Message \(index)\n\nHello")
-        ])
-      }
-    )
-  }
-}
-@Test func `advances Inbox sweeps beyond the retained first page and wraps`() async throws {
-  let adapter = AppleMailAdapter(runner: PagedEvents())
-  let first = try await adapter.nextInboxMessages(limit: 20)
-  let second = try await adapter.nextInboxMessages(limit: 20)
-  let wrapped = try await adapter.nextInboxMessages(limit: 20)
-  #expect(first.count == 20)
-  #expect(second.map { $0.identity.localID } == [21])
-  #expect(wrapped.map { $0.identity.key } == first.map { $0.identity.key })
+@Test func `resumes Inbox sweeps past unreadable messages and wraps after the last page`()
+  async throws
+{
   let store = try testStore()
   try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
     $0.complete(count: 20, total: 21)

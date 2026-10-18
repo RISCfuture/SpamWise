@@ -63,4 +63,7 @@ public struct IMAPValidation: Sendable, Equatable {
   public var sentMailbox: String?
   /// Inbox UID namespace observed during validation.
   public var inboxValidity: UInt64
+
+  /// Server can move mail atomically into a unique Junk mailbox.
+  public var movesToJunk: Bool { supportsMove && junkMailbox != nil }
 }

@@ -6,13 +6,17 @@ struct MailConnectionView: View {
 
   var body: some View {
     Section("Apple Mail") {
-      Text("Allow Automation when asked. Enable SpamWise in Mail → Settings → Extensions.")
+      Text("Allow Automation when asked.")
       Button("Check Mail connection") { model.checkMail() }
         .accessibilityIdentifier("mail.check").disabled(model.busy)
       Text(model.mailStatus).textSelection(.enabled)
         .accessibilityIdentifier(
           model.mailPermissionDenied ? "mail.permissionDenied" : "mail.status"
         )
+      LabeledContent(
+        "Validated accounts",
+        value: model.state.settings.validatedAccounts.count.formatted()
+      )
     }
     Section {
       DisclosureGroup("Accounts and scan health") {
@@ -35,37 +39,18 @@ struct MailConnectionView: View {
         Button("Import Inbox and Sent history") { model.importHistory() }
           .frame(maxWidth: .infinity, alignment: .leading)
       }
-      DisclosureGroup("Enable mail actions") {
-        MailActionSetupView(model: model)
+      DisclosureGroup("Mail rule") {
+        MailRuleSetupView(model: model)
       }
     }.disabled(model.busy)
   }
 }
 
-private struct MailActionSetupView: View {
+private struct MailRuleSetupView: View {
   let model: AppModel
 
   var body: some View {
-    Text(
-      """
-      Select one disposable Inbox message from another account with a subject beginning [SpamWise \
-      Probe]. The test moves it to Junk and back, then adds an orange flag.
-      """
-    )
-    Text(
-      """
-      Each move is checked after 30 seconds. If restoration fails, restore the message manually. \
-      Repeat for each account.
-      """
-    )
-    .foregroundStyle(.secondary)
-    Button("Test selected disposable message") { model.testDisposableMessage() }
-    LabeledContent(
-      "Validated accounts",
-      value: model.state.settings.validatedAccounts.count.formatted()
-    )
-    Text("After validation, inspect the message before turning off dry run in General.")
-      .foregroundStyle(.secondary)
+    Text("Optionally run the bundled script from a Mail rule so new mail is checked as it arrives.")
     HStack {
       Button("Show Mail rule script in Finder") { model.revealRule() }
       Spacer()
@@ -83,6 +68,6 @@ private struct MailActionSetupView: View {
   model.mailStatus = AppModel.describe(IntegrationError.permissionDenied)
   return Form { MailConnectionView(model: model) }.formStyle(.grouped)
 }
-#Preview("Action setup") {
-  Form { MailActionSetupView(model: PreviewHelper.model()) }.formStyle(.grouped)
+#Preview("Mail rule") {
+  Form { MailRuleSetupView(model: PreviewHelper.model()) }.formStyle(.grouped)
 }

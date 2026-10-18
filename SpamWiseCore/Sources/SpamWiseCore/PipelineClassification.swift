@@ -6,6 +6,23 @@ extension Pipeline {
   private static let minimumDomainLookupTimeSec = 0.01
   private static let domainLookupBudgetDivisor = 3.0
   private static let contactFreshnessSec = 86_400.0
+  private static let maximumRuleNoteCharacters = 120
+  private static func decodingFindings(_ message: ParsedMessage) -> [String] {
+    guard let issues = message.decodingIssues else { return [] }
+    return [
+      "Message decoding degraded (\(issues.map(\.rawValue).joined(separator: ", "))); "
+        + "affected text may be garbled"
+    ]
+  }
+  private static func deterministicVerdict(_ label: MailLabel, _ reason: DecisionReason) -> Verdict
+  {
+    Verdict(
+      label: label,
+      confidence: 100,
+      reason: reason.diagnosticDescription,
+      usage: .init(estimated: false)
+    )
+  }
   func classify(
     _ message: ParsedMessage,
     identity: MessageIdentity,
@@ -14,74 +31,21 @@ extension Pipeline {
     auxiliaryFindings: [String]
   ) async throws -> Classification {
     var evidence = relationshipEvidence(message, identity: identity, state: state)
-    evidence.auxiliaryFindings = auxiliaryFindings.isEmpty ? nil : auxiliaryFindings
-    let verdict: Verdict, path: String
+    let findings = Self.decodingFindings(message) + auxiliaryFindings
+    evidence.auxiliaryFindings = findings.isEmpty ? nil : findings
+    let verdict: Verdict, path: DecisionPath, reason: DecisionReason
     if let gate = try await deterministicGate(message, evidence: evidence, state: state) {
-      path = "gate"
-      verdict = Verdict(
-        label: gate.disposition == .allow ? .inbox : .junk,
-        confidence: 100,
-        reason: gate.reason,
-        usage: .init(estimated: false)
-      )
+      (path, reason) = (.gate, .gate(gate.reason))
+      verdict = Self.deterministicVerdict(gate.disposition == .allow ? .inbox : .junk, reason)
     } else if state.settings.advancedOptions.fingerprints,
       state.learning?.campaignMatch(for: message) != nil
     {
-      path = "fingerprint"
-      verdict = Verdict(
-        label: .junk,
-        confidence: 100,
-        reason: "gate: anchored match to explicitly junked campaign",
-        usage: .init(estimated: false)
-      )
+      (path, reason) = (.fingerprint, .campaign)
+      verdict = Self.deterministicVerdict(.junk, reason)
     } else {
-      path = "model"
-      let advanced = state.settings.advancedOptions
-      evidence = await enrich(
-        message,
-        evidence: evidence,
-        settings: advanced,
-        localOnly: state.settings.mailOptions.localOnly,
-        timeout: budget.timeout - Date().timeIntervalSince(budget.start)
-      )
-      if advanced.bayes || advanced.learnedWeights,
-        let estimate = state.learning?.estimate(message: message, evidence: evidence)
-      {
-        if advanced.bayes { evidence.bayesLogOdds = estimate.bayesLogOdds }
-        if advanced.learnedWeights { evidence.learnedMargin = estimate.logisticMargin }
-      }
-      let remaining = min(
-        Self.maximumClassificationTimeSec,
-        budget.timeout - Date().timeIntervalSince(budget.start)
-      )
-      guard remaining > 0 else { throw ClassificationError.timeout }
-      let input = ClassificationInput(
-        message: message,
-        evidence: evidence,
-        policy: state.settings.policy,
-        corrections: advanced.retrieveExamples
-          ? CorrectionRetrieval.examples(
-            for: message,
-            from: state.corrections,
-            limit: state.settings.correctionLimit
-          )
-          : state.corrections,
-        correctionLimit: state.settings.correctionLimit,
-        bodyTokenBudget: state.settings.bodyTokenBudget,
-        timeout: remaining
-      )
-      let classifier = self.classifier
-      verdict = try await withDeadline(seconds: remaining) {
-        try await classifier.classify(input)
-      }.validated()
-      if advanced.bayes {
-        try await trainPrediction(
-          message,
-          evidence: evidence,
-          verdict: verdict,
-          revision: state.revision
-        )
-      }
+      path = .model
+      verdict = try await modelVerdict(message, evidence: &evidence, state: state, budget: budget)
+      reason = .model(verdict.reason)
     }
     let threats = try await assessThreats(
       message: message,
@@ -90,7 +54,67 @@ extension Pipeline {
       localOnly: state.settings.mailOptions.localOnly,
       remainingTimeSec: budget.timeout - Date().timeIntervalSince(budget.start)
     )
-    return Classification(verdict: verdict, evidence: evidence, path: path, threats: threats)
+    return Classification(
+      verdict: verdict,
+      reason: reason,
+      evidence: evidence,
+      path: path,
+      threats: threats
+    )
+  }
+  private func modelVerdict(
+    _ message: ParsedMessage,
+    evidence: inout EvidenceBundle,
+    state: AppState,
+    budget: (start: Date, timeout: Double)
+  ) async throws -> Verdict {
+    let advanced = state.settings.advancedOptions
+    evidence = await enrich(
+      message,
+      evidence: evidence,
+      settings: advanced,
+      localOnly: state.settings.mailOptions.localOnly,
+      timeout: budget.timeout - Date().timeIntervalSince(budget.start)
+    )
+    if advanced.bayes || advanced.learnedWeights,
+      let estimate = state.learning?.estimate(message: message, evidence: evidence)
+    {
+      if advanced.bayes { evidence.bayesLogOdds = estimate.bayesLogOdds }
+      if advanced.learnedWeights { evidence.learnedMargin = estimate.logisticMargin }
+    }
+    let remaining = min(
+      Self.maximumClassificationTimeSec,
+      budget.timeout - Date().timeIntervalSince(budget.start)
+    )
+    guard remaining > 0 else { throw ClassificationError.timeout }
+    let input = ClassificationInput(
+      message: message,
+      evidence: evidence,
+      policy: state.settings.policy,
+      corrections: advanced.retrieveExamples
+        ? CorrectionRetrieval.examples(
+          for: message,
+          from: state.corrections,
+          limit: state.settings.correctionLimit
+        )
+        : state.corrections,
+      correctionLimit: state.settings.correctionLimit,
+      bodyTokenBudget: state.settings.bodyTokenBudget,
+      timeout: remaining
+    )
+    let classifier = self.classifier
+    let verdict = try await withDeadline(seconds: remaining) {
+      try await classifier.classify(input)
+    }.validated()
+    if advanced.bayes {
+      try await trainPrediction(
+        message,
+        evidence: evidence,
+        verdict: verdict,
+        revision: state.revision
+      )
+    }
+    return verdict
   }
   private func deterministicGate(
     _ message: ParsedMessage,
@@ -106,21 +130,47 @@ extension Pipeline {
     ) {
       return senderRule
     }
-    if let rule = try ContentRules.matches(state.contentRules ?? [], message: message).first {
-      try await StateRepository.update(store) { current in
-        guard current.revision == state.revision else { return }
-        if current.contentRuleHits == nil { current.contentRuleHits = [:] }
-        current.contentRuleHits?[rule.id, default: 0] += 1
-      }
-      return GateResult(rule.disposition, "gate: user content rule \(rule.id.uuidString)")
+    let contentRules = ContentRules.evaluate(state.contentRules ?? [], message: message)
+    try? await record(contentRules, revision: state.revision)
+    if let rule = contentRules.decisive {
+      let note = rule.note.trimmingCharacters(in: .whitespacesAndNewlines)
+      return GateResult(
+        rule.disposition,
+        .contentRule(
+          id: rule.id,
+          disposition: rule.disposition,
+          note: note.isEmpty ? nil : String(note.prefix(Self.maximumRuleNoteCharacters))
+        )
+      )
     }
     return Gates.evaluate(
       address: message.fromAddress,
       domain: evidence.fromDomain,
       rules: [],
       contact: evidence.contact,
-      history: evidence.senderHistory
+      history: evidence.senderHistory,
+      authentication: evidence.senderAuthentication
     )
+  }
+  private func record(_ contentRules: ContentRuleEvaluation, revision: Int) async throws {
+    let winner = contentRules.decisive?.id,
+      skipped = contentRules.skipped.keys.map { ($0, 1) }
+    guard winner != nil || !skipped.isEmpty else { return }
+    try await StateRepository.update(store) { current in
+      guard current.revision == revision else { return }
+      if let winner {
+        current.contentRuleHits = (current.contentRuleHits ?? [:]).merging(
+          [winner: 1],
+          uniquingKeysWith: +
+        )
+      }
+      if !skipped.isEmpty {
+        current.contentRuleSkips = (current.contentRuleSkips ?? [:]).merging(
+          skipped,
+          uniquingKeysWith: +
+        )
+      }
+    }
   }
   private func trainPrediction(
     _ message: ParsedMessage,
@@ -216,8 +266,9 @@ extension Pipeline {
   }
   struct Classification {
     var verdict: Verdict
+    var reason: DecisionReason
     var evidence: EvidenceBundle
-    var path: String
+    var path: DecisionPath
     var threats: ThreatAssessment
   }
 }

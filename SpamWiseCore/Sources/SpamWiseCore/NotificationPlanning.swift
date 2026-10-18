@@ -54,7 +54,7 @@ public enum NotificationPlanning {
       $0.max { $0.date < $1.date }
     }
     let eligible = latest.filter {
-      $0.date >= since && $0.date <= now && $0.correctedLabel == nil && $0.path != "verification"
+      $0.date >= since && $0.date <= now && $0.correctedLabel == nil && $0.path != .verification
         && [.applied, .noAction, .failed, .requested].contains($0.outcome)
         && ($0.decision.label == .review
           || (preferences.includeGood && $0.decision.label == .inbox))

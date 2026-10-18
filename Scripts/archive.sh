@@ -19,6 +19,7 @@ xcodebuild -project SpamWise.xcodeproj -scheme SpamWise -destination 'generic/pl
   -archivePath "$archive" ENABLE_HARDENED_RUNTIME=YES SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
   SWIFT_SUPPRESS_WARNINGS=NO "${signing[@]}" archive 2>&1 | tee "$build_root/archive.log" | xcbeautify
 if rg -n 'warning:|error:' "$build_root/archive.log"; then exit 1; fi
+bash Scripts/check-app-icon.sh "$archive/Products/Applications/SpamWise.app"
 if [[ "$mode" == unsigned ]]; then exit 0; fi
 cat > "$build_root/ExportOptions.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -33,6 +34,7 @@ xcodebuild -exportArchive -archivePath "$archive" -exportPath "$build_root/expor
   -exportOptionsPlist "$build_root/ExportOptions.plist" -allowProvisioningUpdates \
   2>&1 | tee "$build_root/export.log" | xcbeautify
 app="$build_root/export/SpamWise.app"
+bash Scripts/check-app-icon.sh "$app"
 codesign --verify --deep --strict --verbose=2 "$app"
 codesign --display --verbose=4 "$app"
 if [[ -n "${3:-}" ]]; then

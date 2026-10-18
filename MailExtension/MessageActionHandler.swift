@@ -17,30 +17,20 @@ final class MessageActionHandler: NSObject, MEMessageActionHandler {
   ) {
     let completion = CompletionOnce(completionHandler)
     guard message.state == .received else { completion.finish(nil); return }
-    guard let raw = message.rawData else { completion.finish(.invokeAgainWithBody); return }
-    // MailKit provides no account identifier, so this route records dry runs only.
-    let identity = MessageIdentity(accountID: nil, contentHash: stableHash(raw))
+    let raw = message.rawData
     let work = Task {
       do {
         let store = try Store(url: Store.sharedURL())
-        try await StateRepository.update(store) { state in
-          state.lastExtensionCallback = .now; state.lastBodyCallback = .now
+        if let raw {
+          _ = try await MailExtensionPreview.process(
+            raw: raw,
+            store: store,
+            classifier: ConfiguredClassifier(store: store),
+            timeout: Self.maximumClassificationTimeSec
+          )
+        } else if MailExtensionPreview.allows(try await StateRepository.load(store).settings) {
+          completion.finish(.invokeAgainWithBody); return
         }
-        let state = try await StateRepository.load(store)
-        guard !state.settings.paused, state.settings.onboardingComplete,
-          state.settings.route != .mailRule, state.settings.route != .imap
-        else {
-          completion.finish(nil); return
-        }
-        let pipeline = Pipeline(
-          store: store,
-          classifier: ConfiguredClassifier(store: store)
-        )
-        _ = await pipeline.process(
-          .init(identity: identity, raw: raw),
-          forceDryRun: true,
-          timeout: min(Self.maximumClassificationTimeSec, state.settings.callbackDeadline)
-        )
       } catch { /* Fail open if App Group/Keychain/persistence is unavailable. */  }
       completion.finish(nil)
     }

@@ -11,6 +11,15 @@ public actor IMAPAdapter: MailClientAdapter {
   private let transport: @Sendable (IMAPConfiguration) throws -> any IMAPTransport
   private var validated = false
   private var sweepCursor = IMAPSweepCursor()
+  private var sweepCursorKey: String {
+    "imap-sweep-v1:"
+      + stableHash(
+        Data(
+          [configuration.id, configuration.host, String(configuration.port), configuration.username]
+            .joined(separator: "\u{0}").utf8
+        )
+      )
+  }
   /// Creates an adapter. Inject a transport for offline tests; the default verifies TLS using Network.framework.
   public init(
     configuration: IMAPConfiguration,
@@ -54,46 +63,36 @@ public actor IMAPAdapter: MailClientAdapter {
   public func recentMessages(limit: Int) async throws -> [MailEnvelope] {
     try await messages(mailbox: "INBOX", limit: limit)
   }
-  /// Advances bounded Inbox pages and restarts after the oldest page; an optional store preserves progress across instances.
-  public func nextInboxMessages(limit: Int, cursorStore: Store? = nil) async throws
-    -> [MailEnvelope]
+  /**
+   Reads new Inbox mail, then one backfill page toward the account's start boundary.
+
+   The first sweep for a UIDVALIDITY records the highest existing UID as the boundary and reads
+   nothing; later sweeps only return messages whose UIDs exceed it. Each sweep first reads every
+   message above the highest UID already read, oldest first and within a budget, and reads the
+   backfill page only once it has caught up. Nothing advances until ``commit(_:cursorStore:)``,
+   so mail from a sweep whose processing stopped early is read again as new mail.
+   */
+  public func nextInboxSweep(limit: Int, cursorStore: Store? = nil) async throws
+    -> IMAPInboxSweep
   {
-    guard limit > 0 else { return [] }
+    let saved = try await cursorStore?.read(sweepCursorKey, default: sweepCursor) ?? sweepCursor
+    guard limit > 0 else { return IMAPInboxSweep(messages: [], cursor: saved) }
     let account = configuration.id
-    let key =
-      "imap-sweep-v1:"
-      + stableHash(
-        Data(
-          [account, configuration.host, String(configuration.port), configuration.username].joined(
-            separator: "\u{0}"
-          ).utf8
-        )
-      )
-    let saved = try await cursorStore?.read(key, default: sweepCursor) ?? sweepCursor
     let (messages, next) = try await withSession { session, _ in
-      let selected = try await Self.select("INBOX", writable: false, session: session)
-      let offset = saved.currentOffset(validity: selected.validity, count: selected.count)
-      let messages = try await Self.messages(
-        mailbox: "INBOX",
-        account: account,
-        limit: limit,
-        session: session,
-        offset: offset,
-        selection: selected
-      )
-      return (
-        messages.envelopes,
-        IMAPSweepCursor(
-          offset: messages.nextOffset,
-          validity: selected.validity
-        )
-      )
+      try await Self.sweepInbox(account: account, limit: limit, cursor: saved, session: session)
     }
+    return IMAPInboxSweep(messages: messages, cursor: next)
+  }
+  /**
+   Advances the boundary, high-water mark and backfill position past a processed sweep.
+
+   An optional store preserves them across instances and processes.
+   */
+  public func commit(_ sweep: IMAPInboxSweep, cursorStore: Store? = nil) async throws {
     if let cursorStore {
-      try await cursorStore.update(key, default: IMAPSweepCursor()) { $0 = next }
+      try await cursorStore.update(sweepCursorKey, default: IMAPSweepCursor()) { $0 = sweep.cursor }
     }
-    sweepCursor = next
-    return messages
+    sweepCursor = sweep.cursor
   }
   /// Reads a bounded mailbox page without setting the Seen flag; names use the server's wire encoding.
   public func messages(mailbox: String, limit: Int) async throws -> [MailEnvelope] {
@@ -122,11 +121,7 @@ public actor IMAPAdapter: MailClientAdapter {
           message.header("in-reply-to") != nil
         else { continue }
         index.importedIDs.insert(envelope.identity.key)
-        for value in (message.headers["to"] ?? []) + (message.headers["cc"] ?? []) {
-          for address in value.components(separatedBy: ",").compactMap(MIMEParser.address) {
-            index.replied[address, default: 0] += 1
-          }
-        }
+        index.recordSent(headers: message.headers)
       }
       return [account: index]
     }
@@ -187,9 +182,12 @@ public actor IMAPAdapter: MailClientAdapter {
       guard let junk = roles.junk, junk.uppercased() != "INBOX" else { throw IMAPError.unsupported }
       let selected = try await Self.select("INBOX", writable: false, session: session)
       guard let raw = try await Self.fetch(uid: Int(uid), session: session),
-        let parsed = try? MIMEParser().parse(raw), parsed.subject.hasPrefix("[SpamWise Probe]")
+        let parsed = try? MIMEParser().parse(raw)
       else {
         throw IntegrationError.staleMessage
+      }
+      guard parsed.subject.hasPrefix("[SpamWise Probe]") else {
+        throw IntegrationError.notProbeMessage
       }
       let original = MessageIdentity(
         accountID: account,
@@ -287,13 +285,13 @@ extension IMAPAdapter {
     return (junk.first, sent.first)
   }
   static func select(_ mailbox: String, writable: Bool, session: IMAPSession) async throws
-    -> (validity: UInt64, count: Int)
+    -> IMAPSelection
   {
     let rows = try await session.command(
       "\(writable ? "SELECT" : "EXAMINE") \(IMAPSession.quote(mailbox))"
     )
     var validities: Set<UInt64> = []
-    var count: Int?
+    var count: Int?, uidNext: Int?
     for row in rows {
       if row.count == 3, row[0].isAtom("*"), row[2].isAtom("EXISTS"), let text = row[1].text,
         let value = Int(text), value >= 0, value <= UInt32.max
@@ -306,6 +304,12 @@ extension IMAPAdapter {
         else { throw IMAPError.malformedResponse }
         validities.insert(value)
       }
+      for index in row.indices where row[index].isAtom("[UIDNEXT") {
+        guard index + 1 < row.count, let text = row[index + 1].text, text.hasSuffix("]"),
+          let value = Int(text.dropLast()), value > 0, value <= UInt32.max
+        else { throw IMAPError.malformedResponse }
+        uidNext = value
+      }
     }
     guard validities.count == 1, let validity = validities.first, let count else {
       throw IMAPError.malformedResponse
@@ -313,7 +317,7 @@ extension IMAPAdapter {
     if writable, rows.contains(where: { $0.contains(where: { $0.isAtom("[READ-ONLY]") }) }) {
       throw IMAPError.rejected
     }
-    return (validity, count)
+    return IMAPSelection(validity: validity, count: count, uidNext: uidNext)
   }
   private static func lookup(_ identity: MessageIdentity, session: IMAPSession) async throws
     -> MailEnvelope?

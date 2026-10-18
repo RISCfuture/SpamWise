@@ -4,16 +4,14 @@ import Security
 protocol EvaluationSetupFailure: Error {}
 
 enum EvaluationSetupError: EvaluationSetupFailure, LocalizedError {
-  case usage, missingExecutable, missingSharedStore, credential(OSStatus)
+  case usage, missingExecutable, credential(OSStatus)
 
   var errorDescription: String? { "Could not start provider evaluation." }
   var failureReason: String? {
     switch self {
       case .usage:
-        "Usage: swift Scripts/evaluate-with-keychain.swift EXECUTABLE claude|openai|gemini --live EVAL_ARGUMENTS"
+        "Usage: swift Scripts/evaluate-with-keychain.swift EXECUTABLE claude|openai|gemini --live --budget-store PATH EVAL_ARGUMENTS"
       case .missingExecutable: "The supplied evaluation executable is unavailable."
-      case .missingSharedStore:
-        "The existing SpamWise shared store is unavailable. No separate spending ledger was created."
       case .credential(let status):
         "The provider setup key is unavailable; Keychain status \(status)."
     }
@@ -54,34 +52,16 @@ struct EvaluationProvider {
   }
 }
 
-func sharedBudgetStore() throws -> URL {
-  let files = FileManager.default
-  let container =
-    files.containerURL(
-      forSecurityApplicationGroupIdentifier: "group.codes.tim.SpamWise"
-    )
-    ?? files.homeDirectoryForCurrentUser.appending(
-      path: "Library/Group Containers/group.codes.tim.SpamWise",
-      directoryHint: .isDirectory
-    )
-  let store = container.appending(path: "SpamWise.store")
-  guard let properties = try? store.resourceValues(forKeys: [.isRegularFileKey]),
-    properties.isRegularFile == true
-  else { throw EvaluationSetupError.missingSharedStore }
-  return store
-}
-
 func runEvaluation() throws -> Int32 {
   let arguments = Array(CommandLine.arguments.dropFirst())
   guard arguments.count >= 5, arguments[2] == "--live",
-    !arguments.dropFirst(3).contains("--budget-store"),
+    arguments.dropFirst(3).contains("--budget-store"),
     !arguments.dropFirst(3).contains("--model")
   else { throw EvaluationSetupError.usage }
   let executable = URL(filePath: arguments[0]), provider = try EvaluationProvider(arguments[1])
   guard FileManager.default.isExecutableFile(atPath: executable.path) else {
     throw EvaluationSetupError.missingExecutable
   }
-  let store = try sharedBudgetStore()
   var environment = ProcessInfo.processInfo.environment
   for variable in ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"] {
     environment.removeValue(forKey: variable)
@@ -91,8 +71,7 @@ func runEvaluation() throws -> Int32 {
   let process = Process()
   process.executableURL = executable
   process.arguments =
-    ["--model", provider.model, "--budget-store", store.path]
-    + arguments.dropFirst(3)
+    ["--model", provider.model] + arguments.dropFirst(3)
   process.environment = environment
   try process.run()
   process.waitUntilExit()
@@ -104,7 +83,7 @@ do {
 } catch {
   let description =
     (error as? EvaluationSetupError)?.failureReason
-    ?? "Evaluation could not start. Check the executable and shared-store access."
+    ?? "Evaluation could not start. Check the executable and budget store."
   FileHandle.standardError.write(Data((description + "\n").utf8))
   exit(1)
 }

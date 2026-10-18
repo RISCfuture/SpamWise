@@ -11,8 +11,9 @@ necessary review access and Apple’s requested issue reference before submittin
 SpamWise is a sandboxed Apple Mail filtering companion. It reads bounded message
 source and history, resolves a message within its account, and supports moving it
 to that account’s Inbox or Junk and adding a Review annotation. It never deletes
-mail or moves it to Trash. The default is dry run, and account destinations require
-a disposable-message validation before live moves are enabled.
+mail or moves it to Trash. The default is dry run. Leaving it requires an explicit
+confirmation after a read-only check that the account’s Inbox and Junk mailboxes
+resolve uniquely, and every live move is verified afterward and fails open.
 
 The app requests `com.apple.security.temporary-exception.apple-events` only for
 `com.apple.mail`, together with the Automation entitlement and usage description.
@@ -34,17 +35,19 @@ Use a test Mail account with disposable synthetic messages. Do not use the
 developer’s private mailbox or API keys.
 
 1. Launch the release app, complete the four setup steps and retain dry run.
-2. Enable its extension in Mail settings. Grant Automation permission to connect
-   Mail, or deny it to inspect the explicit failure state.
+2. Grant Automation permission to connect Mail, or deny it to inspect the explicit
+   failure state. The Mail extension is used only by the optional preview route in
+   Account settings.
 3. Set an address rule and preview a matching synthetic message. Inspect its
    explanation and the separate dry-run action outcome. Replace the rule to verify
    that the latest correction at the same scope wins.
 4. Inspect Account settings: keys are stored in Keychain, provider sharing is a
    separate opt-in, and the disclosure links to provider data terms. Leave remote
    sharing off unless review credentials and appropriate terms are supplied.
-5. For live moves, complete the account’s disposable-message check and deliberately
-   disable dry run. Correct only the selected disposable message, then inspect the
-   separately reported action result. No Trash/delete action is offered.
+5. For live moves, check the Mail connection so the account’s Inbox and Junk
+   mailboxes are validated, then turn off dry run in General and confirm. Correct
+   only the selected disposable message, then inspect the separately reported action
+   result. No Trash/delete action is offered.
 6. Pause processing. Inspect Settings, local Activity, the review digest and Help.
    Denied or failed integration and model requests must leave messages untouched.
 

@@ -64,6 +64,53 @@ public actor Store {
       return try JSONDecoder().decode(T.self, from: row.payload)
     }
   }
+  /// Reads the stored values among several keys in one transaction, omitting absent keys.
+  public func read<T: Codable & Sendable>(_ keys: Set<String>, as type: T.Type) throws -> [String:
+    T]
+  {
+    let wanted = Array(keys)
+    return try access { context in
+      let rows = try context.fetch(
+        FetchDescriptor<StoredValue>(predicate: #Predicate { wanted.contains($0.key) })
+      )
+      return try rows.reduce(into: [:]) { values, row in
+        values[row.key] = try JSONDecoder().decode(T.self, from: row.payload)
+      }
+    }
+  }
+  /**
+   Atomically reads, modifies, and commits several shared values in one transaction.
+
+   The body receives the stored values among `keys`, omitting absent keys. Values it adds or
+   changes for those keys are committed; other keys and removed entries are left unchanged.
+   */
+  @discardableResult public func update<T: Codable & Sendable, R: Sendable>(
+    _ keys: Set<String>,
+    as type: T.Type,
+    _ body: @Sendable (inout [String: T]) throws -> R
+  ) throws -> R {
+    let wanted = Array(keys)
+    return try access { context in
+      let rows = try context.fetch(
+        FetchDescriptor<StoredValue>(predicate: #Predicate { wanted.contains($0.key) })
+      )
+      var values: [String: T] = try rows.reduce(into: [:]) { values, row in
+        values[row.key] = try JSONDecoder().decode(T.self, from: row.payload)
+      }
+      let result = try body(&values)
+      let existing = Dictionary(rows.map { ($0.key, $0) }) { first, _ in first }
+      for (key, value) in values where keys.contains(key) {
+        let payload = try JSONEncoder().encode(value)
+        if let row = existing[key] {
+          row.payload = payload
+        } else {
+          context.insert(StoredValue(key: key, payload: payload))
+        }
+      }
+      try context.save()
+      return result
+    }
+  }
   /// Atomically reads, modifies, and commits a shared value.
   @discardableResult public func update<T: Codable & Sendable, R: Sendable>(
     _ key: String,

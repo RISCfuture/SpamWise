@@ -68,12 +68,8 @@ shared discovery types. The product first shipped in GitHubUpdateChecker 2.3.0.
 Dependency pins live in the project's
 `SpamWise.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved` and
 in `SpamWiseCore/Package.resolved`, alongside the pinned Claude revision in the core
-manifest.
-During verification, Xcode repeatedly removed the project-workspace lock file
-for these local package references, including after successful resolution with
-`-onlyUsePackageVersionsFromResolvedFile`. That generated workspace file is not
-maintained separately. Preserve both package-owned lock files and the reviewed
-library checkout when reproducing release builds.
+manifest. Both lock files are committed. Reproduce release builds with
+`-onlyUsePackageVersionsFromResolvedFile` so resolution uses exactly those pins.
 
 This separation also avoids the original MarkdownUI dependency's Swift 6.4
 `@_implementationOnly` warnings in SpamWise's direct build. Those upstream UI
@@ -81,7 +77,7 @@ warnings remain outside the discovery product; no warning suppression is enabled
 
 ## Why installation remains manual
 
-The inspected local library's `AppInstaller.supportsAutoInstall` rejects sandboxed
+GitHubUpdateChecker 2.3.0's `AppInstaller.supportsAutoInstall` rejects sandboxed
 apps. Its installation implementation replaces the existing bundle before
 checking only bundle structure, and removes quarantine. It does not establish a
 trusted signing requirement, matching team/bundle identity, notarization,

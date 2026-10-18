@@ -24,9 +24,11 @@ public struct MailPreferences: Codable, Sendable, Equatable {
 public struct MailScanHealth: Codable, Sendable {
   /// Account display name, independent of its persistent identifier.
   public var accountName: String
-  /// Offset of the next page, advanced only after processing the current page.
+  /// Earliest received date automatic Inbox filtering considers for this account.
+  public var inboxStart: Date?
+  /// Offset of the next backfill page, advanced only after processing the current page.
   public var nextOffset = 0
-  /// Number of messages reported by Mail during the latest page read.
+  /// Number of Inbox messages received since `inboxStart`, as Mail reported during the latest read.
   public var observedTotal = 0
   /// Number of mailbox positions visited during the current sweep.
   public var scanned = 0
@@ -50,19 +52,34 @@ public struct MailScanHealth: Codable, Sendable {
   public init(accountName: String) { self.accountName = accountName }
   /// Records visited positions after handling readable envelopes and counting unavailable entries.
   public mutating func complete(count: Int, total: Int, unavailable: Int = 0, now: Date = .now) {
+    let end = nextOffset + max(0, count)
+    complete(
+      through: count == 0 || end >= total ? 0 : end,
+      visited: count,
+      total: total,
+      unavailable: unavailable,
+      now: now
+    )
+  }
+  /// Records visited positions and moves the next page to `end`; zero completes the traversal.
+  public mutating func complete(
+    through end: Int,
+    visited: Int,
+    total: Int,
+    unavailable: Int = 0,
+    now: Date = .now
+  ) {
     observedTotal = max(0, total)
     unavailableInSweep = (unavailableInSweep ?? 0) + max(0, unavailable)
-    scanned += max(0, count)
-    nextOffset += max(0, count)
+    scanned += max(0, visited)
+    nextOffset = max(0, end)
     lastSuccess = now
     failure = nil
-    if count == 0 || nextOffset >= observedTotal {
-      nextOffset = 0
-      scanned = 0
-      lastSweepUnavailable = unavailableInSweep
-      unavailableInSweep = 0
-      lastCompletedSweep = now
-    }
+    guard nextOffset == 0 else { return }
+    scanned = 0
+    lastSweepUnavailable = unavailableInSweep
+    unavailableInSweep = 0
+    lastCompletedSweep = now
   }
 }
 

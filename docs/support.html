@@ -29,14 +29,14 @@ usage is billed by the provider. Public distribution is still being prepared.
 There is no published download or App Store listing to link yet.</p>
 <h2 id="getting-started">Getting started</h2>
 <ol>
-<li>Open SpamWise and complete its setup. Enable SpamWise in Mail → Settings →
-Extensions, and allow SpamWise to control Mail when macOS asks.</li>
+<li>Open SpamWise and complete its setup, and allow SpamWise to control Mail when
+macOS asks. The Mail extension is needed only for its optional preview route.</li>
 <li>Start with dry run enabled. Choose an available on-device model or configure an
 explicit provider. Enter API keys only in SpamWise, where they are saved in
 Keychain; grant mail-sharing permission separately for a remote provider.</li>
-<li>Use Account settings to connect Mail and inspect account destinations. Live
-moves require the disposable-message account check. Keep dry run on until you
-have reviewed its results.</li>
+<li>Use Account settings to connect Mail; the check validates each account’s Inbox
+and Junk mailboxes without changing mail. Keep dry run on until you have
+reviewed its results, then turn it off in General and confirm.</li>
 <li>Inspect Activity. Decisions, attempted mail actions and action failures are
 separate. Confidence thresholds are provisional and do not promise a particular
 accuracy rate.</li>
@@ -52,9 +52,9 @@ Unreadable mail stays in place while later readable messages can be processed.
 Permission failures and timeouts leave mail untouched. In System Settings →
 Privacy &amp; Security → Automation, check SpamWise’s Mail permission. Contacts access
 is optional and is separate from Mail access.</p>
-<p>The extension alone does not establish complete incoming coverage. The account
-sweep route supplies additional coverage; large or changing mailboxes may take
-several sweeps. See the <a href="mail-compatibility.html">tested compatibility matrix</a>.</p>
+<p>The optional Mail extension preview cannot filter by account and never moves
+mail. The account sweep route supplies filtering; large or changing mailboxes may
+take several sweeps. See the <a href="mail-compatibility.html">tested compatibility matrix</a>.</p>
 <h2 id="correcting-a-decision">Correcting a decision</h2>
 <p>Use the Activity inspector or SpamWise’s menu-bar commands for selected Mail
 messages. Ordinary corrections create address rules. Choose domain scope explicitly

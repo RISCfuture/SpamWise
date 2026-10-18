@@ -36,21 +36,23 @@ With current spending authorization and verified provider pricing:
 
 ```sh
 pyenv exec python run.py --executable /absolute/path/to/spamwise-eval \
-  --output /absolute/private/preferences-live --live
+  --output /absolute/private/preferences-live --live \
+  --budget-store /absolute/private/evaluation-budget.store
 ```
 
 The runner invokes `Scripts/evaluate-with-keychain.swift` with explicit Claude
-and `--live`. That helper reads the existing Anthropic setup key directly into
-the child environment, supplies the application's existing shared budget path,
-and refuses absent stores or model/budget overrides. This probe never reads or
-prints the key, creates another ledger, or changes production preferences.
+and `--live`, passing the explicit `--budget-store`. That helper reads the
+existing Anthropic setup key directly into the child environment and refuses
+model overrides; the evaluator refuses a ledger with no recorded ceiling. This
+probe never reads or prints the key, configures a ceiling, or changes production
+preferences.
 
 Calls run sequentially, starting with English wanted policy without examples.
 Any launcher error, timeout, missing verdict or classification failure stops
 subsequent conditions without retry or model fallback. There are at most twelve
 conditions and $1.20 in conservative $0.10 reservations per invocation. Failed
 requests can retain reservations. The reported maximum reservation is an upper
-bound, not measured billing or the current total shared-ledger balance.
+bound, not measured billing or the current total ledger balance.
 
 `results.json` separates model outputs, effective decisions and measured token
 estimates. Raw CLI reports are retained per condition. The CLI's graymail mismatch

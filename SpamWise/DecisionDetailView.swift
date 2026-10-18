@@ -14,12 +14,12 @@ struct DecisionDetailView: View {
     Form {
       Section {
         VStack(alignment: .leading) {
-          Text(row.subject).font(.headline).textSelection(.enabled)
-          Text(row.sender).foregroundStyle(.secondary).textSelection(.enabled)
+          Text(row.displaySubject).font(.headline).textSelection(.enabled)
+          Text(row.displaySender).foregroundStyle(.secondary).textSelection(.enabled)
         }
         VStack(alignment: .leading) {
           VerdictBadge(label: row.decision.label)
-          Text(row.decision.reason).textSelection(.enabled)
+          Text(row.decision.reason.localizedDescription).textSelection(.enabled)
         }
         LabeledContent("Outcome", value: row.outcome.localizedTitle)
           .accessibilityIdentifier("correction.outcome")
@@ -145,6 +145,8 @@ private struct CorrectionControls: View {
   let model: AppModel
   let row: DecisionRecord
 
+  private var canCorrect: Bool { !model.busy && row.path != .verification && row.sender != nil }
+
   var body: some View {
     ControlGroup {
       Button("Good") { model.correct(row, label: .inbox) }
@@ -153,21 +155,63 @@ private struct CorrectionControls: View {
         .accessibilityLabel("Mark as Junk").accessibilityIdentifier("correction.junk")
       Button("Review") { model.correct(row, label: .review) }
         .accessibilityLabel("Mark as Review").accessibilityIdentifier("correction.review")
-    }.disabled(model.busy || row.path == "verification")
+    }.disabled(!canCorrect)
+    if row.sender == nil {
+      Text(
+        "Corrections need the sender’s address, which this message doesn’t have. Move it in Mail instead."
+      )
+    }
     if let correction = row.correctedLabel {
       Text("User corrected to \(correction.localizedTitle)")
         .accessibilityIdentifier("correction.label").accessibilityValue(correction.rawValue)
     }
     HStack {
-      Menu("Correct entire domain…") {
-        Button("Allow this domain") { model.correct(row, label: .inbox, scope: .domain) }
-          .accessibilityIdentifier("correction.domain.allow")
-        Button("Block this domain") { model.correct(row, label: .junk, scope: .domain) }
-          .accessibilityIdentifier("correction.domain.block")
-      }.accessibilityIdentifier("correction.domain")
-        .disabled(model.busy || row.evidence?.fromDomain == nil || row.path == "verification")
+      DomainCorrectionMenu(model: model, row: row)
+        .disabled(!canCorrect || row.evidence?.fromDomain == nil)
       Spacer()
       HelpButton(page: "correcting-mistakes")
+    }
+  }
+}
+
+/// Domain-wide corrections, confirmed first when the domain is a shared mail provider.
+private struct DomainCorrectionMenu: View {
+  let model: AppModel
+  let row: DecisionRecord
+  @State private var pendingLabel: MailLabel?
+
+  private var domain: String { row.evidence?.fromDomain ?? "" }
+
+  var body: some View {
+    Menu("Correct entire domain…") {
+      Button("Allow this domain") { request(.inbox) }
+        .accessibilityIdentifier("correction.domain.allow")
+      Button("Block this domain") { request(.junk) }
+        .accessibilityIdentifier("correction.domain.block")
+    }.accessibilityIdentifier("correction.domain")
+      .confirmationDialog(
+        "Create a rule for every sender at \(domain)?",
+        isPresented: Binding(get: { pendingLabel != nil }, set: { if !$0 { pendingLabel = nil } }),
+        presenting: pendingLabel
+      ) { label in
+        Button(
+          label == .inbox ? "Allow every sender at \(domain)" : "Block every sender at \(domain)"
+        ) {
+          model.correct(row, label: label, scope: .domain)
+        }
+      } message: { _ in
+        let count = model.state.knownSenderCounts(atDomains: [domain])[domain, default: 0]
+        Text(
+          "\(domain) is a shared mail provider, so this rule also applies to unrelated people who use it. Known senders at this domain: \(count, format: .number)"
+        )
+      }
+  }
+
+  private func request(_ label: MailLabel) {
+    if SharedMailboxDomains.contains(domain) {
+      pendingLabel = label
+    } else {
+      model.correct(row, label: label, scope: .domain)
     }
   }
 }
@@ -183,7 +227,7 @@ private struct DecisionDiagnosticsView: View {
   }
 
   var body: some View {
-    LabeledContent("Path", value: row.path)
+    LabeledContent("Path", value: row.path.localizedTitle)
     LabeledContent("Policy revision", value: row.revision.formatted())
     LabeledContent("Account", value: row.identity.accountID ?? String(localized: "Unknown"))
     LabeledContent("Source mailbox", value: row.identity.mailbox ?? String(localized: "Unknown"))
@@ -231,9 +275,18 @@ struct VerdictBadge: View {
 #Preview("Failed action") {
   DecisionDetailView(model: PreviewHelper.model(), row: PreviewHelper.failedRecord)
 }
+#Preview("Unclassified") {
+  DecisionDetailView(model: PreviewHelper.model(), row: PreviewHelper.unclassifiedRecord)
+}
 #Preview("Verdict") { VerdictBadge(label: .review) }
 #Preview("Corrections") {
   Form { CorrectionControls(model: PreviewHelper.model(), row: PreviewHelper.record) }
+}
+#Preview("Shared provider corrections") {
+  Form { CorrectionControls(model: PreviewHelper.model(), row: PreviewHelper.sharedProviderRecord) }
+}
+#Preview("Sender-less corrections") {
+  Form { CorrectionControls(model: PreviewHelper.model(), row: PreviewHelper.unclassifiedRecord) }
 }
 #Preview("Diagnostics") { Form { DecisionDiagnosticsView(row: PreviewHelper.record) } }
 #Preview("Unassessed threats") { Form { ThreatAssessmentView(assessment: nil) } }

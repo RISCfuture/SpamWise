@@ -23,7 +23,12 @@ struct OnboardingView: View {
               KeyEntryView(model: model)
               ProviderConsentView(model: model, backend: .claude)
             }
-          case .mail: MailConnectionView(model: model)
+          case .mail:
+            if model.state.settings.advancedOptions.transport == .imap {
+              IMAPSettingsView(model: model)
+            } else {
+              MailConnectionView(model: model)
+            }
           case .preview: SetupPreviewView(model: model)
         }
       }.formStyle(.grouped)
@@ -71,6 +76,12 @@ private struct SetupIntroductionView: View {
         """
         Your selected provider receives a shortened message, your preferences, and relevant \
         examples when local rules cannot decide.
+        """
+      )
+      Text(
+        """
+        Automatic filtering covers only mail received after setup. Older mail is sent to your \
+        provider only when you preview it.
         """
       )
       Text("Optional domain-age lookups share the sender’s domain with registration services.")
