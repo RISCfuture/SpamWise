@@ -79,3 +79,17 @@ import SpamWiseCore
   #expect(state.contentRuleSkips == [unusable.id: 1])
   #expect(state.contentRuleHits.isEmpty)
 }
+
+@Test func `imports an exported content rule once`() async throws {
+  let store = try testStore()
+  var rule = ContentRule(); rule.pattern = "newsletter"
+  let archive = try ContentRuleManagement.exportRules([rule])
+  try await ContentRuleManagement.importRules(archive, store: store)
+  try await ContentRuleManagement.importRules(archive, store: store)
+  #expect(try await StateRepository.load(store).contentRules.count == 1)
+}
+
+@Test func `refuses to export an invalid regular expression`() {
+  var rule = ContentRule(); rule.pattern = "["; rule.operation = .regularExpression
+  #expect(throws: ContentRuleError.invalid) { try ContentRuleManagement.exportRules([rule]) }
+}

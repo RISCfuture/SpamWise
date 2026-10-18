@@ -59,7 +59,7 @@ public actor Store {
   private static let containers = Mutex<[URL: ModelContainer]>([:])
   /// Location of the durable shared store.
   public nonisolated let url: URL
-  /// Creates a Store with the supplied configuration.
+  /// Creates the parent directory of `url` with owner-only permissions; the database opens on first use.
   public init(url: URL) throws {
     self.url = url
     try FileManager.default.createDirectory(
@@ -80,7 +80,7 @@ public actor Store {
   private static func cachedContainer(for url: URL) -> ModelContainer? {
     containers.withLock { $0[url] }
   }
-  /// Reads a small keyed document, throwing when access is unavailable.
+  /// Decodes the document stored under `key`, or returns `fallback` when none is stored.
   public func read<T: Codable & Sendable>(_ key: String, default fallback: T) async throws -> T {
     try await transaction { context in
       try context.document(key).map { try JSONDecoder().decode(T.self, from: $0) } ?? fallback

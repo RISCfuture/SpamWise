@@ -293,7 +293,7 @@ extension EvidenceBundle {
 }
 /// Reads contact email addresses only when permission is available.
 public actor ContactsLookup {
-  /// Creates a ContactsLookup with the supplied configuration.
+  /// Creates a lookup that asks for Contacts access only when ``addresses(requestAccess:)`` requests it.
   public init() {}
   /// Returns known contact addresses, or nil when access is unavailable.
   public func addresses(requestAccess: Bool = false) async throws -> Set<String>? {

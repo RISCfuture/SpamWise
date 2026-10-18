@@ -28,11 +28,15 @@ public actor RDAPLookup {
   private var cache: [String: Entry] = [:]
   private var bootstrap: Bootstrap?
   private var bootstrapExpires = Date.distantPast
-  /// Looks up registration data over bounded HTTPS that never follows redirects.
+  /// Looks up registration data over bounded HTTPS that never follows redirects, reading any cache at `cacheURL` synchronously.
   public init(cacheURL: URL? = nil) {
     self.init(fetcher: BoundedHTTPClient(policy: Self.policy), cacheURL: cacheURL)
   }
-  /// Looks up registration data through an injected transport, optionally persisting the cache.
+  /**
+   Looks up registration data through an injected transport, optionally persisting the cache.
+
+   Reads any cache saved at `cacheURL` synchronously; an unreadable cache starts empty.
+   */
   public init(fetcher: any HTTPFetcher, cacheURL: URL? = nil) {
     self.fetcher = fetcher; self.cacheURL = cacheURL
     if let cacheURL, let data = try? Data(contentsOf: cacheURL),

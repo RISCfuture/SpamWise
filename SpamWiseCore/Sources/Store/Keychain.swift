@@ -27,7 +27,7 @@ public enum KeychainError: CredentialFailure, Sendable, LocalizedError {
     }
   }
 }
-/// Stores the user's API key in the shared data-protection Keychain group.
+/// One credential, such as a model provider or Spamhaus key, in the shared data-protection Keychain group.
 public struct APIKeychain: Sendable {
   /// Keychain access group shared by the app and extension.
   public static let accessGroup = "2NFSK2WB24.codes.tim.SpamWise.shared"
@@ -55,7 +55,7 @@ public struct APIKeychain: Sendable {
       case .onDevice, .privateCloudCompute: return nil
     }
   }
-  /// Reads durable state or credentials, throwing when access is unavailable.
+  /// Returns the stored credential, throwing ``KeychainError/missing`` when none is stored.
   public func read() throws -> String {
     var query = query; query[kSecReturnData as String] = true
     query[kSecMatchLimit as String] = kSecMatchLimitOne

@@ -40,7 +40,7 @@ public struct MessageIdentity: Codable, Sendable, Hashable {
   public var imapKey: String {
     Self.hash(["imap", accountID ?? "unresolved", messageID ?? "", contentHash])
   }
-  /// Creates a MessageIdentity with the supplied configuration.
+  /// Creates an identity as given; a non-nil `mailboxValidity` makes it an IMAP identity keyed by ``imapKey``.
   public init(
     accountID: String?,
     messageID: String? = nil,

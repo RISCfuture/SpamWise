@@ -142,6 +142,26 @@ private func legacyRecord(
   #expect(try await StateRecovery.entries(unreadable).isEmpty)
 }
 
+@Test func `decodes legacy settings with defaults for options they lack`() throws {
+  var object = try #require(
+    JSONSerialization.jsonObject(with: JSONEncoder().encode(AppState())) as? [String: Any]
+  )
+  object.removeValue(forKey: "learning"); object.removeValue(forKey: "reviewedLabels")
+  var settings = try #require(object["settings"] as? [String: Any])
+  settings.removeValue(forKey: "advanced"); settings["paused"] = true
+  settings.removeValue(forKey: "mailPreferences"); settings["route"] = "mailKit"
+  object["settings"] = settings
+  let decoded = try JSONDecoder().decode(
+    AppState.self,
+    from: JSONSerialization.data(withJSONObject: object)
+  )
+  #expect(decoded.settings.paused)
+  #expect(decoded.settings.advancedOptions.backend == .claude)
+  #expect(!decoded.settings.advancedOptions.fingerprints)
+  #expect(!decoded.settings.mailOptions.localOnly)
+  #expect(decoded.settings.incomingRoute == .mailRule)
+}
+
 /// Writes `snapshot` into an unversioned single-document store.
 private func legacyStore(_ snapshot: Data) throws -> Store {
   let store = try testStore()

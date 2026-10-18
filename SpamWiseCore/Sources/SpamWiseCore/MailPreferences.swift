@@ -25,7 +25,7 @@ public struct MailPreferences: Codable, Sendable, Equatable {
   public var markJunkRead = false
   /// Local notification policy, disabled until the user grants permission and enables it.
   public var notifications = NotificationPreferences()
-  /// Creates conservative defaults without changing existing account scope.
+  /// Creates defaults that include every account, trust no receiving server and enable no folder plans.
   public init() {}
   /// Decodes each field independently, using its default when absent or unreadable.
   public init(from decoder: any Decoder) throws {

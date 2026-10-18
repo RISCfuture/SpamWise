@@ -5,7 +5,7 @@ public struct MailEnvelope: Sendable {
   public var identity: MessageIdentity
   /// Original message data used for parsing and identity checks.
   public var raw: Data
-  /// Creates a MailEnvelope with the supplied configuration.
+  /// Pairs raw bytes with their identity as given, without checking the identity's content hash.
   public init(identity: MessageIdentity, raw: Data) { self.identity = identity; self.raw = raw }
 }
 /// Whether the adapter observed the requested action's result in its mail client.
@@ -14,7 +14,7 @@ public struct ActionReceipt: Sendable {
   public var confirmed: Bool
   /// Fresh account-scoped identity observed after a mailbox move, when the adapter can prove it.
   public var updatedIdentity: MessageIdentity?
-  /// Creates an ActionReceipt with the supplied configuration.
+  /// Records whether the action's result was observed, and the identity a move produced when known.
   public init(confirmed: Bool, updatedIdentity: MessageIdentity? = nil) {
     self.confirmed = confirmed; self.updatedIdentity = updatedIdentity
   }

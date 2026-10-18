@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import SpamWiseCore
 
 actor RecordingAdapter: MailClientAdapter {
@@ -77,6 +78,9 @@ func blockStorage(_ store: Store) throws {
 func restoreStorage(_ store: Store) throws {
   try FileManager.default.removeItem(atPath: store.url.path + ".lock")
 }
+/// Classifies every message as Junk with a confidence that meets every filtering threshold.
+let junkClassifier = MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "lure"))
+
 func enableActions(_ store: Store) async throws {
   try await StateRepository.update(store) { state in
     state.settings.dryRun = false
@@ -115,6 +119,13 @@ struct FixtureThreatDetector: ThreatDetector {
   }
 
   func assess(_ input: ThreatInput) async throws -> [ThreatFinding] { try await operation(input) }
+}
+
+/// Counts calls from concurrent closures, such as classifier and detector fixtures.
+final class Counter: Sendable {
+  private let storage = Mutex(0)
+  var value: Int { storage.withLock { $0 } }
+  func increment() { storage.withLock { $0 += 1 } }
 }
 
 func enableSpamhausEvidence(in settings: inout Settings) {

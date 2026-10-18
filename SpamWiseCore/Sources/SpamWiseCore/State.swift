@@ -37,7 +37,7 @@ public struct Settings: Codable, Sendable, Equatable {
   public var incomingRoute: IncomingRoute {
     advancedOptions.transport == .imap ? .imap : .mailRule
   }
-  /// Creates a Settings with the supplied configuration.
+  /// Creates default settings: dry run on, not paused, balanced strength and no validated accounts.
   public init() {}
   /// Decodes each field independently, using its default when absent or unreadable.
   public init(from decoder: any Decoder) throws {
@@ -126,7 +126,7 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var readStatusError: String?
   /// Learning identity of the text that was classified, so corrections replace its sample.
   public var sampleID: String?
-  /// Creates a DecisionRecord with the supplied configuration; an empty subject is stored as nil.
+  /// Creates a record with a new ID and the current date, storing an empty subject as nil.
   public init(
     identity: MessageIdentity,
     sender: String? = nil,
@@ -199,13 +199,13 @@ extension DecisionRecord {
 }
 /// A bounded, revision-specific classification retry.
 public struct RetryJob: Codable, Sendable, Equatable, Identifiable {
-  /// Stable identity used for persistence and presentation.
+  /// The message's identity key, so each message has at most one queued retry.
   public var id: String { identity.key }
-  /// Account and content identity used to resolve this message safely.
+  /// Account and content identity of the message to classify again.
   public var identity: MessageIdentity
-  /// Parsed message supplied to this operation.
+  /// The parsed message to classify again, so the retry needs no Mail lookup.
   public var message: ParsedMessage
-  /// Policy generation used to invalidate stale work after corrections.
+  /// Policy revision when the retry was queued; the retry is discarded once the revision changes.
   public var revision: Int
   /// Retry attempt number; the pipeline permits at most three retries.
   public var attempt: Int
@@ -213,7 +213,7 @@ public struct RetryJob: Codable, Sendable, Equatable, Identifiable {
   public var due: Date
   /// Time after which this queued retry must be discarded.
   public var expires: Date
-  /// Whether mail actions must be suppressed.
+  /// Whether the retry runs as a forced dry run; previews never queue retries, so queued jobs store false.
   public var dryRun: Bool
 }
 /// Account-scoped, deduplicated correspondence and receipt history.
@@ -233,7 +233,7 @@ public struct HistoryIndex: Codable, Sendable, Equatable {
   public var importedIDs = RollingIdentitySet(capacity: RetentionLimits.historyImportIdentities)
   /// Timestamp of the latest stored update.
   public var updatedAt: Date?
-  /// Creates a HistoryIndex with the supplied configuration.
+  /// Creates an empty index whose history is unavailable, so every relationship stays unknown.
   public init() {}
   /// Decodes each field independently, using its default when absent or unreadable.
   public init(from decoder: any Decoder) throws {
@@ -249,7 +249,12 @@ public struct HistoryIndex: Codable, Sendable, Equatable {
     )
     updatedAt = values.lenient(.updatedAt, default: nil)
   }
-  /// Human-readable history with unknown and partial states preserved.
+  /**
+   Returns the counts recorded for one sender, with this index's availability.
+
+   Received mail is counted by `domain`, or by the exact `address` at shared mailbox providers
+   or when the domain is unknown; replies and receipts are counted by `address`.
+   */
   public func summary(address: String, domain: String?) -> SenderHistory {
     .init(
       availability: availability,
@@ -314,7 +319,7 @@ public struct AppState: Codable, Sendable, Equatable {
   public var lastDigestWeek: String?
   /// Whether this transaction invalidated retries and undo that it did not load.
   var invalidatedPendingWork = false
-  /// Creates an AppState with the supplied configuration.
+  /// Creates empty state with default settings, which keep dry run on.
   public init() {}
   /// Decodes each field independently, using its default when absent or unreadable.
   public init(from decoder: any Decoder) throws {

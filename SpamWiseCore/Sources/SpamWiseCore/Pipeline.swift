@@ -14,7 +14,12 @@ public actor Pipeline {
   /// Processed-message index entries whose write failed, keyed by identity, awaiting another attempt.
   var unrecordedResults: [String: (record: DecisionRecord, failure: ProcessingFailure?)] = [:]
   var importedLegacyActivity = false
-  /// Creates a Pipeline with the supplied configuration.
+  /**
+   Creates a pipeline that persists to `store` and classifies with `classifier`.
+
+   Without `rdap` it never looks up domain registration age, and without `threatDetector` its
+   records carry no threat assessment.
+   */
   public init(
     store: Store,
     classifier: any Classifier,

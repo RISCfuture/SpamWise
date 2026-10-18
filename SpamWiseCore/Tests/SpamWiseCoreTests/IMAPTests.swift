@@ -270,12 +270,13 @@ struct `integrates bounded IMAP messages` {
     #expect(throws: IMAPError.invalidConfiguration) {
       _ = try IMAPDaemonConfiguration.decode(Data(embedded.utf8))
     }
-    let ambiguous = IMAPCredentialReference(
-      environment: "IMAP_PASSWORD",
-      keychainService: "service",
-      keychainAccount: "user"
-    )
-    #expect(throws: IMAPError.invalidConfiguration) { try ambiguous.validate() }
+    #expect(throws: IMAPError.invalidConfiguration) {
+      try IMAPCredentialReference(
+        environment: "IMAP_PASSWORD",
+        keychainService: "service",
+        keychainAccount: "user"
+      )
+    }
     let providerBase = String(json.dropLast()) + #", "providerCredentials": "#
     for reference in [
       #"{"claude":{"apiKey":"secret"}}"#,

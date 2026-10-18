@@ -20,7 +20,7 @@ public struct DomainResolver: Sendable {
         .compactMap(asciiRule)
     )
   }()
-  /// Creates a DomainResolver with the supplied configuration.
+  /// Creates a resolver; the bundled Public Suffix List loads once per process, on first use.
   public init() {}
 
   /**

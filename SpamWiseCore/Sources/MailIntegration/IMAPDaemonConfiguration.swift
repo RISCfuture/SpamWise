@@ -15,15 +15,21 @@ public struct IMAPCredentialReference: Codable, Sendable {
   public var keychainAccount: String?
   /// Authentication mechanism; false selects TLS-protected LOGIN.
   public var oauthBearer: Bool
-  /// Creates a secret reference with exactly one source.
+  /**
+   Creates a secret reference with exactly one source.
+
+   - Throws: ``IMAPError/invalidConfiguration`` unless the reference names either a valid
+     environment variable or both a Keychain service and account, but not both sources.
+   */
   public init(
     environment: String? = nil,
     keychainService: String? = nil,
     keychainAccount: String? = nil,
     oauthBearer: Bool = false
-  ) {
+  ) throws {
     self.environment = environment; self.keychainService = keychainService
     self.keychainAccount = keychainAccount; self.oauthBearer = oauthBearer
+    try validate()
   }
   /// Decodes references with password authentication as the default.
   public init(from decoder: any Decoder) throws {

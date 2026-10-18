@@ -14,7 +14,12 @@ public struct NotificationPreferences: Codable, Sendable, Equatable {
   public var quietEndHour = 8
   /// Creates disabled, quiet notification defaults.
   public init() {}
-  /// Checks valid local hours and an overnight or daytime quiet period.
+  /**
+   Whether `date` falls in the quiet period, which may run overnight.
+
+   Equal start and end hours disable quiet hours; an hour outside 0 through 23 makes every time
+   quiet.
+   */
   public func isQuiet(at date: Date, calendar: Calendar = .current) -> Bool {
     guard (0...23).contains(quietStartHour), (0...23).contains(quietEndHour) else { return true }
     guard quietStartHour != quietEndHour else { return false }

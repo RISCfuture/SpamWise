@@ -5,7 +5,7 @@ public struct ConfiguredClassifier: Classifier {
   private let store: Store
   private let http: ModelHTTPClient
   private let credential: @Sendable (ModelBackend) throws -> String
-  /// Reads current settings with optional HTTP and provider-specific credential boundaries.
+  /// Creates a classifier that reads the selected model from `store` at each request, using `http` and `credential`.
   public init(
     store: Store,
     http: ModelHTTPClient = .live,

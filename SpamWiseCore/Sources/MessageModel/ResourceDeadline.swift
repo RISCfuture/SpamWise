@@ -45,7 +45,7 @@ private final class DeadlineRace<T: Sendable>: Sendable {
     var tasks: [Task<Void, Never>] = []
   }
 }
-/// Returns at the deadline even if a provider ignores cancellation; late results are discarded.
+/// Throws ``ResourceDeadlineError/timeout`` after `seconds` even if `operation` ignores cancellation, discarding a late result.
 public func withResourceDeadline<T: Sendable>(
   seconds: TimeInterval,
   operation: @escaping @Sendable () async throws -> T

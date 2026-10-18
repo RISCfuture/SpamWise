@@ -1,7 +1,7 @@
 public import Foundation
 import MessageModel
 
-/// Returns at the deadline even if a provider ignores cancellation; late results are discarded.
+/// Throws ``ClassificationError/timeout`` after `seconds` even if a provider ignores cancellation, discarding a late result.
 public func withDeadline<T: Sendable>(
   seconds: TimeInterval,
   operation: @escaping @Sendable () async throws -> T

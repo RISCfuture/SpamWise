@@ -1,0 +1,73 @@
+import Foundation
+import Testing
+import SpamWiseCore
+
+/// A dry-run Review decision for `person@example.com` in `account`.
+private func reviewRecord(
+  outcome: ActionOutcome = .dryRun,
+  confidence: Int = 50,
+  correctedLabel: MailLabel? = nil
+) -> DecisionRecord {
+  var record = DecisionRecord(
+    identity: MessageIdentity(accountID: "account", contentHash: "digest"),
+    sender: "person@example.com",
+    subject: "Review",
+    verdict: .init(label: .review, confidence: confidence, reason: "uncertain"),
+    decision: .init(label: .review, action: .orangeFlag, reason: .model("uncertain")),
+    outcome: outcome,
+    path: .model
+  )
+  record.correctedLabel = correctedLabel
+  return record
+}
+
+@Test func `excludes corrected mail from the Review digest`() {
+  var state = AppState()
+  state.records = [reviewRecord()]
+  #expect(ReviewDigest(state: state).records.count == 1)
+  state.records = [reviewRecord(correctedLabel: .inbox)]
+  #expect(ReviewDigest(state: state).records.isEmpty)
+}
+
+@Test(arguments: [
+  (text: "PERSON", accountID: String?.none, matches: true), ("PERSON", "account", true),
+  ("PERSON", "other", false), ("nobody", nil, false)
+])
+func `filters Activity by case-insensitive text and exact account`(
+  text: String,
+  accountID: String?,
+  matches: Bool
+) {
+  var query = ActivityQuery()
+  query.text = text; query.accountID = accountID
+  #expect(query.apply(to: [reviewRecord()]).isEmpty != matches)
+}
+
+@Test func `counts corrected decisions as mistakes and failed actions separately`() {
+  let statistics = ActivityStatistics(records: [
+    reviewRecord(outcome: .failed, correctedLabel: .inbox)
+  ])
+  #expect(statistics.reviewedDecisions == 1)
+  #expect(statistics.reviewedMistakes == 1)
+  #expect(statistics.unresolvedReview == 0)
+  #expect(statistics.actionFailures == 1)
+}
+
+@Test func `ranks failed Mail actions ahead of less confident Review`() {
+  let failed = reviewRecord(outcome: .failed, confidence: 50)
+  let uncertain = reviewRecord(outcome: .noAction, confidence: 1)
+  #expect(ReviewPriority.precedes(failed, uncertain))
+  #expect(!ReviewPriority.precedes(uncertain, failed))
+}
+
+@Test func `summarizes diagnostic reasons without sender or explanation text`() throws {
+  var unconsented = reviewRecord()
+  unconsented.decision.reason = .classificationFailed(.consentRequired)
+  var state = AppState()
+  state.records = [reviewRecord(), unconsented]
+  let summary = DiagnosticSummary(state: state)
+  #expect(summary.reasons == ["model": 1, "unclassified: consentRequired": 1])
+  let diagnostic = String(decoding: try JSONEncoder().encode(summary), as: UTF8.self)
+  #expect(!diagnostic.contains("person@example.com"))
+  #expect(!diagnostic.contains("uncertain"))
+}

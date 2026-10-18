@@ -17,7 +17,7 @@ public struct SenderRule: Codable, Sendable, Equatable, Identifiable {
   public var updatedAt: Date
   /// Stable identity used for persistence and presentation.
   public var id: String { scope.rawValue + ":" + value }
-  /// Creates a SenderRule with the supplied configuration.
+  /// Creates a rule, normalizing `value` to lowercase.
   public init(scope: RuleScope, value: String, disposition: RuleDisposition, updatedAt: Date = .now)
   {
     self.scope = scope; self.value = value.lowercased(); self.disposition = disposition
@@ -54,7 +54,7 @@ public struct SenderHistory: Codable, Sendable, Equatable {
       ? "No prior mail in the completely imported history window"
       : "No match in partial history; relationship unknown"
   }
-  /// Creates a SenderHistory with the supplied configuration.
+  /// Creates history counts as given; the default availability leaves the relationship unknown.
   public init(
     availability: HistoryAvailability = .unavailable,
     receivedCount: Int = 0,
@@ -98,7 +98,7 @@ public struct GateResult: Codable, Sendable, Equatable {
   public var disposition: RuleDisposition
   /// The rule or relationship behind this result.
   public var reason: GateReason
-  /// Creates a GateResult with the supplied configuration.
+  /// Pairs a disposition with the rule or relationship that decided it.
   public init(_ disposition: RuleDisposition, _ reason: GateReason) {
     self.disposition = disposition; self.reason = reason
   }
@@ -106,7 +106,8 @@ public struct GateResult: Codable, Sendable, Equatable {
 /// Resolves address rules, domain rules, then authenticated relationships in that order.
 public enum Gates {
   /**
-   Applies deterministic policy without requesting a mail action.
+   Returns the sender rule or authenticated relationship that decides the message, or nil to
+   leave it to the classifier.
 
    The From address can be forged, so anything that allows a sender decides the message only
    when trusted authentication confirms the From domain: an Allow rule, a Contacts match, reply

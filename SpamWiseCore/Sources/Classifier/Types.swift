@@ -33,7 +33,7 @@ public struct TokenUsage: Codable, Sendable, Equatable {
       (Double(input - cached) * rates.input + Double(cached) * rates.cached
       + Double(output) * rates.output) / Self.tokensPerPricingUnit
   }
-  /// Creates a TokenUsage with the supplied configuration.
+  /// Creates token counts, raising negative counts to zero and limiting cached input to `input`.
   public init(
     input: Int = 0,
     output: Int = 0,
@@ -57,7 +57,7 @@ public struct Verdict: Codable, Sendable, Equatable {
   public var reason: String
   /// Provider token counts with explicit measurement provenance.
   public var usage: TokenUsage
-  /// Creates a Verdict with the supplied configuration.
+  /// Creates a verdict, truncating `reason` to 240 characters; ``validated()`` checks the result.
   public init(label: MailLabel, confidence: Int, reason: String, usage: TokenUsage = .init()) {
     self.label = label; self.confidence = confidence
     self.reason = String(reason.prefix(ClassificationLimits.maximumReasonCharacters))
@@ -148,7 +148,12 @@ public struct ClassificationInput: Sendable {
   public var bodyTokenBudget: Int
   /// Maximum operation duration in seconds.
   public var timeout: TimeInterval
-  /// Creates a ClassificationInput with the supplied configuration.
+  /**
+   Creates classification input, clamping each limit to its supported range.
+
+   `correctionLimit` is clamped to 0 through 20 examples, `bodyTokenBudget` to 100 through 4,000
+   tokens and `timeout` to 0.01 through 15 seconds.
+   */
   public init(
     message: ParsedMessage,
     evidence: EvidenceBundle,
@@ -173,9 +178,9 @@ public protocol Classifier: Sendable {
 /// Deterministic or injected classification behavior for offline verification.
 public struct MockClassifier: Classifier {
   private let operation: @Sendable (ClassificationInput) async throws -> Verdict
-  /// Creates a MockClassifier with the supplied configuration.
+  /// Creates a classifier that returns `verdict` for every input, validating it on each call.
   public init(verdict: Verdict) { operation = { _ in verdict } }
-  /// Creates a MockClassifier with the supplied configuration.
+  /// Creates a classifier that runs `operation` for each input and validates the verdict it returns.
   public init(operation: @escaping @Sendable (ClassificationInput) async throws -> Verdict) {
     self.operation = operation
   }

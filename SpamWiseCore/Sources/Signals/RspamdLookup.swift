@@ -23,7 +23,7 @@ public struct RspamdLookup: Sendable {
   /// Scans through the fixed loopback endpoint.
   public init() { self.init(configuration: { .ephemeral }) }
 
-  /// Scans through a session built from the supplied configuration, such as a test fixture.
+  /// Scans through sessions built by `configuration`, such as a test fixture's, under the same bounds.
   package init(configuration: @escaping @Sendable () -> URLSessionConfiguration) {
     client = BoundedHTTPClient(
       policy: .init(

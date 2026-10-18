@@ -83,7 +83,7 @@ public struct Decision: Codable, Sendable, Equatable {
   public var action: MailAction
   /// The evidence or policy behind this result.
   public var reason: DecisionReason
-  /// Creates a Decision with the supplied configuration.
+  /// Records a label and action as given; ``evaluate(_:reason:strength:review:concealsContent:)`` derives them by policy.
   public init(label: MailLabel?, action: MailAction, reason: DecisionReason) {
     self.label = label; self.action = action; self.reason = reason
   }

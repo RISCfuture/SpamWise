@@ -92,7 +92,12 @@ public enum CorpusManagement {
       state.invalidatePendingWork(.corpusImported(count: prepared.count, label: label))
     }
   }
-  /// Relabels reviewed content and linked features without creating sender rules or moving mail.
+  /**
+   Relabels a reviewed label, its linked learning and correction examples, without creating
+   sender rules or moving mail.
+
+   - Throws: ``CorpusError/labelNotFound`` when no reviewed label has `id`.
+   */
   public static func relabel(id: String, label: MailLabel, store: Store) async throws {
     try await StateRepository.update(store, loading: slices) { state in
       guard var reviewed = state.reviewedLabels.first(where: { $0.id == id }) else {
@@ -109,7 +114,12 @@ public enum CorpusManagement {
       state.invalidatePendingWork(.corpusRelabeled(label: label))
     }
   }
-  /// Forgets one label and its linked derived learning, retaining explicit sender rules.
+  /**
+   Forgets one label and its linked learning and correction examples, retaining explicit sender
+   rules.
+
+   - Throws: ``CorpusError/labelNotFound`` when no reviewed label has `id`.
+   */
   public static func forget(id: String, store: Store) async throws {
     try await StateRepository.update(store, loading: slices) { state in
       guard let label = state.reviewedLabels.first(where: { $0.id == id }) else {
