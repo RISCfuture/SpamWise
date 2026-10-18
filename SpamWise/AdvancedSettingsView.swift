@@ -38,14 +38,6 @@ struct AdvancedSettingsView: View {
             value: model.state.settings.incomingRoute.localizedTitle
           )
           LabeledContent("Pending retries", value: model.state.retries.count.formatted())
-          HStack(alignment: .top) {
-            Text(
-              "MailKit remains dry-run-only pending signed timing and account identity validation."
-            )
-            .foregroundStyle(.secondary)
-            Spacer()
-            HelpButton(page: "troubleshooting-mail-integration")
-          }
         }
         if model.state.settings.advancedOptions.transport == .appleMail {
           DisclosureGroup("Optional move test") { MoveTestView(model: model) }

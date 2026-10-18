@@ -17,7 +17,6 @@
 		5A000000000000000000030F /* MailExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 019C87443081F4C500513EEC /* MailExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5A0000000000000000000315 /* GitHubUpdateChecker in Frameworks */ = {isa = PBXBuildFile; productRef = 5A0000000000000000000314 /* GitHubUpdateChecker */; };
 		5A0000000000000000000600 /* SpamWiseCommon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A0000000000000000000107 /* SpamWiseCommon.framework */; };
-		AA0000000000000000000004 /* SpamWiseCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000003 /* SpamWiseCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -227,7 +226,6 @@
 		019C87413081F4C500513EEC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				AA0000000000000000000004 /* SpamWiseCore in Frameworks */,
 			);
 		};
 		019C87563081F50B00513EEC /* Frameworks */ = {
@@ -318,7 +316,6 @@
 			);
 			name = MailExtension;
 			packageProductDependencies = (
-				AA0000000000000000000003 /* SpamWiseCore */,
 			);
 			productName = MailExtension;
 			productReference = 019C87443081F4C500513EEC /* MailExtension.appex */;
@@ -1180,10 +1177,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5A0000000000000000000400 /* XCRemoteSwiftPackageReference "GitHubUpdateChecker" */;
 			productName = GitHubUpdateChecker;
-		};
-		AA0000000000000000000003 /* SpamWiseCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = SpamWiseCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

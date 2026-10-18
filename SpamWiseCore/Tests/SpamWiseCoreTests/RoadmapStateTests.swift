@@ -8,7 +8,7 @@ import SpamWiseCore
   object.removeValue(forKey: "learning"); object.removeValue(forKey: "reviewedLabels")
   var settings = try #require(object["settings"] as? [String: Any])
   settings.removeValue(forKey: "advanced"); settings["paused"] = true
-  settings.removeValue(forKey: "mailPreferences"); settings["route"] = "unverified"
+  settings.removeValue(forKey: "mailPreferences"); settings["route"] = "mailKit"
   object["settings"] = settings
   let decoded = try JSONDecoder().decode(
     AppState.self,

@@ -2,8 +2,6 @@ public import Foundation
 
 /// How SpamWise receives incoming mail.
 public enum IncomingRoute: String, Codable, Sendable, CaseIterable, FallbackDecodable {
-  /// Previews incoming Apple Mail through the MailKit extension, which has no account identity.
-  case mailKit
   /// Checks each included Apple Mail account's Inbox through Automation.
   case mailRule
   /// Checks an explicitly configured IMAP account.
@@ -29,18 +27,15 @@ public struct Settings: Codable, Sendable, Equatable {
   public var bodyTokenBudget = 1500
   /// Whether the user completed the setup flow.
   public var onboardingComplete = false
-  /// The Apple Mail route the user chose; ``incomingRoute`` also accounts for the transport.
-  public var route: IncomingRoute = .mailRule
   /// Accounts whose Inbox and Junk mailboxes resolved uniquely in a read-only check.
   public var validatedAccounts: Set<String> = []
   /// Optional capabilities and the selected model provider.
   public var advancedOptions = AdvancedSettings()
   /// Mail.app workflow preferences.
   public var mailOptions = MailPreferences()
-  /// The effective route: IMAP for the IMAP transport, otherwise the chosen Apple Mail route.
+  /// The effective route: IMAP for the IMAP transport, otherwise Apple Mail Automation checks.
   public var incomingRoute: IncomingRoute {
-    if advancedOptions.transport == .imap { return .imap }
-    return route == .mailKit ? .mailKit : .mailRule
+    advancedOptions.transport == .imap ? .imap : .mailRule
   }
   /// Creates a Settings with the supplied configuration.
   public init() {}
@@ -56,14 +51,13 @@ public struct Settings: Codable, Sendable, Equatable {
     correctionLimit = values.lenient(.correctionLimit, default: defaults.correctionLimit)
     bodyTokenBudget = values.lenient(.bodyTokenBudget, default: defaults.bodyTokenBudget)
     onboardingComplete = values.lenient(.onboardingComplete, default: defaults.onboardingComplete)
-    route = values.lenient(.route, default: defaults.route)
     validatedAccounts = values.lenient(.validatedAccounts, default: defaults.validatedAccounts)
     advancedOptions = values.lenient(.advancedOptions, default: defaults.advancedOptions)
     mailOptions = values.lenient(.mailOptions, default: defaults.mailOptions)
   }
   private enum CodingKeys: String, CodingKey {
     case strength, review, dryRun, paused, policy, correctionLimit, bodyTokenBudget
-    case onboardingComplete, route, validatedAccounts
+    case onboardingComplete, validatedAccounts
     case advancedOptions = "advanced"
     case mailOptions = "mailPreferences"
   }

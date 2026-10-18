@@ -961,23 +961,6 @@
         }
       }
     },
-    "Allow Automation when asked. In Mail → Settings → Extensions, enable SpamWise to inspect incoming dry runs.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permite Automatización cuando se solicite. En Mail → Ajustes → Extensiones, activa SpamWise para simular el análisis del correo entrante."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Autorisez Automatisation lorsque vous y êtes invité. Dans Mail → Réglages → Extensions, activez SpamWise pour simuler l’analyse des messages entrants."
-          }
-        }
-      }
-    },
     "Allow domain": {
       "localizations": {
         "es": {
@@ -5212,22 +5195,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les rôles des boîtes aux lettres sont absents ou ambigus. Les actions restent indisponibles."
-          }
-        }
-      }
-    },
-    "MailKit remains dry-run-only pending signed timing and account identity validation.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MailKit solo permite simulaciones hasta validar los tiempos y la identidad de la cuenta con la aplicación firmada."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MailKit reste limité aux simulations jusqu’à la validation des délais et de l’identité des comptes avec l’application signée."
           }
         }
       }
@@ -11676,22 +11643,6 @@
         }
       }
     },
-    "Mail extension preview — mail stays unchanged": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vista previa de la extensión de Mail — el correo no cambia"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aperçu de l’extension Mail — les messages restent inchangés"
-          }
-        }
-      }
-    },
     "Dry run — Inbox and Junk mailboxes not validated": {
       "localizations": {
         "es": {
@@ -11704,22 +11655,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Simulation — boîtes Réception et Indésirables non validées"
-          }
-        }
-      }
-    },
-    "Incoming mail": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correo entrante"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Messages entrants"
           }
         }
       }
@@ -11740,54 +11675,6 @@
         }
       }
     },
-    "Mail extension preview": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vista previa de la extensión de Mail"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aperçu de l’extension Mail"
-          }
-        }
-      }
-    },
-    "The Mail extension can’t tell which account a message belongs to, so it can’t filter by account. It previews decisions only when all accounts are included, and it never moves mail.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La extensión de Mail no puede saber a qué cuenta pertenece un mensaje, así que no puede filtrar por cuenta. Solo previsualiza decisiones cuando se incluyen todas las cuentas y nunca mueve correo."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’extension Mail ne peut pas savoir à quel compte appartient un message ; elle ne peut donc pas filtrer par compte. Elle ne prévisualise des décisions que si tous les comptes sont inclus, et ne déplace jamais de messages."
-          }
-        }
-      }
-    },
-    "Enable SpamWise in Mail → Settings → Extensions. Automatic Inbox checks stay off while the extension previews incoming mail.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activa SpamWise en Mail → Ajustes → Extensiones. Las comprobaciones automáticas de Entrada se detienen mientras la extensión previsualiza el correo entrante."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activez SpamWise dans Mail → Réglages → Extensions. Les vérifications automatiques de Réception sont suspendues tant que l’extension prévisualise les messages entrants."
-          }
-        }
-      }
-    },
     "Allow Automation when asked.": {
       "localizations": {
         "es": {
@@ -11800,38 +11687,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autorisez Automatisation lorsque vous y êtes invité."
-          }
-        }
-      }
-    },
-    "Mail extension preview off — include all accounts to use it": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vista previa de la extensión de Mail desactivada — incluye todas las cuentas para usarla"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aperçu de l’extension Mail désactivé — incluez tous les comptes pour l’utiliser"
-          }
-        }
-      }
-    },
-    "Only some accounts are included, so the extension previews nothing and no mail is checked. Include all accounts or choose Automation checks.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solo se incluyen algunas cuentas, así que la extensión no previsualiza nada y no se comprueba ningún mensaje. Incluye todas las cuentas o elige Comprobaciones por Automatización."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seuls certains comptes sont inclus : l’extension ne prévisualise donc rien et aucun message n’est vérifié. Incluez tous les comptes ou choisissez Vérifications par Automatisation."
           }
         }
       }

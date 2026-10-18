@@ -20,10 +20,6 @@ public enum FilteringStatus: String, Sendable, CaseIterable {
   case mailNotAuthorized
   /// Apple Mail is not running.
   case mailNotRunning
-  /// Only the Mail extension previews incoming mail; nothing moves.
-  case extensionPreview
-  /// The Mail extension route is chosen, but account scope stops it from previewing mail.
-  case extensionScoped
   /// Dry run, with no account's Inbox and Junk mailboxes validated yet.
   case rolesNotValidated
   /// Dry run: decisions are recorded but mail is unchanged.
@@ -48,8 +44,6 @@ public enum FilteringStatus: String, Sendable, CaseIterable {
         .mailNotAuthorized
       } else if appleMail, mailAutomation == .mailNotRunning {
         .mailNotRunning
-      } else if settings.incomingRoute == .mailKit {
-        MailExtensionPreview.allows(settings) ? .extensionPreview : .extensionScoped
       } else if settings.dryRun {
         settings.validatedAccounts.isEmpty ? .rolesNotValidated : .dryRun
       } else {

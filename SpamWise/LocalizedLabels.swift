@@ -127,7 +127,6 @@ extension ParsedMessage {
 extension IncomingRoute {
   var localizedTitle: String {
     switch self {
-      case .mailKit: String(localized: "Mail extension preview")
       case .mailRule: String(localized: "Automation checks")
       case .imap: String(localized: "IMAP")
     }
@@ -142,9 +141,6 @@ extension FilteringStatus {
       case .mailNotAuthorized:
         String(localized: "Mail Automation not allowed — mail stays unchanged")
       case .mailNotRunning: String(localized: "Mail isn’t running — checks resume when it opens")
-      case .extensionPreview: String(localized: "Mail extension preview — mail stays unchanged")
-      case .extensionScoped:
-        String(localized: "Mail extension preview off — include all accounts to use it")
       case .rolesNotValidated: String(localized: "Dry run — Inbox and Junk mailboxes not validated")
       case .dryRun: String(localized: "Dry run — mail stays unchanged")
       case .filtering: String(localized: "Filtering validated accounts")

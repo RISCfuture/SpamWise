@@ -3,6 +3,8 @@ import Foundation
 enum DocumentWorkerLimits {
   static let inputBytes = 524_288
   static let outputBytes = 16_384
+  static let replyEnvelopeBytes = 128
+  static let textBytes = outputBytes - replyEnvelopeBytes
   static let pages = 12
   static let textCharacters = 3000
   static let connectionDeadlineSec = 12.0

@@ -122,62 +122,6 @@ import SpamWiseCore
   #expect(await settled.moves.map(\.mailbox) == ["Inbox", "Junk"])
   #expect(await settled.searchedMailboxes == ["Inbox", "Junk", "Inbox"])
 }
-@Test func `previews extension mail only on the chosen all-account Apple Mail route`() async throws
-{
-  let store = try testStore(), calls = Counter()
-  let classifier = MockClassifier { _ in
-    calls.increment()
-    return .init(label: .junk, confidence: 99, reason: "Synthetic spam")
-  }
-  let raw = try fixture("filler-spam")
-  func preview(_ edit: @Sendable (inout Settings) -> Void) async throws -> DecisionRecord? {
-    try await StateRepository.update(store) { state in
-      state.settings = Settings(); state.settings.onboardingComplete = true
-      edit(&state.settings)
-    }
-    return try await MailExtensionPreview.process(
-      raw: raw,
-      store: store,
-      classifier: classifier,
-      timeout: 1
-    )
-  }
-  #expect(try await preview { _ in } == nil)
-  #expect(
-    try await preview {
-      $0.route = .mailKit; $0.mailOptions.accountIDs = ["work"]
-    } == nil
-  )
-  #expect(
-    try await preview {
-      $0.route = .mailKit; $0.advancedOptions.transport = .imap
-    } == nil
-  )
-  #expect(
-    try await preview {
-      $0.route = .mailKit; $0.paused = true
-    } == nil
-  )
-  #expect(
-    try await preview {
-      $0.route = .mailKit; $0.onboardingComplete = false
-    } == nil
-  )
-  #expect(calls.value == 0)
-  #expect(try await StateRepository.load(store).records.isEmpty)
-
-  let previewed = try await preview {
-    $0.route = .mailKit; $0.dryRun = false
-  }
-  #expect(previewed?.outcome == .dryRun)
-  #expect(calls.value == 1)
-  var settings = try await StateRepository.load(store).settings
-  #expect(FilteringStatus(settings: settings, mailAutomation: .granted) == .extensionPreview)
-  settings.mailOptions.accountIDs = ["work"]
-  #expect(FilteringStatus(settings: settings, mailAutomation: .granted) == .extensionScoped)
-  #expect(!FilteringStatus(settings: settings, mailAutomation: .granted).allowsAutomaticChecks)
-}
-
 @Test @MainActor
 func `invokes compiled handlers with typed arguments and private error numbers`() throws {
   let library = try AppleScriptLibrary(
@@ -208,14 +152,6 @@ func `invokes compiled handlers with typed arguments and private error numbers`(
   _ = try AppleScriptLibrary(source: MailScripts.library)
 }
 
-@Test func `invokes completion exactly once under concurrent calls`() async {
-  let count = Counter()
-  let completion = CompletionOnce<Int> { _ in count.increment() }
-  await withTaskGroup(of: Void.self) { group in
-    for _ in 0..<100 { group.addTask { completion.finish(1) } }
-  }
-  #expect(count.value == 1)
-}
 final class Counter: Sendable {
   private let storage = Mutex(0)
   var value: Int { storage.withLock { $0 } }

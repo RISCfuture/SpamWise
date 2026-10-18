@@ -20,6 +20,9 @@ No personal mail, external model, provider credential or paid API request is inv
   `DOCUMENT_WORKER_PROBE`; it is absent from the production worker build.
 - `Fixtures.swift`, `ProbeHost.swift` and `check.sh` drive the native acceptance
   cases, sign bundles, verify signatures and check access denial.
+- `ExtractionChecks.swift` and `extraction-check.sh` run extraction in process,
+  without signing, and check that Devanagari, Hindi and combining-mark text is
+  truncated within the reply limits.
 
 The worker has exactly the `com.apple.security.app-sandbox` entitlement. It has
 no network, Automation, App Group, shared Keychain, file-selection or inheritance
@@ -45,7 +48,7 @@ and the installed `NSXPCConnection.h` comments.
 | --- | --- |
 | Input | 524,288 bytes, checked before IPC and again before PDFKit |
 | Pages | At most 12, checked after PDFKit constructs the document |
-| Text | At most 3,000 characters; failed extraction returns no partial text |
+| Text | At most 3,000 characters and 16,256 JSON-encoded bytes, cut at a character boundary; failed extraction returns no partial text |
 | Encoded response | At most 16,384 bytes, checked before reply and before JSON decoding |
 | Worker CPU | Two seconds through `RLIMIT_CPU`, per fresh process |
 | Worker wall clock | Three-second independent watchdog |
@@ -54,6 +57,11 @@ and the installed `NSXPCConnection.h` comments.
 | Client request | Four-second reply deadline after authenticated connection |
 | Concurrent work | A client returns busy while active; the service accepts one parsing job per process |
 | Cancellation | An already cancelled task launches no connection; in-flight cancellation closes the connection and active worker exits |
+
+The text byte budget counts each character's UTF-8 size, and six bytes for an ASCII
+character JSON may escape, so the encoded reply always fits. Scripts with several
+scalars per character, such as Devanagari conjuncts or stacked combining marks, reach
+the byte budget before the character limit.
 
 Byte and character checks are protocol acceptance bounds, not promises about
 intermediate allocations. PDFKit can allocate before page and text checks.
@@ -76,6 +84,14 @@ A shutdown message is sent only after a response from a live worker;
 sending one after interruption could launch a replacement solely to shut it down.
 
 ## Reproduce
+
+The extraction checks need no signing identity:
+
+```sh
+bash Tools/DocumentWorker/extraction-check.sh "$(agent-lock worker)"
+```
+
+The full harness runs them first, then the signed cases:
 
 ```sh
 worker="$(agent-lock worker)"

@@ -3,6 +3,7 @@ set -euo pipefail
 worker="${1:?Pass a token from agent-lock worker}"
 identity="${2:?Pass a Developer ID Application identity}"
 export AGENT_WORKER_ID="$worker"
+bash Tools/DocumentWorker/extraction-check.sh "$worker"
 build_root=".build/$worker/document-worker"
 host="$build_root/DocumentProbe.app"
 service="$host/Contents/XPCServices/DocumentWorker.xpc"

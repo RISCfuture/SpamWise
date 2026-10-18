@@ -1,3 +1,4 @@
+import CoreText
 import Foundation
 import PDFKit
 
@@ -32,6 +33,32 @@ enum DocumentFixtures {
     }
     output += "trailer\n<< /Size \(objects.count + 1) /Root 1 0 R >>\nstartxref\n\(start)\n%%EOF\n"
     return Data(output.utf8)
+  }
+
+  /// Typesets Unicode text with system font fallback, so PDFKit extracts the original scalars.
+  static func typeset(_ text: String, fontSize: CGFloat = 3) throws -> Data {
+    var page = CGRect(x: 0, y: 0, width: 612, height: 792)
+    let output = NSMutableData()
+    guard let consumer = CGDataConsumer(data: output),
+      let context = unsafe CGContext(consumer: consumer, mediaBox: &page, nil)
+    else { throw ProbeError.fixture }
+    let font = CTFontCreateWithName("Helvetica" as CFString, fontSize, nil)
+    let bounds = CGMutablePath()
+    bounds.addRect(page.insetBy(dx: 18, dy: 18))
+    let framesetter = CTFramesetterCreateWithAttributedString(
+      NSAttributedString(string: text, attributes: [.font: font])
+    )
+    let frame = CTFramesetterCreateFrame(
+      framesetter,
+      CFRange(location: 0, length: 0),
+      bounds,
+      nil
+    )
+    context.beginPDFPage(nil)
+    CTFrameDraw(frame, context)
+    context.endPDFPage()
+    context.closePDF()
+    return output as Data
   }
 
   static func encrypted(password: String) throws -> Data {

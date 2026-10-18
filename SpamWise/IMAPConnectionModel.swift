@@ -93,10 +93,7 @@ extension IMAPConnectionModel {
   }
 
   private func save(_ connection: IMAPAppConnection, secret: String, store: Store) async throws {
-    _ = try JSONDecoder().decode(
-      IMAPConfiguration.self,
-      from: JSONEncoder().encode(connection.account)
-    )
+    try connection.account.validate()
     try saveCredential(secret, for: connection)
     let replaced = try await store.update(
       IMAPAppConnection.storeKey,

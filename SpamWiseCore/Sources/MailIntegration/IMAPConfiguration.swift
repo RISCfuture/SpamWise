@@ -36,7 +36,16 @@ public struct IMAPConfiguration: Codable, Sendable, Equatable {
     allowsActions = try values.decodeIfPresent(Bool.self, forKey: .allowsActions) ?? false
     try validate()
   }
-  func validate() throws {
+  /**
+   Checks that the identifier, host, port and username form a usable endpoint.
+
+   Decoding runs this check, so a decoded configuration is always valid; call it before
+   saving a configuration built in memory.
+   - Throws: ``IMAPError/invalidConfiguration`` for an empty or oversized identifier, a host
+     that is empty, too long or not an ASCII hostname, port zero, or a username that is empty
+     or can't be sent as IMAP text.
+   */
+  public func validate() throws {
     guard !id.isEmpty, id.utf8.count <= Self.maximumIdentifierBytes, !host.isEmpty,
       host.utf8.count <= Self.maximumHostBytes, port > 0,
       host.utf8.allSatisfy({
