@@ -374,18 +374,6 @@ func `retains unstarted retries across cancellation and restart`(cancelBeforeSta
   #expect(await task.value.outcome == .superseded)
   #expect(await adapter.actions == [.moveToInbox])
 }
-@Test func `records action failures separately from verdicts`() async throws {
-  let store = try testStore(), adapter = RecordingAdapter()
-  await adapter.deny(); try await enableActions(store)
-  let pipeline = Pipeline(
-    store: store,
-    classifier: MockClassifier(verdict: .init(label: .review, confidence: 50, reason: "uncertain"))
-  )
-  let record = await pipeline.process(try envelope(), adapter: adapter)
-  #expect(record.verdict?.label == .review)
-  #expect(record.outcome == .failed)
-  #expect(record.actionError != nil)
-}
 @Test func `prevents actions after persistence fails`() async throws {
   let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
   try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

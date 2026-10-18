@@ -22,7 +22,10 @@ let package = Package(
     .package(
       url: "https://github.com/anthropics/ClaudeForFoundationModels.git",
       revision: "0262e1a766c461a4268dcec656eca95dd74cebf8"
-    )
+    ),
+    .package(url: "https://github.com/apple/swift-nio.git", exact: "2.103.0"),
+    .package(url: "https://github.com/apple/swift-nio-imap.git", exact: "0.4.0"),
+    .package(url: "https://github.com/apple/swift-nio-transport-services.git", exact: "1.28.0")
   ],
   targets: [
     .target(name: "MessageModel", resources: [.copy("Resources/public_suffix_list.dat")]),
@@ -42,7 +45,15 @@ let package = Package(
       name: "SpamWiseCore",
       dependencies: ["MessageModel", "Signals", "Classifier", "Decision", "Store", "Learning"]
     ),
-    .target(name: "MailIntegration", dependencies: ["SpamWiseCore"]),
+    .target(
+      name: "MailIntegration",
+      dependencies: [
+        "SpamWiseCore",
+        .product(name: "NIOCore", package: "swift-nio"),
+        .product(name: "NIOIMAP", package: "swift-nio-imap"),
+        .product(name: "NIOTransportServices", package: "swift-nio-transport-services")
+      ]
+    ),
     .target(name: "Evaluation", dependencies: ["SpamWiseCore"]),
     .executableTarget(
       name: "SpamWiseEval",
@@ -51,7 +62,11 @@ let package = Package(
     .executableTarget(name: "SpamWiseDaemon", dependencies: ["SpamWiseCore", "MailIntegration"]),
     .testTarget(
       name: "SpamWiseCoreTests",
-      dependencies: ["SpamWiseCore", "MailIntegration", "Evaluation", "Learning"],
+      dependencies: [
+        "SpamWiseCore", "MailIntegration", "Evaluation", "Learning",
+        .product(name: "NIOEmbedded", package: "swift-nio"),
+        .product(name: "NIOIMAP", package: "swift-nio-imap")
+      ],
       resources: [.copy("Fixtures")]
     )
   ],

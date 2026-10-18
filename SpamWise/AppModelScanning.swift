@@ -114,6 +114,9 @@ extension AppModel {
     dryRun: Bool,
     automatic: Bool
   ) async throws -> [DecisionRecord] {
+    if !dryRun {
+      _ = await pipeline.correctMailReturnedFromJunk(batch.messages, adapter: batch.adapter)
+    }
     let total = batch.messages.count
     return try await pipeline.processBatch(
       batch.messages,

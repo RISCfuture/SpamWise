@@ -169,8 +169,9 @@ public enum IMAPAccountValidation {
   /// Call only after observing a unique Junk mailbox with MOVE support, or a probe message
   /// restored to Inbox.
   public static func record(_ configuration: IMAPConfiguration, store: Store) async throws {
-    let fingerprint = fingerprint(configuration)
-    try await store.update(key, default: [String: String]()) { $0[configuration.id] = fingerprint }
+    try await store.update(key, default: [String: String]()) {
+      $0[configuration.id] = configuration.endpointFingerprint
+    }
     try await StateRepository.editSettings(store) { settings in
       settings.validatedAccounts.insert(configuration.id)
       var advanced = settings.advancedOptions
@@ -210,19 +211,8 @@ public enum IMAPAccountValidation {
   {
     let validations = try await store.read(key, default: [String: String]())
     let state = try await StateRepository.load(store, StateSlices())
-    return validations[configuration.id] == fingerprint(configuration)
+    return validations[configuration.id] == configuration.endpointFingerprint
       && state.settings.validatedAccounts.contains(configuration.id)
       && state.settings.incomingRoute == .imap
-  }
-  private static func fingerprint(_ configuration: IMAPConfiguration) -> String {
-    stableHash(
-      Data(
-        [
-          configuration.id, configuration.host.lowercased(), String(configuration.port),
-          configuration.username
-        ]
-        .joined(separator: "\u{0}").utf8
-      )
-    )
   }
 }

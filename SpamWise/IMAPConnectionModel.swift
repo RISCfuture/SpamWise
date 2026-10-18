@@ -12,73 +12,74 @@ import MailIntegration
   var oauthBearer = false
   var accountID = "imap:" + UUID().uuidString
   var status = String(localized: "Configure a separate IMAP connection.")
-  var busy = false
+  /// True while this or any other app operation is running; IMAP setup shares the app's busy gate.
+  var busy: Bool { model.busy }
 
   init(model: AppModel) { self.model = model }
   func load() async {
-    guard let store = model.store,
-      let saved = try? await IMAPAppConnection.load(from: store)
-    else { return }
-    host = saved.account.host; username = saved.account.username
-    port = String(saved.account.port); accountID = saved.account.id; oauthBearer = saved.oauthBearer
-    status = String(localized: "Saved IMAP connection loaded. Check it before use.")
+    guard let store = model.store else { return }
+    do {
+      guard let saved = try await IMAPAppConnection.saved(in: store) else { return }
+      host = saved.account.host; username = saved.account.username
+      port = String(saved.account.port); accountID = saved.account.id
+      oauthBearer = saved.oauthBearer
+      status = String(localized: "Saved IMAP connection loaded. Check it before use.")
+    } catch {
+      status = AppModel.describe(error)
+    }
   }
   func save() {
-    guard let store = model.store, let number = UInt16(port), number > 0 else {
-      status = String(localized: "Enter a valid TLS port."); return
-    }
+    guard let number = UInt16(port), number > 0 else { return report(IMAPSetupError.invalidPort) }
     let connection = connection(port: number)
     let secret = credential
-    busy = true
-    Task {
-      defer { busy = false; credential = "" }
-      do {
-        try await save(connection, secret: secret, store: store)
-        await model.refresh()
-        status = String(
-          localized:
-            "Connection saved. Dry run is enabled; check the connection to validate its mailboxes."
-        )
-      } catch {
-        status = String(
-          localized: "Could not save the connection. Check the endpoint and Keychain access."
-        )
-      }
+    credential = ""
+    perform { [self] in
+      guard let store = model.store else { throw IMAPSetupError.storageUnavailable }
+      try await save(connection, secret: secret, store: store)
+      status = String(
+        localized:
+          "Connection saved. Dry run is enabled; check the connection to validate its mailboxes."
+      )
     }
   }
   func check() {
-    guard let store = model.store else { return }
-    busy = true
-    Task {
-      defer { busy = false }
-      do {
-        let adapter = try await model.configuredIMAPAdapter(validateConnection: false)
-        let result = try await adapter.validateReadOnly()
-        let connection = try await IMAPAppConnection.load(from: store)
-        let validated = try await IMAPAccountValidation.record(
-          result,
-          for: connection.account,
-          store: store
-        )
-        await model.refresh()
-        status =
-          validated
-          ? String(localized: "Read-only check passed. Inbox and Junk mailboxes are validated.")
-          : String(
-            localized:
-              "Read-only check passed. This server lacks a supported MOVE capability or unique Junk mailbox."
-          )
-      } catch {
-        status = String(
-          localized:
-            "IMAP check failed. Verify the saved endpoint, credentials and server capabilities."
-        )
+    perform { [self] in
+      guard let store = model.store else { throw IMAPSetupError.storageUnavailable }
+      guard let connection = try await IMAPAppConnection.saved(in: store) else {
+        throw IMAPSetupError.noSavedConnection
       }
+      let result = try await model.configuredIMAPAdapter().validateReadOnly()
+      let validated = try await IMAPAccountValidation.record(
+        result,
+        for: connection.account,
+        store: store
+      )
+      status =
+        validated
+        ? String(localized: "Read-only check passed. Inbox and Junk mailboxes are validated.")
+        : String(
+          localized:
+            "Read-only check passed. This server lacks a supported MOVE capability or unique Junk mailbox."
+        )
     }
   }
 }
 
 extension IMAPConnectionModel {
+  /// Runs through the app's busy-tracked operation gate and shows any failure's cause here.
+  private func perform(_ operation: @escaping @MainActor () async throws -> Void) {
+    model.run { [self] in
+      do {
+        try await operation()
+      } catch {
+        status = AppModel.describe(error)
+        throw error
+      }
+    }
+  }
+
+  private func report(_ error: IMAPSetupError) { status = AppModel.describe(error) }
+
   private func connection(port: UInt16) -> IMAPAppConnection {
     IMAPAppConnection(
       account: .init(

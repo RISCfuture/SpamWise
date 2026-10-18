@@ -3,7 +3,8 @@ import SpamWiseCore
 
 actor RecordingAdapter: MailClientAdapter {
   var actions: [MailAction] = []
-  var fail = false
+  var failure: (any Error)?
+  var unsupported: Set<MailAction> = []
   var updatedIdentity: MessageIdentity?
   var lookups = 0
   var message: MailEnvelope?
@@ -23,10 +24,12 @@ actor RecordingAdapter: MailClientAdapter {
   func recentMessages(limit: Int) async throws -> [MailEnvelope] { [] }
   func importHistory() async throws -> [String: HistoryIndex] { [:] }
   func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
-    if fail { throw IntegrationError.permissionDenied }
+    if let failure { throw failure }
     actions.append(action); return .init(confirmed: true, updatedIdentity: updatedIdentity)
   }
-  func deny() { fail = true }
+  func deny(with error: any Error = IntegrationError.permissionDenied) { failure = error }
+  func refuse(_ action: MailAction) { unsupported.insert(action) }
+  func supports(_ action: MailAction) async -> Bool { !unsupported.contains(action) }
   func moveIdentity(to identity: MessageIdentity) { updatedIdentity = identity }
 }
 func testStore() throws -> Store {

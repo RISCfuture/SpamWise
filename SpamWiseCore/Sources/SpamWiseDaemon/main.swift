@@ -66,7 +66,11 @@ struct SpamWiseDaemon {
     var account = configuration.account
     account.allowsActions = options.actions
     let credential = configuration.credential
-    let adapter = IMAPAdapter(configuration: account, credentials: { try credential.resolve() })
+    let adapter = IMAPAdapter(
+      configuration: account,
+      credentials: { try credential.resolve() },
+      validations: store
+    )
     let check = try await adapter.validateReadOnly()
     if options.validate {
       try await recordValidation(check, for: account, store: store); return
@@ -134,6 +138,9 @@ struct SpamWiseDaemon {
     options: Options
   ) async throws -> Int {
     let sweep = try await adapter.nextInboxSweep(limit: options.limit, cursorStore: store)
+    if options.actions {
+      _ = await pipeline.correctMailReturnedFromJunk(sweep.messages, adapter: adapter)
+    }
     let processed = try await pipeline.processBatch(
       sweep.messages,
       adapter: adapter,

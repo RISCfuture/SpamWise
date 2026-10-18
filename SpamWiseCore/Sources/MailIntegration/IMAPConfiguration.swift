@@ -1,3 +1,6 @@
+import Foundation
+import SpamWiseCore
+
 /// Explicit account connection settings. Secrets are supplied separately for each connection.
 public struct IMAPConfiguration: Codable, Sendable, Equatable {
   private static let maximumIdentifierBytes = 256
@@ -42,9 +45,18 @@ public struct IMAPConfiguration: Codable, Sendable, Equatable {
       }),
       !username.isEmpty
     else { throw IMAPError.invalidConfiguration }
-    _ = try IMAPSession.quote(username)
+    try IMAPWireText.validate(username)
   }
   private enum CodingKeys: String, CodingKey { case id, host, port, username, allowsActions }
+}
+
+extension IMAPConfiguration {
+  /// Hash of the account, case-insensitive host, port and username; keys validation evidence and sweep progress.
+  var endpointFingerprint: String {
+    stableHash(
+      Data([id, host.lowercased(), String(port), username].joined(separator: "\u{0}").utf8)
+    )
+  }
 }
 
 /// Ephemeral authentication material, obtained from Keychain or an explicit caller-owned source.

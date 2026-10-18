@@ -6,218 +6,231 @@ import SpamWiseCore
 @Suite
 // swiftlint:disable:next type_name
 struct `integrates bounded IMAP messages` {
-  private static let validation =
-    "* OK ready\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS1 OK capability\r\nS2 OK login\r\n"
-    + "* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS3 OK capability\r\n"
-    + "* LIST (\\Junk) \"/\" \"Junk Mail\"\r\n* LIST (\\Sent) \"/\" \"Sent\"\r\nS4 OK list\r\n"
-    + "* OK [UIDVALIDITY 33] selected\r\n* 0 EXISTS\r\nS5 OK examine\r\n"
+  private static let validated =
+    IMAPTranscript.authenticated().roles().examine(validity: 33, exists: 0)
 
-  private static func fetched(_ raw: String, uid: Int, tag: Int) -> String {
-    "* 1 FETCH (UID \(uid) RFC822.SIZE \(raw.utf8.count) BODY[] {\(raw.utf8.count)}\r\n\(raw))\r\nS\(tag) OK fetched\r\n"
-  }
-  private static func selection(validity: Int, tag: Int) -> String {
-    "* OK [UIDVALIDITY \(validity)] selected\r\n* 1 EXISTS\r\nS\(tag) OK selected\r\n"
+  private static func identity(_ raw: String, uid: Int = 7, mailbox: String = "INBOX")
+    -> MessageIdentity
+  {
+    MessageIdentity(
+      accountID: "account",
+      localID: uid,
+      mailboxValidity: 33,
+      mailbox: mailbox,
+      contentHash: stableHash(Data(raw.utf8))
+    )
   }
 
-  private static func selected(validity: Int) -> String {
-    "* OK ready\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS1 OK capability\r\nS2 OK login\r\n* CAPABILITY IMAP4rev1 MOVE SPECIAL-USE\r\nS3 OK capability\r\n* OK [UIDVALIDITY \(validity)] selected\r\n* 1 EXISTS\r\nS4 OK select\r\n"
+  private static func validatedStore() async throws -> Store {
+    let store = try testStore()
+    try await IMAPAccountValidation.record(.test, store: store)
+    return store
   }
+
+  private static func cause(of error: (any Error)?) -> (any Error)? {
+    (error as? ActionNotAttempted)?.cause
+  }
+
   @Test
   func `parses fragmented literal mailboxes and rejects oversized literals`() async throws {
-    let transport = IMAPFixtureTransport(
-      response: "* LIST (\\Junk) \"/\" {9}\r\nJunk Mail\r\n",
-      fragment: 2
+    let server = IMAPTestServer(
+      IMAPTranscript.authenticated(fragment: 2)
+        .then("LIST", "* LIST (\\Junk) \"/\" {9}\r\nJunk Mail")
+        .examine(validity: 33),
+      IMAPTranscript.authenticated().examine(validity: 33)
+        .then("UID FETCH 7 ", "* 1 FETCH (UID 7 RFC822.SIZE 2000001 BODY[] {2000001}")
     )
-    let reader = IMAPResponseReader(transport: transport)
-    let response = try await reader.read()
-    #expect(response.last?.text == "Junk Mail")
-    let oversized = IMAPResponseReader(
-      transport: IMAPFixtureTransport(response: "* 1 FETCH (BODY[] {2000001}\r\n")
-    )
-    await #expect(throws: IMAPError.limitExceeded) { _ = try await oversized.read() }
+    #expect(try await server.adapter().validateReadOnly().junkMailbox == "Junk Mail")
+    await #expect(throws: IMAPError.limitExceeded) {
+      _ = try await server.adapter().lookup(Self.identity("unused"))
+    }
   }
 
   @Test
-  func `rejects unterminated quoting and treats literal content as opaque`() async throws {
-    let invalid = IMAPResponseReader(
-      transport: IMAPFixtureTransport(response: "* LIST () \"/\" \"unfinished\r\n")
+  func `rejects malformed responses and treats literal content as opaque`() async throws {
+    let raw = "From: sender@example.com\r\n\r\nS9 OK fake\r\n* BYE"
+    let server = IMAPTestServer(
+      IMAPTranscript.authenticated().then("LIST", "* LIST (\\Junk) \"/\" \"bad\u{1}name\""),
+      IMAPTranscript.authenticated(fragment: 1).examine(validity: 33)
+        .metadata([.init(1, uid: 7, size: raw.utf8.count)]).body(raw, uid: 7)
     )
-    await #expect(throws: IMAPError.malformedResponse) { _ = try await invalid.read() }
-    let raw = "A1 OK fake\r\n* BYE"
-    let reader = IMAPResponseReader(
-      transport: IMAPFixtureTransport(
-        response: "* 1 FETCH (UID 7 BODY[] {\(raw.utf8.count)}\r\n\(raw))\r\n",
-        fragment: 1
-      )
-    )
-    #expect(try await reader.read().contains(.literal(Data(raw.utf8))))
+    await #expect(throws: IMAPError.malformedResponse) {
+      _ = try await server.adapter().validateReadOnly()
+    }
+    #expect(try await server.adapter().recentMessages(limit: 1).first?.raw == Data(raw.utf8))
   }
 
   @Test
   func `validates read only and refuses changed UID validity before an action`() async throws {
-    let transport = IMAPFixtureTransport(
-      response: Self.validation + Self.selected(validity: 44),
-      fragment: 1
+    let server = IMAPTestServer(
+      Self.validated.roles().select(validity: 44)
     )
-    let adapter = IMAPAdapter(
-      configuration: .init(
-        id: "account",
-        host: "imap.example.com",
-        username: "user",
-        allowsActions: true
-      ),
-      credentials: { .password("secret") },
-      transport: { _ in transport }
-    )
-    let validation = try await adapter.validateReadOnly()
-    #expect(validation.supportsMove)
-    let identity = MessageIdentity(
-      accountID: "account",
-      localID: 7,
-      mailboxValidity: 33,
-      mailbox: "INBOX",
-      contentHash: "old"
-    )
-    await #expect(throws: IntegrationError.staleMessage) {
-      _ = try await adapter.perform(.moveToJunk, for: identity)
+    let adapter = await server.adapter(validations: try await Self.validatedStore())
+    #expect(try await adapter.validateReadOnly().supportsMove)
+    let error = await #expect(throws: ActionNotAttempted.self) {
+      _ = try await adapter.perform(.moveToJunk, for: Self.identity("old"))
     }
-    let commands = await transport.commands
-    #expect(commands.contains { $0.contains("EXAMINE") })
-    #expect(
-      !commands.contains {
-        $0.contains("UID MOVE") || $0.contains("EXPUNGE") || $0.contains("DELETE")
-      }
-    )
+    #expect(Self.cause(of: error) as? IntegrationError == .staleMessage)
+    let commands = await server.commands
+    #expect(commands.contains { $0.hasPrefix("EXAMINE") })
+    #expect(!commands.contains { $0.hasPrefix("UID MOVE") || $0.contains("EXPUNGE") })
+    #expect(await server.connections == 1)
   }
 
   @Test
   func `rejects missing MOVE capability and ambiguous special use roles`() async throws {
-    let transcript = (Self.validation + Self.selected(validity: 33)).replacingOccurrences(
-      of: " MOVE",
-      with: ""
+    let withoutMove = IMAPTranscript.authenticated(capabilities: "IMAP4rev1 SPECIAL-USE")
+    let server = IMAPTestServer(
+      withoutMove.roles().examine(validity: 33, exists: 0),
+      IMAPTranscript.authenticated()
+        .then(
+          "LIST",
+          "* LIST (\\Junk) \"/\" \"Junk Mail\"",
+          "* LIST (\\Junk) \"/\" \"Other Junk\""
+        )
     )
-    let transport = IMAPFixtureTransport(response: transcript, fragment: 1)
-    let configuration = IMAPConfiguration(
-      id: "account",
-      host: "imap.example.com",
-      username: "user",
-      allowsActions: true
-    )
-    let adapter = IMAPAdapter(
-      configuration: configuration,
-      credentials: { .password("secret") },
-      transport: { _ in transport }
-    )
+    let adapter = await server.adapter(validations: try await Self.validatedStore())
+    #expect(await adapter.supports(.moveToJunk))
     #expect(try await !adapter.validateReadOnly().supportsMove)
-    let identity = MessageIdentity(
-      accountID: "account",
-      localID: 7,
-      mailboxValidity: 33,
-      mailbox: "INBOX",
-      contentHash: "old"
-    )
-    await #expect(throws: IMAPError.unsupported) {
-      _ = try await adapter.perform(.moveToJunk, for: identity)
+    #expect(await !adapter.supports(.moveToJunk))
+    let error = await #expect(throws: ActionNotAttempted.self) {
+      _ = try await adapter.perform(.moveToJunk, for: Self.identity("old"))
     }
-    #expect(await !transport.commands.contains { $0.contains("SELECT") || $0.contains("UID MOVE") })
-    let ambiguous = Self.validation.replacingOccurrences(
-      of: "S4 OK list",
-      with: "* LIST (\\Junk) \"/\" \"Other Junk\"\r\nS4 OK list"
-    )
-    let denied = IMAPFixtureTransport(response: ambiguous)
-    let deniedAdapter = IMAPAdapter(
-      configuration: configuration,
-      credentials: { .password("secret") },
-      transport: { _ in denied }
-    )
+    #expect(Self.cause(of: error) as? IMAPError == .unsupported)
     await #expect(throws: IntegrationError.ambiguous) {
-      _ = try await deniedAdapter.validateReadOnly()
+      _ = try await server.adapter().validateReadOnly()
     }
-    #expect(await !denied.commands.contains { $0.contains("SELECT") || $0.contains("UID MOVE") })
+    #expect(await !server.commands.contains { $0.hasPrefix("SELECT") || $0.hasPrefix("UID MOVE") })
   }
 
   @Test(arguments: [true, false])
   func `requires exact content and a UID mapping to confirm a move`(_ mapping: Bool) async throws {
-    let raw = "From: sender@example.com\r\nSubject: bounded\r\n\r\nA1 OK content is opaque"
-    let fetched =
-      "* 1 FETCH (UID 7 RFC822.SIZE \(raw.utf8.count) BODY[] {\(raw.utf8.count)}\r\n\(raw))\r\nS5 OK fetch\r\n"
-    let roles = "* LIST (\\Junk) \"/\" \"Junk Mail\"\r\nS6 OK list\r\n"
-    let moved =
-      "S7 OK \(mapping ? "[COPYUID 40 7 90] " : "")moved\r\n"
-      + (mapping ? Self.selection(validity: 40, tag: 8) + Self.fetched(raw, uid: 90, tag: 9) : "")
-    let transport = IMAPFixtureTransport(
-      response: Self.validation + Self.selected(validity: 33) + fetched + roles + moved,
-      fragment: 1
-    )
-    let adapter = IMAPAdapter(
-      configuration: .init(
-        id: "account",
-        host: "imap.example.com",
-        username: "user",
-        allowsActions: true
-      ),
-      credentials: { .password("secret") },
-      transport: { _ in transport }
-    )
-    _ = try await adapter.validateReadOnly()
-    let identity = MessageIdentity(
-      accountID: "account",
-      localID: 7,
-      mailboxValidity: 33,
-      mailbox: "INBOX",
-      contentHash: stableHash(Data(raw.utf8))
-    )
-    let receipt = try await adapter.perform(.moveToJunk, for: identity)
+    let raw = "From: sender@example.com\r\nSubject: bounded\r\n\r\nS9 OK content is opaque"
+    var transcript = IMAPTranscript.authenticated(fragment: 1).roles()
+      .select(validity: 33).body(raw, uid: 7)
+      .move(uid: 7, to: "Junk Mail", copyUID: mapping ? (40, 90) : nil)
+    if mapping { transcript = transcript.examine("Junk Mail", validity: 40).body(raw, uid: 90) }
+    let server = IMAPTestServer(transcript)
+    let adapter = await server.adapter(validations: try await Self.validatedStore())
+    let receipt = try await adapter.perform(.moveToJunk, for: Self.identity(raw))
     #expect(receipt.confirmed == mapping)
     #expect(receipt.updatedIdentity?.localID == (mapping ? 90 : nil))
     #expect(receipt.updatedIdentity?.mailbox == (mapping ? "Junk Mail" : nil))
-    let commands = await transport.commands
-    #expect(commands.contains("S7 UID MOVE 7 \"Junk Mail\"\r\n"))
-    #expect(commands.contains { $0.contains("BODY.PEEK[]") })
+    #expect(receipt.updatedIdentity.map(\.key) == (mapping ? Self.identity(raw).key : nil))
+    let commands = await server.commands
+    #expect(commands.contains { $0.hasPrefix("UID FETCH 7 ") && $0.contains("BODY.PEEK[]") })
     #expect(!commands.contains { $0.contains("EXPUNGE") || $0.contains("STORE") })
+  }
+
+  @Test(arguments: [
+    ("\\Flagged \\*", "$SpamWiseReview"), ("\\Seen \\Flagged", "\\Flagged"), ("\\Seen", nil)
+  ])
+  func `stores Review as the strongest flag each mailbox permits`(
+    permanentFlags: String,
+    expected: String?
+  ) async throws {
+    let raw = "From: sender@example.com\r\nSubject: maybe\r\n\r\nUncertain"
+    var transcript = IMAPTranscript.authenticated()
+      .select(validity: 33, permanentFlags: permanentFlags).body(raw, uid: 7)
+    if let expected {
+      transcript = transcript.then(
+        "UID STORE 7 +FLAGS (\(expected))",
+        "* 1 FETCH (UID 7 FLAGS (\\Seen \(expected)))"
+      )
+    }
+    let server = IMAPTestServer(transcript)
+    let adapter = await server.adapter(validations: try await Self.validatedStore())
+    if expected == nil {
+      let error = await #expect(throws: ActionNotAttempted.self) {
+        _ = try await adapter.perform(.orangeFlag, for: Self.identity(raw))
+      }
+      #expect(Self.cause(of: error) as? IMAPError == .unsupported)
+    } else {
+      #expect(try await adapter.perform(.orangeFlag, for: Self.identity(raw)).confirmed)
+    }
+    #expect(await !server.commands.contains { $0.hasPrefix("UID MOVE") })
   }
 
   @Test
   func `bounds recent retrieval and preserves the UID namespace`() async throws {
     let raw = "From: sender@example.com\r\n\r\nHello"
-    let metadata = "* 1 FETCH (UID 7 RFC822.SIZE \(raw.utf8.count))\r\nS5 OK metadata\r\n"
-    let fetched =
-      "* 1 FETCH (UID 7 RFC822.SIZE \(raw.utf8.count) BODY[] {\(raw.utf8.count)}\r\n\(raw))\r\nS6 OK fetched\r\n"
-    let transport = IMAPFixtureTransport(
-      response: Self.selected(validity: 33) + metadata + fetched,
-      fragment: 3
+    let server = IMAPTestServer(
+      IMAPTranscript.authenticated(fragment: 3).examine(validity: 33)
+        .metadata([.init(1, uid: 7, size: raw.utf8.count)]).body(raw, uid: 7)
     )
-    let adapter = IMAPAdapter(
-      configuration: .init(id: "account", host: "imap.example.com", username: "user"),
-      credentials: { .password("secret") },
-      transport: { _ in transport }
-    )
-    let messages = try await adapter.recentMessages(limit: 1000)
-    let message = try #require(messages.first)
+    let adapter = await server.adapter()
+    let message = try #require(try await adapter.recentMessages(limit: 1000).first)
     #expect(message.raw == Data(raw.utf8))
     #expect(message.identity.localID == 7 && message.identity.mailboxValidity == 33)
-    await #expect(throws: IntegrationError.accountUnverified) {
+    let error = await #expect(throws: ActionNotAttempted.self) {
       _ = try await adapter.perform(.moveToJunk, for: message.identity)
     }
-    let commands = await transport.commands
-    #expect(commands.contains("S4 EXAMINE \"INBOX\"\r\n"))
+    #expect(Self.cause(of: error) as? IntegrationError == .accountUnverified)
+    #expect(await server.commands.contains("FETCH 1 (UID RFC822.SIZE)"))
   }
 
   @Test
-  func `refuses credential injection and cancelled parsing without reading more bytes`()
+  func `refuses credential injection and cancelled reads without sending more commands`()
     async throws
   {
-    #expect(throws: IMAPError.invalidConfiguration) {
-      _ = try IMAPSession.quote("password\r\nS3 DELETE INBOX")
+    let server = IMAPTestServer(
+      IMAPTranscript().then("CAPABILITY", "* CAPABILITY IMAP4rev1"),
+      IMAPTranscript().stalls(at: "CAPABILITY")
+    )
+    await #expect(throws: IMAPError.invalidConfiguration) {
+      _ = try await server.adapter(password: "password\r\nS3 DELETE INBOX").validateReadOnly()
     }
-    let transport = IMAPFixtureTransport(response: "* OK ready\r\n")
-    let reader = IMAPResponseReader(transport: transport)
-    let task = Task {
-      while !Task.isCancelled { await Task.yield() }
-      return try await reader.read()
-    }
+    let adapter = await server.adapter()
+    let task = Task { try await adapter.validateReadOnly() }
+    while await server.commands.count < 2 { await Task.yield() }
     task.cancel()
     await #expect(throws: CancellationError.self) { _ = try await task.value }
+    #expect(await server.commands == ["CAPABILITY", "CAPABILITY"])
+  }
+
+  @Test
+  func `treats mail returned to Inbox after a Junk move as an implicit Good correction`()
+    async throws
+  {
+    let raw =
+      "From: Sender <sender@example.com>\r\nMessage-ID: <wanted@example.com>\r\n"
+      + "Subject: Newsletter\r\n\r\nWanted after all"
+    let server = IMAPTestServer(
+      IMAPTranscript.authenticated().roles().select(validity: 33).body(raw, uid: 7)
+        .move(uid: 7, to: "Junk Mail", copyUID: (40, 90))
+        .examine("Junk Mail", validity: 40).body(raw, uid: 90)
+        .examine(validity: 33).body(raw, uid: 95)
+    )
+    let store = try await Self.validatedStore()
+    try await StateRepository.editSettings(store) { $0.dryRun = false }
+    let adapter = await server.adapter(validations: store)
+    let pipeline = Pipeline(
+      store: store,
+      classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "spam"))
+    )
+    let original = IMAPAdapter.envelope(
+      Data(raw.utf8),
+      account: "account",
+      uid: 7,
+      mailbox: "INBOX",
+      validity: 33
+    )
+    #expect(await pipeline.process(original, adapter: adapter).outcome == .applied)
+    let rescued = IMAPAdapter.envelope(
+      Data(raw.utf8),
+      account: "account",
+      uid: 95,
+      mailbox: "INBOX",
+      validity: 33
+    )
+    let corrections = await pipeline.correctMailReturnedFromJunk([rescued], adapter: adapter)
+    #expect(corrections.map(\.decision.label) == [.inbox])
+    let again = await pipeline.process(rescued, adapter: adapter)
+    #expect(again.decision.action == .moveToInbox && again.outcome == .applied)
+    #expect(await pipeline.correctMailReturnedFromJunk([rescued], adapter: adapter).isEmpty)
+    #expect(await server.commands.filter { $0.hasPrefix("UID MOVE") }.count == 1)
+    let rules = try await StateRepository.load(store).rules
+    #expect(rules.contains { $0.value == "sender@example.com" && $0.disposition == .allow })
   }
 
   @Test
@@ -269,9 +282,7 @@ struct `integrates bounded IMAP messages` {
   func `binds validation to the endpoint, keeps it through Apple Mail checks and revokes it`()
     async throws
   {
-    let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: directory) }
-    let store = try Store(url: directory.appending(path: "state.store"))
+    let store = try testStore()
     var configuration = IMAPConfiguration(
       id: "imap:test",
       host: "imap.example.com",
@@ -295,6 +306,8 @@ struct `integrates bounded IMAP messages` {
     )
     #expect(try await StateRepository.load(store).settings.validatedAccounts == ["imap:test"])
     #expect(try await IMAPAccountValidation.isValidated(configuration, store: store))
+    configuration.host = "IMAP.Example.com"
+    #expect(try await IMAPAccountValidation.isValidated(configuration, store: store))
     configuration.host = "other.example.com"
     #expect(try await !IMAPAccountValidation.isValidated(configuration, store: store))
     configuration.host = "imap.example.com"
@@ -312,42 +325,25 @@ struct `integrates bounded IMAP messages` {
     async throws
   {
     let raw = "From: sender@example.com\r\nSubject: [SpamWise Probe] round trip\r\n\r\nDisposable"
-    let transcript =
-      Self.validation.replacingOccurrences(of: "* 0 EXISTS", with: "* 1 EXISTS")
-      + Self.fetched(raw, uid: 7, tag: 6) + Self.selection(validity: 33, tag: 7)
-      + Self.fetched(raw, uid: 7, tag: 8) + "S9 OK [COPYUID 40 7 90] moved\r\n"
-      + Self.selection(validity: 40, tag: 10) + Self.fetched(raw, uid: 90, tag: 11)
-      + Self.selection(validity: 40, tag: 12) + Self.fetched(raw, uid: 90, tag: 13)
-      + "S14 OK [COPYUID 33 90 95] restored\r\n"
-      + Self.selection(validity: 33, tag: 15) + Self.fetched(raw, uid: 95, tag: 16)
-    let transport = IMAPFixtureTransport(response: transcript, fragment: 8)
-    let configuration = IMAPConfiguration(
-      id: "imap:test",
-      host: "imap.example.com",
-      username: "user"
+    let server = IMAPTestServer(
+      IMAPTranscript.authenticated(fragment: 8).roles().examine(validity: 33).body(raw, uid: 7)
+        .select(validity: 33).body(raw, uid: 7)
+        .move(uid: 7, to: "Junk Mail", copyUID: (40, 90))
+        .examine("Junk Mail", validity: 40).body(raw, uid: 90)
+        .select("Junk Mail", validity: 40).body(raw, uid: 90)
+        .move(uid: 90, to: "INBOX", copyUID: (33, 95))
+        .examine(validity: 33).body(raw, uid: 95)
     )
-    let adapter = IMAPAdapter(
-      configuration: configuration,
-      credentials: { .password("secret") },
-      transport: { _ in transport }
-    )
-    let restored = try await adapter.testDisposableMessage(uid: 7)
+    let restored = try await server.adapter().testDisposableMessage(uid: 7)
     #expect(restored.localID == 95 && restored.mailboxValidity == 33 && restored.mailbox == "INBOX")
-    let commands = await transport.commands
-    #expect(commands.contains("S14 UID MOVE 90 \"INBOX\"\r\n"))
+    #expect(await server.commands.contains("UID MOVE 90 \"INBOX\""))
     let ordinary = raw.replacingOccurrences(of: "[SpamWise Probe]", with: "Ordinary")
-    let deniedTransport = IMAPFixtureTransport(
-      response: Self.validation + Self.fetched(ordinary, uid: 7, tag: 6)
-    )
-    let denied = IMAPAdapter(
-      configuration: configuration,
-      credentials: { .password("secret") },
-      transport: { _ in deniedTransport }
+    let denied = IMAPTestServer(
+      IMAPTranscript.authenticated().roles().examine(validity: 33).body(ordinary, uid: 7)
     )
     await #expect(throws: IntegrationError.notProbeMessage) {
-      _ = try await denied.testDisposableMessage(uid: 7)
+      _ = try await denied.adapter().testDisposableMessage(uid: 7)
     }
-    #expect(await !deniedTransport.commands.contains { $0.contains("UID MOVE") })
+    #expect(await !denied.commands.contains { $0.hasPrefix("UID MOVE") })
   }
-
 }

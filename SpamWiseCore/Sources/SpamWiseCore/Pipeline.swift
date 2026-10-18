@@ -291,6 +291,7 @@ public actor Pipeline {
     forceDryRun: Bool,
     correction: Bool = false
   ) async throws -> DecisionRecord {
+    let supported = await adapter?.supports(original.decision.action) ?? true
     let key = original.identity.key
     let slices = StateSlices(
       records: .only([original.id]),
@@ -309,6 +310,11 @@ public actor Pipeline {
         record.outcome = .paused
       } else if record.decision.action == .none {
         record.outcome = .noAction
+      } else if !supported {
+        record.outcome = .noAction
+        record.actionError = String(
+          localized: "This mail connection can’t perform the action, so it was not attempted."
+        )
       } else if forceDryRun || state.settings.dryRun {
         record.outcome = .dryRun
       } else if !correction && state.claimedActions[record.identity.key] != nil {
@@ -342,7 +348,7 @@ public actor Pipeline {
       }
     } catch {
       completed.outcome = .failed
-      if let error = error as? IntegrationError {
+      if let error = error as? any MailIntegrationFailure & LocalizedError {
         completed.actionError = [error.errorDescription, error.failureReason].compactMap { $0 }
           .joined(separator: " ")
       } else {

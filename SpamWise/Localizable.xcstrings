@@ -12879,6 +12879,102 @@
           }
         }
       }
+    },
+    "The Mail action was not attempted; the message is unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se intentó la acción de Mail; el mensaje no ha cambiado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’action Mail n’a pas été tentée ; le message est inchangé."
+          }
+        }
+      }
+    },
+    "This mail connection can’t perform the action, so it was not attempted.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta conexión de correo no puede realizar la acción, así que no se intentó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette connexion de messagerie ne peut pas effectuer l’action ; elle n’a donc pas été tentée."
+          }
+        }
+      }
+    },
+    "Couldn’t set up the IMAP connection.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo configurar la conexión IMAP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de configurer la connexion IMAP."
+          }
+        }
+      }
+    },
+    "No IMAP connection is saved.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay ninguna conexión IMAP guardada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune connexion IMAP n’est enregistrée."
+          }
+        }
+      }
+    },
+    "The TLS port must be a number from 1 to 65535.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El puerto TLS debe ser un número entre 1 y 65535."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le port TLS doit être un nombre compris entre 1 et 65535."
+          }
+        }
+      }
+    },
+    "Save the IMAP connection first.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guarda primero la conexión IMAP."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrez d’abord la connexion IMAP."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

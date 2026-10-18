@@ -102,11 +102,11 @@ extension AppModel {
   func correct(_ record: DecisionRecord, label: MailLabel, scope: RuleScope = .address) {
     guard let pipeline else { return }
     run { [self] in
-      let activeAdapter: (any MailClientAdapter)?
-      if record.identity.mailboxValidity != nil {
-        activeAdapter = try? await configuredIMAPCorrectionAdapter()
-      } else {
-        activeAdapter = adapter
+      var activeAdapter: (any MailClientAdapter)?, adapterFailure: String?
+      do {
+        activeAdapter = try await mailAdapter(for: record)
+      } catch {
+        adapterFailure = Self.describe(error)
       }
       let result = try await pipeline.correct(
         recordID: record.id,
@@ -115,8 +115,8 @@ extension AppModel {
         adapter: activeAdapter
       )
       status =
-        String(localized: "Correction saved. Mail action: \(result.outcome.localizedTitle).")
-        + (result.actionError.map { " " + $0 } ?? "")
+        ([String(localized: "Correction saved. Mail action: \(result.outcome.localizedTitle).")]
+        + [result.actionError, adapterFailure].compactMap(\.self)).joined(separator: " ")
     }
   }
 }

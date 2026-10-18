@@ -27,6 +27,8 @@ public protocol MailClientAdapter: Sendable {
   func recentMessages(limit: Int) async throws -> [MailEnvelope]
   /// Imports available account-scoped relationship history.
   func importHistory() async throws -> [String: HistoryIndex]
+  /// Whether this integration can perform `action` at all; Pipeline records unsupported actions without claiming them.
+  func supports(_ action: MailAction) async -> Bool
   /// Performs a supported action on the message only where it was recorded.
   func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt
   /// Performs a user-requested correction, which may find the message outside its recorded mailbox.
@@ -36,6 +38,8 @@ public protocol MailClientAdapter: Sendable {
   func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt
 }
 extension MailClientAdapter {
+  /// Integrations support every action unless they say otherwise.
+  public func supports(_ action: MailAction) async -> Bool { true }
   /// Integrations without broader resolution apply corrections where the message was recorded.
   public func performCorrection(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
@@ -49,6 +53,20 @@ extension MailClientAdapter {
 }
 /// Failures while resolving messages or executing mail-client operations.
 public protocol MailIntegrationFailure: Error {}
+
+/// A failure an adapter raised before it sent any mail command, so the message is unchanged.
+public struct ActionNotAttempted: MailIntegrationFailure, LocalizedError {
+  /// The failure that stopped the action.
+  public let cause: any Error
+  /// A non-sensitive description suitable for presentation.
+  public var errorDescription: String? {
+    String(localized: "The Mail action was not attempted; the message is unchanged.")
+  }
+  /// The non-sensitive cause, when the underlying failure provides one.
+  public var failureReason: String? { (cause as? any LocalizedError)?.failureReason }
+  /// Wraps the failure that stopped an action before dispatch.
+  public init(cause: any Error) { self.cause = cause }
+}
 
 /// Permission, resolution, or execution errors from a mail adapter.
 public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, Equatable {

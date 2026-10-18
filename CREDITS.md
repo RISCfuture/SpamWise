@@ -13,10 +13,17 @@ license and any NOTICE text, so these are called out explicitly.
   Anthropic PBC. Licensed under the Apache License, Version 2.0. The default
   model provider, linked into the app and the Mail extension of both editions.
   The project ships no NOTICE file.
-- **[SwiftNIO](https://github.com/apple/swift-nio)** and
-  **[swift-nio-imap](https://github.com/apple/swift-nio-imap)** — Copyright
-  Apple Inc. and the SwiftNIO project authors. Licensed under the Apache
-  License, Version 2.0. The IMAP transport in both editions.
+- **[SwiftNIO](https://github.com/apple/swift-nio)** 2.103.0,
+  **[swift-nio-imap](https://github.com/apple/swift-nio-imap)** 0.4.0 and
+  **[swift-nio-transport-services](https://github.com/apple/swift-nio-transport-services)**
+  1.28.0 — Copyright Apple Inc. and the SwiftNIO project authors. Licensed
+  under the Apache License, Version 2.0. The IMAP transport in both editions,
+  with their Apache-2.0 dependencies
+  [swift-collections](https://github.com/apple/swift-collections) 1.7.3,
+  [swift-atomics](https://github.com/apple/swift-atomics) 1.3.1,
+  [swift-system](https://github.com/apple/swift-system) 1.8.1 and
+  [swift-se0270-range-set](https://github.com/apple/swift-se0270-range-set)
+  1.0.1.
 - **[swift-log](https://github.com/apple/swift-log)** — Copyright 2018, 2019
   The SwiftLog Project. Licensed under the Apache License, Version 2.0. Used by
   the download edition only, through GitHubUpdateChecker. Its NOTICE reads:
