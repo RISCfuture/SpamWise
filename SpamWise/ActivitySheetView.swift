@@ -30,6 +30,8 @@ struct ActivitySheetView: View {
       case .dateFilter:
         @Bindable var activity = model.activity
         ActivityDateFilterView(query: $activity.query)
+      case .backup(let task):
+        BackupSheet(backup: model.backup, task: task)
     }
   }
 }

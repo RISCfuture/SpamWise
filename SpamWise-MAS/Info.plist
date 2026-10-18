@@ -17,5 +17,25 @@
 			</array>
 		</dict>
 	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>SpamWise Backup</string>
+			<key>UTTypeIdentifier</key>
+			<string>codes.tim.spamwise.backup</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>spamwisebackup</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

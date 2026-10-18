@@ -24,6 +24,10 @@ struct ActivityStatusView: View {
         .foregroundStyle(.primary)
         .accessibilityIdentifier("activity.spendingLimit")
       }
+      MissingProviderKeyBanner(
+        credentials: model.credentials,
+        backend: model.shared.settings.advancedOptions.backend
+      )
       StatusLabel(status: model.shared.storageStatus)
       StatusLabel(status: model.activity.loadFailure.map(OperationStatus.failure))
       StatusLabel(status: model.notifications.deliveryFailure.map(OperationStatus.failure))

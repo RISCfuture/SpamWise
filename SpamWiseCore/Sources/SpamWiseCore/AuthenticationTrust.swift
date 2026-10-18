@@ -60,6 +60,11 @@ public struct AccountAuthentication: Sendable, Equatable {
   public let trustedServers: Set<String>
   /// Detection from the account's sampled mail, independent of the trusted set.
   public let detection: AuthServerDetection
+  /// Creates an account's trust state, as a preview or test supplies it.
+  public init(trustedServers: Set<String>, detection: AuthServerDetection) {
+    self.trustedServers = trustedServers
+    self.detection = detection
+  }
 }
 
 /// An error category for trusted receiving-server configuration.

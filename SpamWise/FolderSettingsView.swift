@@ -2,6 +2,7 @@ import SwiftUI
 import SpamWiseCore
 import MailIntegration
 
+/// Mail folders SpamWise filters or learns from: the saved plans, and a plan being added or changed.
 struct FolderSettingsView: View {
   let folders: FolderPlansModel
   let shared: SharedStateModel
@@ -14,29 +15,29 @@ struct FolderSettingsView: View {
   var body: some View {
     NavigationStack {
       Form {
-        Section("Mail.app folders") {
+        SavedFolderPlansSection(folders: folders, shared: shared, accountName: accountName)
+        Section("Add or change a plan") {
           HStack {
-            Button("Refresh folders") { folders.discoverFolders() }
+            Button("Refresh Folders") { folders.discoverFolders() }
             if folders.plans.isBusy { ProgressView().controlSize(.small) }
           }
           Picker("Folder", selection: $selection) {
-            Text("Choose folder").tag("")
+            Text("Choose a folder").tag("")
             ForEach(folders.folders) { folder in
               Text("\(accountName(folder.accountID)): \(folder.displayName)").tag(folder.id)
             }
           }
           if let plan {
             FolderPlanFields(plan: Binding(get: { self.plan ?? plan }, set: { self.plan = $0 }))
-            Button("Save folder plan") { folders.save(plan) }
-            OperationStatusView(operation: folders.plans)
-            if let health = shared.scanHealth[MailSweeper.healthKey(for: plan)] {
-              FolderHealthView(health: health)
+            HStack {
+              Button("Save Plan") { folders.save(plan) }
+                .accessibilityIdentifier("folders.save")
+              if folders.saving.isBusy { ProgressView().controlSize(.small) }
             }
+            OperationStatusView(operation: folders.saving, identifier: "folders.saveStatus")
             if plan.purpose == .filter {
               FolderPreviewControls(folders: folders, plan: plan, page: $page)
             }
-          } else {
-            OperationStatusView(operation: folders.plans)
           }
         }
       }
@@ -47,6 +48,7 @@ struct FolderSettingsView: View {
     .frame(minWidth: 600, minHeight: 540)
     .onChange(of: selection) { _, id in
       page = 0
+      folders.saving.status = nil
       plan = folders.folders.first { $0.id == id }.map { folder in
         shared.settings.mailOptions.folderPlans.first { $0.id == id }
           ?? MailFolderPlan(folder: folder)
@@ -55,21 +57,82 @@ struct FolderSettingsView: View {
   }
 
   private func accountName(_ id: String) -> String {
-    accounts.first { $0.id == id }?.name ?? id
+    accounts.first { $0.id == id }?.name ?? shared.scanHealth[id]?.accountName ?? id
   }
 }
 
-private struct FolderHealthView: View {
-  let health: MailScanHealth
+/// Every saved plan, including those whose folder Mail no longer lists, with Disable and Remove.
+private struct SavedFolderPlansSection: View {
+  let folders: FolderPlansModel
+  let shared: SharedStateModel
+  let accountName: (String) -> String
 
   var body: some View {
-    if let date = health.lastSuccess {
-      LabeledContent("Last successful page", value: date.formatted())
+    Section("Saved plans") {
+      if folders.statuses.isEmpty {
+        Text("No folder plans yet. Choose a folder below to add one.")
+          .foregroundStyle(.secondary)
+      }
+      ForEach(folders.statuses) { status in
+        SavedFolderPlanRow(
+          folders: folders,
+          status: status,
+          health: shared.scanHealth[MailSweeper.healthKey(for: status.plan)],
+          accountName: accountName(status.plan.folder.accountID)
+        )
+      }
+      OperationStatusView(operation: folders.plans, identifier: "folders.status")
     }
-    UnreadableMailView(count: health.unavailableCount)
-    if let failure = health.failure {
-      StatusLabel(status: .failure(OperationFailure(message: failure)))
+  }
+}
+
+/// One saved plan: its folder and purpose, whether it still resolves, and its controls.
+private struct SavedFolderPlanRow: View {
+  let folders: FolderPlansModel
+  let status: FolderPlanStatus
+  let health: MailScanHealth?
+  let accountName: String
+  @State private var confirmingRemoval = false
+
+  private var plan: MailFolderPlan { status.plan }
+
+  var body: some View {
+    LabeledContent {
+      HStack {
+        Toggle(
+          "Process automatically",
+          isOn: Binding(
+            get: { plan.enabled },
+            set: { folders.setEnabled($0, planID: plan.id) }
+          )
+        )
+        .labelsHidden()
+        .accessibilityLabel(Text("Process \(plan.folder.displayName) automatically"))
+        Button("Remove…") { confirmingRemoval = true }
+          .accessibilityLabel(Text("Remove the plan for \(plan.folder.displayName)"))
+      }
+    } label: {
+      Text("\(accountName): \(plan.folder.displayName)")
+      Text(plan.purpose.localizedTitle)
     }
+    .confirmationDialog(
+      "Remove the plan for “\(plan.folder.displayName)”?",
+      isPresented: $confirmingRemoval,
+      titleVisibility: .visible
+    ) {
+      Button("Remove Plan", role: .destructive) { folders.remove(plan.id) }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("The folder and its mail stay as they are.")
+    }
+    if status.folderResolves == false {
+      WarningLabel(
+        "Mail no longer lists this folder, so it isn’t processed. Remove the plan, or restore the folder in Mail."
+      )
+    } else if let failure = health?.failure {
+      WarningLabel(verbatim: failure)
+    }
+    UnreadableMailView(count: health?.unavailableCount ?? 0)
   }
 }
 
@@ -80,9 +143,9 @@ private struct FolderPreviewControls: View {
   @Binding var page: Int
 
   var body: some View {
-    Stepper("Preview page: \(page + 1)", value: $page, in: 0...1000)
+    Stepper("Preview page \(page + 1)", value: $page, in: 0...1000)
     HStack {
-      Button("Preview this page") {
+      Button("Preview This Page") {
         folders.previewPage(of: plan.folder, since: plan.startDate, page: page)
       }
       if folders.preview.isBusy {
@@ -92,7 +155,7 @@ private struct FolderPreviewControls: View {
     }
     OperationStatusView(operation: folders.preview)
     Text(
-      "Previews recompute decisions without replaying mail actions. Each page contains up to 20 messages."
+      "A preview shows what SpamWise would decide for \(ScanCoordinator.pageLimit) messages at a time, without moving any mail."
     )
     .foregroundStyle(.secondary)
   }
@@ -103,28 +166,40 @@ private struct FolderPlanFields: View {
 
   var body: some View {
     Picker("Purpose", selection: $plan.purpose) {
-      Text("Filter new mail").tag(MailFolderPurpose.filter)
-      Text("Train Good from deliberate placements").tag(MailFolderPurpose.trainGood)
-      Text("Train Junk from deliberate placements").tag(MailFolderPurpose.trainJunk)
+      ForEach(MailFolderPurpose.allCases, id: \.self) { purpose in
+        Text(purpose.localizedTitle).tag(purpose)
+      }
     }
     if plan.purpose == .filter {
-      DatePicker("Received on or after", selection: $plan.startDate)
+      DatePicker("Filter mail received on or after", selection: $plan.startDate)
     } else {
-      Text("Use an empty dedicated folder named \(TrainingFolders.name(for: plan.purpose) ?? "").")
+      Text("Use an empty folder named “\(TrainingFolders.name(for: plan.purpose) ?? "")”.")
       Text(
-        "Place mail here only to train SpamWise. Keep server filters and ordinary Junk separate."
+        "Messages you put in this folder teach SpamWise. Keep it separate from your Junk mailbox and server filters."
       )
       .foregroundStyle(.secondary)
     }
     Toggle("Process this folder automatically", isOn: $plan.enabled)
-    Text(
-      "Renamed or missing folders stop processing. Account selection, Pause and dry run still apply."
-    )
-    .foregroundStyle(.secondary)
+    Text("If you rename or delete the folder in Mail, SpamWise stops processing it.")
+      .foregroundStyle(.secondary)
   }
 }
 
-#Preview("Folder selection") {
+extension MailFolderPurpose {
+  var localizedTitle: String {
+    switch self {
+      case .filter: String(localized: "Filter new mail")
+      case .trainGood: String(localized: "Learn Good from placed mail")
+      case .trainJunk: String(localized: "Learn Junk from placed mail")
+    }
+  }
+}
+
+#Preview("Saved plans") {
+  let model = PreviewHelper.foldersModel()
+  FolderSettingsView(folders: model.folders, shared: model.shared, accounts: model.mail.accounts)
+}
+#Preview("No saved plans") {
   let model = PreviewHelper.model()
   FolderSettingsView(folders: model.folders, shared: model.shared, accounts: model.mail.accounts)
 }
@@ -132,6 +207,7 @@ private struct FolderPlanFields: View {
   Form {
     FolderPlanFields(plan: .constant(.init(folder: .init(accountID: "preview", path: ["Orders"]))))
   }
+  .formStyle(.grouped)
 }
 #Preview("Training plan") {
   Form {
@@ -144,4 +220,5 @@ private struct FolderPlanFields: View {
       )
     )
   }
+  .formStyle(.grouped)
 }

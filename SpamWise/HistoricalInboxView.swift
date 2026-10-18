@@ -26,17 +26,12 @@ struct HistoricalInboxView: View {
         }
       }
       OperationStatusView(operation: operation)
-      Text("Automatic filtering reads only mail received after this date.")
-        .foregroundStyle(.secondary)
       Text(
         """
-        Previewing sends eligible older messages to your selected provider and may incur API \
-        charges.
+        Automatic checks read only mail received since filtering started. To sort older mail, turn \
+        off dry run, preview a page, then apply it. Previews send messages to your provider, which \
+        may cost money, and changing settings discards them.
         """
-      )
-      .foregroundStyle(.secondary)
-      Text(
-        "Previewing and applying older mail require dry run off. Any settings change discards the preview."
       )
       .foregroundStyle(.secondary)
     }

@@ -7,8 +7,10 @@ import MailIntegration
 @MainActor @Observable final class FolderPlansModel {
   /// Folders Mail reported at the latest discovery.
   private(set) var folders: [MailFolder] = []
-  /// Discovering folders and saving, enabling or removing plans.
+  /// Discovering folders, and enabling or removing saved plans.
   let plans = TrackedOperation()
+  /// Saving the plan being edited; its failure explains why the plan wasn't saved.
+  let saving = TrackedOperation()
   /// Previewing a page of a folder's mail; stopping it leaves other work running.
   let preview = TrackedOperation()
   @ObservationIgnored private let services: AppServices
@@ -38,12 +40,11 @@ import MailIntegration
     }
   }
 
+  /// Validates and saves `plan`, replacing the saved plan for its folder.
   func save(_ plan: MailFolderPlan) {
-    plans.run { [self] in
+    saving.run { [self] in
       try await FolderPlans.save(plan, source: services.appleMail, in: services.requireStore())
-      return String(
-        localized: "Folder plan saved. Existing dry-run and account validation still apply."
-      )
+      return String(localized: "Folder plan saved. Dry run and Pause apply to it too.")
     }
   }
 

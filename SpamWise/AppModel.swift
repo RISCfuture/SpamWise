@@ -32,6 +32,8 @@ import MailIntegration
   let backup: BackupModel
   let notifications: NotificationsModel
   let credentials: CredentialsModel
+  let trust: AuthenticationTrustModel
+  let recovery: StorageRecoveryModel
   /// A background problem outside any user operation, such as a fixture that failed to load.
   private(set) var backgroundFailure: OperationFailure?
   @ObservationIgnored private var monitoring: Task<Void, Never>?
@@ -67,6 +69,8 @@ import MailIntegration
     backup = BackupModel(services: services)
     notifications = NotificationsModel(services: services, shared: shared)
     credentials = CredentialsModel(services: services)
+    trust = AuthenticationTrustModel(services: services, shared: shared)
+    recovery = StorageRecoveryModel(services: services, shared: shared)
   }
 
   /**
@@ -124,6 +128,7 @@ extension AppModel {
       guard !Task.isCancelled else { return }
       await shared.refresh()
       await mail.refreshAutomationStatus()
+      await credentials.checkProviderKeyIfDue(for: shared.settings.advancedOptions.backend)
       guard canMonitorMail else { continue }
       await notifications.deliverIfEnabled()
       await relationships.refreshContactsIfDue()

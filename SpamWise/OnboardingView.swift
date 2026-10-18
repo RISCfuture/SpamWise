@@ -61,6 +61,11 @@ struct OnboardingView: View {
               )
             } else {
               MailConnectionView(model: model)
+              RelationshipSettingsView(
+                relationships: model.relationships,
+                settings: model.settings,
+                shared: model.shared
+              )
             }
           case .preview:
             SetupPreviewView(

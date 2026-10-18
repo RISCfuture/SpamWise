@@ -1,28 +1,34 @@
 import SwiftUI
 import SpamWiseCore
 
+/// Your own addresses, and addresses that never count as people you know.
 struct TrustExclusionsView: View {
   let relationships: RelationshipsModel
   let shared: SharedStateModel
   @State private var addresses = ""
 
   var body: some View {
-    DisclosureGroup("Own addresses and trust exclusions") {
-      if !shared.state.ownAddresses.isEmpty {
-        Text(shared.state.ownAddresses.sorted().joined(separator: "\n")).textSelection(.enabled)
+    DisclosureGroup("Your addresses and exceptions") {
+      if shared.state.ownAddresses.isEmpty {
+        Text("Check Mail Connection to find your account addresses.")
+          .foregroundStyle(.secondary)
       } else {
-        Text("No account addresses discovered yet.")
+        LabeledContent("Your addresses") {
+          Text(shared.state.ownAddresses.sorted().joined(separator: "\n"))
+            .textSelection(.enabled)
+        }
       }
       Text(
-        "Exclude aliases or other addresses from automatic Contacts and history trust, one per line."
+        """
+        Mail from these addresses never counts as from people you know. It isn’t blocked, and your \
+        sender rules still apply. Enter one address per line.
+        """
       )
       .foregroundStyle(.secondary)
       TextEditor(text: $addresses).frame(minHeight: 80)
-        .accessibilityLabel("Addresses excluded from automatic trust")
-      Button("Save trust exclusions") { relationships.saveTrustExclusions(addresses) }
+        .accessibilityLabel("Addresses that don’t count as people you know")
+      Button("Save Exceptions") { relationships.saveTrustExclusions(addresses) }
       OperationStatusView(operation: relationships.exclusions)
-      Text("These exclusions do not block mail. Explicit address and domain rules still win.")
-        .foregroundStyle(.secondary)
     }.onAppear {
       addresses = shared.settings.mailOptions.trustExclusions.sorted().joined(separator: "\n")
     }
@@ -32,4 +38,11 @@ struct TrustExclusionsView: View {
 #Preview("Trust exclusions") {
   let model = PreviewHelper.model()
   Form { TrustExclusionsView(relationships: model.relationships, shared: model.shared) }
+    .formStyle(.grouped)
+}
+#Preview("Discovered addresses") {
+  let model = PreviewHelper.model()
+  model.shared.state.ownAddresses = ["me@example.org", "me@icloud.example"]
+  return Form { TrustExclusionsView(relationships: model.relationships, shared: model.shared) }
+    .formStyle(.grouped)
 }

@@ -42,7 +42,7 @@ import MailIntegration
         let validated = try await validateMailboxRoles()
         return String(
           localized:
-            "Connected — \(accounts.count, format: .number) accounts readable; Inbox and Junk mailboxes validated for \(validated, format: .number)."
+            "Connected to Mail. Found the Inbox and Junk mailboxes for \(validated) of \(accounts.count) accounts."
         )
       } catch IntegrationError.permissionDenied {
         permissionDenied = true

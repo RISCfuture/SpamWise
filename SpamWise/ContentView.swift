@@ -11,6 +11,8 @@ struct ContentView: View {
       if !model.shared.hasLoadedState {
         ProgressView().controlSize(.large)
           .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
+      } else if model.shared.needsRecovery {
+        StorageRecoveryView(recovery: model.recovery)
       } else if !model.shared.settings.onboardingComplete {
         OnboardingView(model: model)
       } else {

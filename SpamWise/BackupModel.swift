@@ -4,6 +4,13 @@ import SpamWiseCore
 
 /// Encrypted backups of rules, policy, corrections and learning.
 @MainActor @Observable final class BackupModel {
+  /// What a successful restore leaves the user to do.
+  static var restoredMessage: String {
+    String(
+      localized:
+        "Backup restored. Filtering is paused with dry run on. Check Mail connection in Accounts, then resume."
+    )
+  }
   /// Exporting and restoring backups.
   let operation = TrackedOperation()
   @ObservationIgnored private let services: AppServices
@@ -33,10 +40,7 @@ import SpamWiseCore
     operation.run { [self] in
       let data = try url.readSecurityScoped(maximumBytes: StateBackup.maximumBytes)
       try await StateBackup.restore(data, recoveryKey: recoveryKey, store: services.requireStore())
-      return String(
-        localized:
-          "Backup restored. Filtering is paused; validate accounts before resuming actions."
-      )
+      return Self.restoredMessage
     }
   }
 }

@@ -40,9 +40,7 @@ import SpamWiseCore
     historyImport.run { [self] in
       let source = try await services.sweepSource(for: shared.settings.advancedOptions.transport)
       try await HistoryMaintenance(source: source, store: services.requireStore()).importRecent()
-      return String(
-        localized: "Imported bounded Inbox and Sent history; remaining history is unknown."
-      )
+      return String(localized: "Imported recent Inbox and Sent mail.")
     }
   }
 
@@ -64,8 +62,11 @@ import SpamWiseCore
         }
       }
       return addresses == nil
-        ? String(localized: "Contacts unavailable — relationship remains unknown")
-        : String(localized: "Contacts refreshed")
+        ? String(
+          localized:
+            "SpamWise can’t read Contacts. Allow access in System Settings › Privacy & Security › Contacts."
+        )
+        : String(localized: "Contacts connected.")
     } catch {
       throw ContactsRefreshError.failed
     }

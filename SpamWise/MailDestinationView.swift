@@ -2,6 +2,7 @@ import SwiftUI
 import SpamWiseCore
 import MailIntegration
 
+/// The Inbox and Junk mailboxes Mail reports for an account, which SpamWise moves mail between.
 struct MailDestinationView: View {
   let mail: MailConnectionModel
   let shared: SharedStateModel
@@ -10,28 +11,25 @@ struct MailDestinationView: View {
   @State private var reading = TrackedOperation()
 
   var body: some View {
-    DisclosureGroup("Mailbox destinations") {
-      LabeledContent(
-        "Inbox and Junk",
-        value: shared.settings.validatedAccounts.contains(accountID)
-          ? String(localized: "Validated") : String(localized: "Not validated")
-      )
-      HStack {
-        Button("Read current destinations") { read() }
-        if reading.isBusy { ProgressView().controlSize(.small) }
-      }
-      if let destinations {
-        LabeledContent("Inbox", value: names(destinations.inbox))
-        LabeledContent("Junk", value: names(destinations.junk))
-        if !destinations.isUnambiguous {
-          Text("Mailbox roles are missing or ambiguous. Actions remain unavailable.")
-        }
-      }
-      OperationStatusView(operation: reading)
-      Text(
-        "These are Mail.app roles. Matching names do not prove server labels. Keep dry run on while comparing filters."
-      ).foregroundStyle(.secondary)
+    LabeledContent(
+      "Inbox and Junk mailboxes",
+      value: shared.settings.validatedAccounts.contains(accountID)
+        ? String(localized: "Found") : String(localized: "Not found yet")
+    )
+    HStack {
+      Button("Check Mailboxes") { read() }
+      if reading.isBusy { ProgressView().controlSize(.small) }
     }
+    if let destinations {
+      LabeledContent("Inbox", value: names(destinations.inbox))
+      LabeledContent("Junk", value: names(destinations.junk))
+      if !destinations.isUnambiguous {
+        WarningLabel(
+          "Mail doesn’t show exactly one Inbox and one Junk mailbox for this account, so SpamWise won’t move its mail."
+        )
+      }
+    }
+    OperationStatusView(operation: reading)
   }
 
   private func read() {
@@ -43,11 +41,12 @@ struct MailDestinationView: View {
   }
 
   private func names(_ values: [String]) -> String {
-    values.isEmpty ? String(localized: "Unavailable") : values.joined(separator: ", ")
+    values.isEmpty ? String(localized: "None") : values.joined(separator: ", ")
   }
 }
 
-#Preview("Unchecked destinations") {
+#Preview("Unchecked mailboxes") {
   let model = PreviewHelper.model()
   Form { MailDestinationView(mail: model.mail, shared: model.shared, accountID: "preview") }
+    .formStyle(.grouped)
 }

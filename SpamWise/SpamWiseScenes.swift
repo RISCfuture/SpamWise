@@ -26,6 +26,7 @@ public struct SpamWiseScenes: Scene {
         CommandGroup(after: .appInfo) { UpdateMenuButton(updates: updates) }
       }
       ActivityCommands(model: model)
+      BackupCommands(router: model.router, shared: model.shared)
       CommandGroup(replacing: .help) {
         Button("SpamWise Help") { Help.open("getting-started") }
       }

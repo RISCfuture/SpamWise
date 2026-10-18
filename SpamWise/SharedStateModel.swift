@@ -35,13 +35,16 @@ import SpamWiseCore
   private(set) var pendingDigest: ReviewDigest?
   /// Settings writes still in flight; while any are, reloads keep the edited settings.
   var settingsWritesInFlight = 0
+  /// Unreadable data set aside when storage opened, awaiting the user's recovery decision.
+  var recoveryEntries: [StateRecovery.Entry] = []
   @ObservationIgnored let store: Store?
   @ObservationIgnored private var changeTokens: [StateSlice: Int] = [:]
   @ObservationIgnored private var spendingToken: Int?
   @ObservationIgnored private var lastDigestCheck: (week: String, time: ContinuousClock.Instant)?
-  @ObservationIgnored private var needsRecovery = false
 
   var settings: SpamWiseCore.Settings { state.settings }
+  /// Whether set-aside data needs the user to restore a backup or keep the current state.
+  var needsRecovery: Bool { !recoveryEntries.isEmpty }
   var monthCost: Double { state.costByMonth[AppState.monthKey(.now), default: 0] }
   var spendingLimitReached: Bool {
     spending?.limitReached == true
@@ -138,8 +141,14 @@ import SpamWiseCore
     return token != spendingToken || spending.month != BillingMonth(containing: .now)
   }
 
+  /// Records that the set-aside data was resolved, by a restore or by keeping the current state.
+  func recoveryResolved() {
+    recoveryEntries = []
+    if case .failure = storageStatus { storageStatus = nil }
+  }
+
   private func checkRecovery(_ store: Store) async throws {
-    needsRecovery = try await !StateRecovery.entries(store).isEmpty
+    recoveryEntries = try await StateRecovery.entries(store)
     guard needsRecovery else { return }
     let message = String(
       localized:

@@ -268,6 +268,67 @@ import SpamWiseCore
     )
   }
 
+  /// Two Apple Mail accounts with scan health and trust: iCloud detected, Gmail trusted.
+  static func accountsModel(failing: Bool = false) -> AppModel {
+    let model = model()
+    model.mail.accounts = [
+      MailAccount(id: "icloud", name: "iCloud", addresses: ["me@icloud.example"]),
+      MailAccount(id: "gmail", name: "Gmail", addresses: ["me@gmail.example"])
+    ]
+    model.shared.scanHealth = [
+      "icloud": checkedHealth(name: "iCloud"),
+      "gmail": failing ? failingHealth(name: "Gmail") : checkedHealth(name: "Gmail")
+    ]
+    model.shared.state.settings.validatedAccounts = ["gmail"]
+    model.trust.accounts = [
+      "icloud": .init(trustedServers: [], detection: .detected(["mx.icloud.example"])),
+      "gmail": .init(trustedServers: ["mx.google.com"], detection: .detected(["mx.google.com"]))
+    ]
+    return model
+  }
+
+  /// Saved folder plans: one filtering, one whose folder Mail no longer lists.
+  static func foldersModel() -> AppModel {
+    let model = accountsModel()
+    var orders = MailFolderPlan(folder: .init(accountID: "icloud", path: ["Orders"]))
+    orders.enabled = true
+    let receipts = MailFolderPlan(folder: .init(accountID: "gmail", path: ["Receipts"]))
+    model.shared.state.settings.mailOptions.folderPlans = [orders, receipts]
+    return model
+  }
+
+  /// Storage with two set-aside documents awaiting recovery.
+  static func recoveryModel() -> AppModel {
+    let model = model()
+    let entries = Data(
+      """
+      [{"source": "rules", "date": 782000000, "byteCount": 18432},
+       {"source": "application-v1", "date": 781990000, "byteCount": 512000}]
+      """.utf8
+    )
+    model.shared.recoveryEntries =
+      (try? JSONDecoder().decode([StateRecovery.Entry].self, from: entries)) ?? []
+    return model
+  }
+
+  private static func checkedHealth(name: String) -> MailScanHealth {
+    var health = MailScanHealth(accountName: name)
+    health.inboxStart = .now.addingTimeInterval(-86_400)
+    health.lastAttempt = .now.addingTimeInterval(-120)
+    health.lastSuccess = health.lastAttempt
+    health.observedTotal = 120
+    health.nextOffset = 40
+    health.coverage.classified = 18
+    health.coverage.reviewed = 2
+    return health
+  }
+
+  private static func failingHealth(name: String) -> MailScanHealth {
+    var health = checkedHealth(name: name)
+    health.recordFailure("Mail didn’t respond in time. Mail stays unchanged.")
+    return health
+  }
+
   static func spending(limitReached: Bool) -> MonthlySpending {
     var spending = MonthlySpending(month: .init(containing: .now))
     spending.committedMicroUSD = limitReached ? 5_000_000 : 1_380

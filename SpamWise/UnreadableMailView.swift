@@ -6,7 +6,7 @@ struct UnreadableMailView: View {
   var body: some View {
     if count > 0 {
       LabeledContent("Unreadable messages", value: count.formatted())
-      Text("Unreadable mail stays in place and is retried on the next sweep.")
+      Text("SpamWise leaves these in place and tries them again at the next check.")
         .foregroundStyle(.secondary)
     }
   }

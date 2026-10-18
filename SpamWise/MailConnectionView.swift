@@ -1,16 +1,20 @@
 import SwiftUI
 import SpamWiseCore
 
+/// Connects SpamWise to Apple Mail: Automation permission and the accounts Mail reports.
 struct MailConnectionView: View {
-  let model: AppModel
+  let mail: MailConnectionModel
 
-  private var mail: MailConnectionModel { model.mail }
+  private var showsAutomationDenied: Bool {
+    mail.automation == .notAuthorized && mail.check.failure?.recovery != .openAutomationSettings
+  }
 
   var body: some View {
     Section("Apple Mail") {
-      Text("Allow Automation when asked.")
+      Text("SpamWise reads and moves mail through Mail. Allow access when macOS asks.")
+        .foregroundStyle(.secondary)
       HStack {
-        Button("Check Mail connection") { mail.checkConnection() }
+        Button("Check Mail Connection") { mail.checkConnection() }
           .accessibilityIdentifier("mail.check")
         if mail.check.isBusy { ProgressView().controlSize(.small) }
       }
@@ -18,27 +22,18 @@ struct MailConnectionView: View {
         mail: mail,
         identifier: mail.permissionDenied ? "mail.permissionDenied" : "mail.status"
       )
-      LabeledContent(
-        "Validated accounts",
-        value: model.shared.settings.validatedAccounts.count.formatted()
-      )
-    }
-    Section {
-      DisclosureGroup("Accounts and scan health") {
-        MailHealthView(model: model)
-      }
-      DisclosureGroup("History and Contacts") {
-        RelationshipSettingsView(
-          relationships: model.relationships,
-          settings: model.settings,
-          shared: model.shared
-        )
-      }
-      DisclosureGroup("Mail rule") {
-        MailRuleSetupView(mail: mail)
+      if showsAutomationDenied {
+        AutomationDeniedView()
+      } else if mail.automation == .mailNotRunning {
+        Text("Open Mail so SpamWise can check your accounts.").foregroundStyle(.secondary)
       }
     }
   }
+
+  init(mail: MailConnectionModel) { self.mail = mail }
+
+  /// The connection section over the app's Mail model, as setup presents it.
+  init(model: AppModel) { self.init(mail: model.mail) }
 }
 
 /// The latest connection check's result, or what to do before the first check.
@@ -48,10 +43,10 @@ struct MailConnectionStatus: View {
 
   var body: some View {
     if mail.check.isBusy {
-      Text("Waiting for Mail Automation permission…").foregroundStyle(.secondary)
+      Text("Waiting for you to allow access to Mail…").foregroundStyle(.secondary)
         .accessibilityIdentifier(identifier)
     } else if mail.check.status == nil {
-      Text("Mail connection not checked").foregroundStyle(.secondary)
+      Text("Not checked yet").foregroundStyle(.secondary)
         .accessibilityIdentifier(identifier)
     } else {
       OperationStatusView(operation: mail.check, identifier: identifier)
@@ -59,69 +54,16 @@ struct MailConnectionStatus: View {
   }
 }
 
-private struct RelationshipSettingsView: View {
-  let relationships: RelationshipsModel
-  let settings: SettingsModel
-  let shared: SharedStateModel
-
-  var body: some View {
-    Text("Use your correspondence and Contacts to recognize trusted senders.")
-    Button("Connect Contacts (optional)") { relationships.connectContacts() }
-      .frame(maxWidth: .infinity, alignment: .leading)
-    if relationships.contacts.status == nil {
-      Text("Contacts optional — not requested").foregroundStyle(.secondary)
-    }
-    OperationStatusView(operation: relationships.contacts)
-    Toggle(
-      "Exclude my own addresses from automatic trust",
-      isOn: settings.mailBinding(\.excludeOwnAddresses)
-    )
-    Text(
-      "Explicit sender rules still take precedence. Check Mail connection to refresh your account addresses."
-    )
-    .foregroundStyle(.secondary)
-    TrustExclusionsView(relationships: relationships, shared: shared)
-    HStack {
-      Button("Import Inbox and Sent history") { relationships.importHistory() }
-      if relationships.historyImport.isBusy { ProgressView().controlSize(.small) }
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    OperationStatusView(operation: relationships.historyImport)
-  }
-}
-
-private struct MailRuleSetupView: View {
-  let mail: MailConnectionModel
-  @State private var failure: OperationStatus?
-
-  var body: some View {
-    Text("Optionally run the bundled script from a Mail rule so new mail is checked as it arrives.")
-    HStack {
-      Button("Show Mail rule script in Finder") { reveal() }
-      Spacer()
-      HelpButton(page: "troubleshooting-mail-integration")
-    }
-    StatusLabel(status: failure)
-  }
-
-  private func reveal() {
-    do {
-      try mail.revealRuleScript()
-      failure = nil
-    } catch {
-      failure = .failure(OperationFailure(error))
-    }
-  }
-}
-
 #Preview("Mail connection") {
-  Form { MailConnectionView(model: PreviewHelper.model()) }.formStyle(.grouped)
+  Form { MailConnectionView(mail: PreviewHelper.model().mail) }.formStyle(.grouped)
 }
 #Preview("Permission denied") {
   let model = PreviewHelper.model()
   model.mail.checkConnection()
-  return Form { MailConnectionView(model: model) }.formStyle(.grouped)
+  return Form { MailConnectionView(mail: model.mail) }.formStyle(.grouped)
 }
-#Preview("Mail rule") {
-  Form { MailRuleSetupView(mail: PreviewHelper.model().mail) }.formStyle(.grouped)
+#Preview("Automation off") {
+  let model = PreviewHelper.model()
+  model.mail.automation = .notAuthorized
+  return Form { MailConnectionView(mail: model.mail) }.formStyle(.grouped)
 }

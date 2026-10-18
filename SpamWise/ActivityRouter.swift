@@ -19,6 +19,8 @@ enum ActivitySheet: Identifiable, Equatable {
   case corpus
   /// The Activity date-range filter.
   case dateFilter
+  /// Exporting a backup or restoring one.
+  case backup(BackupTask)
 
   var id: String {
     switch self {
@@ -30,6 +32,7 @@ enum ActivitySheet: Identifiable, Equatable {
       case .audit: "audit"
       case .corpus: "corpus"
       case .dateFilter: "dateFilter"
+      case .backup(let task): "backup.\(task.rawValue)"
     }
   }
 }

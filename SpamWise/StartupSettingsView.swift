@@ -1,9 +1,10 @@
 import SwiftUI
 import ServiceManagement
 
+/// Whether SpamWise opens at login, so it keeps checking mail after a restart.
 struct StartupSettingsView: View {
   @State private var status = SMAppService.mainApp.status
-  @State private var failure = ""
+  @State private var failure: OperationStatus?
   @State private var busy = false
   @Environment(\.scenePhase) private var scenePhase
 
@@ -19,13 +20,15 @@ struct StartupSettingsView: View {
       .disabled(busy)
       .accessibilityIdentifier("settings.login")
       if status == .requiresApproval {
-        Button("Approve in Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
+        Text("macOS needs your approval before SpamWise can open at login.")
+          .foregroundStyle(.secondary)
+        Button("Open Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
       }
       Text(
-        "Filtering continues with windows closed. Keep Mail and SpamWise running on an awake Mac."
+        "SpamWise checks mail while it’s open, even with its windows closed. Mail must be open too."
       )
       .foregroundStyle(.secondary)
-      if !failure.isEmpty { Text(failure).foregroundStyle(.secondary) }
+      StatusLabel(status: failure)
     }
     .onChange(of: scenePhase) { _, _ in status = SMAppService.mainApp.status }
   }
@@ -40,10 +43,15 @@ struct StartupSettingsView: View {
         } else {
           try await SMAppService.mainApp.unregister()
         }
-        failure = ""
+        failure = nil
       } catch {
-        failure = String(
-          localized: "Login registration failed. Check Login Items in System Settings."
+        failure = .failure(
+          OperationFailure(
+            message: String(
+              localized:
+                "SpamWise couldn’t change its login item. Check Login Items in System Settings › General."
+            )
+          )
         )
       }
     }

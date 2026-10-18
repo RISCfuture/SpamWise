@@ -172,7 +172,10 @@ private struct APIKeySection: View {
 
   var body: some View {
     if model.backend.isCloud {
-      Section("API key") { KeyEntryView(credentials: credentials, model: model).id(model.backend) }
+      Section("API key") {
+        MissingProviderKeyBanner(credentials: credentials, backend: model.backend)
+        KeyEntryView(credentials: credentials, model: model).id(model.backend)
+      }
     }
   }
 }
