@@ -47,10 +47,15 @@ func `parses required message fixtures`(_ name: String) throws {
   for ambiguous in [
     "From: a@example.org\nContent-Type: multipart/mixed; boundary=\"a\"; boundary=\"b\"\n\n"
       + "--a\n\nSafe\n--a--\n",
+    "From: a@example.org\nContent-Type: multipart/mixed; boundary=a; Boundary*=''b\n\n"
+      + "--a\n\nSafe\n--a--\n",
     "From: a@example.org\nContent-Type: text/plain\n"
       + "Content-Type : multipart/alternative; boundary=b\n\n--b\n\nHi\n--b--\n"
   ] {
-    #expect(throws: ParseError.malformed) { try MIMEParser().parse(Data(ambiguous.utf8)) }
+    let message = try MIMEParser().parse(Data(ambiguous.utf8))
+    #expect(message.text.isEmpty)
+    #expect(message.decodingIssues == [.ambiguousPartHeaders])
+    #expect(message.concealsContent)
   }
   #expect(throws: ParseError.unreadableSender) {
     try MIMEParser().parse(Data("From: friend@example.org\nFrom : evil@attacker.top\n\nHi".utf8))
@@ -74,6 +79,22 @@ func `parses required message fixtures`(_ name: String) throws {
     MailEnvelope(identity: .init(accountID: "account-A", contentHash: stableHash(raw)), raw: raw)
   )
   #expect(record.path == .model)
+  let concealing = Data(
+    ("From: a@example.org\nContent-Type: multipart/mixed; boundary=b\n\n"
+      + String(repeating: "--b\n\nPart\n", count: 130) + "--b--\n").utf8
+  )
+  #expect(try MIMEParser().parse(concealing).decodingIssues == [.partLimitExceeded])
+  let flagged = await Pipeline(
+    store: try testStore(),
+    classifier: MockClassifier(verdict: .init(label: .inbox, confidence: 90, reason: "Fine"))
+  ).process(
+    MailEnvelope(
+      identity: .init(accountID: "account-A", contentHash: stableHash(concealing)),
+      raw: concealing
+    )
+  )
+  #expect(flagged.decision.label == .review)
+  #expect(flagged.decision.reason == .concealedContent)
 }
 
 /// Messages with tolerated structural quirks, their trimmed body text and recorded issues.
@@ -170,60 +191,6 @@ private func degradedMessage() throws -> Data {
   return Data(raw + Array("--b--\n".utf8))
 }
 
-@Test func `extracts optional text attachments without interpreting active documents`() throws {
-  let source = """
-    From: person@example.org
-    Content-Type: text/html; charset=utf-8
-    Content-Disposition: attachment; filename=invoice.html
-
-    <script>fetch('https://attacker.example')</script><img \
-    src="https://attacker.example/pixel"><p>Invoice offer</p>
-    """
-  let raw = Data(source.utf8)
-  #expect(try MIMEParser().parse(raw).text.isEmpty)
-  let extracted = try MIMEParser(includeTextAttachments: true).parse(raw)
-  #expect(extracted.text.contains("Invoice offer"))
-  #expect(!extracted.text.contains("fetch"))
-  let inspected = try DocumentInspection(raw: raw)
-  #expect(inspected.message == extracted)
-  #expect(inspected.coverage.map(\.status) == [.extracted])
-  let oversized = Data((source + String(repeating: "x", count: 66_000)).utf8)
-  let unavailable = try DocumentInspection(raw: oversized)
-  #expect(unavailable.message.text.isEmpty)
-  #expect(unavailable.coverage.map(\.status) == [.unavailable])
-  let mixed = Data(
-    ("From: person@example.org\nContent-Type: multipart/mixed; boundary=documents\n\n"
-      + "--documents\nContent-Type: text/plain\n\nBody evidence\n"
-      + "--documents\n" + source + String(repeating: "x", count: 66_000)
-      + "\n--documents--\n").utf8
-  )
-  let preserved = try DocumentInspection(raw: mixed)
-  #expect(preserved.message.text.contains("Body evidence"))
-  #expect(!preserved.message.text.contains("Invoice offer"))
-  #expect(preserved.coverage.map(\.status) == [.unavailable])
-  #expect(throws: ParseError.tooLarge) {
-    try MIMEParser(includeTextAttachments: true).parse(
-      Data((source + String(repeating: "x", count: 66_000)).utf8)
-    )
-  }
-  for mediaType in ["application/pdf", "application/vnd.ms-word.document.macroEnabled.12"] {
-    let unsupported = Data(source.replacingOccurrences(of: "text/html", with: mediaType).utf8)
-    let message = try MIMEParser(includeTextAttachments: true).parse(unsupported)
-    #expect(message.text.isEmpty)
-    #expect(message.attachments?.first?.mediaType == mediaType.lowercased())
-    #expect(try DocumentInspection(raw: unsupported).coverage.map(\.status) == [.unsupported])
-  }
-  let malformed = Data(
-    source.replacingOccurrences(of: "\n\n", with: "\nContent-Transfer-Encoding: base64\n\n").utf8
-  )
-  let degraded = try DocumentInspection(raw: malformed)
-  #expect(degraded.coverage.map(\.status) == [.extracted])
-  #expect(degraded.message.decodingIssues?.contains(.invalidBase64) == true)
-  let inlinePDF = Data("From: a@example.org\nContent-Type: application/pdf\n\n%PDF-broken".utf8)
-  let inline = try DocumentInspection(raw: inlinePDF)
-  #expect(inline.message.text.isEmpty)
-  #expect(inline.coverage.map(\.status) == [.unsupported])
-}
 @Test func `parses display-name senders and rejects malformed or oversized messages`() throws {
   for sender in [
     #""friend@example.org"@attacker.example"#, "friend@example.org trailing", "a..b@example.org",
@@ -302,13 +269,21 @@ private func degradedMessage() throws -> Data {
     try MIMEParser().parse(Data(repeating: 65, count: 2_100_000))
   }
 }
-@Test func `resolves registrable domains at public suffix boundaries`() {
+@Test func `resolves registrable domains at public suffix boundaries`() throws {
   let domains = DomainResolver()
   #expect(domains.registrableDomain("mail.shop.example.co.uk") == "example.co.uk")
   #expect(domains.registrableDomain("a.user.github.io") == "user.github.io")
   #expect(domains.registrableDomain("co.uk") == nil)
   #expect(domains.registrableDomain("www.city.kawasaki.jp") == "city.kawasaki.jp")
   #expect(domains.registrableDomain("127.0.0.1") == nil)
+  #expect(domains.registrableDomain("xn--55qx5d.cn") == nil)
+  #expect(domains.registrableDomain("shop.xn--55qx5d.cn") == "shop.xn--55qx5d.cn")
+  #expect(domains.registrableDomain("mail.shop.公司.cn") == "shop.xn--55qx5d.cn")
+  #expect(domains.registrableDomain("WWW.BÜCHER.de") == "xn--bcher-kva.de")
+  #expect(try RuleManagement.normalized("Bücher.de", scope: .domain) == "xn--bcher-kva.de")
+  #expect(throws: RuleManagementError.invalidRule) {
+    try RuleManagement.normalized("公司.cn", scope: .domain)
+  }
 }
 @Test func `excludes scripts and remote images from HTML text`() throws {
   let raw =
@@ -322,7 +297,22 @@ private func degradedMessage() throws -> Data {
   let message = try MIMEParser().parse(Data(raw.utf8))
   #expect(!message.text.contains("hidden"))
   #expect(message.text.contains("Hello & welcome"))
-  #expect(message.urls.contains("https://example.org"))
+  #expect(message.urls == ["https://track.example/pixel", "https://example.org"])
+  let obscured = try MIMEParser().parse(
+    Data(
+      ("From: a@example.com\nContent-Type: text/html\n\n"
+        + "<!-- https://a.example https://b.example --><p>See zz.example: https://zz.example/x.</p>"
+        + "<a href=\"https&#58;//payload.top/login\">a</a><a href=' //relative.top/p '>b</a>"
+        + "<a href=\"https:\\\\back.top\\x\">c</a><a href=\"ht&#x74;ps&colon;&sol;&sol;split\n.top\">d</a>"
+        + "<a href=\"https://zz.example/x\">again</a><a href=\"mailto:x@y.z\">m</a>").utf8
+    )
+  )
+  #expect(
+    obscured.urls == [
+      "https://zz.example/x", "https://payload.top/login", "https://relative.top/p",
+      "https://back.top/x", "https://split.top"
+    ]
+  )
   let markup = try MIMEParser().parse(
     Data(
       ("From: a@example.com\nContent-Type: text/html\n\n"
@@ -383,4 +373,18 @@ private func degradedMessage() throws -> Data {
   )
   #expect(prompt.contains("Hello friend"))
   #expect(prompt.contains("Send your password"))
+  let plain = "Hello friend. " + String(repeating: "Have a nice day. ", count: 20)
+  let html = "<p>Send your password to claim a prize, " + String(repeating: "now ", count: 60)
+  let long = try MIMEParser().parse(
+    Data(
+      raw.replacingOccurrences(of: "Hello friend. Have a nice day.", with: plain)
+        .replacingOccurrences(of: "<p>Send your password to claim a prize.", with: html).utf8
+    )
+  )
+  let alternatives = long.text.components(separatedBy: "\n").filter { !$0.isEmpty }
+  #expect(alternatives.count == 5)
+  #expect(alternatives[1] == "[Alternative 2]")
+  #expect(alternatives[2].hasPrefix("Send your password to claim a prize, now now"))
+  #expect(alternatives[3] == "[Alternative 1]")
+  #expect(alternatives[4] == plain.trimmingCharacters(in: .whitespaces))
 }

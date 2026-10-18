@@ -2,7 +2,13 @@ public import Foundation
 import CryptoKit
 /// Decoded message content; URLs are extracted without fetching remote resources.
 public struct ParsedMessage: Codable, Sendable, Equatable {
-  /// Unfolded headers keyed by lowercase field name, preserving repeated fields.
+  /**
+   Unfolded headers keyed by lowercase field name, preserving repeated fields.
+
+   Values are undecoded: each holds one character per raw header byte, so RFC 2047 encoded words
+   stay encoded and raw UTF-8 reads as Latin-1. Use ``decodedHeaders(_:)`` for text to display
+   or match.
+   */
   public var headers: [String: [String]]
   /// Normalized sender email address.
   public var fromAddress: String
@@ -10,9 +16,13 @@ public struct ParsedMessage: Codable, Sendable, Equatable {
   public var fromDisplayName: String
   /// Decoded message subject; empty when the message has none.
   public var subject: String
-  /// Decoded body text with remote resources excluded.
+  /**
+   Decoded body text with remote resources excluded.
+
+   Differing `multipart/alternative` parts each appear whole, under an `[Alternative N]` marker.
+   */
   public var text: String
-  /// Extracted URLs, never fetched during parsing.
+  /// Distinct extracted URLs in order of first appearance, at most 40, never fetched.
   public var urls: [String]
   /// SHA-256 digest of the original message bytes.
   public var hash: String
@@ -29,8 +39,19 @@ public struct ParsedMessage: Codable, Sendable, Equatable {
       MIMEParser.decodeWords($0.comments, issues: &issues)
     } ?? ""
   }
-  /// Returns the first value for a case-insensitive header name.
+  /// Whether a decoding issue left part of the message unread, so mail apps may show more.
+  public var concealsContent: Bool { decodingIssues?.contains(where: \.concealsContent) == true }
+  /// Returns the first undecoded value for a case-insensitive header name; see ``headers``.
   public func header(_ name: String) -> String? { headers[name.lowercased()]?.first }
+  /**
+   Returns every value of a case-insensitive header name as text.
+
+   RFC 2047 encoded words are decoded, and other bytes read as UTF-8 when they are valid.
+   */
+  public func decodedHeaders(_ name: String) -> [String] {
+    var issues = Set<DecodingIssue>()
+    return (headers[name.lowercased()] ?? []).map { MIMEParser.decodeWords($0, issues: &issues) }
+  }
 }
 /// A recoverable decoding problem; the affected text was decoded lossily instead of rejected.
 public enum DecodingIssue: String, Codable, Sendable, CaseIterable {
@@ -49,8 +70,9 @@ public enum DecodingIssue: String, Codable, Sendable, CaseIterable {
   /// A nested part had unreadable header lines, which were ignored or, when the part began with
   /// one, read with the rest of the part as plain text.
   case malformedPartHeaders
-  /// A nested part repeated its Content-Type, Content-Transfer-Encoding or Content-Disposition
-  /// header, or its multipart boundary parameter, and was skipped.
+  /// The message or a part repeated its Content-Type, Content-Transfer-Encoding or
+  /// Content-Disposition header, or its multipart boundary, and its content was skipped; or a
+  /// part repeated its filename, which was dropped.
   case ambiguousPartHeaders
   /// Unreadable message header lines were ignored.
   case malformedMessageHeaders
@@ -59,6 +81,16 @@ public enum DecodingIssue: String, Codable, Sendable, CaseIterable {
   case incompleteMultipart
   /// A multipart body had no usable boundary parameter and was read as plain text.
   case invalidMultipartBoundary
+  /// The message had more than 128 parts or nesting deeper than 12 levels; the rest was skipped.
+  case partLimitExceeded
+
+  /// Whether the issue left content unread or misread its structure, where mail apps may differ.
+  public var concealsContent: Bool {
+    switch self {
+      case .ambiguousPartHeaders, .invalidMultipartBoundary, .partLimitExceeded: true
+      default: false
+    }
+  }
 }
 /// Untrusted attachment labels extracted without opening attachment content.
 public struct AttachmentMetadata: Codable, Sendable, Equatable {
@@ -75,9 +107,10 @@ public struct AttachmentMetadata: Codable, Sendable, Equatable {
 /// Failures that prevent safe interpretation of message content.
 public protocol MessageParsingError: Error {}
 
-/// A malformed or over-budget message whose content can't be interpreted safely.
+/// An over-budget message, or one without a readable sender, that can't be interpreted safely.
 public enum ParseError: MessageParsingError, Sendable, LocalizedError {
-  case malformed, tooLarge, invalidEncoding
+  /// The message, its header block or other bounded content exceeds a resource limit.
+  case tooLarge
   /// The From header is missing, repeated or not exactly one valid mailbox.
   case unreadableSender
 
@@ -87,9 +120,7 @@ public enum ParseError: MessageParsingError, Sendable, LocalizedError {
   /// The unsupported content or resource limit that prevented parsing.
   public var failureReason: String? {
     switch self {
-      case .malformed: String(localized: "The message structure is invalid or ambiguous.")
       case .tooLarge: String(localized: "The message exceeds the supported content limits.")
-      case .invalidEncoding: String(localized: "The message contains invalid encoded content.")
       case .unreadableSender:
         String(localized: "The message has no single readable sender address.")
     }

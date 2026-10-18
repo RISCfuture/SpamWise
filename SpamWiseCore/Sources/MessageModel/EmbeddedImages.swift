@@ -1,16 +1,11 @@
 public import Foundation
 import ImageIO
 
-/// Bounded extraction of embedded base64 raster MIME parts, without remote resources.
+/// ImageIO validation of a message's embedded raster parts, without remote resources.
 public struct EmbeddedImages: Sendable {
-  private static let maximumMessageBytes = 2_000_000
-  private static let maximumHeaderBytes = 65_536
   private static let maximumTotalImageBytes = 1_048_576
   private static let maximumTotalImagePixels = 8_000_000
   private static let maximumImageDimension = 4096
-  private static let maximumNestingDepth = 12
-  private static let maximumParts = 128
-  private static let maximumBoundaryCharacters = 200
   private static let imageTypes = [
     "image/png": "public.png", "image/jpeg": "public.jpeg",
     "image/gif": "com.compuserve.gif", "image/tiff": "public.tiff", "image/heic": "public.heic"
@@ -22,7 +17,7 @@ public struct EmbeddedImages: Sendable {
   /// Maximum decoded pixels in one image.
   public static let maximumImagePixels = 4_000_000
 
-  /// Creates the bounded MIME image extractor.
+  /// Creates the bounded image validator.
   public init() {}
 
   private static func pixels(in data: Data, mime: String) throws -> Int {
@@ -41,99 +36,27 @@ public struct EmbeddedImages: Sendable {
     return width * height
   }
 
-  /// Extracts validated raster bytes; unsupported or excessive MIME fails without image decoding.
-  public func extract(from raw: Data) throws -> [Data] {
-    guard raw.count <= Self.maximumMessageBytes else { throw ParseError.tooLarge }
-    let source = String(decoding: raw, as: UTF8.self).replacingOccurrences(of: "\r\n", with: "\n")
-    var state = Extraction()
-    try visit(source, depth: 0, state: &state)
-    return state.images
-  }
+  /**
+   Returns the raster bytes of supported image parts after ImageIO checks their type and size.
 
-  private func visit(_ source: String, depth: Int, state: inout Extraction) throws {
-    state.parts += 1
-    guard depth <= Self.maximumNestingDepth, state.parts <= Self.maximumParts else {
-      throw ParseError.tooLarge
-    }
-    let (headers, body) = try split(source)
-    let contentType = headers["content-type"] ?? "text/plain"
-    let mime = contentType.components(separatedBy: ";")[0].lowercased().trimmingCharacters(
-      in: .whitespaces
-    )
-    if mime.hasPrefix("multipart/") {
-      let boundary = try boundary(in: contentType)
-      var current: [String]?, closed = false, children = 0
-      for line in body.components(separatedBy: "\n") {
-        let delimiter = line.trimmingCharacters(in: .whitespaces)
-        if delimiter == "--" + boundary || delimiter == "--" + boundary + "--" {
-          if let current {
-            try visit(current.joined(separator: "\n"), depth: depth + 1, state: &state)
-            children += 1
-          }
-          current = []
-          if delimiter == "--" + boundary + "--" { closed = true; break }
-        } else if current != nil {
-          current?.append(line)
-        }
+   Parts of other image types are ignored. Fails without decoding any image when there are too
+   many supported parts, or when one is invalid or exceeds a byte, dimension or pixel limit.
+   */
+  public func extract(from images: [InlineImage]) throws -> [Data] {
+    let supported = images.filter { Self.imageTypes[$0.mediaType] != nil }
+    guard supported.count <= Self.maximumImages else { throw ParseError.tooLarge }
+    var validated: [Data] = [], bytes = 0, pixels = 0
+    for image in supported {
+      guard let data = image.data(maximumBytes: Self.maximumImageBytes) else {
+        throw ParseError.tooLarge
       }
-      guard closed, children > 0 else { throw ParseError.malformed }
-      return
-    }
-    guard Self.imageTypes[mime] != nil else { return }
-    guard headers["content-transfer-encoding"]?.lowercased() == "base64" else {
-      throw ParseError.invalidEncoding
-    }
-    guard state.images.count < Self.maximumImages else { throw ParseError.tooLarge }
-    let compact = body.filter { !$0.isWhitespace }
-    guard compact.utf8.count <= ((Self.maximumImageBytes + 2) / 3) * 4,
-      let data = Data(base64Encoded: compact), data.count <= Self.maximumImageBytes
-    else { throw ParseError.tooLarge }
-    let pixels = try Self.pixels(in: data, mime: mime)
-    state.bytes += data.count; state.pixels += pixels
-    guard state.bytes <= Self.maximumTotalImageBytes, state.pixels <= Self.maximumTotalImagePixels
-    else { throw ParseError.tooLarge }
-    state.images.append(data)
-  }
-
-  private func split(_ source: String) throws -> ([String: String], String) {
-    guard let separator = source.range(of: "\n\n"),
-      source[..<separator.lowerBound].utf8.count <= Self.maximumHeaderBytes
-    else {
-      throw ParseError.malformed
-    }
-    var lines: [String] = []
-    for line in source[..<separator.lowerBound].components(separatedBy: "\n") {
-      if line.first == " " || line.first == "\t" {
-        guard !lines.isEmpty else { throw ParseError.malformed }
-        lines[lines.count - 1] += " " + line.trimmingCharacters(in: .whitespaces)
-      } else {
-        lines.append(line)
+      pixels += try Self.pixels(in: data, mime: image.mediaType)
+      bytes += data.count
+      guard bytes <= Self.maximumTotalImageBytes, pixels <= Self.maximumTotalImagePixels else {
+        throw ParseError.tooLarge
       }
+      validated.append(data)
     }
-    var headers: [String: String] = [:]
-    for line in lines {
-      guard let colon = line.firstIndex(of: ":") else { throw ParseError.malformed }
-      let key = String(line[..<colon]).lowercased()
-      guard ["content-type", "content-transfer-encoding", "content-disposition"].contains(key)
-      else { continue }
-      guard headers[key] == nil else { throw ParseError.malformed }
-      headers[key] = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
-    }
-    return (headers, String(source[separator.upperBound...]))
-  }
-
-  private func boundary(in contentType: String) throws -> String {
-    let boundaries = MIMEParser.parameterValues("boundary", in: contentType)
-    guard boundaries.count == 1, let value = boundaries.first, !value.isEmpty,
-      value.count <= Self.maximumBoundaryCharacters
-    else { throw ParseError.malformed }
-    return value
-  }
-
-  private struct Extraction {
-    var parts = 0
-    var bytes = 0
-    var pixels = 0
-    var images: [Data] = []
+    return validated
   }
 }

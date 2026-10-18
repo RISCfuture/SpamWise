@@ -32,7 +32,11 @@ public enum RuleManagement {
   private static let maximumRuleBytes = 254
   private static let maximumRules = 10_000
   private static let maximumArchiveBytes = 2_000_000
-  /// Validates a literal email address or registrable domain without broadening its scope.
+  /**
+   Validates a literal email address or registrable domain without broadening its scope.
+
+   A domain is returned in its IDNA ASCII form, the form sender domains are matched in.
+   */
   public static func normalized(_ value: String, scope: RuleScope) throws -> String {
     let value = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     guard !value.isEmpty, value.utf8.count <= maximumRuleBytes else {
@@ -43,12 +47,13 @@ public enum RuleManagement {
         guard MIMEParser.address(value) == value, !value.contains("<"), !value.contains(">") else {
           throw RuleManagementError.invalidRule
         }
+        return value
       case .domain:
-        guard DomainResolver().registrableDomain(value) == value, !value.contains("@") else {
-          throw RuleManagementError.invalidRule
-        }
+        guard let domain = DomainResolver.asciiHost(value), !value.contains("@"),
+          DomainResolver().registrableDomain(domain) == domain
+        else { throw RuleManagementError.invalidRule }
+        return domain
     }
-    return value
   }
   /// Saves the latest explicit rule at its chosen scope and invalidates pending classifications.
   public static func save(

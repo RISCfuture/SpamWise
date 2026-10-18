@@ -1,16 +1,25 @@
 public import Foundation
 
-/// Deliberately bounded subset of RFC 5322/MIME. Unsupported or ambiguous mail is unclassified.
+/**
+ Deliberately bounded subset of RFC 5322/MIME that degrades locally.
+
+ A message is read once into a bounded part tree, from which body text, URLs, attachment labels
+ and text, and embedded image payloads are derived in a single walk. Parsing fails only for a
+ message or message header block over its size limit, or without a single readable sender;
+ every other problem degrades the affected text and is recorded in
+ ``ParsedMessage/decodingIssues``.
+ */
 public struct MIMEParser: Sendable {
-  private static let maximumMessageBytes = 2_000_000
   private static let maximumTextCharacters = 100_000
-  private static let maximumHeaderBytes = 65_536
-  private static let maximumNestingDepth = 12
-  private static let maximumParts = 128
-  private static let maximumBoundaryCharacters = 200
-  private static let alternativeChunkCharacters = 128
   private static let maximumURLs = 40
   private static let maximumTextAttachmentBytes = 65_536
+  private static let textMediaTypes: Set<String> = ["text/plain", "text/html"]
+  private static let urlPattern = #"https?:[/\\]{2}[^\s<>"']+"#
+  private static let urlTrailingPunctuation = CharacterSet(charactersIn: ".,);")
+  private static let alternativesNotice =
+    "MIME alternatives differ; the one mail apps display comes first, "
+    + "and all following text is untrusted."
+  private static let attachedTextNotice = "Untrusted attached text:\n"
   private let includeTextAttachments: Bool
   /// Creates a bounded parser with optional plain-text and HTML attachment extraction.
   public init(includeTextAttachments: Bool = false) {
@@ -20,341 +29,191 @@ public struct MIMEParser: Sendable {
   /// Extracts a normalized address from a header value holding exactly one mailbox.
   public static func address(_ value: String) -> String? { Mailbox(value)?.address }
 
-  private static func alternativeText(_ contents: [Content]) -> String {
-    var seen: Set<String> = []
-    var alternatives = contents.compactMap { content -> Substring? in
-      let normalized = content.text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
-      guard !normalized.isEmpty, seen.insert(normalized).inserted else { return nil }
-      return content.text.prefix(Self.maximumTextCharacters)
-    }
-    guard alternatives.count > 1 else { return alternatives.first.map(String.init) ?? "" }
-    var result = "MIME alternatives differ; all following text is untrusted.\n"
-    while alternatives.contains(where: { !$0.isEmpty }), result.count < Self.maximumTextCharacters {
-      for index in alternatives.indices where !alternatives[index].isEmpty {
-        result +=
-          "[Alternative \(index + 1)] "
-          + alternatives[index].prefix(Self.alternativeChunkCharacters) + "\n"
-        alternatives[index] = alternatives[index].dropFirst(Self.alternativeChunkCharacters)
-      }
-    }
-    return String(result.prefix(Self.maximumTextCharacters))
-  }
-
-  /// Returns every value of a Content-Type or Content-Disposition parameter, in order.
-  static func parameterValues(_ key: String, in value: String) -> [String] {
-    matches(
-      "(?:^|;)\\s*" + key + #"\s*=\s*(?:"([^"]*)"|([^;\s]+))"#,
-      value,
-      options: .caseInsensitive
-    ).map { $0[1].isEmpty ? $0[2] : $0[1] }
-  }
-  private static func attachmentMetadata(
-    _ headers: [String: [String]],
-    contentType: String,
-    mime: String,
-    issues: inout Set<DecodingIssue>
-  ) -> [AttachmentMetadata] {
-    let disposition = headers["content-disposition"]?.first ?? ""
-    let filename =
-      parameterValues("filename", in: disposition).first
-      ?? parameterValues("name", in: contentType).first
-    guard
-      disposition.lowercased().hasPrefix("attachment") || filename != nil
-        || mime.hasPrefix("application/")
-    else { return [] }
-    return [.init(mediaType: mime, filename: filename.map { decodeWords($0, issues: &issues) })]
-  }
-  private static func matches(
-    _ pattern: String,
-    _ text: String,
-    options: NSRegularExpression.Options = []
-  ) -> [[String]] {
-    guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else {
-      return []
-    }
-    return regex.matches(in: text, range: NSRange(text.startIndex..., in: text)).map { match in
-      (0..<match.numberOfRanges).map {
-        Range(match.range(at: $0), in: text).map { String(text[$0]) } ?? ""
-      }
-    }
-  }
-  /// Splits a header line into its lowercased name and trimmed value, allowing obsolete
-  /// whitespace before the colon.
-  private static func field(_ line: String) -> (name: String, value: String)? {
-    guard let colon = line.firstIndex(of: ":") else { return nil }
-    var name = line[..<colon]
-    while name.last == " " || name.last == "\t" { name = name.dropLast() }
-    guard !name.isEmpty, name.utf8.allSatisfy({ $0 > 32 && $0 < 127 }) else { return nil }
-    return (
-      name.lowercased(),
-      String(line[line.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
-    )
-  }
-  /// Unfolds and indexes a header block, skipping unreadable fields and reporting whether any were.
-  private static func fields(_ block: Substring) -> (headers: [String: [String]], complete: Bool) {
-    var lines: [String] = [], complete = true
-    for line in block.components(separatedBy: "\n") where !line.isEmpty {
-      if line.first == " " || line.first == "\t" {
-        guard !lines.isEmpty else {
-          complete = false
-          continue
-        }
-        lines[lines.count - 1] += " " + line.trimmingCharacters(in: .whitespaces)
-      } else {
-        lines.append(line)
-      }
-    }
-    var headers: [String: [String]] = [:]
-    for line in lines {
-      guard let field = field(line) else {
-        complete = false
-        continue
-      }
-      headers[field.name, default: []].append(field.value)
-    }
-    return (headers, complete)
-  }
   /**
-   Splits a multipart body at its boundary delimiters.
+   Joins distinct alternatives, each contiguous and within an equal share of the text limit.
 
-   A close delimiter before the first part is ignored, a missing close delimiter ends the
-   final part at the end of the body, and a body with no delimiter at all is read as one
-   headerless part.
+   Alternatives run from last to first, because mail apps display the last one they support.
    */
-  private static func multipartBodies(
-    _ raw: String,
-    boundary: String,
-    issues: inout Set<DecodingIssue>
-  ) -> [String] {
-    var parts: [String] = [], current: [String]?
-    for line in raw.components(separatedBy: "\n") {
-      let trimmed = line.trimmingCharacters(in: .whitespaces)
-      let opens = trimmed == "--" + boundary, closes = trimmed == "--" + boundary + "--"
-      if closes, current == nil {
-        issues.insert(.incompleteMultipart)
-      } else if opens || closes {
-        if let current { parts.append(current.joined(separator: "\n")) }
-        guard opens else { return parts }
-        current = []
-      } else {
-        current?.append(line)
-      }
+  private static func alternativeText(_ texts: [String]) -> String {
+    var seen: Set<String> = []
+    let alternatives = texts.enumerated().reversed().filter { _, text in
+      let normalized = text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+      return !normalized.isEmpty && seen.insert(normalized).inserted
     }
-    issues.insert(.incompleteMultipart)
-    return parts + [current.map { $0.joined(separator: "\n") } ?? "\n" + raw]
-  }
-  private static func headerless(_ source: String, issues: inout Set<DecodingIssue>) -> (
-    [String: [String]], String
-  ) {
-    issues.insert(.malformedPartHeaders)
-    return ([:], source)
-  }
-  private static func transferDecoded(
-    _ raw: String,
-    encoding: String?,
-    issues: inout Set<DecodingIssue>
-  ) -> Data {
-    switch encoding?.lowercased() ?? "8bit" {
-      case "base64": return base64(raw, issues: &issues)
-      case "quoted-printable": return quotedPrintable(raw, issues: &issues)
-      case "7bit", "8bit", "binary": return Data(latin1Bytes(raw))
-      default:
-        issues.insert(.unknownTransferEncoding)
-        return Data(latin1Bytes(raw))
-    }
-  }
-  /// Returns the single usable multipart boundary, or nil when it is missing, empty or over-long.
-  private static func boundary(of contentType: String) throws -> String? {
-    let boundaries = parameterValues("boundary", in: contentType)
-    guard boundaries.count <= 1 else { throw ParseError.malformed }
-    return boundaries.first.flatMap {
-      (1...maximumBoundaryCharacters).contains($0.count) ? $0 : nil
-    }
-  }
-  /// Returns the declared character set, UTF-8 when absent, or nil when declared more than once.
-  private static func charset(of contentType: String) -> String? {
-    let charsets = parameterValues("charset", in: contentType)
-    return charsets.count > 1 ? nil : charsets.first ?? "utf-8"
+    guard alternatives.count > 1 else { return alternatives.first?.element ?? "" }
+    let share = maximumTextCharacters / alternatives.count
+    return
+      ([alternativesNotice]
+      + alternatives.map { "[Alternative \($0.offset + 1)]\n" + $0.element.prefix(share) })
+      .joined(separator: "\n")
   }
 
-  private static func source(_ data: Data) throws -> String {
-    guard data.count <= maximumMessageBytes else { throw ParseError.tooLarge }
-    // A byte-preserving intermediate avoids corrupting non-UTF8 MIME parts.
-    return String(data.map { Character(UnicodeScalar($0)) }).replacingOccurrences(
-      of: "\r\n",
-      with: "\n"
-    )
+  /// Returns the declared character set, UTF-8 when absent, or nil when declared ambiguously.
+  private static func charset(of part: MIMEPart) -> String? {
+    let charset = part.contentType.parameter("charset")
+    return charset == .absent ? "utf-8" : charset.value
   }
+
+  /// Reads a URL candidate as a web URL with forward slashes, or nil when it has no host.
+  private static func normalizedURL(_ candidate: String) -> String? {
+    let url = candidate.trimmingCharacters(in: urlTrailingPunctuation)
+      .replacingOccurrences(of: "\\", with: "/")
+    return URL(string: url)?.host == nil ? nil : url
+  }
+
   /**
    Decodes a message within byte, part, and nesting limits or throws.
 
    Throws ``ParseError/unreadableSender`` unless a single From header holds exactly one mailbox.
    */
-  public func parse(_ data: Data) throws -> ParsedMessage {
-    let source = try Self.source(data)
-    var traversal = Traversal()
-    let (headers, _) = try split(source, traversal: &traversal)
-    guard let from = headers["from"], from.count == 1, let sender = Mailbox(from[0]) else {
-      throw ParseError.unreadableSender
-    }
-    let content = try part(source, depth: 0, traversal: &traversal)
-    let displayName = Self.decodeWords(sender.displayName, issues: &traversal.issues)
-    let subject = Self.decodeWords(headers["subject"]?.first ?? "", issues: &traversal.issues)
-    let issues = DecodingIssue.allCases.filter(traversal.issues.contains)
-    return ParsedMessage(
-      headers: headers,
-      fromAddress: sender.address,
-      fromDisplayName: displayName,
-      subject: subject,
-      text: String(content.text.prefix(Self.maximumTextCharacters)),
-      urls: Array(content.urls.uniqued().prefix(Self.maximumURLs)),
-      hash: stableHash(data),
-      attachments: content.attachments,
-      decodingIssues: issues.isEmpty ? nil : issues
-    )
-  }
+  public func parse(_ data: Data) throws -> ParsedMessage { try inspect(data).message }
 
   /// Decodes only the header fields of a complete message or of a header block without a body.
   ///
   /// Header lines may end in CRLF, LF or a bare CR.
-  public func headers(_ data: Data) throws -> [String: [String]] {
-    var traversal = Traversal()
-    let source = try Self.source(data).replacingOccurrences(of: "\r", with: "\n")
-    return try split(source, traversal: &traversal).0
+  public func headers(_ data: Data) throws -> [String: [String]] { try MIMETree.headers(data) }
+
+  /// Reads the message once, deriving its text, attachment coverage and image payloads.
+  func inspect(_ data: Data) throws -> DocumentInspection {
+    let tree = try MIMETree(data)
+    guard let from = tree.headers["from"], from.count == 1, let sender = Mailbox(from[0]) else {
+      throw ParseError.unreadableSender
+    }
+    var extraction = Extraction(includeTextAttachments: includeTextAttachments, issues: tree.issues)
+    let text = extraction.text(of: tree.root)
+    let displayName = Self.decodeWords(sender.displayName, issues: &extraction.issues)
+    let subject = Self.decodeWords(tree.headers["subject"]?.first ?? "", issues: &extraction.issues)
+    let issues = DecodingIssue.allCases.filter(extraction.issues.contains)
+    let message = ParsedMessage(
+      headers: tree.headers,
+      fromAddress: sender.address,
+      fromDisplayName: displayName,
+      subject: subject,
+      text: String(text.prefix(Self.maximumTextCharacters)),
+      urls: extraction.urls,
+      hash: stableHash(data),
+      attachments: extraction.attachments,
+      decodingIssues: issues.isEmpty ? nil : issues
+    )
+    return DocumentInspection(
+      message: message,
+      coverage: extraction.coverage,
+      images: extraction.images
+    )
   }
 
-  /**
-   Separates headers from the body, throwing for ambiguous critical message headers.
+  /// One walk over a message's part tree, accumulating everything derived from its leaves.
+  private struct Extraction {
+    let includeTextAttachments: Bool
+    var issues: Set<DecodingIssue>
+    /// Distinct URLs in order of first appearance, up to the URL limit.
+    private(set) var urls: [String] = []
+    private(set) var attachments: [AttachmentMetadata] = []
+    private(set) var coverage: [AttachmentTextCoverage] = []
+    private(set) var images: [InlineImage] = []
+    private var seenURLs: Set<String> = []
 
-   A leading blank line means no headers, and a source without a blank line is all headers.
-   Message headers must be within the header limit, and unreadable header lines are ignored.
-   A nested part whose header block is oversized or begins with an unreadable line is read
-   entirely as headerless plain text, and one with ambiguous critical headers is empty.
-   */
-  private func split(_ source: String, nested: Bool = false, traversal: inout Traversal) throws
-    -> ([String: [String]], String)
-  {
-    if source.hasPrefix("\n") { return ([:], String(source.dropFirst())) }
-    let separator = source.range(of: "\n\n")
-    let block =
-      separator.map { source[..<$0.lowerBound] } ?? source.dropLast(source.hasSuffix("\n") ? 1 : 0)
-    guard block.utf8.count < Self.maximumHeaderBytes else {
-      guard nested else { throw ParseError.tooLarge }
-      return Self.headerless(source, issues: &traversal.issues)
+    init(includeTextAttachments: Bool, issues: Set<DecodingIssue>) {
+      self.includeTextAttachments = includeTextAttachments
+      self.issues = issues
     }
-    let (headers, complete) = Self.fields(block)
-    if !complete {
-      guard !nested || Self.field(String(block.prefix { $0 != "\n" })) != nil else {
-        return Self.headerless(source, issues: &traversal.issues)
+
+    mutating func text(of part: MIMEPart) -> String {
+      switch part.content {
+        case .skipped: return ""
+        case .leaf(let body): return leafText(part, body: body)
+        case .multipart(let children):
+          let texts = children.map { text(of: $0) }
+          return part.mediaType == "multipart/alternative"
+            ? MIMEParser.alternativeText(texts)
+            : texts.filter { !$0.isEmpty }.joined(separator: "\n")
       }
-      traversal.issues.insert(nested ? .malformedPartHeaders : .malformedMessageHeaders)
     }
-    for key in ["content-type", "content-transfer-encoding", "content-disposition"]
-    where (headers[key]?.count ?? 0) > 1 {
-      guard nested else { throw ParseError.malformed }
-      traversal.issues.insert(.ambiguousPartHeaders)
-      return ([:], "")
-    }
-    return (headers, separator.map { String(source[$0.upperBound...]) } ?? "")
-  }
-  private func part(_ source: String, depth: Int, traversal: inout Traversal) throws -> Content {
-    traversal.parts += 1
-    guard depth <= Self.maximumNestingDepth, traversal.parts <= Self.maximumParts else {
-      throw ParseError.tooLarge
-    }
-    let (headers, raw) = try split(source, nested: depth > 0, traversal: &traversal)
-    let contentType = headers["content-type"]?.first ?? "text/plain"
-    var mime = contentType.components(separatedBy: ";")[0].lowercased().trimmingCharacters(
-      in: .whitespaces
-    )
-    let attachments = Self.attachmentMetadata(
-      headers,
-      contentType: contentType,
-      mime: mime,
-      issues: &traversal.issues
-    )
-    let isAttachment = !attachments.isEmpty
-    if isAttachment {
-      guard includeTextAttachments, ["text/plain", "text/html"].contains(mime) else {
-        return Content(text: "", urls: [], plain: false, attachments: attachments)
+
+    /**
+     Returns a leaf's body text, recording its attachment label and coverage.
+
+     Text parts are body text unless their disposition is explicitly `attachment`; attached text
+     is included only when attachment extraction is on and the part is within its size limit.
+     */
+    private mutating func leafText(_ part: MIMEPart, body: String) -> String {
+      let attachment = attachmentMetadata(part)
+      if part.mediaType.hasPrefix("image/"), part.transferEncoding == "base64" {
+        images.append(InlineImage(mediaType: part.mediaType, encoded: body))
       }
-      guard raw.utf8.count <= Self.maximumTextAttachmentBytes else { throw ParseError.tooLarge }
-    }
-    if mime.hasPrefix("multipart/") {
-      guard depth == 0 || Self.parameterValues("boundary", in: contentType).count <= 1 else {
-        traversal.issues.insert(.ambiguousPartHeaders)
-        return Content(text: "", urls: [], plain: false)
+      guard MIMEParser.textMediaTypes.contains(part.mediaType) else {
+        record(attachment, .unsupported)
+        return ""
       }
-      if let boundary = try Self.boundary(of: contentType) {
-        return try multipart(
-          raw,
-          mime: mime,
-          boundary: boundary,
-          depth: depth,
-          traversal: &traversal
+      guard part.isExplicitAttachment else {
+        record(attachment, .extracted)
+        return decodedText(part, body: body)
+      }
+      guard includeTextAttachments else {
+        record(attachment, .omitted)
+        return ""
+      }
+      guard body.utf8.count <= MIMEParser.maximumTextAttachmentBytes else {
+        record(attachment, .unavailable)
+        return ""
+      }
+      record(attachment, .extracted)
+      return MIMEParser.attachedTextNotice + decodedText(part, body: body)
+    }
+
+    private mutating func record(
+      _ attachment: AttachmentMetadata?,
+      _ status: AttachmentTextCoverage.Status
+    ) {
+      guard let attachment else { return }
+      attachments.append(attachment)
+      coverage.append(.init(attachment: attachment, status: status))
+    }
+
+    /// Labels a part shown as an attachment, named, or of an `application/` type.
+    private mutating func attachmentMetadata(_ part: MIMEPart) -> AttachmentMetadata? {
+      let filename = part.disposition.parameter("filename")
+      let name = part.contentType.parameter("name")
+      guard
+        part.isExplicitAttachment || filename != .absent || name != .absent
+          || part.mediaType.hasPrefix("application/")
+      else { return nil }
+      if filename == .ambiguous || (filename == .absent && name == .ambiguous) {
+        issues.insert(.ambiguousPartHeaders)
+      }
+      let label = filename == .absent ? name : filename
+      return AttachmentMetadata(mediaType: part.mediaType, filename: label.text(issues: &issues))
+    }
+
+    private mutating func decodedText(_ part: MIMEPart, body: String) -> String {
+      let decoded = MIMEParser.decode(
+        MIMEParser.transferDecoded(body, encoding: part.transferEncoding, issues: &issues),
+        charset: MIMEParser.charset(of: part),
+        issues: &issues
+      )
+      guard part.mediaType == "text/html" else {
+        collectURLs(in: decoded)
+        return decoded.trimmingCharacters(in: .whitespacesAndNewlines)
+      }
+      let html = HTMLText.convert(decoded, limit: MIMEParser.maximumTextCharacters)
+      collectURLs(in: html.linkSource)
+      return html.text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private mutating func collectURLs(in text: String) {
+      guard urls.count < MIMEParser.maximumURLs,
+        let expression = try? NSRegularExpression(
+          pattern: MIMEParser.urlPattern,
+          options: .caseInsensitive
         )
+      else { return }
+      for match in expression.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+        guard let range = Range(match.range, in: text),
+          let url = MIMEParser.normalizedURL(String(text[range])), seenURLs.insert(url).inserted
+        else { continue }
+        urls.append(url)
+        if urls.count == MIMEParser.maximumURLs { return }
       }
-      traversal.issues.insert(.invalidMultipartBoundary)
-      mime = "text/plain"
     }
-    guard ["text/plain", "text/html"].contains(mime) else {
-      return Content(text: "", urls: [], plain: false)
-    }
-    let decoded = Self.decode(
-      Self.transferDecoded(
-        raw,
-        encoding: headers["content-transfer-encoding"]?.first,
-        issues: &traversal.issues
-      ),
-      charset: Self.charset(of: contentType),
-      issues: &traversal.issues
-    )
-    var urls = Self.matches(#"https?://[^\s<>"']+"#, decoded, options: .caseInsensitive).map {
-      $0[0].trimmingCharacters(in: CharacterSet(charactersIn: ".,);"))
-    }
-    let text =
-      mime == "text/html"
-      ? HTMLText.text(from: decoded, limit: Self.maximumTextCharacters) : decoded
-    urls = urls.filter { URL(string: $0)?.host != nil }
-    return Content(
-      text: (isAttachment ? "Untrusted attached text:\n" : "")
-        + text.trimmingCharacters(in: .whitespacesAndNewlines),
-      urls: urls,
-      plain: mime == "text/plain",
-      attachments: attachments
-    )
-  }
-  private func multipart(
-    _ raw: String,
-    mime: String,
-    boundary: String,
-    depth: Int,
-    traversal: inout Traversal
-  ) throws -> Content {
-    let parts = Self.multipartBodies(raw, boundary: boundary, issues: &traversal.issues)
-    var contents: [Content] = []
-    for source in parts {
-      contents.append(try part(source, depth: depth + 1, traversal: &traversal))
-    }
-    return Content(
-      text: mime == "multipart/alternative"
-        ? Self.alternativeText(contents) : contents.map(\.text).joined(separator: "\n"),
-      urls: contents.flatMap(\.urls),
-      plain: contents.contains(where: \.plain),
-      attachments: contents.flatMap(\.attachments)
-    )
-  }
-
-  /// Mutable state shared across one message's MIME traversal.
-  private struct Traversal {
-    var parts = 0
-    var issues: Set<DecodingIssue> = []
-  }
-
-  private struct Content {
-    var text: String
-    var urls: [String]
-    var plain: Bool
-    var attachments: [AttachmentMetadata] = []
   }
 }

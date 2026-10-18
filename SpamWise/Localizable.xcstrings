@@ -9097,23 +9097,6 @@
         }
       }
     },
-    "The message contains invalid encoded content.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El mensaje contiene contenido codificado no válido."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le message contient du contenu encodé non valide."
-          }
-        }
-      }
-    },
     "The message context exceeds the classification limit.": {
       "extractionState": "manual",
       "localizations": {
@@ -9161,23 +9144,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le message ne correspond plus à son état enregistré."
-          }
-        }
-      }
-    },
-    "The message structure is invalid or ambiguous.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La estructura del mensaje no es válida o es ambigua."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La structure du message n’est pas valide ou est ambiguë."
           }
         }
       }
@@ -12616,6 +12582,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le message n’a pas d’adresse d’expéditeur unique lisible."
+          }
+        }
+      }
+    },
+    "Review: part of the message couldn’t be read reliably": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar: no se pudo leer parte del mensaje de forma fiable"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier : une partie du message n’a pas pu être lue de façon fiable"
           }
         }
       }

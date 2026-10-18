@@ -137,11 +137,11 @@ public enum ContentRules {
     switch field {
       case .subject: message.subject
       case .body: message.text
-      case .listID: message.header("list-id") ?? ""
+      case .listID: message.decodedHeaders("list-id").first ?? ""
       case .recipients:
-        ((message.headers["to"] ?? []) + (message.headers["cc"] ?? [])).joined(separator: "\n")
-      case .replyTo: message.header("reply-to") ?? ""
-      case .contentType: message.header("content-type") ?? ""
+        (message.decodedHeaders("to") + message.decodedHeaders("cc")).joined(separator: "\n")
+      case .replyTo: message.decodedHeaders("reply-to").first ?? ""
+      case .contentType: message.decodedHeaders("content-type").first ?? ""
       case .attachmentNames:
         (message.attachments ?? []).compactMap(\.filename).joined(separator: "\n")
       case .attachmentTypes: (message.attachments ?? []).map(\.mediaType).joined(separator: "\n")

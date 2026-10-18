@@ -26,9 +26,9 @@ public struct EmbeddedImageOCR: Sendable {
   }
 
   /// Returns bounded untrusted OCR text, or nil for absent images, invalid input or unavailable recognition.
-  public func text(from raw: Data) async -> String? {
+  public func text(from parts: [InlineImage]) async -> String? {
     do {
-      let images = try EmbeddedImages().extract(from: raw)
+      let images = try EmbeddedImages().extract(from: parts)
       guard !images.isEmpty else { return nil }
       return try await withResourceDeadline(seconds: Self.recognitionTimeoutSec) {
         try await recognizedText(in: images)

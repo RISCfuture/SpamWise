@@ -56,9 +56,9 @@ public actor Pipeline {
       )
     }
     let settings = current.settings.paused ? AdvancedSettings() : current.settings.advancedOptions
-    var (message, findings): (ParsedMessage, [String])
+    let parsed: (inspection: DocumentInspection, findings: [String])
     do {
-      (message, findings) = try Self.parse(envelope.raw, settings: settings)
+      parsed = try Self.inspect(envelope.raw, settings: settings)
     } catch ParseError.unreadableSender {
       return await reviewUnreadableSender(
         envelope,
@@ -76,7 +76,8 @@ public actor Pipeline {
         revision: current.revision
       )
     }
-    if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: envelope.raw) {
+    var message = parsed.inspection.message, findings = parsed.findings
+    if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: parsed.inspection.images) {
       message.text += "\nEmbedded image text (untrusted):\n" + text
     }
     if !current.settings.mailOptions.localOnly, settings.externalEvidence?.localRspamd == true {
@@ -158,7 +159,8 @@ public actor Pipeline {
         classification.verdict,
         reason: classification.reason,
         strength: state.settings.strength,
-        review: state.settings.review
+        review: state.settings.review,
+        concealsContent: classification.path == .model && message.concealsContent
       )
       var record = DecisionRecord(
         identity: identity,

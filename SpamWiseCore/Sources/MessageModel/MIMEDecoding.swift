@@ -37,6 +37,22 @@ extension MIMEParser {
     return encoding == .utf8 ? String(decoding: data, as: UTF8.self) : fallbackText(data)
   }
 
+  /// Removes a part's transfer encoding, reading an unknown encoding as 8-bit text.
+  static func transferDecoded(
+    _ raw: String,
+    encoding: String?,
+    issues: inout Set<DecodingIssue>
+  ) -> Data {
+    switch encoding ?? "8bit" {
+      case "base64": return base64(raw, issues: &issues)
+      case "quoted-printable": return quotedPrintable(raw, issues: &issues)
+      case "7bit", "8bit", "binary": return Data(latin1Bytes(raw))
+      default:
+        issues.insert(.unknownTransferEncoding)
+        return Data(latin1Bytes(raw))
+    }
+  }
+
   /// Decodes quoted-printable text, keeping invalid escapes literally.
   static func quotedPrintable(_ source: String, issues: inout Set<DecodingIssue>) -> Data {
     let bytes = latin1Bytes(source)
@@ -88,25 +104,37 @@ extension MIMEParser {
     return result
   }
 
-  /// Decodes RFC 2047 encoded words, keeping undecodable words verbatim.
+  /**
+   Decodes RFC 2047 encoded words, keeping undecodable words verbatim.
+
+   Whitespace between two adjacent encoded words is dropped, as RFC 2047 requires, and text
+   outside encoded words is read as UTF-8 when it is valid.
+   */
   static func decodeWords(_ value: String, issues: inout Set<DecodingIssue>) -> String {
     guard value.contains("=?") else { return unencodedHeader(value, issues: &issues) }
     guard let regex = try? NSRegularExpression(pattern: encodedWordPattern) else { return value }
-    var result = value
-    for match in regex.matches(in: value, range: NSRange(value.startIndex..., in: value)).reversed()
-    {
-      guard let range = Range(match.range, in: result) else { continue }
+    var result = "", position = value.startIndex, previousWasEncoded = false
+    for match in regex.matches(in: value, range: NSRange(value.startIndex..., in: value)) {
+      guard let range = Range(match.range, in: value) else { continue }
       func field(_ number: Int) -> String {
         Range(match.range(at: number), in: value).map { String(value[$0]) } ?? ""
       }
+      let gap = value[position..<range.lowerBound]
+      if !(previousWasEncoded && gap.allSatisfy(\.isWhitespace)) {
+        result += unencodedHeader(String(gap), issues: &issues)
+      }
       if let decoded = encodedWord(charset: field(1), encoding: field(2), text: field(3)) {
-        result.replaceSubrange(range, with: decoded.text)
+        result += decoded.text
         issues.formUnion(decoded.issues)
+        previousWasEncoded = true
       } else {
         issues.insert(.invalidEncodedWord)
+        result += value[range]
+        previousWasEncoded = false
       }
+      position = range.upperBound
     }
-    return result
+    return result + unencodedHeader(String(value[position...]), issues: &issues)
   }
 
   private static func encodedWord(charset: String, encoding: String, text: String)
@@ -146,7 +174,7 @@ extension MIMEParser {
     return bytes[next] == lineFeed ? next + 1 : nil
   }
 
-  private static func hexValue(_ byte: UInt8) -> UInt8? {
+  static func hexValue(_ byte: UInt8) -> UInt8? {
     switch byte {
       case UInt8(ascii: "0")...UInt8(ascii: "9"): byte - UInt8(ascii: "0")
       case UInt8(ascii: "A")...UInt8(ascii: "F"): byte - UInt8(ascii: "A") + 10

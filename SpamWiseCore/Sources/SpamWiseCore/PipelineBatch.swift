@@ -9,18 +9,25 @@ extension Pipeline {
       default: .transient
     }
   }
-  static func parse(_ raw: Data, settings: AdvancedSettings) throws -> (
-    ParsedMessage, [String]
+  /**
+   Parses a message once, returning it with attachment coverage findings.
+
+   With attachment text extraction off, only attached text left out of the message is reported.
+   */
+  static func inspect(_ raw: Data, settings: AdvancedSettings) throws -> (
+    DocumentInspection, [String]
   ) {
-    let message = try MIMEParser().parse(raw)
-    guard settings.textAttachments == true else { return (message, []) }
-    let inspection = try DocumentInspection(raw: raw)
+    let extracting = settings.textAttachments == true
+    let inspection = try DocumentInspection(raw: raw, includeTextAttachments: extracting)
     return (
-      inspection.message,
-      inspection.coverage.map { item in
+      inspection,
+      inspection.coverage.compactMap { item in
         switch item.status {
-          case .extracted: "Attachment text extracted; payload safety not assessed"
-          case .unsupported: "Unsupported attachment format; content and safety unknown"
+          case .extracted:
+            extracting ? "Attachment text extracted; payload safety not assessed" : nil
+          case .omitted: "Attached text omitted from the message body; content unknown"
+          case .unsupported:
+            extracting ? "Unsupported attachment format; content and safety unknown" : nil
           case .unavailable: "Attachment decoding unavailable; content and safety unknown"
         }
       }

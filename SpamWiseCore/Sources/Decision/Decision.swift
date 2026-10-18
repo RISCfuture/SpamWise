@@ -97,24 +97,29 @@ public struct Decision: Codable, Sendable, Equatable {
      - reason: Why the verdict was reached; defaults to the verdict's own explanation.
      - strength: The Junk confidence threshold.
      - review: The annotation for Review messages.
+     - concealsContent: Whether part of the message couldn't be read reliably; an Inbox verdict
+       then becomes Review for ``DecisionReason/concealedContent``.
    */
   public static func evaluate(
     _ verdict: Verdict,
     reason: DecisionReason? = nil,
     strength: FilteringStrength = .balanced,
-    review: ReviewTreatment = .orangeFlag
+    review: ReviewTreatment = .orangeFlag,
+    concealsContent: Bool = false
   ) throws -> Decision {
     _ = try verdict.validated()
-    let label =
+    var label =
       verdict.label == .junk && verdict.confidence < strength.threshold
       ? MailLabel.review : verdict.label
+    var reason = reason ?? .model(verdict.reason)
+    if concealsContent, label == .inbox { (label, reason) = (.review, .concealedContent) }
     let action: MailAction
     switch label {
       case .inbox: action = .none
       case .review: action = review.action
       case .junk: action = .moveToJunk
     }
-    return .init(label: label, action: action, reason: reason ?? .model(verdict.reason))
+    return .init(label: label, action: action, reason: reason)
   }
   private enum CodingKeys: String, CodingKey { case label, action, reason }
 }

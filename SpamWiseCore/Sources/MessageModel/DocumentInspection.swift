@@ -11,31 +11,60 @@ public struct AttachmentTextCoverage: Sendable, Equatable {
   public enum Status: Sendable {
     /// Plain text or lexical HTML was decoded within the MIME parser's limits.
     case extracted
+    /// Attached plain text or HTML was left out because attachment text extraction is off.
+    case omitted
     /// The declared format requires an unavailable document decoder.
     case unsupported
-    /// Decoding failed or exceeded a resource limit, leaving its content unknown.
+    /// Decoding exceeded a resource limit, leaving its content unknown.
     case unavailable
   }
 }
 
-/// A message with optional local attachment text and explicit coverage for unsupported content.
-public struct DocumentInspection: Sendable {
-  /// Body and successfully decoded attachment text, all untrusted.
-  public var message: ParsedMessage
-  /// Coverage follows MIME traversal order and never treats missing text as spam evidence.
-  public var coverage: [AttachmentTextCoverage]
+/// An embedded base64 image part, decoded only on request and not yet validated as an image.
+public struct InlineImage: Sendable, Equatable {
+  private static let base64CharactersPerGroup = 4
+  private static let bytesPerGroup = 3
+  /// The declared lowercased media type, such as `image/png`.
+  public let mediaType: String
+  /// The part's body, still base64-encoded.
+  let encoded: String
 
-  /// Uses the existing bounded MIME parser; unreadable attachments preserve the body-only message.
-  public init(raw: Data) throws {
-    let original = try MIMEParser().parse(raw)
-    let extracted = try? MIMEParser(includeTextAttachments: true).parse(raw)
-    message = extracted ?? original
-    coverage = (original.attachments ?? []).map { attachment in
-      let supported = ["text/plain", "text/html"].contains(attachment.mediaType)
-      return AttachmentTextCoverage(
-        attachment: attachment,
-        status: supported ? (extracted == nil ? .unavailable : .extracted) : .unsupported
-      )
-    }
+  /// Decodes the payload when it is valid base64 of at most `maximumBytes` bytes.
+  func data(maximumBytes: Int) -> Data? {
+    let compact = encoded.filter { !$0.isWhitespace }
+    let maximumGroups = (maximumBytes + Self.bytesPerGroup - 1) / Self.bytesPerGroup
+    guard compact.utf8.count <= maximumGroups * Self.base64CharactersPerGroup,
+      let data = Data(base64Encoded: compact), data.count <= maximumBytes
+    else { return nil }
+    return data
+  }
+}
+
+/// A message read once, with attachment text coverage and its embedded image parts.
+public struct DocumentInspection: Sendable {
+  /// Body text, plus attachment text when extraction is on; all untrusted.
+  public var message: ParsedMessage
+  /// Coverage of each attachment in MIME order; missing text is never treated as spam evidence.
+  public var coverage: [AttachmentTextCoverage]
+  /// Embedded base64 image parts in MIME order, for optional local text recognition.
+  public var images: [InlineImage]
+
+  /**
+   Parses a message once within the MIME parser's limits.
+
+   An attachment that can't be read only marks its own coverage, preserving the rest of the
+   message.
+
+   - Parameters:
+     - raw: The message source.
+     - includeTextAttachments: Whether attached plain text and HTML join the message text.
+   - Throws: ``ParseError`` when the message can't be parsed at all.
+   */
+  public init(raw: Data, includeTextAttachments: Bool = true) throws {
+    self = try MIMEParser(includeTextAttachments: includeTextAttachments).inspect(raw)
+  }
+
+  init(message: ParsedMessage, coverage: [AttachmentTextCoverage], images: [InlineImage]) {
+    self.message = message; self.coverage = coverage; self.images = images
   }
 }

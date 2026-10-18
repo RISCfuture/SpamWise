@@ -24,9 +24,17 @@ private func imageMessage(
 
     """
   return Data(
-    ("Content-Type: multipart/related; boundary=images\n\n"
+    ("From: sender@example.org\nContent-Type: multipart/related; boundary=images\n\n"
       + Array(repeating: image, count: parts).joined() + "--images--\n").utf8
   )
+}
+
+extension EmbeddedImageOCR {
+  /// Parses a raw message and recognizes text in its embedded images.
+  fileprivate func text(from raw: Data) async -> String? {
+    guard let inspection = try? DocumentInspection(raw: raw) else { return nil }
+    return await text(from: inspection.images)
+  }
 }
 
 @Test func `recognizes text only from bounded embedded image bytes`() async throws {
@@ -45,7 +53,10 @@ private func imageMessage(
   #expect(await additional.text(from: imageMessage(payload: gif, mime: "image/png")) == nil)
   #expect(await ocr.text(from: imageMessage(parts: 5)) == nil)
   #expect(await ocr.text(from: imageMessage(payload: "invalid")) == nil)
-  let remote = Data("Content-Type: text/html\n\n<img src=\"https://example.com/pixel.png\">".utf8)
+  let remote = Data(
+    "From: a@example.org\nContent-Type: text/html\n\n<img src=\"https://example.com/pixel.png\">"
+      .utf8
+  )
   #expect(await ocr.text(from: remote) == nil)
   let verbose = EmbeddedImageOCR { _ in String(repeating: "x", count: 1000) }
   let text = try #require(await verbose.text(from: imageMessage(parts: 4)))

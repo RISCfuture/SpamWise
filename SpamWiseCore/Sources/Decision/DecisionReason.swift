@@ -22,6 +22,8 @@ public enum DecisionReason: Codable, Sendable, Equatable {
   case messageUnreadable
   /// The message has no single readable sender, so it was flagged for Review without classification.
   case unreadableSender
+  /// Part of the message couldn't be read reliably, so an Inbox verdict was flagged for Review.
+  case concealedContent
   /// The classifier failed for the given reason.
   case classificationFailed(ClassificationError)
   /// The monthly spending limit refused the request before anything was sent to the provider.
@@ -87,6 +89,8 @@ extension DecisionReason {
       case .paused: String(localized: "Filtering paused")
       case .messageUnreadable: String(localized: "Not classified: the message couldn’t be read.")
       case .unreadableSender: String(localized: "Review: the sender’s address couldn’t be read")
+      case .concealedContent:
+        String(localized: "Review: part of the message couldn’t be read reliably")
       case .classificationFailed(let error):
         String(localized: "Not classified: \(error.failureReason ?? error.localizedDescription)")
       case .spendingLimitReached:
@@ -115,6 +119,7 @@ extension DecisionReason {
       case .paused: "Filtering paused"
       case .messageUnreadable: Self.legacyFailurePrefix + "message parsing failed"
       case .unreadableSender: "review: no single readable From mailbox"
+      case .concealedContent: "review: ambiguous or unread MIME content"
       case .classificationFailed(let error): Self.legacyFailurePrefix + error.rawValue
       case .spendingLimitReached:
         Self.legacyFailurePrefix + "spending limit reached; no provider request was made"
