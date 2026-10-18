@@ -1,8 +1,10 @@
 import Foundation
 import Testing
-@testable import SpamWise
+@testable import SpamWiseCommon
 
-struct DirectUpdateConfigurationTests {
+@Suite
+// swiftlint:disable:next type_name
+struct `checks only a valid GitHub repository` {
   @Test(arguments: ["", "$(UPDATE_OWNER)", "../owner", "-owner", "owner-", "a--b", "a/b", "é"])
   func `rejects unsafe or unconfigured owners`(_ owner: String) {
     #expect(DirectUpdateConfiguration(owner: owner, repository: "SpamWise") == nil)
@@ -15,44 +17,39 @@ struct DirectUpdateConfigurationTests {
     #expect(DirectUpdateConfiguration(owner: "publisher", repository: repository) == nil)
   }
 
-  @Test func `constructs release links from explicit repository identity`() throws {
+  @Test func `accepts GitHub owner and repository names`() throws {
     let configuration = try #require(
       DirectUpdateConfiguration(owner: "test-publisher", repository: "test.app_1")
     )
-    #expect(
-      configuration.releasesURL.absoluteString
-        == "https://github.com/test-publisher/test.app_1/releases"
-    )
+    #expect(configuration.owner == "test-publisher")
+    #expect(configuration.repository == "test.app_1")
   }
 
-  @Test func `restricts configured checks to direct bundles without store receipts`() throws {
+  @Test func `reads only SpamWise bundles without store receipts`() throws {
     let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: root) }
-    let direct = try makeBundle(root: root, channel: "direct")
-    #expect(DirectUpdateConfiguration(bundle: direct)?.owner == "test-publisher")
-    let store = try makeBundle(root: root, channel: "app-store")
-    #expect(DirectUpdateConfiguration(bundle: store) == nil)
-    let other = try makeBundle(root: root, channel: "direct", identifier: "codes.tim.Other")
+    #expect(
+      DirectUpdateConfiguration(bundle: try makeBundle(root: root))?.owner == "test-publisher"
+    )
+    let other = try makeBundle(root: root, identifier: "codes.tim.Other")
     #expect(DirectUpdateConfiguration(bundle: other) == nil)
-    let receipt = try makeBundle(root: root, channel: "direct", hasReceipt: true)
+    let unconfigured = try makeBundle(root: root, owner: nil)
+    #expect(DirectUpdateConfiguration(bundle: unconfigured) == nil)
+    let receipt = try makeBundle(root: root, hasReceipt: true)
     #expect(DirectUpdateConfiguration(bundle: receipt) == nil)
   }
 
   private func makeBundle(
     root: URL,
-    channel: String,
     identifier: String = "codes.tim.SpamWise",
+    owner: String? = "test-publisher",
     hasReceipt: Bool = false
   ) throws -> Bundle {
     let url = root.appending(path: "\(UUID().uuidString).app")
     let contents = url.appending(path: "Contents")
     try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
-    let info = [
-      "CFBundleIdentifier": identifier,
-      "SpamWiseDistribution": channel,
-      "SpamWiseUpdateOwner": "test-publisher",
-      "SpamWiseUpdateRepository": "test-app"
-    ]
+    var info = ["CFBundleIdentifier": identifier, "SpamWiseUpdateRepository": "test-app"]
+    info["SpamWiseUpdateOwner"] = owner
     let data = try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
     try data.write(to: contents.appending(path: "Info.plist"))
     if hasReceipt {

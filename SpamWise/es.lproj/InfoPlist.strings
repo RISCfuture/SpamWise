@@ -1,2 +1,2 @@
-"NSAppleEventsUsageDescription" = "SpamWise lee el historial de correo y aplica tus correcciones en Apple Mail.";
+"NSAppleEventsUsageDescription" = "SpamWise lee los mensajes en Mail para clasificarlos y, cuando lo permites, mueve el correo no deseado a Correo no deseado, marca mensajes para revisión y restaura el correo que corriges.";
 "NSContactsUsageDescription" = "SpamWise mantiene los mensajes de tus contactos en la bandeja de entrada.";

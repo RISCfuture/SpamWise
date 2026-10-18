@@ -1,8 +1,10 @@
+public import Observation
 import SwiftUI
 import SpamWiseCore
 import MailIntegration
 
-@MainActor @Observable final class AppModel {
+/// The state and actions behind every SpamWise window, menu and App Intent.
+@MainActor @Observable public final class AppModel {
   private static let monitorInterval: Duration = .seconds(3)
   private static let contactsRefreshIntervalSec: TimeInterval = 3600
   private static let scanIntervalSec: TimeInterval = 60

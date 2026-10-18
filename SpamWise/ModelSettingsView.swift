@@ -31,17 +31,13 @@ struct ModelSettingsView: View {
         .foregroundStyle(.secondary)
       }
       Picker("Provider", selection: backendBinding) {
-        ForEach(
-          ModelBackend.allCases.filter {
-            $0 != .privateCloudCompute || DistributionCapabilities.privateCloudCompute
-          },
-          id: \.self
-        ) { backend in
+        ForEach(ModelBackend.allCases.filter { $0 != .privateCloudCompute }, id: \.self) {
+          backend in
           Text(backend.localizedTitle).tag(backend)
         }
       }.accessibilityIdentifier("model.provider")
-      if backend == .privateCloudCompute && !DistributionCapabilities.privateCloudCompute {
-        Text("Private Cloud Compute is unavailable in this distribution. Select another provider.")
+      if backend == .privateCloudCompute {
+        Text("Private Cloud Compute is unavailable. Select another provider.")
       }
       if model.state.settings.mailOptions.localOnly && backend != .onDevice {
         Text("Select On-device to classify. The current provider is blocked by local mode.")

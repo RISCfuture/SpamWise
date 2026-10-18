@@ -9,9 +9,9 @@ fallback. This is a product/code comparison, not a promise of App Review approva
 
 | Capability | Mac App Store version | Direct version | Evidence and status |
 | --- | --- | --- | --- |
-| Optional local Rspamd through an external `rspamc` executable | Executable transport disabled by `APP_STORE`, including restored settings; explicit loopback HTTP transport available | Both transports implemented; signed sandbox execution fails safely, while signed loopback HTTP works | The executable exclusion is a conservative packaging choice under Apple's self-contained-app requirements, not a recorded rejection. The loopback service is separately configured and optional in both channels; it is not bundled or installed by SpamWise. |
-| Updates outside the store | Updater dependency excluded from the `SpamWise` target; updates must use the App Store | `SpamWiseDirect` links GitHubUpdateChecker's discovery product for manual stable-release discovery and a release-page link | No repository host is configured, so no checks run. Binary download/installation is not enabled: the library does not establish signature/identity verification or safe replacement. See [update acceptance](updating.md). |
-| Private Cloud Compute | Hidden and rejected until the managed entitlement and eligible distribution are verified | Experimental selector exists, but no accepted Developer ID PCC capability | Not functionality sacrificed for MAS. Apple requires App Store distribution for production PCC; eligible testing channels are separate. Do not advertise direct PCC support from the presence of the selector. |
+| Optional local Rspamd | Fixed-loopback HTTP transport only, off by default | Fixed-loopback HTTP transport only, off by default | Neither edition runs an external `rspamc` executable. The loopback service is separately configured and optional in both editions; it is not bundled or installed by SpamWise. |
+| Updates outside the store | The `SpamWise-MAS` target links no updater; updates come from the App Store | The `SpamWise-download` target links GitHubUpdateChecker for scheduled and manual checks against `RISCfuture/SpamWise` | The sandboxed app downloads a release's disk image for the user to install; the library never installs automatically into a sandboxed app. See [updating](updating.md). |
+| Private Cloud Compute | Hidden and rejected | Hidden and rejected | Neither edition holds the managed entitlement, so neither offers the provider; a restored selection fails open with a prompt to choose another. |
 | Mail source/history, selected-message actions and Inbox/Junk moves | Implemented; temporary Apple Events exception requires review | Implemented; settled generated-message moves verified for iCloud/Google | A review gate, not an excluded feature. If Apple rejects the necessary exception, record the actual scope and reassess viability before removing core Mail functionality. |
 | CLI evaluator and headless executable | Separate developer tools, not bundled or installed as a background service by the app | Existing package executables; not currently packaged with the GUI release | No removed GUI functionality. Standalone IMAP expansion remains outside the Mail.app-only roadmap in both channels. |
 | Launch at login and monitoring with windows closed | Opt-in, app-owned lifecycle | Same behavior | No current difference. Quitting the app stops its monitor; no always-running service is installed. |
@@ -53,16 +53,11 @@ this assessment.
 
 ## Build separation
 
-The shared `SpamWiseDirect` scheme builds the additional app target with
-`SPAMWISE_DIRECT_UPDATES`. Only that target links the `GitHubReleaseDiscovery`
-product from the remote GitHubUpdateChecker package (2.3.0 or later). It uses the same app sources,
-entitlements, bundle identity and Mail extension. Its product is
-`SpamWiseDirect.app` to keep build/test products distinct; the bundle identity is
-shared, so install only one channel at a time.
-
-Use the existing `SpamWise` target and `APP_STORE` packaging commands for the
-store. That target has no updater product dependency. Building `SpamWiseDirect`
-with `APP_STORE` intentionally fails compilation. The direct dependency may still
-be resolved when Xcode opens the project; resolution does not put it in the store
-app. Validate the final store archive for updater symbols and resources before
-submission, as described in [updating](updating.md).
+Each edition is its own app target with its own `App` struct, Info.plist and
+entitlements: `SpamWise-MAS` (scheme `SpamWise (MAS)`) and `SpamWise-download`
+(scheme `SpamWise (download)`). Both link the `SpamWise Common` framework, which
+holds every view and the app model, and embed the same Mail extension. Only the
+download target links GitHubUpdateChecker and injects the update checker that
+shows the update controls, so no compile-time flag or command-line override
+selects an edition. Both products are named `SpamWise.app` with the shared
+bundle identity, so install only one edition at a time.

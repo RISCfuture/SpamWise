@@ -1,0 +1,12 @@
+// Project-wide base configuration, shared by every target.
+
+// The version a local build carries. A release passes MARKETING_VERSION (the tag) and
+// CURRENT_PROJECT_VERSION (the commit count) on the command line instead, so these values only
+// name development builds and never need editing for a release.
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
+
+// The GitHub repository whose releases the downloadable edition checks for updates. Its Info.plist
+// carries these, and the release lane refuses to package a build where either is empty.
+SPAMWISE_UPDATE_OWNER = RISCfuture
+SPAMWISE_UPDATE_REPOSITORY = SpamWise

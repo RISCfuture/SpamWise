@@ -1,0 +1,137 @@
+name: CI
+
+# What CI can and cannot prove. Every real action SpamWise takes goes through Apple Events to Mail,
+# which needs a signed app, a configured Mail account and a person to approve Automation; a hosted
+# runner has none of these. So nothing here drives Mail. What is covered is everything on either
+# side of that boundary: the package tests exercise the pipeline, rules and adapters against
+# fixtures and stubbed Apple Events, the unit tests cover the shared app framework, and the build
+# job compiles both editions and the Mail extension.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Package Tests
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Cache SwiftPM build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: .build/swiftpm
+          key: swiftpm-xcode-27-${{ hashFiles('SpamWiseCore/Package.resolved') }}
+
+      - name: Run package tests
+        run: |
+          set -o pipefail
+          swift test --package-path SpamWiseCore --scratch-path .build/swiftpm \
+            -Xswiftc -warnings-as-errors
+
+  # The SpamWise Common scheme is hostless: it builds the shared framework and its test bundle,
+  # needs no signing, and never launches the app.
+  unit:
+    name: Unit Tests
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Observation's @Observable macro can fail fingerprint validation on hosted runners; skipping
+      # it lets the build resolve the macro implementations.
+      - name: Enable macros
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      - name: Record toolchain version
+        id: toolchain
+        run: echo "xcode=$(xcodebuild -version | tr '\n' '-')" >> "$GITHUB_OUTPUT"
+
+      # Exact-match key, no restore-keys: objects built against a different dependency graph or
+      # toolchain must never be reused.
+      - name: Cache Xcode build products
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: |
+            ${{ runner.temp }}/dd-unit/Build
+            ${{ runner.temp }}/dd-unit/SourcePackages
+          key: derived-unit-${{ steps.toolchain.outputs.xcode }}-${{ hashFiles('**/Package.resolved') }}
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project SpamWise.xcodeproj \
+            -scheme "SpamWise Common" \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$RUNNER_TEMP/dd-unit" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/dd-unit/SourcePackages" \
+            -resultBundlePath TestResults-Unit.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify --renderer github-actions
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: test-results-unit
+          path: TestResults-Unit.xcresult
+          if-no-files-found: ignore
+
+  # Both editions emit SpamWise.app, so the second build replaces the first in the shared derived
+  # data. That is only a compile check, and each still compiles its own sources. The extension is
+  # built on its own as well, so a break in it reads as an extension failure.
+  build:
+    name: Build Editions
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Enable macros
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      - name: Record toolchain version
+        id: toolchain
+        run: echo "xcode=$(xcodebuild -version | tr '\n' '-')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Xcode build products
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: |
+            ${{ runner.temp }}/dd-build/Build
+            ${{ runner.temp }}/dd-build/SourcePackages
+          key: derived-build-${{ steps.toolchain.outputs.xcode }}-${{ hashFiles('**/Package.resolved') }}
+
+      - name: Build both editions and the Mail extension
+        run: |
+          set -o pipefail
+          for scheme in "SpamWise (MAS)" "SpamWise (download)" MailExtension; do
+            echo "::group::Build $scheme"
+            xcodebuild build \
+              -project SpamWise.xcodeproj \
+              -scheme "$scheme" \
+              -destination 'platform=macOS,arch=arm64' \
+              -derivedDataPath "$RUNNER_TEMP/dd-build" \
+              -clonedSourcePackagesDirPath "$RUNNER_TEMP/dd-build/SourcePackages" \
+              CODE_SIGNING_ALLOWED=NO \
+              | xcbeautify --renderer github-actions
+            echo "::endgroup::"
+          done

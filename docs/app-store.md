@@ -1,125 +1,43 @@
-# Mac App Store packaging preflight
+# Mac App Store packaging
 
-SpamWise has an App Store export configuration and an isolated local archive
-preflight. These are preparation tools. No App Store upload, TestFlight release,
-review submission or account-capability change is performed by the preflight.
+The App Store edition is the `SpamWise-MAS` target, built by the shared
+`SpamWise (MAS)` scheme with Release as its archive configuration. It links no
+updater, and nothing about the edition depends on a compilation flag passed on
+the command line, so an Xcode Organizer archive and a release lane produce the
+same app.
 
 ```sh
-bash Scripts/app-store-check.sh <worker-token> inspect
-bash Scripts/app-store-check.sh <worker-token> archive
+bundle exec fastlane mac release version:1.0 build:42
 ```
 
-Obtain a distinct token with `agent-lock worker`. Archive mode places its unsigned,
-optimized app and extension in `.build/<worker-token>/app-store/SpamWise.xcarchive`.
-It builds with warnings treated as errors and checks the sandbox entitlements.
-The `APP_STORE` compilation condition disables external executable evidence and
-the ungranted PCC option in both the UI and shared request paths.
-An unsigned archive verifies compilation and bundle assembly; it does not verify
-store signing, entitlements granted by a profile or App Review acceptance.
+The `release` lane installs the App Store and Mac Installer Distribution
+certificates and both bundles' App Store profiles through fastlane match,
+archives the scheme, exports it for App Store Connect and uploads the package
+without submitting it for review. `beta` uploads the same build to TestFlight.
+Tagging a version runs the lane in `.github/workflows/release.yml`, which then
+writes the version's notes from `CHANGELOG.md` and attaches the build once
+Apple has processed it. See [packaging](packaging.md).
 
-## Signing and local export
+## Signing
 
 The original bundle identifiers, team `2NFSK2WB24`, App Group
 `group.codes.tim.SpamWise` and shared Keychain group must remain intact. Apple's
 [distribution-signing guidance](https://developer.apple.com/documentation/xcode/creating-distribution-signed-code-for-the-mac/)
 requires the distribution identity and matching profiles for the app and nested
-extension. Apple Distribution and 3rd Party Mac Developer Installer identities
-for this team were present on 2026-10-16.
+extension; `fastlane/Matchfile` lists both identifiers so match syncs a profile
+for each. Do not grant or fabricate a managed entitlement merely to make
+signing succeed.
 
-A signed archive intended for the store needs existing App Store distribution
-profiles for both bundle IDs and authorized capabilities. Xcode account access or
-managed signing credentials may be required to create/download those profiles.
-See Apple's [App Store profile instructions](https://developer.apple.com/help/account/provisioning-profiles/create-an-app-store-provisioning-profile).
-Do not grant or fabricate a managed entitlement merely to make signing succeed.
+### Current validation gate
 
-After creating a signed archive with the app and extension entitlements intact,
-this command attempts a local export using existing signing material:
-
-```sh
-xcodebuild -exportArchive \
-  -archivePath /absolute/path/to/signed/SpamWise.xcarchive \
-  -exportPath /absolute/path/to/local/app-store-export \
-  -exportOptionsPlist Scripts/AppStoreExportOptions.plist
-```
-
-A development-signed archive can be created with existing local profiles, preserving
-the source entitlements, before App Store export re-signs it for distribution:
-
-```sh
-export AGENT_WORKER_ID=<worker-token>
-xcodebuild -project SpamWise.xcodeproj -scheme SpamWise \
-  -destination 'generic/platform=macOS' \
-  -derivedDataPath .build/$AGENT_WORKER_ID/app-store/DerivedData \
-  -clonedSourcePackagesDirPath .build/$AGENT_WORKER_ID/app-store/SourcePackages \
-  -archivePath .build/$AGENT_WORKER_ID/app-store/SpamWise-signed.xcarchive \
-  CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM=2NFSK2WB24 \
-  CODE_SIGN_IDENTITY='Apple Development' ENABLE_HARDENED_RUNTIME=YES \
-  SWIFT_ACTIVE_COMPILATION_CONDITIONS=APP_STORE \
-  SWIFT_TREAT_WARNINGS_AS_ERRORS=YES SWIFT_SUPPRESS_WARNINGS=NO archive
-```
-
-The plist sets `method=app-store-connect` and `destination=export`; it never selects
-upload. It preserves the version/build number and disables symbol upload. No
-`-allowProvisioningUpdates` flag is added, so account changes are not requested.
-Missing profiles or credentials should fail the export. The preflight's unsigned
-archive is not a distribution-ready signed archive.
-
-Do not export the unsigned preflight archive as a release candidate: Xcode can
-generate empty extension entitlements when no original code signature records
-them. Build a separate signed archive and compare both exported entitlement sets
-with the source before accepting the package.
-
-### Verified local package and current validation gate
-
-On October 16, 2026, a fresh warning-free `APP_STORE` archive was signed inside
-out with the existing Match Apple Distribution and Mac Installer identities.
-The helper addresses a temporary keychain explicitly for each signing command;
-it leaves login-key permissions unchanged, removes only its own search-list
-entry, and deletes decrypted signing material afterward. It verifies profile
-identity, expiry, certificate, sandbox and shared-group compatibility before
-signing. Unexpected nested code requires an explicit signing inventory.
-
-```sh
-PYENV_VERSION=spamwise-corpus pyenv exec python Scripts/export-store-match.py \
-  --certificates /path/to/certificates \
-  --env-file /path/to/existing/fastlane/.env \
-  --archive /path/to/signed/SpamWise.xcarchive \
-  --output /path/to/new/local-package-directory \
-  --app-profile /path/to/app-store-app.provisionprofile \
-  --extension-profile /path/to/app-store-extension.provisionprofile
-```
-
-This is explicit local `codesign`/`productbuild` packaging, not a successful Xcode
-export or App Store acceptance. Deep strict app/extension signature verification
-and installer signature verification passed. The package is
-`.build/cb38d7c0-dd6a-48b3-b59d-6cc4c75083d0/store/package-final/SpamWise.pkg`.
-Its installer timestamp is October 17, 2026 at 06:36:54 UTC. The temporary keychain
-was removed, leaving the original login-keychain search list intact.
-
-The existing Match API key authenticated for an `altool --validate-app` attempt:
-
-```sh
-PYENV_VERSION=spamwise-corpus pyenv exec python Scripts/notarize-match.py \
-  --certificates /path/to/certificates \
-  --env-file /path/to/existing/fastlane/.env \
-  --validate-app /path/to/SpamWise.pkg \
-  --output /path/to/validation.json
-```
-
-Validation stopped with error 19: no Apple ID was found for bundle ID
-`codes.tim.SpamWise` on platform `macOS App`. An App Store Connect app record must
-exist before continuing validation. Apple’s [Apps API documentation](https://developer.apple.com/documentation/appstoreconnectapi/apps)
+On October 16, 2026, an `altool --validate-app` attempt with the shared App
+Store Connect API key stopped with error 19: no Apple ID was found for bundle
+ID `codes.tim.SpamWise` on platform `macOS App`. An App Store Connect app record
+must exist before an upload can succeed. Apple's
+[Apps API documentation](https://developer.apple.com/documentation/appstoreconnectapi/apps)
 directs developers to create new apps on the App Store Connect website; the API
-key does not provide that creation operation. The saved report is
-`.build/cb38d7c0-dd6a-48b3-b59d-6cc4c75083d0/store/validation-final-retry.json`.
-No package was uploaded, published or installed by this check. Signing access is
-resolved; server validation, final metadata and App Review remain open.
-
-For authorized signing preparation, add `-allowProvisioningUpdates` to the local
-export command to let the configured Xcode account create or download matching
-profiles for the existing identifiers and capabilities. This still uses
-`destination=export`; it does not upload or release the app. Do not remove
-entitlements to force an export or request a managed PCC grant through this step.
+key does not provide that creation operation. Server validation, final metadata
+and App Review remain open.
 
 ## Mail Automation exception
 

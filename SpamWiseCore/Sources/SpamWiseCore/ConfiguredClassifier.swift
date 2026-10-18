@@ -35,8 +35,7 @@ public struct ConfiguredClassifier: Classifier {
     else {
       throw ClassificationError.consentRequired
     }
-    guard settings.backend != .privateCloudCompute || DistributionCapabilities.privateCloudCompute
-    else {
+    guard settings.backend != .privateCloudCompute else {
       throw ClassificationError.configuration
     }
     let model = settings.model

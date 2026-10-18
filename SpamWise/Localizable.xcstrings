@@ -6657,22 +6657,6 @@
         }
       }
     },
-    "Private Cloud Compute is unavailable in this distribution. Select another provider.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Private Cloud Compute no está disponible en esta distribución. Selecciona otro proveedor."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Private Cloud Compute n’est pas disponible dans cette distribution. Choisissez un autre fournisseur."
-          }
-        }
-      }
-    },
     "Process this folder automatically": {
       "localizations": {
         "es": {
@@ -10752,29 +10736,6 @@
         }
       }
     },
-    "Updates are delivered through the Mac App Store.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Updates are delivered through the Mac App Store."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las actualizaciones se distribuyen a través de la Mac App Store."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les mises à jour sont distribuées via le Mac App Store."
-          }
-        }
-      }
-    },
     "Check for updates": {
       "extractionState": "manual",
       "localizations": {
@@ -10794,213 +10755,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rechercher des mises à jour"
-          }
-        }
-      }
-    },
-    "Checking for updates…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Checking for updates…"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buscando actualizaciones…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recherche de mises à jour…"
-          }
-        }
-      }
-    },
-    "View release on GitHub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "View release on GitHub"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ver la versión en GitHub"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voir la version sur GitHub"
-          }
-        }
-      }
-    },
-    "Checks contact GitHub. Download and install updates yourself from the release page.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Checks contact GitHub. Download and install updates yourself from the release page."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las búsquedas se conectan a GitHub. Descarga e instala las actualizaciones desde la página de la versión."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La recherche contacte GitHub. Téléchargez et installez les mises à jour depuis la page de la version."
-          }
-        }
-      }
-    },
-    "Direct update checks are not configured for this build.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Direct update checks are not configured for this build."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las actualizaciones directas no están configuradas para esta compilación."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La recherche de mises à jour directes n’est pas configurée pour cette version."
-          }
-        }
-      }
-    },
-    "Update checks are unavailable in this build.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Update checks are unavailable in this build."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La búsqueda de actualizaciones no está disponible en esta compilación."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La recherche de mises à jour n’est pas disponible dans cette version."
-          }
-        }
-      }
-    },
-    "No stable update is available.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No stable update is available."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay actualizaciones estables disponibles."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune mise à jour stable n’est disponible."
-          }
-        }
-      }
-    },
-    "Version %@ is available.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version %@ is available."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La versión %@ está disponible."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La version %@ est disponible."
-          }
-        }
-      }
-    },
-    "You’re up to date.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You’re up to date."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tienes la última versión."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre application est à jour."
-          }
-        }
-      }
-    },
-    "Couldn’t check for updates. Try again later.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn’t check for updates. Try again later."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudieron buscar actualizaciones. Inténtalo de nuevo más tarde."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossible de rechercher des mises à jour. Réessayez plus tard."
           }
         }
       }
@@ -12897,6 +12651,198 @@
           "stringUnit": {
             "state": "translated",
             "value": "La longueur utilise une estimation de quatre caractères par jeton. Le texte cité dans les réponses est abrégé. Le texte des pièces jointes n’est inclus que si l’option est activée."
+          }
+        }
+      }
+    },
+    "About SpamWise": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerca de SpamWise"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À propos de SpamWise"
+          }
+        }
+      }
+    },
+    "Hourly": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cada hora"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les heures"
+          }
+        }
+      }
+    },
+    "Daily": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A diario"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous les jours"
+          }
+        }
+      }
+    },
+    "Weekly": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cada semana"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les semaines"
+          }
+        }
+      }
+    },
+    "Never": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nunca"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jamais"
+          }
+        }
+      }
+    },
+    "Include prerelease versions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluir versiones preliminares"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inclure les versions préliminaires"
+          }
+        }
+      }
+    },
+    "Last checked": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última comprobación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière vérification"
+          }
+        }
+      }
+    },
+    "Check Now": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobar ahora"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier maintenant"
+          }
+        }
+      }
+    },
+    "Reset Skipped Versions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restablecer versiones omitidas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialiser les versions ignorées"
+          }
+        }
+      }
+    },
+    "Check for Updates…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar actualizaciones…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher des mises à jour…"
+          }
+        }
+      }
+    },
+    "Private Cloud Compute is unavailable. Select another provider.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private Cloud Compute no está disponible. Selecciona otro proveedor."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private Cloud Compute n’est pas disponible. Choisissez un autre fournisseur."
+          }
+        }
+      }
+    },
+    "SpamWise includes the open-source software below. The complete notices are in CREDITS.md in the [SpamWise repository](https://github.com/RISCfuture/SpamWise).\n\n**ClaudeForFoundationModels** (revision 0262e1a). Copyright 2026 Anthropic PBC. Licensed under the Apache License, Version 2.0.\n\n**swift-log**. Copyright 2018–2019 The SwiftLog Project. Licensed under the Apache License, Version 2.0. Contains a derivation of the lock implementation from SwiftNIO.\n\n**SwiftNIO** and **swift-nio-imap**. Copyright Apple Inc. and the SwiftNIO project authors. Licensed under the Apache License, Version 2.0.\n\n**Public Suffix List**. Licensed under the Mozilla Public License, Version 2.0. Source: [publicsuffix.org](https://publicsuffix.org/list/).\n\nThe downloadable edition also includes **GitHubUpdateChecker**, **swift-markdown-ui** and **NetworkImage**, licensed under the MIT License, and **swift-cmark**, licensed under the BSD 2-Clause License.\n\nThe Apache License, Version 2.0 is available at [apache.org](https://www.apache.org/licenses/LICENSE-2.0).\n\nSpamWise is not affiliated with, endorsed by, or sponsored by Anthropic. Claude is a trademark of Anthropic PBC.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise incluye el software de código abierto que se indica a continuación. Los avisos completos están en CREDITS.md, en el [repositorio de SpamWise](https://github.com/RISCfuture/SpamWise).\n\n**ClaudeForFoundationModels** (revisión 0262e1a). Copyright 2026 Anthropic PBC. Con licencia Apache, versión 2.0.\n\n**swift-log**. Copyright 2018–2019 The SwiftLog Project. Con licencia Apache, versión 2.0. Contiene una derivación de la implementación de bloqueos de SwiftNIO.\n\n**SwiftNIO** y **swift-nio-imap**. Copyright Apple Inc. y los autores del proyecto SwiftNIO. Con licencia Apache, versión 2.0.\n\n**Public Suffix List**. Con licencia pública de Mozilla, versión 2.0. Fuente: [publicsuffix.org](https://publicsuffix.org/list/).\n\nLa edición descargable también incluye **GitHubUpdateChecker**, **swift-markdown-ui** y **NetworkImage**, con licencia MIT, y **swift-cmark**, con licencia BSD de 2 cláusulas.\n\nLa licencia Apache, versión 2.0 está disponible en [apache.org](https://www.apache.org/licenses/LICENSE-2.0).\n\nSpamWise no está afiliada, respaldada ni patrocinada por Anthropic. Claude es una marca comercial de Anthropic PBC."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise inclut les logiciels libres ci-dessous. Les mentions complètes figurent dans CREDITS.md, dans le [dépôt SpamWise](https://github.com/RISCfuture/SpamWise).\n\n**ClaudeForFoundationModels** (révision 0262e1a). Copyright 2026 Anthropic PBC. Sous licence Apache, version 2.0.\n\n**swift-log**. Copyright 2018–2019 The SwiftLog Project. Sous licence Apache, version 2.0. Contient une dérivation de l’implémentation des verrous de SwiftNIO.\n\n**SwiftNIO** et **swift-nio-imap**. Copyright Apple Inc. et les auteurs du projet SwiftNIO. Sous licence Apache, version 2.0.\n\n**Public Suffix List**. Sous licence publique Mozilla, version 2.0. Source : [publicsuffix.org](https://publicsuffix.org/list/).\n\nL’édition téléchargeable inclut aussi **GitHubUpdateChecker**, **swift-markdown-ui** et **NetworkImage**, sous licence MIT, et **swift-cmark**, sous licence BSD à 2 clauses.\n\nLa licence Apache, version 2.0 est disponible sur [apache.org](https://www.apache.org/licenses/LICENSE-2.0).\n\nSpamWise n’est ni affiliée à Anthropic, ni approuvée ou parrainée par Anthropic. Claude est une marque d’Anthropic PBC."
           }
         }
       }

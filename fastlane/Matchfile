@@ -1,0 +1,22 @@
+git_url("git@github.com:RISCfuture/certificates.git")
+storage_mode("git")
+
+# The certificates repository keeps every app's certificates and profiles on `main`, which is not
+# the branch match reaches for by default ("master"). A missing branch is not an error to match: it
+# starts an empty one, so a read-only sync would then find none of this app's profiles.
+git_branch("main")
+
+type("appstore")
+team_id("2NFSK2WB24")
+
+# `type` is only the default for a bare `match` run; the Fastfile passes the type each edition needs,
+# so this repository holds both an `appstore` and a `developer_id` profile for each identifier below.
+#
+# Both bundles are listed because both carry the App Group and shared keychain access group
+# entitlements, which only a provisioning profile can authorize. gym builds the export options from
+# match's mapping and turns an unsynced identifier into an empty value that `exportArchive` rejects,
+# so a missing entry here is a failed export.
+app_identifier([
+  "codes.tim.SpamWise",
+  "codes.tim.SpamWise.MailExtension"
+])

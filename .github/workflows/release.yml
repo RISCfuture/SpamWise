@@ -1,0 +1,100 @@
+name: Release
+
+# Pushing a version tag builds both editions: the App Store build is uploaded to App Store Connect,
+# and the downloadable build is notarized, stapled, packaged as a disk image, and published as a
+# GitHub release. Nothing here re-runs the tests: tag a commit CI has already passed.
+#
+# The App Store build's notes are written and the build attached to its version once Apple has
+# processed it, leaving only the submission by hand.
+#
+# Tags carry no "v" prefix. The in-app update checker compares release tags against
+# CFBundleShortVersionString, so "1.2" is the tag for version 1.2.
+on:
+  push:
+    tags: ["[0-9]+.[0-9]+*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Marketing version to build and release.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@b76d0fc269f04019767530b0180671738128fe7e  # 1.0.0
+    with:
+      # GitHub names its macOS images after the major Xcode version they carry.
+      runner: xcode-27
+      ruby-version: "4.0.7"
+      # Not a platform in the Apple sense: the reusable workflow runs the release lane once per
+      # entry, and `ci_release` reads each one as an edition name.
+      platforms: '["mas", "download"]'
+      version: ${{ inputs.version || github.ref_name }}
+      certificates-repo: RISCfuture/certificates
+      # Runs before anything is built, with no credentials: a release whose notes or update
+      # repository are missing fails in seconds rather than after an upload that cannot be undone.
+      verify-lane: ci_verify_release_notes
+      # After every edition has uploaded: writes the version's notes and attaches the build once
+      # Apple has processed it.
+      finish-lane: ci_finish_release
+      # Two notarizations, the app's and the disk image's, follow the download archive.
+      timeout-minutes: 90
+    secrets:
+      certificates-token: ${{ secrets.CERTIFICATES_TOKEN }}
+      match-password: ${{ secrets.MATCH_PASSWORD }}
+
+  publish:
+    name: Publish GitHub release
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Only the downloadable edition produces a disk image; the App Store build went straight to
+      # App Store Connect.
+      - name: Download the notarized artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: release-download-${{ inputs.version || github.ref_name }}
+          path: artifacts
+
+      # One asset: the update checker hands the user whichever asset the release carries, so only
+      # the stapled disk image is attached.
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version || github.ref_name }}
+        run: |
+          set -o pipefail
+          dmg=$(find artifacts -name '*.dmg' -print -quit)
+          if [ -z "$dmg" ]; then
+            echo "::error::The release artifacts are missing a disk image."
+            exit 1
+          fi
+
+          # From CHANGELOG.md, the same text App Store Connect carries as "What's New".
+          Scripts/release-notes.sh "$VERSION" > release-notes.md
+
+          # A re-run after a later failure finds the release already there; it takes the asset
+          # instead of stopping the run.
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$VERSION" --repo "$GITHUB_REPOSITORY" --clobber "$dmg"
+          else
+            gh release create "$VERSION" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "SpamWise $VERSION" \
+              --notes-file release-notes.md \
+              "$dmg"
+          fi

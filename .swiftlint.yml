@@ -1,5 +1,7 @@
 included:
   - SpamWise
+  - SpamWise-MAS
+  - SpamWise-download
   - MailExtension
   - SpamWiseCore/Sources
   - SpamWiseCore/Tests

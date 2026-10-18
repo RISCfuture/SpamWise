@@ -1,4 +1,4 @@
-import AppIntents
+public import AppIntents
 import Foundation
 import UniformTypeIdentifiers
 import SpamWiseCore
@@ -70,11 +70,17 @@ struct CorrectSelectedMailIntent: AppIntent, CancellableIntent {
   }
 }
 
-struct SpamWiseStatusIntent: AppIntent {
-  static let title: LocalizedStringResource = "Get SpamWise Status"
-  static var supportedModes: IntentModes { .background }
+/// Reports SpamWise’s redacted filtering status as JSON text.
+public struct SpamWiseStatusIntent: AppIntent {
+  public static let title: LocalizedStringResource = "Get SpamWise Status"
+  public static var supportedModes: IntentModes { .background }
   @Dependency var model: AppModel
-  func perform() async throws -> some IntentResult & ReturnsValue<String> {
+
+  /// Creates the intent; App Intents supplies the model when it runs.
+  public init() {}
+
+  /// Returns the same redacted diagnostics as the exported file.
+  public func perform() async throws -> some IntentResult & ReturnsValue<String> {
     let data = try await AutomationContext.diagnostics(model: model)
     return .result(value: String(decoding: data, as: UTF8.self))
   }

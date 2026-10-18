@@ -12,30 +12,26 @@ and support pages have no public deployment or release download yet. See the
 ## Prerequisites
 
 - Xcode 27 with Swift 6.4, on macOS 27.
-- `swiftlint`, `xcbeautify`, `shellcheck`, `markdownlint-cli2` and `rg` (ripgrep), which the check scripts call.
-- `agent-lock`, which issues the worker tokens the check scripts use to isolate build caches and to serialize UI tests.
+- `swiftlint`, `xcbeautify`, `shellcheck` and `markdownlint-cli2`, which the check scripts call.
+- `rg` (ripgrep) and `agent-lock`, for the runtime probe scripts (`store-check.sh`, `evidence-runtime-check.sh`, `rspamd-runtime-check.sh`), which take an `agent-lock` worker token to isolate their build caches.
 - pyenv with a Python 3 virtualenv, for the corpus and packaging tools under `Tools/` and `Scripts/`.
 
 Swift package dependencies, including GitHubUpdateChecker for the direct-download edition, resolve from their remote repositories at the versions pinned in `Package.resolved`; no sibling checkouts are needed.
 
 ## Build and verify
 
-The provider dependency is pinned in the local package. Preserve bundle identifiers, signing team, App Group, and shared Keychain group.
+The project has two app targets, `SpamWise-MAS` and `SpamWise-download`, that share the `SpamWise Common` framework; their shared schemes are `SpamWise (MAS)` and `SpamWise (download)`. The provider dependency is pinned in the local package. Preserve bundle identifiers, signing team, App Group, and shared Keychain group.
 
 ```sh
-agent-lock worker
-# Use the printed token consistently for this session.
-bash Scripts/check.sh <worker-token>
-bash Scripts/store-check.sh <worker-token>
+Scripts/check.sh
+Scripts/ui-check.sh
 swiftlint lint --strict --no-cache
 shellcheck Scripts/*.sh
-markdownlint-cli2 --config ~/.markdownlint-cli2.jsonc --fix README.md CLAUDE.md TODO.md docs/evaluation.md docs/packaging.md
-bash Scripts/ui-check.sh <worker-token>
 ```
 
-The check script runs all package tests with warnings as errors, then builds the app and extension without signing. The UI script takes the shared UI lock and uses automatic development signing. The UITests target requires an embedded provisioning profile to authorize the runner's application-identifier entitlement; Xcode downloads or creates it using the configured team account. A signed runner without that profile can be rejected with a “Move to Trash” prompt. The test-mode app uses isolated temporary storage and simulated denied Mail permission. The UI flows cover all four onboarding steps, denied-permission messaging, dry-run status, Pause, address-rule replacement, explicit domain correction, and retained corrections when a Mail action fails.
+The check script runs all package tests with warnings as errors, builds both editions and the Mail extension without signing, and runs the hostless unit tests in the `SpamWise Common` scheme. It writes to `.build/check/`; pass another name, such as `Scripts/check.sh feature-x`, to keep builds apart. The UI script runs the UITests target against the App Store edition with automatic development signing. That target requires an embedded provisioning profile to authorize the runner's application-identifier entitlement; Xcode downloads or creates it using the configured team account. The test-mode app uses isolated temporary storage and simulated denied Mail permission. The UI flows cover all four onboarding steps, denied-permission messaging, dry-run status, Pause, address-rule replacement, explicit domain correction, and retained corrections when a Mail action fails. The `SpamWise (MAS)` scheme's test plan, `SpamWise.xctestplan`, runs the unit and UI tests together.
 
-Use `swift format format -i -r SpamWise SpamWiseCore/Sources SpamWiseCore/Tests MailExtension UITests UnitTests`, then `swiftlint lint --fix` and `swiftlint lint --strict`. SwiftLint layout rules that disagree with Swift's formatter are disabled in the repository configuration.
+Use `swift format format -i -r SpamWise SpamWise-MAS SpamWise-download SpamWiseCore/Sources SpamWiseCore/Tests MailExtension UITests UnitTests`, then `swiftlint lint --fix` and `swiftlint lint --strict`. SwiftLint layout rules that disagree with Swift's formatter are disabled in the repository configuration. CI runs the same package tests, builds and unit tests, plus SwiftLint, on every pull request.
 
 ## Run
 
