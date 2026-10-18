@@ -33,23 +33,6 @@
         }
       }
     },
-    "Off": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desactivado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Désactivé"
-          }
-        }
-      }
-    },
     "Local Rspamd scanner": {
       "extractionState": "manual",
       "localizations": {
@@ -63,40 +46,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Analyseur Rspamd local"
-          }
-        }
-      }
-    },
-    "Local HTTP service": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Servicio HTTP local"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Service HTTP local"
-          }
-        }
-      }
-    },
-    "Command-line client": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cliente de línea de comandos"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Client en ligne de commande"
           }
         }
       }
@@ -4736,23 +4685,6 @@
         }
       }
     },
-    "Local evidence is unavailable.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los indicios locales no están disponibles."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les indices locaux sont indisponibles."
-          }
-        }
-      }
-    },
     "Local time. Equal hours disable quiet time. Summaries contain counts, never message content.": {
       "localizations": {
         "es": {
@@ -5999,22 +5931,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Indices facultatifs"
-          }
-        }
-      }
-    },
-    "Optional local rspamc path": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ruta local opcional de rspamc"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chemin local facultatif de rspamc"
           }
         }
       }
@@ -7650,23 +7566,6 @@
         }
       }
     },
-    "Rspamd must already be installed locally. The app sandbox may prevent execution; an unavailable sidecar supplies no spam evidence.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rspamd debe estar instalado localmente. El aislamiento de la aplicación puede impedir su ejecución; si el proceso auxiliar no está disponible, no aporta indicios de correo no deseado."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rspamd doit déjà être installé localement. Le bac à sable de l’application peut empêcher son exécution ; un processus auxiliaire indisponible n’apporte aucun indice de courrier indésirable."
-          }
-        }
-      }
-    },
     "Rule export failed.": {
       "localizations": {
         "es": {
@@ -9023,57 +8922,6 @@
         }
       }
     },
-    "The local evidence process could not complete.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El proceso de indicios locales no pudo completarse."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le processus d’analyse des indices locaux n’a pas pu se terminer."
-          }
-        }
-      }
-    },
-    "The local evidence process timed out.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se agotó el tiempo de espera del proceso de indicios locales."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le délai du processus d’analyse des indices locaux a expiré."
-          }
-        }
-      }
-    },
-    "The local evidence response exceeds the output limit.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La respuesta de indicios locales supera el límite de salida."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La réponse d’analyse des indices locaux dépasse la limite de sortie."
-          }
-        }
-      }
-    },
     "The Mail action is unavailable.": {
       "extractionState": "manual",
       "localizations": {
@@ -9138,23 +8986,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le contexte du message dépasse la limite de classification."
-          }
-        }
-      }
-    },
-    "The message exceeds the local evidence input limit.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El mensaje supera el límite de entrada de indicios locales."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le message dépasse la limite d’entrée de l’analyse des indices locaux."
           }
         }
       }

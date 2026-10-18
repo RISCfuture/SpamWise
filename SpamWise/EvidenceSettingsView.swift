@@ -4,8 +4,6 @@ import SpamWiseCore
 struct EvidenceSettingsView: View {
   @Bindable var model: AppModel
   @State private var configuration = ExternalEvidenceSettings()
-  @State private var path = ""
-  @State private var transport: RspamdTransport?
 
   var body: some View {
     Section {
@@ -46,18 +44,9 @@ struct EvidenceSettingsView: View {
         if configuration.domainBlocklist {
           SpamhausSettingsView(configuration: $configuration)
         }
-        Picker("Local Rspamd scanner", selection: $transport) {
-          Text("Off").tag(RspamdTransport?.none)
-          Text("Local HTTP service").tag(RspamdTransport?.some(.loopbackHTTP))
-          if DistributionCapabilities.externalPrograms {
-            Text("Command-line client").tag(RspamdTransport?.some(.executable))
-          }
-        }
-        .accessibilityIdentifier("rspamdTransport")
-        if transport == .executable && DistributionCapabilities.externalPrograms {
-          TextField("Optional local rspamc path", text: $path)
-        }
-        if transport != nil {
+        Toggle("Local Rspamd scanner", isOn: $configuration.localRspamd)
+          .accessibilityIdentifier("rspamd.enabled")
+        if configuration.localRspamd {
           Text(
             """
             Sends message data to your scanner at 127.0.0.1:11333. Its configuration may use \
@@ -77,24 +66,11 @@ struct EvidenceSettingsView: View {
       }
     }.onAppear {
       configuration = model.state.settings.advancedOptions.externalEvidence ?? .init()
-      path = configuration.rspamcPath ?? ""
-      transport = configuration.selectedRspamdTransport
-      if transport == .executable && !DistributionCapabilities.externalPrograms { transport = nil }
-      if configuration.spamhausTransport != .https && !DistributionCapabilities.externalPrograms {
-        configuration.domainBlocklist = false
-        configuration.termsAcknowledged = false
-        configuration.spamhausTransport = .https
-      }
     }
   }
 
   private func save() {
-    var saved = configuration
-    saved.rspamdTransport = transport
-    saved.rspamcPath =
-      transport == .executable && DistributionCapabilities.externalPrograms && !path.isEmpty
-      ? path : nil
-    let updated = saved
+    let updated = configuration
     model.editSettings {
       var advanced = $0.advancedOptions
       advanced.externalEvidence = updated

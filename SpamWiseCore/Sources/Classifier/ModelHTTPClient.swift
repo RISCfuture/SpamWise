@@ -1,4 +1,5 @@
 public import Foundation
+import Signals
 
 /// Injectable HTTP boundary for bounded, credential-bearing model requests.
 public struct ModelHTTPClient: Sendable {
@@ -6,31 +7,22 @@ public struct ModelHTTPClient: Sendable {
   public static let maximumResponseBytes = 65_536
   /// Ephemeral HTTPS requests with no redirects, cookies, or disk cache.
   public static let live = ModelHTTPClient { request in
-    let configuration = URLSessionConfiguration.ephemeral
-    configuration.httpCookieStorage = nil
-    configuration.urlCache = nil
-    configuration.timeoutIntervalForRequest = ClassificationLimits.timeoutRange.upperBound
-    configuration.timeoutIntervalForResource = ClassificationLimits.timeoutRange.upperBound
-    let session = URLSession(
-      configuration: configuration,
-      delegate: RejectModelRedirects(),
-      delegateQueue: nil
-    )
-    defer { session.invalidateAndCancel() }
-    let (bytes, response) = try await session.bytes(for: request)
-    guard let response = response as? HTTPURLResponse, response.url == request.url else {
-      throw ClassificationError.network
-    }
-    guard response.expectedContentLength <= maximumResponseBytes else {
+    do {
+      let response = try await transport.send(request)
+      return .init(status: response.status, body: response.body)
+    } catch BoundedHTTPError.responseTooLarge {
       throw ClassificationError.invalidOutput
-    }
-    var body = Data()
-    for try await byte in bytes {
-      guard body.count < maximumResponseBytes else { throw ClassificationError.invalidOutput }
-      body.append(byte)
-    }
-    return .init(status: response.statusCode, body: body)
+    } catch BoundedHTTPError.timeout {
+      throw ClassificationError.timeout
+    } catch is BoundedHTTPError { throw ClassificationError.network }
   }
+  private static let transport = BoundedHTTPClient(
+    policy: .init(
+      maximumResponseBytes: maximumResponseBytes,
+      timeout: .seconds(ClassificationLimits.timeoutRange.upperBound),
+      acceptedStatusCodes: nil
+    )
+  )
 
   private let operation: @Sendable (URLRequest) async throws -> Response
 
@@ -63,14 +55,4 @@ public struct ModelHTTPClient: Sendable {
     /// Creates a transport response.
     public init(status: Int, body: Data) { self.status = status; self.body = body }
   }
-}
-
-private final class RejectModelRedirects: NSObject, URLSessionTaskDelegate {
-  func urlSession(
-    _ session: URLSession,
-    task: URLSessionTask,
-    willPerformHTTPRedirection response: HTTPURLResponse,
-    newRequest request: URLRequest,
-    completionHandler: @escaping @Sendable (URLRequest?) -> Void
-  ) { completionHandler(nil) }
 }

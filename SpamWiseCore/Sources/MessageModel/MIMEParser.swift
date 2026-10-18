@@ -207,7 +207,7 @@ public struct MIMEParser: Sendable {
       fromDisplayName: displayName,
       subject: subject,
       text: String(content.text.prefix(Self.maximumTextCharacters)),
-      urls: Array(Set(content.urls)).sorted().prefix(Self.maximumURLs).map { $0 },
+      urls: Array(content.urls.uniqued().prefix(Self.maximumURLs)),
       hash: stableHash(data),
       attachments: content.attachments,
       decodingIssues: issues.isEmpty ? nil : issues

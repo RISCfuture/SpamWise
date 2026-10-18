@@ -1,15 +1,15 @@
 import Foundation
+import Network
 import Testing
 import SpamWiseCore
 @testable import Signals
 
 @Test func `bounds HTTPS responses and sends only domain and header credentials`() async throws {
-  let configuration = URLSessionConfiguration.ephemeral
-  configuration.protocolClasses = [SpamhausFixtureProtocol.self]
+  let configuration = fixtureConfiguration(SpamhausFixtureProtocol.self)
   let listed = try await SpamhausHTTPS.query(
     domain: "listed.example.org",
     key: "synthetic-key",
-    timeout: 0.5,
+    timeout: .milliseconds(500),
     configuration: configuration
   )
   #expect(listed.addresses == ["127.0.1.4"])
@@ -18,7 +18,7 @@ import SpamWiseCore
       try await SpamhausHTTPS.query(
         domain: domain,
         key: "synthetic-key",
-        timeout: 0.05,
+        timeout: .milliseconds(50),
         configuration: configuration
       )
     }
@@ -85,7 +85,7 @@ import SpamWiseCore
     httpsQuery: { domain, key, timeout in
       #expect(!domain.contains("/"))
       #expect(key == "synthetic-key")
-      #expect(timeout <= 0.02)
+      #expect(timeout <= .milliseconds(20))
       try await Task.sleep(for: .seconds(1))
       return .init(status: .answered, addresses: ["127.0.1.2"])
     }
@@ -94,7 +94,7 @@ import SpamWiseCore
   let start = ContinuousClock.now
   let findings = await bounded.lookup(domains: domains, timeout: 0.02)
   #expect(ContinuousClock.now - start < .seconds(0.5))
-  #expect(findings.count == 5)
+  #expect(findings.map(\.subject) == (1...5).map { "example\($0).org" } + ["5 more domains"])
   #expect(findings.allSatisfy { $0.status == .unknown })
   let expired = SpamhausDomainLookup(
     configuration: .init(termsAcknowledged: true, transport: .https),
@@ -152,76 +152,76 @@ func `keeps blocklist error codes out of spam evidence`(_ address: String) async
   #expect(result.first?.subject == "example.com")
 }
 
-@Test func `passes raw mail to Rspamd through stdin and extracts evidence symbols`() async throws {
-  let raw = Data("From: sender@example.org\r\n\r\n$(touch /tmp/unwanted)".utf8)
-  let process = EvidenceProcess { executable, arguments, input in
-    #expect(executable == "/opt/homebrew/bin/rspamc")
-    #expect(arguments == ["--json", "--connect=127.0.0.1:11333", "--timeout=2", "symbols"])
-    #expect(input == raw)
-    return Data(
-      #"""
-      {"score":8,"required_score":6,"action":"reject",
-       "symbols":{"BAYES_SPAM":{"score":5.1},"R_DKIM_ALLOW":{"score":-0.2}}}
-      """#
-      .utf8
-    )
-  }
-  let lookup = RspamdLookup(executablePath: "/opt/homebrew/bin/rspamc", process: process)
-  let result = await lookup.lookup(raw: raw)
+@Test func `posts raw mail to loopback Rspamd and extracts only valid evidence symbols`() async {
+  let lookup = RspamdLookup(configuration: fixtureConfiguration(RspamdFixtureProtocol.self))
+  let result = await lookup.lookup(raw: RspamdFixtureProtocol.message("valid"))
   #expect(result.status == .observed)
-  #expect(result.details.contains("BAYES_SPAM: 5.1"))
-  #expect(!result.details.contains("reject"))
-  let failed = RspamdLookup(
-    executablePath: "/opt/homebrew/bin/rspamc",
-    process: EvidenceProcess { _, _, _ in
-      throw CocoaError(.fileReadNoPermission)
-    }
-  )
-  #expect(await failed.lookup(raw: raw).status == .unknown)
-  for response in [
-    #"{"symbols":{"BAD SYMBOL":{"score":1}}}"#,
-    #"{"symbols":{"SPAM":{"score":10001}}}"#,
-    #"{"action":"reject"}"#,
-    String(repeating: " ", count: 65_537)
+  #expect(result.details == ["BAYES_SPAM: 5.1", "R_DKIM_ALLOW: -0.2"])
+  for scenario in [
+    "bad-symbol", "excessive-score", "no-symbols", "oversized", "redirect", "failure"
   ] {
-    let malformed = RspamdLookup(
-      executablePath: "/opt/homebrew/bin/rspamc",
-      process: EvidenceProcess { _, _, _ in Data(response.utf8) }
-    )
-    #expect(await malformed.lookup(raw: raw).status == .unknown)
+    #expect(await lookup.lookup(raw: RspamdFixtureProtocol.message(scenario)).status == .unknown)
   }
-  let missingPath = RspamdLookup(
-    transport: .executable,
-    process: EvidenceProcess { _, _, _ in
-      Issue.record("Missing executable selection must not dispatch a scan")
-      return Data()
-    }
-  )
-  #expect(await missingPath.lookup(raw: raw).status == .unknown)
-  let expired = RspamdLookup(
-    executablePath: "/opt/homebrew/bin/rspamc",
-    process: EvidenceProcess { _, _, _ in
-      Issue.record("Expired scan budgets must not dispatch a scan")
-      return Data()
-    }
-  )
   for timeout in [0, -1, .infinity, .nan] {
-    #expect(await expired.lookup(raw: raw, timeout: timeout).status == .unknown)
+    let finding = await lookup.lookup(
+      raw: RspamdFixtureProtocol.message("expired"),
+      timeout: timeout
+    )
+    #expect(finding.status == .unknown)
   }
 }
 
-@Test func `preserves process input and stops output floods and timeouts`() async throws {
-  let echoed = try await EvidenceProcess.live.run(
-    executable: "/bin/cat",
-    arguments: [],
-    input: Data("fixture".utf8)
+@Test func `resolves blocklist answers in process through only the configured resolver`()
+  async throws
+{
+  let resolver = try await LoopbackDNSResolver()
+  let listed = await ResolverQuery.addresses(
+    of: "listed.example.com.dbl.spamhaus.org",
+    resolver: "127.0.0.1",
+    port: resolver.port
   )
-  #expect(echoed == Data("fixture".utf8))
-  await #expect(throws: EvidenceProcessError.outputLimit) {
-    try await EvidenceProcess.live.run(executable: "/usr/bin/yes", arguments: [], input: Data())
+  #expect(listed.status == .answered)
+  #expect(listed.addresses == ["127.0.1.2"])
+  let missing = await ResolverQuery.addresses(
+    of: "missing.example.com.dbl.spamhaus.org",
+    resolver: "127.0.0.1",
+    port: resolver.port
+  )
+  #expect(missing.status == .notFound)
+  for address in ["localhost", "127.1", "256.0.0.1", "::1"] {
+    let invalid = await ResolverQuery.addresses(
+      of: "listed.example.com.dbl.spamhaus.org",
+      resolver: address,
+      port: resolver.port
+    )
+    #expect(invalid.status == .failed)
   }
-  await #expect(throws: EvidenceProcessError.timeout) {
-    try await EvidenceProcess.live.run(executable: "/bin/sleep", arguments: ["10"], input: Data())
+}
+
+@Test func `decodes saved scanner selections without enabling removed transports`() throws {
+  func decoded(_ json: String) throws -> ExternalEvidenceSettings {
+    try JSONDecoder().decode(ExternalEvidenceSettings.self, from: Data(json.utf8))
+  }
+  let base = #""domainBlocklist":false,"termsAcknowledged":false,"resolverAddress":"127.0.0.1""#
+  #expect(try decoded("{\(base),\"rspamdTransport\":\"loopbackHTTP\"}").localRspamd)
+  #expect(
+    try !decoded("{\(base),\"rspamdTransport\":\"executable\",\"rspamcPath\":\"/bin/rspamc\"}")
+      .localRspamd
+  )
+  #expect(try !decoded("{\(base),\"rspamcPath\":\"/bin/rspamc\"}").localRspamd)
+  var enabled = ExternalEvidenceSettings()
+  enabled.localRspamd = true
+  #expect(try decoded(String(decoding: JSONEncoder().encode(enabled), as: UTF8.self)) == enabled)
+}
+
+private func fixtureConfiguration(_ protocolClass: AnyClass)
+  -> @Sendable () -> URLSessionConfiguration
+{
+  let name = NSStringFromClass(protocolClass)
+  return {
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.protocolClasses = [NSClassFromString(name)].compactMap { $0 }
+    return configuration
   }
 }
 
@@ -256,6 +256,65 @@ private final class SpamhausFixtureProtocol: URLProtocol {
   override func stopLoading() {}
 }
 
+private final class RspamdFixtureProtocol: URLProtocol {
+  private static let responses: [String: (status: Int, body: String)] = [
+    "valid": (
+      200,
+      #"""
+      {"score":8,"required_score":6,"action":"reject",
+       "symbols":{"BAYES_SPAM":{"score":5.1},"R_DKIM_ALLOW":{"score":-0.2}}}
+      """#
+    ),
+    "bad-symbol": (200, #"{"symbols":{"BAD SYMBOL":{"score":1}}}"#),
+    "excessive-score": (200, #"{"symbols":{"SPAM":{"score":10001}}}"#),
+    "no-symbols": (200, #"{"action":"reject"}"#),
+    "oversized": (200, String(repeating: " ", count: 65_537)),
+    "redirect": (302, #"{"symbols":{}}"#),
+    "failure": (500, #"{"symbols":{}}"#)
+  ]
+
+  override static func canInit(with request: URLRequest) -> Bool { true }
+  override static func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+  static func message(_ scenario: String) -> Data {
+    Data("From: sender@example.org\r\n\r\n\(scenario)".utf8)
+  }
+
+  override func startLoading() {
+    #expect(request.url?.absoluteString == "http://127.0.0.1:11333/checkv2")
+    #expect(request.httpMethod == "POST")
+    let scenario = String(decoding: body(), as: UTF8.self).components(separatedBy: "\r\n\r\n").last
+    guard let url = request.url, let scenario, let fixture = Self.responses[scenario] else {
+      Issue.record("Unexpected Rspamd scan: \(scenario ?? "none")")
+      client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+      return
+    }
+    let response = HTTPURLResponse(
+      url: url,
+      statusCode: fixture.status,
+      httpVersion: "HTTP/1.1",
+      headerFields: ["Content-Type": "application/json", "Location": "http://127.0.0.1:11333/"]
+    )!
+    client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+    client?.urlProtocol(self, didLoad: Data(fixture.body.utf8))
+    client?.urlProtocolDidFinishLoading(self)
+  }
+
+  override func stopLoading() {}
+
+  private func body() -> Data {
+    if let body = request.httpBody { return body }
+    guard let stream = request.httpBodyStream else { return Data() }
+    stream.open()
+    defer { stream.close() }
+    var data = Data(), buffer = [UInt8](repeating: 0, count: 1024)
+    while case let count = unsafe stream.read(&buffer, maxLength: buffer.count), count > 0 {
+      data.append(contentsOf: buffer.prefix(count))
+    }
+    return data
+  }
+}
+
 private struct SpamhausResponseFixture {
   let status: Int
   let body: String
@@ -264,4 +323,56 @@ private struct SpamhausResponseFixture {
   init(_ status: Int, _ body: String, _ expected: ExternalEvidenceStatus) {
     self.status = status; self.body = body; self.expected = expected
   }
+}
+
+/// A UDP resolver on 127.0.0.1 that lists every name except those containing “missing”.
+private final class LoopbackDNSResolver: Sendable {
+  private static let responseFlag: UInt8 = 0x80, recursionDesiredFlag: UInt8 = 0x01
+  private static let recursionAvailableFlag: UInt8 = 0x80, nameErrorCode: UInt8 = 3
+  private static let headerFlagsOffset = 2, responseCodeOffset = 3, answerCountOffset = 7
+  /// A pointer to the question name, then type A, class IN, a 60-second TTL and 127.0.1.2.
+  private static let listedAnswer: [UInt8] = [
+    0xC0, 0x0C, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4, 127, 0, 1, 2
+  ]
+  let port: UInt16
+  private let listener: NWListener
+
+  init() async throws {
+    let parameters = NWParameters.udp
+    parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
+    let listener = try NWListener(using: parameters)
+    listener.newConnectionHandler = { connection in
+      connection.start(queue: .global())
+      connection.receiveMessage { query, _, _, _ in
+        guard let query else { return }
+        connection.send(content: Self.response(to: query), completion: .idempotent)
+      }
+    }
+    port = try await withCheckedThrowingContinuation { continuation in
+      listener.stateUpdateHandler = { state in
+        switch state {
+          case .ready:
+            listener.stateUpdateHandler = nil
+            continuation.resume(returning: listener.port?.rawValue ?? 0)
+          case .failed(let error):
+            listener.stateUpdateHandler = nil
+            continuation.resume(throwing: error)
+          default: break
+        }
+      }
+      listener.start(queue: .global())
+    }
+    self.listener = listener
+  }
+
+  private static func response(to query: Data) -> Data {
+    var bytes = [UInt8](query)
+    let missing = String(decoding: query, as: UTF8.self).contains("missing")
+    bytes[headerFlagsOffset] = responseFlag | (bytes[headerFlagsOffset] & recursionDesiredFlag)
+    bytes[responseCodeOffset] = recursionAvailableFlag | (missing ? nameErrorCode : 0)
+    bytes[answerCountOffset] = missing ? 0 : 1
+    return Data(missing ? bytes : bytes + listedAnswer)
+  }
+
+  deinit { listener.cancel() }
 }

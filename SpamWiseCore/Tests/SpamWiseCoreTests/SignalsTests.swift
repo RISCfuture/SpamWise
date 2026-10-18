@@ -95,6 +95,33 @@ import SpamWiseCore
       authentication: .failed
     ) == nil
   )
+  let links = (1...25).reversed().map { "https://link\($0).com/" }.joined(separator: " ")
+  var flooded = EvidenceBundle(
+    message: try MIMEParser().parse(
+      Data(
+        """
+        From: "\(String(repeating: "A", count: 1000))" <sender@zz-login.xyz>\r
+        Reply-To: help@reply.com\r
+        Return-Path: <bounce@bounce.com>\r
+        Authentication-Results: mx.example; \(String(repeating: "spf=pass; ", count: 30))\r
+        Subject: Flood\r
+        \r
+        \(links) https://link25.com/again\r
+        """.utf8
+      )
+    )
+  )
+  #expect(flooded.fromDisplayName.count == 256)
+  #expect(flooded.authResults.count == 20)
+  #expect(flooded.linkDomains == (6...25).reversed().map { "link\($0).com" })
+  #expect(
+    flooded.reputationDomains.prefix(4) == ["zz-login.xyz", "reply.com", "bounce.com", "link25.com"]
+  )
+  let truncation = "Evidence truncated: display name, authentication results, link domains"
+  #expect(flooded.auxiliaryFindings == [truncation])
+  flooded.record(findings: (1...40).map { "Finding \($0)" } + ["Finding 1"])
+  #expect(flooded.auxiliaryFindings?.count == 32)
+  #expect(flooded.auxiliaryFindings?.last == "Evidence truncated: further findings omitted")
 }
 private func authentication(
   _ results: String,

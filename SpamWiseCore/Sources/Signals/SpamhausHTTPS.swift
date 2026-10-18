@@ -1,22 +1,34 @@
 import Foundation
 import MessageModel
 
-enum SpamhausHTTPS {
-  private static let maximumResponseBytes = 16_384
-  private static let maximumCodes = 20
-  private static let maximumKeyBytes = 256
-  private static let codes: [Int: String] = [
+/// Documented DBL listing codes shared by the DNS and HTTPS services.
+enum SpamhausDBL {
+  /// DNS zone appended to a validated domain for public-mirror queries.
+  static let zone = "dbl.spamhaus.org"
+  /// HTTPS response codes mapped to the equivalent DNS listing addresses.
+  static let listingAddresses: [Int: String] = [
     2002: "127.0.1.2", 2004: "127.0.1.4", 2005: "127.0.1.5",
     2006: "127.0.1.6", 2102: "127.0.1.102", 2103: "127.0.1.103", 2104: "127.0.1.104",
     2105: "127.0.1.105", 2106: "127.0.1.106"
   ]
+  /// DNS answers that count as a listing; every other answer remains unknown.
+  static let listingAddressSet = Set(listingAddresses.values)
+}
+
+enum SpamhausHTTPS {
+  private static let endpoint = URL(string: "https://apibl.spamhaus.net/lookup/v1/DBL/")!
+  private static let maximumResponseBytes = 16_384
+  private static let maximumCodes = 20
+  private static let maximumKeyBytes = 256
+  private static let keyCharacters = UInt8(ascii: "!")...UInt8(ascii: "~")
+  private static let notFoundStatus = 404
+  private static let listedStatus = 200
 
   static func request(domain: String, key: String) throws -> URLRequest {
     guard !key.isEmpty, key.utf8.count <= maximumKeyBytes,
-      key.utf8.allSatisfy({ (33...126).contains($0) }),
-      let endpoint = URL(string: "https://apibl.spamhaus.net/lookup/v1/DBL/" + domain)
+      key.utf8.allSatisfy(keyCharacters.contains)
     else { throw URLError(.userAuthenticationRequired) }
-    var request = URLRequest(url: endpoint)
+    var request = URLRequest(url: endpoint.appending(path: domain))
     request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
@@ -28,79 +40,38 @@ enum SpamhausHTTPS {
     guard data.count <= maximumResponseBytes,
       let body = try? JSONDecoder().decode(Response.self, from: data), body.status == status
     else { return unknown }
-    if status == 404, body.resp == nil { return .init(status: .notFound, addresses: []) }
-    guard status == 200, let values = body.resp, !values.isEmpty, values.count <= maximumCodes,
-      values.allSatisfy({ codes[$0] != nil })
+    if status == notFoundStatus, body.resp == nil { return .init(status: .notFound, addresses: []) }
+    guard status == listedStatus, let values = body.resp, !values.isEmpty,
+      values.count <= maximumCodes,
+      values.allSatisfy({ SpamhausDBL.listingAddresses[$0] != nil })
     else { return unknown }
-    return .init(status: .answered, addresses: values.compactMap { codes[$0] })
+    return .init(
+      status: .answered,
+      addresses: values.compactMap { SpamhausDBL.listingAddresses[$0] }
+    )
   }
 
   static func query(
     domain: String,
     key: String,
-    timeout: TimeInterval,
-    configuration: URLSessionConfiguration = .ephemeral
-  )
-    async throws -> SpamhausDomainLookup.DNSAnswer
-  {
-    let request = try request(domain: domain, key: key)
-    configuration.httpCookieStorage = nil
-    configuration.httpShouldSetCookies = false
-    configuration.urlCredentialStorage = nil
-    configuration.urlCache = nil
-    configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-    configuration.timeoutIntervalForRequest = timeout
-    configuration.timeoutIntervalForResource = timeout
-    configuration.waitsForConnectivity = false
-    let session = URLSession(configuration: configuration, delegate: Delegate(), delegateQueue: nil)
-    defer { session.invalidateAndCancel() }
-    return try await withTaskCancellationHandler {
-      try await withResourceDeadline(seconds: timeout) {
-        let (bytes, response) = try await session.bytes(for: request)
-        guard let response = response as? HTTPURLResponse, response.url == request.url,
-          [200, 404].contains(response.statusCode),
-          response.mimeType?.lowercased() == "application/json",
-          response.expectedContentLength <= maximumResponseBytes
-        else { throw URLError(.badServerResponse) }
-        var data = Data()
-        for try await byte in bytes {
-          try Task.checkCancellation()
-          guard data.count < maximumResponseBytes else { throw URLError(.dataLengthExceedsMaximum) }
-          data.append(byte)
-        }
-        return answer(status: response.statusCode, data: data)
-      }
-    } onCancel: {
-      session.invalidateAndCancel()
-    }
+    timeout: Duration,
+    configuration: @escaping @Sendable () -> URLSessionConfiguration = { .ephemeral }
+  ) async throws -> SpamhausDomainLookup.DNSAnswer {
+    let client = BoundedHTTPClient(
+      policy: .init(
+        maximumResponseBytes: maximumResponseBytes,
+        timeout: timeout,
+        acceptedStatusCodes: [listedStatus, notFoundStatus],
+        mimeType: "application/json"
+      ),
+      configuration: configuration
+    )
+    let response = try await client.send(request(domain: domain, key: key))
+    return answer(status: response.status, data: response.body)
   }
 
   private struct Response: Decodable {
     let status: Int
     let resp: [Int]?
-  }
-
-  private final class Delegate: NSObject, URLSessionTaskDelegate, Sendable {
-    func urlSession(
-      _ session: URLSession,
-      task: URLSessionTask,
-      willPerformHTTPRedirection response: HTTPURLResponse,
-      newRequest request: URLRequest,
-      completionHandler: @escaping @Sendable (URLRequest?) -> Void
-    ) { completionHandler(nil) }
-
-    func urlSession(
-      _ session: URLSession,
-      task: URLSessionTask,
-      didReceive challenge: URLAuthenticationChallenge,
-      completionHandler:
-        @escaping @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-    ) {
-      completionHandler(
-        challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust
-          ? .performDefaultHandling : .cancelAuthenticationChallenge,
-        nil
-      )
-    }
   }
 }

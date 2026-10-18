@@ -12,6 +12,7 @@ swift build --package-path SpamWiseCore --scratch-path "$build_root/swiftpm" \
 products="$build_root/swiftpm/debug"
 swiftc -swift-version 6 -strict-concurrency=complete -strict-memory-safety -warnings-as-errors \
   -parse-as-library -module-cache-path "$build_root/cache" -I "$products" -L "$products" \
+  -Xcc -fmodule-map-file=SpamWiseCore/Sources/CResolver/module.modulemap \
   -lSpamWiseCore Scripts/evidence-runtime-probe.swift -o "$contents/MacOS/SpamWiseEvidenceProbe"
 cp -R "$products/SpamWiseCore_MessageModel.bundle" "$contents/Resources/"
 cat > "$contents/Info.plist" <<'PLIST'

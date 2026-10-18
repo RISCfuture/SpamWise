@@ -33,7 +33,6 @@ private struct ImageFixture {
       case "ocr": try await inspectImages()
       case "privacy": try await inspectPrivacy()
       case "network-control": try await networkControl()
-      case "rspamd": try await inspectRspamd()
       case "rspamd-http": try await inspectRspamdHTTP()
       case "rspamd-http-faults": try await inspectRspamdHTTPFaults()
       default: throw ProbeFailure.unexpected("Unknown mode")
@@ -176,7 +175,7 @@ private struct ImageFixture {
       var external = ExternalEvidenceSettings()
       external.domainBlocklist = true
       external.termsAcknowledged = true
-      external.rspamcPath = "/opt/homebrew/bin/rspamc"
+      external.localRspamd = true
       settings.advancedOptions.externalEvidence = external
       settings.advancedOptions.mailSharingConsent = Set(ModelBackend.allCases)
     }
@@ -218,11 +217,6 @@ private struct ImageFixture {
       throw ProbeFailure.unexpected("Paid request reservation")
     }
     try emit("paid-reservations", result: "zero")
-    let unavailable = await RspamdLookup(executablePath: "/opt/homebrew/bin/rspamc").lookup(
-      raw: raw
-    )
-    guard unavailable.status == .unknown else { throw ProbeFailure.unexpected("Missing rspamc") }
-    try emit("missing-rspamc", result: "unknown")
   }
 
   private static func networkControl() async throws {
@@ -233,34 +227,12 @@ private struct ImageFixture {
     try emit("loopback-observer-control", result: "received \(data.count) bytes")
   }
 
-  private static func inspectRspamd() async throws {
-    let arguments = Array(CommandLine.arguments.dropFirst(2))
-    guard arguments.count == 2, ["observed", "unknown"].contains(arguments[1]) else {
-      throw ProbeFailure.fixture
-    }
-    let boundary = EvidenceProcess { path, arguments, input in
-      do {
-        return try await EvidenceProcess.live.run(
-          executable: path,
-          arguments: arguments,
-          input: input
-        )
-      } catch {
-        let diagnostic = error as NSError
-        try emit("rspamd-process", result: "\(diagnostic.domain):\(diagnostic.code)")
-        throw error
-      }
-    }
-    let scanner = RspamdLookup(executablePath: arguments[0], process: boundary)
-    try await inspectRspamd(scanner: scanner, expectedStatus: arguments[1])
-  }
-
   private static func inspectRspamdHTTP() async throws {
     guard let expected = CommandLine.arguments.dropFirst(2).first,
       ["observed", "unknown"].contains(expected)
     else { throw ProbeFailure.fixture }
     try await inspectRspamd(
-      scanner: RspamdLookup(transport: .loopbackHTTP),
+      scanner: RspamdLookup(),
       expectedStatus: expected
     )
   }
@@ -294,7 +266,7 @@ private struct ImageFixture {
   }
 
   private static func inspectRspamdHTTPFaults() async throws {
-    let scanner = RspamdLookup(transport: .loopbackHTTP)
+    let scanner = RspamdLookup()
     for mode in ["redirect", "overflow", "failure", "timeout"] {
       let start = ContinuousClock.now
       let finding = await scanner.lookup(raw: rawScannerFixture("\(mode)-probe"))

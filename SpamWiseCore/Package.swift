@@ -26,7 +26,8 @@ let package = Package(
   ],
   targets: [
     .target(name: "MessageModel", resources: [.copy("Resources/public_suffix_list.dat")]),
-    .target(name: "Signals", dependencies: ["MessageModel"]),
+    .systemLibrary(name: "CResolver"),
+    .target(name: "Signals", dependencies: ["MessageModel", "CResolver"]),
     .target(
       name: "Classifier",
       dependencies: [
@@ -57,4 +58,4 @@ let package = Package(
   swiftLanguageModes: [.v6]
 )
 
-for target in package.targets { target.swiftSettings = swiftSettings }
+for target in package.targets where target.type != .system { target.swiftSettings = swiftSettings }

@@ -6,14 +6,21 @@ public enum ExternalEvidenceStatus: String, Codable, Sendable {
   case unknown, notListed, listed, observed
 }
 
+/// Named origin of an optional evidence observation.
+public enum EvidenceSource: String, Codable, Sendable {
+  /// Spamhaus Domain Blocklist through public mirrors or the HTTPS service.
+  case spamhausDBL = "Spamhaus DBL"
+  /// The user's Rspamd scanner on the IPv4 loopback interface.
+  case localRspamd = "Local Rspamd"
+}
+
 /// Bounded external observations for a classifier to interpret alongside trusted gates.
 public struct ExternalEvidenceFinding: Codable, Sendable, Equatable {
-  private static let maximumSourceCharacters = 80
   private static let maximumSubjectCharacters = 253
   private static let maximumDetails = 20
   private static let maximumDetailCharacters = 120
   /// Evidence source, such as Spamhaus DBL or local Rspamd.
-  public let source: String
+  public let source: EvidenceSource
   /// Domain or message scope queried.
   public let subject: String
   /// Explicit success, listing, or unavailable status.
@@ -23,18 +30,18 @@ public struct ExternalEvidenceFinding: Codable, Sendable, Equatable {
 
   /// Plain-text evidence suitable for an escaped, untrusted prompt field.
   public var summary: String {
-    "\(source) \(subject): \(status.rawValue)"
+    "\(source.rawValue) \(subject): \(status.rawValue)"
       + (details.isEmpty ? "" : " (\(details.joined(separator: "; ")))")
   }
 
   /// Creates a bounded observation.
   public init(
-    source: String,
+    source: EvidenceSource,
     subject: String,
     status: ExternalEvidenceStatus,
     details: [String] = []
   ) {
-    self.source = String(source.prefix(Self.maximumSourceCharacters))
+    self.source = source
     self.subject = String(subject.prefix(Self.maximumSubjectCharacters))
     self.status = status
     self.details = details.prefix(Self.maximumDetails).map {
@@ -54,7 +61,9 @@ public enum SpamhausTransport: String, Codable, Sendable {
 /// Explicit opt-in for domain-only Spamhaus DBL queries.
 public struct SpamhausConfiguration: Codable, Sendable, Equatable {
   /// Official fair-use conditions that must be reviewed before enabling queries.
-  public static let termsURL = "https://www.spamhaus.org/blocklists/dnsbl-fair-use-policy/"
+  public static let termsURL = URL(
+    string: "https://www.spamhaus.org/blocklists/dnsbl-fair-use-policy/"
+  )!
   /// User acknowledgement of eligibility and resolver requirements, not automatic eligibility verification.
   public var termsAcknowledged: Bool
   /// IPv4 address of the user's configured recursive resolver.
@@ -77,14 +86,18 @@ public struct SpamhausConfiguration: Codable, Sendable, Equatable {
 public struct SpamhausDomainLookup: Sendable {
   /// Injectable DNS A-record lookup receiving a validated absolute query name and resolver address.
   public typealias Query = @Sendable (String, String) async throws -> DNSAnswer
-  /// Injectable HTTPS boundary receiving a domain, query key and remaining timeout in seconds.
-  public typealias HTTPSQuery = @Sendable (String, String, TimeInterval) async throws -> DNSAnswer
+  /// Injectable HTTPS boundary receiving a domain, query key and remaining time.
+  public typealias HTTPSQuery = @Sendable (String, String, Duration) async throws -> DNSAnswer
+  /// Longest time any lookup may take, even when the caller allows more.
+  public static let maximumQueryTime = Duration.seconds(3)
   private static let maximumDomainCandidates = 40
   private static let maximumQueries = 5
   private static let maximumDomainBytes = 253
   private static let maximumLabelCharacters = 63
   private static let maximumAnswerAddresses = 20
-  private static let queryTimeoutSec: TimeInterval = 3
+  private static let lowercaseLetters = UInt8(ascii: "a")...UInt8(ascii: "z")
+  private static let digits = UInt8(ascii: "0")...UInt8(ascii: "9")
+  private static let hyphen = UInt8(ascii: "-"), dot = UInt8(ascii: ".")
   private let configuration: SpamhausConfiguration
   private let query: Query
   private let key: @Sendable () throws -> String
@@ -97,7 +110,9 @@ public struct SpamhausDomainLookup: Sendable {
     key: @escaping @Sendable () throws -> String = { throw URLError(.userAuthenticationRequired) },
     httpsQuery: HTTPSQuery? = nil
   ) {
-    self.configuration = configuration; self.query = query ?? Self.query
+    self.configuration = configuration
+    self.query =
+      query ?? { name, resolver in await ResolverQuery.addresses(of: name, resolver: resolver) }
     self.key = key
     self.httpsQuery =
       httpsQuery ?? { domain, key, timeout in
@@ -105,19 +120,11 @@ public struct SpamhausDomainLookup: Sendable {
       }
   }
 
-  private static func validIPv4(_ address: String) -> Bool {
-    let pieces = address.split(separator: ".", omittingEmptySubsequences: false)
-    return pieces.count == 4
-      && pieces.allSatisfy { part in
-        !part.isEmpty && part.utf8.allSatisfy { (48...57).contains($0) } && UInt8(part) != nil
-      }
-  }
-
   private static func validDomain(_ value: String) -> String? {
     let domain = value.lowercased()
     guard domain.utf8.count <= maximumDomainBytes, !domain.hasPrefix("-"),
       domain.utf8.allSatisfy({
-        (97...122).contains($0) || (48...57).contains($0) || $0 == 45 || $0 == 46
+        lowercaseLetters.contains($0) || digits.contains($0) || $0 == hyphen || $0 == dot
       }),
       domain.split(separator: ".", omittingEmptySubsequences: false).allSatisfy({
         !$0.isEmpty && $0.count <= maximumLabelCharacters && !$0.hasPrefix("-")
@@ -129,84 +136,84 @@ public struct SpamhausDomainLookup: Sendable {
 
   private static func finding(domain: String, answer: DNSAnswer) -> ExternalEvidenceFinding {
     if answer.status == .notFound {
-      return .init(source: "Spamhaus DBL", subject: domain, status: .notListed)
+      return .init(source: .spamhausDBL, subject: domain, status: .notListed)
     }
-    let validCodes: Set<String> = [
-      "127.0.1.2", "127.0.1.4", "127.0.1.5", "127.0.1.6",
-      "127.0.1.102", "127.0.1.103", "127.0.1.104", "127.0.1.105", "127.0.1.106"
-    ]
     guard answer.status == .answered, !answer.addresses.isEmpty,
       answer.addresses.count <= maximumAnswerAddresses,
-      answer.addresses.allSatisfy(validCodes.contains)
-    else {
-      return .init(source: "Spamhaus DBL", subject: domain, status: .unknown)
-    }
+      answer.addresses.allSatisfy(SpamhausDBL.listingAddressSet.contains)
+    else { return unknown(domain) }
     return .init(
-      source: "Spamhaus DBL",
+      source: .spamhausDBL,
       subject: domain,
       status: .listed,
       details: Array(Set(answer.addresses)).sorted()
     )
   }
 
-  private static func query(name: String, resolver: String) async throws -> DNSAnswer {
-    let data = try await EvidenceProcess.live.run(
-      executable: "/usr/bin/dig",
-      arguments: [
-        "@" + resolver, name + ".", "A", "+time=2", "+tries=1", "+noall", "+answer", "+comments"
-      ],
-      input: Data()
-    )
-    let text = String(decoding: data, as: UTF8.self)
-    if text.contains("status: NXDOMAIN,") { return .init(status: .notFound, addresses: []) }
-    guard text.contains("status: NOERROR,") else { return .init(status: .failed, addresses: []) }
-    let addresses = text.split(separator: "\n").compactMap { line -> String? in
-      let fields = line.split(whereSeparator: \.isWhitespace)
-      guard fields.count == 5, fields[0].lowercased() == name.lowercased() + ".",
-        fields[2] == "IN", fields[3] == "A"
-      else { return nil }
-      return String(fields[4])
-    }
-    return .init(status: .answered, addresses: addresses)
+  private static func unknown(_ domain: String) -> ExternalEvidenceFinding {
+    .init(source: .spamhausDBL, subject: domain, status: .unknown)
   }
 
-  /// Queries at most five distinct valid domains; transport and policy failures remain unknown.
-  public func lookup(domains: [String], timeout: TimeInterval = 3) async
+  private static func truncation(skipped: Int) -> [ExternalEvidenceFinding] {
+    guard skipped > 0 else { return [] }
+    return [
+      .init(
+        source: .spamhausDBL,
+        subject: "\(skipped) more domains",
+        status: .unknown,
+        details: ["truncated at the \(maximumQueries)-query limit"]
+      )
+    ]
+  }
+
+  /**
+   Queries the first five distinct valid domains in the supplied priority order, within the
+   caller's budget or ``maximumQueryTime``. Remaining candidates produce one truncation finding;
+   transport and policy failures remain unknown.
+   */
+  public func lookup(domains: [String], timeout: TimeInterval? = nil) async
     -> [ExternalEvidenceFinding]
   {
     guard configuration.termsAcknowledged else { return [] }
-    let domains = Set(domains.prefix(Self.maximumDomainCandidates).compactMap(Self.validDomain))
-      .sorted().prefix(Self.maximumQueries)
+    let candidates = domains.prefix(Self.maximumDomainCandidates).compactMap(Self.validDomain)
+      .uniqued()
+    let queried = Array(candidates.prefix(Self.maximumQueries))
+    let truncation = Self.truncation(skipped: candidates.count - queried.count)
+    let limit = Self.maximumQueryTime / .seconds(1), timeout = timeout ?? limit
     guard !Task.isCancelled, timeout.isFinite, timeout > 0 else {
-      return domains.map { Self.finding(domain: $0, answer: .init(status: .failed, addresses: [])) }
+      return queried.map(Self.unknown) + truncation
     }
-    let timeout = min(timeout, Self.queryTimeoutSec)
-    return await withTaskGroup(of: ExternalEvidenceFinding.self) { group in
-      for domain in domains {
-        group.addTask {
-          do {
-            let answer: DNSAnswer = try await withResourceDeadline(seconds: timeout) {
-              try Task.checkCancellation()
-              switch configuration.transport {
-                case .publicDNS:
-                  guard Self.validIPv4(configuration.resolverAddress) else {
-                    return .init(status: .failed, addresses: [])
-                  }
-                  return try await query(
-                    domain + ".dbl.spamhaus.org",
-                    configuration.resolverAddress
-                  )
-                case .https:
-                  return try await httpsQuery(domain, key(), timeout)
-              }
-            }
-            return Self.finding(domain: domain, answer: answer)
-          } catch { return .init(source: "Spamhaus DBL", subject: domain, status: .unknown) }
-        }
+    let budget = Duration.seconds(min(timeout, limit))
+    let findings = await withTaskGroup(of: (Int, ExternalEvidenceFinding).self) { group in
+      for (index, domain) in queried.enumerated() {
+        group.addTask { (index, await finding(for: domain, timeout: budget)) }
       }
-      var findings: [ExternalEvidenceFinding] = []
+      var findings: [(Int, ExternalEvidenceFinding)] = []
       for await result in group { findings.append(result) }
-      return findings.sorted { $0.subject < $1.subject }
+      return findings.sorted { $0.0 < $1.0 }.map(\.1)
+    }
+    return findings + truncation
+  }
+
+  private func finding(for domain: String, timeout: Duration) async -> ExternalEvidenceFinding {
+    do {
+      let answer = try await withResourceDeadline(seconds: timeout / .seconds(1)) {
+        try Task.checkCancellation()
+        return try await answer(for: domain, timeout: timeout)
+      }
+      return Self.finding(domain: domain, answer: answer)
+    } catch { return Self.unknown(domain) }
+  }
+
+  private func answer(for domain: String, timeout: Duration) async throws -> DNSAnswer {
+    switch configuration.transport {
+      case .publicDNS:
+        guard ResolverQuery.address(configuration.resolverAddress) != nil else {
+          return .init(status: .failed, addresses: [])
+        }
+        return try await query(domain + "." + SpamhausDBL.zone, configuration.resolverAddress)
+      case .https:
+        return try await httpsQuery(domain, key(), timeout)
     }
   }
 

@@ -27,6 +27,13 @@ public enum SenderAuthentication: Sendable, Equatable {
 /// Optional evidence supplied to classification; missing values mean unknown.
 public struct EvidenceBundle: Codable, Sendable, Equatable {
   private static let maximumLinkDomains = 20
+  private static let maximumDisplayNameCharacters = 256
+  private static let maximumAuthResults = 20
+  private static let maximumAuthServerCharacters = 253
+  private static let maximumAuxiliaryFindings = 32
+  private static let maximumFindingCharacters = 1024
+  private static let abuseHeavyTLDs: Set<String> = ["lat", "world", "top", "click", "xyz"]
+  private static let findingsTruncation = "Evidence truncated: further findings omitted"
   private static let displayNameSeparators = CharacterSet.whitespaces.union(
     CharacterSet(charactersIn: "<>()[]\"',;:")
   )
@@ -34,7 +41,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   private static let surroundingPunctuation = CharacterSet.alphanumerics.inverted
   /// Normalized sender email address.
   public var fromAddress: String
-  /// Decoded sender display name; this is an untrusted claim.
+  /// Decoded sender display name, bounded to 256 characters; this is an untrusted claim.
   public var fromDisplayName: String
   /**
    An address claimed in the From display name or comments at a registrable domain other than the
@@ -51,7 +58,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   public var replyToDomain: String?
   /// Registrable domain of Return-Path, or nil if unresolved.
   public var returnPathDomain: String?
-  /// Parsed authentication claims with explicit trust status.
+  /// At most 20 parsed authentication claims with explicit trust status.
   public var authResults: [AuthResult]
   /// Sender's final domain label.
   public var tld: String?
@@ -59,7 +66,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   public var tldIsAbuseHeavy: Bool
   /// Known registration age in days; nil means unknown.
   public var domainAgeDays: Int?
-  /// Distinct registrable domains found in message URLs.
+  /// At most 20 distinct registrable link domains, in order of first appearance.
   public var linkDomains: [String]
   /// Whether a List-Unsubscribe header exists; this is weak evidence.
   public var listUnsubscribePresent: Bool
@@ -72,8 +79,14 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   /// Optional regularized evidence margin; not a probability or standalone action instruction.
   public var learnedMargin: Double?
   /// Bounded optional local or network findings, treated as untrusted evidence.
-  public var auxiliaryFindings: [String]?
-  /// Creates an EvidenceBundle with the supplied configuration.
+  public private(set) var auxiliaryFindings: [String]?
+
+  /// Sender, Reply-To and Return-Path domains, then link domains, without duplicates.
+  public var reputationDomains: [String] {
+    ([fromDomain, replyToDomain, returnPathDomain].compactMap { $0 } + linkDomains).uniqued()
+  }
+
+  /// Creates bounded evidence, recording a finding when a message field exceeds its limit.
   public init(
     message: ParsedMessage,
     history: SenderHistory = .init(),
@@ -82,7 +95,14 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
     trustedAuthServers: Set<String> = []
   ) {
     let resolver = DomainResolver()
-    fromAddress = message.fromAddress; fromDisplayName = message.fromDisplayName
+    let claims = AuthenticationHeaders.parse(
+      message.headers["authentication-results"] ?? [],
+      trustedServers: trustedAuthServers
+    )
+    let domains = message.urls.compactMap { URL(string: $0)?.host }
+      .compactMap(resolver.registrableDomain).uniqued()
+    fromAddress = message.fromAddress
+    fromDisplayName = String(message.fromDisplayName.prefix(Self.maximumDisplayNameCharacters))
     let fromDomain = resolver.domain(ofAddress: message.fromAddress)
     self.fromDomain = fromDomain
     mismatchedDisplayNameAddress = Self.claimedAddresses(
@@ -95,24 +115,56 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
     returnPathDomain = message.header("return-path").flatMap(MIMEParser.address).flatMap(
       resolver.domain
     )
-    authResults = AuthenticationHeaders.parse(
-      message.headers["authentication-results"] ?? [],
-      trustedServers: trustedAuthServers
-    )
+    authResults = claims.prefix(Self.maximumAuthResults).map(Self.bounded)
     tld = fromDomain?.split(separator: ".").last.map(String.init)
-    tldIsAbuseHeavy = ["lat", "world", "top", "click", "xyz"].contains(tld ?? "")
+    tldIsAbuseHeavy = tld.map(Self.abuseHeavyTLDs.contains) ?? false
     self.domainAgeDays = domainAgeDays
-    linkDomains = Array(
-      Set(message.urls.compactMap { URL(string: $0)?.host }.compactMap(resolver.registrableDomain))
-    ).sorted().prefix(Self.maximumLinkDomains).map { $0 }
+    linkDomains = Array(domains.prefix(Self.maximumLinkDomains))
     listUnsubscribePresent = message.header("list-unsubscribe") != nil
     senderHistory = history; self.contact = contact
+    record(
+      findings: Self.truncation(
+        displayName: message.fromDisplayName.count > Self.maximumDisplayNameCharacters,
+        authResults: claims.count > Self.maximumAuthResults,
+        linkDomains: domains.count > Self.maximumLinkDomains
+      )
+    )
+  }
+
+  private static func bounded(_ claim: AuthResult) -> AuthResult {
+    var claim = claim
+    claim.server = String(claim.server.prefix(maximumAuthServerCharacters))
+    return claim
+  }
+
+  private static func truncation(displayName: Bool, authResults: Bool, linkDomains: Bool)
+    -> [String]
+  {
+    let fields = [
+      displayName ? "display name" : nil,
+      authResults ? "authentication results" : nil,
+      linkDomains ? "link domains" : nil
+    ].compactMap { $0 }
+    return fields.isEmpty ? [] : ["Evidence truncated: " + fields.joined(separator: ", ")]
+  }
+
+  private static func bounded(findings: [String]) -> [String] {
+    guard findings.count > maximumAuxiliaryFindings else { return findings }
+    return findings.filter { $0 != findingsTruncation }.prefix(maximumAuxiliaryFindings - 1)
+      + [findingsTruncation]
   }
 
   private static func claimedAddresses(in displayName: String) -> [String] {
     lookalikeAtSigns.reduce(displayName) { $0.replacingOccurrences(of: $1, with: "@") }
       .components(separatedBy: displayNameSeparators)
       .compactMap { MIMEParser.address($0.trimmingCharacters(in: surroundingPunctuation)) }
+  }
+
+  /// Appends distinct findings, keeping at most 32 of up to 1,024 characters each.
+  public mutating func record(findings: [String]) {
+    let truncated = findings.map { String($0.prefix(Self.maximumFindingCharacters)) }
+    let combined = ((auxiliaryFindings ?? []) + truncated).uniqued()
+    auxiliaryFindings = combined.isEmpty ? nil : Self.bounded(findings: combined)
   }
 }
 /// Parses authentication claims without trusting arbitrary sender headers.

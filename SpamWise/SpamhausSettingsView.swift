@@ -20,10 +20,8 @@ struct SpamhausSettingsView: View {
     Picker("Spamhaus service", selection: transport) {
       Text("HTTPS subscription or trial").tag(SpamhausTransport.https)
         .accessibilityIdentifier("spamhaus.transport.https")
-      if DistributionCapabilities.externalPrograms {
-        Text("Public DNS mirrors").tag(SpamhausTransport.publicDNS)
-          .accessibilityIdentifier("spamhaus.transport.publicDNS")
-      }
+      Text("Public DNS mirrors").tag(SpamhausTransport.publicDNS)
+        .accessibilityIdentifier("spamhaus.transport.publicDNS")
     }
     .accessibilityIdentifier("spamhaus.transport")
     if configuration.spamhausTransport == .https {
@@ -48,7 +46,7 @@ struct SpamhausSettingsView: View {
     } else {
       Link(
         "Review Spamhaus usage terms",
-        destination: URL(string: SpamhausConfiguration.termsURL)!
+        destination: SpamhausConfiguration.termsURL
       )
       TextField("DNS resolver address", text: $configuration.resolverAddress)
     }

@@ -31,8 +31,7 @@ extension Pipeline {
     auxiliaryFindings: [String]
   ) async throws -> Classification {
     var evidence = relationshipEvidence(message, identity: identity, state: state)
-    let findings = Self.decodingFindings(message) + auxiliaryFindings
-    evidence.auxiliaryFindings = findings.isEmpty ? nil : findings
+    evidence.record(findings: Self.decodingFindings(message) + auxiliaryFindings)
     let verdict: Verdict, path: DecisionPath, reason: DecisionReason
     if let gate = try await deterministicGate(message, evidence: evidence, state: state) {
       (path, reason) = (.gate, .gate(gate.reason))
@@ -216,14 +215,7 @@ extension Pipeline {
         await rdap.ageDays(domain: domain)
       }
     }
-    if let configuration = advanced.externalEvidence, configuration.domainBlocklist,
-      configuration.spamhausTransport == .https || DistributionCapabilities.externalPrograms
-    {
-      let domains =
-        [domain].compactMap { $0 }
-        + message.urls.compactMap {
-          URL(string: $0)?.host.flatMap { DomainResolver().registrableDomain($0) }
-        }
+    if let configuration = advanced.externalEvidence, configuration.domainBlocklist {
       let lookup = SpamhausDomainLookup(
         configuration: .init(
           termsAcknowledged: configuration.termsAcknowledged,
@@ -233,10 +225,10 @@ extension Pipeline {
         key: { try APIKeychain(service: APIKeychain.spamhausService).read() }
       )
       let findings = await lookup.lookup(
-        domains: domains,
+        domains: evidence.reputationDomains,
         timeout: max(0, timeout - Date().timeIntervalSince(start))
       )
-      evidence.auxiliaryFindings = (evidence.auxiliaryFindings ?? []) + findings.map(\.summary)
+      evidence.record(findings: findings.map(\.summary))
     }
     return evidence
   }

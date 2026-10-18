@@ -117,20 +117,13 @@ if [[ "$ready" != true ]]; then
   exit 1
 fi
 lsof -nP -iTCP:11333 -sTCP:LISTEN > "$evidence_root/listener.log"
-"$probe" rspamd "$rspamd_build/src/client/rspamc" observed \
-  > "$evidence_root/adapter.log" 2>&1
-cat "$evidence_root/adapter.log"
-"$signed_probe" rspamd "$rspamd_build/src/client/rspamc" unknown \
-  > "$evidence_root/signed-adapter.log" 2>&1
-cat "$evidence_root/signed-adapter.log"
+"$probe" rspamd-http observed > "$evidence_root/http.log" 2>&1
+cat "$evidence_root/http.log"
 "$signed_probe" rspamd-http observed > "$evidence_root/signed-http.log" 2>&1
 cat "$evidence_root/signed-http.log"
 kill "$daemon_pid"
 wait "$daemon_pid" || true
 daemon_pid=""
-"$probe" rspamd "$rspamd_build/src/client/rspamc" unknown \
-  > "$evidence_root/stopped-adapter.log" 2>&1
-cat "$evidence_root/stopped-adapter.log"
 "$signed_probe" rspamd-http unknown > "$evidence_root/stopped-http.log" 2>&1
 cat "$evidence_root/stopped-http.log"
 if lsof -nP -iTCP:11333 -sTCP:LISTEN >/dev/null 2>&1; then

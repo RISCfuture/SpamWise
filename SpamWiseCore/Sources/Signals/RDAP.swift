@@ -6,21 +6,9 @@ public protocol HTTPFetcher: Sendable {
   /// Returns response bytes or throws when the optional evidence cannot be fetched.
   func fetch(_ url: URL) async throws -> Data
 }
-/// HTTP transport with a short request timeout and response size limit.
-public struct URLSessionFetcher: HTTPFetcher {
-  private static let requestTimeoutSec: TimeInterval = 3
-  private static let maximumResponseBytes = 2_000_000
-  /// Creates a URLSessionFetcher with the supplied configuration.
-  public init() {}
-  /// Fetches a bounded optional-evidence response or throws on transport failure.
-  public func fetch(_ url: URL) async throws -> Data {
-    var request = URLRequest(url: url); request.timeoutInterval = Self.requestTimeoutSec
-    let (data, response) = try await URLSession.shared.data(for: request)
-    guard let response = response as? HTTPURLResponse, response.statusCode == 200,
-      data.count <= Self.maximumResponseBytes
-    else { throw URLError(.badServerResponse) }
-    return data
-  }
+extension BoundedHTTPClient: HTTPFetcher {
+  /// Returns the body of a successful response.
+  package func fetch(_ url: URL) async throws -> Data { try await send(URLRequest(url: url)).body }
 }
 /// Caches domain registration ages discovered through IANA RDAP bootstrap data.
 public actor RDAPLookup {
@@ -28,13 +16,24 @@ public actor RDAPLookup {
   private static let knownLifetimeSec: TimeInterval = 604_800
   private static let unknownLifetimeSec: TimeInterval = 3600
   private static let maximumCachedDomains = 2048
+  private static let bootstrapURL = URL(string: "https://data.iana.org/rdap/dns.json")!
+  private static let maximumResponseBytes = 2_000_000
+  private static let requestTimeout = Duration.seconds(3)
+  private static let policy = BoundedHTTPClient.Policy(
+    maximumResponseBytes: maximumResponseBytes,
+    timeout: requestTimeout
+  )
   private let fetcher: any HTTPFetcher
   private let cacheURL: URL?
   private var cache: [String: Entry] = [:]
   private var bootstrap: Bootstrap?
   private var bootstrapExpires = Date.distantPast
-  /// Creates a RDAPLookup with the supplied configuration.
-  public init(fetcher: any HTTPFetcher = URLSessionFetcher(), cacheURL: URL? = nil) {
+  /// Looks up registration data over bounded HTTPS that never follows redirects.
+  public init(cacheURL: URL? = nil) {
+    self.init(fetcher: BoundedHTTPClient(policy: Self.policy), cacheURL: cacheURL)
+  }
+  /// Looks up registration data through an injected transport, optionally persisting the cache.
+  public init(fetcher: any HTTPFetcher, cacheURL: URL? = nil) {
     self.fetcher = fetcher; self.cacheURL = cacheURL
     if let cacheURL, let data = try? Data(contentsOf: cacheURL),
       let saved = try? JSONDecoder().decode([String: Entry].self, from: data)
@@ -61,7 +60,7 @@ public actor RDAPLookup {
       if bootstrap == nil || bootstrapExpires < now {
         bootstrap = try JSONDecoder().decode(
           Bootstrap.self,
-          from: await fetcher.fetch(URL(string: "https://data.iana.org/rdap/dns.json")!)
+          from: await fetcher.fetch(Self.bootstrapURL)
         )
         bootstrapExpires = now.addingTimeInterval(Self.knownLifetimeSec)
       }

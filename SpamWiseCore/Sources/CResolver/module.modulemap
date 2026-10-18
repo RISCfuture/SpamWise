@@ -1,0 +1,5 @@
+module CResolver [system] {
+  header "CResolver.h"
+  link "resolv"
+  export *
+}

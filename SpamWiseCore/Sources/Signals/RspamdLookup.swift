@@ -1,82 +1,84 @@
 public import Foundation
 import MessageModel
 
-/// Explicit local scanner transport; neither transport falls back to the other.
-public enum RspamdTransport: String, Codable, Sendable {
-  case executable, loopbackHTTP
-}
-
-/// Optional local Rspamd scan; absent executables, sandbox denial and malformed output remain unknown.
+/**
+ Optional scan by the user's Rspamd service on the IPv4 loopback interface; an absent service,
+ sandbox denial and malformed output remain unknown.
+ */
 public struct RspamdLookup: Sendable {
+  /// Longest time a scan may take, even when the caller allows more.
+  public static let maximumScanTime = Duration.seconds(3)
+  private static let endpoint = URL(string: "http://127.0.0.1:11333/checkv2")!
   private static let maximumMessageBytes = 2_000_000
-  private static let maximumOutputBytes = 65_536
+  private static let maximumResponseBytes = 65_536
   private static let maximumAbsoluteScore: Double = 10_000
   private static let maximumSymbols = 200
   private static let maximumSymbolBytes = 80
   private static let maximumDetails = 20
-  private let transport: RspamdTransport
-  private let executablePath: String?
-  private let process: EvidenceProcess
+  private static let symbolLetters = UInt8(ascii: "A")...UInt8(ascii: "Z")
+  private static let symbolDigits = UInt8(ascii: "0")...UInt8(ascii: "9")
+  private static let symbolSeparator = UInt8(ascii: "_")
+  private let client: BoundedHTTPClient
 
-  /// Selects a local rspamc executable; the daemon endpoint is restricted to IPv4 loopback.
-  public init(executablePath: String, process: EvidenceProcess = .live) {
-    self.init(transport: .executable, executablePath: executablePath, process: process)
+  /// Scans through the fixed loopback endpoint.
+  public init() { self.init(configuration: { .ephemeral }) }
+
+  /// Scans through a session built from the supplied configuration, such as a test fixture.
+  package init(configuration: @escaping @Sendable () -> URLSessionConfiguration) {
+    client = BoundedHTTPClient(
+      policy: .init(
+        maximumResponseBytes: Self.maximumResponseBytes,
+        timeout: Self.maximumScanTime,
+        proxies: .direct,
+        challenges: .rejectAll
+      ),
+      configuration: configuration
+    )
   }
 
-  /// Selects an explicit transport to the fixed IPv4-loopback scanner endpoint.
-  public init(
-    transport: RspamdTransport,
-    executablePath: String? = nil,
-    process: EvidenceProcess = .live
-  ) {
-    self.transport = transport; self.executablePath = executablePath; self.process = process
+  private static func request(raw: Data) -> URLRequest {
+    var request = URLRequest(url: endpoint)
+    request.httpMethod = "POST"
+    request.httpBody = raw
+    request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
+    request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
+    return request
   }
 
-  /// Reports symbols without applying actions, within three seconds or the shorter caller budget.
-  public func lookup(raw: Data, timeout: TimeInterval = 3) async -> ExternalEvidenceFinding {
+  private static func isValid(_ symbol: (key: String, value: Response.Symbol)) -> Bool {
+    symbol.key.utf8.count <= maximumSymbolBytes
+      && symbol.key.utf8.allSatisfy {
+        symbolLetters.contains($0) || symbolDigits.contains($0) || $0 == symbolSeparator
+      }
+      && symbol.value.score.isFinite && abs(symbol.value.score) <= maximumAbsoluteScore
+  }
+
+  /// Reports symbols without applying actions, within the caller's budget or ``maximumScanTime``.
+  public func lookup(raw: Data, timeout: TimeInterval? = nil) async -> ExternalEvidenceFinding {
     let unknown = ExternalEvidenceFinding(
-      source: "Local Rspamd",
+      source: .localRspamd,
       subject: "message",
       status: .unknown
     )
+    let limit = Self.maximumScanTime / .seconds(1), timeout = timeout ?? limit
     guard raw.count <= Self.maximumMessageBytes, timeout.isFinite, timeout > 0 else {
       return unknown
     }
     do {
-      let data = try await withResourceDeadline(seconds: min(3, timeout)) {
-        try await scan(raw: raw, timeout: min(3, timeout))
-      }
-      guard data.count <= Self.maximumOutputBytes else { return unknown }
+      let data = try await client.send(
+        Self.request(raw: raw),
+        timeout: .seconds(min(timeout, limit))
+      )
+      .body
       let response = try JSONDecoder().decode(Response.self, from: data)
-      guard response.symbols.count <= Self.maximumSymbols,
-        response.symbols.allSatisfy({
-          $0.key.utf8.count <= Self.maximumSymbolBytes
-            && $0.key.utf8.allSatisfy {
-              (65...90).contains($0) || (48...57).contains($0) || $0 == 95
-            }
-            && $0.value.score.isFinite && abs($0.value.score) <= Self.maximumAbsoluteScore
-        })
+      guard response.symbols.count <= Self.maximumSymbols, response.symbols.allSatisfy(Self.isValid)
       else { return unknown }
       let details = response.symbols.sorted { $0.key < $1.key }.prefix(Self.maximumDetails).map {
         "\($0.key): \($0.value.score)"
       }
-      return .init(source: "Local Rspamd", subject: "message", status: .observed, details: details)
+      return .init(source: .localRspamd, subject: "message", status: .observed, details: details)
     } catch { return unknown }
-  }
-
-  private func scan(raw: Data, timeout: TimeInterval) async throws -> Data {
-    switch transport {
-      case .loopbackHTTP: return try await RspamdLoopbackHTTP.scan(raw, timeout: timeout)
-      case .executable:
-        guard let executablePath, executablePath.hasPrefix("/"),
-          URL(fileURLWithPath: executablePath).lastPathComponent == "rspamc"
-        else { throw URLError(.badURL) }
-        return try await process.run(
-          executable: executablePath,
-          arguments: ["--json", "--connect=127.0.0.1:11333", "--timeout=2", "symbols"],
-          input: raw
-        )
-    }
   }
 
   private struct Response: Decodable {

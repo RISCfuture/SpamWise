@@ -55,7 +55,7 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
   public var imageOCR = false
   /// Opt-in local extraction of bounded text/plain and text/html attachments.
   public var textAttachments: Bool?
-  /// Explicit external evidence configuration; absent disables all lookups and subprocesses.
+  /// Explicit external evidence configuration; absent disables all lookups and scans.
   public var externalEvidence: ExternalEvidenceSettings?
   /// Presents a local weekly digest of still-unreviewed Review decisions.
   public var weeklyDigest = false
@@ -67,6 +67,7 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
 
 /// Opt-in network reputation and local sidecar configuration.
 public struct ExternalEvidenceSettings: Codable, Sendable, Equatable {
+  private static let loopbackScanner = "loopbackHTTP"
   /// Queries sender and extracted link domains against Spamhaus DBL.
   public var domainBlocklist = false
   /// Records the user's acknowledgement of the provider's usage terms.
@@ -75,16 +76,38 @@ public struct ExternalEvidenceSettings: Codable, Sendable, Equatable {
   public var resolverAddress = "127.0.0.1"
   /// Explicit Spamhaus service; absent values retain public DNS for existing configurations.
   public var spamhausTransport: SpamhausTransport?
-  /// Explicit scanner transport; absent values retain a configured executable path.
-  public var rspamdTransport: RspamdTransport?
-  /// Absolute path to a separately installed local rspamc executable.
-  public var rspamcPath: String?
-  /// Resolves an explicit transport or a legacy executable configuration.
-  public var selectedRspamdTransport: RspamdTransport? {
-    rspamdTransport ?? (rspamcPath == nil ? nil : .executable)
-  }
+  /// Scans messages with the user's Rspamd service on the IPv4 loopback interface.
+  public var localRspamd = false
   /// Creates disabled external evidence.
   public init() {}
+
+  /// Decodes saved settings; any stored scanner selection other than the loopback service is off.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    domainBlocklist = try values.decode(Bool.self, forKey: .domainBlocklist)
+    termsAcknowledged = try values.decode(Bool.self, forKey: .termsAcknowledged)
+    resolverAddress = try values.decode(String.self, forKey: .resolverAddress)
+    spamhausTransport = try values.decodeIfPresent(
+      SpamhausTransport.self,
+      forKey: .spamhausTransport
+    )
+    localRspamd =
+      (try? values.decodeIfPresent(String.self, forKey: .rspamdTransport)) == Self.loopbackScanner
+  }
+
+  /// Encodes an enabled scanner as `rspamdTransport: "loopbackHTTP"`.
+  public func encode(to encoder: any Encoder) throws {
+    var values = encoder.container(keyedBy: CodingKeys.self)
+    try values.encode(domainBlocklist, forKey: .domainBlocklist)
+    try values.encode(termsAcknowledged, forKey: .termsAcknowledged)
+    try values.encode(resolverAddress, forKey: .resolverAddress)
+    try values.encodeIfPresent(spamhausTransport, forKey: .spamhausTransport)
+    if localRspamd { try values.encode(Self.loopbackScanner, forKey: .rspamdTransport) }
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case domainBlocklist, termsAcknowledged, resolverAddress, spamhausTransport, rspamdTransport
+  }
 }
 
 /// An explicit user label; automatic mailbox placement is not ground truth.
