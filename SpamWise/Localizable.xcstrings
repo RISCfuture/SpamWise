@@ -12975,6 +12975,74 @@
           }
         }
       }
+    },
+    "The trusted mail servers could not be updated.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron actualizar los servidores de correo de confianza."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de mettre à jour les serveurs de messagerie de confiance."
+          }
+        }
+      }
+    },
+    "Enter each server as a single name, such as mx.google.com.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce cada servidor como un solo nombre, como mx.google.com."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez chaque serveur sous la forme d’un seul nom, comme mx.google.com."
+          }
+        }
+      }
+    },
+    "An account can trust at most eight servers.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una cuenta puede confiar en ocho servidores como máximo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un compte peut faire confiance à huit serveurs au maximum."
+          }
+        }
+      }
+    },
+    "SpamWise hasn’t seen enough of this account’s mail to detect its servers.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise aún no ha visto suficiente correo de esta cuenta para detectar sus servidores."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’a pas encore vu assez de courrier de ce compte pour détecter ses serveurs."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

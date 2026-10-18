@@ -16,6 +16,7 @@ final class StateTransaction {
   static let learningKey = "state.learning"
   static let undoKey = "state.undo"
   static let contentRuleSkipsKey = "state.contentRuleSkips"
+  static let authenticationKey = "state.authentication"
   let context: ModelContext
   var state = AppState()
   /// The state as read, compared with ``state`` to find what to write.
@@ -145,6 +146,13 @@ extension StateTransaction {
         Self.undoKey,
         slice: .undo,
         default: CorrectionUndo?.none
+      )
+    }
+    if newParts.contains(.authentication) {
+      state.authServerObservations = try document(
+        Self.authenticationKey,
+        slice: .authentication,
+        default: [String: AuthServerObservations]()
       )
     }
   }

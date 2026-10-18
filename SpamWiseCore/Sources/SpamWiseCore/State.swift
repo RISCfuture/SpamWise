@@ -305,6 +305,8 @@ public struct AppState: Codable, Sendable, Equatable {
   public var contactsUpdatedAt: Date?
   /// Own addresses discovered through Mail.app, used only to exclude implicit trust.
   public var ownAddresses: Set<String> = []
+  /// Receiving-server identifiers observed in each account's mail, by account identifier.
+  public var authServerObservations: [String: AuthServerObservations] = [:]
   /// Estimated charges retained independently of the bounded activity log.
   public var costByMonth: [String: Double] = [:]
   /// Bounded derived learning data from explicit corrections and eligible predictions.
@@ -338,6 +340,7 @@ public struct AppState: Codable, Sendable, Equatable {
     contactAddresses = values.lenient(.contactAddresses, default: nil)
     contactsUpdatedAt = values.lenient(.contactsUpdatedAt, default: nil)
     ownAddresses = values.lenient(.ownAddresses, default: [])
+    authServerObservations = values.lenient(.authServerObservations, default: [:])
     costByMonth = values.lenient(.costByMonth, default: Self.costs(of: records))
     learning = values.lenient(.learning, default: LearningState())
     reviewedLabels = values.lenient(.reviewedLabels, default: [])
@@ -347,7 +350,7 @@ public struct AppState: Codable, Sendable, Equatable {
     case revision, settings, rules, contentRules, contentRuleHits, contentRuleSkips, trainingClaims
     case trainingObservations, auditEvents, correctionUndo, corrections, records, retries
     case histories, claimedActions, contactAddresses, contactsUpdatedAt, ownAddresses
-    case costByMonth, learning, reviewedLabels, lastDigestWeek
+    case costByMonth, learning, reviewedLabels, lastDigestWeek, authServerObservations
   }
 }
 extension AppState {

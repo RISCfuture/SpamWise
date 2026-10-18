@@ -64,13 +64,14 @@ extension AppleMailAdapter {
      - eligibleInbox: Inbox messages SpamWise already classified or the user confirmed as Inbox,
        by identity key. No other Inbox message contributes history, and only confirmed receipts
        can authenticate their sender.
-     - trustedAuthServers: Reporting servers whose authentication results a receipt must pass.
+     - trustedAuthServers: Each account's receiving servers, by account identifier, whose
+       authentication results a receipt must pass.
      - incremental: Reads one page per mailbox instead of the most recent 1,000 messages.
    */
   public func importHistory(
     previous: [String: HistoryIndex],
     eligibleInbox: [String: InboxEligibility],
-    trustedAuthServers: Set<String> = [],
+    trustedAuthServers: [String: Set<String>] = [:],
     incremental: Bool = false
   ) async throws -> [String: HistoryIndex] {
     var indexes = previous, advanced: [String: Int] = [:], failure: (any Error)?, readAny = false
@@ -95,7 +96,7 @@ extension AppleMailAdapter {
         inbox: reads[.inbox] ?? [],
         eligibleInbox: eligibleInbox,
         into: indexes[account.id] ?? HistoryIndex(),
-        trustedAuthServers: trustedAuthServers
+        trustedAuthServers: trustedAuthServers[account.id] ?? []
       )
     }
     pageOffsets.merge(advanced) { $1 }

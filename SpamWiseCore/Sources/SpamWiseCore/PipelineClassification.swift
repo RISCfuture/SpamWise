@@ -23,6 +23,21 @@ extension Pipeline {
       usage: .init(estimated: false)
     )
   }
+  /// The scope of the sender's matching Allow rule when trusted authentication did not confirm it.
+  private static func unconfirmedAllowRule(
+    _ message: ParsedMessage,
+    rules: [SenderRule],
+    evidence: EvidenceBundle
+  ) -> RuleScope? {
+    guard evidence.senderAuthentication != .alignedPass,
+      let rule = Gates.matchingRule(
+        address: message.fromAddress,
+        domain: evidence.fromDomain,
+        rules: rules
+      ), rule.disposition == .allow
+    else { return nil }
+    return rule.scope
+  }
   func classify(
     _ message: ParsedMessage,
     identity: MessageIdentity,
@@ -30,6 +45,7 @@ extension Pipeline {
     budget: (start: Date, timeout: Double),
     auxiliaryFindings: [String]
   ) async throws -> Classification {
+    await observeReceivingServers(message, identity: identity, settings: state.settings)
     var evidence = relationshipEvidence(message, identity: identity, state: state)
     evidence.record(findings: Self.decodingFindings(message) + auxiliaryFindings)
     let verdict: Verdict, path: DecisionPath, reason: DecisionReason
@@ -99,7 +115,8 @@ extension Pipeline {
       corrections: CorrectionRetrieval.examples(
         for: message,
         from: state.corrections.filter { $0.isQuotable(inAccount: identity.accountID) },
-        limit: state.settings.correctionLimit
+        limit: state.settings.correctionLimit,
+        senderAuthenticated: evidence.senderAuthentication == .alignedPass
       ),
       correctionLimit: state.settings.correctionLimit,
       bodyTokenBudget: state.settings.bodyTokenBudget,
@@ -129,7 +146,8 @@ extension Pipeline {
       domain: evidence.fromDomain,
       rules: state.rules,
       contact: nil,
-      history: .init()
+      history: .init(),
+      authentication: evidence.senderAuthentication
     ) {
       return senderRule
     }
@@ -174,8 +192,7 @@ extension Pipeline {
     let contradiction =
       (verdict.label == .junk && (evidence.bayesLogOdds ?? 0) < 0)
       || (verdict.label == .inbox && (evidence.bayesLogOdds ?? 0) > 0)
-      || (verdict.label == .inbox
-        && evidence.authResults.contains { $0.trusted && $0.result == "fail" })
+      || (verdict.label == .inbox && evidence.senderAuthentication == .failed)
     try await StateRepository.update(store, loading: StateSlices([.learning])) { current in
       guard current.revision == revision else { return }
       current.learning.admitPrediction(
@@ -224,6 +241,12 @@ extension Pipeline {
     }
     return evidence
   }
+  /**
+   Evidence with the account's relationships and its trusted receiving servers' results.
+
+   Relationships and a matching Allow rule decide a message only for an authenticated sender;
+   the evidence records them either way so the classifier receives those it did not decide.
+   */
   private func relationshipEvidence(
     _ message: ParsedMessage,
     identity: MessageIdentity,
@@ -246,7 +269,18 @@ extension Pipeline {
         && state.contactsUpdatedAt.map { Date().timeIntervalSince($0) < Self.contactFreshnessSec }
           == true
       ? state.contactAddresses?.contains(message.fromAddress) : nil
-    return EvidenceBundle(message: message, history: history, contact: contact)
+    var evidence = EvidenceBundle(
+      message: message,
+      history: history,
+      contact: contact,
+      trustedAuthServers: state.settings.mailOptions.trustedAuthServers(for: identity.accountID)
+    )
+    evidence.unconfirmedAllowRule = Self.unconfirmedAllowRule(
+      message,
+      rules: state.rules,
+      evidence: evidence
+    )
+    return evidence
   }
   struct Classification {
     var verdict: Verdict

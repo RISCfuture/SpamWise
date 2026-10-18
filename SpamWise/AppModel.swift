@@ -319,6 +319,7 @@ extension AppModel {
         histories = try await adapter.importHistory(
           previous: current.histories,
           eligibleInbox: eligible,
+          trustedAuthServers: current.settings.mailOptions.trustedAuthServers,
           incremental: true
         )
       }
@@ -341,10 +342,11 @@ extension AppModel {
         let previous = try await StateRepository.load(
           store,
           StateSlices([.historyImports], histories: .all)
-        ).histories
+        )
         histories = try await adapter.importHistory(
-          previous: previous,
-          eligibleInbox: try await StateRepository.historyEligibleInbox(store)
+          previous: previous.histories,
+          eligibleInbox: try await StateRepository.historyEligibleInbox(store),
+          trustedAuthServers: previous.settings.mailOptions.trustedAuthServers
         )
       }
       try await StateRepository.update(store, loading: Self.historyUpdate(histories)) { state in

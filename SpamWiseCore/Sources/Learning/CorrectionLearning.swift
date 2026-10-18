@@ -8,11 +8,18 @@ public enum CorrectionRetrieval {
   private static let maximumExamples = 100
   private static let senderMatchBonus = 1.0
   private static let domainMatchBonus = 0.25
-  /// Selects relevant corrections; sender and content matches outrank recency.
+  /**
+   Selects relevant corrections; sender and content matches outrank recency.
+
+   - Parameter senderAuthenticated: Whether trusted authentication confirmed the From domain.
+     Only then do examples from the same sender or domain rank higher, because a forged From
+     address must not pull in the examples of the sender it imitates.
+   */
   public static func examples(
     for message: ParsedMessage,
     from corrections: [CorrectionExample],
-    limit: Int = 40
+    limit: Int = 40,
+    senderAuthenticated: Bool = false
   ) -> [CorrectionExample] {
     let candidates = LearningText.uniqueCorrections(corrections)
     let query = Set(LearningText.tokens(message.subject + " " + message.text))
@@ -21,14 +28,15 @@ public enum CorrectionRetrieval {
     for document in documents {
       for token in document { frequencies[token, default: 0] += 1 }
     }
-    let domain = DomainResolver().domain(ofAddress: message.fromAddress)
+    let domain =
+      senderAuthenticated ? DomainResolver().domain(ofAddress: message.fromAddress) : nil
+    let sender = senderAuthenticated ? message.fromAddress.lowercased() : nil
     let scored = zip(candidates, documents).map { example, tokens in
       let overlap = query.intersection(tokens).sorted().reduce(0.0) {
         $0 + log(1 + Double(candidates.count) / Double(frequencies[$1, default: 1]))
       }
       let similarity = overlap / sqrt(Double(max(1, query.count * tokens.count)))
-      let senderBonus =
-        example.sender.lowercased() == message.fromAddress.lowercased() ? senderMatchBonus : 0
+      let senderBonus = example.sender.lowercased() == sender ? senderMatchBonus : 0
       let domainBonus = domain != nil && example.domain == domain ? domainMatchBonus : 0
       return ScoredCorrection(example: example, score: similarity + senderBonus + domainBonus)
     }

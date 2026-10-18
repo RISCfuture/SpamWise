@@ -1,28 +1,33 @@
 import Foundation
 import Testing
 import SpamWiseCore
-@Test func `prioritizes address rules over domain and trusted gates`() {
+@Test func `prioritizes address rules over domain and authenticated relationship gates`() {
   let rules = [
     SenderRule(scope: .domain, value: "example.org", disposition: .allow),
-    SenderRule(scope: .address, value: "jane@example.org", disposition: .block)
+    SenderRule(scope: .address, value: "jane@example.org", disposition: .block),
+    SenderRule(scope: .domain, value: "example.net", disposition: .block),
+    SenderRule(scope: .address, value: "ann@example.net", disposition: .allow)
   ]
-  #expect(
+  func gate(_ address: String, _ authentication: SenderAuthentication) -> GateReason? {
     Gates.evaluate(
-      address: "jane@example.org",
-      domain: "example.org",
+      address: address,
+      domain: DomainResolver().domain(ofAddress: address),
       rules: rules,
       contact: true,
-      history: .init(replyCount: 2)
-    )?.reason == .senderRule(scope: .address, disposition: .block)
+      history: .init(replyCount: 2),
+      authentication: authentication
+    )?.reason
+  }
+  #expect(
+    gate("jane@example.org", .unverified) == .senderRule(scope: .address, disposition: .block)
   )
   #expect(
-    Gates.evaluate(
-      address: "other@example.org",
-      domain: "example.org",
-      rules: rules,
-      contact: false,
-      history: .init()
-    )?.reason == .senderRule(scope: .domain, disposition: .allow)
+    gate("other@example.org", .alignedPass) == .senderRule(scope: .domain, disposition: .allow)
+  )
+  #expect(gate("other@example.org", .unverified) == nil)
+  #expect(gate("ann@example.net", .unverified) == nil)
+  #expect(
+    gate("ann@example.net", .alignedPass) == .senderRule(scope: .address, disposition: .allow)
   )
 }
 @Test func `replaces same scope rules with the latest correction`() {
@@ -45,15 +50,18 @@ import SpamWiseCore
     ) == nil
   )
   #expect(SenderHistory(availability: .complete).summary.contains("No prior"))
-  #expect(
-    Gates.evaluate(
-      address: "jane@example.org",
-      domain: "example.org",
-      rules: [],
-      contact: false,
-      history: .init(replyCount: 1)
-    )?.disposition == .allow
-  )
+  for authentication: SenderAuthentication in [.alignedPass, .unverified] {
+    #expect(
+      Gates.evaluate(
+        address: "jane@example.org",
+        domain: "example.org",
+        rules: [],
+        contact: false,
+        history: .init(replyCount: 1),
+        authentication: authentication
+      )?.disposition == (authentication == .alignedPass ? .allow : nil)
+    )
+  }
 }
 @Test func `extracts domain evidence and explicitly trusted authentication claims`() throws {
   let message = try MIMEParser().parse(fixture("filler-spam"))

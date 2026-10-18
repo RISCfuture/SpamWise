@@ -25,8 +25,16 @@ public enum PromptBuilder {
     review.
     Return a confidence integer 0–100 and a short reason grounded in the supplied evidence.
     Authentication pass and unsubscribe links are weak evidence: spammers routinely provide both.
+    Only authResults marked trusted come from the account's receiving server; untrusted entries \
+    are claims anyone can write and carry no weight. When trustedServersConfigured is false, the \
+    account has no trusted receiving server yet, so no authentication result is trusted, pass or \
+    fail.
     Trusted authentication failures, young domains, abuse-heavy TLDs, a display name claiming \
     another domain's address, and brand/domain mismatch are stronger evidence, never decisive alone.
+    contact, senderHistory and unconfirmedAllowRule describe the From address. Unless a trusted \
+    result authenticates the From domain, that address may be forged, so they are moderate \
+    evidence of a wanted sender, weaker than a trusted authentication failure or signs of \
+    impersonation.
     Platforms that notify on a person's behalf may show that person's address in the display name.
     History unavailable or partial means unknown, not no relationship. Do not infer a purchase \
     from a shipping claim.

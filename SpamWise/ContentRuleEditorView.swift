@@ -138,12 +138,19 @@ struct ContentRuleFormView: View {
       let candidates = model.state.contentRules.filter { $0.id != draft.id } + [draft]
       let evaluation = ContentRules.evaluate(candidates, message: message)
       let matches = evaluation.matching
+      let evidence = EvidenceBundle(
+        message: message,
+        trustedAuthServers: model.state.settings.mailOptions.trustedAuthServers(
+          for: envelope.identity.accountID
+        )
+      )
       let senderRule = Gates.evaluate(
         address: message.fromAddress,
-        domain: DomainResolver().domain(ofAddress: message.fromAddress),
+        domain: evidence.fromDomain,
         rules: model.state.rules,
         contact: nil,
-        history: .init()
+        history: .init(),
+        authentication: evidence.senderAuthentication
       )
       if senderRule != nil {
         result = String(localized: "An address or domain rule takes precedence.")

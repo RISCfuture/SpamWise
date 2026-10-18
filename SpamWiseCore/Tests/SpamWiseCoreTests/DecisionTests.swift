@@ -143,13 +143,14 @@ func `corrects selected mail without classifying and excludes own addresses from
   async throws
 {
   let store = try testStore(), adapter = RecordingAdapter()
-  let selected = try envelope()
+  let selected = try envelope("authentic-contact")
   let message = try MIMEParser().parse(selected.raw)
   try await StateRepository.update(store) {
     $0.contactAddresses = [message.fromAddress]
     $0.contactsUpdatedAt = .now
     $0.ownAddresses = [message.fromAddress]
   }
+  try await AuthenticationTrust.save(["mx.example"], accountID: "account-A", store: store)
   let pipeline = Pipeline(
     store: store,
     classifier: MockClassifier(verdict: .init(label: .review, confidence: 50, reason: "unknown"))

@@ -29,7 +29,6 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   private static let maximumLinkDomains = 20
   private static let maximumDisplayNameCharacters = 256
   private static let maximumAuthResults = 20
-  private static let maximumAuthServerCharacters = 253
   private static let maximumAuxiliaryFindings = 32
   private static let maximumFindingCharacters = 1024
   private static let abuseHeavyTLDs: Set<String> = ["lat", "world", "top", "click", "xyz"]
@@ -80,13 +79,28 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   public var learnedMargin: Double?
   /// Bounded optional local or network findings, treated as untrusted evidence.
   public private(set) var auxiliaryFindings: [String]?
+  /**
+   Whether the account has trusted receiving-server identifiers.
+
+   False means no authentication result can be trusted, so every entry in ``authResults`` is an
+   unverified claim. Nil on evidence recorded before trust was configurable.
+   */
+  public var trustedServersConfigured: Bool?
+  /// The scope of an Allow rule that matched the sender without trusted authentication
+  /// confirming it, so the rule reached the classifier as evidence instead of deciding the message.
+  public var unconfirmedAllowRule: RuleScope?
 
   /// Sender, Reply-To and Return-Path domains, then link domains, without duplicates.
   public var reputationDomains: [String] {
     ([fromDomain, replyToDomain, returnPathDomain].compactMap { $0 } + linkDomains).uniqued()
   }
 
-  /// Creates bounded evidence, recording a finding when a message field exceeds its limit.
+  /**
+   Creates bounded evidence, recording a finding when a message field exceeds its limit.
+
+   - Parameter trustedAuthServers: Receiving-server identifiers of the message's account. Only
+     their topmost Authentication-Results headers produce trusted results.
+   */
   public init(
     message: ParsedMessage,
     history: SenderHistory = .init(),
@@ -95,9 +109,10 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
     trustedAuthServers: Set<String> = []
   ) {
     let resolver = DomainResolver()
+    let trustedServers = AuthenticationHeaders.normalized(trustedAuthServers)
     let claims = AuthenticationHeaders.parse(
       message.headers["authentication-results"] ?? [],
-      trustedServers: trustedAuthServers
+      trustedServers: trustedServers
     )
     let domains = message.urls.compactMap { URL(string: $0)?.host }
       .compactMap(resolver.registrableDomain).uniqued()
@@ -115,13 +130,14 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
     returnPathDomain = message.header("return-path").flatMap(MIMEParser.address).flatMap(
       resolver.domain
     )
-    authResults = claims.prefix(Self.maximumAuthResults).map(Self.bounded)
+    authResults = Array(claims.prefix(Self.maximumAuthResults))
     tld = fromDomain?.split(separator: ".").last.map(String.init)
     tldIsAbuseHeavy = tld.map(Self.abuseHeavyTLDs.contains) ?? false
     self.domainAgeDays = domainAgeDays
     linkDomains = Array(domains.prefix(Self.maximumLinkDomains))
     listUnsubscribePresent = message.header("list-unsubscribe") != nil
     senderHistory = history; self.contact = contact
+    trustedServersConfigured = !trustedServers.isEmpty
     record(
       findings: Self.truncation(
         displayName: message.fromDisplayName.count > Self.maximumDisplayNameCharacters,
@@ -129,12 +145,6 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
         linkDomains: domains.count > Self.maximumLinkDomains
       )
     )
-  }
-
-  private static func bounded(_ claim: AuthResult) -> AuthResult {
-    var claim = claim
-    claim.server = String(claim.server.prefix(maximumAuthServerCharacters))
-    return claim
   }
 
   private static func truncation(displayName: Bool, authResults: Bool, linkDomains: Bool)
@@ -170,6 +180,10 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
 /// Parses authentication claims without trusting arbitrary sender headers.
 public enum AuthenticationHeaders {
   private static let maximumHeaders = 10
+  private static let maximumServerCharacters = 253
+  private static let serverDelimiters = CharacterSet.whitespacesAndNewlines.union(
+    CharacterSet(charactersIn: ";=")
+  )
   private static let methodPattern =
     #"^\s*(spf|dkim|dmarc)\s*=\s*(pass|fail|softfail|neutral|none|temperror|permerror)\b"#
   private static let domainProperties = [
@@ -185,26 +199,51 @@ public enum AuthenticationHeaders {
   public static func parse(_ headers: [String], trustedServers: Set<String>) -> [AuthResult] {
     // Header claims remain untrusted by default; no recomputation of SPF/DKIM/DMARC.
     let reports = headers.prefix(maximumHeaders).map(report)
-    let trusted = topmostTrusted(reports.map(\.server), trustedServers: trustedServers)
+    let trusted = topmostTrusted(reports.map(\.server), trustedServers: normalized(trustedServers))
     return reports.indices.flatMap { index in
       reports[index].results.compactMap { field in
         result(field, server: reports[index].server, trusted: trusted[index])
       }
     }
   }
+  /**
+   The reporting servers of the contiguous topmost headers, where the receiving provider adds its
+   own.
+
+   The run ends at the first header without a server identifier or with a repeated one, because
+   a sender can add lower headers naming any server.
+   */
+  public static func leadingServers(_ headers: [String]) -> [String] {
+    var seen: Set<String> = []
+    return Array(
+      headers.prefix(maximumHeaders).map { report($0).server }
+        .prefix { !$0.isEmpty && seen.insert($0).inserted }
+    )
+  }
+  /// A lowercased reporting-server identifier, or nil when the text is not a single identifier.
+  public static func normalizedServer(_ text: String) -> String? {
+    let server = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    guard !server.isEmpty, server.count <= maximumServerCharacters,
+      server.rangeOfCharacter(from: serverDelimiters) == nil
+    else { return nil }
+    return server
+  }
+  /// Normalized reporting-server identifiers, dropping any that are not a single identifier.
+  public static func normalized(_ servers: Set<String>) -> Set<String> {
+    Set(servers.compactMap(normalizedServer))
+  }
   /// Splits a header into its reporting server, empty when absent, and its result fields.
   private static func report(_ header: String) -> (server: String, results: ArraySlice<String>) {
     let fields = header.lowercased().components(separatedBy: ";")
     guard captures(methodPattern, in: fields[0]) == nil else { return ("", fields[...]) }
-    let server = fields[0].trimmingCharacters(in: .whitespaces).components(separatedBy: " ")[0]
-    return (server, fields.dropFirst())
+    let token = fields[0].components(separatedBy: .whitespacesAndNewlines).first { !$0.isEmpty }
+    return (token.flatMap(normalizedServer) ?? "", fields.dropFirst())
   }
   private static func topmostTrusted(_ servers: [String], trustedServers: Set<String>) -> [Bool] {
-    let trusted = Set(trustedServers.map { $0.lowercased() })
     var seen: Set<String> = [], leading = true
     return servers.map { server in
       leading =
-        leading && !server.isEmpty && trusted.contains(server)
+        leading && !server.isEmpty && trustedServers.contains(server)
         && seen.insert(server).inserted
       return leading
     }

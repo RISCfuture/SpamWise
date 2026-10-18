@@ -73,10 +73,12 @@ public struct StateSlices: Sendable {
     public static let audit = Parts(rawValue: 1 << 7)
     /// History import identities, needed only to import more history.
     public static let historyImports = Parts(rawValue: 1 << 8)
+    /// Receiving-server identifiers observed in each account's mail.
+    public static let authentication = Parts(rawValue: 1 << 9)
     /// Every part.
     public static let all: Parts = [
       .rules, .contentRules, .corrections, .learning, .undo, .contacts, .training, .audit,
-      .historyImports
+      .historyImports, .authentication
     ]
     /// Bit mask of selected parts.
     public let rawValue: Int
@@ -89,5 +91,5 @@ public struct StateSlices: Sendable {
 public enum StateSlice: String, Sendable, CaseIterable {
   case policy, meta, contacts, training, learning, undo, rules, contentRules, contentRuleHits
   case contentRuleSkips, corrections, reviewedLabels, audit, records, retries, claims, histories,
-    mailHealth
+    mailHealth, authentication
 }

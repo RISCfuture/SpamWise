@@ -14,7 +14,12 @@ extension Pipeline {
         identity: envelope.identity,
         sender: message.fromAddress,
         subject: message.subject,
-        evidence: EvidenceBundle(message: message),
+        evidence: EvidenceBundle(
+          message: message,
+          trustedAuthServers: state.settings.mailOptions.trustedAuthServers(
+            for: envelope.identity.accountID
+          )
+        ),
         decision: .init(label: nil, action: .none, reason: .selectedForCorrection),
         outcome: .noAction,
         path: .selection,

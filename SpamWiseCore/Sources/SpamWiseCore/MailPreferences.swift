@@ -11,6 +11,14 @@ public struct MailPreferences: Codable, Sendable, Equatable {
   public var trustExclusions: Set<String> = []
   /// Excludes discovered own addresses from implicit relationship trust.
   public var excludeOwnAddresses = true
+  /**
+   Lowercased receiving-server authserv-ids whose topmost Authentication-Results headers each
+   account trusts, by account identifier.
+
+   An account without an entry trusts no authentication result, so its sender relationships and
+   Allow rules reach the classifier as evidence instead of deciding messages.
+   */
+  public var trustedAuthServers: [String: Set<String>] = [:]
   /// Explicitly configured non-Inbox filtering and dedicated-training folders.
   public var folderPlans: [MailFolderPlan] = []
   /// Opt-in read-status follow-up after a confirmed Junk move.
@@ -30,13 +38,14 @@ public struct MailPreferences: Codable, Sendable, Equatable {
       .excludeOwnAddresses,
       default: defaults.excludeOwnAddresses
     )
+    trustedAuthServers = values.lenient(.trustedAuthServers, default: defaults.trustedAuthServers)
     folderPlans = values.lenient(.folderPlans, default: defaults.folderPlans)
     markJunkRead = values.lenient(.markJunkRead, default: defaults.markJunkRead)
     notifications = values.lenient(.notifications, default: defaults.notifications)
   }
   private enum CodingKeys: String, CodingKey {
     case localOnly, accountIDs, trustExclusions, excludeOwnAddresses, folderPlans, markJunkRead
-    case notifications
+    case notifications, trustedAuthServers
   }
 }
 

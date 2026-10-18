@@ -110,7 +110,7 @@ private actor HistoryEvents: AppleEventRunner {
   let unclassified = try await adapter.importHistory(
     previous: ["account": old],
     eligibleInbox: [:],
-    trustedAuthServers: ["mx.example"],
+    trustedAuthServers: ["account": ["mx.example"]],
     incremental: true
   )
   #expect(unclassified["account"]?.senderReceipts == nil)
@@ -119,14 +119,14 @@ private actor HistoryEvents: AppleEventRunner {
   let first = try await adapter.importHistory(
     previous: ["account": old],
     eligibleInbox: state.historyEligibleInbox,
-    trustedAuthServers: ["mx.example"]
+    trustedAuthServers: ["account": ["mx.example"]]
   )
   #expect(first["account"]?.authenticatedSenderReceipts == nil)
   correct(&state, key: try HistoryRows.key(HistoryRows.shop), as: .inbox)
   let second = try await adapter.importHistory(
     previous: first,
     eligibleInbox: state.historyEligibleInbox,
-    trustedAuthServers: ["MX.example"]
+    trustedAuthServers: ["account": ["MX.example"]]
   )
   let index = try #require(second["account"])
   #expect(index.received["prior.example"] == 4)

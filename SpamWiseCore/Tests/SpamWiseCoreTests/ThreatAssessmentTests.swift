@@ -5,11 +5,13 @@ import SpamWiseCore
 @Test func `assesses trusted mail independently without changing explicit rule actions`()
   async throws
 {
-  let store = try testStore(), adapter = RecordingAdapter(), selected = try envelope()
+  let store = try testStore(), adapter = RecordingAdapter()
+  let selected = try envelope("authentic-contact")
   let message = try MIMEParser().parse(selected.raw), calls = Counter()
   try await StateRepository.update(store) {
     $0.contactAddresses = [message.fromAddress]; $0.contactsUpdatedAt = .now
   }
+  try await AuthenticationTrust.save(["mx.example"], accountID: "account-A", store: store)
   let detector = FixtureThreatDetector { input in
     calls.increment()
     #expect(input.accountID == "account-A")

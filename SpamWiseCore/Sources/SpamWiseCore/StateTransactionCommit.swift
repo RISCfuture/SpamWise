@@ -35,6 +35,11 @@ extension StateTransaction {
       try write(state.learning, Self.learningKey)
       changed.insert(.learning)
     }
+    if state.authServerObservations != baseline.authServerObservations {
+      try requireLoaded(.authentication, .authentication)
+      try write(state.authServerObservations, Self.authenticationKey)
+      changed.insert(.authentication)
+    }
     try commitUndo(&changed)
   }
   /// Writes a replaced undo, or discards it when pending work was invalidated or what it restores changed.
