@@ -53,7 +53,7 @@ struct FolderSettingsView: View {
       .onChange(of: selection) { _, id in
         page = 0
         plan = model.folders.first { $0.id == id }.map { folder in
-          model.state.settings.mailOptions.folderPlans?.first { $0.id == id }
+          model.state.settings.mailOptions.folderPlans.first { $0.id == id }
             ?? MailFolderPlan(folder: folder)
         }
       }

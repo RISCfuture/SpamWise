@@ -174,7 +174,7 @@ public enum ProcessedMessageRepository {
   /// Imports results from the Activity log once per store, before the index is first consulted.
   public static func importLegacyActivity(in store: Store) async throws {
     guard try await store.read(legacyImportKey, default: false) == false else { return }
-    let records = try await StateRepository.load(store).records
+    let records = try await StateRepository.load(store, StateSlices(records: .all)).records
     var buckets: [String: [String: ProcessedMessage]] = [:]
     for record in records where record.identity.accountID != nil && !record.deferredBySpendingLimit
     {

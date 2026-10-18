@@ -31,7 +31,7 @@ func `skips settled mail but not live previews across eviction, failures and ret
   #expect(reasons.contains(.classificationFailed(.network)) && reasons.contains(.messageUnreadable))
   try await StateRepository.update(store) { $0.records.removeAll() }
   try await enableActions(store)
-  try await StateRepository.editSettings(store) { $0.dryRun = false }
+  try await StateRepository.editSettings(store) { $0.strength = .aggressive }
   #expect(try await sweep(false) == 1)
   #expect(calls.value == 3)
   #expect(await adapter.actions.isEmpty)
@@ -75,11 +75,10 @@ func `skips settled mail but not live previews across eviction, failures and ret
   )
   #expect(try await settledAt(pruned) == [previewed.identity.key])
   var contended = previewed
-  contended.identity.contentHash = "unreadable-state"
-  let state = try await StateRepository.load(store)
-  try await replaceState(with: "unreadable", in: store)
+  contended.identity.contentHash = "unavailable-storage"
+  try blockStorage(store)
   #expect(await pipeline.process(contended, discovered: true).outcome == .unclassified)
-  try await replaceState(with: state, in: store)
+  try restoreStorage(store)
   let classified = calls.value
   #expect(
     try await pipeline.processBatch([contended], adapter: adapter, dryRun: true, skipsSettled: true)
@@ -87,27 +86,27 @@ func `skips settled mail but not live previews across eviction, failures and ret
   )
   #expect(calls.value == classified + 1)
 }
-@Test func `records unreadable shared state as a transient failure`() async throws {
+@Test func `records unavailable shared storage as a transient failure`() async throws {
   let store = try testStore(), fresh = try envelope("unsolicited-newsletter")
-  try await store.update(StateRepository.key, default: "") { $0 = "unreadable state" }
   let unclassifiable = MockClassifier(operation: { _ in throw ClassificationError.network })
-  let unreadableState = await Pipeline(store: store, classifier: unclassifiable)
-    .process(fresh, discovered: true)
-  #expect(unreadableState.decision.reason == .storageUnavailable)
+  let pipeline = Pipeline(store: store, classifier: unclassifiable)
+  try blockStorage(store)
+  let unavailable = await pipeline.process(fresh, discovered: true)
+  #expect(unavailable.decision.reason == .storageUnavailable)
+  try restoreStorage(store)
+  try await pipeline.processBatch([], adapter: RecordingAdapter(), dryRun: true, skipsSettled: true)
   let entry = try await ProcessedMessageRepository.entries(for: [fresh.identity.key], in: store)
   #expect(entry[fresh.identity.key]?.failure == .transient)
 }
-private func replaceState(with value: some Codable & Sendable, in store: Store) async throws {
-  try await store.update(StateRepository.key, default: Replacement(value: value)) {
-    $0 = Replacement(value: value)
-  }
+/// Makes every transaction on `store` fail, as when its lock file cannot be opened.
+private func blockStorage(_ store: Store) throws {
+  let lock = store.url.path + ".lock"
+  try? FileManager.default.removeItem(atPath: lock)
+  try FileManager.default.createDirectory(atPath: lock, withIntermediateDirectories: false)
 }
-/// Stored value that ignores the row it replaces.
-private struct Replacement<Value: Codable & Sendable>: Codable, Sendable {
-  var value: Value?
-  init(value: Value) { self.value = value }
-  init(from decoder: any Decoder) throws { value = nil }
-  func encode(to encoder: any Encoder) throws { try value.encode(to: encoder) }
+/// Makes `store` available again after ``blockStorage(_:)``.
+private func restoreStorage(_ store: Store) throws {
+  try FileManager.default.removeItem(atPath: store.url.path + ".lock")
 }
 @Test func `keeps evicted action claims without classifying again`() async throws {
   let store = try testStore(), adapter = RecordingAdapter(), calls = Counter()

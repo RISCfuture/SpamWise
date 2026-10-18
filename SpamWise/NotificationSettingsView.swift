@@ -36,7 +36,7 @@ struct NotificationSettingsView: View {
       Button("Save notification preferences") { save() }.disabled(model.busy)
         .accessibilityIdentifier("notifications.save")
     }.task {
-      preferences = model.state.settings.mailOptions.notifications ?? .init()
+      preferences = model.state.settings.mailOptions.notifications
       enabled = preferences.enabledSince != nil
       permission =
         model.uiTesting

@@ -1,4 +1,5 @@
 public import Foundation
+import SwiftData
 
 /// Explicit privacy and account scope for Mail.app workflows.
 public struct MailPreferences: Codable, Sendable, Equatable {
@@ -10,18 +11,37 @@ public struct MailPreferences: Codable, Sendable, Equatable {
   public var trustExclusions: Set<String> = []
   /// Excludes discovered own addresses from implicit relationship trust.
   public var excludeOwnAddresses = true
-  /// Optional explicitly configured non-Inbox filtering and dedicated-training folders.
-  public var folderPlans: [MailFolderPlan]?
-  /// Opt-in read-status follow-up after a confirmed Junk move; nil means disabled.
-  public var markJunkRead: Bool?
-  /// Optional local notification policy, disabled until the user grants permission and enables it.
-  public var notifications: NotificationPreferences?
+  /// Explicitly configured non-Inbox filtering and dedicated-training folders.
+  public var folderPlans: [MailFolderPlan] = []
+  /// Opt-in read-status follow-up after a confirmed Junk move.
+  public var markJunkRead = false
+  /// Local notification policy, disabled until the user grants permission and enables it.
+  public var notifications = NotificationPreferences()
   /// Creates conservative defaults without changing existing account scope.
   public init() {}
+  /// Decodes each field independently, using its default when absent or unreadable.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    let defaults = MailPreferences()
+    localOnly = values.lenient(.localOnly, default: defaults.localOnly)
+    accountIDs = values.lenient(.accountIDs, default: defaults.accountIDs)
+    trustExclusions = values.lenient(.trustExclusions, default: defaults.trustExclusions)
+    excludeOwnAddresses = values.lenient(
+      .excludeOwnAddresses,
+      default: defaults.excludeOwnAddresses
+    )
+    folderPlans = values.lenient(.folderPlans, default: defaults.folderPlans)
+    markJunkRead = values.lenient(.markJunkRead, default: defaults.markJunkRead)
+    notifications = values.lenient(.notifications, default: defaults.notifications)
+  }
+  private enum CodingKeys: String, CodingKey {
+    case localOnly, accountIDs, trustExclusions, excludeOwnAddresses, folderPlans, markJunkRead
+    case notifications
+  }
 }
 
 /// Durable progress for one account's repeating Inbox sweep.
-public struct MailScanHealth: Codable, Sendable {
+public struct MailScanHealth: Codable, Sendable, Equatable {
   /// Account display name, independent of its persistent identifier.
   public var accountName: String
   /// Earliest received date automatic Inbox filtering considers for this account.
@@ -33,13 +53,11 @@ public struct MailScanHealth: Codable, Sendable {
   /// Number of mailbox positions visited during the current sweep.
   public var scanned = 0
   /// Unreadable entries observed in the current sweep.
-  public var unavailableInSweep: Int?
+  public var unavailableInSweep = 0
   /// Unreadable entries in the most recently completed traversal.
-  public var lastSweepUnavailable: Int?
+  public var lastSweepUnavailable = 0
   /// Most recent traversal's unreadable count, without claiming full coverage.
-  public var unavailableCount: Int {
-    (nextOffset == 0 ? lastSweepUnavailable : unavailableInSweep) ?? 0
-  }
+  public var unavailableCount: Int { nextOffset == 0 ? lastSweepUnavailable : unavailableInSweep }
   /// Latest attempted page read.
   public var lastAttempt: Date?
   /// Latest page whose readable envelopes were handled and unreadable count recorded.
@@ -50,6 +68,21 @@ public struct MailScanHealth: Codable, Sendable {
   public var failure: String?
   /// Creates a progress record without claiming any mail was read.
   public init(accountName: String) { self.accountName = accountName }
+  /// Decodes each field independently, using its default when absent or unreadable.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    self.init(accountName: values.lenient(.accountName, default: ""))
+    inboxStart = values.lenient(.inboxStart, default: nil)
+    nextOffset = values.lenient(.nextOffset, default: 0)
+    observedTotal = values.lenient(.observedTotal, default: 0)
+    scanned = values.lenient(.scanned, default: 0)
+    unavailableInSweep = values.lenient(.unavailableInSweep, default: 0)
+    lastSweepUnavailable = values.lenient(.lastSweepUnavailable, default: 0)
+    lastAttempt = values.lenient(.lastAttempt, default: nil)
+    lastSuccess = values.lenient(.lastSuccess, default: nil)
+    lastCompletedSweep = values.lenient(.lastCompletedSweep, default: nil)
+    failure = values.lenient(.failure, default: nil)
+  }
   /// Records visited positions after handling readable envelopes and counting unavailable entries.
   public mutating func complete(count: Int, total: Int, unavailable: Int = 0, now: Date = .now) {
     let end = nextOffset + max(0, count)
@@ -70,7 +103,7 @@ public struct MailScanHealth: Codable, Sendable {
     now: Date = .now
   ) {
     observedTotal = max(0, total)
-    unavailableInSweep = (unavailableInSweep ?? 0) + max(0, unavailable)
+    unavailableInSweep += max(0, unavailable)
     scanned += max(0, visited)
     nextOffset = max(0, end)
     lastSuccess = now
@@ -81,14 +114,32 @@ public struct MailScanHealth: Codable, Sendable {
     unavailableInSweep = 0
     lastCompletedSweep = now
   }
+  private enum CodingKeys: String, CodingKey {
+    case accountName, inboxStart, nextOffset, observedTotal, scanned, unavailableInSweep
+    case lastSweepUnavailable, lastAttempt, lastSuccess, lastCompletedSweep, failure
+  }
 }
 
 /// Account-scoped progress retained separately from the bounded Activity log.
 public enum MailHealthRepository {
-  private static let key = "mail-health-v1"
+  static let slice = "mailHealth"
   /// Loads progress without relying on cross-process notifications.
   public static func load(_ store: Store) async throws -> [String: MailScanHealth] {
-    try await store.read(key, default: [:])
+    try await StatePersistence.prepared(store)
+    return try await store.transaction { context in
+      try context.fetch(FetchDescriptor<MailHealthRow>()).reduce(into: [:]) { states, row in
+        states[row.key] = try? JSONDecoder().decode(MailScanHealth.self, from: row.payload)
+      }
+    }
+  }
+  /// Loads one account's or folder's progress.
+  public static func load(_ store: Store, key: String) async throws -> MailScanHealth? {
+    try await StatePersistence.prepared(store)
+    return try await store.transaction { context in
+      try context.fetch(FetchDescriptor(predicate: MailHealthRow.keyed([key]))).first.flatMap {
+        try? JSONDecoder().decode(MailScanHealth.self, from: $0.payload)
+      }
+    }
   }
   /// Updates one account without replacing concurrent progress for another.
   public static func update(
@@ -97,11 +148,23 @@ public enum MailHealthRepository {
     name: String,
     _ edit: @Sendable (inout MailScanHealth) -> Void
   ) async throws {
-    try await store.update(key, default: [String: MailScanHealth]()) { states in
-      var health = states[accountID] ?? MailScanHealth(accountName: name)
+    try await StatePersistence.prepared(store)
+    try await store.transaction { context in
+      let row = try context.fetch(FetchDescriptor(predicate: MailHealthRow.keyed([accountID])))
+        .first
+      var health =
+        row.flatMap { try? JSONDecoder().decode(MailScanHealth.self, from: $0.payload) }
+        ?? MailScanHealth(accountName: name)
       health.accountName = name
       edit(&health)
-      states[accountID] = health
+      let payload = try JSONEncoder().encode(health)
+      if let row {
+        row.payload = payload
+      } else {
+        context.insert(MailHealthRow(key: accountID, payload: payload))
+      }
+      try context.markChanged([slice], stamp: context.nextChangeStamp())
+      try context.save()
     }
   }
 }

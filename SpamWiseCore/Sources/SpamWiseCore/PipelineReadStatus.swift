@@ -7,8 +7,11 @@ extension Pipeline {
     guard original.outcome == .applied, original.decision.action == .moveToJunk,
       !Task.isCancelled
     else { return original }
-    let claimed = try await StateRepository.update(store) { state -> DecisionRecord? in
-      guard state.settings.mailOptions.markJunkRead == true,
+    let claimed = try await StateRepository.update(
+      store,
+      loading: StateSlices(records: .only([original.id]))
+    ) { state -> DecisionRecord? in
+      guard state.settings.mailOptions.markJunkRead,
         !state.settings.paused, !state.settings.dryRun, state.revision == original.revision,
         let index = state.records.firstIndex(where: { $0.id == original.id }),
         state.records[index].readStatusOutcome == nil
@@ -20,7 +23,7 @@ extension Pipeline {
     let outcome: ActionOutcome, failure: String?
     do {
       try Task.checkCancellation()
-      let state = try await StateRepository.load(store)
+      let state = try await StateRepository.load(store, StateSlices())
       guard state.revision == claimed.revision, !state.settings.paused, !state.settings.dryRun
       else {
         return try await finishReadStatus(claimed, outcome: .superseded, failure: nil)
@@ -40,7 +43,8 @@ extension Pipeline {
   private func finishReadStatus(_ record: DecisionRecord, outcome: ActionOutcome, failure: String?)
     async throws -> DecisionRecord
   {
-    try await StateRepository.update(store) { state in
+    try await StateRepository.update(store, loading: StateSlices(records: .only([record.id]))) {
+      state in
       guard let index = state.records.firstIndex(where: { $0.id == record.id }) else {
         throw IntegrationError.unavailable
       }

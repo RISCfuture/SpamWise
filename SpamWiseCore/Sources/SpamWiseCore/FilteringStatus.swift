@@ -73,7 +73,7 @@ extension StateRepository {
     in store: Store,
     currentAccounts: Set<String>? = nil
   ) async throws {
-    try await update(store) { state in
+    try await update(store, loading: StateSlices()) { state in
       if let currentAccounts {
         state.settings.validatedAccounts.formIntersection(currentAccounts)
       }

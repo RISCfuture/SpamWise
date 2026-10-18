@@ -1,6 +1,56 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Settings changed: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuración modificada: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages modifiés : %@"
+          }
+        }
+      }
+    },
+    "A storage update changed “%@” without reading it first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una actualización del almacenamiento modificó «%@» sin leerlo antes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une mise à jour du stockage a modifié « %@ » sans l’avoir lu au préalable."
+          }
+        }
+      }
+    },
+    "Some saved SpamWise data couldn’t be read and was set aside. Restore a backup, or keep the current settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron leer algunos datos guardados de SpamWise y se apartaron. Restaura una copia de seguridad o conserva la configuración actual."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certaines données enregistrées de SpamWise n’ont pas pu être lues et ont été mises de côté. Restaurez une sauvegarde ou conservez les réglages actuels."
+          }
+        }
+      }
+    },
     "Testing the selected message; waiting for Mail to show each move…": {
       "extractionState": "manual",
       "localizations": {
@@ -3699,23 +3749,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Le filtrage continue avec les fenêtres fermées. Gardez Mail et SpamWise ouverts sur un Mac éveillé."
-          }
-        }
-      }
-    },
-    "Filtering or integration settings changed": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configuración de filtrado o integración modificada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Réglages de filtrage ou d’intégration modifiés"
           }
         }
       }

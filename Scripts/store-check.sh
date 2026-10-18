@@ -5,8 +5,9 @@ export AGENT_WORKER_ID="$worker"
 build_root=".build/$worker"
 mkdir -p "$build_root"
 swiftc -swift-version 6 -strict-concurrency=complete -strict-memory-safety -warnings-as-errors \
-  -parse-as-library SpamWiseCore/Sources/Store/Store.swift Scripts/store-probe.swift \
-  -o "$build_root/store-probe"
+  -package-name SpamWiseCore -parse-as-library \
+  SpamWiseCore/Sources/Store/Store.swift SpamWiseCore/Sources/Store/Schema.swift \
+  Scripts/store-probe.swift -o "$build_root/store-probe"
 probe_dir="$(mktemp -d "$build_root/store-test.XXXXXX")"
 trap 'rm -rf "$probe_dir"' EXIT
 "$build_root/store-probe" "$probe_dir/state.store" 0

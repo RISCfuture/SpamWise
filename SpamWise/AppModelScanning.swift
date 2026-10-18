@@ -31,7 +31,9 @@ extension AppModel {
     accounts = discovered
     if let store {
       let addresses = Set(discovered.flatMap(\.addresses))
-      try await StateRepository.update(store) { $0.ownAddresses = addresses }
+      try await StateRepository.update(store, loading: StateSlices([.contacts])) {
+        $0.ownAddresses = addresses
+      }
     }
   }
   /// Records now as the Inbox start boundary for the accounts, keeping existing boundaries unless `replacing`.

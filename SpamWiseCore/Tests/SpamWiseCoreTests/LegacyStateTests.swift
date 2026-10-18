@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import Testing
 import SpamWiseCore
 
@@ -16,13 +17,20 @@ import SpamWiseCore
     ("review", "Looks like a newsletter")
   ]
   object["records"] =
-    legacy.map {
-      legacyRecord(label: $0, reason: $1, sender: "Unknown", subject: "Unclassified message")
+    legacy.enumerated().map {
+      legacyRecord(
+        label: $1.label,
+        reason: $1.reason,
+        date: $0,
+        sender: "Unknown",
+        subject: "Unclassified message"
+      )
     } + [
       legacyRecord(
         label: "inbox",
         reason: ["classificationFailed": ["_0": "retired"]],
         path: "model",
+        date: legacy.count,
         sender: "person@example.com",
         subject: "(No subject)"
       )
@@ -32,7 +40,7 @@ import SpamWiseCore
     from: JSONSerialization.data(withJSONObject: object)
   )
   let store = try testStore()
-  try await store.update(StateRepository.key, default: AppState()) { $0 = stored }
+  try await store.update("application-v1", default: AppState()) { $0 = stored }
   let decoded = try await StateRepository.load(store)
   #expect(
     decoded.records.map(\.decision.reason) == [
@@ -65,15 +73,81 @@ private func legacyRecord(
   label: String?,
   reason: Any,
   path: String = "retired",
+  date: Int,
   sender: String,
   subject: String
 ) -> [String: Any] {
   var decision: [String: Any] = ["action": "none", "reason": reason]
   decision["label"] = label
   return [
-    "id": UUID().uuidString, "date": 0,
+    "id": UUID().uuidString, "date": date,
     "identity": ["accountID": "account", "contentHash": UUID().uuidString], "sender": sender,
     "subject": subject, "decision": decision, "outcome": "unclassified", "path": path,
     "latency": 0, "revision": 0
   ]
+}
+
+@Test func `imports a single-document store once and sets aside an unreadable one`() async throws {
+  let identity = MessageIdentity(accountID: "account", contentHash: "digest")
+  var legacy = AppState()
+  legacy.settings.paused = true
+  legacy.rules = [.init(scope: .address, value: "friend@example.org", disposition: .allow)]
+  legacy.claimedActions = [identity.key: UUID()]
+  legacy.records = [
+    DecisionRecord(
+      identity: identity,
+      sender: "person@example.com",
+      subject: "Weekly news",
+      verdict: .init(label: .review, confidence: 60, reason: "uncertain"),
+      decision: .init(label: .review, action: .orangeFlag, reason: .model("uncertain")),
+      outcome: .applied,
+      path: .model
+    )
+  ]
+  var object = try #require(
+    JSONSerialization.jsonObject(with: JSONEncoder().encode(legacy)) as? [String: Any]
+  )
+  var records = try #require(object["records"] as? [[String: Any]])
+  records[0]["outcome"] = "deferred"
+  object["records"] = records
+  object.removeValue(forKey: "learning"); object.removeValue(forKey: "costByMonth")
+  let store = try legacyStore(JSONSerialization.data(withJSONObject: object))
+  let imported = try await StateRepository.load(store)
+  #expect(imported.settings.paused)
+  #expect(imported.rules == legacy.rules)
+  #expect(imported.claimedActions == legacy.claimedActions)
+  #expect(imported.records.map(\.outcome) == [.requested])
+  #expect(try await store.read("application-v1", default: Data()).isEmpty)
+  #expect(try await StateRecovery.entries(store).isEmpty)
+  var query = ActivityQuery(); query.text = "weekly"
+  #expect(try await StateRepository.activity(store, matching: query, limit: 10).count == 1)
+  let unreadable = try legacyStore(Data("not json".utf8))
+  #expect(try await StateRepository.load(unreadable).rules.isEmpty)
+  #expect(try await StateRecovery.entries(unreadable).map(\.source) == ["application-v1"])
+  #expect(
+    try await StateRecovery.preservedData(unreadable)["application-v1"] == Data("not json".utf8)
+  )
+  try await StateRecovery.reset(unreadable)
+  #expect(try await StateRecovery.entries(unreadable).isEmpty)
+}
+
+/// Writes `snapshot` into an unversioned single-document store.
+private func legacyStore(_ snapshot: Data) throws -> Store {
+  let store = try testStore()
+  let container = try ModelContainer(
+    for: Unversioned.StoredValue.self,
+    configurations: ModelConfiguration(url: store.url, cloudKitDatabase: .none)
+  )
+  let context = ModelContext(container)
+  context.insert(Unversioned.StoredValue(key: "application-v1", payload: snapshot))
+  try context.save()
+  return store
+}
+
+private enum Unversioned {
+  @Model final class StoredValue {
+    @Attribute(.unique) var key: String
+    var payload: Data
+    init(key: String, payload: Data) { self.key = key; self.payload = payload }
+  }
 }

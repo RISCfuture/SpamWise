@@ -5,6 +5,7 @@ import SpamWiseCore
 final class MessageActionHandler: NSObject, MEMessageActionHandler {
   private static let maximumClassificationTimeSec: TimeInterval = 8
   private static let completionWatchdog = Duration.seconds(9)
+  private static let store = Result { try Store(url: Store.sharedURL()) }
   var requiredHeaders: [String] {
     [
       "From", "Message-ID", "Authentication-Results", "Reply-To", "Return-Path", "List-Unsubscribe",
@@ -20,7 +21,7 @@ final class MessageActionHandler: NSObject, MEMessageActionHandler {
     let raw = message.rawData
     let work = Task {
       do {
-        let store = try Store(url: Store.sharedURL())
+        let store = try Self.store.get()
         if let raw {
           _ = try await MailExtensionPreview.process(
             raw: raw,
@@ -28,7 +29,9 @@ final class MessageActionHandler: NSObject, MEMessageActionHandler {
             classifier: ConfiguredClassifier(store: store),
             timeout: Self.maximumClassificationTimeSec
           )
-        } else if MailExtensionPreview.allows(try await StateRepository.load(store).settings) {
+        } else if MailExtensionPreview.allows(
+          try await StateRepository.load(store, StateSlices()).settings
+        ) {
           completion.finish(.invokeAgainWithBody); return
         }
       } catch { /* Fail open if App Group/Keychain/persistence is unavailable. */  }

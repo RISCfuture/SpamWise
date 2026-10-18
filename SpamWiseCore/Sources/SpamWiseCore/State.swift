@@ -1,18 +1,15 @@
 public import Foundation
 
 /// How SpamWise receives incoming mail.
-public enum IncomingRoute: String, Codable, Sendable, CaseIterable {
+public enum IncomingRoute: String, Codable, Sendable, CaseIterable, FallbackDecodable {
   /// Previews incoming Apple Mail through the MailKit extension, which has no account identity.
   case mailKit
   /// Checks each included Apple Mail account's Inbox through Automation.
   case mailRule
   /// Checks an explicitly configured IMAP account.
   case imap
-
-  /// Decodes values this version does not recognize as the default Automation route.
-  public init(from decoder: any Decoder) throws {
-    self = Self(rawValue: try decoder.singleValueContainer().decode(String.self)) ?? .mailRule
-  }
+  /// An unrecognized route uses the default Automation route.
+  public static var fallback: Self { .mailRule }
 }
 /// Persisted filtering preferences with dry run enabled by default.
 public struct Settings: Codable, Sendable, Equatable {
@@ -36,20 +33,10 @@ public struct Settings: Codable, Sendable, Equatable {
   public var route: IncomingRoute = .mailRule
   /// Accounts whose Inbox and Junk mailboxes resolved uniquely in a read-only check.
   public var validatedAccounts: Set<String> = []
-  /// Optional advanced preferences; absent in Phase 1 stores.
-  public var advanced: AdvancedSettings?
-  /// Mail.app workflow preferences, with defaults for existing stores.
-  public var mailPreferences: MailPreferences?
-  /// Effective Mail.app workflow preferences.
-  public var mailOptions: MailPreferences {
-    get { mailPreferences ?? MailPreferences() }
-    set { mailPreferences = newValue }
-  }
-  /// Backward-compatible defaults for optional capabilities.
-  public var advancedOptions: AdvancedSettings {
-    get { advanced ?? AdvancedSettings() }
-    set { advanced = newValue }
-  }
+  /// Optional capabilities and the selected model provider.
+  public var advancedOptions = AdvancedSettings()
+  /// Mail.app workflow preferences.
+  public var mailOptions = MailPreferences()
   /// The effective route: IMAP for the IMAP transport, otherwise the chosen Apple Mail route.
   public var incomingRoute: IncomingRoute {
     if advancedOptions.transport == .imap { return .imap }
@@ -57,6 +44,29 @@ public struct Settings: Codable, Sendable, Equatable {
   }
   /// Creates a Settings with the supplied configuration.
   public init() {}
+  /// Decodes each field independently, using its default when absent or unreadable.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    let defaults = Settings()
+    strength = values.lenient(.strength, default: defaults.strength)
+    review = values.lenient(.review, default: defaults.review)
+    dryRun = values.lenient(.dryRun, default: defaults.dryRun)
+    paused = values.lenient(.paused, default: defaults.paused)
+    policy = values.lenient(.policy, default: defaults.policy)
+    correctionLimit = values.lenient(.correctionLimit, default: defaults.correctionLimit)
+    bodyTokenBudget = values.lenient(.bodyTokenBudget, default: defaults.bodyTokenBudget)
+    onboardingComplete = values.lenient(.onboardingComplete, default: defaults.onboardingComplete)
+    route = values.lenient(.route, default: defaults.route)
+    validatedAccounts = values.lenient(.validatedAccounts, default: defaults.validatedAccounts)
+    advancedOptions = values.lenient(.advancedOptions, default: defaults.advancedOptions)
+    mailOptions = values.lenient(.mailOptions, default: defaults.mailOptions)
+  }
+  private enum CodingKeys: String, CodingKey {
+    case strength, review, dryRun, paused, policy, correctionLimit, bodyTokenBudget
+    case onboardingComplete, route, validatedAccounts
+    case advancedOptions = "advanced"
+    case mailOptions = "mailPreferences"
+  }
 }
 /// What produced a decision record.
 public enum DecisionPath: String, Codable, Sendable, CaseIterable {
@@ -115,8 +125,8 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   /// The user's explicit replacement label, if corrected.
   public var correctedLabel: MailLabel?
   /// Whether a later explicit undo restored this correction's rules and learning only.
-  public var correctionUndone: Bool?
-  /// Separately recorded read-status follow-up after a confirmed Junk move.
+  public var correctionUndone = false
+  /// Separately recorded read-status follow-up after a confirmed Junk move; nil when not attempted.
   public var readStatusOutcome: ActionOutcome?
   /// Failure of optional mark-as-read, independent of the already completed move.
   public var readStatusError: String?
@@ -141,6 +151,36 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
     self.decision = decision; self.outcome = outcome; self.path = path; self.latency = latency
     self.revision = revision
   }
+  /// Requires identity, decision and outcome; every other field falls back to its default.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    self.init(
+      identity: try values.decode(MessageIdentity.self, forKey: .identity),
+      decision: try values.decode(Decision.self, forKey: .decision),
+      outcome: try values.decode(ActionOutcome.self, forKey: .outcome)
+    )
+    id = try values.decode(UUID.self, forKey: .id)
+    date = values.lenient(.date, default: date)
+    sender = values.lenient(.sender, default: sender)
+    subject = values.lenient(.subject, default: subject)
+    evidence = values.lenient(.evidence, default: nil)
+    verdict = values.lenient(.verdict, default: nil)
+    threats = values.lenient(.threats, default: nil)
+    actionError = values.lenient(.actionError, default: nil)
+    path = values.lenient(.path, default: path)
+    latency = values.lenient(.latency, default: latency)
+    revision = values.lenient(.revision, default: revision)
+    correctedLabel = values.lenient(.correctedLabel, default: nil)
+    correctionUndone = values.lenient(.correctionUndone, default: false)
+    readStatusOutcome = values.lenient(.readStatusOutcome, default: nil)
+    readStatusError = values.lenient(.readStatusError, default: nil)
+    clearLegacyPlaceholders()
+  }
+  private enum CodingKeys: String, CodingKey {
+    case id, date, identity, sender, subject, evidence, verdict, threats, decision, outcome
+    case actionError, path, latency, revision, correctedLabel, correctionUndone
+    case readStatusOutcome, readStatusError
+  }
 }
 extension DecisionRecord {
   private static let legacyUnknownSender = "Unknown"
@@ -153,29 +193,15 @@ extension DecisionRecord {
   }
 
   /// Clears English placeholder text that earlier versions stored for a missing sender or subject.
-  mutating func clearLegacyPlaceholders() {
+  private mutating func clearLegacyPlaceholders() {
     if subject == Self.legacyMissingSubject { subject = nil }
     guard path == .error else { return }
     if sender == Self.legacyUnknownSender { sender = nil }
     if subject == Self.legacyUnreadableSubject { subject = nil }
   }
 }
-extension DecisionReason {
-  /// The reason recorded when processing fails with `error`.
-  init(failure error: any Error) {
-    self =
-      switch error {
-        case is any BudgetFailure: .spendingLimitReached
-        case let error as ClassificationError: .classificationFailed(error)
-        case is CancellationError: .classificationFailed(.cancelled)
-        case is any MessageParsingError: .messageUnreadable
-        case is any StorageFailure, is DecodingError, is EncodingError: .storageUnavailable
-        default: .processingFailed
-      }
-  }
-}
 /// A bounded, revision-specific classification retry.
-public struct RetryJob: Codable, Sendable, Identifiable {
+public struct RetryJob: Codable, Sendable, Equatable, Identifiable {
   /// Stable identity used for persistence and presentation.
   public var id: String { identity.key }
   /// Account and content identity used to resolve this message safely.
@@ -194,7 +220,7 @@ public struct RetryJob: Codable, Sendable, Identifiable {
   public var dryRun: Bool
 }
 /// Account-scoped, deduplicated correspondence and receipt history.
-public struct HistoryIndex: Codable, Sendable {
+public struct HistoryIndex: Codable, Sendable, Equatable {
   /// The completeness of the available history.
   public var availability: HistoryAvailability = .unavailable
   /// Distinct received-message counts by registrable domain, or by exact address for shared
@@ -206,12 +232,26 @@ public struct HistoryIndex: Codable, Sendable {
   public var senderReceipts: [String: Int]?
   /// User-confirmed receipts that trusted servers authenticated, by exact sender address.
   public var authenticatedSenderReceipts: [String: Int]?
-  /// Account-scoped identities already included in this history snapshot.
-  public var importedIDs: Set<String> = []
+  /// Account-scoped identities already counted, bounded to the most recent imports.
+  public var importedIDs = RollingIdentitySet(capacity: RetentionLimits.historyImportIdentities)
   /// Timestamp of the latest stored update.
   public var updatedAt: Date?
   /// Creates a HistoryIndex with the supplied configuration.
   public init() {}
+  /// Decodes each field independently, using its default when absent or unreadable.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    availability = values.lenient(.availability, default: .unavailable)
+    received = values.lenient(.received, default: [:])
+    replied = values.lenient(.replied, default: [:])
+    senderReceipts = values.lenient(.senderReceipts, default: nil)
+    authenticatedSenderReceipts = values.lenient(.authenticatedSenderReceipts, default: nil)
+    importedIDs = RollingIdentitySet(
+      capacity: RetentionLimits.historyImportIdentities,
+      values.lenient(.importedIDs, default: [])
+    )
+    updatedAt = values.lenient(.updatedAt, default: nil)
+  }
   /// Human-readable history with unknown and partial states preserved.
   public func summary(address: String, domain: String?) -> SenderHistory {
     .init(
@@ -222,30 +262,31 @@ public struct HistoryIndex: Codable, Sendable {
       authenticatedReceiptCount: authenticatedSenderReceipts?[address]
     )
   }
+  private enum CodingKeys: String, CodingKey {
+    case availability, received, replied, senderReceipts, authenticatedSenderReceipts
+    case importedIDs, updatedAt
+  }
 }
 /// Durable application state shared by the app and Mail extension.
-public struct AppState: Codable, Sendable {
-  private static let maximumActivityRecords = 5000
-  /// Version of the persisted application state.
-  public var schemaVersion = 1
+public struct AppState: Codable, Sendable, Equatable {
   /// Policy generation used to invalidate stale work after corrections.
   public var revision = 0
   /// Current filtering and integration preferences.
   public var settings = Settings()
   /// Persisted address and explicitly scoped domain rules.
   public var rules: [SenderRule] = []
-  /// Optional user-authored header and body rules.
-  public var contentRules: [ContentRule]?
+  /// User-authored header and body rules.
+  public var contentRules: [ContentRule] = []
   /// Counts of winning content rules, independent of Activity retention.
-  public var contentRuleHits: [UUID: Int]?
+  public var contentRuleHits: [UUID: Int] = [:]
   /// Per-rule counts of messages where the rule was invalid or timed out, since its last save.
-  public var contentRuleSkips: [UUID: Int]?
+  public var contentRuleSkips: [UUID: Int] = [:]
   /// At-most-once corrections for observed placements in dedicated training folders.
-  public var trainingClaims: [String: UUID]?
+  public var trainingClaims: [String: UUID] = [:]
   /// Identities observed during an unfinished training-folder sweep.
-  public var trainingObservations: [String: Set<String>]?
+  public var trainingObservations: [String: Set<String>] = [:]
   /// Bounded settings, rule and correction revision trail.
-  public var auditEvents: [AuditEvent]?
+  public var auditEvents: [AuditEvent] = []
   /// The latest unchanged correction's bounded undo snapshot.
   public var correctionUndo: CorrectionUndo?
   /// Recent explicit user corrections used as quoted examples.
@@ -263,17 +304,51 @@ public struct AppState: Codable, Sendable {
   /// Time the cached Contacts snapshot was refreshed.
   public var contactsUpdatedAt: Date?
   /// Own addresses discovered through Mail.app, used only to exclude implicit trust.
-  public var ownAddresses: Set<String>?
+  public var ownAddresses: Set<String> = []
   /// Estimated charges retained independently of the bounded activity log.
-  public var costByMonth: [String: Double]?
+  public var costByMonth: [String: Double] = [:]
   /// Bounded derived learning data from explicit corrections and eligible predictions.
-  public var learning: LearningState?
+  public var learning = LearningState()
   /// Explicit labels retained independently of the Activity display window.
-  public var reviewedLabels: [ReviewedLabel]?
+  public var reviewedLabels: [ReviewedLabel] = []
   /// Last calendar week whose local Review digest was presented.
   public var lastDigestWeek: String?
+  /// Whether this transaction invalidated retries and undo that it did not load.
+  var invalidatedPendingWork = false
   /// Creates an AppState with the supplied configuration.
   public init() {}
+  /// Decodes each field independently, using its default when absent or unreadable.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    revision = values.lenient(.revision, default: 0)
+    settings = values.lenient(.settings, default: Settings())
+    rules = values.lenient(.rules, default: [])
+    contentRules = values.lenient(.contentRules, default: [])
+    contentRuleHits = values.lenient(.contentRuleHits, default: [:])
+    contentRuleSkips = values.lenient(.contentRuleSkips, default: [:])
+    trainingClaims = values.lenient(.trainingClaims, default: [:])
+    trainingObservations = values.lenient(.trainingObservations, default: [:])
+    auditEvents = values.lenient(.auditEvents, default: [])
+    correctionUndo = values.lenient(.correctionUndo, default: nil)
+    corrections = values.lenient(.corrections, default: [])
+    records = values.lenient(.records, default: [])
+    retries = values.lenient(.retries, default: [])
+    histories = values.lenient(.histories, default: [:])
+    claimedActions = values.lenient(.claimedActions, default: [:])
+    contactAddresses = values.lenient(.contactAddresses, default: nil)
+    contactsUpdatedAt = values.lenient(.contactsUpdatedAt, default: nil)
+    ownAddresses = values.lenient(.ownAddresses, default: [])
+    costByMonth = values.lenient(.costByMonth, default: Self.costs(of: records))
+    learning = values.lenient(.learning, default: LearningState())
+    reviewedLabels = values.lenient(.reviewedLabels, default: [])
+    lastDigestWeek = values.lenient(.lastDigestWeek, default: nil)
+  }
+  private enum CodingKeys: String, CodingKey {
+    case revision, settings, rules, contentRules, contentRuleHits, contentRuleSkips, trainingClaims
+    case trainingObservations, auditEvents, correctionUndo, corrections, records, retries
+    case histories, claimedActions, contactAddresses, contactsUpdatedAt, ownAddresses
+    case costByMonth, learning, reviewedLabels, lastDigestWeek
+  }
 }
 extension AppState {
   /// Calendar month used for the usage ledger and footer.
@@ -281,75 +356,37 @@ extension AppState {
     let components = Calendar.current.dateComponents([.year, .month], from: date)
     return "\(components.year ?? 0)-\(components.month ?? 0)"
   }
-  /// Inserts or updates activity without charging twice for outcome updates.
-  public mutating func record(_ record: DecisionRecord) {
-    if costByMonth == nil {
-      costByMonth = [:]
-      for previous in records {
-        costByMonth?[Self.monthKey(previous.date), default: 0] +=
-          previous.verdict?.usage.estimatedCost ?? 0
-      }
+  private static func costs(of records: [DecisionRecord]) -> [String: Double] {
+    records.reduce(into: [:]) { costs, record in
+      costs[monthKey(record.date), default: 0] += record.verdict?.usage.estimatedCost ?? 0
     }
+  }
+  /**
+   Inserts or updates activity without charging twice for outcome updates.
+
+   A transaction that may update an existing record must load it, so that the update is not
+   charged as a new decision.
+   */
+  public mutating func record(_ record: DecisionRecord) {
     if let index = records.firstIndex(where: { $0.id == record.id }) {
       records[index] = record
     } else {
       records.append(record)
-      costByMonth?[Self.monthKey(record.date), default: 0] +=
+      costByMonth[Self.monthKey(record.date), default: 0] +=
         record.verdict?.usage.estimatedCost ?? 0
     }
-    records = Array(records.suffix(Self.maximumActivityRecords))
   }
-  mutating func clearLegacyPlaceholders() {
-    records.indices.forEach { records[$0].clearLegacyPlaceholders() }
-  }
-}
-/// Typed transactions for the shared application snapshot.
-public enum StateRepository {
-  private static let correctionLimitRange = 0...20
-  private static let bodyTokenBudgetRange = 100...4000
-  /// Stable storage or deduplication key.
-  public static let key = "application-v1"
-  /// Reads the current shared application snapshot.
-  public static func load(_ store: Store) async throws -> AppState {
-    var state = try await store.read(key, default: AppState())
-    state.clearLegacyPlaceholders()
-    return state
-  }
-  /// Applies a field-level edit to current preferences and invalidates stale classification work.
-  public static func editSettings(
-    _ store: Store,
-    _ edit: @Sendable (inout Settings) throws -> Void
-  ) async throws {
-    try await update(store) { state in
-      try edit(&state.settings)
-      state.correctionUndo = nil
-      state.settings.correctionLimit = min(
-        correctionLimitRange.upperBound,
-        max(correctionLimitRange.lowerBound, state.settings.correctionLimit)
-      )
-      state.settings.bodyTokenBudget = min(
-        bodyTokenBudgetRange.upperBound,
-        max(bodyTokenBudgetRange.lowerBound, state.settings.bodyTokenBudget)
-      )
-      if !state.settings.advancedOptions.retainReviewedContent {
-        state.reviewedLabels = state.reviewedLabels?.map { label in
-          var label = label; label.message = nil; return label
-        }
-      }
-      if state.settings.validatedAccounts.isEmpty { state.settings.dryRun = true }
-      state.revision += 1
-      state.retries.removeAll()
-      state.audit(.settings, detail: String(localized: "Filtering or integration settings changed"))
-    }
-  }
-  /// Atomically reads, modifies, and commits a shared value.
-  public static func update<R: Sendable>(
-    _ store: Store,
-    _ body: @Sendable (inout AppState) throws -> R
-  ) async throws -> R {
-    try await store.update(key, default: AppState()) { state in
-      state.clearLegacyPlaceholders()
-      return try body(&state)
-    }
+  /**
+   Supersedes all queued classification work after a policy change.
+
+   Bumps the revision so in-flight decisions cannot act, discards every retry and the
+   correction undo snapshot, and records `detail` in the audit trail.
+   */
+  public mutating func invalidatePendingWork(_ kind: AuditEvent.Kind, detail: String) {
+    revision += 1
+    retries = []
+    correctionUndo = nil
+    invalidatedPendingWork = true
+    audit(kind, detail: detail)
   }
 }

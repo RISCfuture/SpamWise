@@ -29,7 +29,7 @@ struct GeneralSettingsView: View {
         Toggle(
           "Mark as read after a confirmed Junk move",
           isOn: Binding(
-            get: { model.state.settings.mailOptions.markJunkRead == true },
+            get: { model.state.settings.mailOptions.markJunkRead },
             set: { enabled in model.editSettings { $0.mailOptions.markJunkRead = enabled } }
           )
         )

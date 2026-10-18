@@ -8,7 +8,8 @@ extension Pipeline {
     trainingPlanID: String? = nil
   ) async throws -> DecisionRecord {
     let message = try MIMEParser().parse(envelope.raw)
-    let seed = try await StateRepository.update(store) { state -> DecisionRecord in
+    let seed = try await StateRepository.update(store, loading: StateSlices()) {
+      state -> DecisionRecord in
       let record = DecisionRecord(
         identity: envelope.identity,
         sender: message.fromAddress,

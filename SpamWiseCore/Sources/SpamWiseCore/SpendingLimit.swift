@@ -114,6 +114,10 @@ public enum SpendingLimit {
     try await store.read(key, default: MonthlySpending(month: .init(containing: date)))
       .current(at: date)
   }
+  /// Change counter of the ledger, read without the transaction lock; nil before its first write.
+  public static func changeToken(_ store: Store) async throws -> Int? {
+    try await store.changeTokens()[key]
+  }
   /// Sets or removes the monthly limit without changing what has already been spent.
   public static func setLimit(usd: Double?, store: Store, at date: Date = .now) async throws {
     let limit = try usd.map(MonthlySpending.microUSD)

@@ -1,11 +1,6 @@
 public import Foundation
 
 extension Pipeline {
-  private static let maximumCorrections = 200
-  private static let maximumReviewedCharacters = 16_000
-  private static let maximumReviewedURLs = 40
-  private static let maximumURLCharacters = 2048
-  private static let maximumReviewedLabels = 500
   private static func correctionAction(_ label: MailLabel, review: ReviewTreatment) -> MailAction {
     switch label {
       case .inbox: .moveToInbox
@@ -13,7 +8,7 @@ extension Pipeline {
       case .review: review == .orangeFlag ? .orangeFlag : .orangeBackground
     }
   }
-  private static func collectsLearning(_ options: AdvancedSettings) -> Bool {
+  static func collectsLearning(_ options: AdvancedSettings) -> Bool {
     options.fingerprints || options.bayes || options.learnedWeights
   }
   /// Atomically saves a correction and then attempts the separately recorded mail action.
@@ -25,7 +20,13 @@ extension Pipeline {
     trainingPlanID: String? = nil
   ) async throws -> DecisionRecord {
     guard label != .review || scope == .address else { throw ClassificationError.invalidOutput }
-    let record = try await StateRepository.update(store) { state -> DecisionRecord in
+    let slices = StateSlices(
+      CorrectionUndo.slices.parts.union(.training),
+      records: .only([recordID]),
+      reviewedLabels: CorrectionUndo.slices.reviewedLabels
+    )
+    let record = try await StateRepository.update(store, loading: slices) {
+      state -> DecisionRecord in
       guard let index = state.records.firstIndex(where: { $0.id == recordID }) else {
         throw IntegrationError.unavailable
       }
@@ -61,12 +62,14 @@ extension Pipeline {
         promptScope: previous.identity.accountID.map(CorrectionExample.PromptScope.account)
       )
       example.sampleID =
-        state.reviewedLabels?.first { $0.id == previous.identity.contentHash }?
+        state.reviewedLabels.first { $0.id == previous.identity.contentHash }?
         .sampleID ?? previous.identity.contentHash
       state.corrections.append(example)
-      state.corrections = Array(state.corrections.suffix(Self.maximumCorrections))
-      state.revision += 1
-      state.retries.removeAll()  // Any old prompt/evidence generation is stale after a correction.
+      state.corrections = Array(state.corrections.suffix(RetentionLimits.corrections))
+      state.invalidatePendingWork(
+        .correction,
+        detail: String(localized: "\(scope.rawValue): \(address) → \(label.rawValue)")
+      )
       state.records[index].correctedLabel = label
       var correction = DecisionRecord(
         identity: previous.identity,
@@ -90,14 +93,7 @@ extension Pipeline {
         revision: state.revision
       )
       state.record(correction)
-      state.audit(
-        .correction,
-        detail: String(localized: "\(scope.rawValue): \(address) → \(label.rawValue)")
-      )
-      if let trainingKey {
-        if state.trainingClaims == nil { state.trainingClaims = [:] }
-        state.trainingClaims?[trainingKey] = correction.id
-      }
+      if let trainingKey { state.trainingClaims[trainingKey] = correction.id }
       return correction
     }
     try await recordReviewedLabel(record, label: label, adapter: adapter)
@@ -108,55 +104,58 @@ extension Pipeline {
     label: MailLabel,
     adapter: (any MailClientAdapter)?
   ) async throws {
-    let options = try await StateRepository.load(store).settings.advancedOptions
+    let options = try await StateRepository.load(store, StateSlices()).settings.advancedOptions
     var message: ParsedMessage?
     if options.retainReviewedContent || Self.collectsLearning(options),
       let envelope = try? await adapter?.lookup(record.identity)
     {
-      message = try? MIMEParser().parse(envelope.raw)
-      let boundedText = String(message?.text.prefix(Self.maximumReviewedCharacters) ?? "")
-      message?.text = boundedText
-      message?.headers = [:]
-      let boundedURLs = Array(message?.urls.prefix(Self.maximumReviewedURLs) ?? [])
-        .map { String($0.prefix(Self.maximumURLCharacters)) }
-      message?.urls = boundedURLs
+      message = try? MIMEParser().parse(envelope.raw).boundedForRetention()
     }
     let reviewedMessage = message
-    try await StateRepository.update(store) { state in
-      guard state.revision == record.revision else { return }
-      var labels = state.reviewedLabels ?? []
-      let previousSampleID =
-        labels.first { $0.id == record.identity.contentHash }?.sampleID
-        ?? record.identity.contentHash
-      let sampleID = reviewedMessage.map(LearningSample.identity) ?? previousSampleID
-      for index in state.corrections.indices
-      where state.corrections[index].sampleID == previousSampleID {
-        state.corrections[index].sampleID = sampleID
-        if let reviewedMessage { state.corrections[index].quote(reviewedMessage.text) }
+    try await StateRepository.transaction(store) { transaction in
+      var parts: StateSlices.Parts = [.corrections, .undo]
+      if Self.collectsLearning(transaction.state.settings.advancedOptions) {
+        parts.insert(.learning)
       }
-      labels.removeAll { $0.id == record.identity.contentHash }
-      labels.append(
-        ReviewedLabel(
-          identity: record.identity,
-          label: label,
-          message: state.settings.advancedOptions.retainReviewedContent ? reviewedMessage : nil,
-          sampleID: sampleID
-        )
-      )
-      state.reviewedLabels = Array(labels.suffix(Self.maximumReviewedLabels))
-      if Self.collectsLearning(state.settings.advancedOptions), let reviewedMessage {
-        var learning = state.learning ?? LearningState()
-        learning.recordCorrection(
-          message: reviewedMessage,
-          evidence: record.evidence ?? EvidenceBundle(message: reviewedMessage),
-          label: label
-        )
-        state.learning = learning
-      }
-      if state.correctionUndo?.recordID == record.id {
-        let digest = try CorrectionUndo.digest(state)
-        state.correctionUndo?.expectedDigest = digest
-      }
+      try transaction.load(StateSlices(parts, reviewedLabels: .all))
+      guard transaction.state.revision == record.revision else { return }
+      transaction.state.recordLabel(label, for: record, message: reviewedMessage)
+      try transaction.commit()
     }
+  }
+}
+
+extension AppState {
+  fileprivate mutating func recordLabel(
+    _ label: MailLabel,
+    for record: DecisionRecord,
+    message: ParsedMessage?
+  ) {
+    let previousSampleID =
+      reviewedLabels.first { $0.id == record.identity.contentHash }?.sampleID
+      ?? record.identity.contentHash
+    let sampleID = message.map(LearningSample.identity) ?? previousSampleID
+    for index in corrections.indices where corrections[index].sampleID == previousSampleID {
+      corrections[index].sampleID = sampleID
+      if let message { corrections[index].quote(message.text) }
+    }
+    reviewedLabels.removeAll { $0.id == record.identity.contentHash }
+    reviewedLabels.append(
+      ReviewedLabel(
+        identity: record.identity,
+        label: label,
+        message: settings.advancedOptions.retainReviewedContent ? message : nil,
+        sampleID: sampleID
+      )
+    )
+    reviewedLabels = Array(reviewedLabels.suffix(RetentionLimits.reviewedLabels))
+    if Pipeline.collectsLearning(settings.advancedOptions), let message {
+      learning.recordCorrection(
+        message: message,
+        evidence: record.evidence ?? EvidenceBundle(message: message),
+        label: label
+      )
+    }
+    if correctionUndo?.recordID == record.id { correctionUndo?.confirmed = true }
   }
 }

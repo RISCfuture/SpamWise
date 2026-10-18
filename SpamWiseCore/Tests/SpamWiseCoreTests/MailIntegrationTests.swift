@@ -237,7 +237,7 @@ final class Counter: Sendable {
   try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
     $0.complete(count: 20, total: 21)
   }
-  let restarted = try await Store(url: store.url)
+  let restarted = try Store(url: store.url)
   #expect(try await MailHealthRepository.load(restarted)["account"]?.nextOffset == 20)
   try await MailHealthRepository.update(store, accountID: "other", name: "Other") {
     $0.failure = "unavailable"
@@ -280,7 +280,7 @@ final class Counter: Sendable {
   try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
     $0.complete(count: page.visitedCount, total: 3, unavailable: page.unavailableCount)
   }
-  let resumed = try await MailHealthRepository.load(Store(url: store.url))["account"]
+  let resumed = try await MailHealthRepository.load(try Store(url: store.url))["account"]
   #expect(resumed?.nextOffset == 2)
   #expect(resumed?.unavailableCount == 1)
   var completed = try #require(resumed)
@@ -370,8 +370,8 @@ final class Counter: Sendable {
     store: store
   )
   let incomplete = try await StateRepository.load(store)
-  #expect(incomplete.trainingClaims?.count == 1)
-  #expect(incomplete.trainingObservations?[plan.id]?.isEmpty == true)
+  #expect(incomplete.trainingClaims.count == 1)
+  #expect(incomplete.trainingObservations[plan.id]?.isEmpty == true)
   try await TrainingFolders.observe(
     [selected.identity],
     planID: plan.id,
@@ -379,9 +379,9 @@ final class Counter: Sendable {
     canReleaseClaims: false,
     store: store
   )
-  #expect(try await StateRepository.load(store).trainingObservations?[plan.id]?.isEmpty == true)
+  #expect(try await StateRepository.load(store).trainingObservations[plan.id]?.isEmpty == true)
   try await TrainingFolders.observe([], planID: plan.id, sweepComplete: true, store: store)
-  #expect(try await StateRepository.load(store).trainingClaims?.isEmpty == true)
+  #expect(try await StateRepository.load(store).trainingClaims.isEmpty == true)
   let second = try await pipeline.correct(
     envelope: selected,
     label: .inbox,
@@ -395,6 +395,6 @@ final class Counter: Sendable {
     }
   }
   try await TrainingFolders.observe([], planID: plan.id, sweepComplete: true, store: store)
-  #expect(try await StateRepository.load(store).trainingClaims?.count == 1)
+  #expect(try await StateRepository.load(store).trainingClaims.count == 1)
   #expect(await adapter.actions.isEmpty)
 }

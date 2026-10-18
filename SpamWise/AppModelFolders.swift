@@ -17,7 +17,7 @@ extension AppModel {
         guard plan.folder.path.last == TrainingFolders.name(for: plan.purpose) else {
           throw IntegrationError.unavailable
         }
-        let current = state.settings.mailOptions.folderPlans?.first { $0.id == plan.id }
+        let current = state.settings.mailOptions.folderPlans.first { $0.id == plan.id }
         if current?.trainingBaselineValidated != true || current?.purpose != plan.purpose {
           let page = try await adapter.folderPage(plan.folder, offset: 0, limit: 1)
           guard page.total == 0 else { throw IntegrationError.unavailable }
@@ -26,11 +26,11 @@ extension AppModel {
       }
       let saved = validated
       try await StateRepository.editSettings(store) { settings in
-        var plans = settings.mailOptions.folderPlans ?? []
-        plans.removeAll { $0.id == saved.id }
-        guard plans.count < 20 else { throw IntegrationError.unavailable }
-        plans.append(saved)
-        settings.mailOptions.folderPlans = plans
+        settings.mailOptions.folderPlans.removeAll { $0.id == saved.id }
+        guard settings.mailOptions.folderPlans.count < 20 else {
+          throw IntegrationError.unavailable
+        }
+        settings.mailOptions.folderPlans.append(saved)
       }
       status = String(
         localized: "Folder plan saved. Existing dry-run and account validation still apply."
@@ -53,14 +53,14 @@ extension AppModel {
   }
   func scanConfiguredFolders(with pipeline: Pipeline, dryRun: Bool, limit: Int) async throws {
     guard let store else { throw IntegrationError.unavailable }
-    let plans = Array((state.settings.mailOptions.folderPlans ?? []).filter(\.enabled).prefix(20))
+    let plans = Array(state.settings.mailOptions.folderPlans.filter(\.enabled).prefix(20))
     for plan in plans
     where state.settings.mailOptions.accountIDs?.contains(plan.folder.accountID) ?? true {
       try Task.checkCancellation()
       guard !state.settings.paused else { return }
       let cursorKey = "folder:" + plan.id
       do {
-        let health = try await MailHealthRepository.load(store)[cursorKey]
+        let health = try await MailHealthRepository.load(store, key: cursorKey)
         let offset = health?.nextOffset ?? 0
         let page = try await adapter.folderPage(
           plan.folder,
@@ -118,9 +118,9 @@ extension AppModel {
     guard let store, plan.trainingBaselineValidated else { throw IntegrationError.unavailable }
     for envelope in page.messages {
       try Task.checkCancellation()
-      let current = try await StateRepository.load(store)
+      let current = try await StateRepository.load(store, StateSlices([.training]))
       let key = TrainingFolders.key(planID: plan.id, identity: envelope.identity)
-      guard current.trainingClaims?[key] == nil else { continue }
+      guard current.trainingClaims[key] == nil else { continue }
       _ = try await pipeline.correct(
         envelope: envelope,
         label: plan.purpose == .trainGood ? .inbox : .junk,

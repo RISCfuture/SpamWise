@@ -34,9 +34,13 @@ import MailIntegration
   var showPreview = false
   var scanHealth: [String: MailScanHealth] = [:]
   var spending: MonthlySpending?
+  var spendingToken: Int?
   var spendingLimitError: String?
   var historicalPreview: [String: [UUID]] = [:]
   private var inboxCheckPending = false
+  var recoveryNeeded = false
+  var changeTokens: [StateSlice: Int] = [:]
+  var recordStamp = 0
   private var monitoring: Task<Void, Never>?
   var store: Store?
   var pipeline: Pipeline?
@@ -48,14 +52,9 @@ import MailIntegration
   var lastScan = Date.distantPast
   private var lastContactsRefresh = Date.distantPast
   private var settingsWork: Task<Void, Never>?
-  private var pendingSettings = 0
+  var pendingSettings = 0
   var today: [DecisionRecord] { state.records.filter { Calendar.current.isDateInToday($0.date) } }
-  var monthCost: Double {
-    state.costByMonth?[AppState.monthKey(.now)]
-      ?? state.records.filter {
-        Calendar.current.isDate($0.date, equalTo: .now, toGranularity: .month)
-      }.reduce(0) { $0 + ($1.verdict?.usage.estimatedCost ?? 0) }
-  }
+  var monthCost: Double { state.costByMonth[AppState.monthKey(.now), default: 0] }
   var spendingLimitReached: Bool {
     spending?.limitReached == true
       && [.claude, .openAI, .gemini].contains(state.settings.advancedOptions.backend)
@@ -141,32 +140,6 @@ import MailIntegration
 }
 
 extension AppModel {
-  func refresh() async {
-    defer { hasLoadedState = true }
-    guard let store else { return }
-    do {
-      var loaded = try await StateRepository.load(store)
-      if pendingSettings > 0 { loaded.settings = state.settings }
-      state = loaded
-      scanHealth = try await MailHealthRepository.load(store)
-      do {
-        spending = try await SpendingLimit.load(store)
-      } catch StoreError.lockUnavailable {
-        // Keeps the last reading while another process holds the store.
-      } catch {
-        spending = nil
-      }
-      if state.settings.advancedOptions.weeklyDigest, state.settings.onboardingComplete {
-        let digest = ReviewDigest(state: state)
-        if state.lastDigestWeek != digest.week, !digest.records.isEmpty {
-          showDigest = true
-          try await StateRepository.update(store) { $0.lastDigestWeek = digest.week }
-        }
-      }
-    } catch {
-      status = String(localized: "Shared storage unavailable; mail stays unchanged.")
-    }
-  }
   func startMonitoring() {
     guard monitoring == nil else { return }
     monitoring = Task { await monitor() }
@@ -190,7 +163,7 @@ extension AppModel {
         mailAutomation = await SystemAppleEventRunner.mailAutomationStatus()
       }
       if canMonitorMail {
-        if state.settings.mailOptions.notifications?.enabledSince != nil, let store {
+        if state.settings.mailOptions.notifications.enabledSince != nil, let store {
           do { try await notifications.deliver(store: store) } catch {
             status = String(
               localized: "Notification delivery failed. Mail decisions are unchanged."
@@ -310,7 +283,7 @@ extension AppModel {
     do {
       let addresses = try await ContactsLookup().addresses(requestAccess: requestAccess)
       if let store {
-        try await StateRepository.update(store) {
+        try await StateRepository.update(store, loading: StateSlices([.contacts])) {
           $0.contactAddresses = addresses; $0.contactsUpdatedAt = .now
         }
       }
@@ -328,21 +301,28 @@ extension AppModel {
 }
 
 extension AppModel {
+  private static func historyUpdate(_ histories: [String: HistoryIndex]) -> StateSlices {
+    StateSlices([.historyImports], histories: .only(Set(histories.keys)))
+  }
   func maintainHistory() async {
     guard let store else { return }
     do {
-      let current = try await StateRepository.load(store)
+      let current = try await StateRepository.load(
+        store,
+        StateSlices([.historyImports], histories: .all)
+      )
+      let eligible = try await StateRepository.historyEligibleInbox(store)
       let histories: [String: HistoryIndex]
       if state.settings.advancedOptions.transport == .imap {
         histories = try await configuredIMAPAdapter().importHistory()
       } else {
         histories = try await adapter.importHistory(
           previous: current.histories,
-          eligibleInbox: current.historyEligibleInbox,
+          eligibleInbox: eligible,
           incremental: true
         )
       }
-      try await StateRepository.update(store) { state in
+      try await StateRepository.update(store, loading: Self.historyUpdate(histories)) { state in
         for (account, history) in histories { state.histories[account] = history }
       }
     } catch {
@@ -353,21 +333,22 @@ extension AppModel {
   }
   func importHistory() {
     run { [self] in
+      guard let store else { throw IntegrationError.unavailable }
       let histories: [String: HistoryIndex]
       if state.settings.advancedOptions.transport == .imap {
         histories = try await configuredIMAPAdapter().importHistory()
       } else {
-        var current = state
-        if let store { current = try await StateRepository.load(store) }
+        let previous = try await StateRepository.load(
+          store,
+          StateSlices([.historyImports], histories: .all)
+        ).histories
         histories = try await adapter.importHistory(
-          previous: current.histories,
-          eligibleInbox: current.historyEligibleInbox
+          previous: previous,
+          eligibleInbox: try await StateRepository.historyEligibleInbox(store)
         )
       }
-      if let store {
-        try await StateRepository.update(store) { state in
-          for (account, imported) in histories { state.histories[account] = imported }
-        }
+      try await StateRepository.update(store, loading: Self.historyUpdate(histories)) { state in
+        for (account, imported) in histories { state.histories[account] = imported }
       }
       status = String(
         localized: "Imported bounded Inbox and Sent history; remaining history is unknown."

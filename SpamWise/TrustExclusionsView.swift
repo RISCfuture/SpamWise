@@ -7,8 +7,8 @@ struct TrustExclusionsView: View {
 
   var body: some View {
     DisclosureGroup("Own addresses and trust exclusions") {
-      if let own = model.state.ownAddresses, !own.isEmpty {
-        Text(own.sorted().joined(separator: "\n")).textSelection(.enabled)
+      if !model.state.ownAddresses.isEmpty {
+        Text(model.state.ownAddresses.sorted().joined(separator: "\n")).textSelection(.enabled)
       } else {
         Text("No account addresses discovered yet.")
       }

@@ -56,16 +56,14 @@ struct BackupSettingsView: View {
     }
   }
   private func prepareExport() {
-    do {
+    let key = recoveryKey, content = includeContent
+    model.run {
+      guard let store = model.store else { throw IntegrationError.unavailable }
       document = RulesDocument(
-        data: try StateBackup.export(
-          model.state,
-          recoveryKey: recoveryKey,
-          includeContent: includeContent
-        )
+        data: try await StateBackup.export(store: store, recoveryKey: key, includeContent: content)
       )
       exporting = true
-    } catch { model.status = AppModel.describe(error) }
+    }
   }
   private func restore() {
     guard let url = pendingURL else { return }

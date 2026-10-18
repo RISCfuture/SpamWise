@@ -38,9 +38,9 @@ import SpamWiseCore
     let authorization = await center.notificationSettings().authorizationStatus
     guard authorization == .authorized || authorization == .provisional else { return }
     guard let batch = try await NotificationPlanning.claim(store: store) else { return }
-    let state = try await StateRepository.load(store)
-    guard !state.settings.paused, !state.settings.dryRun,
-      let options = state.settings.mailOptions.notifications, options.enabledSince != nil,
+    let settings = try await StateRepository.load(store, StateSlices()).settings
+    let options = settings.mailOptions.notifications
+    guard !settings.paused, !settings.dryRun, options.enabledSince != nil,
       !options.isQuiet(at: .now)
     else { return }
     let content = UNMutableNotificationContent()

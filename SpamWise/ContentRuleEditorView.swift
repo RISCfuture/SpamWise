@@ -14,7 +14,7 @@ struct ContentRuleEditorView: View {
   @Environment(\.dismiss) private var dismiss
 
   private var rules: [ContentRule] {
-    (model.state.contentRules ?? []).sorted { $0.updatedAt > $1.updatedAt }
+    model.state.contentRules.sorted { $0.updatedAt > $1.updatedAt }
   }
   var body: some View {
     VStack(alignment: .leading) {
@@ -26,8 +26,8 @@ struct ContentRuleEditorView: View {
         TableColumn("Expression", value: \.pattern)
         TableColumn("Action") { Text($0.disposition.localizedTitle) }
         TableColumn("State") { Text($0.enabled ? "Enabled" : "Disabled") }
-        TableColumn("Matches") { Text((model.state.contentRuleHits?[$0.id] ?? 0).formatted()) }
-        TableColumn("Skipped") { Text((model.state.contentRuleSkips?[$0.id] ?? 0).formatted()) }
+        TableColumn("Matches") { Text(model.state.contentRuleHits[$0.id, default: 0].formatted()) }
+        TableColumn("Skipped") { Text(model.state.contentRuleSkips[$0.id, default: 0].formatted()) }
       }
       HStack {
         Button("Add rule") {
@@ -135,7 +135,7 @@ struct ContentRuleFormView: View {
       let envelope = try await model.adapter.selectedMessage()
       let message = try MIMEParser().parse(envelope.raw)
       var draft = rule; draft.updatedAt = .now
-      let candidates = (model.state.contentRules ?? []).filter { $0.id != draft.id } + [draft]
+      let candidates = model.state.contentRules.filter { $0.id != draft.id } + [draft]
       let evaluation = ContentRules.evaluate(candidates, message: message)
       let matches = evaluation.matching
       let senderRule = Gates.evaluate(

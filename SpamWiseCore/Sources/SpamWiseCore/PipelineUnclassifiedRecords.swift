@@ -83,3 +83,18 @@ extension Pipeline {
     }
   }
 }
+
+extension DecisionReason {
+  /// The reason recorded when processing fails with `error`.
+  init(failure error: any Error) {
+    self =
+      switch error {
+        case is any BudgetFailure: .spendingLimitReached
+        case let error as ClassificationError: .classificationFailed(error)
+        case is CancellationError: .classificationFailed(.cancelled)
+        case is any MessageParsingError: .messageUnreadable
+        case is any StorageFailure, is DecodingError, is EncodingError: .storageUnavailable
+        default: .processingFailed
+      }
+  }
+}

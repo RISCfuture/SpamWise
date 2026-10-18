@@ -37,7 +37,7 @@ struct DecisionDetailView: View {
       }
       Section("Correct this decision") {
         CorrectionControls(model: model, row: row)
-        if row.correctionUndone == true {
+        if row.correctionUndone {
           Text("Correction undone; the recorded Mail action was not reversed.")
         }
         if let undo = model.state.correctionUndo, undo.isAvailable(in: model.state) {

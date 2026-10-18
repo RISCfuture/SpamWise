@@ -19,10 +19,10 @@ struct ProviderConsentView: View {
   }
   private var permission: Binding<Bool> {
     Binding(
-      get: { model.state.settings.advancedOptions.mailSharingConsent?.contains(backend) == true },
+      get: { model.state.settings.advancedOptions.mailSharingConsent.contains(backend) },
       set: { granted in
         model.editSettings {
-          var consent = $0.advancedOptions.mailSharingConsent ?? []
+          var consent = $0.advancedOptions.mailSharingConsent
           if granted { consent.insert(backend) } else { consent.remove(backend) }
           $0.advancedOptions.mailSharingConsent = consent
         }

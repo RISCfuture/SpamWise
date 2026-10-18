@@ -62,7 +62,7 @@ extension Pipeline {
     var handled: Set<String> = [], revision = 0
     if skipsSettled {
       try await prepareDiscovery()
-      revision = try await StateRepository.load(store).revision
+      revision = try await StateRepository.load(store, StateSlices()).revision
       handled = try await settledKeys(among: envelopes, revision: revision)
     }
     var records: [DecisionRecord] = []
@@ -80,8 +80,10 @@ extension Pipeline {
       guard record.outcome != .paused else { return records }
       revision = max(revision, record.revision)
       if record.outcome != .duplicate {
-        guard try await StateRepository.load(store).records.contains(where: { $0.id == record.id })
-        else { throw IntegrationError.unavailable }
+        let saved = StateSlices(records: .only([record.id]))
+        guard try await !StateRepository.load(store, saved).records.isEmpty else {
+          throw IntegrationError.unavailable
+        }
       }
       if skipsSettled { try await recordUnrecordedResults() }
       records.append(record)
@@ -98,7 +100,8 @@ extension Pipeline {
   public func applyPreview(recordID: UUID, adapter: any MailClientAdapter) async throws
     -> DecisionRecord
   {
-    let records = try await StateRepository.load(store).records
+    let records = try await StateRepository.load(store, StateSlices(records: .only([recordID])))
+      .records
     guard let record = records.first(where: { $0.id == recordID }), record.outcome == .dryRun,
       record.correctedLabel == nil
     else { throw IntegrationError.staleMessage }

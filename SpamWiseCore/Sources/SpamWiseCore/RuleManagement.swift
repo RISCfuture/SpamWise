@@ -30,7 +30,7 @@ public enum RuleManagementError: RuleManagementFailure, Sendable, LocalizedError
 /// Atomic editing and portable JSON import/export of explicit sender rules.
 public enum RuleManagement {
   private static let maximumRuleBytes = 254
-  private static let maximumRules = 10_000
+  private static let maximumRules = RetentionLimits.senderRules
   private static let maximumArchiveBytes = 2_000_000
   /**
    Validates a literal email address or registrable domain without broadening its scope.
@@ -67,11 +67,10 @@ public enum RuleManagement {
       value: try normalized(value, scope: scope),
       disposition: disposition
     )
-    try await StateRepository.update(store) { state in
+    try await StateRepository.update(store, loading: StateSlices([.rules])) { state in
       state.rules = Gates.replacing(rule, in: state.rules)
       guard state.rules.count <= maximumRules else { throw RuleManagementError.tooManyRules }
-      state.revision += 1; state.retries.removeAll()
-      state.audit(
+      state.invalidatePendingWork(
         .senderRule,
         detail: String(localized: "Saved \(rule.id): \(rule.disposition.rawValue)")
       )
@@ -79,10 +78,9 @@ public enum RuleManagement {
   }
   /// Removes only the selected scoped rule; existing mail actions are not reversed.
   public static func remove(id: String, store: Store) async throws {
-    try await StateRepository.update(store) { state in
+    try await StateRepository.update(store, loading: StateSlices([.rules])) { state in
       state.rules.removeAll { $0.id == id }
-      state.revision += 1; state.retries.removeAll()
-      state.audit(.senderRule, detail: String(localized: "Removed \(id)"))
+      state.invalidatePendingWork(.senderRule, detail: String(localized: "Removed \(id)"))
     }
   }
   /// Serializes rules without mail bodies, API keys or correction examples.
@@ -108,11 +106,13 @@ public enum RuleManagement {
         disposition: $0.disposition
       )
     }
-    try await StateRepository.update(store) { state in
+    try await StateRepository.update(store, loading: StateSlices([.rules])) { state in
       for rule in rules { state.rules = Gates.replacing(rule, in: state.rules) }
       guard state.rules.count <= maximumRules else { throw RuleManagementError.tooManyRules }
-      state.revision += 1; state.retries.removeAll()
-      state.audit(.senderRule, detail: String(localized: "Imported \(rules.count) sender rules"))
+      state.invalidatePendingWork(
+        .senderRule,
+        detail: String(localized: "Imported \(rules.count) sender rules")
+      )
     }
   }
   private struct Archive: Codable { var version = 1; var rules: [SenderRule] }

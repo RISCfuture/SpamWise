@@ -37,7 +37,7 @@ extension Pipeline {
       (path, reason) = (.gate, .gate(gate.reason))
       verdict = Self.deterministicVerdict(gate.disposition == .allow ? .inbox : .junk, reason)
     } else if state.settings.advancedOptions.fingerprints,
-      state.learning?.campaignMatch(for: message, evidence: evidence) != nil
+      state.learning.campaignMatch(for: message, evidence: evidence) != nil
     {
       (path, reason) = (.fingerprint, .campaign)
       verdict = Self.deterministicVerdict(.review, reason)
@@ -82,9 +82,8 @@ extension Pipeline {
       localOnly: state.settings.mailOptions.localOnly,
       timeout: budget.timeout - Date().timeIntervalSince(budget.start)
     )
-    if advanced.bayes || advanced.learnedWeights,
-      let estimate = state.learning?.estimate(message: message, evidence: evidence)
-    {
+    if advanced.bayes || advanced.learnedWeights {
+      let estimate = state.learning.estimate(message: message, evidence: evidence)
       if advanced.bayes { evidence.bayesLogOdds = estimate.bayesLogOdds }
       if advanced.learnedWeights { evidence.learnedMargin = estimate.logisticMargin }
     }
@@ -134,7 +133,7 @@ extension Pipeline {
     ) {
       return senderRule
     }
-    let contentRules = ContentRules.evaluate(state.contentRules ?? [], message: message)
+    let contentRules = ContentRules.evaluate(state.contentRules, message: message)
     try? await record(contentRules, revision: state.revision)
     if let rule = contentRules.decisive {
       let note = rule.note.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -160,20 +159,10 @@ extension Pipeline {
     let winner = contentRules.decisive?.id,
       skipped = contentRules.skipped.keys.map { ($0, 1) }
     guard winner != nil || !skipped.isEmpty else { return }
-    try await StateRepository.update(store) { current in
+    try await StateRepository.update(store, loading: StateSlices([.contentRules])) { current in
       guard current.revision == revision else { return }
-      if let winner {
-        current.contentRuleHits = (current.contentRuleHits ?? [:]).merging(
-          [winner: 1],
-          uniquingKeysWith: +
-        )
-      }
-      if !skipped.isEmpty {
-        current.contentRuleSkips = (current.contentRuleSkips ?? [:]).merging(
-          skipped,
-          uniquingKeysWith: +
-        )
-      }
+      if let winner { current.contentRuleHits[winner, default: 0] += 1 }
+      current.contentRuleSkips.merge(skipped, uniquingKeysWith: +)
     }
   }
   private func trainPrediction(
@@ -187,16 +176,14 @@ extension Pipeline {
       || (verdict.label == .inbox && (evidence.bayesLogOdds ?? 0) > 0)
       || (verdict.label == .inbox
         && evidence.authResults.contains { $0.trusted && $0.result == "fail" })
-    try await StateRepository.update(store) { current in
+    try await StateRepository.update(store, loading: StateSlices([.learning])) { current in
       guard current.revision == revision else { return }
-      var learning = current.learning ?? LearningState()
-      learning.admitPrediction(
+      current.learning.admitPrediction(
         message: message,
         evidence: evidence,
         verdict: verdict,
         hasContradiction: contradiction
       )
-      current.learning = learning
     }
   }
   private func enrich(
@@ -210,7 +197,7 @@ extension Pipeline {
     guard !localOnly, !Task.isCancelled, timeout.isFinite, timeout > 0 else { return evidence }
     let start = Date()
     let domain = DomainResolver().domain(ofAddress: message.fromAddress)
-    if advanced.domainRegistrationLookup == true, let domain, let rdap {
+    if advanced.domainRegistrationLookup, let domain, let rdap {
       evidence.domainAgeDays = try? await withDeadline(
         seconds: min(
           Self.maximumDomainLookupTimeSec,
@@ -246,7 +233,7 @@ extension Pipeline {
     let excluded =
       state.settings.mailOptions.trustExclusions.contains(message.fromAddress)
       || (state.settings.mailOptions.excludeOwnAddresses
-        && state.ownAddresses?.contains(message.fromAddress) == true)
+        && state.ownAddresses.contains(message.fromAddress))
     let history =
       excluded
       ? SenderHistory()

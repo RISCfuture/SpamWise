@@ -12,7 +12,7 @@ struct CorpusView: View {
   @Environment(\.dismiss) private var dismiss
 
   private var labels: [ReviewedLabel] {
-    (model.state.reviewedLabels ?? []).sorted { $0.date > $1.date }
+    model.state.reviewedLabels.sorted { $0.date > $1.date }
   }
   private var selected: ReviewedLabel? { labels.first { $0.id == selection } }
   var body: some View {

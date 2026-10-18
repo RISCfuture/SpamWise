@@ -38,19 +38,31 @@ public enum NotificationPlanning {
   private static let key = "notification-ledger-v1"
   private static let minimumIntervalMin = 5
   private static let maximumIntervalMin = 1440
-  private static let maximumClaims = 5000
-  /// Claims eligible records before delivery; failed notification requests do not replay on restart.
+  private static let maximumClaims = RetentionLimits.activityRecords
+  /**
+   Claims eligible records before delivery; failed notification requests do not replay on restart.
+
+   Activity since activation is read only once the batch interval has elapsed.
+   */
   public static func claim(store: Store, now: Date = .now, calendar: Calendar = .current)
     async throws -> NotificationBatch?
   {
-    let state = try await StateRepository.load(store)
-    let preferences = state.settings.mailOptions.notifications ?? .init()
-    guard let since = preferences.enabledSince, !state.settings.paused,
-      !state.settings.dryRun, !preferences.isQuiet(at: now, calendar: calendar)
+    let settings = try await StateRepository.load(store, StateSlices()).settings
+    let preferences = settings.mailOptions.notifications
+    guard let since = preferences.enabledSince, !settings.paused,
+      !settings.dryRun, !preferences.isQuiet(at: now, calendar: calendar)
     else { return nil }
     let intervalSec =
       Double(min(maximumIntervalMin, max(minimumIntervalMin, preferences.intervalMin))) * 60
-    let latest = Dictionary(grouping: state.records, by: { $0.identity.key }).values.compactMap {
+    let lastBatch = try await store.read(key, default: Ledger()).lastBatch
+    guard now.timeIntervalSince(lastBatch ?? since) >= intervalSec else { return nil }
+    var query = ActivityQuery(); query.start = since
+    let records = try await StateRepository.activity(
+      store,
+      matching: query,
+      limit: RetentionLimits.activityRecords
+    )
+    let latest = Dictionary(grouping: records, by: { $0.identity.key }).values.compactMap {
       $0.max { $0.date < $1.date }
     }
     let eligible = latest.filter {
@@ -61,7 +73,7 @@ public enum NotificationPlanning {
     }
     return try await store.update(key, default: Ledger()) { ledger in
       guard now.timeIntervalSince(ledger.lastBatch ?? since) >= intervalSec else { return nil }
-      ledger.claims.formIntersection(Set(state.records.map { $0.identity.key }))
+      ledger.claims.formIntersection(Set(records.map { $0.identity.key }))
       let pending = eligible.filter { !ledger.claims.contains($0.identity.key) }
       guard !pending.isEmpty else { return nil }
       ledger.claims.formUnion(pending.map { $0.identity.key })

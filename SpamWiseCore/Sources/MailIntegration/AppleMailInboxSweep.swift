@@ -46,7 +46,7 @@ public struct AppleMailInboxSweep: Sendable {
     firstSeen: Date = .now,
     progress: @escaping @Sendable (Int, Int) async -> Void = { _, _ in }
   ) async throws {
-    let health = try await MailHealthRepository.load(store)[account.id]
+    let health = try await MailHealthRepository.load(store, key: account.id)
     let pass = Pass(
       sweep: self,
       account: account,
@@ -70,7 +70,7 @@ public struct AppleMailInboxSweep: Sendable {
       traversal = try await pass.drain(from: saved, budget: &budget)
     }
     try Task.checkCancellation()
-    guard try await !StateRepository.load(store).settings.paused else { return }
+    guard try await !StateRepository.load(store, StateSlices()).settings.paused else { return }
     let end = traversal.end < min(head.total, Self.maximumBackfillDepth) ? traversal.end : 0
     try await MailHealthRepository.update(store, accountID: account.id, name: account.name) {
       $0.complete(

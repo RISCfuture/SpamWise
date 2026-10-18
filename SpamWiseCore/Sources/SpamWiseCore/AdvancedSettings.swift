@@ -12,10 +12,10 @@ public enum MailTransport: String, Codable, Sendable, CaseIterable {
 public struct AdvancedSettings: Codable, Sendable, Equatable {
   /// Explicit model provider.
   public var backend: ModelBackend = .claude
-  /// Providers explicitly allowed to receive mail context; missing consent grants no access.
-  public var mailSharingConsent: Set<ModelBackend>?
+  /// Providers explicitly allowed to receive mail context; an absent provider has no access.
+  public var mailSharingConsent: Set<ModelBackend> = []
   /// Opt-in sender-domain disclosure to registration-data services.
-  public var domainRegistrationLookup: Bool?
+  public var domainRegistrationLookup = false
   /// Persisted model identity, parsed leniently by ``model``.
   private var modelID: String?
   /// Account access method; IMAP requires separate credentials and validation.
@@ -29,7 +29,7 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
   /// Enables bounded on-device OCR for embedded image parts.
   public var imageOCR = false
   /// Opt-in local extraction of bounded text/plain and text/html attachments.
-  public var textAttachments: Bool?
+  public var textAttachments = false
   /// Explicit external evidence configuration; absent disables all lookups and scans.
   public var externalEvidence: ExternalEvidenceSettings?
   /// Presents a local weekly digest of still-unreviewed Review decisions.
@@ -44,9 +44,38 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
   }
   /// Creates disabled optional capabilities with Claude as the default provider.
   public init() {}
+  /// Decodes each field independently, using its default when absent or unreadable.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    let defaults = AdvancedSettings()
+    backend = values.lenient(.backend, default: defaults.backend)
+    mailSharingConsent = values.lenient(.mailSharingConsent, default: defaults.mailSharingConsent)
+    domainRegistrationLookup = values.lenient(
+      .domainRegistrationLookup,
+      default: defaults.domainRegistrationLookup
+    )
+    modelID = values.lenient(.modelID, default: defaults.modelID)
+    transport = values.lenient(.transport, default: defaults.transport)
+    fingerprints = values.lenient(.fingerprints, default: defaults.fingerprints)
+    bayes = values.lenient(.bayes, default: defaults.bayes)
+    learnedWeights = values.lenient(.learnedWeights, default: defaults.learnedWeights)
+    imageOCR = values.lenient(.imageOCR, default: defaults.imageOCR)
+    textAttachments = values.lenient(.textAttachments, default: defaults.textAttachments)
+    externalEvidence = values.lenient(.externalEvidence, default: defaults.externalEvidence)
+    weeklyDigest = values.lenient(.weeklyDigest, default: defaults.weeklyDigest)
+    retainReviewedContent = values.lenient(
+      .retainReviewedContent,
+      default: defaults.retainReviewedContent
+    )
+  }
   /// Selects `model` together with the provider that serves it.
   public mutating func select(_ model: ModelIdentifier) {
     backend = model.backend; modelID = model.rawValue
+  }
+  private enum CodingKeys: String, CodingKey {
+    case backend, mailSharingConsent, domainRegistrationLookup, modelID, transport
+    case fingerprints, bayes, learnedWeights, imageOCR, textAttachments, externalEvidence
+    case weeklyDigest, retainReviewedContent
   }
 }
 
@@ -96,9 +125,9 @@ public struct ExternalEvidenceSettings: Codable, Sendable, Equatable {
 }
 
 /// An explicit user label; automatic mailbox placement is not ground truth.
-public struct ReviewedLabel: Codable, Sendable, Identifiable {
-  /// Human action that supplied the label; legacy labels came from corrections.
-  public var origin: Origin?
+public struct ReviewedLabel: Codable, Sendable, Equatable, Identifiable {
+  /// Human action that supplied the label.
+  public var origin: Origin = .correction
   /// Original account-scoped message identity.
   public var identity: MessageIdentity
   /// Human-selected label, including graymail represented as Review.
@@ -127,20 +156,24 @@ public struct ReviewedLabel: Codable, Sendable, Identifiable {
     self.identity = identity; self.label = label; self.date = date; self.message = message
     self.sampleID = sampleID ?? message.map(LearningSample.identity)
   }
-  /// Migrates retained messages to stable content identities before their text can be cleared.
+  /// Derives a stable content identity from a retained message when none was stored.
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     self.init(
       identity: try values.decode(MessageIdentity.self, forKey: .identity),
       label: try values.decode(MailLabel.self, forKey: .label),
-      date: try values.decode(Date.self, forKey: .date),
-      message: try values.decodeIfPresent(ParsedMessage.self, forKey: .message),
-      sampleID: try values.decodeIfPresent(String.self, forKey: .sampleID)
+      date: values.lenient(.date, default: .now),
+      message: values.lenient(.message, default: nil),
+      sampleID: values.lenient(.sampleID, default: nil)
     )
-    origin = try values.decodeIfPresent(Origin.self, forKey: .origin)
+    origin = values.lenient(.origin, default: .correction)
   }
   /// Explicit human label sources; predictions have separate learning provenance.
-  public enum Origin: String, Codable, Sendable { case correction, reviewedImport }
+  public enum Origin: String, Codable, Sendable, FallbackDecodable {
+    case correction, reviewedImport
+    /// An unrecognized source is treated as an explicit correction.
+    public static var fallback: Self { .correction }
+  }
   private enum CodingKeys: String, CodingKey {
     case identity, label, date, message, sampleID, origin
   }

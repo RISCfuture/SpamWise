@@ -154,7 +154,7 @@ import Evaluation
     seed.settings.paused = false; seed.settings.dryRun = true
     var advanced = seed.settings.advancedOptions
     advanced.externalEvidence = nil; advanced.imageOCR = false
-    seed.settings.advanced = advanced
+    seed.settings.advancedOptions = advanced
     seed.records = []; seed.claimedActions = [:]; seed.retries = []
     let initial = seed
     try await StateRepository.update(store) { $0 = initial }

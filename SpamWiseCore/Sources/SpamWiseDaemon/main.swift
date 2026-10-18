@@ -98,7 +98,7 @@ struct SpamWiseDaemon {
           throw IntegrationError.accountUnverified
         }
       }
-      if try await StateRepository.load(store).settings.paused {
+      if try await StateRepository.load(store, StateSlices()).settings.paused {
         print("Filtering paused; Inbox not read.")
       } else {
         let processed = try await sweep(adapter, with: pipeline, store: store, options: options)
@@ -147,9 +147,8 @@ struct SpamWiseDaemon {
 
   private static func selectModel(_ model: ModelIdentifier?, store: Store) async throws {
     guard let model else { return }
-    guard try await StateRepository.load(store).settings.advancedOptions.model != model else {
-      return
-    }
+    let current = try await StateRepository.load(store, StateSlices()).settings.advancedOptions
+    guard current.model != model else { return }
     try await StateRepository.editSettings(store) { settings in
       var advanced = settings.advancedOptions
       advanced.select(model)

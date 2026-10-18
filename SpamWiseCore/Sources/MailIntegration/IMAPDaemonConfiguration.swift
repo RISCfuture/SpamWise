@@ -209,7 +209,7 @@ public enum IMAPAccountValidation {
     -> Bool
   {
     let validations = try await store.read(key, default: [String: String]())
-    let state = try await StateRepository.load(store)
+    let state = try await StateRepository.load(store, StateSlices())
     return validations[configuration.id] == fingerprint(configuration)
       && state.settings.validatedAccounts.contains(configuration.id)
       && state.settings.incomingRoute == .imap

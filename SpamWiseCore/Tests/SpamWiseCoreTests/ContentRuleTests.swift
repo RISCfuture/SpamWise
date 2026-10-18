@@ -77,5 +77,5 @@ import SpamWiseCore
   #expect(record.outcome == .dryRun)
   let state = try await StateRepository.load(store)
   #expect(state.contentRuleSkips == [unusable.id: 1])
-  #expect(state.contentRuleHits == nil)
+  #expect(state.contentRuleHits.isEmpty)
 }

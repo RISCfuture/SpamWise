@@ -21,7 +21,7 @@ public enum MailExtensionPreview {
     classifier: any Classifier,
     timeout: TimeInterval
   ) async throws -> DecisionRecord? {
-    guard allows(try await StateRepository.load(store).settings) else { return nil }
+    guard allows(try await StateRepository.load(store, StateSlices()).settings) else { return nil }
     return await Pipeline(store: store, classifier: classifier).process(
       .init(identity: MessageIdentity(accountID: nil, contentHash: stableHash(raw)), raw: raw),
       forceDryRun: true,

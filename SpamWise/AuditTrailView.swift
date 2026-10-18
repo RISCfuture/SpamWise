@@ -7,7 +7,7 @@ struct AuditTrailView: View {
   @Environment(\.dismiss) private var dismiss
 
   private var events: [AuditEvent] {
-    (model.state.auditEvents ?? []).reversed().filter {
+    model.state.auditEvents.reversed().filter {
       search.isEmpty || $0.detail.localizedCaseInsensitiveContains(search)
         || $0.kind.rawValue.localizedCaseInsensitiveContains(search)
     }

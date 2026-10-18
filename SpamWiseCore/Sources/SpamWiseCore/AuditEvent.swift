@@ -1,7 +1,7 @@
 public import Foundation
 
 /// A durable configuration or learning mutation, independent of decision records.
-public struct AuditEvent: Codable, Sendable, Identifiable {
+public struct AuditEvent: Codable, Sendable, Equatable, Identifiable {
   /// Stable event identity.
   public var id = UUID()
   /// Local event time.
@@ -13,25 +13,24 @@ public struct AuditEvent: Codable, Sendable, Identifiable {
   /// Bounded description without credentials or message bodies.
   public var detail: String
   /// Supported configuration and learning events.
-  public enum Kind: String, Codable, Sendable {
+  public enum Kind: String, Codable, Sendable, FallbackDecodable {
     case settings, senderRule, contentRule, correction, backupRestore, corpusImport, corpusForget,
       undo
+    /// An unrecognized category is shown as a settings change.
+    public static var fallback: Self { .settings }
   }
 }
 
 extension AppState {
-  private static let maximumAuditEvents = 1000
-  private static let maximumAuditDetailCharacters = 500
   /// Records a bounded event in the same transaction as its mutation.
   public mutating func audit(_ kind: AuditEvent.Kind, detail: String) {
-    var events = auditEvents ?? []
-    events.append(
+    auditEvents.append(
       AuditEvent(
         revision: revision,
         kind: kind,
-        detail: String(detail.prefix(Self.maximumAuditDetailCharacters))
+        detail: String(detail.prefix(RetentionLimits.auditDetailCharacters))
       )
     )
-    auditEvents = Array(events.suffix(Self.maximumAuditEvents))
+    auditEvents = Array(auditEvents.suffix(RetentionLimits.auditEvents))
   }
 }

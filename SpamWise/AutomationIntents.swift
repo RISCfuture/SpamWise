@@ -102,7 +102,8 @@ nonisolated private enum AutomationContext {
   static func diagnostics(model: AppModel) async throws -> Data {
     do {
       guard let store = await model.store else { throw IntegrationError.unavailable }
-      return try JSONEncoder().encode(DiagnosticSummary(state: await StateRepository.load(store)))
+      let state = try await StateRepository.load(store, StateSlices(records: .all, retries: .all))
+      return try JSONEncoder().encode(DiagnosticSummary(state: state))
     } catch { throw AutomationIntentError.unavailable }
   }
   static func execute(_ operation: AutomationOperation, id: UUID, model: AppModel) async throws
@@ -113,7 +114,7 @@ nonisolated private enum AutomationContext {
       guard let store = await model.store, let pipeline = await model.pipeline else {
         throw IntegrationError.unavailable
       }
-      let settings = try await StateRepository.load(store).settings
+      let settings = try await StateRepository.load(store, StateSlices()).settings
       guard settings.onboardingComplete, settings.advancedOptions.transport == .appleMail else {
         throw IntegrationError.unavailable
       }

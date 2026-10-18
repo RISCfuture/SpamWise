@@ -1,4 +1,5 @@
 public import Foundation
+import SwiftData
 
 /// Filters the bounded local log without reclassifying messages.
 public struct ActivityQuery: Sendable {
@@ -16,6 +17,23 @@ public struct ActivityQuery: Sendable {
   public var end: Date?
   /// Restricts to explicit corrections when true.
   public var correctionsOnly = false
+  /// The same filter over stored Activity rows, evaluated by the store.
+  var predicate: Predicate<RecordRow> {
+    let anyAccount = accountID == nil, account = accountID
+    let anyPath = path == nil, path = path?.rawValue ?? ""
+    let anyOutcome = outcome == nil, outcome = outcome?.rawValue ?? ""
+    let start = start ?? .distantPast, end = end ?? .distantFuture
+    let correctionsOnly = correctionsOnly, text = text
+    return #Predicate { row in
+      (anyAccount || row.accountID == account) && (anyPath || row.path == path)
+        && (anyOutcome || row.outcome == outcome) && row.date >= start && row.date <= end
+        && (!correctionsOnly || row.correctedLabel != nil)
+        && (text.isEmpty || row.sender.localizedStandardContains(text)
+          || row.subject.localizedStandardContains(text)
+          || row.reason.localizedStandardContains(text)
+          || row.accountID.flatMap { $0.localizedStandardContains(text) } == true)
+    }
+  }
   /// Creates an unfiltered query.
   public init() {}
   /// Returns matching records newest first, retaining original explanations.

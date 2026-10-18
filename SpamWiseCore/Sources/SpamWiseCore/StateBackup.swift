@@ -20,11 +20,10 @@ public enum BackupError: BackupFailure, LocalizedError, Sendable {
 public enum StateBackup {
   private static let maximumBytes = 64 * 1024 * 1024
   private static let keyBytes = 32
-  private static let maximumRules = 10_000
-  private static let maximumCorrections = 200
-  private static let maximumLabels = 500
-  private static let maximumPolicyCharacters = 8000
-  private static let maximumMessageCharacters = 16_000
+  private static let slices = StateSlices(
+    [.rules, .contentRules, .corrections, .learning, .undo],
+    reviewedLabels: .all
+  )
   private static let authentication = Data("SpamWise-backup-v1".utf8)
 
   /// Generates an independent recovery key to keep separately from the backup file.
@@ -33,11 +32,21 @@ public enum StateBackup {
       unsafe Data(bytes).base64EncodedString()
     }
   }
+  /// Reads the portable state from `store` and encrypts it.
+  public static func export(store: Store, recoveryKey: String, includeContent: Bool = false)
+    async throws -> Data
+  {
+    try export(
+      await StateRepository.load(store, slices),
+      recoveryKey: recoveryKey,
+      includeContent: includeContent
+    )
+  }
   /// Encrypts settings and learning with optional explicitly retained message content.
   public static func export(_ state: AppState, recoveryKey: String, includeContent: Bool = false)
     throws -> Data
   {
-    var labels = state.reviewedLabels ?? []
+    var labels = state.reviewedLabels
     if !includeContent {
       labels = labels.map {
         var label = $0; label.message = nil; return label
@@ -70,12 +79,11 @@ public enum StateBackup {
       payload = try JSONDecoder().decode(Payload.self, from: plain)
       try validate(payload)
     } catch { throw BackupError.invalidArchive }
-    try await StateRepository.update(store) { state in
+    try await StateRepository.update(store, loading: slices) { state in
       state.rules = payload.rules
-      state.correctionUndo = nil
-      state.contentRules = payload.contentRules
+      state.contentRules = payload.contentRules ?? []
       state.corrections = payload.corrections
-      state.learning = payload.learning
+      state.learning = payload.learning ?? LearningState()
       state.reviewedLabels = payload.labels
       state.settings.policy = payload.policy
       state.settings.strength = payload.strength
@@ -86,9 +94,7 @@ public enum StateBackup {
       state.settings.paused = true
       state.settings.dryRun = true
       state.settings.validatedAccounts = []
-      state.retries = []
-      state.revision += 1
-      state.audit(
+      state.invalidatePendingWork(
         .backupRestore,
         detail: String(localized: "Restored portable learning state; actions paused")
       )
@@ -101,9 +107,10 @@ public enum StateBackup {
     return SymmetricKey(data: bytes)
   }
   private static func validate(_ payload: Payload) throws {
-    guard payload.version == 1, payload.rules.count <= maximumRules,
-      payload.corrections.count <= maximumCorrections, payload.labels.count <= maximumLabels,
-      payload.policy.count <= maximumPolicyCharacters,
+    guard payload.version == 1, payload.rules.count <= RetentionLimits.senderRules,
+      payload.corrections.count <= RetentionLimits.corrections,
+      payload.labels.count <= RetentionLimits.reviewedLabels,
+      payload.policy.count <= RetentionLimits.policyCharacters,
       Set(payload.rules.map(\.id)).count == payload.rules.count,
       Set(payload.labels.map(\.id)).count == payload.labels.count
     else { throw BackupError.invalidArchive }
@@ -112,11 +119,13 @@ public enum StateBackup {
         throw BackupError.invalidArchive
       }
     }
-    guard (payload.contentRules?.count ?? 0) <= 100 else { throw BackupError.invalidArchive }
+    guard (payload.contentRules?.count ?? 0) <= RetentionLimits.contentRules else {
+      throw BackupError.invalidArchive
+    }
     for rule in payload.contentRules ?? [] { try ContentRules.validate(rule) }
     for label in payload.labels {
       if let message = label.message {
-        guard message.text.count <= maximumMessageCharacters,
+        guard message == message.boundedForRetention(),
           label.sampleID == LearningSample.identity(for: message)
         else { throw BackupError.invalidArchive }
       }

@@ -78,15 +78,43 @@ extension AppState {
    A reviewed label takes precedence over the Activity record of the same message.
    */
   public var historyEligibleInbox: [String: InboxEligibility] {
+    Self.historyEligibleInbox(
+      decisions: records.filter { $0.outcome != .superseded }.map {
+        InboxDecision(
+          key: $0.identity.key,
+          corrected: $0.correctedLabel,
+          decided: $0.decision.label
+        )
+      },
+      reviewedLabels: reviewedLabels,
+      retries: retries
+    )
+  }
+  /// Inbox eligibility from decisions in date order, with reviewed labels and retries applied.
+  static func historyEligibleInbox(
+    decisions: [InboxDecision],
+    reviewedLabels: [ReviewedLabel],
+    retries: [RetryJob]
+  ) -> [String: InboxEligibility] {
     var latest: [String: (label: MailLabel?, eligibility: InboxEligibility)] = [:]
-    for record in records where record.outcome != .superseded {
-      latest[record.identity.key] =
-        record.correctedLabel.map { ($0, .confirmed) } ?? (record.decision.label, .classified)
+    for decision in decisions {
+      latest[decision.key] =
+        decision.corrected.map { ($0, .confirmed) } ?? (decision.decided, .classified)
     }
-    for reviewed in reviewedLabels ?? [] {
+    for reviewed in reviewedLabels {
       latest[reviewed.identity.key] = (reviewed.label, .confirmed)
     }
     for retry in retries { latest[retry.identity.key] = nil }
     return latest.compactMapValues { $0.label == .inbox ? $0.eligibility : nil }
   }
+}
+
+/// The labels of one retained decision that determine its message's Inbox eligibility.
+struct InboxDecision: Sendable {
+  /// Account-scoped message identity key.
+  let key: String
+  /// The user's explicit correction, if any.
+  let corrected: MailLabel?
+  /// The decided label, when classified.
+  let decided: MailLabel?
 }

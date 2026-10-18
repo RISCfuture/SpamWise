@@ -23,7 +23,7 @@ struct LearningSettingsView: View {
       DisclosureGroup("Evaluation data") {
         LabeledContent(
           "Reviewed labels",
-          value: (model.state.reviewedLabels?.count ?? 0).formatted()
+          value: model.state.reviewedLabels.count.formatted()
         )
         Toggle(
           "Retain reviewed text for evaluation export",
@@ -37,13 +37,13 @@ struct LearningSettingsView: View {
         )
         .foregroundStyle(.secondary)
         Button("Export reviewed labels…") { exporting = true }
-          .disabled((model.state.reviewedLabels ?? []).isEmpty)
+          .disabled(model.state.reviewedLabels.isEmpty)
       }
     }
     .fileExporter(
       isPresented: $exporting,
       document: RulesDocument(
-        data: (try? JSONEncoder.pretty.encode(model.state.reviewedLabels ?? [])) ?? Data()
+        data: (try? JSONEncoder.pretty.encode(model.state.reviewedLabels)) ?? Data()
       ),
       contentType: .json,
       defaultFilename: "SpamWise-reviewed-labels"

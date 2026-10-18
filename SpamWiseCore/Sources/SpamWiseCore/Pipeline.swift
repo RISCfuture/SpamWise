@@ -3,8 +3,6 @@ public import Foundation
 /// Persists decisions before claiming actions and fails open on errors.
 public actor Pipeline {
   private static let maximumRetryAttempts = 3
-  private static let maximumRetryCharacters = 16_000
-  private static let maximumRetries = 100
   private static let initialRetryDelaySec = 30.0
   private static let retryBackoffFactor = 2.0
   private static let retryLifetimeSec = 86_400.0
@@ -25,6 +23,9 @@ public actor Pipeline {
   ) {
     self.store = store; self.classifier = classifier; self.rdap = rdap
     self.threatDetector = threatDetector
+  }
+  private static func isRetryable(_ error: any Error) -> Bool {
+    (error as? ClassificationError)?.retryable == true || (error as? StoreError)?.retryable == true
   }
   /**
    Classifies, persists, then conditionally dispatches one message, failing open on errors.
@@ -47,7 +48,7 @@ public actor Pipeline {
   ) async -> DecisionRecord {
     let start = Date()
     let current: AppState
-    do { current = try await StateRepository.load(store) } catch {
+    do { current = try await claimState(for: envelope.identity) } catch {
       return await unprocessed(
         envelope,
         reason: DecisionReason(failure: error),
@@ -127,11 +128,12 @@ public actor Pipeline {
     }
     defer { inFlight.remove(identity.key) }
     let start = Date()
-    var revision = 0
+    var revision: Int?
     var settles = discovered || !forceDryRun
     do {
       try Task.checkCancellation()
-      let state = try await StateRepository.load(store); revision = state.revision
+      let state = try await classificationState(for: identity)
+      revision = state.revision
       settles = settles || state.settings.dryRun
       if !forceDryRun, let id = state.claimedActions[identity.key] {
         let claimed = await claimedResult(id, identity: identity, state: state)
@@ -143,7 +145,7 @@ public actor Pipeline {
           identity: identity,
           sender: message.fromAddress,
           subject: message.subject,
-          revision: revision
+          revision: state.revision
         )
       }
       let classification = try await classify(
@@ -173,7 +175,7 @@ public actor Pipeline {
         outcome: .pending,
         path: classification.path,
         latency: Date().timeIntervalSince(start),
-        revision: revision
+        revision: state.revision
       )
       // Persist the explanation before an external action can be claimed.
       try await save(record)
@@ -186,7 +188,7 @@ public actor Pipeline {
         sender: message.fromAddress,
         subject: message.subject,
         reason: DecisionReason(failure: error),
-        revision: revision
+        revision: revision ?? 0
       )
       try? await saveFailure(record)
       if settles {
@@ -202,25 +204,23 @@ public actor Pipeline {
       return record
     }
   }
+  /// Queues a retry; an unknown revision means classification never started, so the current one applies.
   private func scheduleRetry(
     error: any Error,
     message: ParsedMessage,
     identity: MessageIdentity,
-    revision: Int,
+    revision: Int?,
     retry: (attempt: Int, dryRun: Bool)
   ) async {
     let (attempt, forceDryRun) = retry
     guard !forceDryRun else { return }
-    if let error = error as? ClassificationError, error.retryable,
-      attempt < Self.maximumRetryAttempts, !Task.isCancelled
-    {
-      var bounded = message; bounded.text = String(message.text.prefix(Self.maximumRetryCharacters))
-      let retryMessage = bounded
-      let retryRevision = revision
-      try? await StateRepository.update(store) { state in
+    if Self.isRetryable(error), attempt < Self.maximumRetryAttempts, !Task.isCancelled {
+      let retryMessage = message.boundedForRetention(keepingHeaders: true)
+      try? await StateRepository.update(store, loading: StateSlices(retries: .all)) { state in
+        let retryRevision = revision ?? state.revision
         guard state.revision == retryRevision else { return }
         state.retries.removeAll { $0.id == identity.key }
-        guard state.retries.count < Self.maximumRetries else { return }
+        guard state.retries.count < RetentionLimits.retries else { return }
         state.retries.append(
           RetryJob(
             identity: identity,
@@ -245,6 +245,7 @@ public actor Pipeline {
     guard
       let jobs = try? await StateRepository.update(
         store,
+        loading: StateSlices(retries: .all),
         { state -> [RetryJob] in
           guard !state.settings.paused else { return [] }
           let jobs = state.retries.filter {
@@ -272,7 +273,8 @@ public actor Pipeline {
     }
   }
   private func claimRetry(_ job: RetryJob, now: Date) async -> Bool {
-    (try? await StateRepository.update(store) { state in
+    (try? await StateRepository.update(store, loading: StateSlices(retries: .only([job.id]))) {
+      state in
       guard !Task.isCancelled, !state.settings.paused, state.revision == job.revision,
         let index = state.retries.firstIndex(where: {
           $0.id == job.id && $0.revision == job.revision && $0.attempt == job.attempt
@@ -289,7 +291,14 @@ public actor Pipeline {
     forceDryRun: Bool,
     correction: Bool = false
   ) async throws -> DecisionRecord {
-    let claimed = try await StateRepository.update(store) { state -> DecisionRecord in
+    let key = original.identity.key
+    let slices = StateSlices(
+      records: .only([original.id]),
+      retries: .only([key]),
+      claims: .only([key])
+    )
+    let claimed = try await StateRepository.update(store, loading: slices) {
+      state -> DecisionRecord in
       guard let i = state.records.firstIndex(where: { $0.id == original.id }) else {
         throw IntegrationError.unavailable
       }
@@ -320,7 +329,7 @@ public actor Pipeline {
     var completed = claimed
     do {
       try Task.checkCancellation()
-      let current = try await StateRepository.load(store)
+      let current = try await StateRepository.load(store, StateSlices())
       guard current.revision == claimed.revision, !current.settings.paused, !current.settings.dryRun
       else { completed.outcome = .superseded; try await save(completed); return completed }
       let receipt =
@@ -342,7 +351,7 @@ public actor Pipeline {
         )
       }
     }
-    try await save(completed)
+    try await saveAfterAction(completed)
     do {
       return try await markJunkRead(completed, adapter: adapter)
     } catch {
@@ -351,21 +360,6 @@ public actor Pipeline {
         localized: "Mark-as-read status could not be saved. The confirmed Junk move is retained."
       )
       return completed
-    }
-  }
-  func save(_ record: DecisionRecord) async throws {
-    try await StateRepository.update(store) { state in
-      state.record(record)
-    }
-  }
-  func saveFailure(_ record: DecisionRecord) async throws {
-    try await StateRepository.update(store) { state in
-      if record.deferredBySpendingLimit {
-        state.records.removeAll {
-          $0.deferredBySpendingLimit && $0.identity.key == record.identity.key
-        }
-      }
-      state.record(record)
     }
   }
   private func unprocessed(

@@ -53,6 +53,6 @@ extension AppModel {
       outcome: .noAction,
       path: .verification
     )
-    try await StateRepository.update(store) { $0.record(record) }
+    try await StateRepository.update(store, loading: StateSlices()) { $0.record(record) }
   }
 }

@@ -24,14 +24,14 @@ public struct ConfiguredClassifier: Classifier {
   }
   /// Executes one explicitly selected backend, counting paid requests toward the monthly spending limit.
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
-    let current = try await StateRepository.load(store).settings
+    let current = try await StateRepository.load(store, StateSlices()).settings
     let settings = current.advancedOptions
     guard !current.mailOptions.localOnly || settings.backend == .onDevice else {
       throw ClassificationError.configuration
     }
     guard
       settings.backend == .onDevice
-        || settings.mailSharingConsent?.contains(settings.backend) == true
+        || settings.mailSharingConsent.contains(settings.backend)
     else {
       throw ClassificationError.consentRequired
     }
@@ -70,10 +70,10 @@ private struct ConsentCheckedClassifier: Classifier {
   let backend: ModelBackend
 
   func classify(_ input: ClassificationInput) async throws -> Verdict {
-    let current = try await StateRepository.load(store).settings
+    let current = try await StateRepository.load(store, StateSlices()).settings
     guard !current.mailOptions.localOnly,
       current.advancedOptions.backend == backend,
-      current.advancedOptions.mailSharingConsent?.contains(backend) == true
+      current.advancedOptions.mailSharingConsent.contains(backend)
     else { throw ClassificationError.consentRequired }
     try Task.checkCancellation()
     return try await underlying.classify(input)

@@ -11,7 +11,7 @@ struct EvidenceSettingsView: View {
         Toggle(
           "Share sender domains with registration services to check domain age",
           isOn: Binding(
-            get: { model.state.settings.advancedOptions.domainRegistrationLookup == true },
+            get: { model.state.settings.advancedOptions.domainRegistrationLookup },
             set: { enabled in
               model.editSettings { $0.advancedOptions.domainRegistrationLookup = enabled }
             }
@@ -28,7 +28,7 @@ struct EvidenceSettingsView: View {
         Toggle(
           "Read plain-text and HTML attachments locally",
           isOn: Binding(
-            get: { model.state.settings.advancedOptions.textAttachments == true },
+            get: { model.state.settings.advancedOptions.textAttachments },
             set: { enabled in model.editSettings { $0.advancedOptions.textAttachments = enabled } }
           )
         )

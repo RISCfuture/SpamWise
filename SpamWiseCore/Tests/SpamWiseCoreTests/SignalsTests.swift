@@ -286,7 +286,8 @@ actor StubRDAP: HTTPFetcher {
   #expect(state.settings.dryRun)
   #expect(state.settings.validatedAccounts == ["account-A"])
   #expect(state.settings.bodyTokenBudget == 4000)
-  #expect(state.revision == 2)
+  #expect(state.revision == 1)
+  #expect(state.auditEvents.suffix(2).map(\.detail).last?.contains("strength") == true)
 }
 
 @Test func `validates accounts from mailbox roles and gates automatic checks and actions on them`()
