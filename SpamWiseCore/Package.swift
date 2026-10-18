@@ -63,7 +63,13 @@ let package = Package(
         .product(name: "ArgumentParser", package: "swift-argument-parser")
       ]
     ),
-    .executableTarget(name: "SpamWiseDaemon", dependencies: ["SpamWiseCore", "MailIntegration"]),
+    .executableTarget(
+      name: "SpamWiseDaemon",
+      dependencies: [
+        "SpamWiseCore", "MailIntegration",
+        .product(name: "ArgumentParser", package: "swift-argument-parser")
+      ]
+    ),
     .testTarget(
       name: "SpamWiseCoreTests",
       dependencies: [

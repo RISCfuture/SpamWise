@@ -25,8 +25,6 @@ public protocol MailClientAdapter: Sendable {
   func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope?
   /// Discovers a bounded page of incoming messages.
   func recentMessages(limit: Int) async throws -> [MailEnvelope]
-  /// Imports available account-scoped relationship history.
-  func importHistory() async throws -> [String: HistoryIndex]
   /// Whether this integration can perform `action` at all; Pipeline records unsupported actions without claiming them.
   func supports(_ action: MailAction) async -> Bool
   /// Performs a supported action on the message only where it was recorded.

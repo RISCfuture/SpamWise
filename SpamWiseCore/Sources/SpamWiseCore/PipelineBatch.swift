@@ -79,12 +79,7 @@ extension Pipeline {
       )
       guard record.outcome != .paused else { return records }
       revision = max(revision, record.revision)
-      if record.outcome != .duplicate {
-        let saved = StateSlices(records: .only([record.id]))
-        guard try await !StateRepository.load(store, saved).records.isEmpty else {
-          throw DecisionRecordError.notFound
-        }
-      }
+      try await requirePersisted(record)
       if skipsSettled { try await recordUnrecordedResults() }
       records.append(record)
       await progress(records.count)
@@ -135,6 +130,15 @@ extension Pipeline {
       throw DecisionRecordError.messageUnavailable
     }
     return await process(envelope, adapter: adapter)
+  }
+
+  /// Stops the batch when a decision never reached the store, as when `process` failed to save it.
+  private func requirePersisted(_ record: DecisionRecord) async throws {
+    guard record.outcome != .duplicate else { return }
+    let saved = StateSlices(records: .only([record.id]))
+    guard try await !StateRepository.load(store, saved).records.isEmpty else {
+      throw DecisionRecordError.notFound
+    }
   }
 
   private func settledKeys(among envelopes: [MailEnvelope], revision: Int) async throws

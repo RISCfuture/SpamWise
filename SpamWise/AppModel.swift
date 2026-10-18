@@ -301,69 +301,17 @@ extension AppModel {
 }
 
 extension AppModel {
-  private static func historyUpdate(_ histories: [String: HistoryIndex]) -> StateSlices {
-    StateSlices([.historyImports], histories: .only(Set(histories.keys)))
-  }
-  func maintainHistory() async {
-    guard let store else { return }
-    do {
-      let current = try await StateRepository.load(
-        store,
-        StateSlices([.historyImports], histories: .all)
-      )
-      let eligible = try await StateRepository.historyEligibleInbox(store)
-      let histories: [String: HistoryIndex]
-      if state.settings.advancedOptions.transport == .imap {
-        histories = try await configuredIMAPAdapter().importHistory()
-      } else {
-        histories = try await adapter.importHistory(
-          previous: current.histories,
-          eligibleInbox: eligible,
-          trustedAuthServers: current.settings.mailOptions.trustedAuthServers,
-          incremental: true
-        )
-      }
-      try await StateRepository.update(store, loading: Self.historyUpdate(histories)) { state in
-        for (account, history) in histories { state.histories[account] = history }
-      }
-    } catch {
-      mailStatus = String(
-        localized: "History refresh unavailable — only previously stored relationships are known"
-      )
-    }
-  }
+  /// Imports the newest bounded Inbox and Sent history of the selected transport.
   func importHistory() {
     run { [self] in
       guard let store else { throw IntegrationError.unavailable }
-      let histories: [String: HistoryIndex]
-      if state.settings.advancedOptions.transport == .imap {
-        histories = try await configuredIMAPAdapter().importHistory()
-      } else {
-        let previous = try await StateRepository.load(
-          store,
-          StateSlices([.historyImports], histories: .all)
-        )
-        histories = try await adapter.importHistory(
-          previous: previous.histories,
-          eligibleInbox: try await StateRepository.historyEligibleInbox(store),
-          trustedAuthServers: previous.settings.mailOptions.trustedAuthServers
-        )
-      }
-      try await StateRepository.update(store, loading: Self.historyUpdate(histories)) { state in
-        for (account, imported) in histories { state.histories[account] = imported }
-      }
+      let source: any MailSweepSource =
+        state.settings.advancedOptions.transport == .imap
+        ? try await configuredIMAPAdapter() : adapter
+      try await HistoryMaintenance(source: source, store: store).importRecent()
       status = String(
         localized: "Imported bounded Inbox and Sent history; remaining history is unknown."
       )
     }
   }
-}
-
-struct ScanBatch {
-  var unavailableCount = 0
-  let adapter: any MailClientAdapter
-  let messages: [MailEnvelope]
-  let retryAccountID: String?
-  /// Records discovery progress once every message has been handled.
-  var commit: @Sendable () async throws -> Void = {}
 }

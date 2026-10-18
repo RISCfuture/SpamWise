@@ -7,23 +7,30 @@ private actor InboxFixtureEvents: AppleEventRunner {
   private static let boundary = Date(timeIntervalSince1970: 1_700_000_000)
   private static let earlierMessages = 5
   private var localIDs: [Int]
+  private var accountIDs = ["account"]
   private var arrivals: (read: Int, localIDs: ClosedRange<Int>)?
-  private(set) var requests: [MailRequest] = []
+  private var inboxReads = 0
   init(count: Int) { localIDs = Array((1...count).reversed()) }
   /// Messages arrive an hour apart, and messages 1 through 5 arrive before the boundary.
   static func received(_ localID: Int) -> Date {
     boundary.addingTimeInterval(Double(localID - earlierMessages - 1) * 3600)
   }
   func deliver(_ localID: Int) { localIDs.insert(localID, at: 0) }
-  /// Delivers `arriving` just before the `read`th page read from now returns.
+  /// Delivers `arriving` just before the `read`th Inbox page read from now returns.
   func deliver(_ arriving: ClosedRange<Int>, duringRead read: Int) {
-    arrivals = (requests.count + read, arriving)
+    arrivals = (inboxReads + read, arriving)
   }
+  /// Reports another account, as when one is added in Mail after setup.
+  func addAccount(_ id: String) { accountIDs.append(id) }
   func run(_ request: MailRequest) async throws -> ScriptValue {
-    requests.append(request)
-    if let arrivals, arrivals.read == requests.count { arrivals.localIDs.forEach(deliver) }
+    if request == .accounts { return .list(accountIDs.map { .list([.string($0), .string($0)]) }) }
+    if case .accountPage(.sent, _, _, _, true, _, _) = request {
+      return MailReply.page(total: 0, [])
+    }
     guard case let .accountPage(.inbox, account, offset, size, false, since, before) = request
     else { throw IntegrationError.scriptFailed }
+    inboxReads += 1
+    if let arrivals, arrivals.read == inboxReads { arrivals.localIDs.forEach(deliver) }
     let received = (since ?? .distantPast)..<(before ?? .distantFuture)
     let candidates = localIDs.filter { received.contains(Self.received($0)) }
     let rows = candidates.dropFirst(offset).prefix(size).map { localID in
@@ -50,18 +57,17 @@ func `checks every newly delivered Inbox message first and never reads before th
       return Verdict(label: .inbox, confidence: 99, reason: "wanted")
     })
   )
-  let sweep = AppleMailInboxSweep(
-    adapter: AppleMailAdapter(runner: events),
-    pipeline: pipeline,
-    store: store
+  let sweeper = MailSweeper(
+    source: AppleMailAdapter(runner: events),
+    store: store,
+    pipeline: pipeline
   )
-  let account = MailAccount(id: "account", name: "Account")
   let start = InboxFixtureEvents.received(6)
-  try await MailHealthRepository.update(store, accountID: account.id, name: account.name) {
+  try await MailHealthRepository.update(store, accountID: "account", name: "account") {
     $0.inboxStart = start
   }
-  let tick = { try await sweep.run(account: account, dryRun: true, limit: 10) }
-  let backfillOffset = { try await MailHealthRepository.load(store)[account.id]?.nextOffset ?? 0 }
+  let tick = { _ = try await sweeper.sweep(dryRun: true, limit: 10) }
+  let backfillOffset = { try await MailHealthRepository.load(store)["account"]?.nextOffset ?? 0 }
   try await tick()
   try await tick()
   #expect(calls.value == 75)
@@ -79,11 +85,11 @@ func `checks every newly delivered Inbox message first and never reads before th
   let afterBurst = try await StateRepository.load(store).records.compactMap(\.identity.localID)
   #expect(Set(afterBurst) == Set(6...133))
   #expect(calls.value == 128)
-  #expect(try await MailHealthRepository.load(store)[account.id]?.inboxStart == start)
-  let added = MailAccount(id: "added", name: "Added after setup")
-  try await sweep.run(account: added, dryRun: true, limit: 10)
+  #expect(try await MailHealthRepository.load(store)["account"]?.inboxStart == start)
+  await events.addAccount("added")
+  try await tick()
   #expect(calls.value == 128)
-  #expect(try await MailHealthRepository.load(store)[added.id]?.inboxStart ?? start > start)
+  #expect(try await MailHealthRepository.load(store)["added"]?.inboxStart ?? start > start)
 }
 
 @Test func `applies a current older mail preview and supersedes a stale one`() async throws {

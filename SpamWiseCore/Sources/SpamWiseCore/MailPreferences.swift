@@ -75,6 +75,12 @@ public struct MailScanHealth: Codable, Sendable, Equatable {
   public var lastCompletedSweep: Date?
   /// Sanitized integration failure, cleared by the next successful page.
   public var failure: String?
+  /// Passes in a row that failed, cleared by the next successful page.
+  public var consecutiveFailures = 0
+  /// Passes in a row whose page read timed out, cleared by a pass without a timeout.
+  public var consecutiveTimeouts = 0
+  /// How the messages visited by the latest pass were handled.
+  public var coverage = SweepCoverage()
   /// Creates a progress record without claiming any mail was read.
   public init(accountName: String) { self.accountName = accountName }
   /// Decodes each field independently, using its default when absent or unreadable.
@@ -91,6 +97,9 @@ public struct MailScanHealth: Codable, Sendable, Equatable {
     lastSuccess = values.lenient(.lastSuccess, default: nil)
     lastCompletedSweep = values.lenient(.lastCompletedSweep, default: nil)
     failure = values.lenient(.failure, default: nil)
+    consecutiveFailures = values.lenient(.consecutiveFailures, default: 0)
+    consecutiveTimeouts = values.lenient(.consecutiveTimeouts, default: 0)
+    coverage = values.lenient(.coverage, default: SweepCoverage())
   }
   /// Records visited positions after handling readable envelopes and counting unavailable entries.
   public mutating func complete(count: Int, total: Int, unavailable: Int = 0, now: Date = .now) {
@@ -117,6 +126,7 @@ public struct MailScanHealth: Codable, Sendable, Equatable {
     nextOffset = max(0, end)
     lastSuccess = now
     failure = nil
+    consecutiveFailures = 0
     guard nextOffset == 0 else { return }
     scanned = 0
     lastSweepUnavailable = unavailableInSweep
@@ -126,6 +136,7 @@ public struct MailScanHealth: Codable, Sendable, Equatable {
   private enum CodingKeys: String, CodingKey {
     case accountName, inboxStart, nextOffset, observedTotal, scanned, unavailableInSweep
     case lastSweepUnavailable, lastAttempt, lastSuccess, lastCompletedSweep, failure
+    case consecutiveFailures, consecutiveTimeouts, coverage
   }
 }
 

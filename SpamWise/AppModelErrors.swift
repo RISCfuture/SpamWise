@@ -2,7 +2,7 @@ import Foundation
 import SpamWiseCore
 
 extension AppModel {
-  static func describe(_ error: any Error) -> String {
+  nonisolated static func describe(_ error: any Error) -> String {
     if error is CancellationError {
       return String(localized: "Cancelled — no further actions requested.")
     }

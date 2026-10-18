@@ -5,13 +5,14 @@ public import SpamWiseCore
 /// Client-independent, bounded IMAP adapter using explicit TLS credentials and UID-scoped actions.
 public actor IMAPAdapter: MailClientAdapter {
   typealias Connector = @Sendable (IMAPConfiguration) async throws -> IMAPConnection
-  private static let historyPageSize = 100
   private static let probeSubjectPrefix = "[SpamWise Probe]"
   /// Explicit account identity used to scope retries and persisted actions.
   public nonisolated let accountID: String
-  private let configuration: IMAPConfiguration
+  let configuration: IMAPConfiguration
   private let credentials: @Sendable () async throws -> IMAPCredential
-  private let validations: Store?
+  /// Holds validation evidence and the persisted sweep cursor.
+  let validations: Store?
+  private let validationScope: IMAPValidationScope
   private let connector: Connector
   private var idleSession: IMAPSession?
   private var observedCapabilities: Set<String>?
@@ -22,16 +23,20 @@ public actor IMAPAdapter: MailClientAdapter {
   /// - Parameters:
   ///   - configuration: The account endpoint. Actions also require `allowsActions`.
   ///   - credentials: Supplies the secret for each new connection.
-  ///   - validations: The store holding ``IMAPAccountValidation`` evidence; without it every action is refused.
+  ///   - validations: The store holding ``IMAPAccountValidation`` evidence and the sweep cursor;
+  ///     without it every action is refused.
+  ///   - validationScope: Whose validation evidence gates actions.
   public init(
     configuration: IMAPConfiguration,
     credentials: @escaping @Sendable () async throws -> IMAPCredential,
-    validations: Store? = nil
+    validations: Store? = nil,
+    validationScope: IMAPValidationScope = .app
   ) {
     self.init(
       configuration: configuration,
       credentials: credentials,
       validations: validations,
+      validationScope: validationScope,
       connector: IMAPPipeline.connectTLS
     )
   }
@@ -40,10 +45,12 @@ public actor IMAPAdapter: MailClientAdapter {
     configuration: IMAPConfiguration,
     credentials: @escaping @Sendable () async throws -> IMAPCredential,
     validations: Store?,
+    validationScope: IMAPValidationScope = .app,
     connector: @escaping Connector
   ) {
     self.configuration = configuration; self.credentials = credentials
-    self.validations = validations; self.connector = connector
+    self.validations = validations; self.validationScope = validationScope
+    self.connector = connector
     accountID = configuration.id
   }
 
@@ -108,29 +115,6 @@ public actor IMAPAdapter: MailClientAdapter {
     return try await withSession { session in
       try await Self.messages(mailbox: mailbox, account: account, limit: limit, session: session)
         .envelopes
-    }
-  }
-  /// Imports at most 100 sent messages as partial reply history; incoming mail never trusts itself.
-  public func importHistory() async throws -> [String: HistoryIndex] {
-    let account = configuration.id
-    return try await withSession { session in
-      guard let sent = try await Self.roles(session: session).sent else { return [:] }
-      let page = try await Self.messages(
-        mailbox: sent,
-        account: account,
-        limit: Self.historyPageSize,
-        session: session
-      )
-      var index = HistoryIndex()
-      index.availability = .partial; index.updatedAt = .now
-      for envelope in page.envelopes {
-        guard let message = try? MIMEParser().parse(envelope.raw),
-          message.header("in-reply-to") != nil
-        else { continue }
-        index.importedIDs.insert(envelope.identity.key)
-        index.recordSent(headers: message.headers)
-      }
-      return [account: index]
     }
   }
   /// Moves are unsupported once a connection showed the server lacks UID MOVE; Review keywords are checked per mailbox.
@@ -200,7 +184,11 @@ public actor IMAPAdapter: MailClientAdapter {
 extension IMAPAdapter {
   private func requireActionValidation() async throws {
     guard configuration.allowsActions, let validations,
-      try await IMAPAccountValidation.isValidated(configuration, store: validations)
+      try await IMAPAccountValidation.isValidated(
+        configuration,
+        scope: validationScope,
+        store: validations
+      )
     else { throw IntegrationError.accountUnverified }
   }
 
@@ -215,7 +203,7 @@ extension IMAPAdapter {
 
   /// Runs `operation` on an idle session when one is still young, otherwise on a fresh authenticated session.
   /// A session returns to the pool only after an operation succeeds; any failure closes it.
-  private func withSession<Value: Sendable>(
+  func withSession<Value: Sendable>(
     openingPrecedesAction: Bool = false,
     _ operation: (IMAPSession) async throws -> Value
   ) async throws -> Value {

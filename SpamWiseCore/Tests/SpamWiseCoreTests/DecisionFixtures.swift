@@ -34,7 +34,6 @@ actor RecordingAdapter: MailClientAdapter {
   }
   func retain(_ envelope: MailEnvelope) { message = envelope }
   func recentMessages(limit: Int) async throws -> [MailEnvelope] { [] }
-  func importHistory() async throws -> [String: HistoryIndex] { [:] }
   func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
     if let failure { throw failure }
     if let observedStore {

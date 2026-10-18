@@ -40,6 +40,12 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
   }
 
   var retainedSince: Date { lastObserved ?? date }
+  /// A paused, superseded or pending result never reached an outcome, so discovery revisits it.
+  private var neverFinished: Bool { [.paused, .superseded, .pending].contains(outcome) }
+  /// Any outcome other than a failure, including dry runs and unavailable integrations.
+  private var keepsOutcomeAcrossRevisions: Bool { outcome != .unclassified }
+  /// Unparseable content fails the same way on every attempt, whatever the revision.
+  private var failsIdentically: Bool { failure == .unparseable }
 
   /**
    Creates a result for a recorded decision, classifying its failure when unclassified.
@@ -89,16 +95,14 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
    backoff elapses.
    */
   public func isSettled(revision current: Int, now: Date = .now) -> Bool {
-    switch outcome {
-      case .paused, .superseded, .pending: return false
-      case .unclassified:
-        switch failure {
-          case .unparseable: return true
-          case .transient: return revision == current && (retryAfter ?? .distantPast) > now
-          case .persistent, nil: return revision == current
-        }
-      default: return true
-    }
+    if neverFinished { return false }
+    if keepsOutcomeAcrossRevisions { return true }
+    return failsIdentically || (revision == current && !isTransientRetryDue(now: now))
+  }
+
+  /// A transient failure whose backoff has elapsed; other failures wait for a revision change.
+  private func isTransientRetryDue(now: Date) -> Bool {
+    failure == .transient && (retryAfter ?? .distantPast) <= now
   }
 
   func shouldReplace(_ previous: Self) -> Bool {

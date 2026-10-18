@@ -89,10 +89,8 @@ private actor HistoryEvents: AppleEventRunner {
   }
 }
 @Test func `gates only on confirmed authenticated receipts from exact non-freemail senders`()
-  async throws
+  throws
 {
-  let runner = HistoryEvents()
-  let adapter = AppleMailAdapter(runner: runner)
   var state = AppState()
   for row in HistoryRows.receipts {
     state.record(
@@ -105,30 +103,27 @@ private actor HistoryEvents: AppleEventRunner {
   }
   let correctedKey = try HistoryRows.key(HistoryRows.corrected)
   correct(&state, key: correctedKey, as: .junk)
-  var old = HistoryIndex()
-  old.received["prior.example"] = 4
-  let unclassified = try await adapter.importHistory(
-    previous: ["account": old],
-    eligibleInbox: [:],
-    trustedAuthServers: ["account": ["mx.example"]],
-    incremental: true
-  )
-  #expect(unclassified["account"]?.senderReceipts == nil)
-  #expect(await runner.inboxOffsets.isEmpty)
+  let sent = try HistoryRows.sent.compactMap { try MailRow($0).envelope }
+  let inbox = try HistoryRows.inbox.compactMap { try MailRow($0).envelope }
+  var index = HistoryIndex()
+  index.received["prior.example"] = 4
+  index.ingest(sent: sent, inbox: inbox, trustedAuthServers: ["mx.example"])
+  #expect(index.senderReceipts == nil)
   #expect(state.historyEligibleInbox[correctedKey] == nil)
-  let first = try await adapter.importHistory(
-    previous: ["account": old],
-    eligibleInbox: state.historyEligibleInbox,
-    trustedAuthServers: ["account": ["mx.example"]]
+  index.ingest(
+    sent: sent,
+    inbox: inbox,
+    eligible: state.historyEligibleInbox,
+    trustedAuthServers: ["mx.example"]
   )
-  #expect(first["account"]?.authenticatedSenderReceipts == nil)
+  #expect(index.authenticatedSenderReceipts == nil)
   correct(&state, key: try HistoryRows.key(HistoryRows.shop), as: .inbox)
-  let second = try await adapter.importHistory(
-    previous: first,
-    eligibleInbox: state.historyEligibleInbox,
-    trustedAuthServers: ["account": ["MX.example"]]
+  index.ingest(
+    sent: sent,
+    inbox: inbox,
+    eligible: state.historyEligibleInbox,
+    trustedAuthServers: ["MX.example"]
   )
-  let index = try #require(second["account"])
   #expect(index.received["prior.example"] == 4)
   #expect(index.received["deals4u@gmail.com"] == 1)
   #expect(index.summary(address: "friend@gmail.com", domain: "gmail.com").receivedCount == 0)
@@ -185,36 +180,22 @@ private func gate(
     authentication: authentication
   )?.disposition
 }
-@Test func `skips an oversized Sent message and a failing mailbox page, even as the only mailbox`()
-  async throws
-{
-  let runner = HistoryEvents(accounts: ["broken", "account"], failingInbox: "broken")
-  let adapter = AppleMailAdapter(runner: runner)
-  let eligible: [String: InboxEligibility] = ["unlisted": .classified]
-  let first = try await adapter.importHistory(
-    previous: [:],
-    eligibleInbox: eligible,
-    incremental: true
-  )
-  #expect(first["account"]?.replied.count == 99)
-  #expect(first["broken"]?.replied.count == 99)
-  let second = try await adapter.importHistory(
-    previous: first,
-    eligibleInbox: eligible,
-    incremental: true
-  )
-  #expect(second["account"]?.replied.count == 100)
-  _ = try await adapter.importHistory(previous: second, eligibleInbox: eligible, incremental: true)
-  _ = try await adapter.importHistory(previous: [:], eligibleInbox: eligible)
-  _ = try await adapter.importHistory(previous: second, eligibleInbox: eligible, incremental: true)
-  #expect(await runner.sentOffsets["account"] == [0, 100, 0, 0, 100, 100])
-  #expect(await runner.inboxOffsets["broken"] == [0, 0, 0, 0, 20])
+@Test func `reads Sent history from its high-water mark on its own schedule`() async throws {
+  let store = try testStore(), now = Date.now
+  let runner = HistoryEvents(accounts: ["broken", "account"], failingSent: "broken")
+  let maintenance = HistoryMaintenance(source: AppleMailAdapter(runner: runner), store: store)
+  let accounts = try await AppleMailAdapter(runner: runner).accounts()
+  #expect(try await maintenance.runIfDue(for: accounts, now: now))
+  #expect(try await !maintenance.runIfDue(for: accounts, now: now.addingTimeInterval(60)))
+  let replied = try await StateRepository.load(store, StateSlices(histories: .all))
+    .histories["account"]?.replied
+  #expect(replied?.count == 100)
+  #expect(replied?.values.allSatisfy { $0 == 1 } == true)
+  #expect(try await maintenance.runIfDue(for: accounts, now: now + HistoryMaintenance.interval))
+  #expect(await runner.sentOffsets["account"] == [0, 20, 0])
   let lone = HistoryEvents(failingSent: "account")
-  let loneAdapter = AppleMailAdapter(runner: lone)
-  for _ in 1...4 {
-    await #expect(throws: IntegrationError.self) {
-      try await loneAdapter.importHistory(previous: [:], eligibleInbox: [:], incremental: true)
-    }
+  await #expect(throws: IntegrationError.self) {
+    try await HistoryMaintenance(source: AppleMailAdapter(runner: lone), store: testStore())
+      .runIfDue(for: [MailAccount(id: "account", name: "account")], now: now)
   }
-  #expect(await lone.sentOffsets["account"] == [0, 0, 0, 100])
 }

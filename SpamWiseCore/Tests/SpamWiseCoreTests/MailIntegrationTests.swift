@@ -272,7 +272,7 @@ final class Counter: Sendable {
       throw ClassificationError.configuration
     })
   )
-  await #expect(throws: IntegrationError.self) {
+  await #expect(throws: TrainingFolderError.planInactive) {
     try await pipeline.correct(
       envelope: selected,
       label: .inbox,
@@ -289,7 +289,7 @@ final class Counter: Sendable {
     adapter: adapter,
     trainingPlanID: plan.id
   )
-  await #expect(throws: IntegrationError.staleMessage) {
+  await #expect(throws: TrainingFolderError.alreadyClaimed) {
     try await pipeline.correct(
       envelope: selected,
       label: .inbox,

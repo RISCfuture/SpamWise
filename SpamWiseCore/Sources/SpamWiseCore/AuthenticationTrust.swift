@@ -113,6 +113,11 @@ public enum AuthenticationTrust {
       )
     }
   }
+  /// The receiving servers each account trusts, by account identifier.
+  public static func trustedServers(_ store: Store) async throws -> [String: Set<String>] {
+    try await StateRepository.load(store, StateSlices([.authentication]))
+      .settings.mailOptions.trustedAuthServers
+  }
   /// Trusts the servers detected in the account's mail, superseding pending classifications.
   public static func confirmDetected(accountID: String, store: Store) async throws {
     let observations = try await StateRepository.load(store, StateSlices([.authentication]))

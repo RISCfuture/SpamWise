@@ -1,17 +1,5 @@
 import Foundation
-public import SpamWiseCore
-
-/// One bounded mailbox page, including entries whose source could not be read.
-public struct MailPage: Sendable {
-  /// Readable envelopes; unavailable entries never reach classification or mail actions.
-  public let messages: [MailEnvelope]
-  /// Current observed mailbox size; not a server acknowledgement.
-  public let total: Int
-  /// Mailbox positions visited, including unavailable entries.
-  public let visitedCount: Int
-  /// Entries requiring another attempt on a later sweep.
-  public var unavailableCount: Int { visitedCount - messages.count }
-}
+import SpamWiseCore
 
 /// One message row returned by the Mail handler library, with its source when readable.
 struct MailRow: Sendable {

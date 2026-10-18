@@ -12831,6 +12831,166 @@
         }
       }
     },
+    "Couldn’t save the folder plan.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar el plan de carpeta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer la configuration du dossier."
+          }
+        }
+      }
+    },
+    "The folder “%@” isn’t named “%@”.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carpeta “%1$@” no se llama “%2$@”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier « %1$@ » ne s’appelle pas « %2$@ »."
+          }
+        }
+      }
+    },
+    "The folder “%@” isn’t empty.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carpeta “%@” no está vacía."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier « %@ » n’est pas vide."
+          }
+        }
+      }
+    },
+    "SpamWise keeps at most %@ folder plans.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise conserva como máximo %@ planes de carpeta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise conserve au maximum %@ configurations de dossier."
+          }
+        }
+      }
+    },
+    "The folder plan no longer exists.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El plan de carpeta ya no existe."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La configuration du dossier n’existe plus."
+          }
+        }
+      }
+    },
+    "Create a dedicated folder named “%@” in Mail, then select it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crea en Mail una carpeta dedicada llamada “%@” y selecciónala."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créez dans Mail un dossier dédié nommé « %@ », puis sélectionnez-le."
+          }
+        }
+      }
+    },
+    "Move its messages elsewhere so the folder is empty, then save the plan again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mueve sus mensajes a otro lugar para vaciar la carpeta y vuelve a guardar el plan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacez ses messages ailleurs pour vider le dossier, puis enregistrez à nouveau la configuration."
+          }
+        }
+      }
+    },
+    "Remove a plan you no longer use, then try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina un plan que ya no uses y vuelve a intentarlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimez une configuration que vous n’utilisez plus, puis réessayez."
+          }
+        }
+      }
+    },
+    "The mail operation failed. Mail stays unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La operación de correo falló. El correo no cambia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’opération de messagerie a échoué. Les messages restent inchangés."
+          }
+        }
+      }
+    },
+    "Folder plan removed. The folder and its mail are unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan de carpeta eliminado. La carpeta y su correo no cambian."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuration du dossier supprimée. Le dossier et ses messages restent inchangés."
+          }
+        }
+      }
+    },
     "The automation request couldn’t be completed.": {
       "extractionState": "manual",
       "localizations": {
@@ -13704,6 +13864,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "SpamWise n’a pas encore vu assez de courrier de ce compte pour détecter ses serveurs."
+          }
+        }
+      }
+    },
+    "The training folder placement couldn’t be applied.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo aplicar la colocación en la carpeta de entrenamiento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’appliquer le placement dans le dossier d’entraînement."
+          }
+        }
+      }
+    },
+    "Filtering is paused, or the training folder plan is off or unvalidated.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El filtrado está en pausa, o el plan de la carpeta de entrenamiento está desactivado o sin validar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtrage est en pause, ou le plan du dossier d’entraînement est désactivé ou non validé."
+          }
+        }
+      }
+    },
+    "The message isn’t in the training folder its plan names.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje no está en la carpeta de entrenamiento que indica su plan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message ne se trouve pas dans le dossier d’entraînement indiqué par son plan."
+          }
+        }
+      }
+    },
+    "This placement was already applied.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta colocación ya se aplicó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce placement a déjà été appliqué."
+          }
+        }
+      }
+    },
+    "The training folder holds more messages than SpamWise tracks.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carpeta de entrenamiento contiene más mensajes de los que SpamWise registra."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dossier d’entraînement contient plus de messages que SpamWise n’en suit."
           }
         }
       }

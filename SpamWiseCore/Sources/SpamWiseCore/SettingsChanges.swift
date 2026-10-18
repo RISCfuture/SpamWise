@@ -41,7 +41,7 @@ extension Settings {
     return array.map(canonical).sorted().joined(separator: "\u{0}")
   }
   /// Dotted names of the encoded fields whose values differ from `previous`.
-  func changedFields(from previous: Settings) -> [String] {
+  public func changedFields(from previous: Settings) -> [String] {
     Self.differences(Self.object(self), Self.object(previous), path: "").sorted()
   }
 }

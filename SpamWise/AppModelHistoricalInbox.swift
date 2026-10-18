@@ -7,7 +7,7 @@ extension AppModel {
     scanHealth[accountID]?.inboxStart
   }
   func previewHistoricalInbox(accountID: String, page: Int) {
-    guard let pipeline, !state.settings.dryRun, let start = inboxStart(accountID: accountID)
+    guard pipeline != nil, !state.settings.dryRun, let start = inboxStart(accountID: accountID)
     else { return }
     run { [self] in
       historicalPreview[accountID] = nil
@@ -17,12 +17,7 @@ extension AppModel {
         limit: Self.defaultScanLimit,
         before: start
       )
-      let records = try await classify(
-        ScanBatch(adapter: adapter, messages: older.messages, retryAccountID: accountID),
-        with: pipeline,
-        dryRun: true,
-        automatic: false
-      )
+      let records = try await preview(older.messages)
       historicalPreview[accountID] = records.filter { $0.outcome == .dryRun }.map(\.id)
       status = String(
         localized:

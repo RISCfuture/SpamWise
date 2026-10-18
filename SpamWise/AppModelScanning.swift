@@ -6,24 +6,24 @@ extension AppModel {
   static func unreadableStatus(_ count: Int) -> String {
     String(localized: "Unreadable messages: \(count, format: .number)")
   }
+  private static func previewStatus(_ preview: MailPreview) -> String {
+    preview.unavailableCount > 0
+      ? unreadableStatus(preview.unavailableCount)
+      : String(localized: "Dry run finished — no mail actions requested")
+  }
+  /// Sweeps mail automatically, or previews the newest `limit` Inbox messages across accounts.
   func scan(dryRun: Bool = true, automatic: Bool = false, limit: Int = AppModel.defaultScanLimit) {
-    guard let pipeline, !automatic || canScanAutomatically else { return }
+    guard pipeline != nil, !automatic || canScanAutomatically else { return }
     run { [self] in
-      await prepareScan(automatic: automatic)
-      if automatic, state.settings.advancedOptions.transport == .appleMail {
-        try await scanMailAccounts(with: pipeline, dryRun: dryRun, limit: limit)
+      await prepareScan()
+      let sweeper = try await mailSweeper()
+      guard automatic else {
+        let preview = try await sweeper.previewRecent(total: limit) { await self.handle($0) }
+        status = Self.previewStatus(preview)
         return
       }
-      let batch = try await scanBatch(automatic: automatic, limit: limit)
-      try await classify(batch, with: pipeline, dryRun: dryRun, automatic: automatic)
-      if !dryRun {
-        await pipeline.retryDue(adapter: batch.adapter, accountID: batch.retryAccountID)
-      }
-      status =
-        dryRun
-        ? String(localized: "Dry run finished — no mail actions requested")
-        : String(localized: "Mail check finished")
-      if batch.unavailableCount > 0 { status = Self.unreadableStatus(batch.unavailableCount) }
+      try await sweeper.sweep(dryRun: dryRun, limit: limit) { await self.handle($0) }
+      status = String(localized: "Mail sweep updated. See Accounts for scan health.")
     }
   }
   func discoverAccounts() async throws {
@@ -49,88 +49,48 @@ extension AppModel {
       await refresh()
     }
   }
-  private func scanMailAccounts(with pipeline: Pipeline, dryRun: Bool, limit: Int) async throws {
-    guard let store else { throw IntegrationError.unavailable }
-    try await discoverAccounts()
-    for account in accounts
-    where state.settings.mailOptions.accountIDs?.contains(account.id) ?? true {
-      try Task.checkCancellation()
-      guard !state.settings.paused else { return }
-      do {
-        try await AppleMailInboxSweep(adapter: adapter, pipeline: pipeline, store: store).run(
-          account: account,
-          dryRun: dryRun,
-          limit: limit
-        ) { count, total in await self.showProgress(count, of: total) }
-        if !dryRun { await pipeline.retryDue(adapter: adapter, accountID: account.id) }
-      } catch is CancellationError { throw CancellationError() } catch {
-        let description = Self.describe(error)
-        try await MailHealthRepository.update(store, accountID: account.id, name: account.name) {
-          $0.failure = description
-        }
-      }
-      await refresh()
+  /// A sweeper over the selected transport, or over `source` when given.
+  func mailSweeper(source: (any MailSweepSource)? = nil) async throws -> MailSweeper {
+    guard let store, let pipeline else { throw IntegrationError.unavailable }
+    let imap = source == nil && state.settings.advancedOptions.transport == .imap
+    let selected: any MailSweepSource
+    if let source {
+      selected = source
+    } else if imap {
+      selected = try await configuredIMAPAdapter()
+    } else {
+      selected = adapter
     }
-    try await scanConfiguredFolders(with: pipeline, dryRun: dryRun, limit: limit)
-    status = String(localized: "Mail sweep updated. See Accounts for scan health.")
+    return MailSweeper(
+      source: selected,
+      store: store,
+      pipeline: pipeline,
+      scope: imap ? .allAccounts : .configured,
+      describe: { Self.describe($0) }
+    )
   }
-  private func prepareScan(automatic: Bool) async {
+  /// Previews messages as a dry run, reusing unchanged earlier previews.
+  func preview(_ messages: [MailEnvelope]) async throws -> [DecisionRecord] {
+    try await mailSweeper(source: adapter).preview(messages) { await self.handle($0) }
+  }
+  private func prepareScan() async {
     lastScan = .now
     if !uiTesting, contactsNeedRefresh { try? await refreshContacts() }
-    if automatic { await maintainHistory() }
+    if state.settings.advancedOptions.transport == .appleMail { try? await discoverAccounts() }
     await refresh()
   }
-  private func scanBatch(automatic: Bool, limit: Int) async throws -> ScanBatch {
-    if state.settings.advancedOptions.transport == .imap {
-      let imap = try await configuredIMAPAdapter()
-      guard automatic else {
-        let messages = try await imap.recentMessages(limit: limit)
-        return ScanBatch(adapter: imap, messages: messages, retryAccountID: imap.accountID)
-      }
-      let sweep = try await imap.nextInboxSweep(limit: limit, cursorStore: store)
-      return ScanBatch(adapter: imap, messages: sweep.messages, retryAccountID: imap.accountID) {
-        [store] in try await imap.commit(sweep, cursorStore: store)
-      }
+  private func handle(_ event: MailSweepEvent) async {
+    switch event {
+      case .processed(let count, let total):
+        status = String(
+          localized: "Classified \(count, format: .number) of \(total, format: .number) messages"
+        )
+      case .historyUnavailable:
+        mailStatus = String(
+          localized: "History refresh unavailable — only previously stored relationships are known"
+        )
+      case .accountSwept, .accountFailed, .folderSwept, .folderFailed: break
     }
-    try await discoverAccounts()
-    var messages: [MailEnvelope] = [], unavailableCount = 0
-    for account in accounts
-    where state.settings.mailOptions.accountIDs?.contains(account.id) ?? true {
-      try Task.checkCancellation()
-      let page = try await adapter.inboxPage(accountID: account.id, offset: 0, limit: limit)
-      messages += page.messages
-      unavailableCount += page.unavailableCount
-    }
-    return ScanBatch(
-      unavailableCount: unavailableCount,
-      adapter: adapter,
-      messages: messages,
-      retryAccountID: nil
-    )
-  }
-  @discardableResult func classify(
-    _ batch: ScanBatch,
-    with pipeline: Pipeline,
-    dryRun: Bool,
-    automatic: Bool
-  ) async throws -> [DecisionRecord] {
-    if !dryRun {
-      _ = await pipeline.correctMailReturnedFromJunk(batch.messages, adapter: batch.adapter)
-    }
-    let total = batch.messages.count
-    return try await pipeline.processBatch(
-      batch.messages,
-      adapter: batch.adapter,
-      dryRun: dryRun,
-      skipsSettled: automatic,
-      progress: { count in await self.showProgress(count, of: total) },
-      onCompletion: batch.commit
-    )
-  }
-  private func showProgress(_ count: Int, of total: Int) async {
-    status = String(
-      localized: "Classified \(count, format: .number) of \(total, format: .number) messages"
-    )
     await refresh()
   }
 }

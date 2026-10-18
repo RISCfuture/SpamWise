@@ -1,20 +1,6 @@
 public import Foundation
 public import SpamWiseCore
 
-/// A Mail account's stable scripting identifier and display name.
-public struct MailAccount: Identifiable, Sendable {
-  /// Mail’s stable scripting account identifier.
-  public var id: String
-  /// Account name supplied by Mail for display.
-  public var name: String
-  /// Own addresses reported by Mail, without reading credentials.
-  public var addresses: [String]
-  /// Creates a displayable account with optional own-address discovery.
-  public init(id: String, name: String, addresses: [String] = []) {
-    self.id = id; self.name = name; self.addresses = addresses
-  }
-}
-
 /**
  Account-scoped Apple Events integration with exact-source action checks.
 
@@ -32,9 +18,6 @@ public actor AppleMailAdapter: MailClientAdapter {
   let callTimeLimit: Duration
   let moveSettlingTime: Duration
   let observationInterval: Duration
-  var pageOffsets: [String: Int] = [:]
-  /// Consecutive failed reads of each history cursor's current page.
-  var historyPageFailures: [String: Int] = [:]
 
   /**
    Creates an adapter over a Mail handler runner.
