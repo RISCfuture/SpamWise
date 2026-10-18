@@ -38,10 +38,10 @@ extension Pipeline {
       (path, reason) = (.gate, .gate(gate.reason))
       verdict = Self.deterministicVerdict(gate.disposition == .allow ? .inbox : .junk, reason)
     } else if state.settings.advancedOptions.fingerprints,
-      state.learning?.campaignMatch(for: message) != nil
+      state.learning?.campaignMatch(for: message, evidence: evidence) != nil
     {
       (path, reason) = (.fingerprint, .campaign)
-      verdict = Self.deterministicVerdict(.junk, reason)
+      verdict = Self.deterministicVerdict(.review, reason)
     } else {
       path = .model
       verdict = try await modelVerdict(message, evidence: &evidence, state: state, budget: budget)

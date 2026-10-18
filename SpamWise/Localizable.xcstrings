@@ -12144,19 +12144,19 @@
         }
       }
     },
-    "Blocked: matches a campaign you marked as junk": {
+    "Review: matches a campaign you marked as junk": {
       "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bloqueado: coincide con una campaña que marcaste como no deseada"
+            "value": "Revisar: coincide con una campaña que marcaste como no deseada"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bloqué : correspond à une campagne que vous avez marquée comme indésirable"
+            "value": "À vérifier : correspond à une campagne que vous avez marquée comme indésirable"
           }
         }
       }

@@ -41,22 +41,20 @@ public enum CorpusManagement {
         labels.append(reviewed)
         state.corrections.removeAll { $0.sampleID == sampleID }
         learning.forget(sampleID: sampleID)
-        if !reviewed.heldOut {
-          learning.recordCorrection(
-            message: message,
-            evidence: EvidenceBundle(message: message),
-            label: label
-          )
-          var example = CorrectionExample(
-            sender: message.fromAddress,
-            domain: DomainResolver().domain(ofAddress: message.fromAddress),
-            subject: message.subject,
-            gist: message.text,
-            label: label
-          )
-          example.sampleID = sampleID
-          state.corrections.append(example)
-        }
+        learning.recordCorrection(
+          message: message,
+          evidence: EvidenceBundle(message: message),
+          label: label
+        )
+        var example = CorrectionExample(
+          sender: message.fromAddress,
+          domain: DomainResolver().domain(ofAddress: message.fromAddress),
+          subject: message.subject,
+          gist: message.text,
+          label: label
+        )
+        example.sampleID = sampleID
+        state.corrections.append(example)
       }
       guard labels.count <= maximumLabels else { throw ParseError.tooLarge }
       state.reviewedLabels = labels
@@ -80,14 +78,9 @@ public enum CorpusManagement {
       reviewed.label = label; reviewed.date = .now
       state.reviewedLabels?.removeAll { $0.id == id }
       state.reviewedLabels?.append(reviewed)
-      if reviewed.heldOut {
-        state.learning?.forget(sampleID: sampleID)
-        state.corrections.removeAll { $0.sampleID == sampleID }
-      } else {
-        state.learning?.relabel(sampleID: sampleID, label: label)
-        for index in state.corrections.indices where state.corrections[index].sampleID == sampleID {
-          state.corrections[index].label = label
-        }
+      state.learning?.relabel(sampleID: sampleID, label: label)
+      for index in state.corrections.indices where state.corrections[index].sampleID == sampleID {
+        state.corrections[index].label = label
       }
       state.correctionUndo = nil
       state.revision += 1; state.retries.removeAll()

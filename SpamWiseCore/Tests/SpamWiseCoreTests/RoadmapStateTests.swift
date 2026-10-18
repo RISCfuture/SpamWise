@@ -161,12 +161,11 @@ import SpamWiseCore
   #expect(labels.count == 20)
   #expect(state.rules.count == 1)
   #expect(state.records.isEmpty)
-  let heldOut = labels.filter(\.heldOut)
-  #expect(!heldOut.isEmpty)
+  #expect(labels.contains { $0.heldOut })
   #expect(
-    heldOut.allSatisfy { label in !state.corrections.contains { $0.sampleID == label.sampleID } }
+    labels.allSatisfy { label in state.corrections.contains { $0.sampleID == label.sampleID } }
   )
-  #expect(state.learning?.samples.allSatisfy { $0.partition == .training } == true)
+  #expect(state.learning?.samples.count == labels.count)
   let last = try #require(labels.last)
   #expect(last.label == .inbox)
   #expect(last.message == nil)

@@ -1,9 +1,11 @@
 import Classifier
 import Foundation
 import MessageModel
+import Signals
 
 enum CampaignContent {
   static let minimumOverlap = 0.8
+  private static let authenticatedSenderPrefix = "dmarc:"
   private static let maximumBodyCharacters = 8000
   private static let minimumBodyCharacters = 100
   private static let minimumWords = 20
@@ -11,17 +13,33 @@ enum CampaignContent {
   private static let wordsPerShingle = 5
   private static let maximumShingles = 128
   private static let minimumShingles = 12
-  private static let maximumURLs = 100
-  private static let maximumLinkAnchors = 20
   private static let footerMarkers = [
     "unsubscribe", "privacy policy", "manage preferences", "manage your preferences",
     "view in browser",
     "all rights reserved", "copyright", "you are receiving", "you received this", "if you no longer"
   ]
 
-  static func fingerprint(message: ParsedMessage, label: MailLabel, date: Date)
-    -> CampaignFingerprint?
-  {
+  /// Builds a signature; Junk signatures additionally require an authenticated sender anchor.
+  static func fingerprint(
+    message: ParsedMessage,
+    shingles: [String],
+    evidence: EvidenceBundle,
+    label: MailLabel,
+    date: Date
+  ) -> CampaignFingerprint? {
+    let anchors = authenticatedAnchors(message, evidence: evidence)
+    guard label != .junk || !anchors.isEmpty else { return nil }
+    return CampaignFingerprint(
+      id: LearningSample.identity(for: message),
+      date: date,
+      label: label,
+      anchors: anchors,
+      shingles: shingles
+    )
+  }
+
+  /// Returns bounded body shingles, or nil when the body is too short or generic to compare.
+  static func shingles(_ message: ParsedMessage) -> [String]? {
     let body = String(message.text.prefix(maximumBodyCharacters)).components(separatedBy: .newlines)
       .filter { line in
         !footerMarkers.contains { line.lowercased().contains($0) }
@@ -35,28 +53,15 @@ enum CampaignContent {
         stableHash(Data(words[$0..<($0 + wordsPerShingle)].joined(separator: " ").utf8))
       }
     ).sorted().prefix(maximumShingles).map { $0 }
-    guard shingles.count >= minimumShingles else { return nil }
-    let anchors = anchors(message)
-    guard !anchors.isEmpty else { return nil }
-    return CampaignFingerprint(
-      id: LearningSample.identity(for: message),
-      date: date,
-      label: label,
-      anchors: anchors,
-      shingles: shingles
-    )
+    return shingles.count >= minimumShingles ? shingles : nil
   }
 
-  static func anchors(_ message: ParsedMessage) -> [String] {
-    let resolver = DomainResolver()
-    var anchors = message.urls.prefix(maximumURLs).compactMap { URL(string: $0)?.host }.compactMap(
-      resolver.registrableDomain
-    )
-    .prefix(maximumLinkAnchors).map { "link:" + $0 }
-    if let domain = resolver.domain(ofAddress: message.fromAddress) {
-      anchors.append("sender:" + domain)
-    }
-    return Array(Set(anchors)).sorted()
+  /// Anchors the From domain only when a trusted server reports DMARC pass, which requires alignment.
+  static func authenticatedAnchors(_ message: ParsedMessage, evidence: EvidenceBundle) -> [String] {
+    guard evidence.authResults.contains(where: isTrustedDMARCPass),
+      let domain = DomainResolver().domain(ofAddress: message.fromAddress)
+    else { return [] }
+    return [authenticatedSenderPrefix + domain]
   }
 
   static func overlap(_ lhs: [String], _ rhs: [String]) -> Double {
@@ -64,29 +69,38 @@ enum CampaignContent {
     return Double(left.intersection(right).count) / Double(max(1, left.union(right).count))
   }
 
+  /// Inbox and Review signatures both suppress near-duplicate Junk inference.
   static func isSuppressed(message: ParsedMessage, fingerprints: [CampaignFingerprint]) -> Bool {
-    guard let candidate = fingerprint(message: message, label: .inbox, date: .distantPast) else {
-      return false
-    }
-    return fingerprints.contains {
-      $0.label != .junk && overlap($0.shingles, candidate.shingles) >= minimumOverlap
-    }
+    shingles(message).map { isSuppressed($0, fingerprints: fingerprints) } ?? false
   }
 
-  static func match(message: ParsedMessage, fingerprints: [CampaignFingerprint]) -> CampaignMatch? {
-    guard let candidate = fingerprint(message: message, label: .junk, date: .distantPast),
-      !isSuppressed(message: message, fingerprints: fingerprints)
+  static func match(
+    message: ParsedMessage,
+    evidence: EvidenceBundle,
+    fingerprints: [CampaignFingerprint]
+  ) -> CampaignMatch? {
+    let anchors = Set(authenticatedAnchors(message, evidence: evidence))
+    guard !anchors.isEmpty, let shingles = shingles(message),
+      !isSuppressed(shingles, fingerprints: fingerprints)
     else { return nil }
-    return fingerprints.filter {
-      $0.label == .junk && !Set($0.anchors).isDisjoint(with: candidate.anchors)
-    }
-    .compactMap { fingerprint -> CampaignMatch? in
-      let similarity = overlap(fingerprint.shingles, candidate.shingles)
-      return similarity >= minimumOverlap
-        ? CampaignMatch(fingerprintID: fingerprint.id, similarity: similarity) : nil
-    }.sorted {
-      $0.similarity == $1.similarity
-        ? $0.fingerprintID < $1.fingerprintID : $0.similarity > $1.similarity
-    }.first
+    return fingerprints.filter { $0.label == .junk && !anchors.isDisjoint(with: $0.anchors) }
+      .compactMap { fingerprint -> CampaignMatch? in
+        let similarity = overlap(fingerprint.shingles, shingles)
+        return similarity >= minimumOverlap
+          ? CampaignMatch(fingerprintID: fingerprint.id, similarity: similarity) : nil
+      }.sorted {
+        $0.similarity == $1.similarity
+          ? $0.fingerprintID < $1.fingerprintID : $0.similarity > $1.similarity
+      }.first
+  }
+
+  private static func isTrustedDMARCPass(_ result: AuthResult) -> Bool {
+    result.trusted && result.mechanism == "dmarc" && result.result == "pass"
+  }
+
+  private static func isSuppressed(_ shingles: [String], fingerprints: [CampaignFingerprint])
+    -> Bool
+  {
+    fingerprints.contains { $0.label != .junk && overlap($0.shingles, shingles) >= minimumOverlap }
   }
 }

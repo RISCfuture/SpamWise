@@ -6,7 +6,7 @@ import Foundation
 public enum DecisionReason: Codable, Sendable, Equatable {
   /// A sender rule, content rule or trusted relationship decided the message.
   case gate(GateReason)
-  /// The message matched a campaign the user explicitly marked as junk.
+  /// The message matched a campaign the user explicitly marked as junk, so it was flagged for Review.
   case campaign
   /// The classifier's own explanation, written in the language its instructions request.
   case model(String)
@@ -78,7 +78,7 @@ extension DecisionReason {
   public var localizedDescription: String {
     switch self {
       case .gate(let gate): gate.localizedDescription
-      case .campaign: String(localized: "Blocked: matches a campaign you marked as junk")
+      case .campaign: String(localized: "Review: matches a campaign you marked as junk")
       case .model(let text), .legacy(let text): text
       case .userCorrection(.address): String(localized: "Your correction for this sender’s address")
       case .userCorrection(.domain): String(localized: "Your correction for this sender’s domain")
@@ -107,7 +107,7 @@ extension DecisionReason {
   public var diagnosticDescription: String {
     switch self {
       case .gate(let gate): gate.diagnosticDescription
-      case .campaign: "gate: anchored match to explicitly junked campaign"
+      case .campaign: "review: authenticated match to explicitly junked campaign"
       case .model(let text), .legacy(let text): text
       case .userCorrection(let scope): "User correction (\(scope.rawValue))"
       case .selectedForCorrection: "Explicitly selected for correction"

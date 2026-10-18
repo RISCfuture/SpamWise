@@ -65,22 +65,56 @@ struct `learns from bounded corrections` {
     #expect(state.knownSenderCounts(atDomains: ["shop.example"]) == ["shop.example": 4])
   }
 
-  @Test func `matches anchored campaigns and invalidates them after explicit good`() throws {
-    let message = try learningMessage(campaignText)
+  @Test func `matches authenticated campaigns and invalidates them after explicit good`() throws {
+    let message = try learningMessage(campaignText, authenticated: true)
     var state = LearningState()
     state.recordCorrection(message: message, evidence: .init(message: message), label: .junk)
-    #expect(state.campaignMatch(for: message) != nil)
-    let unrelatedSender = try learningMessage(campaignText, sender: "different@unrelated.example")
-    #expect(state.campaignMatch(for: unrelatedSender) == nil)
-    state.recordCorrection(message: message, evidence: .init(message: message), label: .inbox)
-    #expect(state.campaignMatch(for: message) == nil)
+    #expect(state.campaignMatch(for: message, evidence: authenticatedEvidence(message)) == nil)
+    state.recordCorrection(message: message, evidence: authenticatedEvidence(message), label: .junk)
+    #expect(state.campaignMatch(for: message, evidence: authenticatedEvidence(message)) != nil)
+    #expect(state.campaignMatch(for: message, evidence: .init(message: message)) == nil)
+    let unrelatedSender = try learningMessage(
+      campaignText,
+      sender: "different@unrelated.example",
+      authenticated: true
+    )
+    #expect(
+      state.campaignMatch(for: unrelatedSender, evidence: authenticatedEvidence(unrelatedSender))
+        == nil
+    )
+    state.recordCorrection(
+      message: message,
+      evidence: authenticatedEvidence(message),
+      label: .inbox
+    )
+    #expect(state.campaignMatch(for: message, evidence: authenticatedEvidence(message)) == nil)
     #expect(state.samples.count == 1)
     #expect(state.samples.first?.label == .inbox)
     let generic = try learningMessage(
-      "Thank you\nUnsubscribe privacy policy manage preferences contact us"
+      "Thank you\nUnsubscribe privacy policy manage preferences contact us",
+      authenticated: true
     )
-    state.recordCorrection(message: generic, evidence: .init(message: generic), label: .junk)
-    #expect(state.campaignMatch(for: generic) == nil)
+    state.recordCorrection(message: generic, evidence: authenticatedEvidence(generic), label: .junk)
+    #expect(state.campaignMatch(for: generic, evidence: authenticatedEvidence(generic)) == nil)
+  }
+
+  @Test func `lets a later junk correction override an earlier good campaign signature`() throws {
+    let issues = try (0..<3).map {
+      try learningMessage(campaignText + " issue\($0)", id: "\($0)", authenticated: true)
+    }
+    var state = LearningState()
+    state.recordCorrection(
+      message: issues[0],
+      evidence: authenticatedEvidence(issues[0]),
+      label: .inbox
+    )
+    state.recordCorrection(
+      message: issues[1],
+      evidence: authenticatedEvidence(issues[1]),
+      label: .junk
+    )
+    #expect(state.fingerprints.map(\.label) == [.junk])
+    #expect(state.campaignMatch(for: issues[2], evidence: authenticatedEvidence(issues[2])) != nil)
   }
 
   @Test func `retains bounded records and restores safe limits when decoding`() throws {
@@ -101,9 +135,18 @@ struct `learns from bounded corrections` {
     #expect(restored.samples == state.samples)
     let empty = try JSONDecoder().decode(LearningState.self, from: Data("{}".utf8))
     #expect(empty.samples.isEmpty)
+    let legacy = try JSONDecoder().decode(
+      LearningState.self,
+      from: Data(legacySampleJSON(id: try #require(state.samples.first?.id)).utf8)
+    )
+    let migrated = try #require(legacy.samples.first?.features)
+    #expect(migrated.version < LearningFeatures.schemaVersion)
+    #expect(migrated.abuseHeavyTLD == 1)
+    #expect(migrated.unknownDomainAge == 1)
+    #expect(migrated.linkDomainDensity == 0.5)
   }
 
-  @Test func `excludes heldout examples and refuses contradictory self training`() throws {
+  @Test func `trains on every explicit label and refuses contradictory self training`() throws {
     var state = LearningState()
     let query = try learningMessage("casino jackpot lottery prize lucky winner claim reward")
     #expect(state.estimate(message: query, evidence: .init(message: query)).bayesLogOdds == nil)
@@ -112,8 +155,7 @@ struct `learns from bounded corrections` {
     let estimate = state.estimate(message: query, evidence: .init(message: query))
     #expect((estimate.bayesLogOdds ?? 0) > 0)
     #expect(estimate.logisticMargin != nil)
-    #expect(estimate.trainingCount + estimate.heldOutCount == state.samples.count)
-    #expect(estimate.heldOutCount > 0)
+    #expect(estimate.trainingCount == state.samples.count)
     let high = Verdict(label: .junk, confidence: 99, reason: "classifier")
     var junkEvidence = EvidenceBundle(message: query)
     junkEvidence.tldIsAbuseHeavy = true
@@ -156,20 +198,16 @@ struct `learns from bounded corrections` {
     #expect(
       state.samples.filter { $0.id == LearningSample.identity(for: query) }.map(\.label) == [.inbox]
     )
-    let heldOut = try #require(state.samples.first { $0.partition == .heldOut })
-    #expect(!state.trainingSamples.contains { $0.id == heldOut.id })
   }
 
-  @Test func `learns directional regularized weights without heldout leakage`() async throws {
-    var state = LearningState(), changedHoldout = LearningState()
+  @Test func `learns directional regularized weights from enriched evidence`() async throws {
+    var state = LearningState()
     try trainLearningState(&state)
-    try trainLearningState(&changedHoldout, reverseHeldOutLabels: true)
     let query = try learningMessage("casino jackpot lottery prize lucky winner claim reward")
     var evidence = EvidenceBundle(message: query)
     evidence.tldIsAbuseHeavy = true
     let junk = state.estimate(message: query, evidence: evidence)
     #expect((junk.logisticMargin ?? 0) > 0)
-    #expect(junk == changedHoldout.estimate(message: query, evidence: evidence))
     evidence.tldIsAbuseHeavy = false
     #expect((state.estimate(message: query, evidence: evidence).logisticMargin ?? 0) < 0)
     let inconsistent = state.admitPrediction(
@@ -234,9 +272,7 @@ private let campaignText =
   + "premium optical lenses astronomy equipment limited inventory clearance purchase checkout "
   + "voucher celestial imaging accessories binoculars mount tripod promotion delivery today"
 
-private func trainLearningState(_ state: inout LearningState, reverseHeldOutLabels: Bool = false)
-  throws
-{
+private func trainLearningState(_ state: inout LearningState) throws {
   for index in 0..<200 {
     let junk = index.isMultiple(of: 2)
     let text =
@@ -246,16 +282,10 @@ private func trainLearningState(_ state: inout LearningState, reverseHeldOutLabe
     let message = try learningMessage(text + " item\(index)", id: "\(index)")
     var evidence = EvidenceBundle(message: message)
     evidence.tldIsAbuseHeavy = junk
-    var label: MailLabel = junk ? .junk : .inbox
-    if reverseHeldOutLabels {
-      var partitionProbe = LearningState()
-      partitionProbe.recordCorrection(message: message, evidence: evidence, label: label)
-      if partitionProbe.samples.first?.partition == .heldOut { label = junk ? .inbox : .junk }
-    }
     state.recordCorrection(
       message: message,
       evidence: evidence,
-      label: label,
+      label: junk ? .junk : .inbox,
       date: Date(timeIntervalSince1970: Double(index))
     )
   }
@@ -278,13 +308,32 @@ private func correction(
   return example
 }
 
+private let trustedAuthServer = "mx.example"
+
 private func learningMessage(
   _ text: String,
   sender: String = "sender@shop.example",
-  id: String = "sample"
+  id: String = "sample",
+  authenticated: Bool = false
 ) throws -> ParsedMessage {
   let subject = text.prefix(80).replacingOccurrences(of: "\n", with: " ")
+  let authentication =
+    authenticated ? "Authentication-Results: \(trustedAuthServer); dmarc=pass\r\n" : ""
   return try MIMEParser().parse(
-    Data("From: \(sender)\r\nSubject: \(subject)\r\nMessage-ID: <\(id)>\r\n\r\n\(text)".utf8)
+    Data(
+      "From: \(sender)\r\nSubject: \(subject)\r\nMessage-ID: <\(id)>\r\n\(authentication)\r\n\(text)"
+        .utf8
+    )
   )
+}
+
+private func authenticatedEvidence(_ message: ParsedMessage) -> EvidenceBundle {
+  EvidenceBundle(message: message, trustedAuthServers: [trustedAuthServer])
+}
+
+private func legacySampleJSON(id: String) -> String {
+  """
+  {"samples": [{"id": "\(id)", "date": 0, "label": "junk", "provenance": "explicitCorrection", \
+  "partition": "training", "tokens": ["casino"], "features": [1, 1, 0, 1, 0, 0, 0, 0.5]}]}
+  """
 }

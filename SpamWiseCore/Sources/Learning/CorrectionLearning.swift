@@ -111,6 +111,13 @@ enum LearningText {
       .map { $0 }
   }
 
+  /// Selects distinct tokens with the smallest stable hashes, independent of spelling and order.
+  static func hashSample(_ text: String, limit: Int) -> [String] {
+    Set(tokens(text)).map { (stableHash(Data($0.utf8)), $0) }.sorted(by: <).prefix(limit).map(
+      \.1
+    )
+  }
+
   static func newer(_ lhs: CorrectionExample, _ rhs: CorrectionExample) -> Bool {
     lhs.date == rhs.date ? lhs.id.uuidString < rhs.id.uuidString : lhs.date > rhs.date
   }
