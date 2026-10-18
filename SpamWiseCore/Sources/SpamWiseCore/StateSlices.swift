@@ -16,7 +16,7 @@ public enum StateSelection<Key: Hashable & Sendable>: Sendable {
  Settings, the policy revision and usage totals are always read. Every other part starts
  empty unless selected. A transaction may add or replace elements of any collection, but it
  deletes only elements it read, and it may change a document only after reading it.
- ``AppState/invalidatePendingWork(_:detail:)`` discards all retries and the undo snapshot
+ ``AppState/invalidatePendingWork(_:)`` discards all retries and the undo snapshot
  whether or not they were read.
  */
 public struct StateSlices: Sendable {

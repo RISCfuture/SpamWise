@@ -82,7 +82,7 @@ extension Pipeline {
       if record.outcome != .duplicate {
         let saved = StateSlices(records: .only([record.id]))
         guard try await !StateRepository.load(store, saved).records.isEmpty else {
-          throw IntegrationError.unavailable
+          throw DecisionRecordError.notFound
         }
       }
       if skipsSettled { try await recordUnrecordedResults() }
@@ -102,12 +102,39 @@ extension Pipeline {
   {
     let records = try await StateRepository.load(store, StateSlices(records: .only([recordID])))
       .records
-    guard let record = records.first(where: { $0.id == recordID }), record.outcome == .dryRun,
-      record.correctedLabel == nil
-    else { throw IntegrationError.staleMessage }
+    guard let record = records.first(where: { $0.id == recordID }) else {
+      throw DecisionRecordError.notFound
+    }
+    guard record.outcome == .dryRun, record.correctedLabel == nil else {
+      throw DecisionRecordError.notPreview
+    }
     let dispatched = try await dispatch(record, adapter: adapter, forceDryRun: false)
     await remember(dispatched, discoveredAs: record.identity)
     return dispatched
+  }
+
+  /**
+   Classifies an unclassified message again now, subject to every live action gate.
+
+   The new result replaces the message's processed-message entry, so a classification settles
+   it for automatic discovery.
+
+   - Throws: ``DecisionRecordError`` when the record is gone, was classified, or its message
+     can no longer be read.
+   */
+  public func retryUnclassified(recordID: UUID, adapter: any MailClientAdapter) async throws
+    -> DecisionRecord
+  {
+    let records = try await StateRepository.load(store, StateSlices(records: .only([recordID])))
+      .records
+    guard let record = records.first(where: { $0.id == recordID }) else {
+      throw DecisionRecordError.notFound
+    }
+    guard record.outcome == .unclassified else { throw DecisionRecordError.notUnclassified }
+    guard let envelope = try await adapter.lookup(record.identity) else {
+      throw DecisionRecordError.messageUnavailable
+    }
+    return await process(envelope, adapter: adapter)
   }
 
   private func settledKeys(among envelopes: [MailEnvelope], revision: Int) async throws

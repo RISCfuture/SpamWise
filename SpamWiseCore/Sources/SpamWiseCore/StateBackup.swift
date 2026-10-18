@@ -94,10 +94,7 @@ public enum StateBackup {
       state.settings.paused = true
       state.settings.dryRun = true
       state.settings.validatedAccounts = []
-      state.invalidatePendingWork(
-        .backupRestore,
-        detail: String(localized: "Restored portable learning state; actions paused")
-      )
+      state.invalidatePendingWork(.backupRestored)
     }
   }
   private static func key(_ encoded: String) throws -> SymmetricKey {

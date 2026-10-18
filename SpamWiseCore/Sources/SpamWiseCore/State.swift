@@ -108,7 +108,7 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var evidence: EvidenceBundle?
   /// Model output, absent for errors or explicit corrections.
   public var verdict: Verdict?
-  /// Independent threat coverage; nil on historical, paused, or failed classification records.
+  /// Independent threat coverage; nil when no detector ran, including historical and failed records.
   public var threats: ThreatAssessment?
   /// Intended action, kept separate from the observed outcome.
   public var decision: Decision
@@ -130,6 +130,8 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var readStatusOutcome: ActionOutcome?
   /// Failure of optional mark-as-read, independent of the already completed move.
   public var readStatusError: String?
+  /// Learning identity of the text that was classified, so corrections replace its sample.
+  public var sampleID: String?
   /// Creates a DecisionRecord with the supplied configuration; an empty subject is stored as nil.
   public init(
     identity: MessageIdentity,
@@ -174,12 +176,13 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
     correctionUndone = values.lenient(.correctionUndone, default: false)
     readStatusOutcome = values.lenient(.readStatusOutcome, default: nil)
     readStatusError = values.lenient(.readStatusError, default: nil)
+    sampleID = values.lenient(.sampleID, default: nil)
     clearLegacyPlaceholders()
   }
   private enum CodingKeys: String, CodingKey {
     case id, date, identity, sender, subject, evidence, verdict, threats, decision, outcome
     case actionError, path, latency, revision, correctedLabel, correctionUndone
-    case readStatusOutcome, readStatusError
+    case readStatusOutcome, readStatusError, sampleID
   }
 }
 extension DecisionRecord {
@@ -383,13 +386,13 @@ extension AppState {
    Supersedes all queued classification work after a policy change.
 
    Bumps the revision so in-flight decisions cannot act, discards every retry and the
-   correction undo snapshot, and records `detail` in the audit trail.
+   correction undo snapshot, and records `change` in the audit trail.
    */
-  public mutating func invalidatePendingWork(_ kind: AuditEvent.Kind, detail: String) {
+  public mutating func invalidatePendingWork(_ change: AuditEvent.Change) {
     revision += 1
     retries = []
     correctionUndo = nil
     invalidatedPendingWork = true
-    audit(kind, detail: detail)
+    audit(change)
   }
 }

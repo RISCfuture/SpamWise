@@ -10,7 +10,7 @@ extension Pipeline {
     let message = try MIMEParser().parse(envelope.raw)
     let seed = try await StateRepository.update(store, loading: StateSlices()) {
       state -> DecisionRecord in
-      let record = DecisionRecord(
+      var record = DecisionRecord(
         identity: envelope.identity,
         sender: message.fromAddress,
         subject: message.subject,
@@ -25,15 +25,19 @@ extension Pipeline {
         path: .selection,
         revision: state.revision
       )
+      record.sampleID = LearningSample.identity(for: message)
       state.record(record)
       return record
     }
     return try await correct(
-      recordID: seed.id,
-      label: label,
-      scope: scope,
+      CorrectionRequest(
+        recordID: seed.id,
+        label: label,
+        scope: scope,
+        trainingPlanID: trainingPlanID
+      ),
       adapter: adapter,
-      trainingPlanID: trainingPlanID
+      message: message
     )
   }
 }

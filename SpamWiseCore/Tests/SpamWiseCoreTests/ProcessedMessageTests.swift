@@ -96,17 +96,41 @@ func `skips settled mail but not live previews across eviction, failures and ret
   try restoreStorage(store)
   try await pipeline.processBatch([], adapter: RecordingAdapter(), dryRun: true, skipsSettled: true)
   let entry = try await ProcessedMessageRepository.entries(for: [fresh.identity.key], in: store)
-  #expect(entry[fresh.identity.key]?.failure == .transient)
-}
-/// Makes every transaction on `store` fail, as when its lock file cannot be opened.
-private func blockStorage(_ store: Store) throws {
-  let lock = store.url.path + ".lock"
-  try? FileManager.default.removeItem(atPath: lock)
-  try FileManager.default.createDirectory(atPath: lock, withIntermediateDirectories: false)
-}
-/// Makes `store` available again after ``blockStorage(_:)``.
-private func restoreStorage(_ store: Store) throws {
-  try FileManager.default.removeItem(atPath: store.url.path + ".lock")
+  let transient = try #require(entry[fresh.identity.key])
+  #expect(transient.failure == .transient)
+  let start = try #require(transient.firstTransientFailure)
+  let retried = ProcessedMessage(
+    record: unavailable,
+    failure: .transient,
+    previous: transient,
+    now: start.addingTimeInterval(2 * 86_400)
+  )
+  #expect(retried.failure == .transient && retried.firstTransientFailure == start)
+  let expired = ProcessedMessage(
+    record: unavailable,
+    failure: .transient,
+    previous: retried,
+    now: start.addingTimeInterval(3 * 86_400)
+  )
+  #expect(expired.failure == .persistent)
+  let outage = await pipeline.process(fresh, discovered: true)
+  let adapter = RecordingAdapter()
+  await adapter.retain(fresh)
+  let recovered = Pipeline(
+    store: store,
+    classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "lure"))
+  )
+  let retry = try await recovered.retryUnclassified(recordID: outage.id, adapter: adapter)
+  #expect(retry.outcome == .dryRun)
+  await #expect(throws: DecisionRecordError.notUnclassified) {
+    try await recovered.retryUnclassified(recordID: retry.id, adapter: adapter)
+  }
+  let settled = try await ProcessedMessageRepository.settledKeys(
+    among: [fresh.identity.key],
+    revision: retry.revision,
+    in: store
+  )
+  #expect(settled == [fresh.identity.key])
 }
 @Test func `keeps evicted action claims without classifying again`() async throws {
   let store = try testStore(), adapter = RecordingAdapter(), calls = Counter()

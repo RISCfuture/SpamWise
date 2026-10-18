@@ -50,6 +50,8 @@ extension MailAction {
       case .orangeBackground: String(localized: "Orange background")
       case .moveToJunk: String(localized: "Move to Junk")
       case .moveToInbox: String(localized: "Move to Inbox")
+      case .clearOrangeFlag: String(localized: "Remove orange flag")
+      case .clearOrangeBackground: String(localized: "Remove orange background")
     }
   }
 }

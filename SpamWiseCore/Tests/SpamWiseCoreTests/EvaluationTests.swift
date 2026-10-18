@@ -129,7 +129,7 @@ import SpamWiseCore
   #expect(migrated.heldOut == label.heldOut)
 }
 
-@Test func `rejects duplicate reviewed content despite changed delivery headers`() throws {
+@Test func `collapses redelivered reviewed content and rejects conflicting labels`() throws {
   let original = try MIMEParser().parse(fixture("personal"))
   var redelivered = original
   redelivered.headers["received"] = ["another delivery route"]
@@ -141,8 +141,13 @@ import SpamWiseCore
       message: $0
     )
   }
-  #expect(throws: ReviewedCorpusError.duplicateContent) {
-    try ReviewedCorpus(labels: labels, partition: .all)
+  #expect(try ReviewedCorpus(labels: labels, partition: .all).entries.count == 1)
+  var conflicting = labels
+  conflicting[1].label = .junk
+  #expect(
+    throws: ReviewedCorpusError.conflictingLabels([LearningSample.identity(for: original)])
+  ) {
+    try ReviewedCorpus(labels: conflicting, partition: .all)
   }
 }
 

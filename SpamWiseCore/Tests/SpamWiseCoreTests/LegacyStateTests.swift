@@ -35,6 +35,15 @@ import SpamWiseCore
         subject: "(No subject)"
       )
     ]
+  object["auditEvents"] = [
+    [
+      "id": UUID().uuidString, "date": 0, "revision": 2, "kind": "senderRule",
+      "detail": "Saved domain:shop.example: block"
+    ]
+  ]
+  object["rules"] = [
+    ["scope": "domain", "value": "Bücher.example", "disposition": "block", "updatedAt": 0]
+  ]
   let stored = try JSONDecoder().decode(
     AppState.self,
     from: JSONSerialization.data(withJSONObject: object)
@@ -63,6 +72,8 @@ import SpamWiseCore
       "Not classified: Allow mail sharing with the selected provider in Account settings first."
     ]
   )
+  #expect(decoded.auditEvents.map(\.change) == [.recorded("Saved domain:shop.example: block")])
+  #expect(decoded.rules.map(\.value) == ["xn--bcher-kva.example"])
   var legacySearch = ActivityQuery()
   legacySearch.text = "RULE FOR THIS SENDER"
   #expect(legacySearch.apply(to: decoded.records).map(\.decision.label) == [.junk])

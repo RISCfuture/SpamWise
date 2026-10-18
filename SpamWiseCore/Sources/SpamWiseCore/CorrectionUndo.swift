@@ -1,5 +1,20 @@
 public import Foundation
 
+/// Failures while undoing a correction.
+public protocol UndoFailure: Error {}
+
+/// Why a correction can no longer be undone; nothing was restored.
+public enum UndoError: UndoFailure, Sendable, Equatable, LocalizedError {
+  /// A later change superseded the correction, or its label was never recorded.
+  case unavailable
+  /// A general description of the refused undo.
+  public var errorDescription: String? { String(localized: "The correction couldn’t be undone.") }
+  /// Why the undo is no longer available.
+  public var failureReason: String? {
+    String(localized: "Rules, labels or settings changed after the correction was saved.")
+  }
+}
+
 /**
  One bounded correction undo, valid only while its policy and learning state remain unchanged.
 
@@ -47,7 +62,7 @@ public struct CorrectionUndo: Codable, Sendable, Equatable {
       guard let undo = transaction.state.correctionUndo,
         undo.isAvailable(in: transaction.state)
       else {
-        throw IntegrationError.staleMessage
+        throw UndoError.unavailable
       }
       try transaction.load(StateSlices(records: .only([undo.sourceID, undo.recordID])))
       transaction.state.restore(undo)
@@ -95,9 +110,6 @@ extension AppState {
     if let index = records.firstIndex(where: { $0.id == undo.recordID }) {
       records[index].correctionUndone = true
     }
-    invalidatePendingWork(
-      .undo,
-      detail: String(localized: "Undid correction rules and learning; Mail action unchanged")
-    )
+    invalidatePendingWork(.correctionUndone)
   }
 }

@@ -38,11 +38,11 @@ public enum NotificationPlanning {
   private static let key = "notification-ledger-v1"
   private static let minimumIntervalMin = 5
   private static let maximumIntervalMin = 1440
-  private static let maximumClaims = RetentionLimits.activityRecords
   /**
    Claims eligible records before delivery; failed notification requests do not replay on restart.
 
-   Activity since activation is read only once the batch interval has elapsed.
+   Activity since activation is read only once the batch interval has elapsed. Claims are kept
+   only for messages still in the bounded Activity log, so the ledger stays within its bound.
    */
   public static func claim(store: Store, now: Date = .now, calendar: Calendar = .current)
     async throws -> NotificationBatch?
@@ -77,7 +77,6 @@ public enum NotificationPlanning {
       let pending = eligible.filter { !ledger.claims.contains($0.identity.key) }
       guard !pending.isEmpty else { return nil }
       ledger.claims.formUnion(pending.map { $0.identity.key })
-      guard ledger.claims.count <= maximumClaims else { throw IntegrationError.unavailable }
       ledger.lastBatch = now
       return NotificationBatch(
         review: pending.filter { $0.decision.label == .review }.count,

@@ -151,6 +151,28 @@ struct `integrates bounded IMAP messages` {
     #expect(await !server.commands.contains { $0.hasPrefix("UID MOVE") })
   }
 
+  @Test(arguments: [
+    ("\\Flagged \\*", "$SpamWiseReview"), ("\\Seen \\Flagged", "\\Flagged"), ("\\Seen", nil)
+  ])
+  func `clears only the Review flag each mailbox permits`(
+    permanentFlags: String,
+    expected: String?
+  ) async throws {
+    let raw = "From: sender@example.com\r\nSubject: maybe\r\n\r\nUncertain"
+    var transcript = IMAPTranscript.authenticated()
+      .select(validity: 33, permanentFlags: permanentFlags).body(raw, uid: 7)
+    if let expected {
+      transcript = transcript.then(
+        "UID STORE 7 -FLAGS (\(expected))",
+        "* 1 FETCH (UID 7 FLAGS (\\Seen))"
+      )
+    }
+    let server = IMAPTestServer(transcript)
+    let adapter = await server.adapter(validations: try await Self.validatedStore())
+    #expect(try await adapter.perform(.clearOrangeFlag, for: Self.identity(raw)).confirmed)
+    #expect(await server.commands.contains { $0.hasPrefix("UID STORE") } == (expected != nil))
+  }
+
   @Test
   func `bounds recent retrieval and preserves the UID namespace`() async throws {
     let raw = "From: sender@example.com\r\n\r\nHello"

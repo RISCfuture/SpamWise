@@ -62,6 +62,30 @@ public struct APIKeychain: Sendable {
     else { throw KeychainError.status(status) }
     return key
   }
+  /**
+   Whether a credential is stored, checked from its attributes without reading the secret.
+
+   - Throws: ``KeychainError/status(_:)`` when Keychain cannot answer, such as a missing
+     entitlement or a locked keychain; a missing item returns false.
+   */
+  public func exists() throws -> Bool {
+    var query = query; query[kSecReturnAttributes as String] = true
+    query[kSecMatchLimit as String] = kSecMatchLimitOne
+    var result: CFTypeRef?
+    let status = unsafe SecItemCopyMatching(query as CFDictionary, &result)
+    switch status {
+      case errSecSuccess: return true
+      case errSecItemNotFound: return false
+      default: throw KeychainError.status(status)
+    }
+  }
+  /// Removes the credential; removing one that is not stored succeeds.
+  public func delete() throws {
+    let status = SecItemDelete(query as CFDictionary)
+    guard status == errSecSuccess || status == errSecItemNotFound else {
+      throw KeychainError.status(status)
+    }
+  }
   /// Writes a nonempty credential, preserving significant password whitespace when explicitly requested.
   public func save(_ key: String, preserveWhitespace: Bool = false) throws {
     let value = Data(

@@ -99,6 +99,13 @@ struct ReviewMessage: Identifiable, Sendable {
 }
 
 extension AppModel {
+  private static func overridingRuleWarning(_ rule: SenderRule) -> String {
+    rule.scope == .domain
+      ? String(
+        localized: "Your rule for the domain \(rule.value) still decides this sender’s mail."
+      )
+      : String(localized: "Your rule for \(rule.value) still decides this sender’s mail.")
+  }
   func correct(_ record: DecisionRecord, label: MailLabel, scope: RuleScope = .address) {
     guard let pipeline else { return }
     run { [self] in
@@ -114,9 +121,11 @@ extension AppModel {
         scope: scope,
         adapter: activeAdapter
       )
+      let overriding = try? await pipeline.overridingRule(for: result)
       status =
         ([String(localized: "Correction saved. Mail action: \(result.outcome.localizedTitle).")]
-        + [result.actionError, adapterFailure].compactMap(\.self)).joined(separator: " ")
+        + [result.actionError, adapterFailure, overriding.map(Self.overridingRuleWarning)]
+        .compactMap(\.self)).joined(separator: " ")
     }
   }
 }

@@ -46,7 +46,7 @@ extension Pipeline {
     try await StateRepository.update(store, loading: StateSlices(records: .only([record.id]))) {
       state in
       guard let index = state.records.firstIndex(where: { $0.id == record.id }) else {
-        throw IntegrationError.unavailable
+        throw DecisionRecordError.notFound
       }
       state.records[index].readStatusOutcome = outcome
       state.records[index].readStatusError = failure

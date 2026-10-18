@@ -157,25 +157,12 @@ public actor Pipeline {
       )
       try Task.checkCancellation()
       guard Date().timeIntervalSince(start) < timeout else { throw ClassificationError.timeout }
-      let decision = try Decision.evaluate(
-        classification.verdict,
-        reason: classification.reason,
-        strength: state.settings.strength,
-        review: state.settings.review,
-        concealsContent: classification.path == .model && message.concealsContent
-      )
-      var record = DecisionRecord(
+      var record = try classification.record(
+        of: message,
         identity: identity,
-        sender: message.fromAddress,
-        subject: message.subject,
-        evidence: classification.evidence,
-        verdict: classification.verdict,
-        threats: classification.threats,
-        decision: decision,
-        outcome: .pending,
-        path: classification.path,
-        latency: Date().timeIntervalSince(start),
-        revision: state.revision
+        settings: state.settings,
+        revision: state.revision,
+        latency: Date().timeIntervalSince(start)
       )
       // Persist the explanation before an external action can be claimed.
       try await save(record)
@@ -284,89 +271,6 @@ public actor Pipeline {
       state.retries.remove(at: index)
       return true
     }) ?? false
-  }
-  func dispatch(
-    _ original: DecisionRecord,
-    adapter: (any MailClientAdapter)?,
-    forceDryRun: Bool,
-    correction: Bool = false
-  ) async throws -> DecisionRecord {
-    let supported = await adapter?.supports(original.decision.action) ?? true
-    let key = original.identity.key
-    let slices = StateSlices(
-      records: .only([original.id]),
-      retries: .only([key]),
-      claims: .only([key])
-    )
-    let claimed = try await StateRepository.update(store, loading: slices) {
-      state -> DecisionRecord in
-      guard let i = state.records.firstIndex(where: { $0.id == original.id }) else {
-        throw IntegrationError.unavailable
-      }
-      var record = state.records[i]
-      if state.revision != record.revision {
-        record.outcome = .superseded
-      } else if state.settings.paused {
-        record.outcome = .paused
-      } else if record.decision.action == .none {
-        record.outcome = .noAction
-      } else if !supported {
-        record.outcome = .noAction
-        record.actionError = String(
-          localized: "This mail connection can’t perform the action, so it was not attempted."
-        )
-      } else if forceDryRun || state.settings.dryRun {
-        record.outcome = .dryRun
-      } else if !correction && state.claimedActions[record.identity.key] != nil {
-        record.outcome = .duplicate
-      } else if adapter == nil || record.identity.accountID == nil
-        || !state.settings.validatedAccounts.contains(record.identity.accountID ?? "")
-      {
-        record.outcome = .integrationUnavailable
-      } else {
-        record.outcome = .requested
-        state.claimedActions[record.identity.key] = record.id
-      }
-      state.records[i] = record
-      if !forceDryRun { state.retries.removeAll { $0.identity.key == record.identity.key } }
-      return record
-    }
-    guard claimed.outcome == .requested, let adapter else { return claimed }
-    var completed = claimed
-    do {
-      try Task.checkCancellation()
-      let current = try await StateRepository.load(store, StateSlices())
-      guard current.revision == claimed.revision, !current.settings.paused, !current.settings.dryRun
-      else { completed.outcome = .superseded; try await save(completed); return completed }
-      let receipt =
-        try await correction
-        ? adapter.performCorrection(claimed.decision.action, for: claimed.identity)
-        : adapter.perform(claimed.decision.action, for: claimed.identity)
-      completed.outcome = receipt.confirmed ? .applied : .requested
-      if receipt.confirmed, let identity = receipt.updatedIdentity {
-        completed.identity = identity
-      }
-    } catch {
-      completed.outcome = .failed
-      if let error = error as? any MailIntegrationFailure & LocalizedError {
-        completed.actionError = [error.errorDescription, error.failureReason].compactMap { $0 }
-          .joined(separator: " ")
-      } else {
-        completed.actionError = String(
-          localized: "The Mail action failed or was cancelled; its result is unknown. Not retried."
-        )
-      }
-    }
-    try await saveAfterAction(completed)
-    do {
-      return try await markJunkRead(completed, adapter: adapter)
-    } catch {
-      completed.readStatusOutcome = .requested
-      completed.readStatusError = String(
-        localized: "Mark-as-read status could not be saved. The confirmed Junk move is retained."
-      )
-      return completed
-    }
   }
   private func unprocessed(
     _ envelope: MailEnvelope,

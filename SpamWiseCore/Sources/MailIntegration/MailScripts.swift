@@ -347,6 +347,9 @@ enum MailScripts {
             tell application "Mail"
                 if commandName is "\(MailCommand.moveToJunk.rawValue)" or ¬
                     commandName is "\(MailCommand.moveToInbox.rawValue)" then
+                    considering case
+                        if (name of mailbox of m) is (name of destination) then return true
+                    end considering
                     move m to destination
                     return true
                 else if commandName is "\(MailCommand.orangeFlag.rawValue)" then
@@ -361,6 +364,12 @@ enum MailScripts {
     \(Failure.existingAnnotation.rawValue)
                     set background color of m to orange
                     return (background color of m) is orange
+                else if commandName is "\(MailCommand.clearOrangeFlag.rawValue)" then
+                    if (flag index of m) is 1 then set flag index of m to -1
+                    return (flag index of m) is not 1
+                else if commandName is "\(MailCommand.clearOrangeBackground.rawValue)" then
+                    if (background color of m) is orange then set background color of m to none
+                    return (background color of m) is not orange
                 else if commandName is "\(MailCommand.markRead.rawValue)" then
                     considering case
                         if (name of mailbox of m) is not (name of destination) then error ¬

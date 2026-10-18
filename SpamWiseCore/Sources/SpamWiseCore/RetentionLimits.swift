@@ -6,8 +6,6 @@ public enum RetentionLimits {
   public static let activityRecords = 5000
   /// Configuration and learning audit events.
   public static let auditEvents = 1000
-  /// Characters kept from one audit description.
-  public static let auditDetailCharacters = 500
   /// Quoted correction examples.
   public static let corrections = 200
   /// Explicit reviewed labels.

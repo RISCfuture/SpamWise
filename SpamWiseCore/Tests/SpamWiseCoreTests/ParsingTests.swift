@@ -387,4 +387,9 @@ private func degradedMessage() throws -> Data {
   #expect(alternatives[2].hasPrefix("Send your password to claim a prize, now now"))
   #expect(alternatives[3] == "[Alternative 1]")
   #expect(alternatives[4] == plain.trimmingCharacters(in: .whitespaces))
+  let shared = try PromptBuilder.prompt(
+    .init(message: long, evidence: .init(message: long), bodyTokenBudget: 100)
+  )
+  #expect(shared.contains("Hello friend"))
+  #expect(shared.contains("Send your password"))
 }

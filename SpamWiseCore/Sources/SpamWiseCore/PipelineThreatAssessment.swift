@@ -4,17 +4,16 @@ extension Pipeline {
   private static let maximumThreatAssessmentTimeSec = 2.0
   private static let threatBudgetFraction = 0.25
 
+  /// Assesses threats with the configured detector; nil when none is configured.
   func assessThreats(
     message: ParsedMessage,
     identity: MessageIdentity,
     evidence: EvidenceBundle,
     localOnly: Bool,
     remainingTimeSec: Double
-  ) async throws -> ThreatAssessment {
+  ) async throws -> ThreatAssessment? {
+    guard let threatDetector else { return nil }
     let input = ThreatInput(message: message, accountID: identity.accountID, evidence: evidence)
-    guard let threatDetector else {
-      return try .unavailable(input: input, reason: "No independent threat detector configured")
-    }
     guard !localOnly || !threatDetector.identity.usesNetwork else {
       return try .unavailable(input: input, reason: "Local mode excludes this network detector")
     }

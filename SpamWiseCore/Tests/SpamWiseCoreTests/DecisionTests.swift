@@ -39,6 +39,7 @@ import SpamWiseCore
 @Test func `persists before acting and prevents duplicate actions`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
+  await adapter.observe(store)
   var moved = try envelope().identity
   moved.localID = 42; moved.mailboxValidity = 99; moved.mailbox = "Junk"
   await adapter.moveIdentity(to: moved)
@@ -79,6 +80,7 @@ import SpamWiseCore
   #expect(markedRead.readStatusOutcome == .applied)
   #expect(markedRead.outcome == .applied)
   #expect(await adapter.readRequests == 2)
+  #expect(await adapter.persistedBeforeAction == [true, true, true])
 }
 @Test func `prevents actions during dry runs pauses and failures`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
@@ -169,7 +171,7 @@ func `corrects selected mail without classifying and excludes own addresses from
   #expect(
     excluded.settings.mailOptions.trustExclusions == ["alias@example.org", "friend@example.org"]
   )
-  await #expect(throws: RuleManagementError.self) {
+  await #expect(throws: TrustExclusionError.invalidAddress("not an address")) {
     try await TrustExclusions.save("valid@example.org\nnot an address", store: store)
   }
   #expect(try await StateRepository.load(store).revision == excluded.revision)
@@ -244,7 +246,7 @@ func `corrects selected mail without classifying and excludes own addresses from
   #expect(await adapter.actions.isEmpty)
   _ = try await pipeline.correct(recordID: failed.id, label: .junk, adapter: adapter)
   try await StateRepository.editSettings(store) { $0.strength = .conservative }
-  await #expect(throws: IntegrationError.staleMessage) {
+  await #expect(throws: UndoError.unavailable) {
     try await CorrectionUndo.apply(store: store)
   }
   try await StateRepository.editSettings(store) { $0.advancedOptions.bayes = false }

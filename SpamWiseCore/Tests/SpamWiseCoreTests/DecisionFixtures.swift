@@ -10,6 +10,18 @@ actor RecordingAdapter: MailClientAdapter {
   var message: MailEnvelope?
   var readRequests = 0
   var failRead = true
+  /// Whether each performed action found its decision and claim already persisted in the observed store.
+  var persistedBeforeAction: [Bool] = []
+  private var observedStore: Store?
+  private var afterAction: (@Sendable () throws -> Void)?
+  private static func isClaimed(_ identity: MessageIdentity, in store: Store) async throws -> Bool {
+    let state = try await StateRepository.load(
+      store,
+      StateSlices(records: .all, claims: .only([identity.key]))
+    )
+    guard let id = state.claimedActions[identity.key] else { return false }
+    return state.records.contains { $0.id == id && $0.outcome == .requested }
+  }
   func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
     readRequests += 1
     if failRead { throw IntegrationError.staleMessage }
@@ -25,8 +37,18 @@ actor RecordingAdapter: MailClientAdapter {
   func importHistory() async throws -> [String: HistoryIndex] { [:] }
   func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
     if let failure { throw failure }
-    actions.append(action); return .init(confirmed: true, updatedIdentity: updatedIdentity)
+    if let observedStore {
+      persistedBeforeAction.append(try await Self.isClaimed(identity, in: observedStore))
+    }
+    actions.append(action)
+    try afterAction?()
+    return .init(confirmed: true, updatedIdentity: updatedIdentity)
   }
+  /// Records, at each action, whether `store` already holds its claimed, requested decision.
+  func observe(_ store: Store) { observedStore = store }
+  /// Runs `body` after each performed action, as when storage fails once Mail has acted.
+  func afterEachAction(_ body: @escaping @Sendable () throws -> Void) { afterAction = body }
+  func allow() { failure = nil }
   func deny(with error: any Error = IntegrationError.permissionDenied) { failure = error }
   func refuse(_ action: MailAction) { unsupported.insert(action) }
   func supports(_ action: MailAction) async -> Bool { !unsupported.contains(action) }
@@ -45,6 +67,16 @@ func envelope(_ name: String = "filler-spam") throws -> MailEnvelope {
     identity: .init(accountID: "account-A", contentHash: stableHash(raw)),
     raw: raw
   )
+}
+/// Makes every transaction on `store` fail, as when its lock file cannot be opened.
+func blockStorage(_ store: Store) throws {
+  let lock = store.url.path + ".lock"
+  try? FileManager.default.removeItem(atPath: lock)
+  try FileManager.default.createDirectory(atPath: lock, withIntermediateDirectories: false)
+}
+/// Makes `store` available again after ``blockStorage(_:)``.
+func restoreStorage(_ store: Store) throws {
+  try FileManager.default.removeItem(atPath: store.url.path + ".lock")
 }
 func enableActions(_ store: Store) async throws {
   try await StateRepository.update(store) { state in

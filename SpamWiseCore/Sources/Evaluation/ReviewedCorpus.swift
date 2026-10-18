@@ -11,8 +11,10 @@ public enum ReviewedCorpusPartition: String, Codable, Sendable {
 public protocol CorpusEvaluationError: Error {}
 
 /// Invalid reviewed-corpus input that must be resolved before model calls.
-public enum ReviewedCorpusError: CorpusEvaluationError, Sendable, LocalizedError {
-  case duplicateContent, oversized
+public enum ReviewedCorpusError: CorpusEvaluationError, Sendable, Equatable, LocalizedError {
+  /// The same content carries different labels; the associated values are the sample identities.
+  case conflictingLabels([String])
+  case oversized
   /// Non-sensitive input failure explanation.
   public var errorDescription: String? {
     String(localized: "Couldn’t evaluate the reviewed corpus.")
@@ -20,14 +22,19 @@ public enum ReviewedCorpusError: CorpusEvaluationError, Sendable, LocalizedError
   /// The input condition that prevents a valid evaluation.
   public var failureReason: String? {
     switch self {
-      case .duplicateContent: String(localized: "The reviewed corpus contains duplicate content.")
+      case .conflictingLabels(let samples):
+        String(
+          localized:
+            "The reviewed corpus labels the same content differently: \(samples.formatted(.list(type: .and)))."
+        )
       case .oversized: String(localized: "The reviewed export exceeds the supported input limits.")
     }
   }
   /// An available correction to the supplied corpus.
   public var recoverySuggestion: String? {
     switch self {
-      case .duplicateContent: String(localized: "Remove duplicate content before evaluation.")
+      case .conflictingLabels:
+        String(localized: "Relabel or forget the conflicting examples, then export again.")
       case .oversized: nil
     }
   }
@@ -44,17 +51,28 @@ public struct ReviewedCorpus: Sendable {
   /// Selection and missing-content counts for reports.
   public let summary: Summary
 
-  /// Validates all retained content identities before selecting a statistical partition.
+  /**
+   Validates all retained content identities before selecting a statistical partition.
+
+   Repeated content with the same label counts once.
+
+   - Throws: ``ReviewedCorpusError/conflictingLabels(_:)`` when repeated content carries
+     different labels.
+   */
   public init(labels: [ReviewedLabel], partition: ReviewedCorpusPartition = .heldOut) throws {
     guard labels.count <= Self.maximumLabels else { throw ReviewedCorpusError.oversized }
-    var entries: [Entry] = [], identities: Set<String> = [], missing = 0, excluded = 0
+    var entries: [Entry] = [], truths: [String: MailLabel] = [:], conflicts: Set<String> = []
+    var missing = 0, excluded = 0
     for label in labels {
       guard let message = label.message else { missing += 1; continue }
       guard try JSONEncoder().encode(message).count <= Self.maximumMessageBytes else {
         throw ReviewedCorpusError.oversized
       }
       let identity = LearningSample.identity(for: message)
-      guard identities.insert(identity).inserted else { throw ReviewedCorpusError.duplicateContent }
+      if let seen = truths.updateValue(label.label, forKey: identity) {
+        if seen != label.label { conflicts.insert(identity) }
+        continue
+      }
       let heldOut = LearningSample.partition(for: identity) == .heldOut
       guard partition == .all || (partition == .heldOut) == heldOut else { excluded += 1; continue }
       let truth: EvaluationTruth
@@ -65,6 +83,7 @@ public struct ReviewedCorpus: Sendable {
       }
       entries.append(.init(id: identity, message: message, truth: truth))
     }
+    guard conflicts.isEmpty else { throw ReviewedCorpusError.conflictingLabels(conflicts.sorted()) }
     self.entries = entries.sorted { $0.id < $1.id }
     summary = .init(
       totalLabels: labels.count,

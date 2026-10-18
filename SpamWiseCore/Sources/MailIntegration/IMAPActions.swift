@@ -98,6 +98,27 @@ extension IMAPAdapter {
     return .init(confirmed: confirmed)
   }
 
+  /// Removes the flag ``markForReview(_:session:)`` would store; a mailbox that admits neither has nothing to clear.
+  static func clearReview(_ identity: MessageIdentity, session: IMAPSession)
+    async throws -> ActionReceipt
+  {
+    let target = try await notAttempted {
+      let revalidated = try await revalidatePresent(identity, writable: true, session: session)
+      return (
+        uid: revalidated.uid,
+        flag: reviewFlag(permitted: revalidated.selection.permanentFlags)
+      )
+    }
+    guard let flag = target.flag else { return .init(confirmed: true) }
+    let reply = try await session.command(
+      .uidStore(try uidSet(target.uid), [], .flags(.remove(silent: false, list: [flag])))
+    )
+    let confirmed = reply.fetches.contains {
+      $0.uid == target.uid && $0.flags?.contains(flag) == false
+    }
+    return .init(confirmed: confirmed)
+  }
+
   /// The Review keyword when the mailbox admits it, else `\Flagged`, else nil.
   private static func reviewFlag(permitted: [PermanentFlag]) -> Flag? {
     if permitted.contains(.wildcard) || permitted.contains(.flag(reviewKeyword)) {

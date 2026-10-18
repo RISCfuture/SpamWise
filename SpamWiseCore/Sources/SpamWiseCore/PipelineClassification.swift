@@ -127,7 +127,7 @@ extension Pipeline {
       try await classifier.classify(input)
     }.validated()
     if advanced.bayes {
-      try await trainPrediction(
+      try? await trainPrediction(
         message,
         evidence: evidence,
         verdict: verdict,
@@ -183,6 +183,7 @@ extension Pipeline {
       current.contentRuleSkips.merge(skipped, uniquingKeysWith: +)
     }
   }
+  /// Admits the verdict into optional training; callers treat failure as no training.
   private func trainPrediction(
     _ message: ParsedMessage,
     evidence: EvidenceBundle,
@@ -287,6 +288,38 @@ extension Pipeline {
     var reason: DecisionReason
     var evidence: EvidenceBundle
     var path: DecisionPath
-    var threats: ThreatAssessment
+    var threats: ThreatAssessment?
+
+    /// The pending decision record that applies the current policy to this classification.
+    func record(
+      of message: ParsedMessage,
+      identity: MessageIdentity,
+      settings: Settings,
+      revision: Int,
+      latency: Double
+    ) throws -> DecisionRecord {
+      let decision = try Decision.evaluate(
+        verdict,
+        reason: reason,
+        strength: settings.strength,
+        review: settings.review,
+        concealsContent: path == .model && message.concealsContent
+      )
+      var record = DecisionRecord(
+        identity: identity,
+        sender: message.fromAddress,
+        subject: message.subject,
+        evidence: evidence,
+        verdict: verdict,
+        threats: threats,
+        decision: decision,
+        outcome: .pending,
+        path: path,
+        latency: latency,
+        revision: revision
+      )
+      record.sampleID = LearningSample.identity(for: message)
+      return record
+    }
   }
 }

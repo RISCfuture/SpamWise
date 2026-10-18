@@ -21,6 +21,10 @@ public enum MailCommand: String, Sendable, CaseIterable {
   case orangeFlag = "flag"
   /// Applies the orange background unless the user already set another color.
   case orangeBackground = "background"
+  /// Removes the orange flag; another flag the user set stays.
+  case clearOrangeFlag = "unflag"
+  /// Removes the orange background; another color the user set stays.
+  case clearOrangeBackground = "unbackground"
   /// Marks the message read while it remains in its account's Junk mailbox.
   case markRead = "read"
   /// Opens the message in Mail's viewer.
@@ -32,6 +36,8 @@ public enum MailCommand: String, Sendable, CaseIterable {
       case .moveToInbox: self = .moveToInbox
       case .orangeFlag: self = .orangeFlag
       case .orangeBackground: self = .orangeBackground
+      case .clearOrangeFlag: self = .clearOrangeFlag
+      case .clearOrangeBackground: self = .clearOrangeBackground
       case .none: return nil
     }
   }

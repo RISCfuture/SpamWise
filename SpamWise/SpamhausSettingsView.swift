@@ -58,9 +58,13 @@ struct SpamhausSettingsView: View {
   }
 
   private func refreshKeyStatus() {
-    keyStatus =
-      (try? APIKeychain(service: APIKeychain.spamhausService).read()) == nil
-      ? String(localized: "No query key saved") : String(localized: "Query key saved in Keychain")
+    do {
+      keyStatus =
+        try APIKeychain(service: APIKeychain.spamhausService).exists()
+        ? String(localized: "Query key saved in Keychain") : String(localized: "No query key saved")
+    } catch {
+      keyStatus = AppModel.describe(error)
+    }
   }
 
   private func saveKey() {
@@ -70,7 +74,7 @@ struct SpamhausSettingsView: View {
       refreshKeyStatus()
     } catch {
       key = ""
-      keyStatus = String(localized: "Could not save the query key in Keychain")
+      keyStatus = AppModel.describe(error)
     }
   }
 }

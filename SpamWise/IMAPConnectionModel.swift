@@ -98,10 +98,16 @@ extension IMAPConnectionModel {
       from: JSONEncoder().encode(connection.account)
     )
     try saveCredential(secret, for: connection)
-    try await store.update(
+    let replaced = try await store.update(
       IMAPAppConnection.storeKey,
       default: Optional<IMAPAppConnection>.none
-    ) { $0 = connection }
+    ) { saved in
+      defer { saved = connection }
+      return saved
+    }
+    if let replaced, replaced.credentialService != connection.credentialService {
+      try? APIKeychain(service: replaced.credentialService).delete()
+    }
     try await StateRepository.editSettings(store) { settings in
       var advanced = settings.advancedOptions
       advanced.transport = .imap

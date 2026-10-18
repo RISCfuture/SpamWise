@@ -8,8 +8,7 @@ struct AuditTrailView: View {
 
   private var events: [AuditEvent] {
     model.state.auditEvents.reversed().filter {
-      search.isEmpty || $0.detail.localizedCaseInsensitiveContains(search)
-        || $0.kind.rawValue.localizedCaseInsensitiveContains(search)
+      search.isEmpty || $0.localizedDescription.localizedCaseInsensitiveContains(search)
     }
   }
   var body: some View {
@@ -18,7 +17,7 @@ struct AuditTrailView: View {
       Table(events) {
         TableColumn("Time") { Text($0.date.formatted()) }
         TableColumn("Policy revision") { Text($0.revision.formatted()) }.width(90)
-        TableColumn("Change", value: \.detail)
+        TableColumn("Change", value: \.localizedDescription)
       }
       HStack {
         Spacer(); Button("Done") { dismiss() }

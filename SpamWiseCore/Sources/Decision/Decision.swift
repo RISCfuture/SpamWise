@@ -36,6 +36,19 @@ public enum MailAction: String, Codable, Sendable {
   case moveToJunk
   /// Moves the message into the account’s Inbox.
   case moveToInbox
+  /// Removes the orange Review flag, leaving any other flag the user set.
+  case clearOrangeFlag
+  /// Removes the orange Review background, leaving any other color the user set.
+  case clearOrangeBackground
+
+  /// The action that removes this Review annotation, or nil when this is not an annotation.
+  public var clearingAnnotation: MailAction? {
+    switch self {
+      case .orangeFlag: .clearOrangeFlag
+      case .orangeBackground: .clearOrangeBackground
+      case .none, .moveToJunk, .moveToInbox, .clearOrangeFlag, .clearOrangeBackground: nil
+    }
+  }
 }
 /// Observed dispatch state, independent of the model verdict.
 public enum ActionOutcome: String, Codable, Sendable {

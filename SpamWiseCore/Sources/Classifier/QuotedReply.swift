@@ -11,6 +11,7 @@ import MessageModel
 struct QuotedReply {
   private static let minimumQuotedShareDivisor = 4
   private static let originalMessageMarker = "-----Original Message-----"
+  private static let alternativeMarkerPrefix = "[Alternative "
   /// New text written for this message.
   let text: String
   /// Quoted lines, attributions and forwarded originals, in message order.
@@ -52,6 +53,47 @@ struct QuotedReply {
   }
 
   /**
+   Shortens `text` to `limit` characters, sharing the room among its MIME alternatives.
+
+   Each `[Alternative N]` section receives an equal share, and room a shorter section leaves
+   goes to the longer ones, so one long alternative cannot crowd out the rest.
+   */
+  static func shortened(_ text: String, to limit: Int) -> String {
+    guard text.count > limit else { return text }
+    let sections = alternativeSections(of: text)
+    guard sections.count > 2 else { return String(text.prefix(limit)) }
+    let lead = sections[0], alternatives = Array(sections.dropFirst())
+    let separators = sections.count - 1
+    var remaining = max(0, limit - lead.count - separators)
+    var allowance = Array(repeating: 0, count: alternatives.count)
+    for (position, index) in alternatives.indices.sorted(by: {
+      alternatives[$0].count < alternatives[$1].count
+    }).enumerated() {
+      allowance[index] = min(alternatives[index].count, remaining / (alternatives.count - position))
+      remaining -= allowance[index]
+    }
+    let shared = zip(alternatives, allowance).map { String($0.prefix($1)) }
+    return String(([String(lead)] + shared).joined(separator: "\n").prefix(limit))
+  }
+
+  /// The text before the first alternative marker, then each marked alternative with its marker.
+  private static func alternativeSections(of text: String) -> [Substring] {
+    let lines = text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+    var sections: [[Substring]] = [[]]
+    for line in lines {
+      if isAlternativeMarker(line) { sections.append([]) }
+      sections[sections.count - 1].append(line)
+    }
+    return sections.map { Substring($0.joined(separator: "\n")) }
+  }
+
+  private static func isAlternativeMarker(_ line: Substring) -> Bool {
+    guard line.hasPrefix(alternativeMarkerPrefix), line.hasSuffix("]") else { return false }
+    let number = line.dropFirst(alternativeMarkerPrefix.count).dropLast()
+    return !number.isEmpty && number.allSatisfy { $0.isASCII && $0.isNumber }
+  }
+
+  /**
    Fits new and quoted text into `limit` characters.
 
    Quoted text receives at least a quarter of the limit, or all the room new text leaves, so a
@@ -59,13 +101,17 @@ struct QuotedReply {
    */
   func fitted(to limit: Int) -> Body {
     guard !quoted.isEmpty else {
-      return Body(text: String(text.prefix(limit)), quotedText: nil, omittedQuotedCharacters: nil)
+      return Body(
+        text: Self.shortened(text, to: limit),
+        quotedText: nil,
+        omittedQuotedCharacters: nil
+      )
     }
     let quotedAllowance = min(
       quoted.count,
       max(limit / Self.minimumQuotedShareDivisor, limit - text.count)
     )
-    let newText = String(text.prefix(limit - quotedAllowance))
+    let newText = Self.shortened(text, to: limit - quotedAllowance)
     let quotedText = String(quoted.prefix(limit - newText.count))
     return Body(
       text: newText,

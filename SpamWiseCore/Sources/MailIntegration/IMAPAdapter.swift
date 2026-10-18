@@ -137,11 +137,12 @@ public actor IMAPAdapter: MailClientAdapter {
   public func supports(_ action: MailAction) async -> Bool {
     switch action {
       case .moveToInbox, .moveToJunk: observedCapabilities.map(Self.supportsMove) ?? true
-      case .none, .orangeFlag, .orangeBackground: true
+      case .none, .orangeFlag, .orangeBackground, .clearOrangeFlag, .clearOrangeBackground: true
     }
   }
-  /// Performs a UID MOVE or Review keyword after persisted validation and an exact content recheck.
-  /// Review is stored as the `$SpamWiseReview` keyword, or `\Flagged` where the mailbox admits no new keywords.
+  /// Performs a UID MOVE or Review keyword change after persisted validation and an exact content recheck.
+  /// Review is stored as the `$SpamWiseReview` keyword, or `\Flagged` where the mailbox admits no new keywords;
+  /// clearing Review removes the same flag.
   /// Failures before the mail command is sent throw ``ActionNotAttempted``.
   public func perform(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
@@ -157,6 +158,8 @@ public actor IMAPAdapter: MailClientAdapter {
           try await Self.move(identity, for: action, session: session)
         case .orangeFlag, .orangeBackground:
           try await Self.markForReview(identity, session: session)
+        case .clearOrangeFlag, .clearOrangeBackground:
+          try await Self.clearReview(identity, session: session)
         case .none: .init(confirmed: true)
       }
     }

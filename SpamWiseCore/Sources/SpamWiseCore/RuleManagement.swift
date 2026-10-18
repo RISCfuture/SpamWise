@@ -71,16 +71,16 @@ public enum RuleManagement {
       state.rules = Gates.replacing(rule, in: state.rules)
       guard state.rules.count <= maximumRules else { throw RuleManagementError.tooManyRules }
       state.invalidatePendingWork(
-        .senderRule,
-        detail: String(localized: "Saved \(rule.id): \(rule.disposition.rawValue)")
+        .senderRuleSaved(scope: rule.scope, value: rule.value, disposition: rule.disposition)
       )
     }
   }
   /// Removes only the selected scoped rule; existing mail actions are not reversed.
   public static func remove(id: String, store: Store) async throws {
     try await StateRepository.update(store, loading: StateSlices([.rules])) { state in
+      guard let rule = state.rules.first(where: { $0.id == id }) else { return }
       state.rules.removeAll { $0.id == id }
-      state.invalidatePendingWork(.senderRule, detail: String(localized: "Removed \(id)"))
+      state.invalidatePendingWork(.senderRuleRemoved(scope: rule.scope, value: rule.value))
     }
   }
   /// Serializes rules without mail bodies, API keys or correction examples.
@@ -109,10 +109,7 @@ public enum RuleManagement {
     try await StateRepository.update(store, loading: StateSlices([.rules])) { state in
       for rule in rules { state.rules = Gates.replacing(rule, in: state.rules) }
       guard state.rules.count <= maximumRules else { throw RuleManagementError.tooManyRules }
-      state.invalidatePendingWork(
-        .senderRule,
-        detail: String(localized: "Imported \(rules.count) sender rules")
-      )
+      state.invalidatePendingWork(.senderRulesImported(count: rules.count))
     }
   }
   private struct Archive: Codable { var version = 1; var rules: [SenderRule] }

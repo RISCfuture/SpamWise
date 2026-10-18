@@ -20,7 +20,9 @@ extension MailCommand {
     switch self {
       case .moveToJunk: .junk
       case .moveToInbox: .inbox
-      case .orangeFlag, .orangeBackground, .markRead, .open: nil
+      case .orangeFlag, .orangeBackground, .clearOrangeFlag, .clearOrangeBackground, .markRead,
+        .open:
+        nil
     }
   }
 }

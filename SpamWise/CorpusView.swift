@@ -79,7 +79,8 @@ struct CorpusView: View {
   private func importFiles(_ urls: [URL]) {
     let chosenLabel = label
     model.run {
-      guard let store = model.store, urls.count <= 20 else { throw ParseError.tooLarge }
+      guard let store = model.store else { throw IntegrationError.unavailable }
+      guard urls.count <= 20 else { throw CorpusError.batchTooLarge(limit: 20) }
       var messages: [ParsedMessage] = []
       for url in urls {
         try Task.checkCancellation()

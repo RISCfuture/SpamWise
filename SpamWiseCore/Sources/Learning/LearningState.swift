@@ -131,11 +131,17 @@ public struct LearningState: Codable, Sendable, Equatable {
     enforceBounds()
   }
 
-  /// Stores an explicit correction, replacing the same content's prior label and campaign evidence.
+  /**
+   Stores an explicit correction, replacing the same content's prior label and campaign evidence.
+
+   - Parameter sampleID: The sample's identity, when it differs from the identity of
+     `message`, such as the identity of the text that was classified.
+   */
   public mutating func recordCorrection(
     message: ParsedMessage,
     evidence: EvidenceBundle,
     label: MailLabel,
+    sampleID: String? = nil,
     date: Date = .now
   ) {
     let sample = LearningSample.make(
@@ -143,6 +149,7 @@ public struct LearningState: Codable, Sendable, Equatable {
       evidence: evidence,
       label: label,
       provenance: .explicitCorrection,
+      id: sampleID,
       date: date
     )
     samples.removeAll { $0.id == sample.id }
@@ -158,7 +165,7 @@ public struct LearningState: Codable, Sendable, Equatable {
         label: label,
         date: date
       ) {
-        fingerprints.append(signature)
+        fingerprints.append(signature.identified(as: sample.id))
       }
     }
     enforceBounds()
@@ -248,6 +255,31 @@ public struct LearningState: Codable, Sendable, Equatable {
     enforceBounds()
   }
 
+  /**
+   Keeps only the explicit samples and campaign signatures that `labels` still holds.
+
+   Samples whose label changed take the new label, and signatures whose label changed are
+   withdrawn. Admitted predictions are kept.
+
+   - Parameter labels: Current labels by sample identity.
+   */
+  public mutating func retainExplicit(matching labels: [String: MailLabel]) {
+    samples = samples.compactMap { sample in
+      guard sample.provenance == .explicitCorrection else { return sample }
+      guard let label = labels[sample.id] else { return nil }
+      return LearningSample(
+        id: sample.id,
+        date: sample.date,
+        label: label,
+        provenance: sample.provenance,
+        tokens: sample.tokens,
+        features: sample.features
+      )
+    }
+    fingerprints.removeAll { labels[$0.id] != $0.label }
+    enforceBounds()
+  }
+
   /// Computes bounded statistical estimates only after minimum reviewed-data gates pass.
   public func estimate(message: ParsedMessage, evidence: EvidenceBundle) -> LearningEstimate {
     let reviewed = trainingSamples
@@ -302,10 +334,11 @@ extension LearningSample {
     evidence: EvidenceBundle,
     label: MailLabel,
     provenance: LearningProvenance,
+    id: String? = nil,
     date: Date
   ) -> LearningSample {
     LearningSample(
-      id: identity(for: message),
+      id: id ?? identity(for: message),
       date: date,
       label: label,
       provenance: provenance,
@@ -345,5 +378,10 @@ extension CampaignFingerprint {
       && shingles.count <= Self.maximumShingles
       && shingles.allSatisfy { $0.count == LearningSample.hashCharacters }
       && date.timeIntervalSince1970.isFinite
+  }
+
+  /// This signature under the identity of the sample it was recorded with.
+  fileprivate func identified(as id: String) -> Self {
+    Self(id: id, date: date, label: label, anchors: anchors, shingles: shingles)
   }
 }

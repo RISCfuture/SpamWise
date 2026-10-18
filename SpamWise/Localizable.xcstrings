@@ -12976,6 +12976,815 @@
         }
       }
     },
+    "The automation request couldn’t be completed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo completar la solicitud de automatización."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de terminer la demande d’automatisation."
+          }
+        }
+      }
+    },
+    "The message has no account or changed since it was selected.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje no tiene cuenta o cambió desde que se seleccionó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message n’a pas de compte ou a changé depuis sa sélection."
+          }
+        }
+      }
+    },
+    "This request identifier was already used for a different request.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este identificador de solicitud ya se usó para otra solicitud."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet identifiant de demande a déjà servi pour une autre demande."
+          }
+        }
+      }
+    },
+    "An earlier attempt with this request identifier did not finish, so it was not repeated.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un intento anterior con este identificador de solicitud no terminó, así que no se repitió."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une tentative précédente avec cet identifiant de demande n’a pas abouti ; elle n’a donc pas été répétée."
+          }
+        }
+      }
+    },
+    "SpamWise remembers at most %lld automation requests.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise recuerda como máximo %lld solicitudes de automatización."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise retient au maximum %lld demandes d’automatisation."
+          }
+        }
+      }
+    },
+    "The reviewed examples couldn’t be updated.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron actualizar los ejemplos revisados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de mettre à jour les exemples vérifiés."
+          }
+        }
+      }
+    },
+    "Import at most %lld messages at a time.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importa como máximo %lld mensajes a la vez."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importez au maximum %lld messages à la fois."
+          }
+        }
+      }
+    },
+    "SpamWise keeps at most %lld imported labels; %lld more can be imported.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise conserva como máximo %lld etiquetas importadas; se pueden importar %lld más."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise conserve au maximum %lld étiquettes importées ; %lld de plus peuvent être importées."
+          }
+        }
+      }
+    },
+    "The reviewed example is no longer available.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El ejemplo revisado ya no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exemple vérifié n’est plus disponible."
+          }
+        }
+      }
+    },
+    "Forget imported examples you no longer need, then import again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Olvida los ejemplos importados que ya no necesites y vuelve a importar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oubliez les exemples importés dont vous n’avez plus besoin, puis importez à nouveau."
+          }
+        }
+      }
+    },
+    "The correction couldn’t be saved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar la corrección."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer la correction."
+          }
+        }
+      }
+    },
+    "The message’s Activity record is no longer available.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El registro de Actividad del mensaje ya no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’entrée d’activité du message n’est plus disponible."
+          }
+        }
+      }
+    },
+    "Review corrections apply only to the sender’s address, not its domain.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las correcciones a Revisar solo se aplican a la dirección del remitente, no a su dominio."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les corrections vers À vérifier ne s’appliquent qu’à l’adresse de l’expéditeur, pas à son domaine."
+          }
+        }
+      }
+    },
+    "“%@” has no registrable domain for a domain-wide rule.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» no tiene un dominio registrable para una regla de todo el dominio."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » n’a pas de domaine enregistrable pour une règle portant sur tout le domaine."
+          }
+        }
+      }
+    },
+    "The Activity record couldn’t be used.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo usar el registro de Actividad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’utiliser l’entrée d’activité."
+          }
+        }
+      }
+    },
+    "The Activity record is no longer available.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El registro de Actividad ya no está disponible."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’entrée d’activité n’est plus disponible."
+          }
+        }
+      }
+    },
+    "Only an uncorrected dry-run preview can be applied.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se puede aplicar una vista previa de simulación sin corregir."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seul un aperçu de simulation non corrigé peut être appliqué."
+          }
+        }
+      }
+    },
+    "Only an unclassified message can be retried.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se puede reintentar un mensaje sin clasificar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seul un message non classé peut être réessayé."
+          }
+        }
+      }
+    },
+    "The message is no longer available in the mail client.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje ya no está disponible en el cliente de correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message n’est plus disponible dans le client de messagerie."
+          }
+        }
+      }
+    },
+    "The correction couldn’t be undone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo deshacer la corrección."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’annuler la correction."
+          }
+        }
+      }
+    },
+    "Rules, labels or settings changed after the correction was saved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las reglas, etiquetas o ajustes cambiaron después de guardar la corrección."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des règles, étiquettes ou réglages ont changé après l’enregistrement de la correction."
+          }
+        }
+      }
+    },
+    "The trust exclusions couldn’t be saved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron guardar las exclusiones de confianza."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer les exclusions de confiance."
+          }
+        }
+      }
+    },
+    "Enter at most %lld characters.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe como máximo %lld caracteres."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez au maximum %lld caractères."
+          }
+        }
+      }
+    },
+    "Enter at most %lld addresses.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe como máximo %lld direcciones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez au maximum %lld adresses."
+          }
+        }
+      }
+    },
+    "“%@” is not a complete email address.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» no es una dirección de correo completa."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« %@ » n’est pas une adresse e-mail complète."
+          }
+        }
+      }
+    },
+    "Remove orange flag": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar bandera naranja"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer le drapeau orange"
+          }
+        }
+      }
+    },
+    "Remove orange background": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar fondo naranja"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer le fond orange"
+          }
+        }
+      }
+    },
+    "Your rule for the domain %@ still decides this sender’s mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu regla para el dominio %@ sigue decidiendo el correo de este remitente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre règle pour le domaine %@ décide toujours du courrier de cet expéditeur."
+          }
+        }
+      }
+    },
+    "Your rule for %@ still decides this sender’s mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu regla para %@ sigue decidiendo el correo de este remitente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre règle pour %@ décide toujours du courrier de cet expéditeur."
+          }
+        }
+      }
+    },
+    "Removed the rule for sender %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se eliminó la regla del remitente %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle de l’expéditeur %@ supprimée"
+          }
+        }
+      }
+    },
+    "Removed the rule for domain %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se eliminó la regla del dominio %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle du domaine %@ supprimée"
+          }
+        }
+      }
+    },
+    "Imported sender rules: %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas de remitente importadas: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles d’expéditeur importées : %lld"
+          }
+        }
+      }
+    },
+    "Allowed mail whose %@ matches “%@”": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se permitió el correo cuyo campo %@ coincide con «%@»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courrier autorisé dont le champ %@ correspond à « %@ »"
+          }
+        }
+      }
+    },
+    "Blocked mail whose %@ matches “%@”": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se bloqueó el correo cuyo campo %@ coincide con «%@»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courrier bloqué dont le champ %@ correspond à « %@ »"
+          }
+        }
+      }
+    },
+    "Removed the content rule for %@ “%@”": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se eliminó la regla de contenido de %@ «%@»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règle de contenu %@ « %@ » supprimée"
+          }
+        }
+      }
+    },
+    "Imported content rules: %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas de contenido importadas: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles de contenu importées : %lld"
+          }
+        }
+      }
+    },
+    "Imported reviewed examples labeled %@: %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejemplos revisados importados con la etiqueta %@: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exemples vérifiés importés avec l’étiquette %@ : %lld"
+          }
+        }
+      }
+    },
+    "Relabeled a reviewed example as %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se cambió la etiqueta de un ejemplo revisado a %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exemple vérifié réétiqueté en %@"
+          }
+        }
+      }
+    },
+    "Forgot a reviewed example and its learning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se olvidó un ejemplo revisado y su aprendizaje"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exemple vérifié et son apprentissage oubliés"
+          }
+        }
+      }
+    },
+    "Rebuilt learning from the current reviewed labels": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se reconstruyó el aprendizaje a partir de las etiquetas revisadas actuales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apprentissage reconstruit à partir des étiquettes vérifiées actuelles"
+          }
+        }
+      }
+    },
+    "Allowed sender %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se permitió el remitente %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expéditeur %@ autorisé"
+          }
+        }
+      }
+    },
+    "Blocked sender %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se bloqueó el remitente %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expéditeur %@ bloqué"
+          }
+        }
+      }
+    },
+    "Allowed domain %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se permitió el dominio %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domaine %@ autorisé"
+          }
+        }
+      }
+    },
+    "Blocked domain %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se bloqueó el dominio %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domaine %@ bloqué"
+          }
+        }
+      }
+    },
+    "Marked mail from %@ as Good": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marcó como Deseado el correo de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courrier de %@ marqué comme Légitime"
+          }
+        }
+      }
+    },
+    "Marked all mail from the domain of %@ as Good": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marcó como Deseado todo el correo del dominio de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout le courrier du domaine de %@ marqué comme Légitime"
+          }
+        }
+      }
+    },
+    "Marked mail from %@ as Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marcó como No deseado el correo de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courrier de %@ marqué comme Indésirable"
+          }
+        }
+      }
+    },
+    "Marked all mail from the domain of %@ as Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marcó como No deseado todo el correo del dominio de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout le courrier du domaine de %@ marqué comme Indésirable"
+          }
+        }
+      }
+    },
+    "Marked mail from %@ for Review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se marcó para Revisar el correo de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courrier de %@ marqué À vérifier"
+          }
+        }
+      }
+    },
     "The trusted mail servers could not be updated.": {
       "extractionState": "manual",
       "localizations": {

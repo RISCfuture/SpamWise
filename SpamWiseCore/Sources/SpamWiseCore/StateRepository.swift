@@ -72,14 +72,11 @@ extension StateRepository {
           var label = label; label.message = nil; return label
         }
       }
-      let detail = String(
-        localized:
-          "Settings changed: \(settings.changedFields(from: previous).formatted(.list(type: .and)))"
-      )
+      let change = AuditEvent.Change.settingsChanged(fields: settings.changedFields(from: previous))
       if settings.policyProjection != previous.policyProjection {
-        transaction.state.invalidatePendingWork(.settings, detail: detail)
+        transaction.state.invalidatePendingWork(change)
       } else {
-        transaction.state.audit(.settings, detail: detail)
+        transaction.state.audit(change)
       }
       try transaction.commit()
     }

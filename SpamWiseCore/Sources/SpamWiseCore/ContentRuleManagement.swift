@@ -22,10 +22,7 @@ public enum ContentRuleManagement {
       try validate(combined)
       state.contentRules = combined
       for id in importedIDs { state.contentRuleSkips[id] = nil }
-      state.invalidatePendingWork(
-        .contentRule,
-        detail: String(localized: "Imported \(archive.rules.count) content rules")
-      )
+      state.invalidatePendingWork(.contentRulesImported(count: archive.rules.count))
     }
   }
   private static func validate(_ rules: [ContentRule]) throws {
@@ -45,17 +42,21 @@ public enum ContentRuleManagement {
       guard state.contentRules.count <= maximumRules else { throw ContentRuleError.invalid }
       state.contentRuleSkips[saved.id] = nil
       state.invalidatePendingWork(
-        .contentRule,
-        detail: String(localized: "Saved \(saved.id.uuidString): \(saved.disposition.rawValue)")
+        .contentRuleSaved(
+          field: saved.field,
+          pattern: saved.pattern,
+          disposition: saved.disposition
+        )
       )
     }
   }
   /// Removes one rule without modifying mail or other rules.
   public static func remove(_ id: UUID, store: Store) async throws {
-    try await StateRepository.update(store, loading: StateSlices([.contentRules])) {
-      $0.contentRules.removeAll { $0.id == id }
-      $0.contentRuleSkips[id] = nil
-      $0.invalidatePendingWork(.contentRule, detail: String(localized: "Removed \(id.uuidString)"))
+    try await StateRepository.update(store, loading: StateSlices([.contentRules])) { state in
+      guard let rule = state.contentRules.first(where: { $0.id == id }) else { return }
+      state.contentRules.removeAll { $0.id == id }
+      state.contentRuleSkips[id] = nil
+      state.invalidatePendingWork(.contentRuleRemoved(field: rule.field, pattern: rule.pattern))
     }
   }
   private struct Archive: Codable { var version = 1; var rules: [ContentRule] }

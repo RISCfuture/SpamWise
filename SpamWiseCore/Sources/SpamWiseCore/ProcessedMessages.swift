@@ -14,7 +14,7 @@ public enum ProcessingFailure: String, Codable, Sendable {
 public struct ProcessedMessage: Codable, Sendable, Equatable {
   private static let initialRetryDelaySec: TimeInterval = 900
   private static let maximumRetryDelaySec: TimeInterval = 43_200
-  private static let maximumTransientAttempts = 8
+  private static let transientRetryWindowSec: TimeInterval = 3 * 86_400
   /// Policy generation in effect when the message was processed.
   public var revision: Int
   /// Recorded label; nil when the message was not classified.
@@ -29,6 +29,8 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
   public var attempts: Int?
   /// Earliest time a transient failure may be processed again.
   public var retryAfter: Date?
+  /// Time of the first of the consecutive transient failures, which bounds how long they are retried.
+  public var firstTransientFailure: Date?
   /// Latest time automatic discovery found this result settled; retention counts from here.
   public var lastObserved: Date?
 
@@ -39,7 +41,13 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
 
   var retainedSince: Date { lastObserved ?? date }
 
-  /// Creates a result for a recorded decision, classifying its failure when unclassified.
+  /**
+   Creates a result for a recorded decision, classifying its failure when unclassified.
+
+   A transient failure is retried with exponential backoff, from 15 minutes up to 12 hours,
+   until three days after the first of its consecutive transient failures; it then persists
+   until the filtering revision changes.
+   */
   public init(
     record: DecisionRecord,
     failure: ProcessingFailure? = nil,
@@ -53,9 +61,12 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
     guard record.outcome == .unclassified else { return }
     self.failure = failure ?? .persistent
     guard self.failure == .transient else { return }
-    let attempts = (previous?.failure == .transient ? previous?.attempts ?? 0 : 0) + 1
+    let transient = previous?.failure == .transient ? previous : nil
+    let attempts = (transient?.attempts ?? 0) + 1
+    let firstFailure = transient?.firstTransientFailure ?? transient?.date ?? now
     self.attempts = attempts
-    if attempts >= Self.maximumTransientAttempts {
+    firstTransientFailure = firstFailure
+    if now.timeIntervalSince(firstFailure) >= Self.transientRetryWindowSec {
       self.failure = .persistent
     } else {
       retryAfter = now.addingTimeInterval(

@@ -146,7 +146,8 @@ import SpamWiseCore
     disposition: .allow,
     store: store
   )
-  let message = try MIMEParser().parse(fixture("filler-spam"))
+  var message = try MIMEParser().parse(fixture("filler-spam"))
+  message.headers["list-unsubscribe"] = ["<mailto:leave@courtesy-kit.lat>"]
   var examples = (0..<20).map { index in
     var sample = message
     sample.subject = "Corpus example \(index)"
@@ -154,6 +155,11 @@ import SpamWiseCore
     return sample
   }
   try await CorpusManagement.importMessages(examples, label: .junk, store: store)
+  #expect(
+    try await StateRepository.load(store).learning.samples.allSatisfy {
+      $0.features.listUnsubscribe == 1
+    }
+  )
   examples[0].hash = "different delivery"
   try await CorpusManagement.importMessages([examples[0]], label: .inbox, store: store)
   let state = try await StateRepository.load(store)
@@ -177,6 +183,7 @@ import SpamWiseCore
   #expect(!forgotten.corrections.contains { $0.sampleID == last.sampleID })
   #expect(!forgotten.learning.samples.contains { $0.id == last.sampleID })
   #expect(forgotten.rules == state.rules)
+  #expect(try await CorpusManagement.capacity(store: store).remainingImports == 481)
 }
 
 @Test func `bounds concurrent reservations by the monthly limit and resets in a new month`()
@@ -332,7 +339,7 @@ func `batches private notifications across restarts while honoring quiet time an
       == first
   )
   #expect(try await StateRepository.load(store).records.count == 1)
-  await #expect(throws: IntegrationError.staleMessage) {
+  await #expect(throws: AutomationError.requestReused) {
     try await pipeline.execute(
       .correct(.junk),
       requestID: requestID,

@@ -91,7 +91,7 @@ import SpamWiseCore
     await malformed.process(selected).threats?.findings.allSatisfy { $0.status == .unknown } == true
   )
   let absent = await Pipeline(store: store, classifier: classifier).process(selected)
-  #expect(absent.threats?.finding(for: .spam)?.status == .unknown)
+  #expect(absent.threats == nil)
   let delayed = Pipeline(
     store: store,
     classifier: classifier,
