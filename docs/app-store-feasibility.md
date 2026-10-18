@@ -1,75 +1,78 @@
-# App Store feasibility — 2026-10-16
+# App Store feasibility
 
-**Decision: pursue the Mac App Store first.** There is no established blanket
-prohibition on this sandboxed Mail.app product. This is a source/code assessment,
-not an App Review approval. Do not switch to external updates merely because an
-exception needs review.
+**Decision: Developer ID is the primary channel; the Mac App Store edition is
+secondary and depends on one App Review decision.** SpamSieve, the closest comparable
+Mail filter, also ships outside the store. This is a source and code assessment, not
+an App Review approval.
+
+## The deciding risk: the Mail Apple Events exception
+
+Every SpamWise action reaches Mail through Apple Events under
+`com.apple.security.temporary-exception.apple-events` for `com.apple.mail`: history
+import, message lookup, Junk and Inbox moves, Review flags and read status. Both
+editions use it. Guideline 2.4.5(i) limits modifying other apps' data, temporary
+exceptions are granted case by case, and Mail's scripting dictionary exposes only a
+`com.apple.mail.compose` access group, which covers none of these operations.
+Replacing the exception with compose access would break the product.
+
+The Mail extension cannot stand in. MailKit messages carry no account identity
+SpamWise can trust and MailKit offers no arbitrary-mailbox move, so the extension
+returns no decision for any message. A store build without the exception would
+therefore move no mail and would also invite a guideline 4.2 minimum-functionality
+rejection.
+
+So the store edition waits on an early exception decision, sought with the drafted
+[justification](app-review-notes.md) before any further store polish. If Apple refuses
+or limits it, the options are an IMAP-only store build (IMAP needs only the network
+client entitlement, but has had no live acceptance) or no store edition at all.
+Apple's [temporary-exception documentation](https://developer.apple.com/library/archive/documentation/Miscellaneous/Reference/EntitlementKeyReference/Chapters/AppSandboxTemporaryExceptionEntitlements.html)
+asks for a necessity explanation and an issue reference in App Store Connect and
+prefers scripting access groups where the target offers a suitable one.
+
+## Other guideline requirements
 
 Apple's [Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
 require sandboxed Mac apps using appropriate public APIs, self-contained packaging,
-consent for login operation, and App Store updates (§2.4.5/2.5). They also require
-an accessible privacy policy and explicit permission before sharing personal data
-with third-party AI (§5.1). Pricing and service access need evaluation under §3.1;
-API credentials should not be described as a SpamWise license key.
+consent for login operation and App Store updates (§2.4.5/2.5). They also require an
+accessible privacy policy and explicit permission before sharing personal data with
+third-party AI (§5.1). Pricing and service access need evaluation under §3.1; API
+credentials should not be described as a SpamWise license key.
 
-Apple's [temporary-exception documentation](https://developer.apple.com/library/archive/documentation/Miscellaneous/Reference/EntitlementKeyReference/Chapters/AppSandboxTemporaryExceptionEntitlements.html)
-permits requesting Apple Events exceptions with a necessity explanation and issue
-reference in App Store Connect. Scripting access groups are preferred where suitable.
-The presence of an exception is not proof of rejection; approval is discretionary.
+How the code meets them:
 
-## Findings in this checkout
+- Both editions and the extension enable App Sandbox, keep their identifiers and App
+  Group, and use public Apple Events APIs. The store edition links no updater. Login
+  registration is opt-in, and quitting the app ends its monitoring.
+- No external executable runs in either edition. Optional local Rspamd uses a
+  fixed-loopback HTTP transport to a separately installed scanner, off by default and
+  blocked in local mode. Spamhaus public DNS uses in-process resolver queries.
+- Provider mail-sharing permission defaults off, per provider, and is checked before
+  credential access and spending reservation and again before each paid request.
+  The disclosure covers attachment and OCR text, correction examples and sensitive
+  mail. Saving an API key grants no mail-sharing permission. Domain-age lookups need
+  a separate opt-in.
+- Private Cloud Compute is hidden in both editions; neither holds the managed
+  entitlement.
+- The privacy manifest declares the data sent to providers and the app's own
+  UserDefaults access. The [privacy inventory](privacy-audit.md) records the App
+  Privacy answers; do not claim "data not collected" because the user supplies their
+  own provider key.
+- The app is free, published by Tim Morgan (<tim@tim.codes>). Optional provider usage
+  is paid directly to the provider. Offline rules and review work without a provider
+  key. A reviewer needs a complete flow using synthetic mail and appropriate access,
+  without the owner's personal keys.
 
-- The app and extension enable App Sandbox, preserve their identifiers/App Group,
-  use public MailKit/Apple Events APIs, and contain no external updater. Login
-  registration is opt-in and quitting the app ends its monitoring task.
-- The installed Mail dictionary exposes `com.apple.mail.compose` access groups.
-  Existing-mail source, history, lookup and move operations lack a suitable narrow
-  group. Replacing the exception with compose permission would break the product.
-  Keep the exact `com.apple.mail` exception and explain its bounded use accurately.
-- The `APP_STORE` variant disables optional `rspamc` execution and its configuration
-  UI, including restored executable settings. The core classifier does not require it.
-  An explicit fixed-loopback HTTP transport supports a separately configured local
-  Rspamd service in either distribution. Signed sandbox probes establish connectivity;
-  they do not establish App Review acceptance. Neither transport is required or
-  enabled by default, and both are blocked in local-only mode.
-- Provider-specific mail-sharing permission defaults off, including existing stores.
-  Requests require consent before credentials/reservations and recheck it before
-  paid requests. The disclosure includes attachment/OCR text, correction examples
-  and sensitive mail. Supplying an API key does not grant mail-sharing permission.
-  Domain-age lookups also require a separate opt-in to share sender domains.
-- Privacy/support drafts, provider-retention disclosures, a targeted required-reason
-  API audit and static pages are prepared. Public URLs, final privacy answers and
-  complete App Store metadata remain pending. Do not claim
-  “data not collected” merely because the user supplies their own provider key.
-- The app lacks the managed PCC entitlement. The store variant omits that choice
-  and rejects restored PCC settings without silently changing providers.
-- A privacy manifest declares the app's own UserDefaults access with reason CA92.1.
-  The [privacy audit](privacy-audit.md) records the source/dependency inspection
-  and provider terms. Final artifact validation and publisher privacy answers remain
-  release gates; the manifest is not an App Privacy questionnaire submission.
-- A local store package now passes app/extension and installer signature checks
-  using the existing Match identities. Authenticated store validation stops because
-  the App Store Connect app record does not exist; this is separate from App Review.
-- The app will be free, published by Tim Morgan (<tim@tim.codes>). Optional provider
-  usage is paid directly to the provider; verify the complete review flow rather
-  than assuming free app pricing resolves service-access requirements. Offline rules/review remain usable
-  without a provider key. A reviewer needs a complete demonstrable flow using
-  synthetic mail and appropriate review access, without the owner's personal keys.
+## Store release gates
 
-## Store-first release gates
+1. Obtain the Mail exception decision.
+2. Finish the runtime acceptance work and any store-specific gaps it reveals.
+3. Create the App Store Connect app record, then validate a correctly signed store
+   package with the original entitlements.
+4. Publish the site under `docs/`, enter the privacy answers, screenshots and review
+   access, and submit only as a deliberate release step.
 
-1. Finish the runtime acceptance work and store-specific feature/consent/privacy gaps.
-2. Produce and validate a correctly signed local App Store package with original
-   entitlements; supply the Mail exception justification and issue reference.
-3. Publish the prepared static site under `docs/` at a confirmed repository/address,
-   enter the confirmed free pricing, and finish screenshots and review access.
-4. Submit only as a deliberate release step, then handle Apple's actual decision.
-
-Direct distribution can coexist with the Mac App Store. Its selected update approach
-is **GitHub Releases with
-[GitHubUpdateChecker](https://github.com/RISCfuture/GitHubUpdateChecker)** 2.3.0 or
-later, resolved as a remote package; it also remains the fallback if the store path
-proves unsuitable. Track actual feature cuts and common acceptance gaps in the
-[distribution ledger](distribution-differences.md). No alternate updater has been
-added, no release hosting address has been invented, and no store upload has occurred.
-See [packaging preparation](app-store.md) and [lifecycle](lifecycle.md).
+The Developer ID edition ships through GitHub Releases with
+[GitHubUpdateChecker](https://github.com/RISCfuture/GitHubUpdateChecker), independent
+of these gates. Status for each gate is in [TODO.md](../TODO.md); edition differences
+are in the [distribution ledger](distribution-differences.md). See also
+[App Store packaging](app-store.md) and [lifecycle](lifecycle.md).

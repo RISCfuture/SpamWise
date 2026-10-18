@@ -9,22 +9,26 @@ availability is checked at runtime and never causes a silent model substitution.
 
 ## Observed account behavior
 
-The evidence below is from signed-app probes recorded in `CLAUDE.md` and the
-[live Mail follow-up](probes/live-mail-followup.md) on October 16, 2026. It describes
-those probes, not blanket provider certification or acceptance of all parity features.
+The matrix below comes from signed-app probes with generated cross-account messages.
+It describes those probes, not blanket provider certification; open coverage is
+tracked in [TODO.md](../TODO.md), and the
+[live Mail follow-up](probes/live-mail-followup.md) records the newer workflows.
 
-| Mail.app account | Apple Events connection | Inbox/Junk round trip | Orange flag | Offline/reconnect | New parity workflows |
+| Mail.app account | Apple Events connection | Inbox/Junk round trip | Orange flag | Offline/reconnect | Newer workflows |
 | --- | --- | --- | --- | --- | --- |
-| iCloud | Passed | Passed at 08:42 PDT, with 30-second settling per move | Passed | Pending | Confirmed Junk/read, historical preview, renamed-folder fail-open, closed-window/relaunch scanning observed |
-| Google | Passed | Passed at 08:45 PDT, with 30-second settling per move | Passed | Pending | Pending |
+| iCloud | Passed | Passed | Passed | Pending | Confirmed Junk then read status, historical preview, renamed-folder fail-closed, closed-window and relaunch scanning |
+| Google | Passed | Passed | Passed | Pending | Pending |
 | Exchange / Microsoft 365 in Mail | Not tested | Not tested | Not tested | Not tested | Not tested |
 | Other accounts in Mail | Not tested | Not tested | Not tested | Not tested | Not tested |
 
-The cross-account probes avoided duplicate Message-IDs in the receiving account's
-Sent mailbox. Same-account duplicates remain ambiguous and untouched. An earlier
-immediate self-mail move was unstable and appeared in Recovered Messages; subsequent
-settled cross-account probes passed. Thirty seconds is an observation interval,
-not an independent server acknowledgement.
+Probes are sent from another account so that the receiving account holds no Sent copy
+with the same Message-ID; same-account duplicates are ambiguous and left untouched. A
+move immediately after self-sent mail arrived proved unstable: Mail later put the
+message in Recovered Messages. After each move, SpamWise polls the message every two
+seconds and confirms the move after two consecutive matching observations, giving up
+after 30 seconds. That is an observation of Mail's local state, not a server
+acknowledgement, and the Apple Events handlers rewritten since these probes still need
+a fresh signed run.
 
 Mail's account-specific special Inbox/Junk roles are used for moves; SpamWise does
 not guess a destination by name. Accounts → Mailbox destinations reads those roles
@@ -41,21 +45,18 @@ sweeps. It needs SpamWise and Mail running on an awake Mac, Automation permissio
 and available message sources. Keep dry run enabled for comparisons with SpamSieve
 and server rules. Their classifications and folder membership are not human labels.
 
-A signed incoming delivery updated both MailKit heartbeat and body timestamps at
-23:21:45 PDT, approximately two seconds after receipt. An earlier delivery encountered
-stale extension generations (PlugInKit “other version in use”); a graceful Mail
-restart and re-registration of the installed extension preceded the successful
-observation. Stable account identity and timing under server-routed Junk, delays
-and cancellation are still unvalidated. MailKit remains dry-run only; one successful
-callback does not establish delivery coverage.
+Mail also lists SpamWise's MailKit extension, which returns no decision for any
+message. MailKit messages carry no account identity SpamWise can trust, so the
+extension cannot pick an account's own Junk mailbox; all filtering happens through
+the Apple Events sweeps above.
 
 ## Repeatable acceptance matrix
 
 For each configured account, use uniquely identified, disposable cross-account mail
 and retain its exact identities. Record initial role mapping, delivery time, first
 scan time, decision path, source mailbox, intended action and settled outcome.
-Exercise Inbox delivery, server-routed folders, no MailKit callback, repeated sweeps,
-restart, wake, reconnect and a changing multi-page mailbox. Compare two filters with
+Exercise Inbox delivery, server-routed folders, repeated sweeps, restart, wake,
+reconnect and a changing multi-page mailbox. Compare two filters with
 SpamWise in dry run first. Never send ordinary Junk through training automatically.
 
 New workflows also need explicit selected corrections, Junk restore, mark-as-read,

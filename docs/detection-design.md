@@ -1,7 +1,6 @@
 # Separate threat detection from mail preferences
 
-Product direction confirmed 2026-10-16. This is the target design, not a claim that
-the current Inbox/Review/Junk classifier implements independent detectors.
+This is the target design, not a claim that the current Inbox/Review/Junk classifier implements independent detectors.
 
 SpamWise should work from installation using pretrained general detectors and
 zero-shot preference interpretation. A personal mailbox receiving roughly twenty
@@ -49,9 +48,9 @@ concern, not automatic proof that the surrounding email is spam.
 - Keep existing address/domain rule precedence and separate model verdict,
   intended action and action outcome. Do not silently turn threat findings into
   new moves or override explicit rules. Preserve no Trash/delete and fail-open.
-- Trusted-contact/history gates currently skip classification. Independent threat
-  coverage requires a separate assessment path even for trusted mail, while
-  leaving the existing rule-driven action intact. A gate-approved Inbox result
+- Contact and history gates skip classification when the sender's authentication
+  is trusted and aligned. Independent threat coverage therefore needs a separate
+  assessment path even for that mail, while leaving the rule-driven action intact. A gate-approved Inbox result
   must never be presented as a completed security scan.
 - Unknown targeting history cannot prove or disprove spearphishing. Unusual style,
   urgency or a new bank account is supporting evidence, not a decisive rule.

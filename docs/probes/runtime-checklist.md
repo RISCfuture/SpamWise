@@ -1,14 +1,52 @@
-# Signed runtime acceptance record
+# Signed runtime acceptance checklist
 
-Status: PARTIALLY RUN (2026-10-16). Developer ID packaging and notarization pass. The provisioned XCTest runner passes offline onboarding and correction flows. A signed app verified the supplied API key using Haiku 5.5: 990 input tokens, 78 output tokens, no cache reads, estimated cost $0.000138. The key is stored in Keychain. Signed extension credential access and incoming callbacks remain unverified. Separating Automation consent from the eight-second script timeout resolved the signed app's connection failure: after the user clicked Allow, it read two Mail accounts successfully. The extension is visibly named SpamWise. The original self-sent probe correctly failed app lookup because its Inbox and Sent copies shared Message-ID; a native immediate round trip also exposed delayed recovery. Fresh cross-account probes now pass through the signed app for both iCloud and Google: each move settles for 30 seconds, then verifies source and destination before the next action. Inbox restoration and orange flags were independently observed, and both accounts are recorded as validated. Dry run remains on and onboarding incomplete. See CLAUDE.md for evidence and the Apple Event Boolean decoding fix. History import remains pending. Do not treat build/unit tests as proof of signed integration.
+These are the checks a signed build must pass on a real Mac with real Mail accounts.
+Which of them have passed is recorded in [TODO.md](../../TODO.md). Use only generated
+`[SpamWise Probe]` messages for any action, never record keys or message bodies, and
+clean up probes afterward as `CLAUDE.md` describes. Build success, unit tests and
+generated AppleScript compilation are not substitutes for these checks.
 
-1. Build with team 2NFSK2WB24, App Group group.codes.tim.SpamWise, shared Keychain access group. On a clean macOS 27 user account, start a timer and complete the four onboarding steps. Record elapsed time (target <5 minutes), OS/build, signing identity class, configured account types. Never record keys or message bodies.
-2. Verify a user-supplied key through onboarding. Record Haiku model ID, measured usage, latency, and configuration errors without fallback. Verify extension can independently read the same shared Keychain item. Denied/locked Keychain must leave mail untouched.
-3. In Mail Settings → Extensions enable SpamWise. Keep dry run on. Send controlled plain/MIME test mail to each configured account. Record initial callback and second rawData callback, byte counts only. Include server-routed Junk. Check Activity reason and evidence. No observation means unknown coverage.
-4. Controlled provider delay runs at 1, 3, 5, 8, 10 and 15 seconds. Record Mail timeout behavior, cancellation, host termination, duplicate callbacks. Current implementation watchdog returns nil at 9 seconds, classifier budget at most 8; these are provisional safety caps, NOT measured Mail deadlines. MailKit remains dry-run-only because its SDK message has no account identity. Do not enable it for actions without a tested identity bridge and timing data.
-5. Use “Check Mail connection” to grant Automation. Deny once and confirm clear UI status and no action. Import bounded Inbox/Sent history; verify known reply/receipt and unknown/partial cases. No Full Disk Access or Mail database access is required.
-6. Send a disposable message from another account with a subject starting `[SpamWise Probe]`, put it in Inbox and select only it in Mail. A same-account Sent copy with the same Message-ID makes resolution ambiguous. Run “Test selected message” under Settings → Advanced → Optional move test. It verifies the initial Inbox location, moves to that account’s Junk and back to Inbox, and sets an orange flag. Each move waits 30 seconds before resolving the message again and checking its source and destination; the next action requires successful verification. The flag is read back too. The test neither changes dry run nor validates the account; “Check Mail connection” validates accounts from their Inbox and Junk roles. If return fails, find the test message in Junk and restore it manually. SpamWise neither creates nor deletes the test message: it never sends mail from the user’s account and exposes no Trash or delete operation, so delete it in Mail afterward. Repeat per account. Test background color separately. This observes Mail's local state, not a separate server acknowledgement. Do not use important mail.
-7. Only after successful Apple Events action tests, turn off dry run in General and confirm. Install the bundled SpamWiseRule.scpt under ~/Library/Application Scripts/com.apple.mail/ using Finder, add a Mail rule invoking it. App must be running or launchable by its registered spamwise:// URL. The notification contains no mail data; the app re-queries account-scoped messages. Review stays in Inbox with orange flag/background.
-8. Exercise Mark as Good/Junk, explicit domain correction, pause, network loss, unavailable storage, duplicate Message-ID within an account, identical IDs across accounts, and correction during a delayed classification. Ambiguous messages stay untouched. Requested/failed actions must be distinguishable from confirmed actions.
-9. Run a signed app and extension simultaneously against the App Group. Verify cross-process state visibility and no lost rules. Offline Store tests and the standalone 100-write SwiftData probe do not validate signing entitlements.
-10. Run held-out eval, then archive/sign/notarize with available Developer ID credentials. Fresh-install acceptance remains incomplete until the above results are recorded.
+1. Build either edition signed for team 2NFSK2WB24, with App Group
+   `group.codes.tim.SpamWise` and the shared Keychain group. On a clean macOS 27 user
+   account, start a timer and complete the four onboarding steps. Record elapsed time
+   (target under five minutes), OS build, signing identity class and configured
+   account types.
+2. Verify a user-supplied key through onboarding. Record the model ID, measured usage,
+   latency and configuration errors, without fallback. A denied or locked Keychain
+   must leave mail untouched.
+3. Use **Check Mail connection** to grant Automation. Deny once and confirm a clear
+   status and no action. Run **Import Inbox and Sent history**; verify known reply and
+   receipt cases and the unknown/partial cases. No Full Disk Access or Mail database
+   access is required.
+4. Send a disposable message from another account with a subject starting
+   `[SpamWise Probe]`, put it in Inbox and select only it in Mail. A same-account Sent
+   copy with the same Message-ID makes resolution ambiguous. Run **Test selected
+   message** under Settings → Advanced → Optional move test. It verifies the initial
+   Inbox location, moves the message to that account's Junk and back to Inbox, and
+   sets an orange flag. After each move SpamWise polls every two seconds and confirms
+   after two consecutive observations of the exact source in the intended mailbox,
+   giving up after 30 seconds; the next action requires a confirmed one. The flag is
+   read back too. The test neither changes dry run nor validates the account; **Check
+   Mail connection** validates accounts from their Inbox and Junk roles. If the return
+   fails, find the message in Junk and restore it manually. Repeat per account, and
+   test the background color separately. This observes Mail's local state, not a
+   server acknowledgement.
+5. Only after the action tests pass, turn off dry run in General and confirm.
+   Optionally install the bundled `SpamWiseRule.scpt` under
+   `~/Library/Application Scripts/com.apple.mail/` and add a Mail rule that runs it;
+   the app must be running or launchable by its `spamwise://` URL. The trigger carries
+   no mail data; the app re-queries account-scoped messages. Send controlled plain and
+   MIME probes to each account, including server-routed Junk, and check each Activity
+   reason and evidence. Review stays in Inbox with an orange flag or background.
+6. Exercise Mark as Good/Junk/Review from the menu bar, an explicit domain
+   correction, Pause, network loss, unavailable storage, duplicate Message-IDs within
+   an account, identical IDs across accounts, and a correction during a delayed
+   classification. Ambiguous messages stay untouched, and requested or failed actions
+   stay distinguishable from confirmed ones.
+7. Confirm and then stop trusting an account's receiving servers. A probe from an
+   address in Contacts must reach Inbox without classification only while the
+   account trusts its servers and the probe's authentication is aligned.
+8. Close every window, then lock the screen, sleep and wake, and restart the Mac;
+   confirm scanning continues and progress persists each time.
+9. Run the held-out evaluation, then archive, sign and notarize the edition being
+   accepted and repeat the checks above on that exact artifact.

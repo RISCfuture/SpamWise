@@ -2,16 +2,91 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>NSPrivacyTracking</key>
-  <false/>
-  <key>NSPrivacyAccessedAPITypes</key>
-  <array>
-    <dict>
-      <key>NSPrivacyAccessedAPIType</key>
-      <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
-      <key>NSPrivacyAccessedAPITypeReasons</key>
-      <array><string>CA92.1</string></array>
-    </dict>
-  </array>
+	<!--
+	  What SpamWise sends, in the form App Store Connect reads.
+
+	  Both editions carry this one file, so the two builds cannot come to
+	  describe themselves differently. docs/privacy.md is the policy and
+	  docs/privacy-audit.md the inventory these answers come from; change all
+	  three together.
+
+	  Everything declared here leaves the Mac only after the user chooses a
+	  cloud model provider (Anthropic, OpenAI or Google), enters their own API
+	  key and separately grants that provider permission to receive mail.
+	  SpamWise runs no server of its own: requests go straight from the Mac to
+	  the provider, which receives them under the user's own account.
+
+	  Apple requires the required-reason API section only on iOS, iPadOS,
+	  tvOS, visionOS and watchOS, never on macOS. It is declared anyway
+	  because the API below is genuinely used and the answer does not change.
+	-->
+
+	<!-- No advertising, analytics or tracking integration, and no tracking
+	     domain is contacted. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<!--
+		  The message being classified: its sender, subject and a shortened body,
+		  attachment and image text when those options are on, and the evidence
+		  gathered about it, such as authentication results, link domains and
+		  whether the sender is a contact. The provider retains requests under
+		  its own terms, for up to 30 days by default. Optional Spamhaus and
+		  domain-registration lookups also send the message's domains, never its
+		  text. Linked, because every request carries the user's API key.
+		-->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeEmailsOrTextMessages</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+
+		<!--
+		  The user's own words that travel with each request: their filtering
+		  preferences and up to five subjects and excerpts of earlier corrections
+		  from the same account, quoted with the sender's domain rather than
+		  address.
+		-->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
+
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<!--
+		  CA92.1 for the app's own preferences in the standard domain. Shared
+		  state lives in the App Group's SwiftData store, not an App Group
+		  defaults suite, so 1C8F.1 does not apply.
+		-->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

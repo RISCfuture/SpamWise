@@ -24,8 +24,7 @@ entitlement, container, launch and integration configuration.
 From the repository root:
 
 ```sh
-worker="$(agent-lock worker)"
-bash Scripts/evidence-runtime-check.sh "$worker" \
+bash Scripts/evidence-runtime-check.sh <build-token> \
   'Developer ID Application: Timothy Morgan (2NFSK2WB24)'
 ```
 
@@ -33,7 +32,7 @@ The script compiles the package and harness with warnings treated as errors,
 verifies the app signature, then runs `ocr` and `privacy`. Each run starts after
 a four-second observer interval and remains alive for four seconds afterward.
 `nettop -P -n -L 0 -p PID -J bytes_in,bytes_out` records one-second per-process
-observations in `.build/<worker>/ocr-network.csv` and `privacy-network.csv`.
+observations in `.build/<build-token>/ocr-network.csv` and `privacy-network.csv`.
 The executable prints synthetic-case results to corresponding `.log` files.
 
 For an observer positive control, start a temporary HTTP listener on an unused
@@ -87,8 +86,8 @@ here. No classification-quality claim follows from successful text recognition.
 
 ## Local-mode network observations
 
-The privacy fixture enables OCR, RDAP and DNS reputation options, supplies an
-Rspamd executable path, and records synthetic consent for every provider. Local
+The privacy fixture enables OCR, RDAP, DNS reputation and local Rspamd options, and
+records synthetic consent for every provider. Local
 mode remains enabled throughout. It processes the synthetic message through the
 production pipeline with each explicitly selected backend:
 
@@ -96,9 +95,8 @@ production pipeline with each explicitly selected backend:
 | --- | --- |
 | Claude, OpenAI, Gemini and Private Cloud Compute | Unclassified with configuration refusal |
 | Apple on-device | Completed a dry-run verdict |
-| RDAP and DNS evidence | No domain-age or external evidence recorded |
+| RDAP, DNS and Rspamd evidence | No domain-age or external evidence recorded |
 | Paid-request ledger | Zero reservations, zero committed dollars |
-| Missing `/opt/homebrew/bin/rspamc`, explicitly checked afterward | Unknown |
 
 The credential boundary throws a distinct error if called; cloud cases assert
 the configuration-refusal result, establishing rejection before credential access.
@@ -120,19 +118,11 @@ delegated traffic from Foundation Models services, DNS services, child processes
 or Mail.app. Independent service-aware network observation, the signed shipping
 app and useful local-model quality remain broader acceptance gates.
 
-## Saved evidence and remaining optional-service gates
+## Remaining optional-service gates
 
-The first signed run, signature verification and loopback control are retained
-under `.build/acaeba63-ddfe-4a49-99a6-640a80fd9fbe/`: `ocr.log`, `privacy.log`,
-their `*-network.csv` files, `control.log`, and `control-network.csv`.
-These files contain synthetic data only. The harness's temporary classification
-store is removed; generated images exist only in memory.
-
-The initial run had no Rspamd installation and verified missing-client unknown.
-A subsequent [temporary native Rspamd probe](rspamd-runtime.md) verified real
-scanner symbols through the production adapter outside App Sandbox. The signed
-sandboxed harness could not launch that external client and correctly returned
-unknown. Shipping optional-tool execution and integration remain outstanding;
-no app permissions were widened. DNS-service eligibility,
-terms acknowledgement and an attributable configured resolver remain separate
-user/service prerequisites; no public DNSBL queries were made for this probe.
+The run's logs and network counters contain synthetic data only; the harness's
+temporary classification store is removed, and generated images exist only in
+memory. A separate [temporary native Rspamd probe](rspamd-runtime.md) verifies real
+scanner symbols through the production HTTP adapter. DNS-service eligibility, terms
+acknowledgement and an attributable configured resolver remain separate user and
+service prerequisites; no public DNSBL queries were made for this probe.

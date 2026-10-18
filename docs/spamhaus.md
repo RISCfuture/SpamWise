@@ -1,7 +1,7 @@
 # Spamhaus fit for SpamWise
 
-Research checked on 2026-10-17. No account was registered, terms accepted, key
-requested, paid service purchased or live message/domain lookup performed.
+This assesses Spamhaus as an optional evidence source and records how SpamWise uses
+it. Live Spamhaus authorization has not been exercised; see [TODO.md](../TODO.md).
 
 ## What it adds
 
@@ -38,18 +38,18 @@ developer-operated proxy. The app's zero price alone does not resolve those case
 
 ## Privacy and existing implementation
 
-The current adapter sends sender/link domains in DNS questions, not full messages,
+SpamWise sends the From, Reply-To, Return-Path and link domains, never full messages,
 email addresses or URL paths. The resolver and service can therefore observe the
 queried domains. Keyed DNS also puts the service key into the query name, as shown
 in the [authentication protocol](https://docs.spamhaus.com/datasets/docs/source/70-access-methods/data-query-service/020-dqs-auth.html).
 
-The app offers two explicitly selected transports: public DNS through bounded
-`dig` execution, or the native HTTPS API at `apibl.spamhaus.net`. HTTPS sends the
-query key in the Authorization header and stores it only in shared Keychain under
-`codes.tim.SpamWise.spamhaus`. It never embeds the key in a domain, URL, backup or
-activity record. Public DNS is unavailable in the App Store build; HTTPS needs
-only the existing outgoing-network entitlement. Neither transport falls back to
-the other. Direct keyed DNS queries are not implemented.
+The app offers two explicitly selected transports: public DNS, as in-process
+libresolv queries sent only to the configured resolver, or the native HTTPS API at
+`apibl.spamhaus.net`. HTTPS sends the query key in the Authorization header and stores
+it only in the shared Keychain. It never embeds the key in a domain, URL, backup or
+activity record. Both transports work in both editions with only the existing
+outgoing-network entitlement, and neither falls back to the other. Direct keyed DNS
+queries are not implemented.
 
 Both routes require acknowledgement of the selected service's terms and remain
 disabled by default and in local-only mode. Changing services clears that
@@ -67,8 +67,7 @@ SpamWise conservatively treats that inconsistent code as unknown; accepted codes
 must also appear in the zone table.
 
 Offline tests cover response interpretation, credential failures, consent,
-domain/query bounds, cancellation, deadlines and local-only suppression. Live
-Spamhaus account authorization and signed shipping queries remain unverified.
+domain/query bounds, cancellation, deadlines and local-only suppression.
 
 Spamhaus also maintains [Rspamd integration configuration](https://github.com/spamhaus/rspamd-dqs).
 That is an alternative deployment path once its compatibility and service settings

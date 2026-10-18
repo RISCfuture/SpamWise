@@ -28,16 +28,13 @@ extension; `fastlane/Matchfile` lists both identifiers so match syncs a profile
 for each. Do not grant or fabricate a managed entitlement merely to make
 signing succeed.
 
-### Current validation gate
+### Validation gate
 
-On October 16, 2026, an `altool --validate-app` attempt with the shared App
-Store Connect API key stopped with error 19: no Apple ID was found for bundle
-ID `codes.tim.SpamWise` on platform `macOS App`. An App Store Connect app record
-must exist before an upload can succeed. Apple's
+Authenticated `altool --validate-app` stops with error 19 until an App Store Connect
+app record exists for bundle ID `codes.tim.SpamWise` on platform macOS. Apple's
 [Apps API documentation](https://developer.apple.com/documentation/appstoreconnectapi/apps)
-directs developers to create new apps on the App Store Connect website; the API
-key does not provide that creation operation. Server validation, final metadata
-and App Review remain open.
+directs developers to create new apps on the App Store Connect website; the API key
+does not provide that creation operation.
 
 ## Mail Automation exception
 
@@ -51,37 +48,35 @@ prefers scripting-target access groups when the target exposes a suitable group.
 Mail composition permission does not establish access to SpamWise's existing-mail
 inspection and move operations.
 
-Prepare an accurate justification for the bounded, account-specific Mail actions,
-user consent, dry-run defaults, persist-before-action policy and refusal to delete
-mail. App Review approval remains pending. Mail.app is the supported product focus;
-the existing experimental IMAP code does not establish a store workaround or remove
-the compiled app's temporary-exception entitlement.
+Every action path, from history import and lookup to Junk and Inbox moves, flags and
+read status, goes through this exception, and the Mail extension alone does nothing.
+A store build without it could not filter mail, so the exception decision gates the
+whole edition; see [feasibility](app-store-feasibility.md). The
+[review notes](app-review-notes.md) draft the justification: bounded,
+account-specific Mail actions, user consent, dry-run defaults, persist-before-action
+and refusal to delete mail. IMAP does not remove the need for the entitlement in the
+current build.
 
 ## Private Cloud Compute
 
-The current app does not request `com.apple.developer.private-cloud-compute`.
-Selecting PCC therefore cannot be claimed as a working distribution feature.
-Apple's [PCC eligibility page](https://developer.apple.com/private-cloud-compute/)
+Neither edition requests `com.apple.developer.private-cloud-compute`, so neither
+offers PCC, and a restored PCC selection fails open with a prompt to choose another
+model. Apple's [PCC eligibility page](https://developer.apple.com/private-cloud-compute/)
 requires Small Business Program membership, fewer than two million first-time
 App Store downloads, and the entitlement assigned to the developer account.
 Eligible distribution is through the App Store; Apple lists TestFlight and ad hoc
 for testing. Developer ID notarization alone does not satisfy those conditions.
 
 Confirm the account grant and matching app/profile capability before introducing
-the entitlement or claiming PCC acceptance. The missing grant blocks PCC use;
-it does not by itself establish rejection of an app that uses another explicit
-provider and fails open when PCC is unavailable.
+the entitlement and showing the choice again.
 
-## Remaining acceptance
+## Privacy answers
 
-The local signed package and compatible distribution profiles are verified.
-App Store Connect app creation, final metadata/privacy answers, published policy
-and support URLs, the Mail exception issue reference, server validation and review
-remain open. Drafts are in [review notes](app-review-notes.md) and the
-[privacy audit](privacy-audit.md); the static site is prepared under `docs/`. The headless CLI is a
-standalone package executable and is not installed as an automatic background
-service by the app or this script. No production account or mailbox is contacted
-by packaging checks.
+The policy is [privacy.md](privacy.md), published as the site's privacy page. The App
+Privacy answers, the manifest's collected-data types and the source inventory are all
+in [the privacy inventory](privacy-audit.md); enter the answers from there rather than
+from Xcode's privacy report alone, which cannot see what providers receive. Open
+submission steps are tracked in [TODO.md](../TODO.md).
 
 ## Product-page draft
 
@@ -113,53 +108,9 @@ Description draft:
 > provider with your own API credentials. External providers receive bounded mail
 > context and may charge for requests; dry run can still make model requests.
 
-Do not advertise PCC availability until its grant and signed runtime are verified.
+Do not advertise PCC; neither edition offers it.
 Screenshots must come from the reviewed release build and must use synthetic mail.
 Publish privacy and support pages with the marketing site under `docs/`, hosted
-through GitHub Pages. Publisher/contact and free pricing are confirmed; the public
-site address, territory choices and final age-rating answers remain release work.
-Use copyright Tim Morgan for the release year. Do not invent a deployed URL before
-the hosting repository and address exist.
-
-## Privacy-policy and disclosure draft
-
-Policy draft for review before publication:
-
-> SpamWise processes mail from accounts you explicitly connect. It stores settings,
-> sender rules, decision records, corrections, and bounded retry data locally.
-> Optional learning and reviewed-content settings retain additional local data.
-> API credentials and app-configured IMAP credentials are stored in Keychain.
->
-> When you grant mail-sharing permission to Anthropic Claude, OpenAI, or Google Gemini, SpamWise sends bounded
-> message text, subject, evidence, preferences, and selected correction examples to
-> that provider using your credentials. Mail context can contain personal or
-> sensitive information. Your provider's terms and retention settings apply.
-> Selecting an on-device model performs model inference on your Mac. Optional
-> domain reputation checks send queried domains to the configured DNS service;
-> optional domain-age lookups contact registration-data services. You can revoke
-> provider permission in Account settings; already dispatched requests cannot be
-> recalled. The App Store build excludes external executable scanners.
->
-> Contacts permission, when granted, supplies local trusted-sender evidence.
-> SpamWise has no advertising or tracking integration. Pausing stops new processing;
-> dry run suppresses mail actions but does not suppress provider requests.
-
-The [App Privacy questionnaire](https://developer.apple.com/app-store/app-privacy-details/)
-includes third-party practices. Its collection definition depends on access beyond
-servicing the request in real time; ordinary optional processing does not
-automatically qualify for an exemption. Review provider retention and account
-settings before submitting answers. The following is a draft inventory, not a
-submitted privacy label:
-
-| Data | Current use and disclosure review |
-| --- | --- |
-| Emails or Text Messages | Selected remote models receive bounded mail context for app functionality; treat as potentially linked, not anonymized. |
-| Other User Content | Preferences and correction examples may reach the selected provider for app functionality. |
-| Identifiers | Provider authentication and IMAP account identifiers can link requests to the user's service account. |
-| Contacts | Address matching is local; confirm no address-book list is transmitted by the release build. |
-| Diagnostics and usage | Local activity, estimated costs and retry state are not themselves analytics collection; assess any downstream provider logs separately. |
-
-The publisher must confirm provider-specific retention, linkage and data categories,
-publish the final policy with a real contact address, and verify the release's
-required-reason API/privacy-manifest requirements. No blanket “data not collected”
-claim follows from local storage or user-supplied API keys.
+through GitHub Pages. Publisher/contact and free pricing are confirmed. Use copyright
+Tim Morgan for the release year. Do not invent a deployed URL before the site is
+published.

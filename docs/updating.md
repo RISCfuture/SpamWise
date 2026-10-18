@@ -43,12 +43,6 @@ sandboxed app: it downloads the release's disk image and hands the user the
 file to install. Releases ship one asset, the notarized and stapled disk image
 `.github/workflows/release.yml` attaches.
 
-## Acceptance still required
-
-- Publish a release from the public repository and verify discovery, the
-  download, offline errors, rate limiting, prereleases and version ordering
-  with a signed, notarized build.
-- Verify replacing an installed copy from the downloaded disk image, including
-  Mail extension registration and login-item registration afterwards.
-- Validate switching between editions: both share the bundle identifier, App
-  Group and Mail extension, so install one at a time.
+Install one edition at a time: both share the bundle identifier, App Group and
+Mail extension. Release and edition-switching acceptance is tracked under SS-20 in
+[TODO.md](../TODO.md).

@@ -81,6 +81,13 @@ Confirm each item on the exported bundle you will distribute:
 
 ## Acceptance on a fresh setup
 
-Use a fresh local app state and controlled test mail. Record elapsed onboarding time (target under five minutes), API/model availability, actual incoming body callbacks, account identity, shared Keychain and App Group access, Automation/Contacts denied states, Review annotations, account-specific Inbox/Junk moves, pause/dry-run behavior, corrections, and fail-open behavior for network, parsing, storage, and timeout failures. Repeat across configured accounts and server-routed Junk. Establish a callback deadline with controlled delays; the current deadline is provisional.
+Use a fresh local app state and controlled test mail. Record elapsed onboarding time
+(target under five minutes), API/model availability, account identity, shared
+Keychain and App Group access, Automation/Contacts denied states, Review annotations,
+account-specific Inbox/Junk moves, pause/dry-run behavior, corrections, and fail-open
+behavior for network, parsing, storage and timeout failures. Repeat across configured
+accounts and server-routed Junk.
 
-Use the complete [runtime probe checklist](probes/runtime-checklist.md). UI automation and signed integration are separate checks. Build success, synthetic fixture outcomes, and generated AppleScript compilation do not substitute for either.
+Use the [runtime probe checklist](probes/runtime-checklist.md). UI automation and
+signed integration are separate checks; build success, synthetic fixture outcomes and
+generated AppleScript compilation substitute for neither.

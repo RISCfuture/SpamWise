@@ -12,8 +12,8 @@ incomplete about limitations and training data. Pin
 `2f5580bfd62e4a167d05742f0de321d570df5a21`, use Safetensors and disable remote
 code. No substitute model is loaded.
 
-The model config lacks semantic output names. I independently checked the
-training dataset's `label`/`label_text` pairs at
+The model config lacks semantic output names, so the label mapping was checked
+against the training dataset's `label`/`label_text` pairs at
 [`SetFit/enron_spam` revision `1916f66c89d52221ae33eb57d44498b4f3a5df22`](https://huggingface.co/datasets/SetFit/enron_spam/tree/1916f66c89d52221ae33eb57d44498b4f3a5df22):
 0 means ham and 1 means spam. This establishes the interpreted label mapping,
 not the dataset's suitability for phishing, graymail or multilingual training.

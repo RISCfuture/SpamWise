@@ -14,17 +14,15 @@ Run the [audit tool](../../Tools/Corpus/audit.py) from the repository root:
 
 ```sh
 PYENV_VERSION=spamwise-corpus pyenv exec python Tools/Corpus/audit.py \
-  --corpus .build/corpus-negatives-20261016/prepared-v1 \
-  --baseline .build/e85b1d5f-04fe-4493-80a9-6fc7785ec9ad/corpus-prepared-v1 \
-  --downloads .build/corpus-negatives-20261016/downloads \
-  --language-tool .build/<worker-token>/language-audit \
-  --output .build/<worker-token>/corpus-audit/fresh
+  --corpus /private/path/prepared-v1 \
+  --baseline /private/path/baseline-prepared-v1 \
+  --downloads /private/path/downloads \
+  --language-tool .build/language-audit \
+  --output .build/corpus-audit/fresh
 ```
 
 The [aggregate report](../../Tools/Corpus/reports/corpus-integrity-audit.json)
-pins both corpus hashes. The actual local outputs are under
-`.build/89f5ef8a-0fe6-4e2d-913f-6b94a7916693/corpus-audit/derived-final/`.
-Per-pair identities remain private local artifacts. Both preparation manifests
+pins both corpus hashes. Per-pair identities stay in private local artifacts. Both preparation manifests
 and all four downloaded source hashes were verified before processing.
 Build the optional language helper using the [tool instructions](../../Tools/Corpus/README.md#audit-frozen-preparation);
 omit that argument for a metadata/campaign-only audit.

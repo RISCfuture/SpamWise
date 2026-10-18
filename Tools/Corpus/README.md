@@ -154,11 +154,11 @@ NaturalLanguage helper with an isolated compiler cache, then pass its path as
 `--language-tool` to the audit command:
 
 ```sh
-AGENT_WORKER_ID=<worker-token> xcrun swiftc \
+xcrun swiftc \
   -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
   -enable-experimental-feature StrictMemorySafety \
-  -module-cache-path ../../.build/<worker-token>/ModuleCache \
-  language-audit.swift -o ../../.build/<worker-token>/language-audit
+  -module-cache-path ../../.build/<build-token>/ModuleCache \
+  language-audit.swift -o ../../.build/<build-token>/language-audit
 ```
 
 The Python tool verifies and selects real non-holdout records before passing text
@@ -168,7 +168,7 @@ unknown. These hypotheses are neither calibrated language accuracy nor independe
 review. The report pins macOS and executable identity. Per-record annotations go
 to private `inferred-languages.json`; original language fields stay unknown.
 
-The [2026-10-16 audit](../../docs/probes/corpus-integrity-audit.md) found substantial
+The [integrity audit](../../docs/probes/corpus-integrity-audit.md) found substantial
 development overlap missed by exact-template grouping. Frozen partitions remain
 unchanged; the derived development manifest and inferred language counts support
 further audit, not independent benchmark claims.

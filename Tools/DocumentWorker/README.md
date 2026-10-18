@@ -88,14 +88,13 @@ sending one after interruption could launch a replacement solely to shut it down
 The extraction checks need no signing identity:
 
 ```sh
-bash Tools/DocumentWorker/extraction-check.sh "$(agent-lock worker)"
+bash Tools/DocumentWorker/extraction-check.sh <build-token>
 ```
 
 The full harness runs them first, then the signed cases:
 
 ```sh
-worker="$(agent-lock worker)"
-bash Tools/DocumentWorker/check.sh "$worker" \
+bash Tools/DocumentWorker/check.sh <build-token> \
   'Developer ID Application: Timothy Morgan (2NFSK2WB24)'
 ```
 
@@ -106,7 +105,8 @@ runtime, verifies signatures and executes both. It temporarily listens only on
 from the shell establishes that the listener exists before testing service denial.
 Temporary marker files and the listener are removed after use.
 
-Results and signed bundles are retained in `.build/<worker>/document-worker/`.
+The build token is any name of letters, digits and hyphens. Results and signed
+bundles are retained in `.build/<build-token>/document-worker/`.
 `results.log` covers document, identity, resource and recovery cases;
 `sandbox.log` covers network and filesystem denial; `unauthorized.log` checks an
 otherwise valid, same-team signed caller with the wrong bundle identifier;
@@ -123,42 +123,36 @@ shellcheck Tools/DocumentWorker/check.sh
 markdownlint-cli2 --config ~/.markdownlint-cli2.jsonc Tools/DocumentWorker/README.md
 ```
 
-## Observed OS constraints
+## What the signed harness shows
 
-The final signed run on 2026-10-16 passed 24 native checks. It processed ordinary,
-JavaScript-action, encrypted, owner-password, malformed, oversized, page-limit and text-limit fixtures with the
-expected outcomes. Hung, abruptly exited, CPU-bound and growing-memory workers
-terminated; subsequent independent ordinary documents extracted successfully.
-Wrong service identity, malformed JSON and excess returned text were rejected.
+The full signed check makes 28 request observations plus three direct
+completion-order checks. Ordinary, JavaScript-action, encrypted, owner-password,
+malformed, oversized, page-limit and text-limit fixtures give their expected
+outcomes. Hung, abruptly exited, CPU-bound and growing-memory workers are terminated,
+and the next ordinary document extracts successfully in a different worker process.
+Wrong service identity, malformed JSON and excess returned text are rejected.
+In-flight cancellation returns to the caller in well under a millisecond, and
+recovery extracts the ordinary fixture in a new worker; that is evidence for a
+controlled run, not a guaranteed OS scheduling or memory-reclamation bound.
 
 Both a live loopback connection and file reads outside the worker's container
-returned `EPERM`. The files existed: one was a shell-created synthetic marker in
-the build directory, and the other was created by the host in its own container's
-temporary directory. An otherwise valid Developer ID signed app with the same
-team but a different bundle identifier was rejected before receiving a worker
-identity. A separately built worker without diagnostic entry points extracted the
-ordinary fixture successfully; deep strict signature verification passed.
+return `EPERM`, for a shell-created marker in the build directory and for a file the
+host created in its own container's temporary directory. An otherwise valid
+Developer ID signed app with the same team but a different bundle identifier is
+rejected before receiving a worker identity. A worker built without diagnostic entry
+points extracts the ordinary fixture, and deep strict signature verification passes.
 
-The final worker CPU probe exited with `SIGXCPU` after 2,032 ms according to
-launchd. The wall-time probe logged its watchdog termination and returned
-unavailable text in 3.005 seconds when already connected. The memory probe logged
-138,936,320 resident bytes at termination. An earlier signed run observed the
-larger overshoot described below. Each resource failure was followed by a
-successful ordinary extraction in a different worker PID.
+The CPU probe exits with `SIGXCPU` after about two seconds of CPU time, according to
+launchd. The wall-time probe logs its watchdog termination and returns unavailable
+text about three seconds after connecting. These artifacts contain synthetic inputs
+and process diagnostics only.
 
-Evidence is retained in
-`.build/485dd0e3-6675-44be-8612-25b075ed2453/document-worker/`, including
-`results.log`, `sandbox.log`, `unauthorized.log`, `production.log`, signed bundles
-and `resource-evidence.log`. The enclosing `document-worker-final.log` records the
-whole successful command. These artifacts contain synthetic inputs and process
-diagnostics only. They are local evidence, not committed distribution artifacts.
-
-The memory watchdog logged a resident size of **148,520,960 bytes** when terminating
-a worker against the **134,217,728-byte** threshold. That overshoot is expected
-from sampling and is direct evidence that this is **not a hard allocation ceiling**.
-A faster or larger allocation could overshoot much further or cause system pressure
-before the watchdog runs. The synthetic fixture grows memory in 16 MiB steps;
-it does not establish behavior for every PDFKit allocation pattern.
+The memory watchdog terminates workers at around 139 to 149 million resident bytes
+against its **134,217,728-byte** threshold. That overshoot is expected from sampling
+and is direct evidence that this is **not a hard allocation ceiling**. A faster or
+larger allocation could overshoot much further or cause system pressure before the
+watchdog runs. The synthetic fixture grows memory in 16 MiB steps; it does not
+establish behavior for every PDFKit allocation pattern.
 
 Setting `RLIMIT_AS` to 16 MiB returned `-1` with `EINVAL` in both a standalone
 probe and the signed worker. The SDK aliases `RLIMIT_RSS` to `RLIMIT_AS`; Apple's
@@ -202,9 +196,10 @@ and reuse requires separate accounting and memory-reclamation acceptance.
    caller/service checks against the actual exports.
 3. Add an app integration client using a narrow core protocol; keep NSXPC and
    PDFKit out of the pure core modules. Pass already bounded PDF bytes, never a
-   file URL, bookmark or security-scoped resource. The daemon and Mail extension
-   need their own validated hosting design; a service embedded in the app is not
-   automatically available to those processes.
+   file URL, bookmark or security-scoped resource. Reuse `PDFExtraction.swift`'s
+   byte-bounded `BoundedText` for the returned text. The headless daemon
+   needs its own validated hosting design; a service embedded in the app is not
+   automatically available to it.
 4. Retain the evaluated one-document lifecycle unless a replacement is validated. One document per process
    reclaims the process's allocations but encounters the observed launch delay.
    Reusing one serialized service across successful jobs could reduce latency,
@@ -222,26 +217,3 @@ The strict hard-memory-containment requirement remains unresolved. If it remains
 mandatory, keep production PDFs unsupported until a suitable bounded parser or
 enforceable OS containment mechanism is established. A signed sandbox and a
 successful watchdog probe do not close that gate.
-
-## Latest signed cancellation run
-
-On 2026-10-17 the exact-source signed check passed 28 request observations plus
-three direct completion-order checks. In-flight cancellation returned to the
-caller in 0.000156 seconds; recovery extracted the ordinary fixture in a different
-worker. Launchd separately records cancelled PID 83726 being removed 28 ms after
-its successful spawn. That is evidence for this controlled run, not a guaranteed
-OS scheduling or memory-reclamation bound.
-
-The full run also passed the existing document/resource/recovery cases,
-wrong-service and wrong-caller requirements, outside-container and host-container
-file denial, loopback denial, and the worker build excluding diagnostic symbols.
-The memory watchdog recorded 148,439,040 resident bytes against its 134,217,728-byte
-threshold, again demonstrating sampling overshoot.
-
-Evidence is in `.build/594427e7-0238-4e70-ad69-7a5595634c83/document-worker/`:
-`results.log`, `sandbox.log`, `unauthorized.log`, `production.log`,
-`cancellation-evidence.log` and `resource-evidence.log`. The enclosing
-`document-worker-final.log` records the successful signed build/run command.
-Strict Swift compilation, Swift formatting, strict SwiftLint, shellcheck and
-Markdown lint passed. These are isolated harness results; production PDF support
-and hard process-memory containment remain unestablished.

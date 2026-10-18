@@ -1,46 +1,190 @@
 # SpamWise
 
-A macOS 27 Apple Mail filter with local sender rules, optional relationship evidence, and guided Claude classification. It never deletes mail. Inbox means no action, Review stays in Inbox with an annotation, and eligible Junk moves only to that account's resolved Junk mailbox.
+[![CI](https://github.com/RISCfuture/SpamWise/actions/workflows/ci.yml/badge.svg)](https://github.com/RISCfuture/SpamWise/actions/workflows/ci.yml)
+[![Linters](https://github.com/RISCfuture/SpamWise/actions/workflows/lint.yml/badge.svg)](https://github.com/RISCfuture/SpamWise/actions/workflows/lint.yml)
+[![Platform](https://img.shields.io/badge/platform-macOS%2027-lightgrey.svg)](https://developer.apple.com/)
 
-The app starts in dry run, and dry-run checks begin once Mail Automation is allowed. Leaving dry run requires an explicit confirmation after a read-only check that each account's Inbox and Junk mailboxes resolve uniquely; every live move is verified afterward and fails open. Signed live Mail behavior and production thresholds still require the acceptance checks in [the runtime checklist](docs/probes/runtime-checklist.md).
+SpamWise is a sandboxed junk-mail filter for Apple Mail on macOS 27. Your sender and
+domain rules decide first; Contacts and your own mail history help when the sender's
+authentication can be trusted; a language model you choose classifies the rest:
+Anthropic Claude, OpenAI, Google Gemini or Apple's on-device model.
 
-The repository is [RISCfuture/SpamWise](https://github.com/RISCfuture/SpamWise),
-currently private while publication is reviewed. The prepared marketing, privacy
-and support pages have no public deployment or release download yet. See the
-[repository approval checklist](docs/repository-approval.md).
+It never deletes mail. Inbox means no action, Review leaves the message in the Inbox
+with an orange flag or background, and Junk moves it to that account's own Junk
+mailbox. It starts in dry run, recording what it would do without touching mail, until
+you turn actions on.
 
-## Prerequisites
+SpamWise has not been released. The repository is
+[RISCfuture/SpamWise](https://github.com/RISCfuture/SpamWise); the prerelease site
+under `docs/` is not deployed. See [TODO.md](TODO.md) for what is done and what is still
+waiting on acceptance.
 
-- Xcode 27 with Swift 6.4, on macOS 27.
-- `swiftlint`, `xcbeautify`, `shellcheck` and `markdownlint-cli2`, which the check scripts call.
-- `rg` (ripgrep) and `agent-lock`, for the runtime probe scripts (`store-check.sh`, `evidence-runtime-check.sh`, `rspamd-runtime-check.sh`), which take an `agent-lock` worker token to isolate their build caches.
-- pyenv with a Python 3 virtualenv, for the corpus and packaging tools under `Tools/` and `Scripts/`.
+## Editions
 
-Swift package dependencies, including GitHubUpdateChecker for the direct-download edition, resolve from their remote repositories at the versions pinned in `Package.resolved`; no sibling checkouts are needed.
+Two app targets build from one project. Both produce `SpamWise.app` with the bundle
+identifier `codes.tim.SpamWise`, embed the same Mail extension and share one App Group
+store and Keychain group, so install only one at a time.
 
-## Build and verify
+| | **SpamWise (download)** | **SpamWise (MAS)** |
+| --- | --- | --- |
+| Target | `SpamWise-download` | `SpamWise-MAS` |
+| Distribution | Developer ID, notarized disk image on GitHub Releases | Mac App Store |
+| Updates | Checks GitHub Releases with [GitHubUpdateChecker](https://github.com/RISCfuture/GitHubUpdateChecker) | The store |
+| Status | Primary channel | Depends on App Review granting the Mail Apple Events exception |
 
-The project has two app targets, `SpamWise-MAS` and `SpamWise-download`, that share the `SpamWise Common` framework; their shared schemes are `SpamWise (MAS)` and `SpamWise (download)`. The provider dependency is pinned in the local package. Preserve bundle identifiers, signing team, App Group, and shared Keychain group.
+Nothing is conditionally compiled. Each target holds only its entry point, Info.plist,
+entitlements and App Shortcuts; the download edition injects the update checker, and
+the shared views show update controls only when one is present. See
+[distribution differences](docs/distribution-differences.md).
+
+## Architecture
+
+### Layout
+
+| Path | Contents |
+| --- | --- |
+| `SpamWiseCore/` | Swift package with all filtering logic; no SwiftUI or MailKit |
+| `SpamWise/` | The `SpamWise Common` framework: app model, every view and Settings, the Help book, string catalogs |
+| `SpamWise-MAS/`, `SpamWise-download/` | Edition entry points, Info.plists and entitlements |
+| `MailExtension/` | The Mail extension, which deliberately leaves every message to Mail |
+| `UnitTests/`, `UITests/` | Hostless framework tests and XCTest UI flows |
+| `eval/` | Five synthetic fixtures, their seed state and mock verdicts |
+| `Scripts/` | Check, packaging and runtime-probe scripts |
+| `Tools/` | Research harnesses: corpus preparation, document worker, preference probe, site generator |
+| `fastlane/`, `.github/workflows/` | Release lanes, CI, lint, release and site workflows |
+| `docs/` | Reference documentation and the generated prerelease site |
+
+### Package modules
+
+| Module | Role | Depends on |
+| --- | --- | --- |
+| MessageModel | Bounded MIME parsing, message identity, public suffix list | — |
+| Signals | Rule gates, authentication evidence, Spamhaus DBL, RDAP, Rspamd | MessageModel, CResolver |
+| Classifier | Prompt construction, provider classifiers, model catalog | MessageModel, Signals |
+| Decision | Pure action policy from verdict and settings | Classifier, Signals |
+| Learning | Optional Bayes, evidence weights and campaign fingerprints | Classifier, Signals, MessageModel |
+| Store | SwiftData store shared across processes, Keychain | MessageModel, Signals, Classifier, Decision |
+| SpamWiseCore | Pipeline, mail sweeper, corrections, state | all of the above |
+| MailIntegration | Apple Events adapter for Mail, IMAP on swift-nio-imap | SpamWiseCore |
+| Evaluation | Metrics, calibration and comparison reports | SpamWiseCore |
+| `spamwise-eval` | Evaluation CLI | SpamWiseCore, MailIntegration, Evaluation |
+| `spamwise-daemon` | Headless IMAP filter | SpamWiseCore, MailIntegration |
+
+Every message passes through the same pipeline: parse, gather evidence, apply rules,
+classify if no rule decided, choose an action, persist the decision and an
+at-most-once action claim, then ask the mail adapter to act. Any failure leaves the
+message where it is.
+
+### Schemes
+
+| Scheme | Builds | Tests |
+| --- | --- | --- |
+| `SpamWise (download)` | Download edition and extension | — |
+| `SpamWise (MAS)` | App Store edition and extension | `UnitTests`, `UITests` (`SpamWise.xctestplan`) |
+| `SpamWise Common` | Shared framework | `UnitTests`, hostless |
+| `MailExtension` | The extension | — |
+| `SpamWiseCore`, `MailIntegration`, `spamwise-eval`, `spamwise-daemon` | Package products | — |
+
+## Requirements
+
+- macOS 27 and Xcode 27 with Swift 6.4, on Apple silicon (Intel is untested).
+- `swiftlint`, `xcbeautify` and `python3` for `Scripts/check.sh`.
+- For releases: Ruby 4.0.7 with the `spamwise` gemset (`.ruby-version`,
+  `.ruby-gemset`) and the gems in `Gemfile`, plus access to the team's match
+  certificates repository.
+- For the corpus and site tools under `Tools/`: pyenv with a Python 3 virtualenv, as
+  each tool's README describes.
+
+Swift packages resolve from their remote repositories at the versions pinned in the
+committed `Package.resolved` files.
+
+## Building
 
 ```sh
-Scripts/check.sh
-Scripts/ui-check.sh
-swiftlint lint --strict --no-cache
-shellcheck Scripts/*.sh
+xcodebuild build -project SpamWise.xcodeproj -scheme "SpamWise (download)" \
+  -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO
 ```
 
-The check script runs all package tests with warnings as errors, builds both editions and the Mail extension without signing, and runs the hostless unit tests in the `SpamWise Common` scheme. It writes to `.build/check/`; pass another name, such as `Scripts/check.sh feature-x`, to keep builds apart. The UI script runs the UITests target against the App Store edition with automatic development signing. That target requires an embedded provisioning profile to authorize the runner's application-identifier entitlement; Xcode downloads or creates it using the configured team account. The test-mode app uses isolated temporary storage and simulated denied Mail permission. The UI flows cover all four onboarding steps, denied-permission messaging, dry-run status, Pause, address-rule replacement, explicit domain correction, and retained corrections when a Mail action fails. The `SpamWise (MAS)` scheme's test plan, `SpamWise.xctestplan`, runs the unit and UI tests together.
+An unsigned build compiles, but Mail Automation, the App Group and the Keychain group
+need signing with team `2NFSK2WB24`. Open `SpamWise.xcodeproj` and run either edition
+scheme with automatic signing to try the app.
 
-Use `swift format format -i -r SpamWise SpamWise-MAS SpamWise-download SpamWiseCore/Sources SpamWiseCore/Tests MailExtension UITests UnitTests`, then `swiftlint lint --fix` and `swiftlint lint --strict`. SwiftLint layout rules that disagree with Swift's formatter are disabled in the repository configuration. CI runs the same package tests, builds and unit tests, plus SwiftLint, on every pull request.
+## Testing
 
-## Run
+```sh
+Scripts/check.sh            # everything CI runs, with warnings as errors
+Scripts/ui-check.sh         # XCTest UI flows; development-signed
+```
 
-Open `SpamWise.xcodeproj` and run the SpamWise scheme with signing configured for team `2NFSK2WB24`. Complete the four setup steps. API verification sends a synthetic message; recent-mail dry run sends eligible message context to Anthropic. The key is stored in Keychain only after successful verification. Contacts is optional. Do not grant Full Disk Access.
+`check.sh` checks localization coverage, runs the package tests, builds both editions
+and the extension, checks the app icon and runs the hostless unit tests. Products land
+in `.build/check/`; pass another name (`Scripts/check.sh feature-x`) to keep concurrent
+builds apart. The pieces can run alone:
 
-For mail actions, check the Mail connection in Settings → Accounts to validate each account's mailboxes, optionally install the bundled Mail rule script as described in Help, and review dry-run results before turning off dry run. An optional `[SpamWise Probe]` move test is in Settings → Advanced. Keep SpamWise running. Automatic scans consider only mail received after setup (or after a later account is added or included), read each account's new Inbox mail first on every check, and then continue a bounded backfill; mailbox changes can delay discovery of backfilled mail. Older mail is filtered only through an explicit preview in Settings. Authorized Contacts refresh hourly, and bounded Sent/Inbox history updates run with automatic scans. The Inbox scanner does not automatically process server-routed Junk.
+| Layer | Command |
+| --- | --- |
+| Package tests | `swift test --package-path SpamWiseCore -Xswiftc -warnings-as-errors` |
+| Hostless unit tests | `xcodebuild test -project SpamWise.xcodeproj -scheme "SpamWise Common" CODE_SIGNING_ALLOWED=NO` |
+| UI tests | `Scripts/ui-check.sh`, which signs for team `2NFSK2WB24` and runs `UITests` against the App Store edition |
+| Store concurrency | `bash Scripts/store-check.sh <build-token>`: two processes make 50 transactions each, a third reads 100 |
+| Lint and format | `swift format format -i -r <dirs>`, `swiftlint lint --strict` |
 
-## Evaluation and packaging
+The UI flows use isolated temporary storage and a simulated denied Mail permission, so
+they never touch mail. Two checks are opt-in because they spend money or need an
+installed, indexed app:
 
-[Evaluation instructions](docs/evaluation.md) cover labeled corpora, mailbox export, mock/live selection, cache identity, confidence buckets, usage, and statistical limits. The included fixture verdicts are explicit mocks and do not establish model quality. Live tests are opt-in via `SPAMWISE_LIVE_API=1`.
+- `SPAMWISE_LIVE_API=1 swift test --package-path SpamWiseCore` classifies one fixture
+  with Claude Haiku using the Keychain key.
+- `TEST_RUNNER_SPAMWISE_INTENTS_TEST=1
+  TEST_RUNNER_SPAMWISE_INTENTS_APP_PATH=/path/to/SpamWise.app Scripts/ui-check.sh`
+  runs the App Intents through the registered app. See [automation](docs/automation.md).
 
-[Packaging instructions](docs/packaging.md) cover Help indexing, hardened-runtime archives, Developer ID export, notarization, and acceptance. [CLAUDE.md](CLAUDE.md) records implementation decisions and actual probe results; [TODO.md](TODO.md) tracks deferred product work. The original [Phase 1 brief](docs/phase-one-brief.md) is preserved verbatim.
+The [evaluation guide](docs/evaluation.md) covers the offline fixture check and
+labeled-corpus runs with `spamwise-eval`.
+
+## Running
+
+Complete the four setup steps. Allow SpamWise to control Mail when macOS asks;
+Contacts is optional. Do not grant Full Disk Access: SpamWise never reads Mail's
+databases. Choose a model; a cloud provider needs your own API key, stored in Keychain,
+and separate permission to share mail with it.
+
+Check the Mail connection in Settings → Accounts to validate each account's Inbox and
+Junk mailboxes, review the dry-run results in Activity, then turn dry run off in
+General. SpamWise filters only while it runs: closing its windows leaves the menu-bar
+app monitoring, and launch at login is optional. Automatic scans consider mail received
+after setup; older mail is filtered only through an explicit preview in Settings.
+
+`spamwise-daemon` filters one IMAP account headlessly; see [IMAP](docs/imap.md).
+
+## Releasing
+
+```sh
+bundle install
+bundle exec fastlane mac download_release version:1.0 build:42
+bundle exec fastlane mac release version:1.0 build:42
+```
+
+`download_release` archives, notarizes and staples the download edition and builds a
+notarized disk image; `release` uploads the App Store edition without submitting it.
+Pushing a version tag runs both through `.github/workflows/release.yml`, using the
+matching `CHANGELOG.md` section as release notes. See [packaging](docs/packaging.md).
+
+## Privacy
+
+SpamWise has no analytics or tracking. With your permission it sends bounded message
+context to the model provider you choose, and optional evidence lookups send domains to
+Spamhaus or registration-data services. Everything else stays on the Mac. The
+[privacy policy](docs/privacy.md) and [data inventory](docs/privacy-audit.md) give the
+details.
+
+## Documentation
+
+The [documentation index](docs/README.md) lists the reference docs. [TODO.md](TODO.md)
+tracks status, and [CHANGELOG.md](CHANGELOG.md) holds release notes. The original
+[Phase 1 brief](docs/phase-one-brief.md) is preserved verbatim.
+
+## License
+
+No license has been selected yet; all rights are reserved. Third-party components are
+listed in [CREDITS.md](CREDITS.md).

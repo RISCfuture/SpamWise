@@ -34,8 +34,7 @@ and avoid repeatedly fetching the same file.
 
 ## Download verification
 
-Downloaded only into ignored local artifacts under
-`.build/9bdac1b8-1027-4502-a77b-e1a9b0abc471/corpus-audit/`. Nothing was
+Downloaded only into ignored local artifacts under `.build/`. Nothing was
 imported into Mail, rendered as HTML, executed as an attachment, uploaded to a
 provider, or added to the public site. No API charges were incurred.
 

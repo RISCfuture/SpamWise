@@ -9,7 +9,7 @@ There is no published download or App Store listing to link yet.
 ## Getting started
 
 1. Open SpamWise and complete its setup, and allow SpamWise to control Mail when
-   macOS asks. The Mail extension is needed only for its optional preview route.
+   macOS asks.
 2. Start with dry run enabled. Choose an available on-device model or configure an
    explicit provider. Enter API keys only in SpamWise, where they are saved in
    Keychain; grant mail-sharing permission separately for a remote provider.
@@ -28,15 +28,18 @@ test; no immediate-delivery guarantee is made.
 ## If mail is not being classified
 
 Check Pause, account inclusion, the selected provider and mail-sharing permission.
+Contacts, reply history and Good corrections let mail skip classification only in
+accounts whose trusted receiving servers are configured, so that the sender's
+authentication can be checked; otherwise they count only as evidence for the model.
 Open Accounts and scan health for the last successful scan or reported failure.
 Unreadable mail stays in place while later readable messages can be processed.
 Permission failures and timeouts leave mail untouched. In System Settings →
 Privacy & Security → Automation, check SpamWise’s Mail permission. Contacts access
 is optional and is separate from Mail access.
 
-The optional Mail extension preview cannot filter by account and never moves
-mail. The account sweep route supplies filtering; large or changing mailboxes may
-take several sweeps. See the [tested compatibility matrix](mail-compatibility.md).
+SpamWise filters by scanning each account's Inbox through Mail; large or changing
+mailboxes may take several sweeps. Enabling SpamWise in Mail's extension settings is
+not required. See the [tested compatibility matrix](mail-compatibility.md).
 
 ## Correcting a decision
 

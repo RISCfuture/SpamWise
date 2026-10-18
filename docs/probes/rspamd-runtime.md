@@ -19,11 +19,11 @@ credentials, model calls, paid services, or public blocklist queries are involve
 
 Build native Rspamd separately from its pinned source package, then build the
 client harness with `Scripts/evidence-runtime-check.sh`. Keep an unsigned copy of
-the compiled harness executable before signing, for the executable comparison.
-Pass absolute paths:
+the compiled harness executable before signing, for the sandbox comparison. Pass
+absolute paths and any build token (letters, digits and hyphens):
 
 ```sh
-bash Scripts/rspamd-runtime-check.sh <worker-token> \
+bash Scripts/rspamd-runtime-check.sh <build-token> \
   <rspamd-source-directory> <rspamd-build-directory> \
   <unsigned-probe-executable> <signed-probe-app-executable>
 ```
@@ -31,20 +31,19 @@ bash Scripts/rspamd-runtime-check.sh <worker-token> \
 The script uses `127.0.0.1:11333` for the scanner and `127.0.0.1:11334` for a
 synthetic redirect trap. Both must be unused. It terminates only processes it
 starts, removes its temporary configuration and verifies that both listeners
-have stopped. It preserves logs beneath `.build/<worker-token>/rspamd/`.
+have stopped. It preserves logs beneath `.build/<build-token>/rspamd/`.
 
 ## Observed results
 
-Worker `053e029e-a477-4600-94f0-b8d53af1b4d7` on macOS 27 / Swift 6.4:
+On macOS 27 with Swift 6.4:
 
 | Check | Result |
 | --- | --- |
-| Native unsigned executable, marker message | Observed `SPAMWISE_PROBE: 1.5` |
-| Native unsigned executable, ordinary message | Observed, no symbols |
-| Signed sandbox executable transport | Unknown, `NSCocoaErrorDomain:4` |
+| Unsigned harness, marker message | Observed `SPAMWISE_PROBE: 1.5` |
+| Unsigned harness, ordinary message | Observed, no symbols |
 | Signed sandbox HTTP, marker message | Observed `SPAMWISE_PROBE: 1.5` |
 | Signed sandbox HTTP, ordinary message | Observed, no symbols |
-| Stopped native server, both transports | Unknown |
+| Stopped native server | Unknown |
 | HTTP 307 redirect to a second loopback listener | Unknown; no redirected request |
 | HTTP response above 64 KiB without Content-Length | Unknown |
 | HTTP 503 | Unknown |
@@ -60,7 +59,6 @@ connections for stalled and cancelled scans.
 
 This establishes a sandbox-compatible transport to the normal worker without
 launching an external program. It does not establish representative spam
-accuracy, administrator-supplied Rspamd configuration, actual incoming Mail
-callbacks, App Review acceptance, or authentication of whichever local process
-owns port 11333. The optional feature remains disabled until explicitly selected;
-existing executable selections are not migrated to HTTP.
+accuracy, administrator-supplied Rspamd configuration, App Review acceptance, or
+authentication of whichever local process owns port 11333. The optional feature
+stays disabled until explicitly turned on.

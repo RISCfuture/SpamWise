@@ -100,12 +100,12 @@ partition, scores and confusion counts; there was no model/threshold adjustment.
 
 Install `Tools/Corpus/requirements.txt` and `requirements-baseline.txt` in a unique
 pyenv environment. Obtain the CSV through the original release's Files section;
-the script verifies the exact pinned hash before parsing. The recorded run used:
+the script verifies the exact pinned hash before parsing:
 
 ```sh
-PYENV_VERSION=spamwise-spaphish-f6498b20 pyenv exec python Tools/Corpus/spaphish.py \
-  --source '.build/f6498b20-a954-4540-9bde-cb7605194f14/spaphish/downloads/Spaphish dataset - DiB.csv' \
-  --output .build/d0294911-bcb6-4e23-b906-15f26cc19efa/spaphish-confirmation
+PYENV_VERSION=spamwise-spaphish pyenv exec python Tools/Corpus/spaphish.py \
+  --source '/private/path/Spaphish dataset - DiB.csv' \
+  --output .build/spaphish-confirmation
 ```
 
 Use a fresh output directory on reproduction. Private `partition.json` and

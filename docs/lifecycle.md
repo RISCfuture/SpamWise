@@ -1,9 +1,11 @@
 # Install, upgrade, recover and remove
 
-Use the Developer ID app only after signature, notarization, stapling and Gatekeeper
-checks pass for that exact artifact. Keep one installed copy in Applications and
-enable SpamWise in Mail → Settings → Extensions. Development exports are not release
-updates. App Store distribution remains separately pending App Review.
+SpamWise comes in two editions: a notarized download from GitHub Releases and a Mac
+App Store edition. Both share one identity, store and Keychain group, so keep exactly
+one installed copy in Applications. Install a downloaded build only after its
+signature, notarization, stapling and Gatekeeper checks pass. Development exports are
+not release updates. Mail's extension list includes SpamWise, but filtering does not
+depend on enabling it; the extension leaves every message to Mail.
 
 ## Upgrade and recovery
 
@@ -20,30 +22,29 @@ Restore clears action validation, pauses filtering and keeps dry run on. It does
 reset budget commitments or duplicate-action protection. Revalidate destinations
 before resuming actions. API keys remain in Keychain and are excluded from backups.
 
-The preferred update path is the Mac App Store, pending the
-[feasibility and release gates](app-store-feasibility.md). A store build must use
-App Store updates. A direct version may coexist, using GitHub Releases with the
-owner’s GitHubUpdateChecker library. The [distribution ledger](distribution-differences.md)
-tracks feature differences and channel-switching requirements. No external update
-mechanism is enabled. SS-20 remains open until the chosen distribution and upgrade
-path are tested; a successful archive alone does not establish this.
+The download edition checks GitHub Releases on the schedule set in Settings →
+General → App updates, or when you choose Check for Updates…. When you accept an
+update it downloads the release's disk image; quit SpamWise and replace the app from
+it as above. The App Store edition updates through the App Store. To switch editions,
+install the new copy, launch it and confirm Accounts and Activity, then remove the old
+one. The [distribution ledger](distribution-differences.md) lists what differs between
+the editions.
 
 ## Stop background operation
 
 Turn off **Open SpamWise at login** in Settings → General. Check System Settings →
 General → Login Items if approval is pending or registration fails. Pause, then quit
 SpamWise to stop its monitor; closing its windows leaves the menu-bar app running.
-Disable SpamWise in Mail → Settings → Extensions before removal.
 
 ## Remove the app and optionally its data
 
 Quitting and removing the app leaves learned state and Keychain credentials intact
 for reinstall. To remove personal state as well, export anything you want to retain,
-disable its extension/login item and quit both Mail and SpamWise first. In Finder,
+turn off the login item and quit both Mail and SpamWise first. In Finder,
 use Go → Go to Folder to inspect only SpamWise's containers:
 
 - `~/Library/Group Containers/group.codes.tim.SpamWise/` holds shared state, action
-  claims, budget accounting and evidence caches.
+  claims, budget accounting, the Contacts snapshot and the domain-age cache.
 - `~/Library/Containers/codes.tim.SpamWise/` holds app preferences and sandbox data.
 - The extension container uses its preserved bundle identifier
   `codes.tim.SpamWise.MailExtension`; confirm the identifier on the installed bundle
@@ -54,7 +55,7 @@ historical spending/replay protection; restore or reauthorize a spending limit b
 running paid evaluation again. Do not remove Mail's containers, databases or mailboxes.
 
 In Keychain Access, remove only SpamWise credentials whose service starts with
-`codes.tim.SpamWise.` and which you intend to discard. This includes the optional
-setup credential and provider credentials; never remove team-wide signing keys.
+`codes.tim.SpamWise.` and which you intend to discard: provider API keys, the
+Spamhaus query key and IMAP credentials. Never remove team-wide signing keys.
 Delete independently saved backups/recovery keys only when you no longer need them.
 SpamWise does not remove messages as part of uninstall.

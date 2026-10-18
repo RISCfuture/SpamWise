@@ -1,24 +1,41 @@
 # Evaluation
 
-Build with `bash Scripts/check.sh <worker-token>`. The executable is the `spamwise-eval` product of `SpamWiseCore`; use `swift run --package-path SpamWiseCore --scratch-path .build/<worker-token>/swiftpm spamwise-eval --help` for options.
-
-## Offline smoke test
+`spamwise-eval` is the `SpamWiseCore` package's evaluation executable. It has five
+subcommands: `corpus`, `reviewed`, `export`, `compare` and `threat-report`; `--help` on
+each lists its options. Every run is a dry run and requests no Mail action. Examples
+below use `spamwise-eval` for
 
 ```sh
-swift run --package-path SpamWiseCore --scratch-path .build/<worker-token>/swiftpm spamwise-eval \
-  --input eval/fixtures --model mock --mock-responses eval/mock-responses.json \
-  --cache .build/<worker-token>/eval-cache --output .build/<worker-token>/eval-report.json
+swift run --package-path SpamWiseCore --scratch-path .build/swiftpm spamwise-eval
 ```
 
-The five samples use explicitly supplied synthetic verdicts. This verifies parsing, decisions, caching, reporting, and the expected fixture outcomes; it does not measure Claude quality. Repeat with `--strength conservative` to recompute actions using cached model responses. Cache identity includes raw message hash, fixed instructions, effective preferences/evidence/body prompt, model ID, and schema ID. Changing the mock-response file also invalidates mock cache entries.
+## Offline fixture check
+
+```sh
+spamwise-eval corpus eval/fixtures --model mock \
+  --mock-responses eval/mock-responses.json --state eval/fixture-state.json \
+  --cache .build/eval-cache --output .build/eval-report.json
+```
+
+The five samples get explicitly supplied synthetic verdicts, keyed by message hash, so
+this is a plumbing check: it verifies parsing, rules, decisions, caching, reporting
+and the expected two Inbox, two Junk and one Review outcomes, but never exercises the
+prompt, instructions or evidence encoding, and says nothing about model quality.
+`eval/fixture-state.json` seeds receipt history for the order-confirmation sender;
+that history becomes a decisive gate only when the fixture account trusts its
+receiving server, and otherwise reaches the model as evidence. Repeat with
+`--strength conservative` to recompute actions from cached responses. Cache identity
+includes the raw message hash, fixed instructions, effective preferences, evidence and
+body prompt, model ID and schema ID; changing the mock-response file also invalidates
+mock entries.
 
 ## Corpus and live runs
 
 Place independently human-labeled `.eml` files in `good/`, `junk/`, and optionally `graymail/`. Duplicate message bytes are rejected to prevent inflated sample sizes. Include personal mail, wanted newsletters, club notices, receipts, order confirmations, and realistic spam. Reserve a separate held-out set before tuning.
 
-Live calls require `SPAMWISE_LIVE_API=1`. Select `--model claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`, `gpt-5.4-mini`, or `gemini-3.8-flash`, with the corresponding `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` in the process environment. The CLI never saves keys. `apple-on-device` and `apple-private-cloud-compute` use Apple's Foundation Models framework without an API key; PCC requires Apple's managed entitlement and availability. Unsupported or unavailable models fail without fallback. Rates are captured for the selected model; optional `--input-price`, `--output-price`, and `--cache-price` override report estimates in USD per million tokens. Provider cache-write premiums are not separately exposed.
+`spamwise-eval corpus DIRECTORY` evaluates such a directory. Live calls require `SPAMWISE_LIVE_API=1`. Select `--model claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`, `gpt-5.4-mini`, or `gemini-3.8-flash`, with the corresponding `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` in the process environment. The CLI never saves keys. `apple-on-device` uses Apple's Foundation Models framework without an API key. Private Cloud Compute is not selectable. Unsupported or unavailable models fail without fallback. Rates are captured for the selected model; optional `--input-price`, `--output-price`, and `--cache-price` override report estimates in USD per million tokens. Provider cache-write premiums are not separately exposed.
 
-Paid models require `--budget-store PATH`, an evaluation ledger that the CLI never defaults to the app's shared store. Before each uncached paid request, the CLI atomically reserves a conservative upper bound there: $0.10 for Haiku, $1 for other paid models. A new ledger refuses every request until `--budget-limit USD` records its ceiling; changing the ceiling keeps existing commitments. Reservations are commitments, not measured billing; failed calls retain their reservation because a timeout cannot prove that the provider did not bill. Passing the app's existing store continues the ledger recorded there, without touching the app's monthly spending. The report's measured-token cost estimate is distinct from reserved budget. Neither a new ledger nor a report-price override grants permission to spend.
+Paid models require `--budget-store PATH`, an evaluation ledger that the CLI never defaults to the app's shared store. Before each uncached paid request, the CLI atomically reserves a conservative upper bound there: $0.10 for Haiku, $1 for other paid models. A new ledger refuses every request until `--budget-limit USD` records its ceiling; changing the ceiling keeps existing commitments. Reservations are commitments, not measured billing; failed calls retain their reservation because a timeout cannot prove that the provider did not bill, and the report counts them as `failedProviderCalls`. Passing the app's existing store continues the ledger recorded there, without touching the app's monthly spending. The report's measured-token cost estimate (`newEstimatedCostUSD`) is distinct from reserved budget. A budget or storage refusal stops the run with exit status 1 and writes no report. Neither a new ledger nor a report-price override grants permission to spend; the authorized additional evaluation ceiling is $150.
 
 ### Using a saved setup key
 
@@ -32,8 +49,8 @@ Keychain launcher:
 
 ```sh
 swift Scripts/evaluate-with-keychain.swift /absolute/path/to/spamwise-eval \
-  openai --live --budget-store /private/path/to/budget.store \
-  --input /private/path/to/corpus \
+  openai --live corpus /private/path/to/corpus \
+  --budget-store /private/path/to/budget.store \
   --cache /private/path/to/cache --output /private/path/to/report.json
 ```
 
@@ -41,60 +58,68 @@ The launcher supplies the provider's explicit supported model and reads the key
 directly into the child process environment. It never writes a plaintext key or
 places it in command arguments. It removes unrelated provider credentials from
 that environment, requires `--live` and an explicit `--budget-store`, and rejects
-model overrides.
-A separately compiled launcher was refused setup-key access by Keychain. Treat
-each executable's Keychain authorization separately; compilation alone does not
-establish credential access.
+model overrides. Keychain authorizes each executable separately, so a newly compiled
+launcher may be refused setup-key access until it is approved.
 
 Filesystem permission, an unconfigured ledger or budget exhaustion prevents
 evaluation. The store's transaction and cross-process lock remain responsible for
 each reservation.
 
-On 2026-10-16, this path admitted one synthetic OpenAI request through the existing
-evaluator build. The API returned HTTP 429, which the backend reported as
-`rateLimited`; the report recorded no verdict or token usage. The shared ledger
-retained one $1 reservation against its $150 ceiling. No billed amount was
-reported, and no refund or automatic retry was performed. This verifies setup-key
-read access and shared reservation, not successful OpenAI classification or
-signed-app credential access. The report is
-`.build/e85b1d5f-04fe-4493-80a9-6fc7785ec9ad/openai-report.json`.
-
-Optional `--state snapshot.json` reads an `AppState` with rules, corrections, Contacts, and history under account ID `eval`. Each run uses a fresh temporary classification store, forces dry run, and clears action claims and retries. It does not mutate the app's classification state; paid requests reserve spending in the explicit `--budget-store` ledger. RDAP is unknown, external DNS/Rspamd and image OCR are disabled, and no remote URLs from mail are fetched.
+For `corpus`, optional `--state snapshot.json` reads an `AppState` with rules, corrections, Contacts, and history under account ID `eval`. Each run uses a fresh temporary classification store, forces dry run, and clears action claims and retries. It does not mutate the app's classification state; paid requests reserve spending in the explicit `--budget-store` ledger. RDAP is unknown, external DNS/Rspamd and image OCR are disabled, and no remote URLs from mail are fetched.
 
 ## Reviewed-label exports
 
 Enable local reviewed-content retention in the app before correcting messages, then export reviewed labels from Settings. Labels created without retained text remain useful metadata but cannot supply evaluation input. Evaluate the export directly:
 
 ```sh
-spamwise-eval --reviewed /private/path/reviewed-labels.json --model mock \
+spamwise-eval reviewed /private/path/reviewed-labels.json --model mock \
   --partition held-out --output /private/path/reviewed-report.json
 ```
 
-`--reviewed` replaces `--input`; the default partition is `held-out`. The stable content identity uses normalized subject and body, independently of delivery headers, correction date, or label. The loader rejects duplicate retained content across the entire export before making model calls. Export limits are 64 MiB, 10,000 labels, and 2 MB per retained parsed message. `reviewedCorpus` reports total labels, missing content, partition exclusions, and selected messages. Metadata-only labels are skipped explicitly; a selection with no retained messages produces zero observations and clear counts. Graymail remains separate.
+The default partition is `held-out`. The stable content identity uses normalized subject and body, independently of delivery headers, correction date, or label. The loader rejects duplicate retained content across the entire export before making model calls. Export limits are 64 MiB, 10,000 labels, and 2 MB per retained parsed message. `reviewedCorpus` reports total labels, missing content, partition exclusions, and selected messages. Metadata-only labels are skipped explicitly; a selection with no retained messages produces zero observations and clear counts. Graymail remains separate.
 
-Retained `ParsedMessage` values go directly to the pipeline; human labels are used only for metrics and never enter prompts. The default state is empty. `--state` is rejected for `held-out` and `all` partitions to prevent imported rules or learned state from leaking labels. `--partition training` permits a supplied state for exploratory testing; `training` and `all` cannot establish held-out quality. Clearing retained text preserves an available sample identity and its split, but makes that sample unavailable to the evaluator.
+Retained `ParsedMessage` values go directly to the pipeline; human labels are used only for metrics and never enter prompts. The default state is empty. `--state` is accepted only with `--partition training`, and is rejected for `held-out` and `all` to prevent imported rules or learned state from leaking labels. `--partition training` permits a supplied state for exploratory testing; `training` and `all` cannot establish held-out quality. Clearing retained text preserves an available sample identity and its split, but makes that sample unavailable to the evaluator.
 
 This is a statistical content holdout, not proof of independent live full-pipeline quality. Earlier corrections may already have influenced user policy or model selection, and retained messages omit original MIME images and delivery context. An independent, representative corpus and separately validated live integrations remain necessary before claiming a calibrated false-positive rate.
 
 ## Reports and calibration
 
-JSON reports include a true-label/effective-label confusion matrix, overall and per-path Junk precision/recall, unclassified counts, original-model confidence buckets, threshold candidates, newly incurred tokens, cache hits, estimated cost, and every mismatched filename with its reason. Graymail remains separate from binary good/junk metrics. Review and failures count as missed junk for recall; failures are also reported explicitly. Calibration uses original model Junk labels, even when a policy threshold reduces them to Review. Gate results are excluded from model calibration.
+JSON reports include a true-label/effective-label confusion matrix, overall and
+per-path Junk precision/recall (keyed by decision path), unclassified counts,
+original-model confidence buckets, a `calibration` section, newly incurred tokens with
+their pricing, cache hits, estimated cost, failed provider calls, and every mismatched
+filename with its reason. Graymail remains separate from binary good/junk metrics.
+Review and failures count as missed junk for recall; failures are also reported
+explicitly. Calibration uses original model Junk labels, even when a policy threshold
+reduces them to Review. Gate results are excluded from model calibration.
 
-The exact one-sided 95% Clopper-Pearson false-positive upper bound is reported alongside the rule-of-three approximation for zero errors. With two good fixtures and zero false positives, the approximation is capped at 100%, not 0.2%. Approximately 1,500 representative good messages with zero false positives are needed for the 0.2% bound. Confidence is not a calibrated probability. Candidate Conservative/Balanced/Aggressive thresholds remain 99/95/90 until separately validated; the CLI never silently changes production settings.
+`calibration.curve` scores every Junk threshold from 85 to 100. For each filtering
+strength, `calibration.strengths` reports the current threshold and the lowest
+threshold whose exact one-sided 95% Clopper-Pearson false-positive upper bound on the
+training partition meets the strength's target: 0.1% Conservative, 0.2% Balanced, 0.5%
+Aggressive. It then validates that threshold on the held-out partition. Selection
+therefore needs both partitions: use `reviewed --partition all`, or a corpus whose
+hash split covers both. The targets are provisional.
+
+The rule-of-three approximation is reported alongside the exact bound for zero
+errors. With two good fixtures and zero false positives, the approximation is capped
+at 100%, not 0.2%; approximately 1,500 representative good messages with zero false
+positives are needed for the 0.2% bound. Confidence is not a calibrated probability.
+The production thresholds stay 99/95/90 until separately validated; the CLI never
+changes production settings.
 
 ## Export from Mail
 
 ```sh
-spamwise-eval --export inbox --destination /path/to/unlabeled --limit 500
+spamwise-eval export inbox --destination /path/to/unlabeled --limit 500
 ```
 
 The helper reads through Apple Events and may require Automation permission. Supported source roles are Inbox, Junk, and Sent. No move/delete operation is exposed. Source mailbox placement is not a human label: review exported messages before placing them in corpus folders. Existing export files are never overwritten. Exported mail, cached reasons, and reports may contain personal data; keep them outside the repository.
 
 ## Accumulating SpamSieve samples
 
-The user’s iCloud and Google accounts each have a Junk folder that will accumulate
-SpamSieve-classified messages over the coming weeks. Preserve those messages as
-candidate evaluation data. A SpamSieve decision is a provisional label, not an
+The owner's iCloud and Google Junk folders accumulate SpamSieve-classified messages.
+Preserve those messages as candidate evaluation data. A SpamSieve decision is a provisional label, not an
 independently confirmed answer; folder membership alone does not establish which
 filter moved a message.
 
@@ -109,7 +134,7 @@ to any later authorized paid evaluation.
 
 ## Frozen comparisons with SpamSieve or another configuration
 
-`spamwise-eval --compare MANIFEST.json --output comparison.json` computes paired
+`spamwise-eval compare MANIFEST.json --output comparison.json` computes paired
 metrics offline. It performs no Mail operation, model call, collection or training.
 The version-1 example is
 `SpamWiseCore/Tests/SpamWiseCoreTests/Fixtures/comparison.json`; its synthetic numbers
@@ -149,7 +174,7 @@ spending. Keep the $150 ceiling and ordinary Junk-folder preservation in force.
 
 ## Independent threat metrics
 
-Use `spamwise-eval --threat-report observations.json --output report.json` for
+Use `spamwise-eval threat-report observations.json --output report.json` for
 independently labeled spam/phishing/spearphishing/fraud/malware observations.
 This report never derives threat labels from Inbox/Junk preferences. See
 [observation format, cache identities and unknown coverage](threat-assessments.md).

@@ -25,9 +25,10 @@ corrections and the bounded mailbox-sweep route. macOS Automation consent is req
 before access; denial leaves mail unchanged and appears in the app.
 
 There is no direct Mail database access, Full Disk Access requirement, private Mail
-plug-in injection or code downloaded to change functionality. The store build
-excludes direct updates, external executable evidence scanning and the ungranted
-Private Cloud Compute choice. Launch at login is opt-in. Quitting stops monitoring.
+plug-in injection, external executable or code downloaded to change functionality.
+The store build contains no updater and does not offer the ungranted Private Cloud
+Compute choice. The Mail extension returns no decision for any message. Launch at
+login is opt-in. Quitting stops monitoring.
 
 ## Suggested review flow
 
@@ -36,8 +37,7 @@ developer’s private mailbox or API keys.
 
 1. Launch the release app, complete the four setup steps and retain dry run.
 2. Grant Automation permission to connect Mail, or deny it to inspect the explicit
-   failure state. The Mail extension is used only by the optional preview route in
-   Account settings.
+   failure state.
 3. Set an address rule and preview a matching synthetic message. Inspect its
    explanation and the separate dry-run action outcome. Replace the rule to verify
    that the latest correction at the same scope wins.

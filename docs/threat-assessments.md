@@ -14,10 +14,10 @@ request moves. Paused, failed and historical records have no completed assessmen
 Corrections retain the original assessment without converting action labels into
 threat-training labels.
 
-No production detector is selected yet. Current app records therefore report
-unknown for every objective, and the inspector displays “Not assessed”. The
-injection interface and synthetic tests establish orchestration, not predictive
-quality. Candidate selection and calibration remain open in `TODO.md`.
+No production detector is selected, so app records carry no assessment, which means
+unknown for every objective. The injection interface and synthetic tests establish
+orchestration, not predictive quality. Candidate selection and calibration are
+tracked in [TODO.md](../TODO.md).
 
 Input includes the parsed message, account identity and available relationship
 and authentication evidence. Preference-derived Bayes and learned-margin scores
@@ -53,8 +53,8 @@ The evaluator accepts independent objective observations without making provider
 calls or accessing Mail:
 
 ```sh
-swift run --package-path SpamWiseCore --scratch-path .build/WORKER/swiftpm \
-  spamwise-eval --threat-report observations.json --output report.json
+swift run --package-path SpamWiseCore --scratch-path .build/swiftpm \
+  spamwise-eval threat-report observations.json --output report.json
 ```
 
 The input is a JSON array. Each row contains a unique `sampleID`, `language`,

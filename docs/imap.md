@@ -1,9 +1,14 @@
 # IMAP and headless operation
 
-SpamWise can access an explicitly configured IMAP account independently of Apple
-Mail or another desktop client. No credentials are read from Mail's databases.
-This route has offline protocol coverage; live TLS authentication and disposable
-moves remain pending because no IMAP credentials have been supplied.
+SpamWise can filter an explicitly configured IMAP account independently of Apple
+Mail, either from the app (Settings → Accounts) or headlessly with
+`spamwise-daemon`. No credentials are read from Mail's databases. The route is built
+on [swift-nio-imap](https://github.com/apple/swift-nio-imap) and has offline protocol
+coverage only; live acceptance is tracked in [TODO.md](../TODO.md).
+
+In the app, the connection's password or OAuth token is stored in the shared
+Keychain, and **Check read-only connection** performs the validation described below
+for the app. The rest of this page describes the daemon.
 
 ## Configuration
 
@@ -28,9 +33,11 @@ Use a JSON file containing endpoint settings and a secret reference:
 }
 ```
 
-The default port is 993 with implicit TLS. Alternative ports still use TLS;
-plaintext, STARTTLS downgrade and certificate-validation overrides are absent.
-An optional `oauthBearer: true` selects OAuth bearer authentication. The server
+The default port is 993 with implicit TLS through Network.framework, which verifies
+the certificate chain and host name. Alternative ports still use TLS; plaintext,
+STARTTLS and certificate-validation overrides are absent. An optional
+`"oauthBearer": true` in `credential` selects OAuth bearer authentication instead of
+`LOGIN`. The server
 must advertise both `AUTH=OAUTHBEARER` and `SASL-IR`. Token issuance and refresh
 belong to the caller; SpamWise never invents or refreshes an OAuth grant.
 
@@ -52,8 +59,7 @@ fallback. Keychain reads do not request interactive authentication.
 
 Omitting `providerCredentials` preserves the signed app's shared Keychain lookup.
 An unsigned standalone executable should supply explicit environment or login
-Keychain references for paid providers. Apple on-device and PCC models need no
-API key; PCC still requires Apple's managed entitlement and runtime availability.
+Keychain references for paid providers. The Apple on-device model needs no API key.
 
 Paid provider calls count toward the selected state store's monthly spending, the
 same ledger the app shows under Usage and spending. Each request first counts its
@@ -63,123 +69,125 @@ would exceed it is not sent and its message stays unclassified. A private
 `statePath` keeps separate monthly accounting with no limit until one is set. Dry
 run still permits paid model calls.
 
-## Read-only check and dry run
+## Commands
 
-Build the `spamwise-daemon` Swift package product using the repository's isolated
-build instructions. The executable's `--help` lists all options.
+Build the `spamwise-daemon` package product (`swift build --package-path SpamWiseCore
+--product spamwise-daemon`). It has three subcommands; `run` is the default, and
+`--help` on each lists its options.
 
 ```sh
-spamwise-daemon --config imap.json --validate
-spamwise-daemon --config imap.json --once --limit 20
-spamwise-daemon --config imap.json --once --model claude-haiku-5-5 --limit 20
-spamwise-daemon --config imap.json --poll-seconds 60 --limit 20
+spamwise-daemon validate --config imap.json
+spamwise-daemon run --config imap.json --limit 20
+spamwise-daemon run --config imap.json --model claude-haiku-5-5 --limit 20
+spamwise-daemon run --config imap.json --poll-seconds 60 --limit 20
+spamwise-daemon probe --config imap.json 123
+spamwise-daemon run --config imap.json --actions
 ```
 
-`--model` explicitly chooses `claude-haiku-5-5`, `claude-sonnet-5-5`,
-`claude-opus-5-5`, `gpt-5.4-mini`, `gemini-3.8-flash`, `apple-on-device`, or
-`apple-private-cloud-compute`. It persists only the provider/model selection when
-changed, invalidating stale classification retries through the ordinary settings
-transaction. Other settings and action gates remain in force. Without the flag,
-the selected store's existing model is used (Haiku for a fresh store). The flag
-cannot be combined with `--validate` or `--probe`, and unsupported models fail
-before connecting to IMAP.
+### Validation
 
-`--validate` authenticates, discovers mailbox roles and examines Inbox. It never
+`validate` authenticates, discovers mailbox roles and examines Inbox. It never
 fetches message bodies, marks messages read or moves messages. When the server
-supports `UID MOVE` and designates a unique Junk mailbox, it records validation
-for the exact account ID, host, port and username and selects the IMAP route in
-the shared settings; otherwise it revokes any validation recorded for that
-endpoint. It never turns off dry run.
-The default run is a dry run. On a fresh store, and after a UIDVALIDITY change, the
-first run records the highest existing UID as the start boundary and reads nothing;
-later runs process only new mail above it. The highest UID comes from `UIDNEXT`, or
-from the newest message when the server omits `UIDNEXT`. Mail that arrives after the
-last run but before a UIDVALIDITY change falls below the new boundary and is not
-filtered automatically. IMAP has no preview or refilter for mail below the boundary;
-the older-mail preview in Settings covers Apple Mail accounts only. Dry run
-suppresses mail actions but may send bounded message context to the explicitly
-selected provider. Polling accepts intervals from 60 to 3,600 seconds and skips
-previously processed identities.
+supports `UID MOVE` and designates a unique Junk mailbox, it records daemon
+validation for the exact account ID, host, port and username and adds the account to
+the store's validated accounts; otherwise it revokes the daemon's validation, which
+turns dry run back on when no validated account remains. Validation is scoped: the
+daemon's and the app's validations of the same endpoint are recorded separately, and
+neither authorizes the other. It never changes the app's incoming route or transport,
+and it prints every shared setting it changed.
 
-A dry run counts the mail it previews as processed. Live filtering that shares the
-store, including the app, then skips that mail instead of acting on it. While the
-app filters live, give dry-run polling its own `statePath`.
+### Sweeps
 
-Activity shows decision reasons in the viewer's language. Mail action failures are
-saved as text in the language of the process that recorded them, so failures the
-daemon records, having no string catalog, read in English.
+`run` sweeps once, or every `--poll-seconds` (60 to 3,600). `--limit` sets the page
+size, 1 to 100. Without `--actions` the run is a dry run; it may still send bounded
+message context to the selected provider.
+
+`--model` chooses `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`,
+`gpt-5.4-mini`, `gemini-3.8-flash` or `apple-on-device`, and requires a `statePath`:
+the daemon will not change the model in the store it shares with the app. It
+persists only the provider/model selection, invalidating stale classification
+retries through the ordinary settings transaction. Without it, the store's existing
+model is used (Haiku for a fresh store).
+
+On a fresh store, and after a UIDVALIDITY change, the first run records the highest
+existing UID as the start boundary and reads nothing; later runs process only new
+mail above it. The highest UID comes from `UIDNEXT`, or from the newest message when
+the server omits `UIDNEXT`. Mail that arrives after the last run but before a
+UIDVALIDITY change falls below the new boundary and is not filtered automatically.
+IMAP has no preview or refilter for mail below the boundary.
 
 Each run first reads every message above the highest UID already read, oldest first,
 up to five pages and the 4 MB byte budget; the rest resumes on the next run. Once new
 mail is caught up, the run reads one persisted backfill page that restarts after
-reaching the boundary or the newest 10,000 messages. That progress is saved only
-after every message the run read has been processed, so mail from a cancelled,
-failed or paused run is read again as new mail. While filtering is paused, runs read
-nothing. Action-enabled polling also processes due classification retries for the
-configured account. Mailbox mutations can defer a message until the next sweep.
-Polling does not use IMAP IDLE. SIGINT and SIGTERM cancel pending work. Nothing
-installs a launch daemon or enables automatic startup.
+reaching the boundary or the newest 10,000 messages. That progress is saved only after
+every message the run read has been processed, so mail from a cancelled, failed or
+paused run is read again. While filtering is paused, runs read nothing. Runs also
+maintain bounded Sent history for reply evidence, at most every 15 minutes, and
+action-enabled runs process due classification retries for the configured account.
 
-## Optional disposable probe and actions
+A dry run counts the mail it previews as processed. Live filtering that shares the
+store, including the app, then skips that mail instead of acting on it. While the app
+filters live, give dry-run polling its own `statePath`.
 
-Validation comes from `--validate`, or from a passing read-only check in the app
-for the same endpoint. The probe is an optional end-to-end move test. To run it,
-place a disposable message whose subject starts with `[SpamWise Probe]` in Inbox
-and obtain its current Inbox UID from your IMAP tooling; an Apple Mail local
-message ID is not an IMAP UID. SpamWise neither sends nor deletes the message:
-it never sends mail from your account, and it exposes no Trash or delete
-operation, so you supply the message and delete it afterward.
+In poll mode a failed sweep is logged with its category and retried after a delay
+that doubles from the poll interval up to an hour. The daemon exits on configuration
+errors, after three consecutive authentication failures, or on SIGINT/SIGTERM, which
+cancel pending work. Polling does not use IMAP IDLE. Nothing installs a launch daemon
+or enables automatic startup.
 
-```sh
-spamwise-daemon --config imap.json --probe 123
-```
+Activity shows decision reasons in the viewer's language. Mail action failures are
+saved as text in the language of the process that recorded them, so failures the
+daemon records read in English.
 
-The probe checks exact content and UIDVALIDITY, moves only that UID to the unique
-server-designated Junk mailbox, verifies its new identity using COPYUID, then
-moves and verifies it back in Inbox. Each move changes the UID. Failure or a
-missing UID mapping stops the probe; uncertain moves are never automatically
-reversed or retried. Inspect the disposable message manually if the probe fails.
-A verified restoration also records validation for the exact endpoint. Neither
-the probe nor `--validate` changes the shared dry-run setting.
+### Actions and the disposable probe
 
-```sh
-spamwise-daemon --config imap.json --once --actions
-```
+`run --actions` requires daemon validation of this exact endpoint, an unpaused
+pipeline and dry run disabled in the store's settings. The pipeline persists
+explanations and action claims before dispatch; an unconfirmed outcome retains its
+claim. Any failure before a mail command is sent is reported as an action not
+attempted, so the message stays where it was and nothing is claimed as moved.
 
-Actions require the explicit flag, recorded endpoint validation, the IMAP route,
-an unpaused pipeline and dry run disabled in the shared settings. The pipeline
-persists explanations and action claims before dispatch. An unconfirmed outcome
-retains its claim. Validation for another endpoint or Apple Mail does not grant
-IMAP authorization. Orange flag colors are not portable in IMAP; Review remains
-without that annotation when this route rejects the unsupported action.
+Junk moves use `UID MOVE` to the server-designated Junk mailbox. Review is stored as
+the `$SpamWiseReview` keyword, or `\Flagged` where the mailbox admits no new keywords,
+and clearing Review removes the same flag. A message SpamWise moved to Junk that
+later reappears in Inbox was rescued in another client: SpamWise records it as an
+implicit Good correction, which also marks the sender as wanted, and never junks it
+again.
+
+`probe` is an optional end-to-end move test. Place a disposable message whose
+subject starts with `[SpamWise Probe]` in Inbox and pass its current Inbox UID (an
+Apple Mail local message ID is not an IMAP UID). SpamWise neither sends nor deletes
+the message: you supply it and delete it afterward. The probe checks exact content
+and UIDVALIDITY, moves only that UID to Junk, verifies its new identity using
+COPYUID, then moves and verifies it back in Inbox. Each move changes the UID. Failure
+or a missing UID mapping stops the probe; uncertain moves are never automatically
+reversed or retried, so inspect the message manually if the probe fails. A verified
+restoration records daemon validation; the probe never changes the dry-run setting.
 
 ## Protocol limits and interoperability
 
-Each operation uses a fresh TLS session capped at 30 seconds. Reads are bounded
-to 64 KiB chunks and protocol lines, eight literals per response, 12 nested lists,
-4,096 tokens per response, 2,048 responses per command and 4.2 MB per command.
-Message literals are capped at 2 MB. A recent/history page includes at most 100
-messages and 4 MB of content. Oversized, malformed, ambiguous, interrupted or
-unsupported responses fail open.
+Each connection closes 30 seconds after it opens, whatever it is doing; consecutive
+operations reuse a session opened within the last 10 seconds. Responses are parsed
+by swift-nio-imap with at most 16 message attributes per fetch, 8,192 buffered
+responses, 2,048 responses and 4.2 MB per command. Message literals are capped at 2
+MB. A page includes at most 100 messages and 4 MB of content. Oversized, malformed,
+ambiguous, interrupted or unsupported responses fail open.
 
 Mailbox roles come from SPECIAL-USE rather than guessed localized names. Multiple
 Junk/Sent designations are rejected. Trash and nonselectable roles are excluded.
-Mailbox wire names support ASCII and IMAP modified UTF-7, quoted escapes and
-literals; unsupported non-ASCII wire names are rejected. UIDVALIDITY and UID,
-mailbox and account form the stable namespace. BODY.PEEK avoids setting Seen.
-History imports only bounded Sent replies as partial history, never incoming
-mail's own claims as proof of trust.
+UIDVALIDITY and UID, mailbox and account form the stable namespace. `BODY.PEEK`
+avoids setting Seen. History imports only bounded Sent replies as partial history,
+never incoming mail's own claims as proof of trust.
 
-Only server-supported UID MOVE is used. There is no COPY/STORE Deleted/EXPUNGE
+Only server-supported `UID MOVE` is used. There is no COPY/STORE Deleted/EXPUNGE
 fallback, mailbox creation or Trash/delete command. A tagged success without a
 matching COPYUID mapping is retained as an uncertain outcome.
 
 The implementation follows [IMAP4rev2](https://www.rfc-editor.org/rfc/rfc9051.html),
 [SPECIAL-USE](https://www.rfc-editor.org/rfc/rfc6154.html),
 [UID MOVE](https://www.rfc-editor.org/rfc/rfc6851.html) and
-[OAuth SASL](https://www.rfc-editor.org/rfc/rfc7628.html).
-The reviewed [SwiftNIO IMAP library](https://github.com/apple/swift-nio-imap)
-provides a broader grammar but labels itself unsuitable for production and does
-not supply this adapter's bounded-input contract. SpamWise uses a deliberately
-restricted parser and system Network.framework TLS; unsupported grammar is
-rejected rather than interpreted permissively.
+[OAuth SASL](https://www.rfc-editor.org/rfc/rfc7628.html). Dependencies are pinned in
+`SpamWiseCore/Package.swift`: swift-nio-imap 0.4.0, swift-nio 2.103.0 and
+swift-nio-transport-services 1.28.0, all Apache-2.0 (see [CREDITS.md](../CREDITS.md)).
+swift-nio-imap 0.4.0 accepts a lone CR after a literal's `{size}` as a complete line
+ending, so SpamWise holds back a chunk's trailing CR until the following bytes arrive.

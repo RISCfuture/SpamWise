@@ -30,12 +30,10 @@ in a fresh child process per fixture, compares actual outcomes, and deletes the
 temporary fixtures. No message content, credential, Mail access or API call is
 used. The probe is a developer tool, not a production helper.
 
-From the repository root, use an isolated worker token:
+From the repository root:
 
 ```sh
-worker="$(agent-lock worker)"
-export AGENT_WORKER_ID="$worker"
-probe_root=".build/$worker/document-probe"
+probe_root=".build/document-probe"
 mkdir -p "$probe_root"
 swiftc -swift-version 6 -strict-memory-safety -warnings-as-errors \
   -module-cache-path "$probe_root/cache" Scripts/document-probe.swift \
