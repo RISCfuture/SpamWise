@@ -51,6 +51,34 @@ func `filters Activity by case-insensitive text and exact account`(
   #expect(statistics.reviewedMistakes == 1)
   #expect(statistics.unresolvedReview == 0)
   #expect(statistics.actionFailures == 1)
+  #expect(statistics.reviewedMistakeUpperBound == 1)
+  #expect(statistics.accountDailyCounts["account"]?.values.reduce(0, +) == 1)
+}
+
+@Test func `bounds the reviewed disagreement rate above the observed share`() throws {
+  let statistics = ActivityStatistics(
+    records: [reviewRecord(correctedLabel: .inbox)]
+      + (1...9).map { _ in reviewRecord(correctedLabel: .review) }
+  )
+  let bound = try #require(statistics.reviewedMistakeUpperBound)
+  #expect(bound > 0.1 && bound < 0.5)
+}
+
+@Test func `pages Activity in the requested order with newest first among ties`() async throws {
+  let store = try testStore()
+  let senders = ["carol@example.com", "alice@example.com", "bob@example.com", "alice@example.com"]
+  let records = senders.enumerated().map { index, sender in
+    var record = reviewRecord()
+    record.sender = sender
+    record.date = Date(timeIntervalSince1970: TimeInterval(index))
+    return record
+  }
+  try await StateRepository.update(store) { state in records.forEach { state.record($0) } }
+  var query = ActivityQuery()
+  query.sort = ActivitySort(key: .sender, ascending: true)
+  let page = try await StateRepository.activity(store, matching: query, limit: 3)
+  #expect(page.map(\.id) == [records[3].id, records[1].id, records[2].id])
+  #expect(query.apply(to: records).prefix(3).map(\.id) == page.map(\.id))
 }
 
 @Test func `ranks failed Mail actions ahead of less confident Review`() {

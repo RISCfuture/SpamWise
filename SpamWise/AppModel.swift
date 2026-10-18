@@ -108,7 +108,12 @@ extension AppModel {
 
   func startMonitoring() {
     guard monitoring == nil else { return }
-    monitoring = Task { await monitor() }
+    monitoring = Task { [self] in
+      await withDiscardingTaskGroup { group in
+        if !services.uiTesting { group.addTask { await self.scanning.monitorNetwork() } }
+        await monitor()
+      }
+    }
   }
 
   private func monitor() async {

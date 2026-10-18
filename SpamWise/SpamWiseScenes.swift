@@ -25,7 +25,7 @@ public struct SpamWiseScenes: Scene {
       if let updates {
         CommandGroup(after: .appInfo) { UpdateMenuButton(updates: updates) }
       }
-      ToolsCommands(router: model.router, shared: model.shared)
+      ActivityCommands(model: model)
       CommandGroup(replacing: .help) {
         Button("SpamWise Help") { Help.open("getting-started") }
       }

@@ -35,6 +35,19 @@ import SpamWiseCore
   @ObservationIgnored private let shared: SharedStateModel
 
   var canShowMore: Bool { rows.count < matchingCount }
+  /// The table's sort order, kept in ``query`` so the store applies it to every page.
+  var sortOrder: [KeyPathComparator<DecisionRecord>] {
+    get { [ActivitySortColumn.comparator(for: query.sort)] }
+    set { query.sort = newValue.first.map(ActivitySortColumn.sort(for:)) ?? ActivitySort() }
+  }
+  /// Whether only today's decisions are shown.
+  var showsTodayOnly: Bool {
+    get { query.start == TodaySummary.query.start && query.end == nil }
+    set {
+      query.start = newValue ? TodaySummary.query.start : nil
+      query.end = nil
+    }
+  }
 
   init(store: Store, shared: SharedStateModel) {
     self.store = store
@@ -52,6 +65,14 @@ import SpamWiseCore
 
   /// Shows another page of matching records.
   func showMore() { visibleLimit += Self.pageSize }
+
+  /// Removes every filter, keeping the search text and sort order.
+  func clearFilters() {
+    var cleared = ActivityQuery()
+    cleared.text = query.text
+    cleared.sort = query.sort
+    query = cleared
+  }
 
   /// The shown record with `id`.
   func record(id: UUID?) -> DecisionRecord? {
@@ -115,6 +136,43 @@ import SpamWiseCore
       state.records += (try? await records(matching: query)) ?? []
     }
     return state.knownSenderCounts(atDomains: domains)
+  }
+}
+
+extension ActivityQuery {
+  /// Whether a filter other than the search text hides some records.
+  var hasFilters: Bool {
+    accountID != nil || path != nil || outcome != nil || start != nil || end != nil
+      || correctionsOnly
+  }
+}
+
+/// The Activity table's sortable columns and the store order each one requests.
+enum ActivitySortColumn {
+  /// The store order a column's comparator requests; an unknown column falls back to newest first.
+  static func sort(for comparator: KeyPathComparator<DecisionRecord>) -> ActivitySort {
+    guard
+      let key = ActivitySort.Key.allCases.first(where: { keyPath(for: $0) == comparator.keyPath })
+    else { return ActivitySort() }
+    return ActivitySort(key: key, ascending: comparator.order == .forward)
+  }
+
+  private static func keyPath(for key: ActivitySort.Key) -> PartialKeyPath<DecisionRecord> {
+    switch key {
+      case .date: \DecisionRecord.date
+      case .sender: \DecisionRecord.displaySender
+      case .subject: \DecisionRecord.displaySubject
+    }
+  }
+
+  /// The comparator the table shows for a store order.
+  static func comparator(for sort: ActivitySort) -> KeyPathComparator<DecisionRecord> {
+    let order: SortOrder = sort.ascending ? .forward : .reverse
+    return switch sort.key {
+      case .date: KeyPathComparator(\.date, order: order)
+      case .sender: KeyPathComparator(\.displaySender, order: order)
+      case .subject: KeyPathComparator(\.displaySubject, order: order)
+    }
   }
 }
 

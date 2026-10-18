@@ -1,4 +1,5 @@
 import Foundation
+import Network
 import Observation
 import SpamWiseCore
 import MailIntegration
@@ -13,13 +14,22 @@ import MailIntegration
 @MainActor @Observable final class ScanCoordinator {
   /// Messages read per page by sweeps and previews.
   static let pageLimit = 20
-  private static let interval: Duration = .seconds(60)
+  /// The pause between the end of one automatic check and the start of the next.
+  static let interval: Duration = .seconds(60)
+  /// ``interval`` as the user reads it, such as “1 minute”.
+  static var intervalText: String {
+    interval.formatted(.units(allowed: [.minutes, .seconds], width: .wide))
+  }
   /// Progress of the sweep in progress, or nil when none is running.
   private(set) var progress: ScanProgress?
   /// The latest sweep's problems, or nil when it finished cleanly.
   private(set) var sweepStatus: OperationStatus?
   /// When the latest sweep finished.
   private(set) var lastCompletion: Date?
+  /// Whether the latest sweep failed outright or could not check some account or folder.
+  private(set) var lastSweepFailed = false
+  /// Whether the network is reachable, as last reported by the system.
+  private(set) var isOnline = true
   /// The user's dry run of recent Inbox mail.
   let preview = TrackedOperation()
   /// The latest finished dry run of recent Inbox mail, or nil while one runs or after it failed.
@@ -34,6 +44,22 @@ import MailIntegration
 
   var filteringStatus: FilteringStatus {
     FilteringStatus(settings: shared.settings, mailAutomation: mail.automation)
+  }
+  /// The state the menu bar and Activity footer report, most limiting first.
+  var filteringState: FilteringState {
+    FilteringState(
+      filteringStatus,
+      needsNetwork: shared.settings.checksNeedNetwork,
+      isOnline: isOnline,
+      isFailing: lastSweepFailed || hasStalledAccount
+    )
+  }
+  /// Whether an account in scope keeps timing out on the same page.
+  private var hasStalledAccount: Bool {
+    let scope = shared.settings.mailOptions.accountIDs
+    return shared.knownAccounts.contains { account in
+      (scope?.contains(account.id) ?? true) && shared.scanHealth[account.id]?.isStalled == true
+    }
   }
   var canScanAutomatically: Bool {
     filteringStatus.allowsAutomaticChecks
@@ -57,6 +83,11 @@ import MailIntegration
 
   static func unreadableStatus(_ count: Int) -> String {
     String(localized: "Unreadable messages: \(count, format: .number)")
+  }
+
+  /// Follows network reachability until cancelled.
+  func monitorNetwork() async {
+    for await path in NWPathMonitor() { isOnline = path.status == .satisfied }
   }
 
   /// Starts a sweep when automatic checks are allowed and the interval has passed.
@@ -121,12 +152,14 @@ import MailIntegration
         await self.handle($0)
       }
       sweepStatus = status(after: summary)
+      lastSweepFailed = summary.failures > 0
     } catch is CancellationError {
       sweepStatus = .message(
-        String(localized: "Mail check stopped. The next check starts in a minute.")
+        String(localized: "Mail check stopped. The next check starts in \(Self.intervalText).")
       )
     } catch {
       sweepStatus = .failure(OperationFailure(error))
+      lastSweepFailed = true
     }
     progress = nil
     lastFinished = .now

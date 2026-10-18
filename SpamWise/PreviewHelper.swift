@@ -84,6 +84,18 @@ import SpamWiseCore
     )
   }
 
+  static var correctedRecord: DecisionRecord {
+    var record = failedRecord
+    record.correctedLabel = .inbox
+    return record
+  }
+
+  static var assessedRecord: DecisionRecord {
+    var record = failedRecord
+    record.threats = threatAssessment
+    return record
+  }
+
   static var corrections: [CorrectionExample] {
     [
       CorrectionExample(

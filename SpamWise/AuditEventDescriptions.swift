@@ -6,12 +6,75 @@ extension AuditEvent {
   var localizedDescription: String { change.localizedDescription }
 }
 
+/// The names of changed settings as Settings shows them, from their stored field paths.
+enum SettingsFieldTitles {
+  /// Distinct titles for `paths`, such as “Dry run” for `dryRun`, in first-seen order.
+  static func titles(for paths: [String]) -> [String] {
+    var seen = Set<String>()
+    return paths.map(title(for:)).filter { seen.insert($0).inserted }
+  }
+
+  private static func title(for path: String) -> String {
+    let components = path.split(separator: ".").map(String.init)
+    switch components.first {
+      case "advanced": return advancedTitle(components.dropFirst().first)
+      case "mailPreferences": return mailTitle(components.dropFirst().first)
+      default: return generalTitle(components.first)
+    }
+  }
+
+  private static func generalTitle(_ field: String?) -> String {
+    switch field {
+      case "strength": String(localized: "Filtering strength")
+      case "review": String(localized: "Review marking")
+      case "dryRun": String(localized: "Dry run")
+      case "paused": String(localized: "Pause")
+      case "policy": String(localized: "Your policy")
+      case "correctionLimit": String(localized: "Correction examples")
+      case "bodyTokenBudget": String(localized: "Message text sent")
+      case "onboardingComplete": String(localized: "Setup")
+      case "validatedAccounts": String(localized: "Validated accounts")
+      default: String(localized: "Other settings")
+    }
+  }
+
+  private static func advancedTitle(_ field: String?) -> String {
+    switch field {
+      case "backend", "modelID": String(localized: "Classifier")
+      case "mailSharingConsent": String(localized: "Provider consent")
+      case "domainRegistrationLookup": String(localized: "Domain age lookup")
+      case "transport": String(localized: "Mail connection")
+      case "fingerprints", "bayes", "learnedWeights": String(localized: "Learning")
+      case "imageOCR", "textAttachments", "externalEvidence": String(localized: "Evidence")
+      case "weeklyDigest": String(localized: "Weekly Review digest")
+      case "retainReviewedContent": String(localized: "Reviewed message text")
+      default: String(localized: "Advanced settings")
+    }
+  }
+
+  private static func mailTitle(_ field: String?) -> String {
+    switch field {
+      case "localOnly": String(localized: "Local-only mode")
+      case "accountIDs": String(localized: "Accounts to filter")
+      case "trustExclusions", "excludeOwnAddresses": String(localized: "Trusted senders")
+      case "trustedAuthServers": String(localized: "Trusted receiving servers")
+      case "folderPlans": String(localized: "Folder plans")
+      case "markJunkRead": String(localized: "Mark Junk as read")
+      case "notifications": String(localized: "Notifications")
+      default: String(localized: "Mail settings")
+    }
+  }
+}
+
 extension AuditEvent.Change {
   /// What changed, described in the reader's language.
   var localizedDescription: String {
     switch self {
       case .settingsChanged(let fields):
-        String(localized: "Settings changed: \(fields.formatted(.list(type: .and)))")
+        String(
+          localized:
+            "Settings changed: \(SettingsFieldTitles.titles(for: fields).formatted(.list(type: .and)))"
+        )
       case let .senderRuleSaved(scope, value, disposition):
         Self.savedRule(scope: scope, value: value, disposition: disposition)
       case let .senderRuleRemoved(scope, value):

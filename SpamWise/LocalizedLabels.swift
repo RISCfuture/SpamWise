@@ -33,11 +33,28 @@ extension FilteringStrength {
 }
 
 extension MailLabel {
+  /// The verdict noun: Good, Review or Junk. “Inbox” names only the mailbox.
   var localizedTitle: String {
     switch self {
-      case .inbox: String(localized: "Inbox")
+      case .inbox: String(localized: "Good")
       case .review: String(localized: "Review")
       case .junk: String(localized: "Junk")
+    }
+  }
+  /// The symbol shown beside the verdict.
+  var systemImage: String {
+    switch self {
+      case .inbox: "checkmark.circle"
+      case .review: "flag"
+      case .junk: "xmark.bin"
+    }
+  }
+  /// The command that corrects a decision to this verdict.
+  var correctionTitle: String {
+    switch self {
+      case .inbox: String(localized: "Mark as Good")
+      case .review: String(localized: "Mark for Review")
+      case .junk: String(localized: "Mark as Junk")
     }
   }
 }
@@ -62,14 +79,14 @@ extension ActionOutcome {
       case .noAction: String(localized: "No action")
       case .dryRun: String(localized: "Dry run")
       case .paused: String(localized: "Paused")
-      case .pending: String(localized: "Pending")
-      case .requested: String(localized: "Requested")
+      case .pending: String(localized: "Waiting")
+      case .requested: String(localized: "Sent to Mail")
       case .applied: String(localized: "Applied")
       case .failed: String(localized: "Failed")
       case .unclassified: String(localized: "Unclassified")
-      case .superseded: String(localized: "Superseded")
-      case .duplicate: String(localized: "Duplicate")
-      case .integrationUnavailable: String(localized: "Integration unavailable")
+      case .superseded: String(localized: "Replaced by a newer decision")
+      case .duplicate: String(localized: "Already handled")
+      case .integrationUnavailable: String(localized: "Mail unavailable")
     }
   }
 }
@@ -133,7 +150,7 @@ extension IncomingRoute {
   }
 }
 
-extension FilteringStatus {
+extension FilteringState {
   var localizedTitle: String {
     switch self {
       case .setupIncomplete: String(localized: "Setup not finished")
@@ -141,10 +158,17 @@ extension FilteringStatus {
       case .mailNotAuthorized:
         String(localized: "Mail Automation not allowed — mail stays unchanged")
       case .mailNotRunning: String(localized: "Mail isn’t running — checks resume when it opens")
-      case .rolesNotValidated: String(localized: "Dry run — Inbox and Junk mailboxes not validated")
+      case .offline: String(localized: "Offline — checks resume when you’re back online")
+      case .failing: String(localized: "Some mail couldn’t be checked — see Settings → Accounts")
+      case .rolesNotValidated:
+        String(localized: "Dry run — check the Mail connection in Settings to start filtering")
       case .dryRun: String(localized: "Dry run — mail stays unchanged")
       case .filtering: String(localized: "Filtering validated accounts")
     }
+  }
+  /// Whether the state stops or limits filtering until the user or the system acts.
+  var needsAttention: Bool {
+    [.mailNotAuthorized, .offline, .failing].contains(self)
   }
 }
 

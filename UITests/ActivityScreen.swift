@@ -3,7 +3,15 @@ import XCTest
 @MainActor struct ActivityScreen {
   let app: XCUIApplication
 
-  var mode: String? { app.staticTexts["activity.mode"].value as? String }
+  /// The footer's filtering state, read from its `activity.mode.<state>` identifier.
+  var mode: String? {
+    Self.modeElement(in: app).identifier.split(separator: ".").last.map(String.init)
+  }
+
+  private static func modeElement(in app: XCUIApplication) -> XCUIElement {
+    app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier BEGINSWITH %@", "activity.mode.")).firstMatch
+  }
 
   static func launchCorrectionFixture(automation: Bool = false, appURL: URL? = nil) -> Self {
     let app = UITestApplication.make(url: appURL)
@@ -16,7 +24,7 @@ import XCTest
   }
 
   static func waitForLanding(in app: XCUIApplication) -> Self {
-    XCTAssertTrue(app.staticTexts["activity.mode"].waitForExistence(timeout: UITestTiming.launch))
+    XCTAssertTrue(modeElement(in: app).waitForExistence(timeout: UITestTiming.launch))
     return Self(app: app)
   }
 
@@ -75,17 +83,9 @@ import XCTest
 
   func pause() {
     app.buttons["activity.pause"].click()
-    XCTAssertEqual(
-      XCTWaiter.wait(
-        for: [
-          XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "paused"),
-            object: app.staticTexts["activity.mode"]
-          )
-        ],
-        timeout: UITestTiming.transition
-      ),
-      .completed
+    XCTAssertTrue(
+      app.descendants(matching: .any)["activity.mode.paused"]
+        .waitForExistence(timeout: UITestTiming.transition)
     )
   }
 }

@@ -10,68 +10,113 @@ struct DecisionDetailView: View {
   let activity: ActivityModel
   /// Shows a message preview where this detail is presented.
   let presentPreview: @MainActor (MessagePreview) -> Void
-  @State private var source: RulesDocument?
-  @State private var exporting = false
-  @State private var exportFailure: OperationStatus?
 
   var body: some View {
     Form {
       Section {
-        VStack(alignment: .leading) {
-          Text(row.displaySubject).font(.headline).textSelection(.enabled)
-          Text(row.displaySender).foregroundStyle(.secondary).textSelection(.enabled)
+        DecisionSummaryView(row: row)
+        if row.isRetryable {
+          RetryClassificationButton(corrections: corrections, row: row)
         }
-        VStack(alignment: .leading) {
-          VerdictBadge(label: row.decision.label)
-          Text(row.decision.reason.localizedDescription).textSelection(.enabled)
-        }
-        LabeledContent("Outcome", value: row.outcome.localizedTitle)
-          .accessibilityIdentifier("correction.outcome")
-          .accessibilityValue(row.outcome.rawValue)
-        if let error = row.actionError {
-          Label(error, systemImage: "exclamationmark.triangle")
-        }
-        if let outcome = row.readStatusOutcome {
-          LabeledContent("Mark-as-read", value: outcome.localizedTitle)
-        }
-        if let error = row.readStatusError { Text(error) }
       }
-      Section("Threat assessment") {
-        ThreatAssessmentView(assessment: row.threats)
+      if let threats = row.threats, threats.wasAssessed {
+        Section("Threat assessment") {
+          ThreatAssessmentView(assessment: threats)
+        }
       }
       Section("Correct this decision") {
         CorrectionControls(corrections: corrections, activity: activity, row: row)
         CorrectionPrompts(corrections: corrections, row: row)
         if row.correctionUndone {
-          Text("Correction undone; the recorded Mail action was not reversed.")
+          Text("You undid this correction. The message stays where it is in Mail.")
         }
         if let undo = shared.state.correctionUndo, undo.isAvailable(in: shared.state) {
           UndoCorrectionButton(corrections: corrections, undo: undo)
         }
         OperationStatusView(operation: corrections.decision, identifier: "correction.status")
       }
+      MessageAccessSection(row: row, messages: messages, presentPreview: presentPreview)
       Section {
-        Button("Preview message") { messages.preview(row, present: presentPreview) }
-        Button("Open in Mail") { messages.open(row) }
-        Button("Export raw source…") {
-          messages.exportSource(row) { data in
-            source = RulesDocument(data: data); exporting = true
-          }
+        DisclosureGroup("Decision details") {
+          DecisionDiagnosticsView(
+            row: row,
+            accountName: shared.accountName(for: row.identity.accountID)
+          )
         }
-        if messages.operation.isBusy { ProgressView().controlSize(.small) }
-        OperationStatusView(operation: messages.operation)
-        StatusLabel(status: exportFailure)
-        DisclosureGroup("Decision details") { DecisionDiagnosticsView(row: row) }
       }
     }.formStyle(.grouped)
-      .fileExporter(
-        isPresented: $exporting,
-        document: source,
-        contentType: .data,
-        defaultFilename: "message.eml"
-      ) { result in
-        exportFailure = ExportResult.status(of: result, failure: "Message source export failed.")
+  }
+}
+
+/// The message, its verdict and reason, and what happened in Mail.
+private struct DecisionSummaryView: View {
+  let row: DecisionRecord
+
+  var body: some View {
+    VStack(alignment: .leading) {
+      Text(row.displaySubject).font(.headline).textSelection(.enabled)
+      Text(row.displaySender).foregroundStyle(.secondary).textSelection(.enabled)
+    }
+    LabeledContent("Date") { Text(row.date, format: .dateTime) }
+    VStack(alignment: .leading) {
+      VerdictBadge(label: row.decision.label)
+      Text(row.decision.reason.localizedDescription).textSelection(.enabled)
+    }
+    LabeledContent("Outcome", value: row.outcome.localizedTitle)
+      .accessibilityIdentifier("correction.outcome")
+    if let error = row.actionError {
+      Label(error, systemImage: "exclamationmark.triangle")
+    }
+    if let outcome = row.readStatusOutcome {
+      LabeledContent("Marked as read", value: outcome.localizedTitle)
+    }
+    if let error = row.readStatusError { Text(error) }
+  }
+}
+
+/// Classifies an unclassified message again, for example after a provider outage.
+private struct RetryClassificationButton: View {
+  let corrections: CorrectionsModel
+  let row: DecisionRecord
+
+  var body: some View {
+    Button("Classify Again") { corrections.retryClassification(row) }
+      .disabled(!corrections.canRetry(row))
+      .help("Checks this message again. Dry run and Pause still apply.")
+      .accessibilityIdentifier("correction.retry")
+  }
+}
+
+/// Reads the message from Mail to preview, open or export it.
+private struct MessageAccessSection: View {
+  let row: DecisionRecord
+  let messages: MessageAccessModel
+  let presentPreview: @MainActor (MessagePreview) -> Void
+  @State private var source: RulesDocument?
+  @State private var exporting = false
+  @State private var exportFailure: OperationStatus?
+
+  var body: some View {
+    Section {
+      Button("Preview message") { messages.preview(row, present: presentPreview) }
+      Button("Open in Mail") { messages.open(row) }
+      Button("Export raw source…") {
+        messages.exportSource(row) { data in
+          source = RulesDocument(data: data); exporting = true
+        }
       }
+      if messages.operation.isBusy { ProgressView().controlSize(.small) }
+      OperationStatusView(operation: messages.operation)
+      StatusLabel(status: exportFailure)
+    }
+    .fileExporter(
+      isPresented: $exporting,
+      document: source,
+      contentType: .data,
+      defaultFilename: "message.eml"
+    ) { result in
+      exportFailure = ExportResult.status(of: result, failure: "Message source export failed.")
+    }
   }
 }
 
@@ -98,77 +143,18 @@ private struct UndoCorrectionButton: View {
   }
 }
 
-private struct ThreatAssessmentView: View {
-  let assessment: ThreatAssessment?
-
-  private var findings: [ThreatFinding] {
-    assessment?.findings.filter { $0.status == .detected } ?? []
-  }
-
-  var body: some View {
-    if assessment?.findings.contains(where: { $0.status != .unknown }) != true {
-      Text("Not assessed").foregroundStyle(.secondary)
-        .accessibilityIdentifier("threats.status")
-      Text("Mail placement does not establish message safety.")
-    } else {
-      if findings.isEmpty {
-        Text("No threats detected within assessed coverage")
-          .accessibilityIdentifier("threats.status")
-      }
-      ForEach(findings, id: \.kind) { finding in
-        LabeledContent(finding.kind.localizedTitle, value: finding.reason)
-      }
-      DisclosureGroup("Assessment coverage") {
-        ForEach(ThreatKind.allCases, id: \.self) { kind in
-          LabeledContent(kind.localizedTitle) {
-            if let finding = assessment?.finding(for: kind), finding.status != .unknown {
-              Text(finding.coverage)
-            } else {
-              Text("Not assessed")
-            }
-          }
-        }
-        if let detector = assessment?.detector {
-          LabeledContent("Detector", value: detector.implementation)
-          LabeledContent("Model", value: detector.model)
-        }
-        Text("Findings describe assessed content only. Scores are not calibrated probabilities.")
-      }
-    }
-  }
-}
-
-private extension ThreatKind {
-  var localizedTitle: String {
-    switch self {
-      case .spam: String(localized: "Spam")
-      case .phishing: String(localized: "Phishing")
-      case .spearphishing: String(localized: "Spearphishing")
-      case .fraud: String(localized: "Fraud")
-      case .malware: String(localized: "Malware")
-    }
-  }
-}
-
 private struct CorrectionControls: View {
   let corrections: CorrectionsModel
   let activity: ActivityModel
   let row: DecisionRecord
 
-  private var canCorrect: Bool {
-    !corrections.decision.isBusy && row.path != .verification && row.sender != nil
-  }
-
   var body: some View {
     HStack {
       ControlGroup {
-        Button("Good") { corrections.correct(row, label: .inbox) }
-          .accessibilityLabel("Mark as Good").accessibilityIdentifier("correction.good")
-        Button("Junk") { corrections.correct(row, label: .junk) }
-          .accessibilityLabel("Mark as Junk").accessibilityIdentifier("correction.junk")
-        Button("Review") { corrections.correct(row, label: .review) }
-          .accessibilityLabel("Mark as Review").accessibilityIdentifier("correction.review")
-      }.disabled(!canCorrect)
+        CorrectionButton(corrections: corrections, row: row, label: .inbox)
+        CorrectionButton(corrections: corrections, row: row, label: .junk)
+        CorrectionButton(corrections: corrections, row: row, label: .review)
+      }.disabled(!corrections.canCorrect(row))
       if corrections.decision.isBusy { ProgressView().controlSize(.small) }
     }
     if row.sender == nil {
@@ -177,14 +163,36 @@ private struct CorrectionControls: View {
       )
     }
     if let correction = row.correctedLabel {
-      Text("User corrected to \(correction.localizedTitle)")
-        .accessibilityIdentifier("correction.label").accessibilityValue(correction.rawValue)
+      Text("You marked this \(correction.localizedTitle)")
+        .accessibilityIdentifier("correction.label.\(correction.rawValue)")
     }
     HStack {
       DomainCorrectionMenu(corrections: corrections, activity: activity, row: row)
-        .disabled(!canCorrect || row.evidence?.fromDomain == nil)
+        .disabled(!corrections.canCorrect(row) || row.evidence?.fromDomain == nil)
       Spacer()
       HelpButton(page: "correcting-mistakes")
+    }
+  }
+}
+
+/// One verdict correction, named by its verdict noun and described by its command title.
+private struct CorrectionButton: View {
+  let corrections: CorrectionsModel
+  let row: DecisionRecord
+  let label: MailLabel
+
+  var body: some View {
+    Button(label.localizedTitle) { corrections.correct(row, label: label) }
+      .accessibilityLabel(label.correctionTitle)
+      .help(label.correctionTitle)
+      .accessibilityIdentifier(Self.identifier(for: label))
+  }
+
+  private static func identifier(for label: MailLabel) -> String {
+    switch label {
+      case .inbox: "correction.good"
+      case .junk: "correction.junk"
+      case .review: "correction.review"
     }
   }
 }
@@ -238,6 +246,7 @@ private struct DomainCorrectionMenu: View {
 
 private struct DecisionDiagnosticsView: View {
   let row: DecisionRecord
+  let accountName: String
 
   private var evidenceDescription: String? {
     guard let evidence = row.evidence, let data = try? JSONEncoder.pretty.encode(evidence) else {
@@ -247,10 +256,10 @@ private struct DecisionDiagnosticsView: View {
   }
 
   var body: some View {
-    LabeledContent("Path", value: row.path.localizedTitle)
+    LabeledContent("Decided by", value: row.path.localizedTitle)
     LabeledContent("Policy revision", value: row.revision.formatted())
-    LabeledContent("Account", value: row.identity.accountID ?? String(localized: "Unknown"))
-    LabeledContent("Source mailbox", value: row.identity.mailbox ?? String(localized: "Unknown"))
+    LabeledContent("Account", value: accountName)
+    LabeledContent("Mailbox", value: row.identity.mailbox ?? String(localized: "Unknown"))
     LabeledContent("Intended action", value: row.decision.action.localizedTitle)
     if let verdict = row.verdict {
       LabeledContent("Confidence") {
@@ -282,19 +291,28 @@ private struct DecisionDiagnosticsView: View {
   }
 }
 
+/// A verdict as a symbol and its noun; an unclassified decision has its own symbol.
 struct VerdictBadge: View {
   let label: MailLabel?
 
+  private var title: String { label?.localizedTitle ?? String(localized: "Unclassified") }
+
   var body: some View {
-    Text(label?.localizedTitle ?? String(localized: "Unclassified"))
-      .accessibilityLabel("Verdict: \(label?.localizedTitle ?? String(localized: "Unclassified"))")
+    Label(title, systemImage: label?.systemImage ?? "questionmark.circle")
+      .accessibilityLabel("Verdict: \(title)")
   }
 }
 
 #Preview("Decision") { DecisionDetailPreview(row: PreviewHelper.record) }
 #Preview("Failed action") { DecisionDetailPreview(row: PreviewHelper.failedRecord) }
 #Preview("Unclassified") { DecisionDetailPreview(row: PreviewHelper.unclassifiedRecord) }
-#Preview("Verdict") { VerdictBadge(label: .review) }
+#Preview("Assessed threats") { DecisionDetailPreview(row: PreviewHelper.assessedRecord) }
+#Preview("Verdicts") {
+  VStack(alignment: .leading) {
+    ForEach(MailLabel.allCases, id: \.self) { VerdictBadge(label: $0) }
+    VerdictBadge(label: nil)
+  }.padding()
+}
 #Preview("Corrections") {
   let model = PreviewHelper.model()
   Form {
@@ -325,10 +343,8 @@ struct VerdictBadge: View {
     )
   }
 }
-#Preview("Diagnostics") { Form { DecisionDiagnosticsView(row: PreviewHelper.record) } }
-#Preview("Unassessed threats") { Form { ThreatAssessmentView(assessment: nil) } }
-#Preview("Threat finding") {
-  Form { ThreatAssessmentView(assessment: PreviewHelper.threatAssessment) }
+#Preview("Diagnostics") {
+  Form { DecisionDiagnosticsView(row: PreviewHelper.record, accountName: "Example account") }
 }
 
 /// A decision's detail over preview models.

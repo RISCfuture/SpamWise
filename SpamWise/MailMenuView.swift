@@ -1,7 +1,12 @@
 import SwiftUI
 import SpamWiseCore
 
-/// The menu bar menu: status, selected-message corrections and Pause.
+/**
+ The menu bar menu: status, selected-message corrections and Pause.
+
+ Its items have no key equivalents, because a menu bar extra's shortcuts work only while its
+ menu is open. The Correct Selected Mail shortcut action can be bound to a global key instead.
+ */
 struct MailMenuView: View {
   let shared: SharedStateModel
   let scanning: ScanCoordinator
@@ -15,18 +20,16 @@ struct MailMenuView: View {
   private var canActOnMail: Bool { storageReady && shared.settings.onboardingComplete }
 
   var body: some View {
-    Text(scanning.filteringStatus.localizedTitle)
+    Text(scanning.filteringState.localizedTitle)
     if scanning.progress != nil { Text("Checking mail…") }
     Button("Show Activity") { openWindow(id: "activity") }
     if let digest = shared.pendingDigest {
-      Button("Review digest") { show(.digest) }
+      ActivityActionButton(action: .digest) { show(.digest) }
         .badge(digest.records.count)
     }
     SelectionCorrectionMenu(corrections: corrections, canActOnMail: canActOnMail, show: show)
-    Button(shared.settings.paused ? "Resume filtering" : "Pause filtering") {
-      settings.togglePause()
-    }
-    .disabled(!canActOnMail)
+    PauseFilteringButton(settings: settings, paused: shared.settings.paused)
+      .disabled(!canActOnMail)
     SettingsLink()
     Divider()
     Button("Quit SpamWise") { NSApplication.shared.terminate(nil) }

@@ -47,6 +47,33 @@ import MailIntegration
 // MARK: - Decision corrections
 
 extension CorrectionsModel {
+  /// Whether `record` can be corrected now: it has a sender, isn't a setup check and nothing is running.
+  func canCorrect(_ record: DecisionRecord) -> Bool {
+    !decision.isBusy && record.path != .verification && record.sender != nil
+  }
+
+  /// Whether `record` is an unclassified message that can be classified again now.
+  func canRetry(_ record: DecisionRecord) -> Bool { !decision.isBusy && record.isRetryable }
+
+  /// Classifies an unclassified record's message again, under the same dry-run and pause rules.
+  func retryClassification(_ record: DecisionRecord) {
+    decision.run { [self] in
+      let pipeline = try services.requirePipeline()
+      let adapter = try await services.adapter(for: record)
+      let result = try await pipeline.retryUnclassified(recordID: record.id, adapter: adapter)
+      guard let label = result.decision.label else {
+        return String(
+          localized:
+            "SpamWise still couldn’t classify this message: \(result.decision.reason.localizedDescription)"
+        )
+      }
+      return String(
+        localized:
+          "Classified as \(label.localizedTitle). Mail action: \(result.outcome.localizedTitle)."
+      )
+    }
+  }
+
   /**
    Corrects `record`; the correction is saved even if Mail fails.
 
@@ -277,4 +304,9 @@ struct CorrectionProgress: Equatable {
   let total: Int
   /// The one-based position of the message being corrected.
   var current: Int { min(total, completed + 1) }
+}
+
+extension DecisionRecord {
+  /// Whether this is an unclassified message, rather than a setup check, that can be classified again.
+  var isRetryable: Bool { outcome == .unclassified && path != .verification }
 }

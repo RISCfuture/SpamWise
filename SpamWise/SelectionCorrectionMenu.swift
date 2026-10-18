@@ -21,12 +21,9 @@ struct SelectionCorrectionMenu: View {
     Section("Selected messages in Mail") {
       SelectionCorrectionStatus(corrections: corrections, show: show)
       Group {
-        Button("Mark as Good") { correct(.inbox) }
-          .keyboardShortcut("g", modifiers: [.command, .option])
-        Button("Mark as Junk") { correct(.junk) }
-          .keyboardShortcut("j", modifiers: [.command, .option])
-        Button("Mark for Review") { correct(.review) }
-          .keyboardShortcut("r", modifiers: [.command, .option])
+        ForEach([MailLabel.inbox, .junk, .review], id: \.self) { label in
+          Button(label.correctionTitle) { correct(label) }
+        }
         Menu("Correct Senders’ Domains") {
           Button("Allow Senders’ Domains") { correct(.inbox, scope: .domain) }
           Button("Block Senders’ Domains") { correct(.junk, scope: .domain) }

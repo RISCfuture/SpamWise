@@ -53,7 +53,7 @@ final class UITests: XCTestCase {
     XCTAssertEqual(statistics.decisionCount, "1")
     statistics.close()
     let detail = activity.openFixture()
-    XCTAssertTrue(detail.threatsAreUnassessed)
+    XCTAssertTrue(detail.hidesThreatAssessment)
     detail.markGood()
     XCTAssertTrue(detail.correctionSavedWithActionFailure)
     let settings = activity.openRulesSettings()
@@ -221,11 +221,8 @@ enum UITestTiming {
 @MainActor struct DecisionScreen {
   let app: XCUIApplication
 
-  var threatsAreUnassessed: Bool {
-    let status = app.staticTexts["threats.status"]
-    guard status.waitForExistence(timeout: UITestTiming.transition) else { return false }
-    return (status.value as? String) == "Not assessed" || status.label == "Not assessed"
-  }
+  /// Whether the inspector omits the threat section, as it does when no detector ran.
+  var hidesThreatAssessment: Bool { !app.staticTexts["threats.status"].exists }
 
   var correctionSavedWithActionFailure: Bool {
     let status = app.staticTexts["correction.status"]
@@ -291,17 +288,10 @@ enum UITestTiming {
   }
 
   private func waitForCorrection(_ label: String) {
-    XCTAssertEqual(
-      XCTWaiter.wait(
-        for: [
-          XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", label),
-            object: app.staticTexts["correction.label"]
-          )
-        ],
+    XCTAssertTrue(
+      app.staticTexts["correction.label.\(label)"].waitForExistence(
         timeout: UITestTiming.transition
-      ),
-      .completed
+      )
     )
   }
 }

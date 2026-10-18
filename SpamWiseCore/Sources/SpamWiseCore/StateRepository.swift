@@ -120,7 +120,7 @@ extension StateRepository {
       )
     }
   }
-  /// One page of matching Activity records, newest first, fetched without reading the whole log.
+  /// One page of matching Activity records in the query's order, fetched without reading the whole log.
   public static func activity(
     _ store: Store,
     matching query: ActivityQuery = .init(),
@@ -129,10 +129,7 @@ extension StateRepository {
   ) async throws -> [DecisionRecord] {
     try await StatePersistence.prepared(store)
     return try await store.snapshot { context in
-      var descriptor = FetchDescriptor(
-        predicate: query.predicate,
-        sortBy: [SortDescriptor(\.date, order: .reverse)]
-      )
+      var descriptor = FetchDescriptor(predicate: query.predicate, sortBy: query.sort.descriptors)
       descriptor.fetchOffset = max(0, offset)
       descriptor.fetchLimit = max(0, limit)
       let decoder = JSONDecoder()

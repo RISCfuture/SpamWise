@@ -298,22 +298,6 @@
         }
       }
     },
-    "Action failures": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Acciones fallidas"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Échecs d’action"
-          }
-        }
-      }
-    },
     "Activity": {
       "localizations": {
         "es": {
@@ -438,22 +422,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tous les résultats"
-          }
-        }
-      }
-    },
-    "All paths": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Todas las rutas"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tous les circuits"
           }
         }
       }
@@ -1050,22 +1018,6 @@
         }
       }
     },
-    "Clear filters": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Borrar filtros"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Effacer les filtres"
-          }
-        }
-      }
-    },
     "Confidence": {
       "localizations": {
         "es": {
@@ -1451,22 +1403,6 @@
         }
       }
     },
-    "Correction undone; the recorded Mail action was not reversed.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corrección deshecha; la acción registrada en Mail no se revirtió."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correction annulée ; l’action enregistrée dans Mail n’a pas été inversée."
-          }
-        }
-      }
-    },
     "Correction undone. Use a separate correction to request a Mail action.": {
       "localizations": {
         "es": {
@@ -1516,22 +1452,6 @@
         }
       }
     },
-    "Daily decision counts": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Número de decisiones diarias"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nombre de décisions par jour"
-          }
-        }
-      }
-    },
     "Date range…": {
       "localizations": {
         "es": {
@@ -1576,54 +1496,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Détails de la décision"
-          }
-        }
-      }
-    },
-    "Decisions": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Decisiones"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Décisions"
-          }
-        }
-      }
-    },
-    "Decisions per day": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Decisiones por día"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Décisions par jour"
-          }
-        }
-      }
-    },
-    "Decisions today: %@ · Junk: %@ · Review: %@": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Decisiones de hoy: %@ · No deseado: %@ · Revisar: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Décisions aujourd’hui : %@ · Indésirables : %@ · À vérifier : %@"
           }
         }
       }
@@ -1768,22 +1640,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Simuler sur les messages récents"
-          }
-        }
-      }
-    },
-    "Duplicate": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Duplicada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Doublon"
           }
         }
       }
@@ -2652,22 +2508,6 @@
         }
       }
     },
-    "Integration unavailable": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Integración no disponible"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Intégration indisponible"
-          }
-        }
-      }
-    },
     "Intended action": {
       "localizations": {
         "es": {
@@ -3036,22 +2876,6 @@
         }
       }
     },
-    "Mark as Review": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marcar para revisar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marquer comme à vérifier"
-          }
-        }
-      }
-    },
     "Mark for Review": {
       "localizations": {
         "es": {
@@ -3064,22 +2888,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Marquer pour vérification"
-          }
-        }
-      }
-    },
-    "Mark-as-read": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marcar como leído"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marquer comme lu"
           }
         }
       }
@@ -3660,38 +3468,6 @@
         }
       }
     },
-    "Path": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ruta"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Circuit"
-          }
-        }
-      }
-    },
-    "Pause filtering": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pausar filtrado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Suspendre le filtrage"
-          }
-        }
-      }
-    },
     "Paused": {
       "localizations": {
         "es": {
@@ -3704,22 +3480,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "En pause"
-          }
-        }
-      }
-    },
-    "Pending": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pendiente"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En attente"
           }
         }
       }
@@ -4220,22 +3980,6 @@
         }
       }
     },
-    "Requested": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solicitada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Demandée"
-          }
-        }
-      }
-    },
     "Reset to default": {
       "localizations": {
         "es": {
@@ -4349,22 +4093,6 @@
         }
       }
     },
-    "Resume filtering": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reanudar filtrado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reprendre le filtrage"
-          }
-        }
-      }
-    },
     "Retain reviewed text for evaluation export": {
       "localizations": {
         "es": {
@@ -4381,22 +4109,6 @@
         }
       }
     },
-    "Retained log only. Selective corrections do not measure accuracy or calibration.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solo el registro conservado. Las correcciones selectivas no miden precisión ni calibración."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Journal conservé uniquement. Les corrections sélectives ne mesurent ni précision ni étalonnage."
-          }
-        }
-      }
-    },
     "Review": {
       "localizations": {
         "es": {
@@ -4409,22 +4121,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "À vérifier"
-          }
-        }
-      }
-    },
-    "Review digest": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Resumen de mensajes para revisar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Récapitulatif des messages à vérifier"
           }
         }
       }
@@ -4521,38 +4217,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corpus vérifié"
-          }
-        }
-      }
-    },
-    "Reviewed decisions": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Decisiones revisadas"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Décisions vérifiées"
-          }
-        }
-      }
-    },
-    "Reviewed disagreements": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Discrepancias revisadas"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Désaccords vérifiés"
           }
         }
       }
@@ -4910,22 +4574,6 @@
         }
       }
     },
-    "Show details": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mostrar detalles"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Afficher les détails"
-          }
-        }
-      }
-    },
     "Show Mail rule script in Finder": {
       "localizations": {
         "es": {
@@ -4986,22 +4634,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Source"
-          }
-        }
-      }
-    },
-    "Source mailbox": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buzón de origen"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Boîte d’origine"
           }
         }
       }
@@ -5134,22 +4766,6 @@
         }
       }
     },
-    "Superseded": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reemplazada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remplacée"
-          }
-        }
-      }
-    },
     "These are Mail.app roles. Matching names do not prove server labels. Keep dry run on while comparing filters.": {
       "localizations": {
         "es": {
@@ -5198,22 +4814,6 @@
         }
       }
     },
-    "Time": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hora"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Heure"
-          }
-        }
-      }
-    },
     "TLS port": {
       "localizations": {
         "es": {
@@ -5226,38 +4826,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Port TLS"
-          }
-        }
-      }
-    },
-    "Today": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hoy"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aujourd’hui"
-          }
-        }
-      }
-    },
-    "Today: %@": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hoy: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aujourd’hui : %@"
           }
         }
       }
@@ -5354,22 +4922,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Essayer une simulation"
-          }
-        }
-      }
-    },
-    "Try a dry run to preview how your mail will be classified.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prueba una simulación para ver cómo se clasificará tu correo."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lancez une simulation pour voir comment votre courrier sera classé."
           }
         }
       }
@@ -5471,22 +5023,6 @@
         }
       }
     },
-    "Unresolved Review": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Revisiones pendientes"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vérifications en attente"
-          }
-        }
-      }
-    },
     "Usage": {
       "localizations": {
         "es": {
@@ -5563,22 +5099,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Utilisez votre correspondance et vos Contacts pour reconnaître les expéditeurs de confiance."
-          }
-        }
-      }
-    },
-    "User corrected to %@": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El usuario cambió la clasificación a %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Classement corrigé par l’utilisateur : %@"
           }
         }
       }
@@ -6764,22 +6284,6 @@
         }
       }
     },
-    "Dry run — Inbox and Junk mailboxes not validated": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Simulación — buzones de Entrada y No deseado sin validar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Simulation — boîtes Réception et Indésirables non validées"
-          }
-        }
-      }
-    },
     "Automation checks": {
       "localizations": {
         "es": {
@@ -7823,22 +7327,6 @@
         }
       }
     },
-    "Mail check stopped. The next check starts in a minute.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comprobación del correo detenida. La siguiente empieza dentro de un minuto."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vérification du courrier arrêtée. La prochaine commence dans une minute."
-          }
-        }
-      }
-    },
     "Message preview": {
       "localizations": {
         "es": {
@@ -8059,22 +7547,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arrêter l’aperçu"
-          }
-        }
-      }
-    },
-    "Stops this check. The next one starts in a minute.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Detiene esta comprobación. La siguiente empieza dentro de un minuto."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arrête cette vérification. La prochaine commence dans une minute."
           }
         }
       }
@@ -12091,6 +11563,1286 @@
           "stringUnit": {
             "state": "translated",
             "value": "Avancé. Laissez vide pour une nouvelle demande. Pour réessayer sans risque une exécution interrompue, saisissez l’UUID qu’elle a utilisé."
+          }
+        }
+      }
+    },
+    "%lld of %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld sur %2$lld"
+          }
+        }
+      }
+    },
+    "Accounts to filter": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuentas que se filtran"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comptes à filtrer"
+          }
+        }
+      }
+    },
+    "Advanced settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes avanzados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages avancés"
+          }
+        }
+      }
+    },
+    "All sources": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todas las fuentes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les sources"
+          }
+        }
+      }
+    },
+    "Already handled": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya gestionado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déjà traité"
+          }
+        }
+      }
+    },
+    "At most %@ of reviewed decisions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Como máximo, el %@ de las decisiones revisadas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Au plus %@ des décisions vérifiées"
+          }
+        }
+      }
+    },
+    "Change the search or clear the filters to see more.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambia la búsqueda o quita los filtros para ver más."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifiez la recherche ou effacez les filtres pour en voir davantage."
+          }
+        }
+      }
+    },
+    "Checks this message again. Dry run and Pause still apply.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a comprobar este mensaje. La simulación y la pausa siguen aplicándose."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifie à nouveau ce message. La simulation et la pause restent appliquées."
+          }
+        }
+      }
+    },
+    "Classified as %@. Mail action: %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clasificado como %1$@. Acción en Mail: %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classé comme %1$@. Action dans Mail : %2$@."
+          }
+        }
+      }
+    },
+    "Classify Again": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volver a clasificar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classer à nouveau"
+          }
+        }
+      }
+    },
+    "Clear Filters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar filtros"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer les filtres"
+          }
+        }
+      }
+    },
+    "Configuration History": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historial de configuración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique de configuration"
+          }
+        }
+      }
+    },
+    "Correction examples": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejemplos de corrección"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exemples de correction"
+          }
+        }
+      }
+    },
+    "Date": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fecha"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        }
+      }
+    },
+    "Decided by": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decidido por"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décidé par"
+          }
+        }
+      }
+    },
+    "Decisions you changed": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisiones que cambiaste"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décisions que vous avez modifiées"
+          }
+        }
+      }
+    },
+    "Decisions you reviewed": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisiones que revisaste"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décisions que vous avez vérifiées"
+          }
+        }
+      }
+    },
+    "Domain age lookup": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulta de antigüedad del dominio"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification de l’âge du domaine"
+          }
+        }
+      }
+    },
+    "Dry Run Recent Mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simular con correo reciente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simuler sur les messages récents"
+          }
+        }
+      }
+    },
+    "Dry run — check the Mail connection in Settings to start filtering": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulación — comprueba la conexión con Mail en Ajustes para empezar a filtrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulation — vérifiez la connexion à Mail dans les Réglages pour commencer à filtrer"
+          }
+        }
+      }
+    },
+    "Filtering is paused. Resume to sort new mail again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El filtrado está en pausa. Reanúdalo para volver a clasificar el correo nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le filtrage est en pause. Reprenez-le pour trier à nouveau les nouveaux messages."
+          }
+        }
+      }
+    },
+    "Filters are on": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hay filtros activos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des filtres sont actifs"
+          }
+        }
+      }
+    },
+    "Folder plans": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planes de carpeta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurations de dossier"
+          }
+        }
+      }
+    },
+    "Go through this week’s mail marked for Review.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repasa el correo de esta semana marcado para revisión."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parcourez les messages de la semaine marqués pour vérification."
+          }
+        }
+      }
+    },
+    "Hide Inspector": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ocultar inspector"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masquer l’inspecteur"
+          }
+        }
+      }
+    },
+    "Hide the decision’s details": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oculta los detalles de la decisión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque les détails de la décision"
+          }
+        }
+      }
+    },
+    "Learning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprendizaje"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apprentissage"
+          }
+        }
+      }
+    },
+    "Local-only mode": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modo solo local"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode local uniquement"
+          }
+        }
+      }
+    },
+    "Look through Junk and restore anything that isn’t junk.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa el correo no deseado y recupera lo que sí quieras."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parcourez les indésirables et restaurez ce qui n’en est pas."
+          }
+        }
+      }
+    },
+    "Mail actions that failed": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acciones de Mail fallidas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions Mail en échec"
+          }
+        }
+      }
+    },
+    "Mail check stopped. The next check starts in %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobación del correo detenida. La siguiente empieza dentro de %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification du courrier arrêtée. La suivante commence dans %@."
+          }
+        }
+      }
+    },
+    "Mail settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes de correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages de messagerie"
+          }
+        }
+      }
+    },
+    "Mail unavailable": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no disponible"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail indisponible"
+          }
+        }
+      }
+    },
+    "Mailbox": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buzón"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boîte aux lettres"
+          }
+        }
+      }
+    },
+    "Mark Junk as read": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar el correo no deseado como leído"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer les indésirables comme lus"
+          }
+        }
+      }
+    },
+    "Marked as read": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcado como leído"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marqué comme lu"
+          }
+        }
+      }
+    },
+    "Message text sent": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texto del mensaje enviado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texte du message envoyé"
+          }
+        }
+      }
+    },
+    "Messages": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages"
+          }
+        }
+      }
+    },
+    "Messages per day": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes por día"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages par jour"
+          }
+        }
+      }
+    },
+    "Messages per day by account": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes por día y cuenta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages par jour et par compte"
+          }
+        }
+      }
+    },
+    "No matching decisions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay decisiones que coincidan"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune décision correspondante"
+          }
+        }
+      }
+    },
+    "No threats found in the parts that were checked": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontraron amenazas en las partes comprobadas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune menace trouvée dans les parties vérifiées"
+          }
+        }
+      }
+    },
+    "Not checked": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin comprobar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non vérifié"
+          }
+        }
+      }
+    },
+    "Offline — checks resume when you’re back online": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin conexión — las comprobaciones se reanudan cuando vuelvas a estar en línea"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors ligne — les vérifications reprennent dès le retour de la connexion"
+          }
+        }
+      }
+    },
+    "Other settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otros ajustes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autres réglages"
+          }
+        }
+      }
+    },
+    "Pause": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausa"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        }
+      }
+    },
+    "Pause Filtering": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausar filtrado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suspendre le filtrage"
+          }
+        }
+      }
+    },
+    "Provider consent": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consentimiento del proveedor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consentement du fournisseur"
+          }
+        }
+      }
+    },
+    "Reason": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motivo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motif"
+          }
+        }
+      }
+    },
+    "Replaced by a newer decision": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sustituida por una decisión más reciente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remplacée par une décision plus récente"
+          }
+        }
+      }
+    },
+    "Resume Filtering": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reanudar filtrado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reprendre le filtrage"
+          }
+        }
+      }
+    },
+    "Review Digest": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resumen de mensajes para revisar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Récapitulatif des messages à vérifier"
+          }
+        }
+      }
+    },
+    "Review marking": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca de revisión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquage pour vérification"
+          }
+        }
+      }
+    },
+    "Reviewed Corpus": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corpus revisado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corpus vérifié"
+          }
+        }
+      }
+    },
+    "Reviewed message text": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texto de los mensajes revisados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Texte des messages vérifiés"
+          }
+        }
+      }
+    },
+    "See how SpamWise would sort your newest mail. Nothing moves.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mira cómo clasificaría SpamWise tu correo más reciente. No se mueve nada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voyez comment SpamWise trierait vos messages les plus récents. Rien n’est déplacé."
+          }
+        }
+      }
+    },
+    "See how many messages SpamWise sorted, by day and account.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mira cuántos mensajes clasificó SpamWise, por día y por cuenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voyez combien de messages SpamWise a triés, par jour et par compte."
+          }
+        }
+      }
+    },
+    "Sent to Mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviada a Mail"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoyée à Mail"
+          }
+        }
+      }
+    },
+    "Setup": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuración inicial"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configuration initiale"
+          }
+        }
+      }
+    },
+    "Show Inspector": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar inspector"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher l’inspecteur"
+          }
+        }
+      }
+    },
+    "Show only some decisions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muestra solo algunas decisiones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher seulement certaines décisions"
+          }
+        }
+      }
+    },
+    "Show the decision’s details": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muestra los detalles de la decisión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche les détails de la décision"
+          }
+        }
+      }
+    },
+    "Some decisions are hidden by filters.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los filtros ocultan algunas decisiones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des filtres masquent certaines décisions."
+          }
+        }
+      }
+    },
+    "Some mail couldn’t be checked — see Settings → Accounts": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo comprobar parte del correo — consulta Ajustes → Cuentas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certains messages n’ont pas pu être vérifiés — voir Réglages → Comptes"
+          }
+        }
+      }
+    },
+    "SpamWise still couldn’t classify this message: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise sigue sin poder clasificar este mensaje: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’arrive toujours pas à classer ce message : %@"
+          }
+        }
+      }
+    },
+    "Stop sorting new mail until you resume. Mail already sorted stays where it is.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deja de clasificar el correo nuevo hasta que lo reanudes. El correo ya clasificado se queda donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrête de trier les nouveaux messages jusqu’à la reprise. Les messages déjà triés restent où ils sont."
+          }
+        }
+      }
+    },
+    "Stops this check. The next one starts in %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detiene esta comprobación. La siguiente empieza dentro de %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrête cette vérification. La suivante commence dans %@."
+          }
+        }
+      }
+    },
+    "Today only": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo hoy"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aujourd’hui uniquement"
+          }
+        }
+      }
+    },
+    "Today: %lld messages, %lld Junk, %lld Review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoy: %1$lld mensajes, %2$lld no deseados, %3$lld para revisar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aujourd’hui : %1$lld messages, %2$lld indésirables, %3$lld à vérifier"
+          }
+        }
+      }
+    },
+    "Trusted receiving servers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servidores de recepción de confianza"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveurs de réception de confiance"
+          }
+        }
+      }
+    },
+    "Trusted senders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remitentes de confianza"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expéditeurs de confiance"
+          }
+        }
+      }
+    },
+    "Try a dry run to preview how your mail will be sorted.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haz una simulación para ver cómo se clasificará tu correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancez une simulation pour voir comment vos messages seront triés."
+          }
+        }
+      }
+    },
+    "Unknown account": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuenta desconocida"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compte inconnu"
+          }
+        }
+      }
+    },
+    "Waiting": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En espera"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente"
+          }
+        }
+      }
+    },
+    "Waiting for Review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pendientes de revisión"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de vérification"
+          }
+        }
+      }
+    },
+    "What was checked": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qué se comprobó"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce qui a été vérifié"
+          }
+        }
+      }
+    },
+    "You marked this %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lo marcaste como %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous l’avez marqué comme %@"
+          }
+        }
+      }
+    },
+    "You undid this correction. The message stays where it is in Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deshiciste esta corrección. El mensaje se queda donde está en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous avez annulé cette correction. Le message reste où il est dans Mail."
+          }
+        }
+      }
+    },
+    "Your policy": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu política"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre politique"
+          }
+        }
+      }
+    },
+    "With 95% confidence, at most this share of the decisions you reviewed needed a change.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Con un 95 % de confianza, como máximo esta proporción de las decisiones que revisaste necesitó un cambio."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec 95 % de confiance, au plus cette part des décisions que vous avez vérifiées a dû être modifiée."
           }
         }
       }

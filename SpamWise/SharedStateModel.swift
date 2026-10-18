@@ -70,6 +70,12 @@ import SpamWiseCore
     }
   }
 
+  /// The account's display name, or “Unknown account” when SpamWise has no name for it.
+  func accountName(for id: String?) -> String {
+    id.flatMap { scanHealth[$0]?.accountName }.flatMap { $0.isEmpty ? nil : $0 }
+      ?? String(localized: "Unknown account")
+  }
+
   /// Reloads only the slices whose change tokens moved, and publishes only real differences.
   func refresh() async {
     defer { hasLoadedState = true }

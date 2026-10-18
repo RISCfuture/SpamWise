@@ -15,7 +15,7 @@ struct AuditTrailView: View {
   var body: some View {
     NavigationStack {
       Table(events) {
-        TableColumn("Time") { Text($0.date.formatted()) }
+        TableColumn("Date") { Text($0.date, format: .activityDate) }
         TableColumn("Policy revision") { Text($0.revision.formatted()) }.width(90)
         TableColumn("Change", value: \.localizedDescription)
       }

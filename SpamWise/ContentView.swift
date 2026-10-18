@@ -2,13 +2,15 @@ import SwiftUI
 import SpamWiseCore
 
 struct ContentView: View {
+  /// The smallest Activity and setup window.
+  static let minimumSize = CGSize(width: 720, height: 460)
   let model: AppModel
 
   var body: some View {
     Group {
       if !model.shared.hasLoadedState {
         ProgressView().controlSize(.large)
-          .frame(minWidth: 720, minHeight: 460)
+          .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
       } else if !model.shared.settings.onboardingComplete {
         OnboardingView(model: model)
       } else {
@@ -21,7 +23,6 @@ struct ContentView: View {
 private struct ActivityView: View {
   let model: AppModel
   @State private var selection: UUID?
-  @State private var showsInspector = false
 
   private var selected: DecisionRecord? { model.activity.record(id: selection) }
   private var reload: ActivityReload {
@@ -36,17 +37,16 @@ private struct ActivityView: View {
     @Bindable var activity = model.activity
     @Bindable var router = model.router
     VStack(spacing: 0) {
+      if activity.query.hasFilters {
+        ActivityFilterBanner(activity: activity)
+      }
       ActivityTable(activity: activity, selection: $selection)
         .navigationTitle("Activity")
         .searchable(text: $activity.query.text, prompt: "Search sender, subject or reason")
-        .toolbar {
-          ActivityToolbar(
-            model: model,
-            showsInspector: $showsInspector,
-            canInspect: selected != nil
-          )
+        .toolbar(id: "activity") {
+          ActivityToolbar(model: model, canInspect: selected != nil)
         }
-        .inspector(isPresented: $showsInspector) {
+        .inspector(isPresented: $router.showsInspector) {
           if let selected {
             DecisionDetailView(
               row: selected,
@@ -59,13 +59,14 @@ private struct ActivityView: View {
           }
         }
         .onChange(of: selection) { _, value in
-          showsInspector = value != nil
+          router.showsInspector = value != nil
           model.corrections.decision.status = nil
           model.messages.operation.status = nil
         }
       ActivityStatusView(model: model)
     }
-    .frame(minWidth: 720, minHeight: 460)
+    .frame(minWidth: ContentView.minimumSize.width, minHeight: ContentView.minimumSize.height)
+    .focusedSceneValue(\.selectedDecision, selected)
     .task(id: reload) { await activity.reload() }
     .sheet(item: $router.sheet) { sheet in ActivitySheetView(sheet: sheet, model: model) }
   }
@@ -79,29 +80,34 @@ private struct ActivityReload: Equatable {
 }
 
 private struct ActivityTable: View {
-  let activity: ActivityModel
+  @Bindable var activity: ActivityModel
   @Binding var selection: UUID?
 
   var body: some View {
-    Table(activity.rows, selection: $selection) {
-      TableColumn("Time") { row in
-        Text(row.date, format: .dateTime.hour().minute())
-      }.width(min: 60, ideal: 75)
-      TableColumn("Sender") { row in Text(row.displaySender) }.width(min: 120, ideal: 180)
-      TableColumn("Subject") { row in
+    Table(activity.rows, selection: $selection, sortOrder: $activity.sortOrder) {
+      TableColumn("Date", value: \.date) { row in
+        Text(row.date, format: .activityDate)
+      }.width(min: 70, ideal: 120)
+      TableColumn("Sender", value: \.displaySender).width(min: 120, ideal: 180)
+      TableColumn("Subject", value: \.displaySubject) { row in
         Text(row.displaySubject).accessibilityIdentifier("activity.subject.\(row.id)")
-      }.width(min: 160, ideal: 320)
+      }.width(min: 160, ideal: 280)
       TableColumn("Verdict") { row in
         VerdictBadge(label: row.decision.label)
       }.width(min: 90, ideal: 110)
+      TableColumn("Confidence") { row in
+        if let verdict = row.verdict {
+          Text(Double(verdict.confidence) / 100, format: .percent).monospacedDigit()
+        }
+      }.width(min: 60, ideal: 80)
+      TableColumn("Reason") { row in
+        let reason = row.decision.reason.localizedDescription
+        Text(reason).lineLimit(1).help(reason)
+      }.width(min: 120, ideal: 240)
     }
     .overlay {
       if activity.rows.isEmpty {
-        ContentUnavailableView {
-          Label("No decisions yet", systemImage: "tray")
-        } description: {
-          Text("Try a dry run to preview how your mail will be classified.")
-        }
+        ActivityEmptyView(filtered: activity.query.hasFilters || !activity.query.text.isEmpty)
       }
     }
     .safeAreaInset(edge: .bottom) {
@@ -120,32 +126,79 @@ private struct ActivityTable: View {
   }
 }
 
-private struct ActivityToolbar: ToolbarContent {
+private struct ActivityEmptyView: View {
+  let filtered: Bool
+
+  var body: some View {
+    if filtered {
+      ContentUnavailableView {
+        Label("No matching decisions", systemImage: "line.3.horizontal.decrease.circle")
+      } description: {
+        Text("Change the search or clear the filters to see more.")
+      }
+    } else {
+      ContentUnavailableView {
+        Label("No decisions yet", systemImage: "tray")
+      } description: {
+        Text("Try a dry run to preview how your mail will be sorted.")
+      }
+    }
+  }
+}
+
+/// Says that filters hide some decisions, with a way to show them all again.
+private struct ActivityFilterBanner: View {
+  let activity: ActivityModel
+
+  var body: some View {
+    VStack(spacing: 0) {
+      HStack {
+        Label(
+          "Some decisions are hidden by filters.",
+          systemImage: "line.3.horizontal.decrease.circle.fill"
+        )
+        .foregroundStyle(.secondary)
+        Spacer()
+        Button("Clear Filters") { activity.clearFilters() }
+          .accessibilityIdentifier("activity.clearFilters")
+      }
+      .padding(.horizontal).padding(.vertical, 6)
+      Divider()
+    }
+  }
+}
+
+private struct ActivityToolbar: CustomizableToolbarContent {
   let model: AppModel
-  @Binding var showsInspector: Bool
   let canInspect: Bool
 
-  var body: some ToolbarContent {
-    ToolbarItemGroup {
-      Button(model.shared.settings.paused ? "Resume filtering" : "Pause filtering") {
-        model.settings.togglePause()
-      }.accessibilityIdentifier("activity.pause")
-      Button("Dry run recent mail") { model.scanning.previewRecent() }
+  var body: some CustomizableToolbarContent {
+    ToolbarItem(id: "pause") {
+      PauseFilteringButton(settings: model.settings, paused: model.shared.settings.paused)
+        .accessibilityIdentifier("activity.pause")
+    }
+    ToolbarItem(id: "dryRun") {
+      ActivityActionButton(action: .dryRun) { model.scanning.previewRecent() }
         .disabled(!model.services.storageReady)
         .accessibilityIdentifier("activity.scan")
-      Button("Review digest") { model.router.present(.digest) }
-        .accessibilityIdentifier("activity.digest")
-      Button("Review Junk") { model.router.present(.junkReview) }
     }
-    ToolbarItem {
+    ToolbarItem(id: "digest") {
+      ActivityActionButton(action: .digest) { model.router.present(.digest) }
+        .accessibilityIdentifier("activity.digest")
+    }
+    ToolbarItem(id: "junkReview") {
+      ActivityActionButton(action: .junkReview) { model.router.present(.junkReview) }
+        .accessibilityIdentifier("activity.junkReview")
+    }
+    ToolbarItem(id: "filter") {
       ActivityFilterMenu(activity: model.activity, shared: model.shared, router: model.router)
     }
-    ToolbarItem {
-      Button("Statistics") { model.router.present(.statistics) }
+    ToolbarItem(id: "statistics") {
+      ActivityActionButton(action: .statistics) { model.router.present(.statistics) }
         .accessibilityIdentifier("activity.statistics")
     }
-    ToolbarItem {
-      Button("Show details", systemImage: "sidebar.right") { showsInspector.toggle() }
+    ToolbarItem(id: "inspector", placement: .primaryAction) {
+      InspectorToggle(router: model.router)
         .disabled(!canInspect)
         .accessibilityIdentifier("activity.inspector")
     }
@@ -162,15 +215,15 @@ private struct ActivityFilterMenu: View {
   let router: ActivityRouter
 
   var body: some View {
-    Menu("Filter") {
+    Menu {
       Picker("Account", selection: $activity.query.accountID) {
         Text("All accounts").tag(String?.none)
         ForEach(shared.knownAccounts, id: \.id) { account in
           Text(account.name).tag(Optional(account.id))
         }
       }
-      Picker("Path", selection: $activity.query.path) {
-        Text("All paths").tag(DecisionPath?.none)
+      Picker("Decided by", selection: $activity.query.path) {
+        Text("All sources").tag(DecisionPath?.none)
         ForEach(DecisionPath.allCases, id: \.self) {
           Text($0.localizedTitle).tag(Optional($0))
         }
@@ -180,16 +233,29 @@ private struct ActivityFilterMenu: View {
         ForEach(Self.outcomes, id: \.self) { Text($0.localizedTitle).tag(Optional($0)) }
       }
       Toggle("Corrections only", isOn: $activity.query.correctionsOnly)
-      Button("Today") {
-        activity.query.start = Calendar.current.startOfDay(for: .now); activity.query.end = nil
-      }
+      Toggle("Today only", isOn: $activity.showsTodayOnly)
       Button("Date range…") { router.present(.dateFilter) }
-      Button("Clear filters") { activity.query = ActivityQuery() }
-    }.accessibilityIdentifier("activity.filter")
+      Divider()
+      Button("Clear Filters") { activity.clearFilters() }
+        .disabled(!activity.query.hasFilters)
+    } label: {
+      Label(
+        "Filter",
+        systemImage: activity.query.hasFilters
+          ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
+      )
+    }
+    .help(activity.query.hasFilters ? "Filters are on" : "Show only some decisions")
+    .accessibilityIdentifier("activity.filter")
   }
 }
 
 #Preview("Activity") { ContentView(model: PreviewHelper.model()) }
 #Preview("Empty activity") { ContentView(model: PreviewHelper.model(empty: true)) }
 #Preview("Paused") { ContentView(model: PreviewHelper.model(paused: true)) }
+#Preview("Filtered") {
+  let model = PreviewHelper.model()
+  model.activity.query.outcome = .failed
+  return ContentView(model: model)
+}
 #Preview("Activity table") { ActivityView(model: PreviewHelper.model()) }

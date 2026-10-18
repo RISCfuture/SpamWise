@@ -9,9 +9,7 @@ struct ActivityStatusView: View {
     VStack(alignment: .leading, spacing: 6) {
       Divider()
       HStack {
-        Text(model.scanning.filteringStatus.localizedTitle)
-          .accessibilityIdentifier("activity.mode")
-          .accessibilityValue(model.scanning.filteringStatus.rawValue)
+        FilteringStateView(state: model.scanning.filteringState)
         BackgroundCheckView(scanning: model.scanning)
         Spacer()
         TodayTotalsView(today: model.activity.today, monthCost: model.shared.monthCost)
@@ -38,6 +36,22 @@ struct ActivityStatusView: View {
   }
 }
 
+/// The aggregate filtering state, marked when it needs attention.
+private struct FilteringStateView: View {
+  let state: FilteringState
+
+  var body: some View {
+    Group {
+      if state.needsAttention {
+        Label(state.localizedTitle, systemImage: "exclamationmark.triangle")
+      } else {
+        Text(state.localizedTitle)
+      }
+    }
+    .accessibilityIdentifier("activity.mode.\(state.rawValue)")
+  }
+}
+
 /// Progress of the automatic check and the user's dry run, each with its own Stop button.
 private struct BackgroundCheckView: View {
   let scanning: ScanCoordinator
@@ -54,9 +68,9 @@ private struct BackgroundCheckView: View {
         Text("Checking mail…").foregroundStyle(.secondary)
       }
       Button("Stop") { scanning.stop() }
-        .help("Stops this check. The next one starts in a minute.")
+        .help("Stops this check. The next one starts in \(ScanCoordinator.intervalText).")
     } else if let date = scanning.lastCompletion {
-      Text("Last checked \(date, format: .dateTime.hour().minute())").foregroundStyle(.secondary)
+      Text("Last checked \(date, format: .activityDate)").foregroundStyle(.secondary)
     }
     if scanning.preview.isBusy {
       ProgressView().controlSize(.small)
@@ -71,11 +85,9 @@ private struct TodayTotalsView: View {
   let monthCost: Double
 
   var body: some View {
-    Text("Today: \(today.decisions, format: .number)")
+    Text("Today: \(today.decisions) messages, \(today.junk) Junk, \(today.review) Review")
       .foregroundStyle(.secondary)
-      .help(
-        "Decisions today: \(today.decisions, format: .number) · Junk: \(today.junk, format: .number) · Review: \(today.review, format: .number)"
-      )
+      .accessibilityIdentifier("activity.today")
     Text("Month: \(monthCost, format: .currency(code: "USD"))")
       .foregroundStyle(.secondary)
       .help("Estimated API cost this month")
@@ -101,6 +113,11 @@ private struct DigestAnnouncementView: View {
 #Preview("Activity status") { ActivityStatusView(model: PreviewHelper.model()) }
 #Preview("Spending limit reached") {
   ActivityStatusView(model: PreviewHelper.model(spendingLimitReached: true))
+}
+#Preview("Filtering states") {
+  VStack(alignment: .leading) {
+    ForEach(FilteringState.allCases, id: \.self) { FilteringStateView(state: $0) }
+  }.padding()
 }
 #Preview("Digest announcement") {
   DigestAnnouncementView(count: 3) {}.padding()
