@@ -2,13 +2,14 @@ import SwiftUI
 import SpamWiseCore
 
 struct TrustExclusionsView: View {
-  let model: AppModel
+  let relationships: RelationshipsModel
+  let shared: SharedStateModel
   @State private var addresses = ""
 
   var body: some View {
     DisclosureGroup("Own addresses and trust exclusions") {
-      if !model.state.ownAddresses.isEmpty {
-        Text(model.state.ownAddresses.sorted().joined(separator: "\n")).textSelection(.enabled)
+      if !shared.state.ownAddresses.isEmpty {
+        Text(shared.state.ownAddresses.sorted().joined(separator: "\n")).textSelection(.enabled)
       } else {
         Text("No account addresses discovered yet.")
       }
@@ -18,19 +19,17 @@ struct TrustExclusionsView: View {
       .foregroundStyle(.secondary)
       TextEditor(text: $addresses).frame(minHeight: 80)
         .accessibilityLabel("Addresses excluded from automatic trust")
-      Button("Save trust exclusions") {
-        let draft = addresses
-        model.run {
-          guard let store = model.store else { throw IntegrationError.unavailable }
-          try await TrustExclusions.save(draft, store: store)
-        }
-      }.disabled(model.busy)
+      Button("Save trust exclusions") { relationships.saveTrustExclusions(addresses) }
+      OperationStatusView(operation: relationships.exclusions)
       Text("These exclusions do not block mail. Explicit address and domain rules still win.")
         .foregroundStyle(.secondary)
     }.onAppear {
-      addresses = model.state.settings.mailOptions.trustExclusions.sorted().joined(separator: "\n")
+      addresses = shared.settings.mailOptions.trustExclusions.sorted().joined(separator: "\n")
     }
   }
 }
 
-#Preview("Trust exclusions") { Form { TrustExclusionsView(model: PreviewHelper.model()) } }
+#Preview("Trust exclusions") {
+  let model = PreviewHelper.model()
+  Form { TrustExclusionsView(relationships: model.relationships, shared: model.shared) }
+}

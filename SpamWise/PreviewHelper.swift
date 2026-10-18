@@ -122,6 +122,7 @@ import SpamWiseCore
     return configuration
   }
 
+  /// Feature models over preview services, without a store, with fixture Activity and state.
   static func model(
     onboarding: Bool = false,
     paused: Bool = false,
@@ -131,15 +132,15 @@ import SpamWiseCore
     suggestions: Bool = false,
     spendingLimitReached: Bool = false
   ) -> AppModel {
-    let model = AppModel(preview: true)
-    model.spending = spending(limitReached: spendingLimitReached)
-    model.state.settings.onboardingComplete = !onboarding
-    model.state.settings.paused = paused
-    model.state.settings.advancedOptions.transport = transport
-    model.state.settings.advancedOptions.backend = backend
-    model.state.records = empty ? [] : [record]
-    model.state.rules = empty ? [] : [rule]
-    model.state.corrections = suggestions ? corrections : []
+    let model = AppModel(services: .preview(), activityFixtures: empty ? [] : [record])
+    let shared = model.shared
+    shared.spending = spending(limitReached: spendingLimitReached)
+    shared.state.settings.onboardingComplete = !onboarding
+    shared.state.settings.paused = paused
+    shared.state.settings.advancedOptions.transport = transport
+    shared.state.settings.advancedOptions.backend = backend
+    shared.state.rules = empty ? [] : [rule]
+    shared.state.corrections = suggestions ? corrections : []
     return model
   }
 

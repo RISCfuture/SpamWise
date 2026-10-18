@@ -2,7 +2,7 @@ import SwiftUI
 import SpamWiseCore
 
 struct KeyEntryView: View {
-  @Bindable var model: AppModel
+  let credentials: CredentialsModel
   @State private var key = ""
 
   var body: some View {
@@ -10,9 +10,13 @@ struct KeyEntryView: View {
       .accessibilityIdentifier("setup.key")
     HStack {
       Button("Verify and save key") {
-        model.verifyKey(key); key = ""
+        credentials.verifyClaudeKey(key); key = ""
       }
-      .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.busy)
+      .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+      if credentials.claudeKey.isBusy {
+        ProgressView().controlSize(.small)
+        Text("Verifying Haiku 5.5…").foregroundStyle(.secondary)
+      }
       Spacer()
       Link(
         "Open Claude Console",
@@ -21,10 +25,10 @@ struct KeyEntryView: View {
     }
     Text("Verification sends one synthetic message to Haiku 5.5 and saves your key in Keychain.")
       .foregroundStyle(.secondary)
-    if !model.keyStatus.isEmpty {
-      Text("API key status: \(model.keyStatus)").textSelection(.enabled)
-    }
+    OperationStatusView(operation: credentials.claudeKey, identifier: "setup.keyStatus")
   }
 }
 
-#Preview("API key") { Form { KeyEntryView(model: PreviewHelper.model()) }.formStyle(.grouped) }
+#Preview("API key") {
+  Form { KeyEntryView(credentials: PreviewHelper.model().credentials) }.formStyle(.grouped)
+}

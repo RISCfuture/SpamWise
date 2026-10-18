@@ -9,6 +9,17 @@
     }
   ],
   "defaultOptions" : {
+    "environmentVariableEntries" : [
+      {
+        "key" : "PACKAGE_RESOURCE_BUNDLE_PATH",
+        "value" : "$(BUILT_PRODUCTS_DIR)"
+      }
+    ],
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:SpamWise.xcodeproj",
+      "identifier" : "019C87583081F50B00513EEC",
+      "name" : "UnitTests"
+    },
     "testTimeoutsEnabled" : true
   },
   "testTargets" : [

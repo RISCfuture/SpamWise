@@ -1,172 +1,177 @@
 import SwiftUI
 import SpamWiseCore
-import MailIntegration
 import UniformTypeIdentifiers
 
 struct ContentRuleEditorView: View {
-  let model: AppModel
+  let rules: RulesModel
+  let shared: SharedStateModel
   @State private var selection: UUID?
-  @State private var editing: ContentRule?
-  @State private var showsEditor = false
+  @State private var path: [ContentRuleRoute] = []
   @State private var importing = false
   @State private var exporting = false
   @State private var archive: RulesDocument?
+  @State private var exportStatus: OperationStatus?
   @Environment(\.dismiss) private var dismiss
 
-  private var rules: [ContentRule] {
-    model.state.contentRules.sorted { $0.updatedAt > $1.updatedAt }
+  private var contentRules: [ContentRule] {
+    shared.state.contentRules.sorted { $0.updatedAt > $1.updatedAt }
   }
+
   var body: some View {
-    VStack(alignment: .leading) {
-      Text("Content rules").font(.title2)
-      Text("Address, then domain, then newest matching content rule, then trusted relationships.")
-        .foregroundStyle(.secondary)
-      Table(rules, selection: $selection) {
-        TableColumn("Field") { Text($0.field.localizedTitle) }
-        TableColumn("Expression", value: \.pattern)
-        TableColumn("Action") { Text($0.disposition.localizedTitle) }
-        TableColumn("State") { Text($0.enabled ? "Enabled" : "Disabled") }
-        TableColumn("Matches") { Text(model.state.contentRuleHits[$0.id, default: 0].formatted()) }
-        TableColumn("Skipped") { Text(model.state.contentRuleSkips[$0.id, default: 0].formatted()) }
-      }
-      HStack {
-        Button("Add rule") {
-          editing = nil; showsEditor = true
-        }
-        Button("Edit") {
-          editing = rules.first { $0.id == selection }; showsEditor = true
-        }
-        .disabled(selection == nil)
-        Button("Remove", role: .destructive) { remove() }.disabled(selection == nil)
-        Menu("Transfer") {
-          Button("Import content rules…") { importing = true }
-          Button("Export content rules…") {
-            model.run {
-              archive = try RulesDocument(data: ContentRuleManagement.exportRules(rules))
-              exporting = true
-            }
+    NavigationStack(path: $path) {
+      VStack(alignment: .leading) {
+        Text("Address, then domain, then newest matching content rule, then trusted relationships.")
+          .foregroundStyle(.secondary)
+        ContentRuleTable(rules: contentRules, shared: shared, selection: $selection)
+        HStack {
+          Button("Add rule") { path.append(.add) }
+          Button("Edit") {
+            if let selection { path.append(.edit(selection)) }
           }
+          .disabled(selection == nil)
+          Button("Remove", role: .destructive) {
+            if let selection { rules.removeContentRule(selection) }
+          }.disabled(selection == nil)
+          Menu("Transfer") {
+            Button("Import content rules…") { importing = true }
+            Button("Export content rules…") { exportRules() }.disabled(contentRules.isEmpty)
+          }
+          if rules.contentRules.isBusy { ProgressView().controlSize(.small) }
         }
-        Spacer()
-        Button("Done") { dismiss() }
-      }.disabled(model.busy)
-    }.padding().frame(minWidth: 640, minHeight: 400)
-      .sheet(isPresented: $showsEditor) {
-        ContentRuleFormView(model: model, rule: editing ?? ContentRule())
+        OperationStatusView(operation: rules.contentRules)
+        StatusLabel(status: exportStatus)
       }
-      .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
-        if case .success(let url) = result { importRules(url) }
+      .padding()
+      .navigationTitle("Content rules")
+      .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "contentRules.done") }
+      .navigationDestination(for: ContentRuleRoute.self) { route in
+        ContentRuleFormView(rules: rules, rule: rule(for: route), isNew: route == .add) {
+          path.removeLast()
+        }
       }
-      .fileExporter(
-        isPresented: $exporting,
-        document: archive,
-        contentType: .json,
-        defaultFilename: "SpamWise-content-rules"
-      ) { result in
-        if case .failure = result { model.status = String(localized: "Rule export failed.") }
-      }
+    }
+    .frame(minWidth: 640, minHeight: 430)
+    .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
+      if case .success(let url) = result { rules.importContentRules(from: url) }
+    }
+    .fileExporter(
+      isPresented: $exporting,
+      document: archive,
+      contentType: .json,
+      defaultFilename: "SpamWise-content-rules"
+    ) { exportStatus = ExportResult.status(of: $0, failure: "Rule export failed.") }
   }
-  private func importRules(_ url: URL) {
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      let scoped = url.startAccessingSecurityScopedResource()
-      defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-      let file = try FileHandle(forReadingFrom: url)
-      defer { try? file.close() }
-      let data = try file.read(upToCount: 1_000_001) ?? Data()
-      try await ContentRuleManagement.importRules(data, store: store)
+
+  private func rule(for route: ContentRuleRoute) -> ContentRule {
+    guard case .edit(let id) = route else { return ContentRule() }
+    return shared.state.contentRules.first { $0.id == id } ?? ContentRule()
+  }
+
+  private func exportRules() {
+    do {
+      archive = RulesDocument(data: try rules.exportedContentRules())
+      exporting = true
+    } catch {
+      exportStatus = .failure(OperationFailure(error))
     }
   }
-  private func remove() {
-    guard let selection else { return }
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      try await ContentRuleManagement.remove(selection, store: store)
+}
+
+/// A content rule form pushed inside the content rules sheet.
+private enum ContentRuleRoute: Hashable {
+  case add
+  case edit(UUID)
+}
+
+private struct ContentRuleTable: View {
+  let rules: [ContentRule]
+  let shared: SharedStateModel
+  @Binding var selection: UUID?
+
+  var body: some View {
+    Table(rules, selection: $selection) {
+      TableColumn("Field") { Text($0.field.localizedTitle) }
+      TableColumn("Expression", value: \.pattern)
+      TableColumn("Action") { Text($0.disposition.localizedTitle) }
+      TableColumn("State") { Text($0.enabled ? "Enabled" : "Disabled") }
+      TableColumn("Matches") { Text(shared.state.contentRuleHits[$0.id, default: 0].formatted()) }
+      TableColumn("Skipped") {
+        Text(shared.state.contentRuleSkips[$0.id, default: 0].formatted())
+      }
+    }
+    .overlay {
+      if rules.isEmpty {
+        ContentUnavailableView(
+          "No content rules",
+          systemImage: "text.magnifyingglass",
+          description: Text(
+            "Add a rule to allow or block mail whose subject, body or headers match an expression."
+          )
+        )
+      }
     }
   }
 }
 
 struct ContentRuleFormView: View {
-  let model: AppModel
+  let rules: RulesModel
   @State var rule: ContentRule
-  @State private var result = ""
-  @Environment(\.dismiss) private var dismiss
+  let isNew: Bool
+  let close: () -> Void
+  @State private var saving = TrackedOperation()
+  @State private var testing = TrackedOperation()
 
   var body: some View {
-    VStack {
-      Form {
-        Picker("Field", selection: $rule.field) {
-          ForEach(ContentRuleField.allCases, id: \.self) { Text($0.localizedTitle).tag($0) }
-        }
-        Picker("Match", selection: $rule.operation) {
-          ForEach(ContentRuleOperator.allCases, id: \.self) { Text($0.localizedTitle).tag($0) }
-        }
-        TextField("Expression", text: $rule.pattern)
-        Picker("Action", selection: $rule.disposition) {
-          Text("Allow").tag(RuleDisposition.allow)
-          Text("Block").tag(RuleDisposition.block)
-        }
-        Toggle("Enabled", isOn: $rule.enabled)
-        TextField("Notes", text: $rule.note, axis: .vertical)
-        Text(
-          "Expressions are case-insensitive and bounded. A timed-out rule leaves mail unchanged."
-        )
-        .foregroundStyle(.secondary)
-        Button("Test selected Mail message") { preview() }.disabled(model.busy)
-        if !result.isEmpty { Text(result).textSelection(.enabled) }
-      }.formStyle(.grouped)
+    Form {
+      Picker("Field", selection: $rule.field) {
+        ForEach(ContentRuleField.allCases, id: \.self) { Text($0.localizedTitle).tag($0) }
+      }
+      Picker("Match", selection: $rule.operation) {
+        ForEach(ContentRuleOperator.allCases, id: \.self) { Text($0.localizedTitle).tag($0) }
+      }
+      TextField("Expression", text: $rule.pattern)
+      Picker("Action", selection: $rule.disposition) {
+        Text("Allow").tag(RuleDisposition.allow)
+        Text("Block").tag(RuleDisposition.block)
+      }
+      Toggle("Enabled", isOn: $rule.enabled)
+      TextField("Notes", text: $rule.note, axis: .vertical)
+      Text(
+        "Expressions are case-insensitive and bounded. A timed-out rule leaves mail unchanged."
+      )
+      .foregroundStyle(.secondary)
       HStack {
-        Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
-        Spacer()
-        Button("Save") { save() }.keyboardShortcut(.defaultAction)
-          .disabled((try? ContentRules.validate(rule)) == nil || model.busy)
-      }.padding()
-    }.frame(minWidth: 520, minHeight: 430)
+        Button("Test selected Mail message") { test() }
+        if testing.isBusy { ProgressView().controlSize(.small) }
+      }
+      OperationStatusView(operation: testing)
+      OperationStatusView(operation: saving)
+    }
+    .formStyle(.grouped)
+    .navigationTitle(isNew ? "Add content rule" : "Edit content rule")
+    .navigationBarBackButtonHidden()
+    .toolbar {
+      ConfirmationToolbarItems(
+        confirmTitle: "Save",
+        canConfirm: (try? ContentRules.validate(rule)) != nil && !saving.isBusy,
+        cancel: close,
+        confirm: save
+      )
+    }
   }
+
   private func save() {
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      try await ContentRuleManagement.save(rule, store: store)
-      dismiss()
+    let draft = rule
+    saving.run { [rules, close] in
+      try await rules.saveContentRule(draft)
+      close()
+      return nil
     }
   }
-  private func preview() {
-    model.run {
-      let envelope = try await model.adapter.selectedMessage()
-      let message = try MIMEParser().parse(envelope.raw)
-      var draft = rule; draft.updatedAt = .now
-      let candidates = model.state.contentRules.filter { $0.id != draft.id } + [draft]
-      let evaluation = ContentRules.evaluate(candidates, message: message)
-      let matches = evaluation.matching
-      let evidence = EvidenceBundle(
-        message: message,
-        trustedAuthServers: model.state.settings.mailOptions.trustedAuthServers(
-          for: envelope.identity.accountID
-        )
-      )
-      let senderRule = Gates.evaluate(
-        address: message.fromAddress,
-        domain: evidence.fromDomain,
-        rules: model.state.rules,
-        contact: nil,
-        history: .init(),
-        authentication: evidence.senderAuthentication
-      )
-      if senderRule != nil {
-        result = String(localized: "An address or domain rule takes precedence.")
-      } else if evaluation.skipped[draft.id] != nil {
-        result = String(
-          localized: "This rule could not be evaluated for the selected message and does not match."
-        )
-      } else if evaluation.decisive?.id == draft.id {
-        result = String(localized: "This rule wins for the selected message.")
-      } else {
-        result = String(localized: "This rule does not win for the selected message.")
-      }
-      if matches.count > 1 {
-        result += " " + String(localized: "Matching content rules: \(matches.count). Newest wins.")
-      }
-    }
+
+  func test() {
+    let draft = rule
+    testing.run(retryable: true) { [rules] in try await rules.test(draft) }
   }
 }
 
@@ -194,7 +199,12 @@ extension ContentRuleOperator {
   }
 }
 
-#Preview("Content rules") { ContentRuleEditorView(model: PreviewHelper.model()) }
+#Preview("Content rules") {
+  let model = PreviewHelper.model()
+  ContentRuleEditorView(rules: model.rules, shared: model.shared)
+}
 #Preview("New content rule") {
-  ContentRuleFormView(model: PreviewHelper.model(), rule: ContentRule())
+  NavigationStack {
+    ContentRuleFormView(rules: PreviewHelper.model().rules, rule: ContentRule(), isNew: true) {}
+  }
 }

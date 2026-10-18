@@ -2,15 +2,17 @@ import SwiftUI
 import SpamWiseCore
 
 struct ModelSettingsView: View {
-  @Bindable var model: AppModel
+  let settings: SettingsModel
+  let shared: SharedStateModel
+  let credentials: CredentialsModel
   @State private var key = ""
 
-  private var backend: ModelBackend { model.state.settings.advancedOptions.backend }
+  private var backend: ModelBackend { settings.settings.advancedOptions.backend }
   private var backendBinding: Binding<ModelBackend> {
     Binding(
       get: { backend },
       set: { value in
-        model.editSettings {
+        settings.editSettings {
           var advanced = $0.advancedOptions
           advanced.select(value.defaultModel)
           $0.advancedOptions = advanced
@@ -22,9 +24,9 @@ struct ModelSettingsView: View {
 
   var body: some View {
     Section("Classifier") {
-      Toggle("Keep filtering on this Mac", isOn: model.mailBinding(\.localOnly))
+      Toggle("Keep filtering on this Mac", isOn: settings.mailBinding(\.localOnly))
         .accessibilityIdentifier("model.localOnly")
-      if model.state.settings.mailOptions.localOnly {
+      if settings.settings.mailOptions.localOnly {
         Text(
           "Requires the on-device provider. Disables external evidence and sidecars. Mail still synchronizes."
         )
@@ -39,22 +41,23 @@ struct ModelSettingsView: View {
       if backend == .privateCloudCompute {
         Text("Private Cloud Compute is unavailable. Select another provider.")
       }
-      if model.state.settings.mailOptions.localOnly && backend != .onDevice {
+      if settings.settings.mailOptions.localOnly && backend != .onDevice {
         Text("Select On-device to classify. The current provider is blocked by local mode.")
           .accessibilityIdentifier("model.localConflict")
       }
       if backend != .onDevice {
-        ProviderConsentView(model: model, backend: backend)
+        ProviderConsentView(settings: settings, backend: backend)
       }
-      LabeledContent("Model", value: model.state.settings.advancedOptions.model.displayName)
+      LabeledContent("Model", value: settings.settings.advancedOptions.model.displayName)
       if backend == .claude {
-        KeyEntryView(model: model)
+        KeyEntryView(credentials: credentials)
       } else if [.openAI, .gemini].contains(backend) {
         SecureField("Provider API key", text: $key).accessibilityIdentifier("model.key")
         Button("Save provider key") {
-          model.saveProviderKey(key); key = ""
+          credentials.saveProviderKey(key, for: backend); key = ""
         }
-        .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.busy)
+        .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        OperationStatusView(operation: credentials.providerKey)
         Text(
           "Stored only in Keychain. Saving does not make a paid request; use a dry run to verify."
         )
@@ -69,22 +72,32 @@ struct ModelSettingsView: View {
       }
     }
     Section {
-      DisclosureGroup("Usage and spending") { SpendingSettingsView(model: model) }
+      DisclosureGroup("Usage and spending") {
+        SpendingSettingsView(settings: settings, shared: shared)
+      }
     }
   }
 }
 
-#Preview("Claude") { Form { ModelSettingsView(model: PreviewHelper.model()) }.formStyle(.grouped) }
-#Preview("On-device") {
-  Form { ModelSettingsView(model: PreviewHelper.model(backend: .onDevice)) }.formStyle(.grouped)
-}
-#Preview("OpenAI") {
-  Form { ModelSettingsView(model: PreviewHelper.model(backend: .openAI)) }.formStyle(.grouped)
-}
-#Preview("Gemini") {
-  Form { ModelSettingsView(model: PreviewHelper.model(backend: .gemini)) }.formStyle(.grouped)
-}
-#Preview("Private Cloud Compute") {
-  Form { ModelSettingsView(model: PreviewHelper.model(backend: .privateCloudCompute)) }
-    .formStyle(.grouped)
+#Preview("Claude") { ModelSettingsPreview(backend: .claude) }
+#Preview("On-device") { ModelSettingsPreview(backend: .onDevice) }
+#Preview("OpenAI") { ModelSettingsPreview(backend: .openAI) }
+#Preview("Gemini") { ModelSettingsPreview(backend: .gemini) }
+#Preview("Private Cloud Compute") { ModelSettingsPreview(backend: .privateCloudCompute) }
+
+/// The classifier settings over preview models.
+private struct ModelSettingsPreview: View {
+  let model: AppModel
+
+  var body: some View {
+    Form {
+      ModelSettingsView(
+        settings: model.settings,
+        shared: model.shared,
+        credentials: model.credentials
+      )
+    }.formStyle(.grouped)
+  }
+
+  init(backend: ModelBackend) { model = PreviewHelper.model(backend: backend) }
 }

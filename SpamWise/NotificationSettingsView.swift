@@ -2,14 +2,15 @@ import SwiftUI
 import SpamWiseCore
 
 struct NotificationSettingsView: View {
-  let model: AppModel
+  let notifications: NotificationsModel
+  let settings: SettingsModel
   @State private var preferences = NotificationPreferences()
   @State private var enabled = false
-  @State private var permission = ""
 
   var body: some View {
     DisclosureGroup("Notifications") {
-      Text(permission).foregroundStyle(.secondary).accessibilityIdentifier("notifications.status")
+      Text(notifications.permission).foregroundStyle(.secondary)
+        .accessibilityIdentifier("notifications.status")
       Toggle("Notify me about unresolved Review", isOn: $enabled)
         .accessibilityIdentifier("notifications.enabled")
       if enabled {
@@ -33,42 +34,35 @@ struct NotificationSettingsView: View {
         )
         .foregroundStyle(.secondary)
       }
-      Button("Save notification preferences") { save() }.disabled(model.busy)
+      Button("Save notification preferences") { save() }
         .accessibilityIdentifier("notifications.save")
+      OperationStatusView(operation: notifications.save)
     }.task {
-      preferences = model.state.settings.mailOptions.notifications
+      preferences = settings.settings.mailOptions.notifications
       enabled = preferences.enabledSince != nil
-      permission =
-        model.uiTesting
-        ? String(localized: "Notifications not requested") : await model.notifications.status()
+      await notifications.refreshPermission()
     }
   }
+
   private func save() {
     var draft = preferences
     draft.enabledSince = enabled ? preferences.enabledSince ?? .now : nil
-    let saved = draft, wantsNotifications = enabled
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      if wantsNotifications {
-        guard !model.uiTesting, try await model.notifications.authorize() else {
-          permission = String(localized: "Notifications denied in System Settings")
-          return
-        }
-      }
-      try await StateRepository.editSettings(store) { $0.mailOptions.notifications = saved }
-      preferences = saved
-      permission = await model.notifications.status()
-    }
+    preferences = draft
+    notifications.savePreferences(draft)
   }
 }
 
 #Preview("Disabled notifications") {
-  Form { NotificationSettingsView(model: PreviewHelper.model()) }
+  let model = PreviewHelper.model()
+  Form { NotificationSettingsView(notifications: model.notifications, settings: model.settings) }
 }
 
 #Preview("Enabled notifications") {
   let model = PreviewHelper.model()
-  var preferences = NotificationPreferences(); preferences.enabledSince = .now
-  model.state.settings.mailOptions.notifications = preferences
-  return Form { NotificationSettingsView(model: model) }
+  var preferences = NotificationPreferences()
+  preferences.enabledSince = .now
+  model.shared.state.settings.mailOptions.notifications = preferences
+  return Form {
+    NotificationSettingsView(notifications: model.notifications, settings: model.settings)
+  }
 }

@@ -3,31 +3,35 @@ import SpamWiseCore
 import UniformTypeIdentifiers
 
 struct LearningSettingsView: View {
-  @Bindable var model: AppModel
+  let settings: SettingsModel
+  let shared: SharedStateModel
+  let rules: RulesModel
+  let activity: ActivityModel
   @State private var exporting = false
+  @State private var exportStatus: OperationStatus?
 
   var body: some View {
     Section {
       DisclosureGroup("Learning from corrections") {
-        Toggle("Match explicitly junked campaigns", isOn: model.advancedBinding(\.fingerprints))
-        Toggle("Use Bayes as supporting evidence", isOn: model.advancedBinding(\.bayes))
-        Toggle("Use learned evidence weights", isOn: model.advancedBinding(\.learnedWeights))
+        Toggle("Match explicitly junked campaigns", isOn: settings.advancedBinding(\.fingerprints))
+        Toggle("Use Bayes as supporting evidence", isOn: settings.advancedBinding(\.bayes))
+        Toggle("Use learned evidence weights", isOn: settings.advancedBinding(\.learnedWeights))
         Text(
           "Learning needs reviewed good and junk examples. Your sender rules always take precedence."
         )
         .foregroundStyle(.secondary)
-        DomainSuggestionsView(model: model)
+        DomainSuggestionsView(shared: shared, rules: rules, activity: activity)
       }
     }
     Section {
       DisclosureGroup("Evaluation data") {
         LabeledContent(
           "Reviewed labels",
-          value: model.state.reviewedLabels.count.formatted()
+          value: shared.state.reviewedLabels.count.formatted()
         )
         Toggle(
           "Retain reviewed text for evaluation export",
-          isOn: model.advancedBinding(\.retainReviewedContent)
+          isOn: settings.advancedBinding(\.retainReviewedContent)
         )
         Text(
           """
@@ -37,42 +41,43 @@ struct LearningSettingsView: View {
         )
         .foregroundStyle(.secondary)
         Button("Export reviewed labels…") { exporting = true }
-          .disabled(model.state.reviewedLabels.isEmpty)
+          .disabled(shared.state.reviewedLabels.isEmpty)
+        StatusLabel(status: exportStatus)
       }
     }
     .fileExporter(
       isPresented: $exporting,
       document: RulesDocument(
-        data: (try? JSONEncoder.pretty.encode(model.state.reviewedLabels)) ?? Data()
+        data: (try? JSONEncoder.pretty.encode(shared.state.reviewedLabels)) ?? Data()
       ),
       contentType: .json,
       defaultFilename: "SpamWise-reviewed-labels"
-    ) { result in
-      if case .failure = result {
-        model.status = String(localized: "Reviewed labels could not be exported.")
-      }
+    ) {
+      exportStatus = ExportResult.status(of: $0, failure: "Reviewed labels could not be exported.")
     }
   }
 }
 
 private struct DomainSuggestionsView: View {
-  let model: AppModel
+  let shared: SharedStateModel
+  let rules: RulesModel
+  let activity: ActivityModel
+  @State private var senderCounts: [String: Int] = [:]
+
+  private var suggestions: [PolicySuggestion] {
+    PolicyDistiller.suggestions(from: shared.state.corrections, rules: shared.state.rules)
+  }
 
   var body: some View {
-    let suggestions = PolicyDistiller.suggestions(
-      from: model.state.corrections,
-      rules: model.state.rules
-    )
+    let suggestions = suggestions
     if !suggestions.isEmpty {
-      let senderCounts = model.state.knownSenderCounts(atDomains: Set(suggestions.map(\.domain)))
       Text("Suggested domain preferences").font(.headline)
         .frame(maxWidth: .infinity, alignment: .leading)
       ForEach(suggestions) { suggestion in
         LabeledContent {
           Button(suggestion.label == .inbox ? "Allow domain" : "Block domain") {
-            model.saveRule(
-              scope: .domain,
-              value: suggestion.domain,
+            rules.saveSuggestedRule(
+              domain: suggestion.domain,
               disposition: suggestion.label == .inbox ? .allow : .block
             )
           }
@@ -83,14 +88,27 @@ private struct DomainSuggestionsView: View {
           )
         }
       }
+      OperationStatusView(operation: rules.senderRules)
+        .task(id: Set(suggestions.map(\.domain))) {
+          senderCounts = await activity.knownSenderCounts(atDomains: Set(suggestions.map(\.domain)))
+        }
     }
   }
 }
 
 #Preview("Learning") {
-  Form { LearningSettingsView(model: PreviewHelper.model()) }.formStyle(.grouped)
+  let model = PreviewHelper.model()
+  Form {
+    LearningSettingsView(
+      settings: model.settings,
+      shared: model.shared,
+      rules: model.rules,
+      activity: model.activity
+    )
+  }.formStyle(.grouped)
 }
 #Preview("Suggestions") {
-  Form { DomainSuggestionsView(model: PreviewHelper.model(suggestions: true)) }
+  let model = PreviewHelper.model(suggestions: true)
+  Form { DomainSuggestionsView(shared: model.shared, rules: model.rules, activity: model.activity) }
     .formStyle(.grouped)
 }

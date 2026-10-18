@@ -2,13 +2,21 @@ import SwiftUI
 import SpamWiseCore
 
 struct AccountSettingsView: View {
-  @Bindable var model: AppModel
+  let model: AppModel
 
   var body: some View {
     Form {
-      ModelSettingsView(model: model)
-      IMAPSettingsView(model: model)
-      if model.state.settings.advancedOptions.transport == .appleMail {
+      ModelSettingsView(
+        settings: model.settings,
+        shared: model.shared,
+        credentials: model.credentials
+      )
+      IMAPSettingsView(
+        settings: model.settings,
+        imap: model.imap,
+        storageReady: model.services.storageReady
+      )
+      if model.shared.settings.advancedOptions.transport == .appleMail {
         MailConnectionView(model: model)
       }
     }.formStyle(.grouped)

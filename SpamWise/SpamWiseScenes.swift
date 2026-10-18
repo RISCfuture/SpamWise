@@ -1,5 +1,4 @@
 public import SwiftUI
-import AppIntents
 import SpamWiseCore
 
 /**
@@ -26,7 +25,7 @@ public struct SpamWiseScenes: Scene {
       if let updates {
         CommandGroup(after: .appInfo) { UpdateMenuButton(updates: updates) }
       }
-      ToolsCommands(model: model)
+      ToolsCommands(router: model.router, shared: model.shared)
       CommandGroup(replacing: .help) {
         Button("SpamWise Help") { Help.open("getting-started") }
       }
@@ -37,7 +36,14 @@ public struct SpamWiseScenes: Scene {
     }
     .windowResizability(.contentSize)
     MenuBarExtra("SpamWise", systemImage: "envelope.badge.shield.half.filled") {
-      MailMenuView(model: model)
+      MailMenuView(
+        shared: model.shared,
+        scanning: model.scanning,
+        settings: model.settings,
+        corrections: model.corrections,
+        router: model.router,
+        storageReady: model.services.storageReady
+      )
     }
   }
 
@@ -52,20 +58,5 @@ public struct SpamWiseScenes: Scene {
   public init(model: AppModel, updates: (any UpdateChecking)? = nil) {
     self.model = model
     self.updates = updates
-  }
-}
-
-extension AppModel {
-  /**
-   Creates the model a launched app runs on, makes it available to App Intents
-   and starts monitoring Mail.
-
-   Call this once, from the edition's `App` initializer.
-   */
-  public static func launch() -> AppModel {
-    let model = AppModel()
-    unsafe AppDependencyManager.shared.add(dependency: model)
-    model.startMonitoring()
-    return model
   }
 }

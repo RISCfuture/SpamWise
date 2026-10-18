@@ -2,7 +2,8 @@ import SwiftUI
 import SpamWiseCore
 
 struct EvidenceSettingsView: View {
-  @Bindable var model: AppModel
+  let settings: SettingsModel
+  let credentials: CredentialsModel
   @State private var configuration = ExternalEvidenceSettings()
 
   var body: some View {
@@ -10,16 +11,11 @@ struct EvidenceSettingsView: View {
       DisclosureGroup {
         Toggle(
           "Share sender domains with registration services to check domain age",
-          isOn: Binding(
-            get: { model.state.settings.advancedOptions.domainRegistrationLookup },
-            set: { enabled in
-              model.editSettings { $0.advancedOptions.domainRegistrationLookup = enabled }
-            }
-          )
+          isOn: settings.advancedBinding(\.domainRegistrationLookup)
         )
         Toggle(
           "Read embedded image text with on-device OCR",
-          isOn: model.advancedBinding(\.imageOCR)
+          isOn: settings.advancedBinding(\.imageOCR)
         )
         Text("Only embedded images are read. Remote images are never downloaded.").foregroundStyle(
           .secondary
@@ -27,10 +23,7 @@ struct EvidenceSettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         Toggle(
           "Read plain-text and HTML attachments locally",
-          isOn: Binding(
-            get: { model.state.settings.advancedOptions.textAttachments },
-            set: { enabled in model.editSettings { $0.advancedOptions.textAttachments = enabled } }
-          )
+          isOn: settings.advancedBinding(\.textAttachments)
         )
         Text(
           "PDF and Office documents remain unread. Attached text is untrusted; scripts and remote resources never run."
@@ -42,7 +35,7 @@ struct EvidenceSettingsView: View {
         )
         .accessibilityIdentifier("spamhaus.enabled")
         if configuration.domainBlocklist {
-          SpamhausSettingsView(configuration: $configuration)
+          SpamhausSettingsView(configuration: $configuration, credentials: credentials)
         }
         Toggle("Local Rspamd scanner", isOn: $configuration.localRspamd)
           .accessibilityIdentifier("rspamd.enabled")
@@ -65,13 +58,13 @@ struct EvidenceSettingsView: View {
         Text("Optional evidence").accessibilityIdentifier("evidence.disclosure")
       }
     }.onAppear {
-      configuration = model.state.settings.advancedOptions.externalEvidence ?? .init()
+      configuration = settings.settings.advancedOptions.externalEvidence ?? .init()
     }
   }
 
   private func save() {
     let updated = configuration
-    model.editSettings {
+    settings.editSettings {
       var advanced = $0.advancedOptions
       advanced.externalEvidence = updated
       $0.advancedOptions = advanced
@@ -80,5 +73,7 @@ struct EvidenceSettingsView: View {
 }
 
 #Preview("Evidence") {
-  Form { EvidenceSettingsView(model: PreviewHelper.model()) }.formStyle(.grouped)
+  let model = PreviewHelper.model()
+  Form { EvidenceSettingsView(settings: model.settings, credentials: model.credentials) }
+    .formStyle(.grouped)
 }

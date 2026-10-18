@@ -2,28 +2,42 @@ import SwiftUI
 import SpamWiseCore
 
 struct AuditTrailView: View {
-  let model: AppModel
+  let shared: SharedStateModel
   @State private var search = ""
   @Environment(\.dismiss) private var dismiss
 
   private var events: [AuditEvent] {
-    model.state.auditEvents.reversed().filter {
+    shared.state.auditEvents.reversed().filter {
       search.isEmpty || $0.localizedDescription.localizedCaseInsensitiveContains(search)
     }
   }
+
   var body: some View {
-    VStack {
-      TextField("Search configuration history", text: $search)
+    NavigationStack {
       Table(events) {
         TableColumn("Time") { Text($0.date.formatted()) }
         TableColumn("Policy revision") { Text($0.revision.formatted()) }.width(90)
         TableColumn("Change", value: \.localizedDescription)
       }
-      HStack {
-        Spacer(); Button("Done") { dismiss() }
+      .overlay {
+        if events.isEmpty {
+          if search.isEmpty {
+            ContentUnavailableView(
+              "No configuration changes",
+              systemImage: "clock.arrow.circlepath",
+              description: Text("Rule, policy and learning changes appear here.")
+            )
+          } else {
+            ContentUnavailableView.search(text: search)
+          }
+        }
       }
-    }.padding().frame(minWidth: 700, minHeight: 420)
+      .navigationTitle("Configuration history")
+      .searchable(text: $search, prompt: "Search configuration history")
+      .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "audit.done") }
+    }
+    .frame(minWidth: 700, minHeight: 420)
   }
 }
 
-#Preview("Configuration history") { AuditTrailView(model: PreviewHelper.model()) }
+#Preview("Configuration history") { AuditTrailView(shared: PreviewHelper.model().shared) }

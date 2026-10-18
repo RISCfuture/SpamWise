@@ -3,20 +3,21 @@ import SpamWiseCore
 
 struct SpendingSettingsView: View {
   private static let defaultLimitUSD = 5.0
-  let model: AppModel
+  let settings: SettingsModel
+  let shared: SharedStateModel
   @State private var limitUSD = Self.defaultLimitUSD
 
   var body: some View {
     LabeledContent(
       "Month-to-date estimated API cost",
-      value: model.monthCost.formatted(.currency(code: "USD"))
+      value: shared.monthCost.formatted(.currency(code: "USD"))
     )
-    if let spending = model.spending {
+    if let spending = shared.spending {
       Toggle(
         "Limit monthly spending",
         isOn: Binding(
           get: { spending.limitMicroUSD != nil },
-          set: { model.setSpendingLimit(usd: $0 ? limitUSD : nil) }
+          set: { settings.setSpendingLimit(usd: $0 ? limitUSD : nil) }
         )
       )
       .accessibilityIdentifier("spending.limitEnabled")
@@ -24,16 +25,16 @@ struct SpendingSettingsView: View {
         TextField("Monthly limit", value: $limitUSD, format: .currency(code: "USD"))
           .accessibilityIdentifier("spending.limit")
           .onChange(of: limitUSD) { _, amount in
-            if amount != spending.limitUSD { model.setSpendingLimit(usd: amount) }
+            if amount != spending.limitUSD { settings.setSpendingLimit(usd: amount) }
           }
-        if let error = model.spendingLimitError {
+        if let error = settings.spendingLimitError {
           Text(error).textSelection(.enabled).accessibilityIdentifier("spending.limitError")
         }
         LabeledContent(
           "Counted toward this month’s limit",
           value: spending.committedUSD.formatted(.currency(code: "USD"))
         )
-        if model.spendingLimitReached {
+        if shared.spendingLimitReached {
           Text(
             "This month’s limit has been reached. Paid classification resumes next month or when you raise the limit."
           )
@@ -54,21 +55,28 @@ struct SpendingSettingsView: View {
       Spacer()
       HelpButton(page: "what-data-is-sent")
     }
-    .onChange(of: model.spending?.limitUSD, initial: true) { _, saved in
+    .onChange(of: shared.spending?.limitUSD, initial: true) { _, saved in
       if let saved { limitUSD = saved }
     }
   }
 }
 
-#Preview("Unlimited") {
-  Form { SpendingSettingsView(model: PreviewHelper.model()) }.formStyle(.grouped)
-}
+#Preview("Unlimited") { SpendingPreview(model: PreviewHelper.model()) }
 #Preview("Limit reached") {
-  Form { SpendingSettingsView(model: PreviewHelper.model(spendingLimitReached: true)) }
-    .formStyle(.grouped)
+  SpendingPreview(model: PreviewHelper.model(spendingLimitReached: true))
 }
 #Preview("Invalid limit") {
   let model = PreviewHelper.model(spendingLimitReached: true)
-  model.spendingLimitError = AppModel.describe(SpendingLimitError.invalidAmount)
-  return Form { SpendingSettingsView(model: model) }.formStyle(.grouped)
+  model.settings.spendingLimitError = OperationFailure.describe(SpendingLimitError.invalidAmount)
+  return SpendingPreview(model: model)
+}
+
+/// Spending settings over preview models.
+private struct SpendingPreview: View {
+  let model: AppModel
+
+  var body: some View {
+    Form { SpendingSettingsView(settings: model.settings, shared: model.shared) }
+      .formStyle(.grouped)
+  }
 }

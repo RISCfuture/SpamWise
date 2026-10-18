@@ -3,8 +3,8 @@ import SpamWiseCore
 
 struct SpamhausSettingsView: View {
   @Binding var configuration: ExternalEvidenceSettings
+  let credentials: CredentialsModel
   @State private var key = ""
-  @State private var keyStatus = ""
 
   private var transport: Binding<SpamhausTransport> {
     Binding(
@@ -36,13 +36,12 @@ struct SpamhausSettingsView: View {
         .foregroundStyle(.secondary)
       SecureField("Spamhaus HTTPS query key", text: $key)
         .accessibilityIdentifier("spamhaus.key")
-      Button("Save query key") { saveKey() }
-        .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        .accessibilityIdentifier("spamhaus.saveKey")
-      if !keyStatus.isEmpty {
-        Text(keyStatus).foregroundStyle(.secondary)
-          .accessibilityIdentifier("spamhaus.keyStatus")
+      Button("Save query key") {
+        credentials.saveSpamhausKey(key); key = ""
       }
+      .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+      .accessibilityIdentifier("spamhaus.saveKey")
+      OperationStatusView(operation: credentials.spamhausKey, identifier: "spamhaus.keyStatus")
     } else {
       Link(
         "Review Spamhaus usage terms",
@@ -54,37 +53,26 @@ struct SpamhausSettingsView: View {
       .accessibilityIdentifier("spamhaus.consent")
     Text("Shares sender and link domains with the selected service. Disabled in local-only mode.")
       .foregroundStyle(.secondary)
-      .onAppear { refreshKeyStatus() }
-  }
-
-  private func refreshKeyStatus() {
-    do {
-      keyStatus =
-        try APIKeychain(service: APIKeychain.spamhausService).exists()
-        ? String(localized: "Query key saved in Keychain") : String(localized: "No query key saved")
-    } catch {
-      keyStatus = AppModel.describe(error)
-    }
-  }
-
-  private func saveKey() {
-    do {
-      try APIKeychain(service: APIKeychain.spamhausService).save(key)
-      key = ""
-      refreshKeyStatus()
-    } catch {
-      key = ""
-      keyStatus = AppModel.describe(error)
-    }
+      .onAppear { credentials.refreshSpamhausKeyStatus() }
   }
 }
 
 #Preview("HTTPS") {
   @Previewable @State var configuration = PreviewHelper.spamhaus(.https)
-  Form { SpamhausSettingsView(configuration: $configuration) }.formStyle(.grouped)
+  Form {
+    SpamhausSettingsView(
+      configuration: $configuration,
+      credentials: PreviewHelper.model().credentials
+    )
+  }.formStyle(.grouped)
 }
 
 #Preview("Public DNS") {
   @Previewable @State var configuration = PreviewHelper.spamhaus(.publicDNS)
-  Form { SpamhausSettingsView(configuration: $configuration) }.formStyle(.grouped)
+  Form {
+    SpamhausSettingsView(
+      configuration: $configuration,
+      credentials: PreviewHelper.model().credentials
+    )
+  }.formStyle(.grouped)
 }

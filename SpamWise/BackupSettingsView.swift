@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 import SpamWiseCore
 
 struct BackupSettingsView: View {
-  let model: AppModel
+  let backup: BackupModel
   @State private var recoveryKey = ""
   @State private var includeContent = false
   @State private var exporting = false
@@ -11,6 +11,7 @@ struct BackupSettingsView: View {
   @State private var confirmingRestore = false
   @State private var pendingURL: URL?
   @State private var document: RulesDocument?
+  @State private var fileStatus: OperationStatus?
 
   var body: some View {
     DisclosureGroup("Backup and restore") {
@@ -28,7 +29,10 @@ struct BackupSettingsView: View {
       HStack {
         Button("Export encrypted backup") { prepareExport() }
         Button("Restore backup…") { importing = true }
-      }.disabled(recoveryKey.isEmpty || model.busy)
+        if backup.operation.isBusy { ProgressView().controlSize(.small) }
+      }.disabled(recoveryKey.isEmpty)
+      OperationStatusView(operation: backup.operation)
+      StatusLabel(status: fileStatus)
       Text(
         "Restore replaces learning, pauses filtering and clears validation. Credentials and spending are preserved."
       )
@@ -39,49 +43,33 @@ struct BackupSettingsView: View {
       document: document,
       contentType: .data,
       defaultFilename: "SpamWise.spamwisebackup"
-    ) {
-      if case .failure = $0 { model.status = String(localized: "Backup export failed.") }
-    }
+    ) { fileStatus = ExportResult.status(of: $0, failure: "Backup export failed.") }
     .fileImporter(isPresented: $importing, allowedContentTypes: [.data]) {
       switch $0 {
-        case .success(let url): pendingURL = url; confirmingRestore = true
-        case .failure: model.status = String(localized: "Backup import failed.")
+        case .success(let url):
+          fileStatus = nil; pendingURL = url; confirmingRestore = true
+        case .failure:
+          fileStatus = .failure(
+            OperationFailure(message: String(localized: "Backup import failed."))
+          )
       }
     }
     .confirmationDialog(
       "Replace rules, policy and learning from this backup?",
       isPresented: $confirmingRestore
     ) {
-      Button("Restore and pause filtering", role: .destructive) { restore() }
+      Button("Restore and pause filtering", role: .destructive) {
+        if let pendingURL { backup.restore(from: pendingURL, recoveryKey: recoveryKey) }
+      }
     }
   }
+
   private func prepareExport() {
-    let key = recoveryKey, content = includeContent
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      document = RulesDocument(
-        data: try await StateBackup.export(store: store, recoveryKey: key, includeContent: content)
-      )
-      exporting = true
-    }
-  }
-  private func restore() {
-    guard let url = pendingURL else { return }
-    let key = recoveryKey
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      let scoped = url.startAccessingSecurityScopedResource()
-      defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-      let file = try FileHandle(forReadingFrom: url)
-      defer { try? file.close() }
-      let data = try file.read(upToCount: 64 * 1024 * 1024 + 1) ?? Data()
-      try await StateBackup.restore(data, recoveryKey: key, store: store)
-      model.status = String(
-        localized:
-          "Backup restored. Filtering is paused; validate accounts before resuming actions."
-      )
+    fileStatus = nil
+    backup.export(recoveryKey: recoveryKey, includeContent: includeContent) { data in
+      document = RulesDocument(data: data); exporting = true
     }
   }
 }
 
-#Preview("Backup") { Form { BackupSettingsView(model: PreviewHelper.model()) } }
+#Preview("Backup") { Form { BackupSettingsView(backup: PreviewHelper.model().backup) } }

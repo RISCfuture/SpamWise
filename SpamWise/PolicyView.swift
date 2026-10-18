@@ -3,7 +3,7 @@ import SpamWiseCore
 
 struct PolicyView: View {
   private static let characterLimit = 4000
-  @Bindable var model: AppModel
+  let settings: SettingsModel
   @State private var policy = ""
 
   private var localizedDefaultPolicy: String {
@@ -36,17 +36,17 @@ struct PolicyView: View {
       HStack {
         Button("Reset to default") { policy = localizedDefaultPolicy }
         Spacer()
-        Button("Save preferences") { model.setSetting(\.policy, to: policy) }
-          .disabled(policy.count > Self.characterLimit || model.busy)
+        Button("Save preferences") { settings.setSetting(\.policy, to: policy) }
+          .disabled(policy.count > Self.characterLimit)
           .keyboardShortcut("s", modifiers: .command)
       }
     }.padding()
       .onAppear {
         policy =
-          model.state.settings.policy == PromptBuilder.defaultPolicy
-          ? localizedDefaultPolicy : model.state.settings.policy
+          settings.settings.policy == PromptBuilder.defaultPolicy
+          ? localizedDefaultPolicy : settings.settings.policy
       }
   }
 }
 
-#Preview("Preferences") { PolicyView(model: PreviewHelper.model()) }
+#Preview("Preferences") { PolicyView(settings: PreviewHelper.model().settings) }

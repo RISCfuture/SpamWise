@@ -3,86 +3,104 @@ import UniformTypeIdentifiers
 import SpamWiseCore
 
 struct RuleEditorView: View {
-  @Bindable var model: AppModel
+  let rules: RulesModel
+  let shared: SharedStateModel
   @State private var selection: String?
-  @State private var editingRule: SenderRule?
-  @State private var showingEditor = false
+  @State private var editor: RuleEditing?
   @State private var importing = false
   @State private var exporting = false
   @State private var showsContentRules = false
   @State private var document = RulesDocument(data: Data())
+  @State private var transferStatus: OperationStatus?
 
-  private var selectedRule: SenderRule? { model.state.rules.first { $0.id == selection } }
-  private var sortedRules: [SenderRule] { model.state.rules.sorted { $0.value < $1.value } }
+  private var selectedRule: SenderRule? { shared.state.rules.first { $0.id == selection } }
+  private var sortedRules: [SenderRule] { shared.state.rules.sorted { $0.value < $1.value } }
 
   var body: some View {
     VStack(alignment: .leading) {
       Text("Address rules take precedence over domain rules and trusted relationships.")
         .foregroundStyle(.secondary).accessibilityIdentifier("settings.rules.content")
-      Table(sortedRules, selection: $selection) {
-        TableColumn("Sender", value: \.value)
-        TableColumn("Scope") { rule in Text(rule.scope.localizedTitle) }.width(120)
-        TableColumn("Action") { rule in
-          Text(rule.disposition.localizedTitle)
-            .accessibilityIdentifier("settings.rule.\(rule.scope.rawValue).\(rule.value)")
-        }.width(80)
-      }
-      .overlay {
-        if sortedRules.isEmpty {
-          ContentUnavailableView(
-            "No sender rules",
-            systemImage: "line.3.horizontal.decrease",
-            description: Text("Add an address or domain to always allow or block its mail.")
-          )
-        }
-      }
+      SenderRuleTable(rules: sortedRules, selection: $selection)
       HStack {
-        Button("Add rule") {
-          editingRule = nil; showingEditor = true
-        }
-        .accessibilityIdentifier("rules.add")
-        Button("Edit") {
-          editingRule = selectedRule; showingEditor = true
-        }
-        .disabled(selectedRule == nil).accessibilityIdentifier("rules.edit")
+        Button("Add rule") { editor = RuleEditing(rule: nil) }
+          .accessibilityIdentifier("rules.add")
+        Button("Edit") { editor = RuleEditing(rule: selectedRule) }
+          .disabled(selectedRule == nil).accessibilityIdentifier("rules.edit")
         Button("Remove", role: .destructive) {
-          if let selectedRule { model.removeRule(selectedRule.id); selection = nil }
+          if let selectedRule { rules.removeSenderRule(selectedRule.id); selection = nil }
         }.disabled(selectedRule == nil).accessibilityIdentifier("rules.remove")
+        if rules.senderRules.isBusy { ProgressView().controlSize(.small) }
         Spacer()
         Menu("Transfer rules") {
           Button("Import rules…") { importing = true }
           Button("Export rules…") { exportRules() }.disabled(sortedRules.isEmpty)
         }
-      }.disabled(model.busy)
+      }
+      OperationStatusView(operation: rules.senderRules)
+      StatusLabel(status: transferStatus)
       Button("Content rules…") { showsContentRules = true }
     }.padding()
-      .sheet(isPresented: $showingEditor) { RuleFormView(model: model, rule: editingRule) }
-      .sheet(isPresented: $showsContentRules) { ContentRuleEditorView(model: model) }
+      .sheet(item: $editor) { editing in RuleFormView(rules: rules, rule: editing.rule) }
+      .sheet(isPresented: $showsContentRules) {
+        ContentRuleEditorView(rules: rules, shared: shared)
+      }
       .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
-        switch result {
-          case .success(let url): model.importRules(url)
-          case .failure: break
-        }
+        if case .success(let url) = result { rules.importSenderRules(from: url) }
       }
       .fileExporter(
         isPresented: $exporting,
         document: document,
         contentType: .json,
         defaultFilename: "SpamWise-rules"
-      ) { result in
-        if case .failure = result {
-          model.status = String(localized: "Rules could not be exported.")
-        }
-      }
+      ) { transferStatus = ExportResult.status(of: $0, failure: "Rules could not be exported.") }
   }
 
   private func exportRules() {
     do {
-      document = RulesDocument(data: try RuleManagement.exportRules(model.state.rules))
+      document = RulesDocument(data: try rules.exportedSenderRules())
       exporting = true
-    } catch { model.status = AppModel.describe(error) }
+    } catch {
+      transferStatus = .failure(OperationFailure(error))
+    }
   }
 }
 
-#Preview("Rules") { RuleEditorView(model: PreviewHelper.model()) }
-#Preview("Empty rules") { RuleEditorView(model: PreviewHelper.model(empty: true)) }
+/// The rule a form edits, or a new rule.
+private struct RuleEditing: Identifiable {
+  let id = UUID()
+  let rule: SenderRule?
+}
+
+private struct SenderRuleTable: View {
+  let rules: [SenderRule]
+  @Binding var selection: String?
+
+  var body: some View {
+    Table(rules, selection: $selection) {
+      TableColumn("Sender", value: \.value)
+      TableColumn("Scope") { rule in Text(rule.scope.localizedTitle) }.width(120)
+      TableColumn("Action") { rule in
+        Text(rule.disposition.localizedTitle)
+          .accessibilityIdentifier("settings.rule.\(rule.scope.rawValue).\(rule.value)")
+      }.width(80)
+    }
+    .overlay {
+      if rules.isEmpty {
+        ContentUnavailableView(
+          "No sender rules",
+          systemImage: "line.3.horizontal.decrease",
+          description: Text("Add an address or domain to always allow or block its mail.")
+        )
+      }
+    }
+  }
+}
+
+#Preview("Rules") {
+  let model = PreviewHelper.model()
+  RuleEditorView(rules: model.rules, shared: model.shared)
+}
+#Preview("Empty rules") {
+  let model = PreviewHelper.model(empty: true)
+  RuleEditorView(rules: model.rules, shared: model.shared)
+}

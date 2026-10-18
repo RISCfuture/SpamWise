@@ -3,115 +3,108 @@ import UniformTypeIdentifiers
 import SpamWiseCore
 
 struct CorpusView: View {
-  let model: AppModel
+  let corpus: CorpusModel
   @State private var selection: String?
   @State private var label: MailLabel = .inbox
   @State private var importing = false
   @State private var exporting = false
   @State private var export: RulesDocument?
+  @State private var exportStatus: OperationStatus?
   @Environment(\.dismiss) private var dismiss
 
-  private var labels: [ReviewedLabel] {
-    model.state.reviewedLabels.sorted { $0.date > $1.date }
-  }
+  private var labels: [ReviewedLabel] { corpus.labels }
   private var selected: ReviewedLabel? { labels.first { $0.id == selection } }
+
   var body: some View {
-    VStack(alignment: .leading) {
-      Text("Reviewed corpus").font(.title2).accessibilityIdentifier("corpus.title")
-      Text(
-        "Import only messages you reviewed. Mailbox membership and SpamSieve predictions are not human labels."
-      )
-      .foregroundStyle(.secondary)
-      HStack {
-        ForEach(MailLabel.allCases, id: \.self) { kind in
-          Text("\(kind.localizedTitle): \(labels.filter { $0.label == kind }.count)")
-        }
-        Spacer()
-        Text("Held out: \(labels.filter(\.heldOut).count)")
-      }
-      Table(labels, selection: $selection) {
-        TableColumn("Subject") { Text($0.message?.displaySubject ?? String($0.id.prefix(12))) }
-        TableColumn("Label") {
-          Text($0.label.localizedTitle).accessibilityIdentifier("corpus.label.\($0.id)")
-        }
-        TableColumn("Partition") { Text($0.heldOut ? "Held out" : "Training") }
-        TableColumn("Source") {
-          Text($0.origin == .reviewedImport ? "Reviewed import" : "Correction")
-        }
-        TableColumn("Content") { Text($0.message == nil ? "Not retained" : "Retained locally") }
-      }
-      HStack {
-        Picker("Reviewed label", selection: $label) {
-          ForEach(MailLabel.allCases, id: \.self) { Text($0.localizedTitle).tag($0) }
-        }.frame(maxWidth: 230)
-        Button("Import reviewed .eml files…") { importing = true }
-        Button("Relabel") { relabel() }.disabled(selected == nil)
-        Button("Forget", role: .destructive) { forget() }.disabled(selected == nil)
-          .accessibilityIdentifier("corpus.forget")
-      }.disabled(model.busy)
-      HStack {
-        Button("Export reviewed corpus") {
-          if let data = try? JSONEncoder.pretty.encode(labels) {
-            export = RulesDocument(data: data); exporting = true
+    NavigationStack {
+      VStack(alignment: .leading) {
+        Text(
+          "Import only messages you reviewed. Mailbox membership and SpamSieve predictions are not human labels."
+        )
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier("corpus.title")
+        HStack {
+          ForEach(MailLabel.allCases, id: \.self) { kind in
+            Text("\(kind.localizedTitle): \(labels.filter { $0.label == kind }.count)")
           }
+          Spacer()
+          Text("Held out: \(labels.filter(\.heldOut).count)")
         }
-        Spacer()
-        Button("Done") { dismiss() }.accessibilityIdentifier("corpus.done")
+        CorpusTable(labels: labels, selection: $selection)
+        HStack {
+          Picker("Reviewed label", selection: $label) {
+            ForEach(MailLabel.allCases, id: \.self) { Text($0.localizedTitle).tag($0) }
+          }.frame(maxWidth: 230)
+          Button("Import reviewed .eml files…") { importing = true }
+          Button("Relabel") { if let selected { corpus.relabel(selected.id, as: label) } }
+            .disabled(selected == nil)
+          Button("Forget", role: .destructive) { if let selected { corpus.forget(selected.id) } }
+            .disabled(selected == nil)
+            .accessibilityIdentifier("corpus.forget")
+          if corpus.operation.isBusy { ProgressView().controlSize(.small) }
+        }
+        HStack {
+          Button("Export reviewed corpus") { exportCorpus() }.disabled(labels.isEmpty)
+          Spacer()
+        }
+        OperationStatusView(operation: corpus.operation)
+        StatusLabel(status: exportStatus)
       }
-      if !model.status.isEmpty { Text(model.status).foregroundStyle(.secondary) }
-    }.padding().frame(minWidth: 760, minHeight: 450)
-      .fileImporter(
-        isPresented: $importing,
-        allowedContentTypes: [.data],
-        allowsMultipleSelection: true
-      ) {
-        if case .success(let urls) = $0 { importFiles(urls) }
-      }
-      .fileExporter(
-        isPresented: $exporting,
-        document: export,
-        contentType: .json,
-        defaultFilename: "SpamWise-reviewed"
-      ) {
-        if case .failure = $0 { model.status = String(localized: "Corpus export failed.") }
-      }
-  }
-  private func importFiles(_ urls: [URL]) {
-    let chosenLabel = label
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      guard urls.count <= 20 else { throw CorpusError.batchTooLarge(limit: 20) }
-      var messages: [ParsedMessage] = []
-      for url in urls {
-        try Task.checkCancellation()
-        let scoped = url.startAccessingSecurityScopedResource()
-        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-        let file = try FileHandle(forReadingFrom: url)
-        defer { try? file.close() }
-        let data = try file.read(upToCount: 2_000_001) ?? Data()
-        messages.append(try MIMEParser().parse(data))
-      }
-      try await CorpusManagement.importMessages(messages, label: chosenLabel, store: store)
-      model.status = String(
-        localized: "Reviewed examples imported. No sender rules or mail actions were created."
-      )
+      .padding()
+      .navigationTitle("Reviewed corpus")
+      .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "corpus.done") }
     }
-  }
-  private func forget() {
-    guard let selected else { return }
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      try await CorpusManagement.forget(id: selected.id, store: store)
+    .frame(minWidth: 760, minHeight: 450)
+    .fileImporter(
+      isPresented: $importing,
+      allowedContentTypes: [.data],
+      allowsMultipleSelection: true
+    ) {
+      if case .success(let urls) = $0 { corpus.importMessages(urls, label: label) }
     }
+    .fileExporter(
+      isPresented: $exporting,
+      document: export,
+      contentType: .json,
+      defaultFilename: "SpamWise-reviewed"
+    ) { exportStatus = ExportResult.status(of: $0, failure: "Corpus export failed.") }
   }
-  private func relabel() {
-    guard let selected else { return }
-    let chosenLabel = label
-    model.run {
-      guard let store = model.store else { throw IntegrationError.unavailable }
-      try await CorpusManagement.relabel(id: selected.id, label: chosenLabel, store: store)
+
+  private func exportCorpus() {
+    do {
+      export = RulesDocument(data: try corpus.exported()); exporting = true
+    } catch {
+      exportStatus = .failure(OperationFailure(error))
     }
   }
 }
 
-#Preview("Reviewed corpus") { CorpusView(model: PreviewHelper.model()) }
+private struct CorpusTable: View {
+  let labels: [ReviewedLabel]
+  @Binding var selection: String?
+
+  var body: some View {
+    Table(labels, selection: $selection) {
+      TableColumn("Subject") { Text($0.message?.displaySubject ?? String($0.id.prefix(12))) }
+      TableColumn("Label") {
+        Text($0.label.localizedTitle).accessibilityIdentifier("corpus.label.\($0.id)")
+      }
+      TableColumn("Partition") { Text($0.heldOut ? "Held out" : "Training") }
+      TableColumn("Source") {
+        Text($0.origin == .reviewedImport ? "Reviewed import" : "Correction")
+      }
+      TableColumn("Content") { Text($0.message == nil ? "Not retained" : "Retained locally") }
+    }
+    .overlay {
+      if labels.isEmpty {
+        ContentUnavailableView(
+          "No reviewed examples",
+          systemImage: "tray",
+          description: Text("Corrections and imported reviewed messages appear here.")
+        )
+      }
+    }
+  }
+}
+
+#Preview("Reviewed corpus") { CorpusView(corpus: PreviewHelper.model().corpus) }

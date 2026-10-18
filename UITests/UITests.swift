@@ -228,7 +228,7 @@ enum UITestTiming {
   }
 
   var correctionSavedWithActionFailure: Bool {
-    let status = app.staticTexts["activity.status"]
+    let status = app.staticTexts["correction.status"]
     guard status.waitForExistence(timeout: UITestTiming.transition) else { return false }
     let text = status.staticTexts.firstMatch
     return XCTWaiter.wait(

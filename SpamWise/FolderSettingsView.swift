@@ -3,63 +3,98 @@ import SpamWiseCore
 import MailIntegration
 
 struct FolderSettingsView: View {
-  let model: AppModel
+  let folders: FolderPlansModel
+  let shared: SharedStateModel
+  let accounts: [MailAccount]
   @State private var selection = ""
   @State private var plan: MailFolderPlan?
   @State private var page = 0
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
-    VStack {
+    NavigationStack {
       Form {
         Section("Mail.app folders") {
-          Button("Refresh folders") { model.discoverFolders() }.disabled(model.busy)
+          HStack {
+            Button("Refresh folders") { folders.discoverFolders() }
+            if folders.plans.isBusy { ProgressView().controlSize(.small) }
+          }
           Picker("Folder", selection: $selection) {
             Text("Choose folder").tag("")
-            ForEach(model.folders) { folder in
+            ForEach(folders.folders) { folder in
               Text("\(accountName(folder.accountID)): \(folder.displayName)").tag(folder.id)
             }
           }
           if let plan {
             FolderPlanFields(plan: Binding(get: { self.plan ?? plan }, set: { self.plan = $0 }))
-            Button("Save folder plan") { model.saveFolderPlan(plan) }.disabled(model.busy)
-            if let health = model.scanHealth["folder:" + plan.id] {
-              if let date = health.lastSuccess {
-                LabeledContent("Last successful page", value: date.formatted())
-              }
-              UnreadableMailView(count: health.unavailableCount)
-              if let failure = health.failure { Text(failure).textSelection(.enabled) }
+            Button("Save folder plan") { folders.save(plan) }
+            OperationStatusView(operation: folders.plans)
+            if let health = shared.scanHealth[MailSweeper.healthKey(for: plan)] {
+              FolderHealthView(health: health)
             }
             if plan.purpose == .filter {
-              Stepper("Preview page: \(page + 1)", value: $page, in: 0...1000)
-              Button("Preview this page") {
-                model.refilterFolder(plan.folder, since: plan.startDate, offset: page * 20)
-              }.disabled(model.busy)
-              Text(
-                "Previews recompute decisions without replaying mail actions. Each page contains up to 20 messages."
-              )
-              .foregroundStyle(.secondary)
+              FolderPreviewControls(folders: folders, plan: plan, page: $page)
             }
+          } else {
+            OperationStatusView(operation: folders.plans)
           }
         }
-        if !model.status.isEmpty { Text(model.status).textSelection(.enabled) }
-      }.formStyle(.grouped)
-      HStack {
-        if model.busy { Button("Cancel") { model.cancel() } }
-        Spacer()
-        Button("Done") { dismiss() }
-      }.padding()
-    }.frame(minWidth: 600, minHeight: 540)
-      .onChange(of: selection) { _, id in
-        page = 0
-        plan = model.folders.first { $0.id == id }.map { folder in
-          model.state.settings.mailOptions.folderPlans.first { $0.id == id }
-            ?? MailFolderPlan(folder: folder)
-        }
       }
+      .formStyle(.grouped)
+      .navigationTitle("Folders")
+      .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "folders.done") }
+    }
+    .frame(minWidth: 600, minHeight: 540)
+    .onChange(of: selection) { _, id in
+      page = 0
+      plan = folders.folders.first { $0.id == id }.map { folder in
+        shared.settings.mailOptions.folderPlans.first { $0.id == id }
+          ?? MailFolderPlan(folder: folder)
+      }
+    }
   }
+
   private func accountName(_ id: String) -> String {
-    model.accounts.first { $0.id == id }?.name ?? id
+    accounts.first { $0.id == id }?.name ?? id
+  }
+}
+
+private struct FolderHealthView: View {
+  let health: MailScanHealth
+
+  var body: some View {
+    if let date = health.lastSuccess {
+      LabeledContent("Last successful page", value: date.formatted())
+    }
+    UnreadableMailView(count: health.unavailableCount)
+    if let failure = health.failure {
+      StatusLabel(status: .failure(OperationFailure(message: failure)))
+    }
+  }
+}
+
+/// Previews one page of a filtered folder; Stop Preview ends only this preview.
+private struct FolderPreviewControls: View {
+  let folders: FolderPlansModel
+  let plan: MailFolderPlan
+  @Binding var page: Int
+
+  var body: some View {
+    Stepper("Preview page: \(page + 1)", value: $page, in: 0...1000)
+    HStack {
+      Button("Preview this page") {
+        folders.previewPage(of: plan.folder, since: plan.startDate, page: page)
+      }
+      if folders.preview.isBusy {
+        ProgressView().controlSize(.small)
+        Button("Stop Preview") { folders.preview.cancel() }
+      }
+    }
+    OperationStatusView(operation: folders.preview)
+    Text(
+      "Previews recompute decisions without replaying mail actions. Each page contains up to 20 messages."
+    )
+    .foregroundStyle(.secondary)
   }
 }
 
@@ -89,7 +124,10 @@ private struct FolderPlanFields: View {
   }
 }
 
-#Preview("Folder selection") { FolderSettingsView(model: PreviewHelper.model()) }
+#Preview("Folder selection") {
+  let model = PreviewHelper.model()
+  FolderSettingsView(folders: model.folders, shared: model.shared, accounts: model.mail.accounts)
+}
 #Preview("Filtering plan") {
   Form {
     FolderPlanFields(plan: .constant(.init(folder: .init(accountID: "preview", path: ["Orders"]))))

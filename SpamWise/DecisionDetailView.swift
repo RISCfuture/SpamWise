@@ -1,14 +1,18 @@
 import SwiftUI
 import SpamWiseCore
 import UniformTypeIdentifiers
-import MailIntegration
 
 struct DecisionDetailView: View {
-  let model: AppModel
   let row: DecisionRecord
+  let corrections: CorrectionsModel
+  let messages: MessageAccessModel
+  let shared: SharedStateModel
+  let activity: ActivityModel
+  /// Shows a message preview where this detail is presented.
+  let presentPreview: @MainActor (MessagePreview) -> Void
   @State private var source: RulesDocument?
   @State private var exporting = false
-  @State private var confirmingUndo = false
+  @State private var exportFailure: OperationStatus?
 
   var body: some View {
     Form {
@@ -36,45 +40,26 @@ struct DecisionDetailView: View {
         ThreatAssessmentView(assessment: row.threats)
       }
       Section("Correct this decision") {
-        CorrectionControls(model: model, row: row)
+        CorrectionControls(corrections: corrections, activity: activity, row: row)
         if row.correctionUndone {
           Text("Correction undone; the recorded Mail action was not reversed.")
         }
-        if let undo = model.state.correctionUndo, undo.isAvailable(in: model.state) {
-          Button("Undo latest correction…") { confirmingUndo = true }.disabled(model.busy)
-            .accessibilityIdentifier("correction.undo")
-            .confirmationDialog(
-              "Restore the previous rules and learning? Mail will not move.",
-              isPresented: $confirmingUndo
-            ) {
-              Button("Undo rules and learning") {
-                model.run {
-                  guard let store = model.store else { throw IntegrationError.unavailable }
-                  try await CorrectionUndo.apply(store: store)
-                  model.status = String(
-                    localized:
-                      "Correction undone. Use a separate correction to request a Mail action."
-                  )
-                }
-              }.accessibilityIdentifier("correction.undo.confirm")
-            } message: {
-              Text(
-                "Restores \(undo.ruleCount) rules and \(undo.exampleCount) examples. Later changes disable undo."
-              )
-            }
+        if let undo = shared.state.correctionUndo, undo.isAvailable(in: shared.state) {
+          UndoCorrectionButton(corrections: corrections, undo: undo)
         }
+        OperationStatusView(operation: corrections.decision, identifier: "correction.status")
       }
       Section {
-        Button("Preview message") { model.previewMessage(row) }.disabled(model.busy)
-        Button("Open in Mail") { model.openInMail(row) }.disabled(model.busy)
+        Button("Preview message") { messages.preview(row, present: presentPreview) }
+        Button("Open in Mail") { messages.open(row) }
         Button("Export raw source…") {
-          model.run {
-            guard let envelope = try await model.adapter.lookup(row.identity) else {
-              throw IntegrationError.unavailable
-            }
-            source = RulesDocument(data: envelope.raw); exporting = true
+          messages.exportSource(row) { data in
+            source = RulesDocument(data: data); exporting = true
           }
-        }.disabled(model.busy)
+        }
+        if messages.operation.isBusy { ProgressView().controlSize(.small) }
+        OperationStatusView(operation: messages.operation)
+        StatusLabel(status: exportFailure)
         DisclosureGroup("Decision details") { DecisionDiagnosticsView(row: row) }
       }
     }.formStyle(.grouped)
@@ -83,8 +68,31 @@ struct DecisionDetailView: View {
         document: source,
         contentType: .data,
         defaultFilename: "message.eml"
+      ) { result in
+        exportFailure = ExportResult.status(of: result, failure: "Message source export failed.")
+      }
+  }
+}
+
+private struct UndoCorrectionButton: View {
+  let corrections: CorrectionsModel
+  let undo: CorrectionUndo
+  @State private var confirming = false
+
+  var body: some View {
+    Button("Undo latest correction…") { confirming = true }
+      .disabled(corrections.decision.isBusy)
+      .accessibilityIdentifier("correction.undo")
+      .confirmationDialog(
+        "Restore the previous rules and learning? Mail will not move.",
+        isPresented: $confirming
       ) {
-        if case .failure = $0 { model.status = String(localized: "Message source export failed.") }
+        Button("Undo rules and learning") { corrections.undoLatestCorrection() }
+          .accessibilityIdentifier("correction.undo.confirm")
+      } message: {
+        Text(
+          "Restores \(undo.ruleCount) rules and \(undo.exampleCount) examples. Later changes disable undo."
+        )
       }
   }
 }
@@ -142,20 +150,26 @@ private extension ThreatKind {
 }
 
 private struct CorrectionControls: View {
-  let model: AppModel
+  let corrections: CorrectionsModel
+  let activity: ActivityModel
   let row: DecisionRecord
 
-  private var canCorrect: Bool { !model.busy && row.path != .verification && row.sender != nil }
+  private var canCorrect: Bool {
+    !corrections.decision.isBusy && row.path != .verification && row.sender != nil
+  }
 
   var body: some View {
-    ControlGroup {
-      Button("Good") { model.correct(row, label: .inbox) }
-        .accessibilityLabel("Mark as Good").accessibilityIdentifier("correction.good")
-      Button("Junk") { model.correct(row, label: .junk) }
-        .accessibilityLabel("Mark as Junk").accessibilityIdentifier("correction.junk")
-      Button("Review") { model.correct(row, label: .review) }
-        .accessibilityLabel("Mark as Review").accessibilityIdentifier("correction.review")
-    }.disabled(!canCorrect)
+    HStack {
+      ControlGroup {
+        Button("Good") { corrections.correct(row, label: .inbox) }
+          .accessibilityLabel("Mark as Good").accessibilityIdentifier("correction.good")
+        Button("Junk") { corrections.correct(row, label: .junk) }
+          .accessibilityLabel("Mark as Junk").accessibilityIdentifier("correction.junk")
+        Button("Review") { corrections.correct(row, label: .review) }
+          .accessibilityLabel("Mark as Review").accessibilityIdentifier("correction.review")
+      }.disabled(!canCorrect)
+      if corrections.decision.isBusy { ProgressView().controlSize(.small) }
+    }
     if row.sender == nil {
       Text(
         "Corrections need the sender’s address, which this message doesn’t have. Move it in Mail instead."
@@ -166,7 +180,7 @@ private struct CorrectionControls: View {
         .accessibilityIdentifier("correction.label").accessibilityValue(correction.rawValue)
     }
     HStack {
-      DomainCorrectionMenu(model: model, row: row)
+      DomainCorrectionMenu(corrections: corrections, activity: activity, row: row)
         .disabled(!canCorrect || row.evidence?.fromDomain == nil)
       Spacer()
       HelpButton(page: "correcting-mistakes")
@@ -176,9 +190,11 @@ private struct CorrectionControls: View {
 
 /// Domain-wide corrections, confirmed first when the domain is a shared mail provider.
 private struct DomainCorrectionMenu: View {
-  let model: AppModel
+  let corrections: CorrectionsModel
+  let activity: ActivityModel
   let row: DecisionRecord
   @State private var pendingLabel: MailLabel?
+  @State private var knownSenders = 0
 
   private var domain: String { row.evidence?.fromDomain ?? "" }
 
@@ -197,21 +213,24 @@ private struct DomainCorrectionMenu: View {
         Button(
           label == .inbox ? "Allow every sender at \(domain)" : "Block every sender at \(domain)"
         ) {
-          model.correct(row, label: label, scope: .domain)
+          corrections.correct(row, label: label, scope: .domain)
         }
       } message: { _ in
-        let count = model.state.knownSenderCounts(atDomains: [domain])[domain, default: 0]
         Text(
-          "\(domain) is a shared mail provider, so this rule also applies to unrelated people who use it. Known senders at this domain: \(count, format: .number)"
+          "\(domain) is a shared mail provider, so this rule also applies to unrelated people who use it. Known senders at this domain: \(knownSenders, format: .number)"
         )
       }
   }
 
   private func request(_ label: MailLabel) {
-    if SharedMailboxDomains.contains(domain) {
+    guard SharedMailboxDomains.contains(domain) else {
+      corrections.correct(row, label: label, scope: .domain)
+      return
+    }
+    let domain = domain
+    Task {
+      knownSenders = await activity.knownSenderCounts(atDomains: [domain])[domain, default: 0]
       pendingLabel = label
-    } else {
-      model.correct(row, label: label, scope: .domain)
     }
   }
 }
@@ -271,25 +290,58 @@ struct VerdictBadge: View {
   }
 }
 
-#Preview("Decision") { DecisionDetailView(model: PreviewHelper.model(), row: PreviewHelper.record) }
-#Preview("Failed action") {
-  DecisionDetailView(model: PreviewHelper.model(), row: PreviewHelper.failedRecord)
-}
-#Preview("Unclassified") {
-  DecisionDetailView(model: PreviewHelper.model(), row: PreviewHelper.unclassifiedRecord)
-}
+#Preview("Decision") { DecisionDetailPreview(row: PreviewHelper.record) }
+#Preview("Failed action") { DecisionDetailPreview(row: PreviewHelper.failedRecord) }
+#Preview("Unclassified") { DecisionDetailPreview(row: PreviewHelper.unclassifiedRecord) }
 #Preview("Verdict") { VerdictBadge(label: .review) }
 #Preview("Corrections") {
-  Form { CorrectionControls(model: PreviewHelper.model(), row: PreviewHelper.record) }
+  let model = PreviewHelper.model()
+  Form {
+    CorrectionControls(
+      corrections: model.corrections,
+      activity: model.activity,
+      row: PreviewHelper.record
+    )
+  }
 }
 #Preview("Shared provider corrections") {
-  Form { CorrectionControls(model: PreviewHelper.model(), row: PreviewHelper.sharedProviderRecord) }
+  let model = PreviewHelper.model()
+  Form {
+    CorrectionControls(
+      corrections: model.corrections,
+      activity: model.activity,
+      row: PreviewHelper.sharedProviderRecord
+    )
+  }
 }
 #Preview("Sender-less corrections") {
-  Form { CorrectionControls(model: PreviewHelper.model(), row: PreviewHelper.unclassifiedRecord) }
+  let model = PreviewHelper.model()
+  Form {
+    CorrectionControls(
+      corrections: model.corrections,
+      activity: model.activity,
+      row: PreviewHelper.unclassifiedRecord
+    )
+  }
 }
 #Preview("Diagnostics") { Form { DecisionDiagnosticsView(row: PreviewHelper.record) } }
 #Preview("Unassessed threats") { Form { ThreatAssessmentView(assessment: nil) } }
 #Preview("Threat finding") {
   Form { ThreatAssessmentView(assessment: PreviewHelper.threatAssessment) }
+}
+
+/// A decision's detail over preview models.
+private struct DecisionDetailPreview: View {
+  let row: DecisionRecord
+  let model = PreviewHelper.model()
+
+  var body: some View {
+    DecisionDetailView(
+      row: row,
+      corrections: model.corrections,
+      messages: model.messages,
+      shared: model.shared,
+      activity: model.activity
+    ) { _ in }
+  }
 }

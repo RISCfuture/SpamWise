@@ -2,7 +2,7 @@ import SwiftUI
 import SpamWiseCore
 
 struct ProviderConsentView: View {
-  let model: AppModel
+  let settings: SettingsModel
   let backend: ModelBackend
 
   private var termsURL: URL? {
@@ -19,9 +19,9 @@ struct ProviderConsentView: View {
   }
   private var permission: Binding<Bool> {
     Binding(
-      get: { model.state.settings.advancedOptions.mailSharingConsent.contains(backend) },
-      set: { granted in
-        model.editSettings {
+      get: { settings.settings.advancedOptions.mailSharingConsent.contains(backend) },
+      set: { [backend] granted in
+        settings.editSettings {
           var consent = $0.advancedOptions.mailSharingConsent
           if granted { consent.insert(backend) } else { consent.remove(backend) }
           $0.advancedOptions.mailSharingConsent = consent
@@ -36,8 +36,8 @@ struct ProviderConsentView: View {
       Text(
         """
         Includes the message’s sender, subject, shortened text and evidence, your preferences, and \
-        up to \(model.state.settings.correctionLimit, format: .number) similar corrections from \
-        the same account, each with its sender domain, subject, a short excerpt and your label. \
+        up to \(settings.settings.correctionLimit, format: .number) similar corrections from the \
+        same account, each with its sender domain, subject, a short excerpt and your label. \
         Enabled attachment/OCR text may be included. Mail can contain sensitive information.
         """
       ).foregroundStyle(.secondary)
@@ -70,15 +70,17 @@ struct ProviderConsentView: View {
 }
 
 #Preview("Mail sharing off") {
-  Form { ProviderConsentView(model: PreviewHelper.model(), backend: .claude) }
+  Form { ProviderConsentView(settings: PreviewHelper.model().settings, backend: .claude) }
 }
 #Preview("Mail sharing on") {
   let model = PreviewHelper.model(backend: .openAI)
-  model.state.settings.advancedOptions.mailSharingConsent = [.openAI]
-  return Form { ProviderConsentView(model: model, backend: .openAI) }
+  model.shared.state.settings.advancedOptions.mailSharingConsent = [.openAI]
+  return Form { ProviderConsentView(settings: model.settings, backend: .openAI) }
 }
 #Preview("Gemini disclosure") {
-  Form { ProviderConsentView(model: PreviewHelper.model(backend: .gemini), backend: .gemini) }
-    .formStyle(.grouped)
-    .frame(width: 600)
+  Form {
+    ProviderConsentView(settings: PreviewHelper.model(backend: .gemini).settings, backend: .gemini)
+  }
+  .formStyle(.grouped)
+  .frame(width: 600)
 }

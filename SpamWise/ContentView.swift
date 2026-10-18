@@ -6,10 +6,10 @@ struct ContentView: View {
 
   var body: some View {
     Group {
-      if !model.hasLoadedState {
+      if !model.shared.hasLoadedState {
         ProgressView().controlSize(.large)
           .frame(minWidth: 720, minHeight: 460)
-      } else if !model.state.settings.onboardingComplete {
+      } else if !model.shared.settings.onboardingComplete {
         OnboardingView(model: model)
       } else {
         ActivityView(model: model)
@@ -19,172 +19,177 @@ struct ContentView: View {
 }
 
 private struct ActivityView: View {
-  @Bindable var model: AppModel
+  let model: AppModel
   @State private var selection: UUID?
   @State private var showsInspector = false
-  @State private var query = ActivityQuery()
-  @State private var showsStatistics = false
-  @State private var showsDates = false
 
-  private var selected: DecisionRecord? {
-    model.state.records.first { $0.id == selection }
+  private var selected: DecisionRecord? { model.activity.record(id: selection) }
+  private var reload: ActivityReload {
+    ActivityReload(
+      records: model.shared.recordsVersion,
+      query: model.activity.queryRevision,
+      limit: model.activity.visibleLimit
+    )
   }
 
   var body: some View {
+    @Bindable var activity = model.activity
+    @Bindable var router = model.router
     VStack(spacing: 0) {
-      Table(query.apply(to: model.state.records), selection: $selection) {
-        TableColumn("Time") { row in
-          Text(row.date, format: .dateTime.hour().minute())
-        }.width(min: 60, ideal: 75)
-        TableColumn("Sender") { row in Text(row.displaySender) }.width(min: 120, ideal: 180)
-        TableColumn("Subject") { row in
-          Text(row.displaySubject).accessibilityIdentifier("activity.subject.\(row.id)")
-        }.width(min: 160, ideal: 320)
-        TableColumn("Verdict") { row in
-          VerdictBadge(label: row.decision.label)
-        }.width(min: 90, ideal: 110)
-      }
-      .overlay {
-        if model.state.records.isEmpty {
-          ContentUnavailableView {
-            Label("No decisions yet", systemImage: "tray")
-          } description: {
-            Text("Try a dry run to preview how your mail will be classified.")
+      ActivityTable(activity: activity, selection: $selection)
+        .navigationTitle("Activity")
+        .searchable(text: $activity.query.text, prompt: "Search sender, subject or reason")
+        .toolbar {
+          ActivityToolbar(
+            model: model,
+            showsInspector: $showsInspector,
+            canInspect: selected != nil
+          )
+        }
+        .inspector(isPresented: $showsInspector) {
+          if let selected {
+            DecisionDetailView(
+              row: selected,
+              corrections: model.corrections,
+              messages: model.messages,
+              shared: model.shared,
+              activity: model.activity
+            ) { model.router.present(.messagePreview($0)) }
+            .inspectorColumnWidth(min: 300, ideal: 340, max: 440)
           }
         }
-      }
-      .navigationTitle("Activity")
-      .searchable(text: $query.text, prompt: "Search sender, subject or reason")
-      .toolbar {
-        ToolbarItemGroup {
-          Button(model.state.settings.paused ? "Resume filtering" : "Pause filtering") {
-            model.togglePause()
-          }.accessibilityIdentifier("activity.pause")
-          Button("Dry run recent mail") { model.scan() }
-            .disabled(model.busy || !model.storageReady)
-            .accessibilityIdentifier("activity.scan")
-          Button("Review digest") { model.showDigest = true }
-            .accessibilityIdentifier("activity.digest")
-          Button("Review Junk") {
-            model.showJunk = true
-            model.run { try await model.discoverAccounts() }
-          }.disabled(model.busy)
+        .onChange(of: selection) { _, value in
+          showsInspector = value != nil
+          model.corrections.decision.status = nil
+          model.messages.operation.status = nil
         }
-        ToolbarItem {
-          Menu("Filter") {
-            Picker("Account", selection: $query.accountID) {
-              Text("All accounts").tag(String?.none)
-              ForEach(
-                Array(Set(model.state.records.compactMap { $0.identity.accountID })).sorted(),
-                id: \.self
-              ) {
-                Text($0).tag(Optional($0))
-              }
-            }
-            Picker("Path", selection: $query.path) {
-              Text("All paths").tag(DecisionPath?.none)
-              ForEach(
-                DecisionPath.allCases.filter(Set(model.state.records.map(\.path)).contains),
-                id: \.self
-              ) {
-                Text($0.localizedTitle).tag(Optional($0))
-              }
-            }
-            Picker("Outcome", selection: $query.outcome) {
-              Text("All outcomes").tag(ActionOutcome?.none)
-              ForEach(
-                Array(Set(model.state.records.map { $0.outcome.rawValue })).sorted(),
-                id: \.self
-              ) { value in
-                if let outcome = ActionOutcome(rawValue: value) {
-                  Text(outcome.localizedTitle).tag(Optional(outcome))
-                }
-              }
-            }
-            Toggle("Corrections only", isOn: $query.correctionsOnly)
-            Button("Today") {
-              query.start = Calendar.current.startOfDay(for: .now); query.end = nil
-            }
-            Button("Date range…") { showsDates = true }
-            Button("Clear filters") { query = ActivityQuery() }
-          }.accessibilityIdentifier("activity.filter")
-        }
-        ToolbarItem {
-          Button("Statistics") { showsStatistics = true }
-            .accessibilityIdentifier("activity.statistics")
-        }
-        ToolbarItem {
-          Button("Show details", systemImage: "sidebar.right") { showsInspector.toggle() }
-            .disabled(selected == nil)
-            .accessibilityIdentifier("activity.inspector")
-        }
-      }
-      .inspector(isPresented: $showsInspector) {
-        if let selected {
-          DecisionDetailView(model: model, row: selected)
-            .inspectorColumnWidth(min: 300, ideal: 340, max: 440)
-        }
-      }
-      .onChange(of: selection) { _, value in showsInspector = value != nil }
       ActivityStatusView(model: model)
     }
     .frame(minWidth: 720, minHeight: 460)
-    .sheet(isPresented: $model.showDigest) { ReviewDigestView(model: model) }
-    .sheet(isPresented: $model.showCorrections) { CorrectionResultsView(model: model) }
-    .sheet(isPresented: $model.showJunk) { MailReviewView(model: model) }
-    .sheet(isPresented: $model.showPreview) { MessagePreviewView(text: model.previewText) }
-    .sheet(isPresented: $showsStatistics) { ActivityStatisticsView(model: model) }
-    .sheet(isPresented: $model.showAudit) { AuditTrailView(model: model) }
-    .sheet(isPresented: $model.showCorpus) { CorpusView(model: model) }
-    .sheet(isPresented: $showsDates) { ActivityDateFilterView(query: $query) }
+    .task(id: reload) { await activity.reload() }
+    .sheet(item: $router.sheet) { sheet in ActivitySheetView(sheet: sheet, model: model) }
   }
 }
 
-private struct ActivityStatusView: View {
-  let model: AppModel
+/// What the Activity table's contents depend on.
+private struct ActivityReload: Equatable {
+  let records: Int
+  let query: Int
+  let limit: Int
+}
+
+private struct ActivityTable: View {
+  let activity: ActivityModel
+  @Binding var selection: UUID?
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      Divider()
-      HStack {
-        Text(model.filteringStatus.localizedTitle).accessibilityIdentifier("activity.mode")
-          .accessibilityValue(model.filteringStatus.rawValue)
-        if model.busy {
-          ProgressView().controlSize(.small)
-          Button("Cancel") { model.cancel() }
+    Table(activity.rows, selection: $selection) {
+      TableColumn("Time") { row in
+        Text(row.date, format: .dateTime.hour().minute())
+      }.width(min: 60, ideal: 75)
+      TableColumn("Sender") { row in Text(row.displaySender) }.width(min: 120, ideal: 180)
+      TableColumn("Subject") { row in
+        Text(row.displaySubject).accessibilityIdentifier("activity.subject.\(row.id)")
+      }.width(min: 160, ideal: 320)
+      TableColumn("Verdict") { row in
+        VerdictBadge(label: row.decision.label)
+      }.width(min: 90, ideal: 110)
+    }
+    .overlay {
+      if activity.rows.isEmpty {
+        ContentUnavailableView {
+          Label("No decisions yet", systemImage: "tray")
+        } description: {
+          Text("Try a dry run to preview how your mail will be classified.")
         }
-        Spacer()
-        Text("Today: \(model.today.count, format: .number)")
-          .help(
-            "Decisions today: \(model.today.count, format: .number) · Junk: \(model.today.filter { $0.decision.label == .junk }.count, format: .number) · Review: \(model.today.filter { $0.decision.label == .review }.count, format: .number)"
-          )
-        Text("Month: \(model.monthCost, format: .currency(code: "USD"))")
-          .help("Estimated API cost this month")
-      }
-      if model.spendingLimitReached {
-        Text(
-          "Monthly spending limit reached — new mail isn’t sent to the provider until next month or a higher limit."
-        )
-        .foregroundStyle(.primary)
-        .accessibilityIdentifier("activity.spendingLimit")
-      }
-      if !model.status.isEmpty {
-        Text(model.status).textSelection(.enabled).accessibilityIdentifier("activity.status")
-          .lineLimit(2)
       }
     }
-    .font(.callout).foregroundStyle(.secondary)
-    .padding(.horizontal).padding(.bottom, 8)
+    .safeAreaInset(edge: .bottom) {
+      if activity.canShowMore {
+        HStack {
+          Text(
+            "Showing \(activity.rows.count, format: .number) of \(activity.matchingCount, format: .number)"
+          )
+          .foregroundStyle(.secondary)
+          Button("Show More") { activity.showMore() }
+            .accessibilityIdentifier("activity.showMore")
+        }
+        .padding(.vertical, 6)
+      }
+    }
+  }
+}
+
+private struct ActivityToolbar: ToolbarContent {
+  let model: AppModel
+  @Binding var showsInspector: Bool
+  let canInspect: Bool
+
+  var body: some ToolbarContent {
+    ToolbarItemGroup {
+      Button(model.shared.settings.paused ? "Resume filtering" : "Pause filtering") {
+        model.settings.togglePause()
+      }.accessibilityIdentifier("activity.pause")
+      Button("Dry run recent mail") { model.scanning.previewRecent() }
+        .disabled(!model.services.storageReady)
+        .accessibilityIdentifier("activity.scan")
+      Button("Review digest") { model.router.present(.digest) }
+        .accessibilityIdentifier("activity.digest")
+      Button("Review Junk") { model.router.present(.junkReview) }
+    }
+    ToolbarItem {
+      ActivityFilterMenu(activity: model.activity, shared: model.shared, router: model.router)
+    }
+    ToolbarItem {
+      Button("Statistics") { model.router.present(.statistics) }
+        .accessibilityIdentifier("activity.statistics")
+    }
+    ToolbarItem {
+      Button("Show details", systemImage: "sidebar.right") { showsInspector.toggle() }
+        .disabled(!canInspect)
+        .accessibilityIdentifier("activity.inspector")
+    }
+  }
+}
+
+private struct ActivityFilterMenu: View {
+  private static let outcomes: [ActionOutcome] = [
+    .noAction, .dryRun, .paused, .pending, .requested, .applied, .failed, .unclassified,
+    .superseded, .duplicate, .integrationUnavailable
+  ]
+  @Bindable var activity: ActivityModel
+  let shared: SharedStateModel
+  let router: ActivityRouter
+
+  var body: some View {
+    Menu("Filter") {
+      Picker("Account", selection: $activity.query.accountID) {
+        Text("All accounts").tag(String?.none)
+        ForEach(shared.knownAccounts, id: \.id) { account in
+          Text(account.name).tag(Optional(account.id))
+        }
+      }
+      Picker("Path", selection: $activity.query.path) {
+        Text("All paths").tag(DecisionPath?.none)
+        ForEach(DecisionPath.allCases, id: \.self) {
+          Text($0.localizedTitle).tag(Optional($0))
+        }
+      }
+      Picker("Outcome", selection: $activity.query.outcome) {
+        Text("All outcomes").tag(ActionOutcome?.none)
+        ForEach(Self.outcomes, id: \.self) { Text($0.localizedTitle).tag(Optional($0)) }
+      }
+      Toggle("Corrections only", isOn: $activity.query.correctionsOnly)
+      Button("Today") {
+        activity.query.start = Calendar.current.startOfDay(for: .now); activity.query.end = nil
+      }
+      Button("Date range…") { router.present(.dateFilter) }
+      Button("Clear filters") { activity.query = ActivityQuery() }
+    }.accessibilityIdentifier("activity.filter")
   }
 }
 
 #Preview("Activity") { ContentView(model: PreviewHelper.model()) }
 #Preview("Empty activity") { ContentView(model: PreviewHelper.model(empty: true)) }
 #Preview("Paused") { ContentView(model: PreviewHelper.model(paused: true)) }
-
-#Preview("Activity status") { ActivityStatusView(model: PreviewHelper.model()) }
-#Preview("Spending limit reached") {
-  ActivityStatusView(model: PreviewHelper.model(spendingLimitReached: true))
-}
-
 #Preview("Activity table") { ActivityView(model: PreviewHelper.model()) }

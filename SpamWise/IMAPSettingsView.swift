@@ -2,15 +2,16 @@ import SwiftUI
 import SpamWiseCore
 
 struct IMAPSettingsView: View {
-  @Bindable var model: AppModel
-  @State private var connection: IMAPConnectionModel
+  let settings: SettingsModel
+  @Bindable var imap: IMAPConnectionModel
+  let storageReady: Bool
 
   private var transportBinding: Binding<MailTransport> {
     Binding(
-      get: { model.state.settings.advancedOptions.transport },
+      get: { settings.settings.advancedOptions.transport },
       set: { value in
-        guard value != model.state.settings.advancedOptions.transport else { return }
-        model.editSettings { settings in
+        guard value != settings.settings.advancedOptions.transport else { return }
+        settings.editSettings { settings in
           var advanced = settings.advancedOptions
           advanced.transport = value
           settings.advancedOptions = advanced
@@ -22,50 +23,50 @@ struct IMAPSettingsView: View {
   }
 
   var body: some View {
-    @Bindable var connection = connection
     Section("Mail connection") {
       Picker("Connection", selection: transportBinding) {
         Text("Apple Mail").tag(MailTransport.appleMail)
         Text("IMAP").tag(MailTransport.imap)
       }.accessibilityIdentifier("imap.transport")
-        .disabled(connection.busy || !model.storageReady)
-    }.task { await connection.load() }
-    if model.state.settings.advancedOptions.transport == .imap {
+        .disabled(imap.operation.isBusy || !storageReady)
+    }.task { imap.loadIfNeeded() }
+    if settings.settings.advancedOptions.transport == .imap {
       Section("IMAP account") {
-        TextField("Server hostname", text: $connection.host).accessibilityIdentifier("imap.host")
-        TextField("Username", text: $connection.username).accessibilityIdentifier("imap.username")
-        SecureField("Password or bearer token", text: $connection.credential)
-          .accessibilityIdentifier("imap.credential")
-        Text("Leave the credential blank to keep the saved Keychain value.").foregroundStyle(
-          .secondary
-        )
-        DisclosureGroup("Connection options") {
-          TextField("TLS port", text: $connection.port).accessibilityIdentifier("imap.port")
-          Toggle("Use OAuth bearer token", isOn: $connection.oauthBearer).accessibilityIdentifier(
-            "imap.oauth"
+        Group {
+          TextField("Server hostname", text: $imap.host).accessibilityIdentifier("imap.host")
+          TextField("Username", text: $imap.username).accessibilityIdentifier("imap.username")
+          SecureField("Password or bearer token", text: $imap.credential)
+            .accessibilityIdentifier("imap.credential")
+          Text("Leave the credential blank to keep the saved Keychain value.").foregroundStyle(
+            .secondary
           )
-        }
+          DisclosureGroup("Connection options") {
+            TextField("TLS port", text: $imap.port).accessibilityIdentifier("imap.port")
+            Toggle("Use OAuth bearer token", isOn: $imap.oauthBearer).accessibilityIdentifier(
+              "imap.oauth"
+            )
+          }
+        }.disabled(imap.operation.isBusy)
         HStack {
-          Button("Save IMAP connection") { connection.save() }.accessibilityIdentifier("imap.save")
-          Button("Check read-only connection") { connection.check() }.accessibilityIdentifier(
+          Button("Save IMAP connection") { imap.save() }.accessibilityIdentifier("imap.save")
+          Button("Check read-only connection") { imap.check() }.accessibilityIdentifier(
             "imap.validate"
           )
+          if imap.operation.isBusy { ProgressView().controlSize(.small) }
         }
-        Text(connection.status).textSelection(.enabled).accessibilityIdentifier("imap.status")
-        if connection.busy { ProgressView() }
-      }.disabled(connection.busy || !model.storageReady)
+        OperationStatusView(operation: imap.operation, identifier: "imap.status")
+      }.disabled(!storageReady)
     }
-  }
-
-  init(model: AppModel) {
-    self.model = model
-    _connection = State(initialValue: IMAPConnectionModel(model: model))
   }
 }
 
 #Preview("Connection selection") {
-  Form { IMAPSettingsView(model: PreviewHelper.model()) }.formStyle(.grouped)
+  let model = PreviewHelper.model()
+  Form { IMAPSettingsView(settings: model.settings, imap: model.imap, storageReady: true) }
+    .formStyle(.grouped)
 }
 #Preview("IMAP setup") {
-  Form { IMAPSettingsView(model: PreviewHelper.model(transport: .imap)) }.formStyle(.grouped)
+  let model = PreviewHelper.model(transport: .imap)
+  Form { IMAPSettingsView(settings: model.settings, imap: model.imap, storageReady: true) }
+    .formStyle(.grouped)
 }

@@ -2,20 +2,22 @@ import SwiftUI
 import SpamWiseCore
 
 struct AdvancedSettingsView: View {
-  @Bindable var model: AppModel
+  let model: AppModel
+
+  private var settings: SettingsModel { model.settings }
 
   var body: some View {
     Form {
       Section {
         DisclosureGroup("Context limits") {
           Stepper(
-            "Similar corrections: \(model.state.settings.correctionLimit, format: .number)",
-            value: model.settingBinding(\.correctionLimit),
+            "Similar corrections: \(settings.settings.correctionLimit, format: .number)",
+            value: settings.binding(\.correctionLimit),
             in: 0...20
           )
           Stepper(
-            "Body budget: ~\(model.state.settings.bodyTokenBudget, format: .number) tokens",
-            value: model.settingBinding(\.bodyTokenBudget),
+            "Body budget: ~\(settings.settings.bodyTokenBudget, format: .number) tokens",
+            value: settings.binding(\.bodyTokenBudget),
             in: 100...4000,
             step: 100
           )
@@ -28,19 +30,24 @@ struct AdvancedSettingsView: View {
           .foregroundStyle(.secondary)
         }
       }
-      LearningSettingsView(model: model)
-      EvidenceSettingsView(model: model)
-      Section { BackupSettingsView(model: model) }
+      LearningSettingsView(
+        settings: settings,
+        shared: model.shared,
+        rules: model.rules,
+        activity: model.activity
+      )
+      EvidenceSettingsView(settings: settings, credentials: model.credentials)
+      Section { BackupSettingsView(backup: model.backup) }
       Section {
         DisclosureGroup("Integration details") {
           LabeledContent(
             "Incoming route",
-            value: model.state.settings.incomingRoute.localizedTitle
+            value: settings.settings.incomingRoute.localizedTitle
           )
-          LabeledContent("Pending retries", value: model.state.retries.count.formatted())
+          LabeledContent("Pending retries", value: model.shared.state.retries.count.formatted())
         }
-        if model.state.settings.advancedOptions.transport == .appleMail {
-          DisclosureGroup("Optional move test") { MoveTestView(model: model) }
+        if settings.settings.advancedOptions.transport == .appleMail {
+          DisclosureGroup("Optional move test") { MoveTestView(mail: model.mail) }
         }
       }
     }.formStyle(.grouped)
@@ -48,7 +55,7 @@ struct AdvancedSettingsView: View {
 }
 
 private struct MoveTestView: View {
-  let model: AppModel
+  let mail: MailConnectionModel
 
   var body: some View {
     Text(
@@ -58,13 +65,20 @@ private struct MoveTestView: View {
       validation stay unchanged.
       """
     )
-    Button("Test selected message") { model.testDisposableMessage() }
-      .disabled(model.busy)
-    if !model.moveTestStatus.isEmpty {
-      Text(model.moveTestStatus).textSelection(.enabled)
+    HStack {
+      Button("Test selected message") { mail.testDisposableMessage() }
+        .disabled(mail.moveTest.isBusy)
+      if mail.moveTest.isBusy {
+        ProgressView().controlSize(.small)
+        Text("Testing the selected message; waiting for Mail to show each move…")
+          .foregroundStyle(.secondary)
+      }
     }
+    OperationStatusView(operation: mail.moveTest)
   }
 }
 
 #Preview("Advanced") { AdvancedSettingsView(model: PreviewHelper.model()) }
-#Preview("Move test") { Form { MoveTestView(model: PreviewHelper.model()) }.formStyle(.grouped) }
+#Preview("Move test") {
+  Form { MoveTestView(mail: PreviewHelper.model().mail) }.formStyle(.grouped)
+}

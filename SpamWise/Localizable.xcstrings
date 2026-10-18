@@ -682,22 +682,6 @@
         }
       }
     },
-    "API key status: %@": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estado de la clave de API: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "État de la clé API : %@"
-          }
-        }
-      }
-    },
     "API keys stay in Keychain. You can complete setup offline.": {
       "localizations": {
         "es": {
@@ -1098,22 +1082,6 @@
         }
       }
     },
-    "Cancelling; mail stays unchanged unless an action was already requested.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancelando; el correo no cambia salvo que ya se haya solicitado una acción."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annulation en cours ; les messages restent inchangés sauf si une action a déjà été demandée."
-          }
-        }
-      }
-    },
     "Change": {
       "localizations": {
         "es": {
@@ -1222,22 +1190,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisir un dossier"
-          }
-        }
-      }
-    },
-    "Classified %@ of %@ messages": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ de %@ mensajes clasificados"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ messages classés sur %@"
           }
         }
       }
@@ -2956,22 +2908,6 @@
         }
       }
     },
-    "Haiku 5.5 is ready": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Haiku 5.5 está listo"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Haiku 5.5 est prêt"
-          }
-        }
-      }
-    },
     "Held out": {
       "localizations": {
         "es": {
@@ -3580,22 +3516,6 @@
         }
       }
     },
-    "Mail connection checked": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conexión con Mail comprobada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connexion à Mail vérifiée"
-          }
-        }
-      }
-    },
     "Mail connection not checked": {
       "localizations": {
         "es": {
@@ -3656,22 +3576,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Règle Mail"
-          }
-        }
-      }
-    },
-    "Mail sweep updated. See Accounts for scan health.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Análisis de Mail actualizado. Consulta su estado en Cuentas."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Analyse de Mail actualisée. Consultez son état dans Comptes."
           }
         }
       }
@@ -5517,22 +5421,6 @@
         }
       }
     },
-    "Review decision": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Revisar decisión"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Examiner la décision"
-          }
-        }
-      }
-    },
     "Review digest": {
       "localizations": {
         "es": {
@@ -5773,22 +5661,6 @@
         }
       }
     },
-    "Rule removed.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Regla eliminada."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Règle supprimée."
-          }
-        }
-      }
-    },
     "Rule saved. Pending classifications were invalidated.": {
       "localizations": {
         "es": {
@@ -6013,22 +5885,6 @@
         }
       }
     },
-    "Save rule": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guardar regla"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrer la règle"
-          }
-        }
-      }
-    },
     "Save trust exclusions": {
       "localizations": {
         "es": {
@@ -6169,22 +6025,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corrections des messages sélectionnés"
-          }
-        }
-      }
-    },
-    "Selected-message corrections finished. Review each mail outcome.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correcciones terminadas. Revisa el resultado de cada acción."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corrections terminées. Vérifiez le résultat de chaque action."
           }
         }
       }
@@ -9596,6 +9436,502 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exemples vérifiés importés avec l’étiquette %@ : %@"
+          }
+        }
+      }
+    },
+    "Add a rule to allow or block mail whose subject, body or headers match an expression.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade una regla para permitir o bloquear el correo cuyo asunto, cuerpo o encabezados coincidan con una expresión."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez une règle pour autoriser ou bloquer les messages dont l’objet, le corps ou les en-têtes correspondent à une expression."
+          }
+        }
+      }
+    },
+    "Add content rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir regla de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une règle de contenu"
+          }
+        }
+      }
+    },
+    "Checking mail…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando el correo…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification du courrier…"
+          }
+        }
+      }
+    },
+    "Checking mail… %@ of %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando el correo… %1$@ de %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification du courrier… %1$@ sur %2$@"
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermer"
+          }
+        }
+      }
+    },
+    "Corrections and imported reviewed messages appear here.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aquí aparecen las correcciones y los mensajes revisados importados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les corrections et les messages vérifiés importés apparaissent ici."
+          }
+        }
+      }
+    },
+    "Date range": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intervalo de fechas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Période"
+          }
+        }
+      }
+    },
+    "Edit content rule": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar regla de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier la règle de contenu"
+          }
+        }
+      }
+    },
+    "Folders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carpetas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossiers"
+          }
+        }
+      }
+    },
+    "Last checked %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última comprobación: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière vérification : %@"
+          }
+        }
+      }
+    },
+    "Mail check stopped. The next check starts in a minute.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobación del correo detenida. La siguiente empieza dentro de un minuto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification du courrier arrêtée. La prochaine commence dans une minute."
+          }
+        }
+      }
+    },
+    "Message preview": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa del mensaje"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aperçu du message"
+          }
+        }
+      }
+    },
+    "No configuration changes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay cambios de configuración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune modification de la configuration"
+          }
+        }
+      }
+    },
+    "No content rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay reglas de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune règle de contenu"
+          }
+        }
+      }
+    },
+    "No reviewed examples": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay ejemplos revisados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun exemple vérifié"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aceptar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "Open Automation Settings": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir ajustes de Automatización"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les réglages Automatisation"
+          }
+        }
+      }
+    },
+    "Open Digest": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir resumen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir le récapitulatif"
+          }
+        }
+      }
+    },
+    "Rule, policy and learning changes appear here.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aquí aparecen los cambios en reglas, preferencias y aprendizaje."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les modifications des règles, des préférences et de l’apprentissage apparaissent ici."
+          }
+        }
+      }
+    },
+    "Running dry run…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ejecutando la simulación…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulation en cours…"
+          }
+        }
+      }
+    },
+    "Settings couldn’t be saved": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar la configuración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer les réglages"
+          }
+        }
+      }
+    },
+    "Show More": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar más"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher plus"
+          }
+        }
+      }
+    },
+    "Showing %@ of %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrando %1$@ de %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ affichés sur %2$@"
+          }
+        }
+      }
+    },
+    "Some accounts or folders couldn’t be checked. See Settings → Accounts for scan health.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron comprobar algunas cuentas o carpetas. Consulta el estado de las comprobaciones en Ajustes → Cuentas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certains comptes ou dossiers n’ont pas pu être vérifiés. Consultez l’état des vérifications dans Réglages → Comptes."
+          }
+        }
+      }
+    },
+    "Stop": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter"
+          }
+        }
+      }
+    },
+    "Stop Dry Run": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener la simulación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la simulation"
+          }
+        }
+      }
+    },
+    "Stop Preview": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener la vista previa"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter l’aperçu"
+          }
+        }
+      }
+    },
+    "Stops this check. The next one starts in a minute.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detiene esta comprobación. La siguiente empieza dentro de un minuto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrête cette vérification. La prochaine commence dans une minute."
+          }
+        }
+      }
+    },
+    "This week’s Review digest is ready: %@ messages": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El resumen semanal de mensajes para revisar está listo: %@ mensajes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le récapitulatif hebdomadaire des messages à vérifier est prêt : %@ messages"
+          }
+        }
+      }
+    },
+    "Try Again": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayer"
+          }
+        }
+      }
+    },
+    "Warning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advertencia"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avertissement"
           }
         }
       }

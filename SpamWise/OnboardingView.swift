@@ -2,9 +2,15 @@ import SwiftUI
 import SpamWiseCore
 
 struct OnboardingView: View {
-  @Bindable var model: AppModel
-  var completion: () -> Void = {}
+  let model: AppModel
+  /// Closes setup when it is presented over Settings; nil in the main window.
+  var close: (() -> Void)?
   @State private var step: SetupStep = .welcome
+
+  private var isBusy: Bool {
+    model.credentials.claudeKey.isBusy || model.mail.check.isBusy || model.imap.operation.isBusy
+      || model.scanning.preview.isBusy
+  }
 
   var body: some View {
     VStack(spacing: 0) {
@@ -15,41 +21,49 @@ struct OnboardingView: View {
           "Step \(step.rawValue + 1, format: .number) of \(SetupStep.allCases.count, format: .number)"
         ).foregroundStyle(.secondary)
       }.padding()
+      StatusLabel(status: model.shared.storageStatus)
+        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal)
       Form {
         switch step {
           case .welcome:
-            SetupIntroductionView(correctionLimit: model.state.settings.correctionLimit)
+            SetupIntroductionView(correctionLimit: model.shared.settings.correctionLimit)
           case .account:
             Section("Connect your Anthropic account") {
-              KeyEntryView(model: model)
-              ProviderConsentView(model: model, backend: .claude)
+              KeyEntryView(credentials: model.credentials)
+              ProviderConsentView(settings: model.settings, backend: .claude)
             }
           case .mail:
-            if model.state.settings.advancedOptions.transport == .imap {
-              IMAPSettingsView(model: model)
+            if model.shared.settings.advancedOptions.transport == .imap {
+              IMAPSettingsView(
+                settings: model.settings,
+                imap: model.imap,
+                storageReady: model.services.storageReady
+              )
             } else {
               MailConnectionView(model: model)
             }
-          case .preview: SetupPreviewView(model: model)
+          case .preview: SetupPreviewView(scanning: model.scanning)
         }
       }.formStyle(.grouped)
       Divider()
       HStack {
+        if let close {
+          Button("Close", action: close).keyboardShortcut(.cancelAction)
+        }
         if let previous = step.previous {
-          Button("Back") { step = previous }.disabled(model.busy)
+          Button("Back") { step = previous }
         }
         Spacer()
-        if model.busy { ProgressView().controlSize(.small) }
+        if isBusy { ProgressView().controlSize(.small) }
         if let next = step.next {
           Button(step == .account ? "Continue offline" : "Continue") { step = next }
             .accessibilityIdentifier("setup.continue").keyboardShortcut(.defaultAction)
-            .disabled(model.busy)
         } else {
           Button("Finish setup") {
-            model.finishSetup(); completion()
+            model.finishSetup(); close?()
           }
           .accessibilityIdentifier("setup.finish").keyboardShortcut(.defaultAction)
-          .disabled(!model.storageReady || model.busy)
+          .disabled(!model.services.storageReady)
         }
       }.padding()
     }
@@ -99,7 +113,7 @@ private struct SetupIntroductionView: View {
 }
 
 private struct SetupPreviewView: View {
-  let model: AppModel
+  let scanning: ScanCoordinator
 
   var body: some View {
     Section("Try a dry run") {
@@ -109,8 +123,14 @@ private struct SetupPreviewView: View {
         selected provider and may incur API charges.
         """
       )
-      Button("Dry run 20 recent messages") { model.scan(limit: 20) }.disabled(model.busy)
-      Text(model.status).textSelection(.enabled)
+      HStack {
+        Button("Dry run 20 recent messages") { scanning.previewRecent(limit: 20) }
+        if scanning.preview.isBusy {
+          ProgressView().controlSize(.small)
+          Button("Stop Dry Run") { scanning.preview.cancel() }
+        }
+      }
+      OperationStatusView(operation: scanning.preview)
     }
     Section {
       Text("You can finish setup offline and return to Settings later.").foregroundStyle(.secondary)
@@ -122,4 +142,6 @@ private struct SetupPreviewView: View {
 #Preview("Introduction") {
   Form { SetupIntroductionView(correctionLimit: 5) }.formStyle(.grouped)
 }
-#Preview("Dry run") { Form { SetupPreviewView(model: PreviewHelper.model()) }.formStyle(.grouped) }
+#Preview("Dry run") {
+  Form { SetupPreviewView(scanning: PreviewHelper.model().scanning) }.formStyle(.grouped)
+}

@@ -101,7 +101,9 @@ struct ExportSpamWiseDiagnosticsIntent: AppIntent {
 nonisolated private enum AutomationContext {
   static func diagnostics(model: AppModel) async throws -> Data {
     do {
-      guard let store = await model.store else { throw IntegrationError.unavailable }
+      guard let store = await MainActor.run(body: { model.services.store }) else {
+        throw IntegrationError.unavailable
+      }
       let state = try await StateRepository.load(store, StateSlices(records: .all, retries: .all))
       return try JSONEncoder().encode(DiagnosticSummary(state: state))
     } catch { throw AutomationIntentError.unavailable }
@@ -111,14 +113,14 @@ nonisolated private enum AutomationContext {
   {
     do {
       try Task.checkCancellation()
-      guard let store = await model.store, let pipeline = await model.pipeline else {
-        throw IntegrationError.unavailable
+      let (store, pipeline, adapter) = await MainActor.run {
+        (model.services.store, model.services.pipeline, model.services.appleMail)
       }
+      guard let store, let pipeline else { throw IntegrationError.unavailable }
       let settings = try await StateRepository.load(store, StateSlices()).settings
       guard settings.onboardingComplete, settings.advancedOptions.transport == .appleMail else {
         throw IntegrationError.unavailable
       }
-      let adapter = model.adapter
       let selected = try await adapter.selectedMessage()
       let reply = try await pipeline.execute(
         operation,
