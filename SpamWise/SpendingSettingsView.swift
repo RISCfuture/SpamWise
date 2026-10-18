@@ -12,6 +12,9 @@ struct SpendingSettingsView: View {
       "Month-to-date estimated API cost",
       value: shared.monthCost.formatted(.currency(code: "USD"))
     )
+    .onChange(of: shared.spending?.limitUSD, initial: true) { _, saved in
+      if let saved { limitUSD = saved }
+    }
     if let spending = shared.spending {
       Toggle(
         "Limit monthly spending",
@@ -44,20 +47,6 @@ struct SpendingSettingsView: View {
     } else {
       Text("Spending information is unavailable. Shared storage could not be read.")
     }
-    HStack(alignment: .top) {
-      Text(
-        """
-        Each paid request counts its largest possible cost until it finishes, then its measured \
-        cost. The limit starts over each calendar month.
-        """
-      )
-      .foregroundStyle(.secondary)
-      Spacer()
-      HelpButton(page: "what-data-is-sent")
-    }
-    .onChange(of: shared.spending?.limitUSD, initial: true) { _, saved in
-      if let saved { limitUSD = saved }
-    }
   }
 }
 
@@ -76,7 +65,7 @@ private struct SpendingPreview: View {
   let model: AppModel
 
   var body: some View {
-    Form { SpendingSettingsView(settings: model.settings, shared: model.shared) }
+    Form { Section { SpendingSettingsView(settings: model.settings, shared: model.shared) } }
       .formStyle(.grouped)
   }
 }

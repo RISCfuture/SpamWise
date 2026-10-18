@@ -81,18 +81,13 @@ extension StateRepository {
     }
   }
   private static func clamp(_ settings: inout Settings) {
-    settings.correctionLimit = clamped(
-      settings.correctionLimit,
-      to: ClassificationLimits.correctionLimitRange
+    settings.correctionLimit = ClassificationLimits.correctionLimitRange.clamp(
+      settings.correctionLimit
     )
-    settings.bodyTokenBudget = clamped(
-      settings.bodyTokenBudget,
-      to: ClassificationLimits.bodyTokenBudgetRange
+    settings.bodyTokenBudget = ClassificationLimits.bodyTokenBudgetRange.clamp(
+      settings.bodyTokenBudget
     )
     if settings.validatedAccounts.isEmpty { settings.dryRun = true }
-  }
-  private static func clamped(_ value: Int, to range: ClosedRange<Int>) -> Int {
-    min(range.upperBound, max(range.lowerBound, value))
   }
 }
 

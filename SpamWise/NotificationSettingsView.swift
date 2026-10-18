@@ -1,60 +1,83 @@
 import SwiftUI
 import SpamWiseCore
 
+/// Count-only summary notifications; each control saves as it changes.
 struct NotificationSettingsView: View {
+  private static let intervalStepMin = 5
   let notifications: NotificationsModel
   let settings: SettingsModel
-  @State private var preferences = NotificationPreferences()
-  @State private var enabled = false
+
+  private var preferences: NotificationPreferences { settings.settings.mailOptions.notifications }
+  private var enabled: Binding<Bool> {
+    Binding(
+      get: { preferences.enabledSince != nil },
+      set: { notifications.setEnabled($0) }
+    )
+  }
 
   var body: some View {
-    DisclosureGroup("Notifications") {
-      Text(notifications.permission).foregroundStyle(.secondary)
-        .accessibilityIdentifier("notifications.status")
-      Toggle("Notify me about unresolved Review", isOn: $enabled)
+    @Bindable var interval = settings.notificationIntervalMin
+    Section {
+      Toggle("Notify me about unresolved Review", isOn: enabled)
+        .disabled(notifications.save.isBusy)
         .accessibilityIdentifier("notifications.enabled")
-      if enabled {
-        Toggle("Also include good mail", isOn: $preferences.includeGood)
+      if preferences.enabledSince != nil {
+        Toggle("Also include good mail", isOn: settings.mailBinding(\.notifications.includeGood))
         Stepper(
-          "Batch interval: \(Measurement(value: Double(preferences.intervalMin), unit: UnitDuration.minutes), format: .measurement(width: .wide, usage: .asProvided))",
-          value: $preferences.intervalMin,
-          in: 5...1440,
-          step: 5
+          "Batch interval: \(Measurement(value: Double(interval.value), unit: UnitDuration.minutes), format: .measurement(width: .wide, usage: .asProvided))",
+          value: $interval.value,
+          in: NotificationPreferences.intervalRangeMin,
+          step: Self.intervalStepMin
         )
-        HStack {
-          Picker("Quiet from", selection: $preferences.quietStartHour) {
-            ForEach(0..<24) { Text($0.formatted() + ":00").tag($0) }
-          }
-          Picker("Until", selection: $preferences.quietEndHour) {
-            ForEach(0..<24) { Text($0.formatted() + ":00").tag($0) }
-          }
-        }
-        Text(
-          "Local time. Equal hours disable quiet time. Summaries contain counts, never message content."
+        QuietHoursPicker(
+          title: "Quiet from",
+          selection: settings.mailBinding(\.notifications.quietStartHour)
         )
-        .foregroundStyle(.secondary)
+        QuietHoursPicker(
+          title: "Quiet until",
+          selection: settings.mailBinding(\.notifications.quietEndHour)
+        )
       }
-      Button("Save notification preferences") { save() }
-        .accessibilityIdentifier("notifications.save")
       OperationStatusView(operation: notifications.save)
-    }.task {
-      preferences = settings.settings.mailOptions.notifications
-      enabled = preferences.enabledSince != nil
-      await notifications.refreshPermission()
+    } header: {
+      Text("Notifications")
+    } footer: {
+      VStack(alignment: .leading) {
+        Text(notifications.permission)
+          .accessibilityIdentifier("notifications.status")
+        Text(
+          "Notifications show counts, never message content. Set both quiet hours the same to turn quiet hours off."
+        )
+      }
+      .foregroundStyle(.secondary)
+    }
+    .task { await notifications.refreshPermission() }
+  }
+}
+
+/// An hour of the day, shown in the user's clock format.
+private struct QuietHoursPicker: View {
+  private static let hours = 0..<24
+  let title: LocalizedStringKey
+  @Binding var selection: Int
+
+  var body: some View {
+    Picker(title, selection: $selection) {
+      ForEach(Self.hours, id: \.self) { hour in
+        Text(Self.date(atHour: hour), format: .dateTime.hour()).tag(hour)
+      }
     }
   }
 
-  private func save() {
-    var draft = preferences
-    draft.enabledSince = enabled ? preferences.enabledSince ?? .now : nil
-    preferences = draft
-    notifications.savePreferences(draft)
+  private static func date(atHour hour: Int) -> Date {
+    Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: .now) ?? .now
   }
 }
 
 #Preview("Disabled notifications") {
   let model = PreviewHelper.model()
   Form { NotificationSettingsView(notifications: model.notifications, settings: model.settings) }
+    .formStyle(.grouped)
 }
 
 #Preview("Enabled notifications") {
@@ -65,4 +88,5 @@ struct NotificationSettingsView: View {
   return Form {
     NotificationSettingsView(notifications: model.notifications, settings: model.settings)
   }
+  .formStyle(.grouped)
 }

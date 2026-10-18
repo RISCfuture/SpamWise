@@ -1,7 +1,37 @@
 import SwiftUI
 import SpamWiseCore
 
+/// Permission for one provider to receive mail context, with what it receives.
 struct ProviderConsentView: View {
+  let settings: SettingsModel
+  let backend: ModelBackend
+
+  var body: some View {
+    ProviderConsentToggle(settings: settings, backend: backend)
+    ProviderSharingSummary(settings: settings, backend: backend)
+  }
+}
+
+/// Grants or withdraws one provider's permission to receive mail context.
+struct ProviderConsentToggle: View {
+  let settings: SettingsModel
+  let backend: ModelBackend
+
+  private var permission: Binding<Bool> {
+    Binding(
+      get: { settings.settings.advancedOptions.mailSharingConsent.contains(backend) },
+      set: { settings.setSharingConsent($0, for: backend) }
+    )
+  }
+
+  var body: some View {
+    Toggle("Allow mail context to be sent to \(backend.localizedTitle)", isOn: permission)
+      .accessibilityIdentifier("provider.consent")
+  }
+}
+
+/// What a provider receives with each message, and how to stop it.
+struct ProviderSharingSummary: View {
   let settings: SettingsModel
   let backend: ModelBackend
 
@@ -17,36 +47,22 @@ struct ProviderConsentView: View {
       case .onDevice, .privateCloudCompute: nil
     }
   }
-  private var permission: Binding<Bool> {
-    Binding(
-      get: { settings.settings.advancedOptions.mailSharingConsent.contains(backend) },
-      set: { [backend] granted in
-        settings.editSettings {
-          var consent = $0.advancedOptions.mailSharingConsent
-          if granted { consent.insert(backend) } else { consent.remove(backend) }
-          $0.advancedOptions.mailSharingConsent = consent
-        }
-      }
-    )
-  }
+
   var body: some View {
-    Toggle("Allow mail context to be sent to \(backend.localizedTitle)", isOn: permission)
-      .accessibilityIdentifier("provider.consent")
-    DisclosureGroup("What is shared") {
+    VStack(alignment: .leading) {
       Text(
         """
-        Includes the message’s sender, subject, shortened text and evidence, your preferences, and \
-        up to \(settings.settings.correctionLimit, format: .number) similar corrections from the \
-        same account, each with its sender domain, subject, a short excerpt and your label. \
-        Enabled attachment/OCR text may be included. Mail can contain sensitive information.
+        Each message’s sender, subject, shortened text and evidence are sent with your policy and \
+        up to \(settings.settings.correctionLimit) similar corrections from the same account. Mail \
+        can contain sensitive information.
         """
-      ).foregroundStyle(.secondary)
+      )
       Text(
         """
-        Automatic filtering covers only mail received after setup. Older mail is sent to your \
-        provider only when you preview it.
+        Only new mail is sent automatically; older mail is sent only when you preview it. Turning \
+        this off stops future requests, but requests already sent can’t be recalled.
         """
-      ).foregroundStyle(.secondary)
+      )
       if backend == .gemini {
         Text(
           """
@@ -59,23 +75,20 @@ struct ProviderConsentView: View {
         Link("Provider data and retention terms", destination: termsURL)
           .accessibilityIdentifier("provider.privacyTerms")
       }
-      Text(
-        """
-        Turn this off to stop future requests. Requests already sent cannot be recalled. Provider \
-        retention terms apply; keys stay in Keychain.
-        """
-      ).foregroundStyle(.secondary)
     }
+    .foregroundStyle(.secondary)
   }
 }
 
 #Preview("Mail sharing off") {
   Form { ProviderConsentView(settings: PreviewHelper.model().settings, backend: .claude) }
+    .formStyle(.grouped)
 }
 #Preview("Mail sharing on") {
   let model = PreviewHelper.model(backend: .openAI)
   model.shared.state.settings.advancedOptions.mailSharingConsent = [.openAI]
   return Form { ProviderConsentView(settings: model.settings, backend: .openAI) }
+    .formStyle(.grouped)
 }
 #Preview("Gemini disclosure") {
   Form {

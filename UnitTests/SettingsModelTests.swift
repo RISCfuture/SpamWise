@@ -30,10 +30,102 @@ struct `Optimistic settings edits` {
     #expect(shared.settingsWritesInFlight == 0)
   }
 
+  @Test func `change only their own field and withdraw terms with the Spamhaus service`()
+    async throws
+  {
+    let store = try temporaryStore()
+    let shared = SharedStateModel(store: store)
+    let settings = SettingsModel(shared: shared)
+    await shared.refresh()
+    var accepted = ExternalEvidenceSettings()
+    accepted.termsAcknowledged = true
+    await settings.setSetting(\.advancedOptions.externalEvidence, to: accepted).value
+    try await StateRepository.editSettings(store) { $0.policy = "Saved by another process" }
+    settings.selectSpamhausService(.https)
+    await settled(settings)
+    let saved = try await StateRepository.load(store, StateSlices()).settings
+    #expect(saved.policy == "Saved by another process")
+    #expect(saved.advancedOptions.externalEvidence?.spamhausTransport == .https)
+    #expect(saved.advancedOptions.externalEvidence?.termsAcknowledged == false)
+  }
+
+  @Test func `switch to the on-device model when filtering is kept on this Mac`() async throws {
+    let store = try temporaryStore()
+    let shared = SharedStateModel(store: store)
+    let settings = SettingsModel(shared: shared)
+    await shared.refresh()
+    settings.keepFilteringOnThisMac()
+    await settled(settings)
+    let saved = try await StateRepository.load(store, StateSlices()).settings
+    #expect(saved.mailOptions.localOnly)
+    #expect(saved.advancedOptions.model == .appleOnDevice)
+    #expect(!settings.hasLocalOnlyConflict)
+  }
+
   private func temporaryStore() throws -> Store {
     try Store(
       url: FileManager.default.temporaryDirectory
         .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
+    )
+  }
+
+  /// Waits for every settings write queued so far.
+  private func settled(_ settings: SettingsModel) async {
+    await settings.editSettings { _ in }.value
+  }
+}
+
+@MainActor @Suite
+// swiftlint:disable:next type_name
+struct `Setting drafts` {
+  @Test func `save a burst of edits once`() async {
+    let setting = PersistedSetting()
+    let draft = setting.draft()
+    for value in 1...5 { draft.value = value }
+    await draft.scheduledSave?.value
+    #expect(setting.saves == [5])
+    #expect(!draft.hasUnsavedEdit)
+  }
+
+  @Test func `follow the persisted value only while unedited`() {
+    let setting = PersistedSetting()
+    let draft = setting.draft()
+    setting.value = 3
+    #expect(draft.value == 3)
+    draft.value = 4
+    setting.value = 7
+    #expect(draft.value == 4)
+    draft.commit()
+    #expect(setting.saves == [4])
+  }
+
+  @Test func `keep an unacceptable edit unsaved`() {
+    let setting = PersistedSetting()
+    let draft = setting.draft(accepting: 0...10)
+    draft.value = 11
+    draft.commit()
+    #expect(setting.saves.isEmpty)
+    #expect(draft.hasUnsavedEdit)
+    #expect(!draft.isAcceptable)
+    #expect(draft.value == 11)
+  }
+}
+
+/// A stored setting that records each save.
+@MainActor private final class PersistedSetting {
+  private static let debounce: Duration = .milliseconds(20)
+  var value = 0
+  private(set) var saves: [Int] = []
+
+  func draft(accepting range: ClosedRange<Int> = Int.min...Int.max) -> SettingDraft<Int> {
+    SettingDraft(
+      delay: Self.debounce,
+      persisted: { self.value },
+      accepts: { range.contains($0) },
+      save: { saved in
+        self.saves.append(saved)
+        self.value = saved
+      }
     )
   }
 }

@@ -1,21 +1,82 @@
+import Network
 import SwiftUI
 import SpamWiseCore
 
 /**
  Edits shared settings optimistically: an edit shows at once and its write is queued after every
  earlier one, so rapid edits persist in order and a reload never shows a stale value meanwhile.
+
+ Each control writes only its own field. Steppers and text fields edit through a
+ ``SettingDraft``, so a burst of clicks or keystrokes makes one write.
  */
 @MainActor @Observable final class SettingsModel {
+  private static let stepperDelay: Duration = .milliseconds(600)
+  private static let textDelay: Duration = .milliseconds(1500)
+  /// The default policy in the user's language, shown in place of the stored English default.
+  static var localizedDefaultPolicy: String {
+    String(
+      localized:
+        """
+        Marketing from retailers I haven’t ordered from is unwanted. Cart and checkout reminders \
+        from stores with no order history are unwanted. Shipping notices are wanted only if they \
+        match an order in my history. Anything from people I’ve corresponded with is wanted.
+        """
+    )
+  }
   /// The latest settings write failure, until the next write succeeds.
   var saveFailure: OperationFailure?
   /// Why the latest spending-limit change was refused.
   var spendingLimitError: String?
   @ObservationIgnored private let shared: SharedStateModel
   @ObservationIgnored private var tail: Task<Void, Never>?
+  /// The filtering policy, saved after a pause in typing; one over the limit stays unsaved.
+  @ObservationIgnored private(set) lazy var policy = SettingDraft(
+    delay: Self.textDelay,
+    persisted: { [unowned self] in Self.displayedPolicy(settings.policy) },
+    accepts: { $0.count <= ClassificationLimits.maximumPolicyCharacters },
+    save: { [unowned self] in setSetting(\.policy, to: $0) }
+  )
+  /// How many similar corrections accompany each message.
+  @ObservationIgnored private(set) lazy var correctionLimit = SettingDraft(
+    delay: Self.stepperDelay,
+    persisted: { [unowned self] in settings.correctionLimit },
+    save: { [unowned self] in setSetting(\.correctionLimit, to: $0) }
+  )
+  /// How much message text accompanies each message, in estimated tokens.
+  @ObservationIgnored private(set) lazy var bodyTokenBudget = SettingDraft(
+    delay: Self.stepperDelay,
+    persisted: { [unowned self] in settings.bodyTokenBudget },
+    save: { [unowned self] in setSetting(\.bodyTokenBudget, to: $0) }
+  )
+  /// The shortest time between notifications, in minutes.
+  @ObservationIgnored private(set) lazy var notificationIntervalMin = SettingDraft(
+    delay: Self.stepperDelay,
+    persisted: { [unowned self] in settings.mailOptions.notifications.intervalMin },
+    save: { [unowned self] in setSetting(\.mailOptions.notifications.intervalMin, to: $0) }
+  )
+  /// The DNS resolver for public Spamhaus lookups; only an IPv4 address is saved.
+  @ObservationIgnored private(set) lazy var resolverAddress = SettingDraft(
+    delay: Self.textDelay,
+    persisted: { [unowned self] in evidence.resolverAddress },
+    accepts: { IPv4Address($0) != nil },
+    save: { [unowned self] address in editEvidence { $0.resolverAddress = address } }
+  )
 
   var settings: SpamWiseCore.Settings { shared.state.settings }
+  /// The optional evidence configuration, or its disabled defaults.
+  var evidence: ExternalEvidenceSettings {
+    settings.advancedOptions.externalEvidence ?? ExternalEvidenceSettings()
+  }
+  /// Whether local-only mode is on while a network provider is still selected.
+  var hasLocalOnlyConflict: Bool {
+    settings.mailOptions.localOnly && settings.advancedOptions.backend != .onDevice
+  }
 
   init(shared: SharedStateModel) { self.shared = shared }
+
+  private static func displayedPolicy(_ policy: String) -> String {
+    policy == PromptBuilder.defaultPolicy ? localizedDefaultPolicy : policy
+  }
 
   /// Applies `edit` locally, then persists it after every earlier settings write.
   @discardableResult func editSettings(
@@ -44,6 +105,58 @@ import SpamWiseCore
     editSettings { $0[keyPath: key] = value }
   }
 
+  /// Turns local-only mode on, selecting the on-device model in the same write.
+  func keepFilteringOnThisMac() {
+    editSettings {
+      $0.mailOptions.localOnly = true
+      if $0.advancedOptions.backend != .onDevice {
+        $0.advancedOptions.select(ModelBackend.onDevice.defaultModel)
+      }
+    }
+  }
+
+  /// Turns local-only mode off; the selected provider is unchanged.
+  func allowNetworkProviders() {
+    setSetting(\.mailOptions.localOnly, to: false)
+  }
+
+  /// Selects `backend` with its default model; reselecting the current provider keeps its model.
+  func selectBackend(_ backend: ModelBackend) {
+    guard backend != settings.advancedOptions.backend else { return }
+    editSettings { $0.advancedOptions.select(backend.defaultModel) }
+  }
+
+  /// Selects `model` together with the provider that serves it.
+  func selectModel(_ model: ModelIdentifier) {
+    editSettings { $0.advancedOptions.select(model) }
+  }
+
+  /// Grants or withdraws `backend`'s permission to receive mail context.
+  func setSharingConsent(_ granted: Bool, for backend: ModelBackend) {
+    editSettings {
+      if granted {
+        $0.advancedOptions.mailSharingConsent.insert(backend)
+      } else {
+        $0.advancedOptions.mailSharingConsent.remove(backend)
+      }
+    }
+  }
+
+  /// Selects the Spamhaus service, withdrawing acceptance of the previous service's terms.
+  func selectSpamhausService(_ transport: SpamhausTransport) {
+    editEvidence {
+      guard $0.spamhausTransport != transport else { return }
+      $0.spamhausTransport = transport
+      $0.termsAcknowledged = false
+    }
+  }
+
+  /// Replaces the policy with the default, at once.
+  func resetPolicy() {
+    policy.value = Self.localizedDefaultPolicy
+    policy.commit()
+  }
+
   func togglePause() {
     setSetting(\.paused, to: !settings.paused)
   }
@@ -53,16 +166,6 @@ import SpamWiseCore
     editSettings {
       if !$0.onboardingComplete { $0.dryRun = true }
       $0.onboardingComplete = true
-    }
-  }
-
-  /// Selects `backend` with its default model; reselecting the current provider keeps its model.
-  func selectBackend(_ backend: ModelBackend) {
-    guard backend != settings.advancedOptions.backend else { return }
-    editSettings {
-      var advanced = $0.advancedOptions
-      advanced.select(backend.defaultModel)
-      $0.advancedOptions = advanced
     }
   }
 
@@ -106,6 +209,26 @@ import SpamWiseCore
         }
       }
     )
+  }
+
+  /// A binding that writes one optional-evidence field, creating the configuration if needed.
+  func evidenceBinding<T: Sendable>(
+    _ key: any WritableKeyPath<ExternalEvidenceSettings, T> & Sendable
+  ) -> Binding<T> {
+    Binding(
+      get: { self.evidence[keyPath: key] },
+      set: { value in self.editEvidence { $0[keyPath: key] = value } }
+    )
+  }
+
+  private func editEvidence(
+    _ edit: @escaping @Sendable (inout ExternalEvidenceSettings) -> Void
+  ) {
+    editSettings {
+      var evidence = $0.advancedOptions.externalEvidence ?? ExternalEvidenceSettings()
+      edit(&evidence)
+      $0.advancedOptions.externalEvidence = evidence
+    }
   }
 
   /// Runs `write` after every earlier settings write, then reloads shared storage.

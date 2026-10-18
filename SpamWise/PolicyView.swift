@@ -1,52 +1,87 @@
 import SwiftUI
 import SpamWiseCore
 
+/// The Policy tab: what the user wants to receive, in their own words, saved as they type.
 struct PolicyView: View {
-  private static let characterLimit = 4000
+  private static let editorMinimumHeight: CGFloat = 220
   let settings: SettingsModel
-  @State private var policy = ""
-
-  private var localizedDefaultPolicy: String {
-    String(
-      localized:
-        """
-        Marketing from retailers I haven’t ordered from is unwanted. Cart and checkout reminders \
-        from stores with no order history are unwanted. Shipping notices are wanted only if they \
-        match an order in my history. Anything from people I’ve corresponded with is wanted.
-        """
-    )
-  }
+  @State private var confirmsReset = false
 
   var body: some View {
-    VStack(alignment: .leading) {
-      Text("Your mail preferences").font(.headline)
-      Text(
-        "Describe what you want to receive. Your policy is sent to your selected provider with eligible messages."
-      )
-      .foregroundStyle(.secondary)
-      TextEditor(text: $policy)
-        .font(.body).border(.separator).accessibilityLabel("Mail filtering policy")
-        .accessibilityIdentifier("settings.policy")
-      HStack {
-        Text("\(policy.count, format: .number)/\(Self.characterLimit, format: .number) characters")
-          .foregroundStyle(.secondary)
-        Spacer()
-        HelpButton(page: "how-decisions-are-made")
+    @Bindable var policy = settings.policy
+    Form {
+      Section {
+        TextEditor(text: $policy.value)
+          .font(.body)
+          .frame(minHeight: Self.editorMinimumHeight)
+          .accessibilityLabel("Mail filtering policy")
+          .accessibilityIdentifier("settings.policy")
+          .commitsDraft(policy)
+        PolicyLength(policy: policy)
+      } header: {
+        Text("Your mail policy")
+      } footer: {
+        Text(
+          "Describe what you want to receive. Your policy is sent to your selected provider with eligible messages."
+        )
+        .foregroundStyle(.secondary)
       }
-      HStack {
-        Button("Reset to default") { policy = localizedDefaultPolicy }
-        Spacer()
-        Button("Save preferences") { settings.setSetting(\.policy, to: policy) }
-          .disabled(policy.count > Self.characterLimit)
-          .keyboardShortcut("s", modifiers: .command)
+      Section {
+        HStack {
+          Button("Reset to default") { confirmsReset = true }
+            .disabled(policy.value == SettingsModel.localizedDefaultPolicy)
+          Spacer()
+          HelpButton(page: "how-decisions-are-made")
+        }
       }
-    }.padding()
-      .onAppear {
-        policy =
-          settings.settings.policy == PromptBuilder.defaultPolicy
-          ? localizedDefaultPolicy : settings.settings.policy
-      }
+    }
+    .formStyle(.grouped)
+    .confirmationDialog(
+      "Replace your policy with the default?",
+      isPresented: $confirmsReset,
+      titleVisibility: .visible
+    ) {
+      Button("Replace Policy", role: .destructive) { settings.resetPolicy() }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("Your current policy text will be replaced.")
+    }
   }
 }
 
-#Preview("Preferences") { PolicyView(settings: PreviewHelper.model().settings) }
+/// The policy's length against its limit, or why an edit isn't saved.
+private struct PolicyLength: View {
+  let policy: SettingDraft<String>
+
+  var body: some View {
+    if policy.isAcceptable {
+      Text(
+        "\(policy.value.count) of \(ClassificationLimits.maximumPolicyCharacters) characters"
+      )
+      .foregroundStyle(.secondary)
+      .monospacedDigit()
+    } else {
+      StatusLabel(
+        status: .failure(
+          OperationFailure(
+            message: String(
+              localized:
+                "Not saved. Shorten your policy to \(ClassificationLimits.maximumPolicyCharacters) characters or fewer."
+            )
+          )
+        ),
+        identifier: "settings.policyTooLong"
+      )
+    }
+  }
+}
+
+#Preview("Policy") { PolicyView(settings: PreviewHelper.model().settings) }
+#Preview("Too long") {
+  let settings = PreviewHelper.model().settings
+  settings.policy.value = String(
+    repeating: "Unwanted. ",
+    count: ClassificationLimits.maximumPolicyCharacters
+  )
+  return PolicyView(settings: settings)
+}

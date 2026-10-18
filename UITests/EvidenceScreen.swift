@@ -3,7 +3,7 @@ import XCTest
 @MainActor struct EvidenceScreen {
   let app: XCUIApplication
 
-  var canSave: Bool { app.buttons["evidence.save"].isEnabled }
+  var termsNotice: XCUIElement { app.descendants(matching: .any)["spamhaus.consentRequired"] }
   var canSaveQueryKey: Bool { app.buttons["spamhaus.saveKey"].isEnabled }
   var hasSecureQueryKeyField: Bool { app.secureTextFields["spamhaus.key"].exists }
   var hasAcceptedTerms: Bool {
@@ -11,11 +11,6 @@ import XCTest
   }
 
   static func waitForLanding(in app: XCUIApplication) -> Self {
-    let disclosure = app.disclosureTriangles["evidence.disclosure"]
-    XCTAssertTrue(disclosure.waitForExistence(timeout: UITestTiming.transition))
-    if !app.switches["spamhaus.enabled"].exists {
-      disclosure.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5)).click()
-    }
     XCTAssertTrue(
       app.switches["spamhaus.enabled"].waitForExistence(timeout: UITestTiming.transition)
     )
@@ -31,6 +26,7 @@ import XCTest
 
   func acceptTerms() {
     app.switches["spamhaus.consent"].click()
+    XCTAssertTrue(termsNotice.waitForNonExistence(timeout: UITestTiming.transition))
   }
 
   func selectHTTPS() {
@@ -42,10 +38,6 @@ import XCTest
 
   func selectPublicDNS() {
     selectService("spamhaus.transport.publicDNS")
-  }
-
-  func save() {
-    app.buttons["evidence.save"].click()
   }
 
   func close() -> ActivityScreen {
@@ -67,23 +59,21 @@ extension UITests {
     let activity = ActivityScreen.launchCorrectionFixture()
     let evidence = activity.openEvidenceSettings()
     evidence.enableSpamhaus()
-    XCTAssertFalse(evidence.canSave)
+    XCTAssertTrue(evidence.termsNotice.exists)
     evidence.acceptTerms()
-    XCTAssertTrue(evidence.canSave)
     evidence.selectHTTPS()
     XCTAssertTrue(evidence.hasSecureQueryKeyField)
     XCTAssertFalse(evidence.canSaveQueryKey)
     XCTAssertFalse(evidence.hasAcceptedTerms)
-    XCTAssertFalse(evidence.canSave)
+    XCTAssertTrue(evidence.termsNotice.exists)
     evidence.acceptTerms()
-    evidence.save()
     let reopened = evidence.close().openEvidenceSettings()
     XCTAssertTrue(reopened.hasSecureQueryKeyField)
     XCTAssertTrue(reopened.hasAcceptedTerms)
     reopened.selectPublicDNS()
     XCTAssertFalse(reopened.hasSecureQueryKeyField)
     XCTAssertFalse(reopened.hasAcceptedTerms)
-    XCTAssertFalse(reopened.canSave)
+    XCTAssertTrue(reopened.termsNotice.exists)
   }
 
 }

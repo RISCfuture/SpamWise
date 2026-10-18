@@ -1,79 +1,111 @@
 import SwiftUI
 import SpamWiseCore
 
+/// Optional evidence: what SpamWise reads on this Mac, and what it looks up over the network.
 struct EvidenceSettingsView: View {
   let settings: SettingsModel
   let credentials: CredentialsModel
-  @State private var configuration = ExternalEvidenceSettings()
+
+  var body: some View {
+    LocalAnalysisSection(settings: settings)
+    NetworkLookupsSection(settings: settings)
+    if settings.evidence.domainBlocklist {
+      SpamhausSettingsView(settings: settings, credentials: credentials)
+    }
+  }
+}
+
+private struct LocalAnalysisSection: View {
+  let settings: SettingsModel
 
   var body: some View {
     Section {
-      DisclosureGroup {
+      Toggle(
+        "Read embedded image text with on-device OCR",
+        isOn: settings.advancedBinding(\.imageOCR)
+      )
+      Toggle(
+        "Read plain-text and HTML attachments locally",
+        isOn: settings.advancedBinding(\.textAttachments)
+      )
+    } header: {
+      Text("Local analysis")
+    } footer: {
+      Text(
+        """
+        Only images inside the message are read; remote images are never downloaded. PDF and \
+        Office attachments aren’t read, and nothing in an attachment ever runs.
+        """
+      )
+      .foregroundStyle(.secondary)
+    }
+  }
+}
+
+private struct NetworkLookupsSection: View {
+  let settings: SettingsModel
+
+  private var localOnly: Bool { settings.settings.mailOptions.localOnly }
+
+  var body: some View {
+    Section {
+      Group {
         Toggle(
           "Share sender domains with registration services to check domain age",
           isOn: settings.advancedBinding(\.domainRegistrationLookup)
         )
         Toggle(
-          "Read embedded image text with on-device OCR",
-          isOn: settings.advancedBinding(\.imageOCR)
-        )
-        Text("Only embedded images are read. Remote images are never downloaded.").foregroundStyle(
-          .secondary
-        )
-        .frame(maxWidth: .infinity, alignment: .leading)
-        Toggle(
-          "Read plain-text and HTML attachments locally",
-          isOn: settings.advancedBinding(\.textAttachments)
-        )
-        Text(
-          "PDF and Office documents remain unread. Attached text is untrusted; scripts and remote resources never run."
-        )
-        .foregroundStyle(.secondary)
-        Toggle(
           "Look up sender and link domains in Spamhaus DBL",
-          isOn: $configuration.domainBlocklist
+          isOn: settings.evidenceBinding(\.domainBlocklist)
         )
         .accessibilityIdentifier("spamhaus.enabled")
-        if configuration.domainBlocklist {
-          SpamhausSettingsView(configuration: $configuration, credentials: credentials)
-        }
-        Toggle("Local Rspamd scanner", isOn: $configuration.localRspamd)
+        Toggle("Scan with my Rspamd server", isOn: settings.evidenceBinding(\.localRspamd))
           .accessibilityIdentifier("rspamd.enabled")
-        if configuration.localRspamd {
-          Text(
-            """
-            Sends message data to your scanner at 127.0.0.1:11333. Its configuration may use \
-            online services. Disabled in local-only mode.
-            """
-          )
-          .foregroundStyle(.secondary)
-        }
-        Text("Unavailable or failed evidence never counts as spam.").foregroundStyle(.secondary)
-          .frame(maxWidth: .infinity, alignment: .leading)
-        Button("Save evidence settings") { save() }
-          .accessibilityIdentifier("evidence.save")
-          .disabled(configuration.domainBlocklist && !configuration.termsAcknowledged)
-          .frame(maxWidth: .infinity, alignment: .leading)
-      } label: {
-        Text("Optional evidence").accessibilityIdentifier("evidence.disclosure")
-      }
-    }.onAppear {
-      configuration = settings.settings.advancedOptions.externalEvidence ?? .init()
+      }.disabled(localOnly)
+    } header: {
+      Text("Network lookups")
+    } footer: {
+      NetworkLookupsFooter(localOnly: localOnly)
     }
   }
+}
 
-  private func save() {
-    let updated = configuration
-    settings.editSettings {
-      var advanced = $0.advancedOptions
-      advanced.externalEvidence = updated
-      $0.advancedOptions = advanced
+private struct NetworkLookupsFooter: View {
+  let localOnly: Bool
+
+  private var rspamdAddress: String {
+    let endpoint = RspamdLookup.endpoint
+    return [endpoint.host(), endpoint.port.map(String.init)].compactMap(\.self)
+      .joined(separator: ":")
+  }
+
+  var body: some View {
+    Group {
+      if localOnly {
+        Text(
+          "Unavailable while Keep filtering on this Mac is on in Classifier settings."
+        )
+      } else {
+        Text(
+          """
+          Rspamd receives the whole message at \(rspamdAddress), and its own configuration may use \
+          online services. A lookup that fails never counts against a message.
+          """
+        )
+      }
     }
+    .foregroundStyle(.secondary)
   }
 }
 
 #Preview("Evidence") {
   let model = PreviewHelper.model()
   Form { EvidenceSettingsView(settings: model.settings, credentials: model.credentials) }
+    .formStyle(.grouped)
+}
+#Preview("Local only") {
+  let model = PreviewHelper.model(backend: .onDevice)
+  model.shared.state.settings.mailOptions.localOnly = true
+  return Form { EvidenceSettingsView(settings: model.settings, credentials: model.credentials) }
     .formStyle(.grouped)
 }

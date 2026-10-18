@@ -185,7 +185,7 @@ public struct ReviewDigest: Sendable {
   public static let lookbackDays = 7
   /// Calendar week identity used to avoid repeated automatic presentation.
   public let week: String
-  /// Latest still-unreviewed decisions in the preceding seven days.
+  /// Latest still-unreviewed decisions in the preceding ``lookbackDays`` days.
   public let records: [DecisionRecord]
   /// Builds a digest from persisted outcomes without reclassifying mail.
   public init(state: AppState, now: Date = .now, calendar: Calendar = .current) {

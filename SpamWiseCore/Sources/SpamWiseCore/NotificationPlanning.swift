@@ -15,9 +15,7 @@ public struct NotificationPreferences: Codable, Sendable, Equatable {
   /// Local-clock quiet period end, supporting overnight periods.
   public var quietEndHour = 8
   /// ``intervalMin`` limited to ``intervalRangeMin``.
-  var boundedIntervalMin: Int {
-    min(Self.intervalRangeMin.upperBound, max(Self.intervalRangeMin.lowerBound, intervalMin))
-  }
+  var boundedIntervalMin: Int { Self.intervalRangeMin.clamp(intervalMin) }
   /// Creates disabled, quiet notification defaults.
   public init() {}
   /**

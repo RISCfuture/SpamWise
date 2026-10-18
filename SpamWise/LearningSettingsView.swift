@@ -12,38 +12,46 @@ struct LearningSettingsView: View {
 
   var body: some View {
     Section {
-      DisclosureGroup("Learning from corrections") {
-        Toggle("Match explicitly junked campaigns", isOn: settings.advancedBinding(\.fingerprints))
-        Toggle("Use Bayes as supporting evidence", isOn: settings.advancedBinding(\.bayes))
-        Toggle("Use learned evidence weights", isOn: settings.advancedBinding(\.learnedWeights))
-        Text(
-          "Learning needs reviewed good and junk examples. Your sender rules always take precedence."
-        )
-        .foregroundStyle(.secondary)
-        DomainSuggestionsView(shared: shared, rules: rules, activity: activity)
-      }
+      Toggle(
+        "Recognize campaigns you marked as Junk",
+        isOn: settings.advancedBinding(\.fingerprints)
+      )
+      Toggle("Learn from words in corrected mail", isOn: settings.advancedBinding(\.bayes))
+      Toggle(
+        "Learn which evidence matters most",
+        isOn: settings.advancedBinding(\.learnedWeights)
+      )
+    } header: {
+      Text("Learning from corrections")
+    } footer: {
+      Text(
+        """
+        SpamWise learns from mail you mark Good or Junk once it has enough of each. Your sender \
+        rules always come first.
+        """
+      )
+      .foregroundStyle(.secondary)
     }
+    DomainSuggestionsView(shared: shared, rules: rules, activity: activity)
     Section {
-      DisclosureGroup("Evaluation data") {
-        LabeledContent(
-          "Reviewed labels",
-          value: shared.state.reviewedLabels.count.formatted()
-        )
-        Toggle(
-          "Retain reviewed text for evaluation export",
-          isOn: settings.advancedBinding(\.retainReviewedContent)
-        )
-        Text(
-          """
-          Retains up to 500 bounded reviewed messages locally. Turning this off removes previously \
-          retained text; labels and derived learning remain.
-          """
-        )
-        .foregroundStyle(.secondary)
-        Button("Export reviewed labels…") { exporting = true }
-          .disabled(shared.state.reviewedLabels.isEmpty)
-        StatusLabel(status: exportStatus)
-      }
+      LabeledContent("Reviewed labels", value: shared.state.reviewedLabels.count.formatted())
+      Toggle(
+        "Retain reviewed text for evaluation export",
+        isOn: settings.advancedBinding(\.retainReviewedContent)
+      )
+      Button("Export reviewed labels…") { exporting = true }
+        .disabled(shared.state.reviewedLabels.isEmpty)
+      StatusLabel(status: exportStatus)
+    } header: {
+      Text("Evaluation data")
+    } footer: {
+      Text(
+        """
+        Keeps the text of up to \(RetentionLimits.reviewedLabels) reviewed messages on this Mac \
+        for export. Turning this off deletes the kept text; labels and learning remain.
+        """
+      )
+      .foregroundStyle(.secondary)
     }
     .fileExporter(
       isPresented: $exporting,
@@ -71,27 +79,27 @@ private struct DomainSuggestionsView: View {
   var body: some View {
     let suggestions = suggestions
     if !suggestions.isEmpty {
-      Text("Suggested domain preferences").font(.headline)
-        .frame(maxWidth: .infinity, alignment: .leading)
-      ForEach(suggestions) { suggestion in
-        LabeledContent {
-          Button(suggestion.label == .inbox ? "Allow domain" : "Block domain") {
-            rules.saveSuggestedRule(
-              domain: suggestion.domain,
-              disposition: suggestion.label == .inbox ? .allow : .block
+      Section("Suggested domain rules") {
+        ForEach(suggestions) { suggestion in
+          LabeledContent {
+            Button(suggestion.label == .inbox ? "Allow domain" : "Block domain") {
+              rules.saveSuggestedRule(
+                domain: suggestion.domain,
+                disposition: suggestion.label == .inbox ? .allow : .block
+              )
+            }
+          } label: {
+            Text(suggestion.domain)
+            Text(
+              "Known senders: \(senderCounts[suggestion.domain, default: 0], format: .number)"
             )
           }
-        } label: {
-          Text(suggestion.domain)
-          Text(
-            "Known senders: \(senderCounts[suggestion.domain, default: 0], format: .number)"
-          )
         }
+        OperationStatusView(operation: rules.senderRules)
       }
-      OperationStatusView(operation: rules.senderRules)
-        .task(id: Set(suggestions.map(\.domain))) {
-          senderCounts = await activity.knownSenderCounts(atDomains: Set(suggestions.map(\.domain)))
-        }
+      .task(id: Set(suggestions.map(\.domain))) {
+        senderCounts = await activity.knownSenderCounts(atDomains: Set(suggestions.map(\.domain)))
+      }
     }
   }
 }

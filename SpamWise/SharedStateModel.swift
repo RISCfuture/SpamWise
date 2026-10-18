@@ -25,6 +25,8 @@ import SpamWiseCore
   var spending: MonthlySpending?
   /// Whether the first reload finished.
   private(set) var hasLoadedState: Bool
+  /// Whether settings were read from storage, so edits never write defaults over them.
+  private(set) var hasLoadedSettings: Bool
   /// Shared storage problems the user should know about.
   private(set) var storageStatus: OperationStatus?
   /// Changes whenever the Activity log does.
@@ -62,6 +64,7 @@ import SpamWiseCore
   init(store: Store?, reportsMissingStore: Bool = true) {
     self.store = store
     hasLoadedState = store == nil
+    hasLoadedSettings = store == nil && !reportsMissingStore
     if store == nil, reportsMissingStore {
       storageStatus = .failure(OperationFailure(SharedStorageError.unavailable))
     }
@@ -73,6 +76,7 @@ import SpamWiseCore
     guard let store else { return }
     do {
       try await reloadChangedSlices(from: store)
+      hasLoadedSettings = true
       await reloadSpendingIfChanged(from: store)
       try await checkDigest(store)
       if case .failure = storageStatus, !needsRecovery { storageStatus = nil }

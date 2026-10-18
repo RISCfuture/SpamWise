@@ -11,33 +11,39 @@ struct GeneralSettingsView: View {
     Form {
       StartupSettingsView()
       UpdateSettingsView()
-      Section("Filtering") {
+      Section {
         Picker("Filtering strength", selection: settings.binding(\.strength)) {
           ForEach(FilteringStrength.allCases, id: \.self) { strength in
             Text(strength.localizedTitle).tag(strength)
           }
         }
-        Text("Confidence thresholds are provisional until calibrated with reviewed mail.")
-          .foregroundStyle(.secondary)
         Picker("Review treatment", selection: settings.binding(\.review)) {
           Text("Orange flag (keep in Inbox)").tag(ReviewTreatment.orangeFlag)
           Text("Orange background (keep in Inbox)").tag(ReviewTreatment.orangeBackground)
         }
         DryRunToggle(settings: settings, mail: model.mail, imap: model.imap)
-        Text(
-          "Previewed mail keeps its recorded decision after dry run ends. Correct it from Activity to act on it."
-        )
-        .foregroundStyle(.secondary)
         Toggle(
           "Mark as read after a confirmed Junk move",
           isOn: settings.mailBinding(\.markJunkRead)
         )
-      }
-      Section("Review") {
-        NotificationSettingsView(notifications: model.notifications, settings: settings)
-        Toggle("Show a weekly Review digest", isOn: settings.advancedBinding(\.weeklyDigest))
+      } header: {
+        Text("Filtering")
+      } footer: {
         Text(
-          "A local summary of unresolved Review items from the last seven days. No email is sent."
+          """
+          In a dry run, Activity shows what SpamWise would do and mail stays where it is. Mail \
+          checked during a dry run keeps that decision; correct it in Activity to move it.
+          """
+        )
+        .foregroundStyle(.secondary)
+      }
+      Section {
+        Toggle("Show a weekly Review digest", isOn: settings.advancedBinding(\.weeklyDigest))
+      } header: {
+        Text("Review")
+      } footer: {
+        Text(
+          "Each week, lists Review messages from the last \(ReviewDigest.lookbackDays) days that you haven’t resolved. Nothing is emailed."
         )
         .foregroundStyle(.secondary)
       }

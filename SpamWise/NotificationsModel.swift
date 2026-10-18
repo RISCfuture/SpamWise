@@ -6,7 +6,7 @@ import SpamWiseCore
 @MainActor @Observable final class NotificationsModel {
   /// Notification permission, as last read.
   private(set) var permission = String(localized: "Notifications not requested")
-  /// Saving notification preferences.
+  /// Turning notifications on or off.
   let save = TrackedOperation()
   /// The latest delivery failure, until a delivery succeeds.
   private(set) var deliveryFailure: OperationFailure?
@@ -26,17 +26,25 @@ import SpamWiseCore
     permission = await center.status()
   }
 
-  /// Saves `preferences`, asking for permission first when notifications are being enabled.
-  func savePreferences(_ preferences: NotificationPreferences) {
+  /**
+   Turns summary notifications on or off, asking for permission before turning them on.
+
+   Only activity after they are turned on is announced.
+   */
+  func setEnabled(_ enabled: Bool) {
     save.run { [self] in
       let store = try services.requireStore()
-      if preferences.enabledSince != nil {
+      if enabled {
         guard !services.uiTesting, try await center.authorize() else {
           permission = String(localized: "Notifications denied in System Settings")
           return nil
         }
       }
-      try await StateRepository.editSettings(store) { $0.mailOptions.notifications = preferences }
+      let enabledSince: Date? = enabled ? .now : nil
+      try await StateRepository.editSettings(store) {
+        $0.mailOptions.notifications.enabledSince = enabledSince
+      }
+      shared.state.settings.mailOptions.notifications.enabledSince = enabledSince
       await shared.refresh()
       await refreshPermission()
       return nil

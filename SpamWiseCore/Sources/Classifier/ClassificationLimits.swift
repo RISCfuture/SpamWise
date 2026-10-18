@@ -20,5 +20,7 @@ public enum ClassificationLimits {
 
 extension ClosedRange {
   /// Returns `value` limited to this range.
-  func clamp(_ value: Bound) -> Bound { Swift.min(upperBound, Swift.max(lowerBound, value)) }
+  package func clamp(_ value: Bound) -> Bound {
+    Swift.min(upperBound, Swift.max(lowerBound, value))
+  }
 }

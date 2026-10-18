@@ -1,78 +1,139 @@
 import SwiftUI
 import SpamWiseCore
 
+/// The Spamhaus service, its terms, and its query key or resolver; lookups wait for the terms.
 struct SpamhausSettingsView: View {
-  @Binding var configuration: ExternalEvidenceSettings
+  let settings: SettingsModel
   let credentials: CredentialsModel
-  @State private var key = ""
 
+  private var evidence: ExternalEvidenceSettings { settings.evidence }
   private var transport: Binding<SpamhausTransport> {
     Binding(
-      get: { configuration.spamhausTransport ?? .publicDNS },
-      set: {
-        configuration.spamhausTransport = $0
-        configuration.termsAcknowledged = false
-      }
+      get: { evidence.spamhausTransport ?? .publicDNS },
+      set: { settings.selectSpamhausService($0) }
     )
   }
 
   var body: some View {
-    Picker("Spamhaus service", selection: transport) {
-      Text("HTTPS subscription or trial").tag(SpamhausTransport.https)
-        .accessibilityIdentifier("spamhaus.transport.https")
-      Text("Public DNS mirrors").tag(SpamhausTransport.publicDNS)
-        .accessibilityIdentifier("spamhaus.transport.publicDNS")
+    Section {
+      Group {
+        Picker("Spamhaus service", selection: transport) {
+          Text("HTTPS subscription or trial").tag(SpamhausTransport.https)
+            .accessibilityIdentifier("spamhaus.transport.https")
+          Text("Public DNS mirrors").tag(SpamhausTransport.publicDNS)
+            .accessibilityIdentifier("spamhaus.transport.publicDNS")
+        }
+        .accessibilityIdentifier("spamhaus.transport")
+        if evidence.spamhausTransport == .https {
+          SpamhausKeyEntry(credentials: credentials)
+        } else {
+          ResolverAddressField(draft: settings.resolverAddress)
+        }
+        Toggle(
+          "I meet the lookup service’s usage terms",
+          isOn: settings.evidenceBinding(\.termsAcknowledged)
+        )
+        .accessibilityIdentifier("spamhaus.consent")
+        if !evidence.termsAcknowledged {
+          StatusLabel(
+            status: .failure(
+              OperationFailure(
+                message: String(localized: "No lookups are made until you accept the terms.")
+              )
+            ),
+            identifier: "spamhaus.consentRequired"
+          )
+        }
+      }.disabled(settings.settings.mailOptions.localOnly)
+    } header: {
+      Text("Spamhaus")
+    } footer: {
+      SpamhausFooter(usesHTTPS: evidence.spamhausTransport == .https)
     }
-    .accessibilityIdentifier("spamhaus.transport")
-    if configuration.spamhausTransport == .https {
-      Link(
-        "Review HTTPS access requirements",
-        destination: URL(
-          string:
-            "https://docs.spamhaus.com/datasets/docs/source/70-access-methods/web-query-service/000-intro.html"
-        )!
-      )
-      Text("Requires DNS Blocklists via HTTPS access. Free DNS-query keys may not include it.")
-        .foregroundStyle(.secondary)
-      SecureField("Spamhaus HTTPS query key", text: $key)
-        .accessibilityIdentifier("spamhaus.key")
-      Button("Save query key") {
-        credentials.saveSpamhausKey(key); key = ""
-      }
+  }
+}
+
+private struct SpamhausKeyEntry: View {
+  let credentials: CredentialsModel
+  @State private var key = ""
+
+  var body: some View {
+    SecureField("Spamhaus HTTPS query key", text: $key, prompt: Text("Query key"))
+      .accessibilityIdentifier("spamhaus.key")
+      .onSubmit(save)
+    Button("Save query key", action: save)
       .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
       .accessibilityIdentifier("spamhaus.saveKey")
-      OperationStatusView(operation: credentials.spamhausKey, identifier: "spamhaus.keyStatus")
-    } else {
-      Link(
-        "Review Spamhaus usage terms",
-        destination: SpamhausConfiguration.termsURL
-      )
-      TextField("DNS resolver address", text: $configuration.resolverAddress)
-    }
-    Toggle("I meet the lookup service’s usage terms", isOn: $configuration.termsAcknowledged)
-      .accessibilityIdentifier("spamhaus.consent")
-    Text("Shares sender and link domains with the selected service. Disabled in local-only mode.")
-      .foregroundStyle(.secondary)
+    OperationStatusView(operation: credentials.spamhausKey, identifier: "spamhaus.keyStatus")
       .onAppear { credentials.refreshSpamhausKeyStatus() }
+  }
+
+  private func save() {
+    guard !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    credentials.saveSpamhausKey(key)
+    key = ""
+  }
+}
+
+private struct ResolverAddressField: View {
+  @Bindable var draft: SettingDraft<String>
+
+  var body: some View {
+    TextField(
+      "DNS resolver address",
+      text: $draft.value,
+      prompt: Text(verbatim: ExternalEvidenceSettings().resolverAddress)
+    )
+    .commitsDraft(draft)
+    if !draft.isAcceptable {
+      StatusLabel(
+        status: .failure(
+          OperationFailure(
+            message: String(
+              localized:
+                "Not saved. Enter an IPv4 address, such as \(ExternalEvidenceSettings().resolverAddress)."
+            )
+          )
+        )
+      )
+    }
+  }
+}
+
+private struct SpamhausFooter: View {
+  private static let accessRequirementsURL = URL(
+    string:
+      "https://docs.spamhaus.com/datasets/docs/source/70-access-methods/web-query-service/000-intro.html"
+  )
+  let usesHTTPS: Bool
+
+  var body: some View {
+    VStack(alignment: .leading) {
+      Text("Sender and link domains are shared with the selected service.")
+      if usesHTTPS {
+        Text(
+          "The HTTPS service needs a subscription or trial key; free DNS keys may not include it."
+        )
+        if let url = Self.accessRequirementsURL {
+          Link("Review HTTPS access requirements", destination: url)
+        }
+      } else {
+        Link("Review Spamhaus usage terms", destination: SpamhausConfiguration.termsURL)
+      }
+    }
+    .foregroundStyle(.secondary)
   }
 }
 
 #Preview("HTTPS") {
-  @Previewable @State var configuration = PreviewHelper.spamhaus(.https)
-  Form {
-    SpamhausSettingsView(
-      configuration: $configuration,
-      credentials: PreviewHelper.model().credentials
-    )
-  }.formStyle(.grouped)
+  let model = PreviewHelper.model()
+  model.shared.state.settings.advancedOptions.externalEvidence = PreviewHelper.spamhaus(.https)
+  return Form { SpamhausSettingsView(settings: model.settings, credentials: model.credentials) }
+    .formStyle(.grouped)
 }
-
 #Preview("Public DNS") {
-  @Previewable @State var configuration = PreviewHelper.spamhaus(.publicDNS)
-  Form {
-    SpamhausSettingsView(
-      configuration: $configuration,
-      credentials: PreviewHelper.model().credentials
-    )
-  }.formStyle(.grouped)
+  let model = PreviewHelper.model()
+  model.shared.state.settings.advancedOptions.externalEvidence = PreviewHelper.spamhaus(.publicDNS)
+  return Form { SpamhausSettingsView(settings: model.settings, credentials: model.credentials) }
+    .formStyle(.grouped)
 }

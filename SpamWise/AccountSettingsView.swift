@@ -6,11 +6,6 @@ struct AccountSettingsView: View {
 
   var body: some View {
     Form {
-      ModelSettingsView(
-        settings: model.settings,
-        shared: model.shared,
-        credentials: model.credentials
-      )
       IMAPSettingsView(
         settings: model.settings,
         imap: model.imap,
