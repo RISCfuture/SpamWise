@@ -3,91 +3,124 @@ import Synchronization
 import Testing
 import SpamWiseCore
 @testable import MailIntegration
-@Test func `escapes AppleScript literals so they cannot become commands`() {
-  #expect(
-    MailScripts.literal("a\" & do shell script \"bad") == "\"a\\\" & do shell script \\\"bad\""
-  )
-  #expect(MailScripts.literal("a\\b").contains("a\\\\b"))
-  #expect(!MailScripts.literal("a\nb").contains("\n"))
-}
-@Test func `requires account scoped identity and exact source in Mail scripts`() throws {
-  #expect(throws: IntegrationError.self) {
-    try MailScripts.lookup(.init(accountID: nil, contentHash: "x"))
-  }
-  let identity = MessageIdentity(accountID: "account", messageID: "<id>", contentHash: "x")
-  let script = try MailScripts.lookup(identity, action: .moveToJunk, expectedSource: "safe source")
-  #expect(script.contains("count of matches) is not 1"))
-  #expect(script.contains("source of targetMessage"))
-  #expect(script.contains("mailboxes of junk mailbox"))
-}
-actor StubAppleEvents: AppleEventRunner {
-  var responses: [ScriptValue]
-  private(set) var moves = 0
-  init(_ response: ScriptValue) { responses = [response] }
-  init(responses: [ScriptValue]) { self.responses = responses }
-  func run(_ source: String) async throws -> ScriptValue {
-    if source.contains("move targetMessage") { moves += 1 }
-    return responses.removeFirst()
-  }
-}
-@Test func `rejects changed source and unstable Mail probe restoration`() async throws {
-  let runner = StubAppleEvents(
-    .list([.string("account"), .string("Inbox"), .integer(1), .string("id"), .string("changed")])
-  )
+
+@Test func `refuses unscoped identities and unverifiable moves before contacting Mail`() async {
+  let runner = StubAppleEvents([:])
   let adapter = AppleMailAdapter(runner: runner)
-  await #expect(throws: IntegrationError.staleMessage) {
-    _ = try await adapter.lookup(
-      .init(accountID: "account", messageID: "id", contentHash: "expected")
-    )
+  await #expect(throws: IntegrationError.accountUnresolved) {
+    try await adapter.perform(.orangeFlag, for: .init(accountID: nil, contentHash: "x"))
   }
-  let raw = "From: probe@example.org\r\nSubject: [SpamWise Probe] Test\r\n\r\nDisposable probe."
-  let selected = ScriptValue.list([
-    .string("account"), .string("Inbox"), .integer(1), .string("id"), .string(raw)
+  await #expect(throws: IntegrationError.missingMessageID) {
+    try await adapter.perform(.moveToJunk, for: MailReply.identity(messageID: nil))
+  }
+  #expect(await runner.requests.isEmpty)
+}
+
+@Test func `acts only in the recorded mailbox unless the user corrects the message`() async throws {
+  let receipts = MailReply.message(mailbox: "Receipts", localID: 7)
+  let runner = StubAppleEvents([
+    .findMessages: [MailReply.found(), MailReply.found(), MailReply.found(receipts)],
+    .applyAction: [MailReply.applied],
+    .observeMessages: [MailReply.found(MailReply.message(mailbox: "Junk", localID: 8))]
   ])
-  let unconfirmed = AppleMailAdapter(
-    runner: StubAppleEvents(responses: [selected, .boolean(true), .boolean(false)]),
-    moveSettlingTime: .zero
+  let adapter = AppleMailAdapter(runner: runner, observationInterval: .zero)
+  await #expect(throws: IntegrationError.messageMoved) {
+    try await adapter.perform(.moveToJunk, for: MailReply.identity())
+  }
+  #expect(await runner.appliedCount == 0)
+  let receipt = try await adapter.performCorrection(.moveToJunk, for: MailReply.identity())
+  #expect(await runner.searchedMailboxes == ["Inbox", "Inbox", nil])
+  #expect(await runner.moves.map(\.mailbox) == ["Receipts"])
+  #expect(receipt.confirmed)
+  #expect(receipt.updatedIdentity?.mailbox == "Junk")
+  #expect(receipt.updatedIdentity?.localID == 8)
+}
+
+@Test func `resolves duplicate Message-IDs by content and local ID`() throws {
+  let identity = MailReply.identity(localID: 2)
+  let other = try MailRow(MailReply.message(localID: 1, source: "From: a@example.org\n\nOther"))
+  let first = try MailRow(MailReply.message(localID: 2))
+  let second = try MailRow(MailReply.message(localID: 3))
+  #expect(try AppleMailAdapter.select(identity, from: [other, second])?.location.localID == 3)
+  #expect(try AppleMailAdapter.select(identity, from: [first, second])?.location.localID == 2)
+  #expect(throws: IntegrationError.ambiguous) {
+    try AppleMailAdapter.select(MailReply.identity(localID: nil), from: [first, second])
+  }
+  #expect(throws: IntegrationError.staleMessage) {
+    try AppleMailAdapter.select(identity, from: [other])
+  }
+  let oversized = try MailRow(MailReply.message(localID: 4, source: nil))
+  #expect(throws: IntegrationError.messageTooLarge) {
+    try AppleMailAdapter.select(identity, from: [other, oversized])
+  }
+  #expect(try AppleMailAdapter.select(identity, from: []) == nil)
+}
+
+@Test func `reports moves as unknown once Mail may have applied them`() async throws {
+  let unobserved = StubAppleEvents([
+    .findMessages: [MailReply.found(MailReply.message())],
+    .applyAction: [MailReply.applied],
+    .observeMessages: [MailReply.found()]
+  ])
+  let polling = Task {
+    try await AppleMailAdapter(runner: unobserved, observationInterval: .milliseconds(5))
+      .perform(.moveToJunk, for: MailReply.identity())
+  }
+  while await unobserved.appliedCount == 0 { await Task.yield() }
+  polling.cancel()
+  #expect(try await polling.value.confirmed == false)
+  let slowMove = StubAppleEvents(
+    [.findMessages: [MailReply.found(MailReply.message())], .applyAction: [MailReply.applied]],
+    delays: [.applyAction: .seconds(10)]
   )
-  await #expect(throws: IntegrationError.staleMessage) {
-    try await unconfirmed.perform(
-      .moveToJunk,
-      for: MessageIdentity(
-        accountID: "account",
-        messageID: "id",
-        contentHash: stableHash(Data(raw.utf8))
-      )
-    )
+  let limited = AppleMailAdapter(runner: slowMove, callTimeLimit: .milliseconds(50))
+  #expect(try await limited.perform(.moveToJunk, for: MailReply.identity()).confirmed == false)
+  let slowRead = StubAppleEvents(
+    [.findMessages: [MailReply.found(MailReply.message())]],
+    delays: [.findMessages: .seconds(10)]
+  )
+  await #expect(throws: IntegrationError.timedOut) {
+    try await AppleMailAdapter(runner: slowRead, callTimeLimit: .milliseconds(50))
+      .lookup(MailReply.identity())
   }
-  let unstable = StubAppleEvents(responses: [
-    selected, .boolean(true), selected, .boolean(true), .boolean(false)
+}
+
+@Test func `verifies the disposable probe through each settled move`() async throws {
+  let inbox = MailReply.message(), junk = MailReply.message(mailbox: "Junk", localID: 2)
+  let restored = MailReply.message(localID: 3)
+  let unstable = StubAppleEvents([
+    .selectedRows: [MailReply.selection(inbox)],
+    .findMessages: [MailReply.found(inbox)],
+    .applyAction: [MailReply.applied],
+    .observeMessages: [MailReply.found(inbox), MailReply.found()]
   ])
-  let probe = AppleMailAdapter(runner: unstable, moveSettlingTime: .zero)
-  await #expect(throws: IntegrationError.staleMessage) {
+  let probe = AppleMailAdapter(
+    runner: unstable,
+    moveSettlingTime: .milliseconds(50),
+    observationInterval: .zero
+  )
+  await #expect(throws: IntegrationError.actionUnconfirmed) {
     try await probe.testDisposableMessage()
   }
-  #expect(await unstable.moves == 1)
-  let ordinary = ScriptValue.list([
-    .string("account"), .string("Inbox"), .integer(1), .string("id"),
-    .string(raw.replacingOccurrences(of: "[SpamWise Probe]", with: "Ordinary"))
-  ])
+  #expect(await unstable.moves.count == 1)
+  let ordinary = MailReply.selection(MailReply.message(source: "From: a@example.org\r\n\r\nMail"))
   await #expect(throws: IntegrationError.notProbeMessage) {
-    try await AppleMailAdapter(runner: StubAppleEvents(ordinary)).testDisposableMessage()
+    try await AppleMailAdapter(runner: StubAppleEvents([.selectedRows: [ordinary]]))
+      .testDisposableMessage()
   }
-  let junk = ScriptValue.list([
-    .string("account"), .string("Junk"), .integer(2), .string("id"), .string(raw)
+  let settled = StubAppleEvents([
+    .selectedRows: [MailReply.selection(inbox)],
+    .findMessages: [MailReply.found(inbox), MailReply.found(junk), MailReply.found(restored)],
+    .applyAction: [MailReply.applied],
+    .observeMessages: [
+      MailReply.found(inbox), MailReply.found(junk), MailReply.found(junk),
+      MailReply.found(restored)
+    ]
   ])
-  let restored = ScriptValue.list([
-    .string("account"), .string("Inbox"), .integer(3), .string("id"), .string(raw)
-  ])
-  let settled = StubAppleEvents(responses: [
-    selected, .boolean(true), selected, .boolean(true), .boolean(true),
-    junk, .boolean(true), .boolean(true), restored, .boolean(true), .boolean(true), .boolean(true)
-  ])
-  #expect(
-    try await AppleMailAdapter(runner: settled, moveSettlingTime: .zero).testDisposableMessage()
-      == "account"
-  )
-  #expect(await settled.moves == 2)
+  let adapter = AppleMailAdapter(runner: settled, observationInterval: .zero)
+  #expect(try await adapter.testDisposableMessage() == "account")
+  #expect(await settled.moves.map(\.mailbox) == ["Inbox", "Junk"])
+  #expect(await settled.searchedMailboxes == ["Inbox", "Junk", "Inbox"])
 }
 @Test func `previews extension mail only on the chosen all-account Apple Mail route`() async throws
 {
@@ -138,13 +171,43 @@ actor StubAppleEvents: AppleEventRunner {
   }
   #expect(previewed?.outcome == .dryRun)
   #expect(calls.value == 1)
-
   var settings = try await StateRepository.load(store).settings
   #expect(FilteringStatus(settings: settings, mailAutomation: .granted) == .extensionPreview)
   settings.mailOptions.accountIDs = ["work"]
   #expect(FilteringStatus(settings: settings, mailAutomation: .granted) == .extensionScoped)
   #expect(!FilteringStatus(settings: settings, mailAutomation: .granted).allowsAutomaticChecks)
 }
+
+@Test @MainActor
+func `invokes compiled handlers with typed arguments and private error numbers`() throws {
+  let library = try AppleScriptLibrary(
+    source: """
+      on echovalues(a, b, c)
+          return {a, b, c}
+      end echovalues
+      on fail(n)
+          error "Failed" number n
+      end fail
+      on unary()
+          return true
+      end unary
+      """
+  )
+  #expect(try library.call("unary", []) == .boolean(true))
+  #expect(
+    try library.call("echovalues", [.string("Quot\"ed"), .list([.integer(5)]), .boolean(false)])
+      == .list([.string("Quot\"ed"), .list([.integer(5)]), .boolean(false)])
+  )
+  for failure in MailScriptError.allCases {
+    let error = try #require(throws: AppleScriptFailure.self) {
+      try library.call("fail", [.integer(failure.rawValue)])
+    }
+    #expect(error.number == failure.rawValue)
+    #expect(error.integrationError == failure.integrationError)
+  }
+  _ = try AppleScriptLibrary(source: MailScripts.library)
+}
+
 @Test func `invokes completion exactly once under concurrent calls`() async {
   let count = Counter()
   let completion = CompletionOnce<Int> { _ in count.increment() }
@@ -158,7 +221,7 @@ final class Counter: Sendable {
   var value: Int { storage.withLock { $0 } }
   func increment() { storage.withLock { $0 += 1 } }
 }
-@Test @MainActor func `compiles generated scripts and decodes Apple Event booleans`() throws {
+@Test @MainActor func `decodes Apple Event booleans`() throws {
   for (source, expected) in [
     ("return true", ScriptValue.boolean(true)),
     ("return false", .boolean(false)),
@@ -167,52 +230,9 @@ final class Counter: Sendable {
     let script = try #require(NSAppleScript(source: source))
     #expect(ScriptValue.decode(unsafe script.executeAndReturnError(nil)) == expected)
   }
-  let identity = MessageIdentity(
-    accountID: "test-account",
-    messageID: "test-id",
-    contentHash: "test"
-  )
-  let scripts = [
-    try MailScripts.markRead(identity, expectedSource: "From: x\n\nbody"),
-    MailScripts.folders, MailScripts.destinations(accountID: "test-account"),
-    try MailScripts.folderPage(
-      .init(accountID: "account", path: ["Parent", "Quot\"ed"]),
-      offset: 0,
-      limit: 20,
-      since: Date()
-    ),
-    MailScripts.accounts, MailScripts.selected, MailScripts.selectedBatch,
-    MailScripts.recent(limit: 5, offset: 20),
-    MailScripts.accountPage(accountID: "test-account", offset: 20, limit: 5),
-    MailScripts.accountPage(accountID: "test-account", offset: 0, limit: 5, role: "junk mailbox"),
-    MailScripts.accountPage(
-      accountID: "test-account",
-      offset: 0,
-      limit: 5,
-      role: "sent mailbox",
-      headersOnly: true
-    ),
-    MailScripts.accountPage(accountID: "test-account", offset: 0, limit: 5, since: Date()),
-    MailScripts.accountPage(accountID: "test-account", offset: 20, limit: 5, before: Date()),
-    try MailScripts.resolve(identity, operation: "open targetMessage\nreturn true"),
-    try MailScripts.lookup(identity),
-    try MailScripts.lookup(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody"),
-    try MailScripts.lookup(identity, action: .orangeFlag, expectedSource: "From: x\n\nbody"),
-    try MailScripts.lookup(identity, action: .orangeBackground, expectedSource: "From: x\n\nbody"),
-    try MailScripts.verification(identity, action: .moveToJunk, expectedSource: "From: x\n\nbody"),
-    try MailScripts.verification(identity, action: .orangeFlag, expectedSource: "From: x\n\nbody")
-  ]
-  for source in scripts {
-    let script = try #require(NSAppleScript(source: source))
-    var error: NSDictionary?
-    let compiled = unsafe script.compileAndReturnError(&error)
-    #expect(compiled, Comment(rawValue: error?.description ?? "Script compiles"))
-  }
 }
 
-@Test func `resumes Inbox sweeps past unreadable messages and wraps after the last page`()
-  async throws
-{
+@Test func `persists Inbox sweep progress and wraps after the last page`() async throws {
   let store = try testStore()
   try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
     $0.complete(count: 20, total: 21)
@@ -229,21 +249,34 @@ final class Counter: Sendable {
   #expect(health["account"]?.nextOffset == 0)
   #expect(health["account"]?.lastCompletedSweep != nil)
   #expect(health["other"]?.failure == "unavailable")
-  let oversized = ScriptValue.list([
-    .string("account"), .string("Inbox"), .integer(1), .string("oversized"),
-    .string(String(repeating: "x", count: 2_000_001))
-  ])
-  let readable = ScriptValue.list([
-    .string("account"), .string("Inbox"), .integer(2), .string("readable"),
-    .string("From: person@example.org\nSubject: Later mail\n\nHello")
-  ])
+}
+
+@Test func `skips unreadable messages in pages and selections`() async throws {
+  let oversized = MailReply.message(
+    localID: 1,
+    messageID: "oversized",
+    source: String(repeating: "x", count: MailScripts.maximumMessageBytes + 1)
+  )
+  let unreadable = MailReply.message(localID: 3, messageID: "missing", source: nil)
+  let readable = MailReply.message(
+    localID: 2,
+    messageID: "readable",
+    source: "From: person@example.org\nSubject: Later mail\n\nHello"
+  )
   let partial = AppleMailAdapter(
-    runner: StubAppleEvents(.list([.integer(2), .list([oversized, readable])]))
+    runner: StubAppleEvents([
+      .accountPage: [MailReply.page(total: 3, [oversized, readable])],
+      .selectedRows: [MailReply.selection(unreadable, readable)]
+    ])
   )
   let page = try await partial.inboxPage(accountID: "account", offset: 0, limit: 20)
   #expect(page.messages.map { $0.identity.localID } == [2])
   #expect(page.visitedCount == 2)
   #expect(page.unavailableCount == 1)
+  let selection = try await partial.selectedMessages()
+  #expect(selection.messages.map { $0.identity.localID } == [2])
+  #expect(selection.unavailableCount == 1)
+  let store = try testStore()
   try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
     $0.complete(count: page.visitedCount, total: 3, unavailable: page.unavailableCount)
   }
@@ -256,11 +289,8 @@ final class Counter: Sendable {
   #expect(completed.unavailableCount == 1)
   completed.complete(count: 0, total: 0)
   #expect(completed.unavailableCount == 0)
-  let unreadable = ScriptValue.list([
-    .string("account"), .string("Inbox"), .integer(3), .string("missing"), .boolean(false)
-  ])
   let allUnreadable = try AppleMailAdapter.decodePage(
-    .list([.integer(3), .list([unreadable])]),
+    MailReply.page(total: 3, [unreadable]),
     accountID: "account",
     offset: 2,
     limit: 20
@@ -268,9 +298,9 @@ final class Counter: Sendable {
   #expect(allUnreadable.messages.isEmpty)
   #expect(allUnreadable.visitedCount == 1)
   for accountID in ["other", ""] {
-    #expect(throws: IntegrationError.ambiguous) {
+    #expect(throws: IntegrationError.mailboxUnresolved) {
       try AppleMailAdapter.decodePage(
-        .list([.integer(1), .list([unreadable])]),
+        MailReply.page(total: 1, [unreadable]),
         accountID: accountID,
         offset: 0,
         limit: 20
@@ -279,7 +309,7 @@ final class Counter: Sendable {
   }
   #expect(throws: IntegrationError.scriptFailed) {
     try AppleMailAdapter.decodePage(
-      .list([.integer(1), .list([])]),
+      MailReply.page(total: 1, []),
       accountID: "account",
       offset: 0,
       limit: 20

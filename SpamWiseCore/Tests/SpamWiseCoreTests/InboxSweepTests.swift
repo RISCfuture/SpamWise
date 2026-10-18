@@ -8,44 +8,31 @@ private actor InboxFixtureEvents: AppleEventRunner {
   private static let earlierMessages = 5
   private var localIDs: [Int]
   private var arrivals: (read: Int, localIDs: ClosedRange<Int>)?
-  private(set) var scripts: [String] = []
+  private(set) var requests: [MailRequest] = []
   init(count: Int) { localIDs = Array((1...count).reversed()) }
   /// Messages arrive an hour apart, and messages 1 through 5 arrive before the boundary.
   static func received(_ localID: Int) -> Date {
     boundary.addingTimeInterval(Double(localID - earlierMessages - 1) * 3600)
   }
-  private static func number(after marker: String, in source: String) -> Int? {
-    guard let start = source.range(of: marker, options: .backwards)?.upperBound else { return nil }
-    return Int(source[start...].prefix(while: \.isNumber))
-  }
-  private static func date(_ name: String, in source: String) -> Date? {
-    guard let year = number(after: "set year of \(name) to ", in: source),
-      let month = number(after: "set month of \(name) to ", in: source),
-      let day = number(after: "set day of \(name) to ", in: source),
-      let time = number(after: "set time of \(name) to ", in: source)
-    else { return nil }
-    return Calendar.current.date(from: DateComponents(year: year, month: month, day: day))?
-      .addingTimeInterval(Double(time))
-  }
   func deliver(_ localID: Int) { localIDs.insert(localID, at: 0) }
   /// Delivers `arriving` just before the `read`th page read from now returns.
   func deliver(_ arriving: ClosedRange<Int>, duringRead read: Int) {
-    arrivals = (scripts.count + read, arriving)
+    arrivals = (requests.count + read, arriving)
   }
-  func run(_ source: String) async throws -> ScriptValue {
-    scripts.append(source)
-    if let arrivals, arrivals.read == scripts.count { arrivals.localIDs.forEach(deliver) }
-    guard let first = Self.number(after: "set firstIndex to ", in: source),
-      let size = Self.number(after: "set lastIndex to firstIndex + ", in: source)
+  func run(_ request: MailRequest) async throws -> ScriptValue {
+    requests.append(request)
+    if let arrivals, arrivals.read == requests.count { arrivals.localIDs.forEach(deliver) }
+    guard case let .accountPage(.inbox, account, offset, size, false, since, before) = request
     else { throw IntegrationError.scriptFailed }
-    let since = Self.date("sinceDate", in: source) ?? .distantPast
-    let before = Self.date("beforeDate", in: source) ?? .distantFuture
-    let candidates = localIDs.filter { (since..<before).contains(Self.received($0)) }
-    let rows = candidates.dropFirst(first - 1).prefix(size).map { localID in
-      ScriptValue.list([
-        .string("account"), .string("Inbox"), .integer(localID), .string("id-\(localID)"),
-        .string("From: person@example.org\nSubject: Message \(localID)\n\nHello")
-      ])
+    let received = (since ?? .distantPast)..<(before ?? .distantFuture)
+    let candidates = localIDs.filter { received.contains(Self.received($0)) }
+    let rows = candidates.dropFirst(offset).prefix(size).map { localID in
+      MailReply.message(
+        account: account,
+        localID: localID,
+        messageID: "id-\(localID)",
+        source: "From: person@example.org\nSubject: Message \(localID)\n\nHello"
+      )
     }
     return .list([.integer(candidates.count), .list(Array(rows))])
   }

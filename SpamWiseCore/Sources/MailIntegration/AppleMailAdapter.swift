@@ -1,109 +1,6 @@
 public import Foundation
 public import SpamWiseCore
-import OSLog
-import Dispatch
-import CoreServices
 
-/// Sendable subset of Apple Event results used by the Mail adapter.
-public indirect enum ScriptValue: Sendable, Equatable {
-  case string(String), integer(Int), list([ScriptValue]), boolean(Bool)
-  var string: String? { if case .string(let value) = self { value } else { nil } }
-  var integer: Int? { if case .integer(let value) = self { value } else { nil } }
-  var list: [ScriptValue]? { if case .list(let value) = self { value } else { nil } }
-  static func decode(_ descriptor: NSAppleEventDescriptor) -> ScriptValue {
-    if descriptor.descriptorType == typeAEList {
-      return .list(
-        (1...max(1, descriptor.numberOfItems)).compactMap { descriptor.atIndex($0) }.map(decode)
-      )
-    }
-    if [typeBoolean, typeTrue, typeFalse].contains(descriptor.descriptorType) {
-      return .boolean(descriptor.booleanValue)
-    }
-    if [typeSInt16, typeSInt32, typeSInt64].contains(descriptor.descriptorType) {
-      return .integer(Int(descriptor.int32Value))
-    }
-    return .string(descriptor.stringValue ?? "")
-  }
-}
-/// Injectable execution boundary for Mail Apple Events.
-public protocol AppleEventRunner: Sendable {
-  /// Executes a script and returns only transferable result values.
-  func run(_ source: String) async throws -> ScriptValue
-}
-/// Serializes AppleScript execution off the UI thread and sanitizes integration failures.
-public struct SystemAppleEventRunner: AppleEventRunner {
-  @MainActor private static let initialized: Void = {
-    _ = unsafe NSAppleScript(source: "return true")?.executeAndReturnError(nil)
-  }()
-  /// Initializes AppleScript on the main actor before dispatching work to its serial executor.
-  @MainActor public init() { _ = Self.initialized }
-  /// Requests Mail Automation consent independently of a script's execution timeout.
-  public static func requestMailPermission() async throws {
-    try await AppleScriptExecutor.shared.checkPermission(askUser: true)
-  }
-  /// Reads Mail Automation consent without prompting, launching Mail or waiting for a script.
-  @concurrent public static func mailAutomationStatus() async -> MailAutomationStatus {
-    let target = NSAppleEventDescriptor(bundleIdentifier: "com.apple.mail")
-    let status = unsafe AEDeterminePermissionToAutomateTarget(
-      target.aeDesc,
-      typeWildCard,
-      typeWildCard,
-      false
-    )
-    if status == noErr { return .granted }
-    return status == procNotFound ? .mailNotRunning : .notAuthorized
-  }
-  /// Executes the supplied Mail script and returns a sendable result.
-  public func run(_ source: String) async throws -> ScriptValue {
-    try await AppleScriptExecutor.shared.run(source)
-  }
-}
-
-private actor AppleScriptExecutor {
-  static let shared = AppleScriptExecutor()
-  private let queue = DispatchSerialQueue(label: "codes.tim.SpamWise.apple-events")
-  // The actor owns this queue for its entire lifetime, including every AppleScript call.
-  nonisolated var unownedExecutor: UnownedSerialExecutor { unsafe queue.asUnownedSerialExecutor() }
-  private let logger = Logger(subsystem: "codes.tim.SpamWise", category: "AppleEvents")
-
-  func checkPermission(askUser: Bool) throws {
-    try Task.checkCancellation()
-    let target = NSAppleEventDescriptor(bundleIdentifier: "com.apple.mail")
-    let status = unsafe AEDeterminePermissionToAutomateTarget(
-      target.aeDesc,
-      typeWildCard,
-      typeWildCard,
-      askUser
-    )
-    logger.info("Mail Automation permission status: \(status)")
-    guard status == noErr else {
-      if status == procNotFound { throw IntegrationError.unavailable }
-      throw IntegrationError.permissionDenied
-    }
-    try Task.checkCancellation()
-  }
-
-  func run(_ source: String) throws -> ScriptValue {
-    try checkPermission(askUser: false)
-    guard let script = NSAppleScript(source: source) else { throw IntegrationError.scriptFailed }
-    var error: NSDictionary?
-    let result = unsafe script.executeAndReturnError(&error)
-    if let error {
-      let code = error[NSAppleScript.errorNumber] as? Int
-      logger.error("AppleScript execution failed: code \(code ?? 0)")
-      if code == -1743 || code == -10004 { throw IntegrationError.permissionDenied }
-      if code == -1701 { throw IntegrationError.ambiguous }
-      if code == -1702 { throw IntegrationError.staleMessage }
-      throw IntegrationError.scriptFailed
-    }
-    logger.info(
-      "AppleScript returned descriptor type \(result.descriptorType), items \(result.numberOfItems)"
-    )
-    try Task.checkCancellation()
-    return ScriptValue.decode(result)
-  }
-
-}
 /// A Mail account's stable scripting identifier and display name.
 public struct MailAccount: Identifiable, Sendable {
   /// Mail’s stable scripting account identifier.
@@ -118,50 +15,62 @@ public struct MailAccount: Identifiable, Sendable {
   }
 }
 
-/// Account-scoped Apple Events integration with exact-source action checks.
+/**
+ Account-scoped Apple Events integration with exact-source action checks.
+
+ Every handler call runs under a wall-clock limit. Mutating calls that pass that limit, or are
+ cancelled after they start, report an unconfirmed receipt because Mail may still apply them.
+ */
 public actor AppleMailAdapter: MailClientAdapter {
-  static let maximumPageSize = 1000
-  static let maximumMessageBytes = 2_000_000
+  /// Default wall-clock limit for one handler call.
+  public static let defaultCallTimeLimit = Duration.seconds(30)
+  /// Default longest wait for Mail to show a moved message in its destination.
+  public static let defaultMoveSettlingTime = Duration.seconds(30)
+  /// Default delay between observations of a moved message.
+  public static let defaultObservationInterval = Duration.seconds(2)
   let runner: any AppleEventRunner
-  private let moveSettlingTime: Duration
+  let callTimeLimit: Duration
+  let moveSettlingTime: Duration
+  let observationInterval: Duration
   var pageOffsets: [String: Int] = [:]
   /// Consecutive failed reads of each history cursor's current page.
   var historyPageFailures: [String: Int] = [:]
-  /// Creates an AppleMailAdapter with the supplied configuration.
-  public init(runner: any AppleEventRunner, moveSettlingTime: Duration = .seconds(30)) {
+
+  /**
+   Creates an adapter over a Mail handler runner.
+
+   - Parameters:
+     - runner: Executes Mail handler requests.
+     - callTimeLimit: Wall-clock limit for each handler call.
+     - moveSettlingTime: Longest time to wait for Mail to show a moved message.
+     - observationInterval: Delay between observations of a moved message.
+   */
+  public init(
+    runner: any AppleEventRunner,
+    callTimeLimit: Duration = defaultCallTimeLimit,
+    moveSettlingTime: Duration = defaultMoveSettlingTime,
+    observationInterval: Duration = defaultObservationInterval
+  ) {
     self.runner = runner
+    self.callTimeLimit = max(.zero, callTimeLimit)
     self.moveSettlingTime = max(.zero, moveSettlingTime)
+    self.observationInterval = max(.zero, observationInterval)
   }
-  static func envelope(_ value: ScriptValue) throws -> MailEnvelope {
-    guard let fields = value.list, fields.count == 5, let account = fields[0].string,
-      !account.isEmpty,
-      let box = fields[1].string, let id = fields[2].integer, let messageID = fields[3].string,
-      let source = fields[4].string, source.utf8.count <= maximumMessageBytes
-    else { throw IntegrationError.scriptFailed }
-    let raw = Data(source.utf8)
-    return .init(
-      identity: .init(
-        accountID: account,
-        messageID: messageID.isEmpty ? nil : messageID,
-        localID: id,
-        mailbox: box,
-        contentHash: stableHash(raw)
-      ),
-      raw: raw
-    )
-  }
-  func runFolderScript(_ source: String) async throws -> ScriptValue {
+
+  /// Runs one handler request under the adapter's wall-clock limit.
+  func invoke(_ request: MailRequest) async throws -> ScriptValue {
+    let runner = self.runner
     do {
-      return try await runner.run(source)
-    } catch IntegrationError.ambiguous {
-      throw IntegrationError.folderUnresolved
+      return try await withResourceDeadline(seconds: callTimeLimit.timeInterval) {
+        try await runner.run(request)
+      }
+    } catch ResourceDeadlineError.timeout {
+      throw IntegrationError.timedOut
     }
   }
   /// Reads Mail account identifiers and display names.
   public func accounts() async throws -> [MailAccount] {
-    guard let rows = try await runner.run(MailScripts.accounts).list else {
-      throw IntegrationError.scriptFailed
-    }
+    guard let rows = try await invoke(.accounts).list else { throw IntegrationError.scriptFailed }
     return try rows.map { row in
       guard let fields = row.list, (2...3).contains(fields.count), let id = fields[0].string,
         let name = fields[1].string
@@ -170,17 +79,12 @@ public actor AppleMailAdapter: MailClientAdapter {
       return MailAccount(id: id, name: name, addresses: addresses.compactMap(MIMEParser.address))
     }
   }
-  /// Resolves exactly one account-scoped message and rejects stale content.
-  public func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? {
-    let envelope = try Self.envelope(await runner.run(MailScripts.lookup(identity)))
-    guard envelope.identity.accountID == identity.accountID,
-      envelope.identity.contentHash == identity.contentHash
-    else { throw IntegrationError.staleMessage }
-    return envelope
-  }
+}
+
+extension AppleMailAdapter {
   /// Reads a bounded window of Inbox messages without changing mail.
   public func recentMessages(limit: Int) async throws -> [MailEnvelope] {
-    try await messages(limit: limit, role: "inbox")
+    try await messages(limit: limit, role: .inbox)
   }
   /// Reads an Inbox page within one account, optionally limited to mail received on or after `since` or before `before`, without advancing the caller's durable cursor.
   public func inboxPage(
@@ -202,19 +106,16 @@ public actor AppleMailAdapter: MailClientAdapter {
     accountID: String,
     offset: Int,
     limit: Int,
-    role: String = "inbox",
+    role: MailboxRole = .inbox,
     received: (since: Date?, before: Date?) = (nil, nil)
   ) async throws -> MailPage {
-    guard ["inbox", "junk mailbox", "sent mailbox"].contains(role) else {
-      throw IntegrationError.unavailable
-    }
-    return try Self.decodePage(
-      await runner.run(
-        MailScripts.accountPage(
+    try Self.decodePage(
+      await invoke(
+        .accountPage(
+          role: role,
           accountID: accountID,
           offset: offset,
           limit: limit,
-          role: role,
           since: received.since,
           before: received.before
         )
@@ -224,102 +125,22 @@ public actor AppleMailAdapter: MailClientAdapter {
       limit: limit
     )
   }
-
-  /// Reads a bounded window from the specified special mailbox role.
-  public func messages(limit: Int, role: String) async throws -> [MailEnvelope] {
-    guard ["inbox", "junk mailbox", "sent mailbox"].contains(role),
-      let rows = try await runner.run(MailScripts.recent(limit: limit, mailbox: role)).list
-    else { throw IntegrationError.scriptFailed }
-    return try rows.map(Self.envelope)
+  /// Reads readable messages from the first page of Mail's combined special mailbox.
+  public func messages(limit: Int, role: MailboxRole) async throws -> [MailEnvelope] {
+    try await unifiedPage(role, offset: 0, limit: limit).messages
   }
-  /// Reads exactly one message selected in Mail.
+  /// Reads exactly one readable message selected in Mail.
   public func selectedMessage() async throws -> MailEnvelope {
-    try Self.envelope(await runner.run(MailScripts.selected))
+    let selection = try await selection(maximumCount: 1)
+    guard let message = selection.messages.first else { throw IntegrationError.messageTooLarge }
+    return message
   }
   /// Captures up to fifty selected messages before any correction or move begins.
-  public func selectedMessages() async throws -> [MailEnvelope] {
-    guard let rows = try await runner.run(MailScripts.selectedBatch).list,
-      (1...50).contains(rows.count)
-    else { throw IntegrationError.ambiguous }
-    return try rows.map(Self.envelope)
-  }
-  /// Opens exactly one verified message in Mail's own viewer.
-  public func open(_ identity: MessageIdentity) async throws {
-    guard let message = try await lookup(identity),
-      let source = String(data: message.raw, encoding: .utf8)
-    else { throw IntegrationError.staleMessage }
-    _ = try await runner.run(
-      MailScripts.resolve(
-        identity,
-        operation:
-          "if (source of targetMessage) is not \(MailScripts.literal(source)) then error \"Message changed\" number -1702\nopen targetMessage\nactivate\nreturn true"
-      )
-    )
-  }
-  /// Requests an action and observes its result after allowing each move to settle.
-  public func perform(_ action: MailAction, for identity: MessageIdentity) async throws
-    -> ActionReceipt
-  {
-    guard action != .none else { return .init(confirmed: true) }
-    guard let message = try await lookup(identity),
-      let source = String(data: message.raw, encoding: .utf8)
-    else { throw IntegrationError.staleMessage }
-    try Task.checkCancellation()
-    let result = try await runner.run(
-      MailScripts.lookup(identity, action: action, expectedSource: source)
-    )
-    guard result == .boolean(true) else { throw IntegrationError.scriptFailed }
-    if action == .moveToJunk || action == .moveToInbox {
-      try await Task.sleep(for: moveSettlingTime)
-    }
-    try await verify(action, for: identity, source: source)
-    return .init(confirmed: true)
-  }
-  private func verify(_ action: MailAction, for identity: MessageIdentity, source: String)
-    async throws
-  {
-    try Task.checkCancellation()
-    let observed = try await runner.run(
-      MailScripts.verification(identity, action: action, expectedSource: source)
-    )
-    guard observed == .boolean(true) else { throw IntegrationError.staleMessage }
-  }
-  /// Marks read only after rechecking exact source and the account's current Junk membership.
-  public func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
-    guard let message = try await lookup(identity),
-      let source = String(data: message.raw, encoding: .utf8)
-    else {
-      throw IntegrationError.staleMessage
-    }
-    try Task.checkCancellation()
-    let result = try await runner.run(MailScripts.markRead(identity, expectedSource: source))
-    guard result == .boolean(true) else { throw IntegrationError.scriptFailed }
-    return .init(confirmed: true)
-  }
-  /// Imports bounded Sent history; Inbox mail needs an explicit eligibility set.
-  public func importHistory() async throws -> [String: HistoryIndex] {
-    try await importHistory(previous: [:], eligibleInbox: [:])
-  }
-  /// Optional move test: only a message deliberately named [SpamWise Probe] is eligible.
-  public func testDisposableMessage() async throws -> String {
-    let selected = try await selectedMessage()
-    let message = try MIMEParser().parse(selected.raw)
-    guard message.subject.hasPrefix("[SpamWise Probe]") else {
-      throw IntegrationError.notProbeMessage
-    }
-    guard let account = selected.identity.accountID else { throw IntegrationError.unavailable }
-    guard let source = String(data: selected.raw, encoding: .utf8) else {
-      throw IntegrationError.staleMessage
-    }
-    try await verify(.moveToInbox, for: selected.identity, source: source)
-    _ = try await perform(.moveToJunk, for: selected.identity)
-    _ = try await perform(.moveToInbox, for: selected.identity)
-    _ = try await perform(.orangeFlag, for: selected.identity)
-    try await verify(.moveToInbox, for: selected.identity, source: source)
-    return account
+  public func selectedMessages() async throws -> MailPage {
+    try await selection(maximumCount: MailScripts.maximumSelectionCount)
   }
   /// Writes raw messages to a directory without overwriting existing files.
-  public func export(role: String, to directory: URL, limit: Int = 500) async throws -> Int {
+  public func export(role: MailboxRole, to directory: URL, limit: Int = 500) async throws -> Int {
     let messages = try await messages(limit: limit, role: role)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     for message in messages {
@@ -329,5 +150,30 @@ public actor AppleMailAdapter: MailClientAdapter {
       )
     }
     return messages.count
+  }
+
+  private func unifiedPage(_ role: MailboxRole, offset: Int, limit: Int) async throws -> MailPage {
+    try Self.decodePage(
+      await invoke(.unifiedPage(role: role, offset: offset, limit: limit)),
+      offset: offset,
+      limit: limit
+    )
+  }
+  private func selection(maximumCount: Int) async throws -> MailPage {
+    guard let result = try await invoke(.selection(maximumCount: maximumCount)).list,
+      result.count == 2, let count = result[0].integer, let values = result[1].list
+    else { throw IntegrationError.scriptFailed }
+    guard (1...maximumCount).contains(count) else {
+      throw IntegrationError.selectionCount(minimum: 1, maximum: maximumCount)
+    }
+    guard values.count == count else { throw IntegrationError.scriptFailed }
+    let rows = try values.map(MailRow.init)
+    return MailPage(messages: rows.compactMap(\.envelope), total: count, visitedCount: count)
+  }
+}
+
+extension Duration {
+  var timeInterval: TimeInterval {
+    Double(components.seconds) + Double(components.attoseconds) / 1e18
   }
 }

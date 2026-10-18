@@ -39,10 +39,7 @@ extension AppModel {
     run { [self] in
       do {
         moveTestStatus =
-          String(
-            localized:
-              "Testing the selected message; allowing 30 seconds after each move for Mail to sync…"
-          )
+          String(localized: "Testing the selected message; waiting for Mail to show each move…")
         _ = try await adapter.testDisposableMessage()
         moveTestStatus =
           String(localized: "Junk, Inbox restoration, and orange flag verified in Mail.")

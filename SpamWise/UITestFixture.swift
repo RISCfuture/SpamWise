@@ -4,18 +4,19 @@
   import SpamWiseCore
 
   struct DeniedAppleEventRunner: AppleEventRunner {
-    func run(_ source: String) async throws -> ScriptValue {
+    func run(_ request: MailRequest) async throws -> ScriptValue {
       throw IntegrationError.permissionDenied
     }
   }
 
   struct SelectedFixtureAppleEventRunner: AppleEventRunner {
-    func run(_ source: String) async throws -> ScriptValue {
-      guard source == MailScripts.selected else { throw IntegrationError.permissionDenied }
-      return .list([
-        .string("ui-test"), .string("Inbox"), .integer(1),
-        .string("automation@example.org"), .string(UITestFixture.messageSource)
+    func run(_ request: MailRequest) async throws -> ScriptValue {
+      guard case .selection = request else { throw IntegrationError.permissionDenied }
+      let message = ScriptValue.list([
+        .string("ui-test"), .string("Inbox"), .integer(1), .string("automation@example.org"),
+        .integer(UITestFixture.messageSource.utf8.count), .string(UITestFixture.messageSource)
       ])
+      return .list([.integer(1), .list([message])])
     }
   }
 

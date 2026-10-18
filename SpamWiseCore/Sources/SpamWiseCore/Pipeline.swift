@@ -321,7 +321,10 @@ public actor Pipeline {
       let current = try await StateRepository.load(store)
       guard current.revision == claimed.revision, !current.settings.paused, !current.settings.dryRun
       else { completed.outcome = .superseded; try await save(completed); return completed }
-      let receipt = try await adapter.perform(claimed.decision.action, for: claimed.identity)
+      let receipt =
+        try await correction
+        ? adapter.performCorrection(claimed.decision.action, for: claimed.identity)
+        : adapter.perform(claimed.decision.action, for: claimed.identity)
       completed.outcome = receipt.confirmed ? .applied : .requested
       if receipt.confirmed, let identity = receipt.updatedIdentity {
         completed.identity = identity

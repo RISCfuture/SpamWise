@@ -16,7 +16,7 @@ extension AppleMailAdapter {
   /// Reads special-mailbox names without changing messages or enabling actions.
   public func destinations(accountID: String) async throws -> MailDestinations {
     guard !accountID.isEmpty,
-      let fields = try await runFolderScript(MailScripts.destinations(accountID: accountID)).list,
+      let fields = try await invoke(.destinations(accountID: accountID)).list,
       fields.count == 2, let inbox = fields[0].list, let junk = fields[1].list,
       inbox.allSatisfy({ $0.string != nil }), junk.allSatisfy({ $0.string != nil })
     else { throw IntegrationError.scriptFailed }
@@ -29,26 +29,21 @@ extension AppleMailAdapter {
 }
 
 extension MailScripts {
-  /// Uses the same special-mailbox collections as action resolution, without reading content.
-  public static func destinations(accountID: String) -> String {
-    """
-    with timeout of 8 seconds
-        tell application "Mail"
-            set candidates to (every account whose id is \(literal(accountID)))
-            if (count of candidates) is not 1 then error "Account unresolved" number -1701
-            set inboxNames to {}
-            repeat with b in mailboxes of inbox
-                if (id of account of b) is \(literal(accountID)) then set end of inboxNames to \
-    name of b
-            end repeat
-            set junkNames to {}
-            repeat with b in mailboxes of junk mailbox
-                if (id of account of b) is \(literal(accountID)) then set end of junkNames to name \
-    of b
-            end repeat
+  static let destinationHandlers = """
+    on boxNames(boxes)
+        set names to {}
+        repeat with b in boxes
+            tell application "Mail" to set end of names to name of (contents of b)
+        end repeat
+        return names
+    end boxNames
+    on \(MailHandler.destinationNames.rawValue)(accountID)
+        with timeout of \(eventTimeoutSeconds) seconds
+            my accountByID(accountID)
+            set inboxNames to my boxNames(my roleBoxes("\(MailboxRole.inbox.rawValue)", accountID))
+            set junkNames to my boxNames(my roleBoxes("\(MailboxRole.junk.rawValue)", accountID))
             return {inboxNames, junkNames}
-        end tell
-    end timeout
+        end timeout
+    end \(MailHandler.destinationNames.rawValue)
     """
-  }
 }

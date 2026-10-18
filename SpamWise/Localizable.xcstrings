@@ -1,6 +1,244 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Testing the selected message; waiting for Mail to show each move…": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probando el mensaje seleccionado; esperando a que Mail muestre cada traslado…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test du message sélectionné ; attente de l’affichage de chaque déplacement dans Mail…"
+          }
+        }
+      }
+    },
+    "Mail has no unique account with the recorded identifier.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no tiene una única cuenta con el identificador registrado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail ne possède aucun compte unique correspondant à l’identifiant enregistré."
+          }
+        }
+      }
+    },
+    "Mail couldn’t identify this account’s mailbox uniquely.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no pudo identificar de forma única el buzón de esta cuenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas pu identifier de façon unique la boîte aux lettres de ce compte."
+          }
+        }
+      }
+    },
+    "The message couldn’t be found in Mail.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró el mensaje en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message est introuvable dans Mail."
+          }
+        }
+      }
+    },
+    "The message is no longer in the mailbox where SpamWise found it, so it was left in place.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje ya no está en el buzón donde SpamWise lo encontró, así que se dejó donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message ne se trouve plus dans la boîte aux lettres où SpamWise l’a trouvé ; il a donc été laissé en place."
+          }
+        }
+      }
+    },
+    "The message has no Message-ID, so SpamWise can’t confirm a move and left it in place.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje no tiene Message-ID, así que SpamWise no puede confirmar un traslado y lo dejó donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message n’a pas de Message-ID ; SpamWise ne peut donc pas confirmer un déplacement et l’a laissé en place."
+          }
+        }
+      }
+    },
+    "The message already has a flag or color you set, so SpamWise left it unchanged.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje ya tiene una bandera o un color que estableciste, así que SpamWise no lo modificó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message porte déjà un drapeau ou une couleur que vous avez définis ; SpamWise ne l’a donc pas modifié."
+          }
+        }
+      }
+    },
+    "Select one message in the account’s Inbox whose subject starts with “[SpamWise Probe]”.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona un mensaje de la bandeja de entrada de la cuenta cuyo asunto empiece por «[SpamWise Probe]»."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez un message de la boîte de réception du compte dont l’objet commence par « [SpamWise Probe] »."
+          }
+        }
+      }
+    },
+    "The message is too large for SpamWise to read, so it was left unchanged.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje es demasiado grande para que SpamWise lo lea, así que no se modificó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message est trop volumineux pour que SpamWise le lise ; il n’a donc pas été modifié."
+          }
+        }
+      }
+    },
+    "Select exactly one message in Mail.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona exactamente un mensaje en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez exactement un message dans Mail."
+          }
+        }
+      }
+    },
+    "Select %lld to %lld messages in Mail.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona de %lld a %lld mensajes en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez de %lld à %lld messages dans Mail."
+          }
+        }
+      }
+    },
+    "Mail has more than %lld mailboxes or folders nested more than %lld levels deep.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail tiene más de %lld buzones o carpetas anidadas a más de %lld niveles de profundidad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail contient plus de %lld boîtes aux lettres ou des dossiers imbriqués sur plus de %lld niveaux."
+          }
+        }
+      }
+    },
+    "Mail didn’t respond in time. Any requested change may still happen; check the message in Mail.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no respondió a tiempo. Es posible que el cambio solicitado aún se produzca; revisa el mensaje en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas répondu à temps. La modification demandée peut encore avoir lieu ; vérifiez le message dans Mail."
+          }
+        }
+      }
+    },
+    "Mail didn’t show the expected result before the observation window ended.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no mostró el resultado esperado antes de que terminara el periodo de observación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas affiché le résultat attendu avant la fin de la période d’observation."
+          }
+        }
+      }
+    },
     "Backfill position": {
       "localizations": {
         "es": {
@@ -8719,22 +8957,6 @@
         }
       }
     },
-    "Testing the selected message; allowing 30 seconds after each move for Mail to sync…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probando el mensaje seleccionado; esperando 30 segundos tras cada movimiento para que Mail se sincronice…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Test du message sélectionné ; attente de 30 secondes après chaque déplacement pour la synchronisation de Mail…"
-          }
-        }
-      }
-    },
     "The backup could not be opened.": {
       "extractionState": "manual",
       "localizations": {
@@ -11522,23 +11744,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les boîtes Réception et Indésirables du compte n’ont pas été validées."
-          }
-        }
-      }
-    },
-    "The selected message’s subject doesn’t begin with “[SpamWise Probe]”.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El asunto del mensaje seleccionado no empieza por «[SpamWise Probe]»."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’objet du message sélectionné ne commence pas par « [SpamWise Probe] »."
           }
         }
       }

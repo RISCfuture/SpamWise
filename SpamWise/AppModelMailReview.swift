@@ -6,7 +6,8 @@ extension AppModel {
   func correctSelection(_ label: MailLabel) {
     guard let pipeline else { return }
     run { [self] in
-      let messages = await ReviewMessage.load(try await adapter.selectedMessages())
+      let selection = try await adapter.selectedMessages()
+      let messages = await ReviewMessage.load(selection.messages)
       correctionResults = []
       showCorrections = true
       for reviewed in messages {
@@ -30,6 +31,9 @@ extension AppModel {
         }
       }
       status = String(localized: "Selected-message corrections finished. Review each mail outcome.")
+      if selection.unavailableCount > 0 {
+        status = Self.unreadableStatus(selection.unavailableCount)
+      }
     }
   }
   func loadJunk(accountID: String, offset: Int) {
@@ -38,7 +42,7 @@ extension AppModel {
         accountID: accountID,
         offset: offset,
         limit: 20,
-        role: "junk mailbox"
+        role: .junk
       )
       junkMessages = await ReviewMessage.load(page.messages)
       junkTotal = page.total

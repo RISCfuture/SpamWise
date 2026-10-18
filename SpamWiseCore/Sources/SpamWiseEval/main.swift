@@ -66,12 +66,8 @@ import Evaluation
   }
 
   private static func export(_ options: Options) async throws {
-    let role: String
-    switch try options.required("export") {
-      case "inbox": role = "inbox"
-      case "junk": role = "junk mailbox"
-      case "sent": role = "sent mailbox"
-      default: throw EvaluationError.arguments
+    guard let role = MailboxRole(rawValue: try options.required("export")) else {
+      throw EvaluationError.arguments
     }
     guard let limit = Int(options.values["limit"] ?? "500"), (1...1000).contains(limit) else {
       throw EvaluationError.arguments

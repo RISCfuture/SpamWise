@@ -10,8 +10,8 @@ extension AppleMailAdapter {
   /// Consecutive failures of one incremental page before the cursor steps past it.
   private static let maximumHistoryPageFailures = 3
 
-  private static func historyPageSize(role: String) -> Int {
-    role == "sent mailbox" ? sentHistoryPageSize : inboxHistoryPageSize
+  private static func historyPageSize(role: MailboxRole) -> Int {
+    role == .sent ? sentHistoryPageSize : inboxHistoryPageSize
   }
   /// Whether a mailbox read failure stays local to that mailbox instead of ending the import.
   private static func isIsolated(_ error: any Error) -> Bool {
@@ -45,6 +45,10 @@ extension AppleMailAdapter {
     }
     return index
   }
+  /// Imports bounded Sent history; Inbox mail needs an explicit eligibility set.
+  public func importHistory() async throws -> [String: HistoryIndex] {
+    try await importHistory(previous: [:], eligibleInbox: [:])
+  }
   /**
    Adds only unseen messages to each account's history snapshot.
 
@@ -71,15 +75,15 @@ extension AppleMailAdapter {
   ) async throws -> [String: HistoryIndex] {
     var indexes = previous, advanced: [String: Int] = [:], failure: (any Error)?, readAny = false
     for account in try await accounts() {
-      var reads: [String: [MailEnvelope]] = [:]
-      for role in eligibleInbox.isEmpty ? ["sent mailbox"] : ["sent mailbox", "inbox"] {
+      var reads: [MailboxRole: [MailEnvelope]] = [:]
+      for role: MailboxRole in eligibleInbox.isEmpty ? [.sent] : [.sent, .inbox] {
         do {
           reads[role] = try await historyMessages(
             account.id,
             role: role,
             incremental: incremental,
             advancing: &advanced
-          ) { role == "sent mailbox" || eligibleInbox[$0.identity.key] != nil }
+          ) { role == .sent || eligibleInbox[$0.identity.key] != nil }
         } catch let error where Self.isIsolated(error) {
           failure = error
         }
@@ -87,8 +91,8 @@ extension AppleMailAdapter {
       guard !reads.isEmpty else { continue }
       readAny = true
       indexes[account.id] = Self.recording(
-        sent: reads["sent mailbox"] ?? [],
-        inbox: reads["inbox"] ?? [],
+        sent: reads[.sent] ?? [],
+        inbox: reads[.inbox] ?? [],
         eligibleInbox: eligibleInbox,
         into: indexes[account.id] ?? HistoryIndex(),
         trustedAuthServers: trustedAuthServers
@@ -103,7 +107,7 @@ extension AppleMailAdapter {
   /// An incremental read stores its next cursor position in `advanced` for the caller to commit.
   private func historyMessages(
     _ accountID: String,
-    role: String,
+    role: MailboxRole,
     incremental: Bool,
     advancing advanced: inout [String: Int],
     where isIncluded: (MailEnvelope) -> Bool
@@ -111,7 +115,7 @@ extension AppleMailAdapter {
     guard incremental else {
       return try await recentHistory(accountID, role: role, where: isIncluded)
     }
-    let cursor = "history-\(role)-\(accountID)"
+    let cursor = "history-\(role.rawValue)-\(accountID)"
     let offset = pageOffsets[cursor, default: 0]
     let page: MailPage
     do {
@@ -129,7 +133,7 @@ extension AppleMailAdapter {
   }
   private func recentHistory(
     _ accountID: String,
-    role: String,
+    role: MailboxRole,
     where isIncluded: (MailEnvelope) -> Bool
   ) async throws -> [MailEnvelope] {
     var messages: [MailEnvelope] = [], offset = 0
@@ -153,25 +157,25 @@ extension AppleMailAdapter {
     return failures >= Self.maximumHistoryPageFailures
   }
   /// An account without a uniquely resolvable mailbox for the role contributes no history.
-  private func historyPage(_ accountID: String, role: String, offset: Int) async throws -> MailPage
+  private func historyPage(_ accountID: String, role: MailboxRole, offset: Int) async throws
+    -> MailPage
   {
-    let isSent = role == "sent mailbox"
     let limit = Self.historyPageSize(role: role)
-    let script = MailScripts.accountPage(
+    let request = MailRequest.accountPage(
+      role: role,
       accountID: accountID,
       offset: offset,
       limit: limit,
-      role: role,
-      headersOnly: isSent
+      headersOnly: role == .sent
     )
     do {
       return try Self.decodePage(
-        await runner.run(script),
+        await invoke(request),
         accountID: accountID,
         offset: offset,
         limit: limit
       )
-    } catch IntegrationError.ambiguous {
+    } catch IntegrationError.mailboxUnresolved {
       return MailPage(messages: [], total: 0, visitedCount: 0)
     }
   }

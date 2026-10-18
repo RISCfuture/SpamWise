@@ -41,10 +41,17 @@ private enum HistoryRows {
     )
   }
   static func row(_ mailbox: String, id: String, _ content: ScriptValue) -> ScriptValue {
-    .list([.string("account"), .string(mailbox), .integer(1), .string("<\(id)>"), content])
+    let byteCount = content.string?.utf8.count ?? MailScripts.maximumMessageBytes + 1
+    return .list([
+      .string("account"), .string(mailbox), .integer(1), .string("<\(id)>"), .integer(byteCount),
+      content
+    ])
+  }
+  static func envelope(_ row: ScriptValue) throws -> MailEnvelope {
+    try #require(try MailRow(row).envelope)
   }
   static func key(_ row: ScriptValue) throws -> String {
-    try AppleMailAdapter.envelope(row).identity.key
+    try envelope(row).identity.key
   }
 }
 private actor HistoryEvents: AppleEventRunner {
@@ -60,19 +67,15 @@ private actor HistoryEvents: AppleEventRunner {
     self.failingSent = failingSent
   }
 
-  func run(_ source: String) async throws -> ScriptValue {
-    if source.contains("email addresses of a") {
+  func run(_ request: MailRequest) async throws -> ScriptValue {
+    if request == .accounts {
       return .list(accountIDs.map { .list([.string($0), .string($0), .list([])]) })
     }
-    guard let account = accountIDs.first(where: { source.contains("is \"\($0)\"") }) else {
-      throw IntegrationError.scriptFailed
-    }
-    let isSent = source.contains("mailboxes of sent mailbox")
-    guard source.contains(isSent ? "my pageHeaders(" : "my pageEnvelope(") else {
-      throw IntegrationError.scriptFailed
-    }
-    let offset = try number(after: "set firstIndex to ", in: source) - 1
-    let limit = try number(after: "set lastIndex to firstIndex + ", in: source)
+    guard case let .accountPage(role, account, offset, limit, headersOnly, _, _) = request,
+      accountIDs.contains(account), role != .junk
+    else { throw IntegrationError.scriptFailed }
+    let isSent = role == .sent
+    guard headersOnly == isSent else { throw IntegrationError.scriptFailed }
     if isSent {
       sentOffsets[account, default: []].append(offset)
     } else {
@@ -84,12 +87,6 @@ private actor HistoryEvents: AppleEventRunner {
     }
     return .list([.integer(rows.count), .list(Array(rows.dropFirst(offset).prefix(limit)))])
   }
-  private func number(after marker: String, in source: String) throws -> Int {
-    guard let start = source.range(of: marker)?.upperBound,
-      let value = Int(source[start...].prefix(while: \.isNumber))
-    else { throw IntegrationError.scriptFailed }
-    return value
-  }
 }
 @Test func `gates only on confirmed authenticated receipts from exact non-freemail senders`()
   async throws
@@ -100,7 +97,7 @@ private actor HistoryEvents: AppleEventRunner {
   for row in HistoryRows.receipts {
     state.record(
       .init(
-        identity: try AppleMailAdapter.envelope(row).identity,
+        identity: try HistoryRows.envelope(row).identity,
         decision: .init(label: .inbox, action: .none, reason: .model("Wanted")),
         outcome: .dryRun
       )
@@ -148,7 +145,7 @@ private actor HistoryEvents: AppleEventRunner {
   #expect(index.replied.count == 100)
   #expect(index.replied.values.allSatisfy { $0 == 1 })
   #expect(index.availability == .partial)
-  let shop = try MIMEParser().parse(AppleMailAdapter.envelope(HistoryRows.shop).raw)
+  let shop = try MIMEParser().parse(HistoryRows.envelope(HistoryRows.shop).raw)
   let authenticated = EvidenceBundle(message: shop, trustedAuthServers: ["mx.example"])
   #expect(
     gate("orders@shop.example.org", index, authentication: authenticated.senderAuthentication)
