@@ -351,7 +351,7 @@
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				CC000000000000000000000D /* XCLocalSwiftPackageReference "../../Libraries/GitHubUpdateChecker" */,
+				CC000000000000000000000D /* XCRemoteSwiftPackageReference "GitHubUpdateChecker" */,
 				AA0000000000000000000005 /* XCLocalSwiftPackageReference "SpamWiseCore" */,
 			);
 			preferredProjectObjectVersion = 90;
@@ -995,11 +995,18 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = SpamWiseCore;
 		};
-		CC000000000000000000000D /* XCLocalSwiftPackageReference "../../Libraries/GitHubUpdateChecker" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../Libraries/GitHubUpdateChecker;
-		};
 /* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CC000000000000000000000D /* XCRemoteSwiftPackageReference "GitHubUpdateChecker" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RISCfuture/GitHubUpdateChecker";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		AA0000000000000000000001 /* SpamWiseCore */ = {
@@ -1016,7 +1023,7 @@
 		};
 		CC0000000000000000000008 /* GitHubReleaseDiscovery */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = CC000000000000000000000D /* XCLocalSwiftPackageReference "../../Libraries/GitHubUpdateChecker" */;
+			package = CC000000000000000000000D /* XCRemoteSwiftPackageReference "GitHubUpdateChecker" */;
 			productName = GitHubReleaseDiscovery;
 		};
 /* End XCSwiftPackageProductDependency section */

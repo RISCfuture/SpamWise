@@ -1,8 +1,7 @@
 # Direct release updates
 
-The `SpamWiseDirect` target integrates the local
-`~/Repositories/Libraries/GitHubUpdateChecker` package's `GitHubReleaseDiscovery`
-product for **manual release discovery**. Settings → General → App updates checks the configured public GitHub
+The `SpamWiseDirect` target integrates the `GitHubReleaseDiscovery` product of
+[GitHubUpdateChecker](https://github.com/RISCfuture/GitHubUpdateChecker) for **manual release discovery**. Settings → General → App updates checks the configured public GitHub
 repository only after a click. It accepts stable releases, compares the installed
 marketing version, and offers a GitHub releases-page link. There are no startup
 checks, downloads, binary replacement, automatic relaunches or channel switches.
@@ -18,8 +17,10 @@ disables direct checks. This receipt-presence guard is not receipt authenticatio
 
 The shared `SpamWiseDirect` scheme builds a sandboxed app with the existing bundle
 identifier `codes.tim.SpamWise`, team `2NFSK2WB24`, App Group and extension. Only
-this target links GitHubReleaseDiscovery. Keep the library at the documented sibling
-path, or update the project reference deliberately when moving the checkout.
+this target links GitHubReleaseDiscovery, resolved as a remote package from version
+2.3.0 up to the next major version. To develop the library alongside the app, drag
+a local checkout into the Xcode project as a package override; never commit a path
+reference.
 
 Once the actual public release repository exists, set these direct-target build
 settings to its confirmed values:
@@ -62,14 +63,12 @@ The library exposes its existing API client, semantic version parser and release
 models as a separate Foundation/Logging product. SpamWise does not link the
 library's updater UI, downloader, installer or MarkdownUI dependency. The original
 `GitHubUpdateChecker` product retains its public API through typealiases to the
-shared discovery types. The extraction is a local library change that must travel
-with this app change; the library's original clean revision was
-`0cc0d8bf55c9b3b58d046cb81e45606fbe3812a6`.
-The extraction is committed locally as `eab9c1d` on `codex/release-discovery`;
-check out that revision when reproducing this integration.
+shared discovery types. The product first shipped in GitHubUpdateChecker 2.3.0.
 
-Dependency pins live in `SpamWiseCore/Package.resolved` and the library's
-`Package.resolved`, alongside the pinned Claude revision in the core manifest.
+Dependency pins live in the project's
+`SpamWise.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved` and
+in `SpamWiseCore/Package.resolved`, alongside the pinned Claude revision in the core
+manifest.
 During verification, Xcode repeatedly removed the project-workspace lock file
 for these local package references, including after successful resolution with
 `-onlyUsePackageVersionsFromResolvedFile`. That generated workspace file is not

@@ -9,9 +9,18 @@ currently private while publication is reviewed. The prepared marketing, privacy
 and support pages have no public deployment or release download yet. See the
 [repository approval checklist](docs/repository-approval.md).
 
+## Prerequisites
+
+- Xcode 27 with Swift 6.4, on macOS 27.
+- `swiftlint`, `xcbeautify`, `shellcheck`, `markdownlint-cli2` and `rg` (ripgrep), which the check scripts call.
+- `agent-lock`, which issues the worker tokens the check scripts use to isolate build caches and to serialize UI tests.
+- pyenv with a Python 3 virtualenv, for the corpus and packaging tools under `Tools/` and `Scripts/`.
+
+Swift package dependencies, including GitHubUpdateChecker for the direct-download edition, resolve from their remote repositories at the versions pinned in `Package.resolved`; no sibling checkouts are needed.
+
 ## Build and verify
 
-Requires Xcode 27, Swift 6.4, macOS 27, `swiftlint`, `xcbeautify`, `shellcheck`, and `markdownlint-cli2`. The provider dependency is pinned in the local package. Preserve bundle identifiers, signing team, App Group, and shared Keychain group.
+The provider dependency is pinned in the local package. Preserve bundle identifiers, signing team, App Group, and shared Keychain group.
 
 ```sh
 agent-lock worker
