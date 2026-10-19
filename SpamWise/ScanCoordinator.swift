@@ -84,7 +84,7 @@ final class ScanCoordinator {
   }
 
   static func unreadableStatus(_ count: Int) -> String {
-    String(localized: "Unreadable messages: \(count, format: .number)")
+    String(localized: "Unreadable messages: \(count)")
   }
 
   /// Follows network reachability until cancelled.

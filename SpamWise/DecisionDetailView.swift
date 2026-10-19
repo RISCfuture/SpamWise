@@ -226,7 +226,7 @@ private struct DomainCorrectionMenu: View {
         }
       } message: { _ in
         Text(
-          "\(domain) is a shared mail provider, so this rule also applies to unrelated people who use it. Known senders at this domain: \(knownSenders, format: .number)"
+          "\(domain) is a shared mail provider, so this rule also applies to unrelated people who use it. Known senders at this domain: \(knownSenders)"
         )
       }
   }

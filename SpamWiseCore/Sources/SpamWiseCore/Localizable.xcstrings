@@ -161,34 +161,142 @@
         }
       }
     },
-    "Enter at most %@ addresses.": {
+    "Enter at most %lld addresses.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Enter at most %lld address."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Enter at most %lld addresses."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Escribe como máximo %@ direcciones."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld de direcciones."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld dirección."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld direcciones."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saisissez au maximum %@ adresses."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld d’adresses."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld adresse."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld adresses."
+                }
+              }
+            }
           }
         }
       }
     },
-    "Enter at most %@ characters.": {
+    "Enter at most %lld characters.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Enter at most %lld character."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Enter at most %lld characters."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Escribe como máximo %@ caracteres."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld de caracteres."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld carácter."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Escribe como máximo %lld caracteres."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saisissez au maximum %@ caractères."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld de caractères."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld caractère."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Saisissez au maximum %lld caractères."
+                }
+              }
+            }
           }
         }
       }
@@ -241,18 +349,72 @@
         }
       }
     },
-    "Import at most %@ messages at a time.": {
+    "Import at most %lld messages at a time.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Import at most %lld message at a time."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Import at most %lld messages at a time."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importa como máximo %@ mensajes a la vez."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa como máximo %lld de mensajes a la vez."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa como máximo %lld mensaje a la vez."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa como máximo %lld mensajes a la vez."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importez au maximum %@ messages à la fois."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez au maximum %lld de messages à la fois."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez au maximum %lld message à la fois."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez au maximum %lld messages à la fois."
+                }
+              }
+            }
           }
         }
       }
@@ -337,24 +499,102 @@
         }
       }
     },
-    "Mail doesn’t have %@ to %@ messages selected.": {
+    "Mail doesn’t have %lld to %lld messages selected.": {
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
-            "value": "Mail doesn’t have %1$@ to %2$@ messages selected."
+            "state": "translated",
+            "value": "Mail doesn’t have %1$lld to %#@arg2@ selected."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mail no tiene de %@ a %@ mensajes seleccionados."
+            "value": "Mail no tiene de %1$lld a %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes seleccionados"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje seleccionado"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes seleccionados"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mail n’a pas de %@ à %@ messages sélectionnés."
+            "value": "Mail n’a pas de %1$lld à %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages sélectionnés"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message sélectionné"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages sélectionnés"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -375,24 +615,174 @@
         }
       }
     },
-    "Mail has more than %@ mailboxes or folders nested more than %@ levels deep.": {
+    "Mail has more than %lld mailboxes or folders nested more than %lld levels deep.": {
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
-            "value": "Mail has more than %1$@ mailboxes or folders nested more than %2$@ levels deep."
+            "state": "translated",
+            "value": "Mail has more than %#@arg1@ or folders nested more than %#@arg2@ deep."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mailbox"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mailboxes"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg level"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg levels"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mail tiene más de %@ buzones o carpetas anidadas a más de %@ niveles de profundidad."
+            "value": "Mail tiene más de %#@arg1@ o carpetas anidadas a más de %#@arg2@ de profundidad."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de buzones"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg buzón"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg buzones"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de niveles"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg nivel"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg niveles"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mail contient plus de %@ boîtes aux lettres ou des dossiers imbriqués sur plus de %@ niveaux."
+            "value": "Mail contient plus de %#@arg1@ ou des dossiers imbriqués sur plus de %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de boîtes aux lettres"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg boîte aux lettres"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg boîtes aux lettres"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de niveaux"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg niveau"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg niveaux"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -589,24 +979,102 @@
         }
       }
     },
-    "Select %@ to %@ messages in Mail, then try again.": {
+    "Select %lld to %lld messages in Mail, then try again.": {
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
-            "value": "Select %1$@ to %2$@ messages in Mail, then try again."
+            "state": "translated",
+            "value": "Select %1$lld to %#@arg2@ in Mail, then try again."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Selecciona de %@ a %@ mensajes en Mail y vuelve a intentarlo."
+            "value": "Selecciona de %1$lld a %#@arg2@ en Mail y vuelve a intentarlo."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sélectionnez de %@ à %@ messages dans Mail, puis réessayez."
+            "value": "Sélectionnez de %1$lld à %#@arg2@ dans Mail, puis réessayez."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -675,56 +1143,294 @@
         }
       }
     },
-    "SpamWise keeps at most %@ folder plans.": {
+    "SpamWise keeps at most %lld folder plans.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise keeps at most %lld folder plan."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise keeps at most %lld folder plans."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise conserva como máximo %@ planes de carpeta."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserva como máximo %lld de planes de carpeta."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserva como máximo %lld plan de carpeta."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserva como máximo %lld planes de carpeta."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise conserve au maximum %@ configurations de dossier."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserve au maximum %lld de configurations de dossier."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserve au maximum %lld configuration de dossier."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise conserve au maximum %lld configurations de dossier."
+                }
+              }
+            }
           }
         }
       }
     },
-    "SpamWise keeps at most %@ imported labels; %@ more can be imported.": {
+    "SpamWise keeps at most %lld imported labels; %lld more can be imported.": {
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
-            "value": "SpamWise keeps at most %1$@ imported labels; %2$@ more can be imported."
+            "state": "translated",
+            "value": "SpamWise keeps at most %#@arg1@; %2$lld more can be imported."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg imported label"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg imported labels"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "SpamWise conserva como máximo %@ etiquetas importadas; se pueden importar %@ más."
+            "value": "SpamWise conserva como máximo %#@arg1@; %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de etiquetas importadas"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg etiqueta importada"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg etiquetas importadas"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se pueden importar %arg más"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se puede importar %arg más"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se pueden importar %arg más"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "SpamWise conserve au maximum %@ étiquettes importées ; %@ de plus peuvent être importées."
+            "value": "SpamWise conserve au maximum %#@arg1@ ; %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg d’étiquettes importées"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg étiquette importée"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg étiquettes importées"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de plus peuvent être importées"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de plus peut être importée"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de plus peuvent être importées"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
-    "SpamWise remembers at most %@ automation requests.": {
+    "SpamWise remembers at most %lld automation requests.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise remembers at most %lld automation request."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise remembers at most %lld automation requests."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise recuerda como máximo %@ solicitudes de automatización."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise recuerda como máximo %lld de solicitudes de automatización."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise recuerda como máximo %lld solicitud de automatización."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise recuerda como máximo %lld solicitudes de automatización."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise retient au maximum %@ demandes d’automatisation."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise retient au maximum %lld de demandes d’automatisation."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise retient au maximum %lld demande d’automatisation."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise retient au maximum %lld demandes d’automatisation."
+                }
+              }
+            }
           }
         }
       }

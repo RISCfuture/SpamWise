@@ -24,7 +24,7 @@ public enum FolderPlanError: Error, LocalizedError, Sendable, Equatable {
         String(localized: "The folder “\(folder)” isn’t empty.", bundle: .module)
       case .limitReached(let limit):
         String(
-          localized: "SpamWise keeps at most \(limit, format: .number) folder plans.",
+          localized: "SpamWise keeps at most \(limit) folder plans.",
           bundle: .module
         )
       case .notFound: String(localized: "The folder plan no longer exists.", bundle: .module)

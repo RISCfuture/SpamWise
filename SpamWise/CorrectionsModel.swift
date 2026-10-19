@@ -35,8 +35,14 @@ final class CorrectionsModel {
 
   init(services: AppServices) { self.services = services }
 
-  private static func savedStatus(_ record: DecisionRecord) -> String {
-    String(localized: "Correction saved. Mail action: \(record.outcome.localizedTitle).")
+  private static func savedStatus(_ record: DecisionRecord, failures: [String]) -> String {
+    let outcome = record.outcome.localizedTitle
+    guard !failures.isEmpty else {
+      return String(localized: "Correction saved. Mail action: \(outcome).")
+    }
+    return String(
+      localized: "Correction saved. Mail action: \(outcome). \(failures.joined(separator: " "))"
+    )
   }
 
   private static func unverifiedRequiresConfirmation(_ record: DecisionRecord, _ label: MailLabel)
@@ -141,8 +147,8 @@ extension CorrectionsModel {
       if let rule = try? await pipeline.overridingRule(for: result) {
         conflict = RuleConflict(recordID: record.id, rule: rule)
       }
-      return ([Self.savedStatus(result)] + [result.actionError, adapterFailure].compactMap(\.self))
-        .joined(separator: " ")
+      let failures = [result.actionError, adapterFailure].compactMap(\.self)
+      return Self.savedStatus(result, failures: failures)
     }
   }
 

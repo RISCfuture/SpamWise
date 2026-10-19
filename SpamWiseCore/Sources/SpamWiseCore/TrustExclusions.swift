@@ -19,9 +19,9 @@ public enum TrustExclusionError: TrustExclusionFailure, Sendable, Equatable, Loc
   public var failureReason: String? {
     switch self {
       case .inputTooLong(let limit):
-        String(localized: "Enter at most \(limit, format: .number) characters.", bundle: .module)
+        String(localized: "Enter at most \(limit) characters.", bundle: .module)
       case .tooManyAddresses(let limit):
-        String(localized: "Enter at most \(limit, format: .number) addresses.", bundle: .module)
+        String(localized: "Enter at most \(limit) addresses.", bundle: .module)
       case .invalidAddress(let line):
         String(localized: "“\(line)” is not a complete email address.", bundle: .module)
     }

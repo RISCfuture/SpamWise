@@ -125,24 +125,24 @@
         }
       }
     },
-    "--limit must be from %@ to %@.": {
+    "--limit must be from %lld to %lld.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "new",
-            "value": "--limit must be from %1$@ to %2$@."
+            "value": "--limit must be from %1$lld to %2$lld."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "--limit debe estar entre %1$@ y %2$@."
+            "value": "--limit debe estar entre %1$lld y %2$lld."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "--limit doit être compris entre %1$@ et %2$@."
+            "value": "--limit doit être compris entre %1$lld et %2$lld."
           }
         }
       }
@@ -211,18 +211,72 @@
         }
       }
     },
-    "Exported %@ messages. Assign human labels before evaluating.": {
+    "Exported %lld messages. Assign human labels before evaluating.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Exported %lld message. Assign human labels before evaluating."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Exported %lld messages. Assign human labels before evaluating."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se exportaron %@ mensajes. Asigna etiquetas humanas antes de evaluar."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se exportaron %lld de mensajes. Asigna etiquetas humanas antes de evaluar."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se exportó %lld mensaje. Asigna etiquetas humanas antes de evaluar."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se exportaron %lld mensajes. Asigna etiquetas humanas antes de evaluar."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ messages exportés. Attribuez des étiquettes humaines avant l’évaluation."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld de messages exportés. Attribuez des étiquettes humaines avant l’évaluation."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld message exporté. Attribuez des étiquettes humaines avant l’évaluation."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld messages exportés. Attribuez des étiquettes humaines avant l’évaluation."
+                }
+              }
+            }
           }
         }
       }

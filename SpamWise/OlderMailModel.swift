@@ -71,9 +71,7 @@ final class OlderMailModel {
         )
         if let record, [.requested, .applied].contains(record.outcome) { requested += 1 }
       }
-      return String(
-        localized: "Requested mail actions for \(requested, format: .number) previewed messages."
-      )
+      return String(localized: "Requested mail actions for \(requested) previewed messages.")
     }
   }
 }

@@ -102,7 +102,7 @@ public enum ComparisonManifestError: CorpusEvaluationError, BoundedInputError, S
       case let .messageCount(count, allowed):
         String(
           localized:
-            "The cohort has \(count, format: .number) messages; \(allowed.lowerBound, format: .number) to \(allowed.upperBound, format: .number) are supported.",
+            "The cohort has \(count) messages; \(allowed.lowerBound) to \(allowed.upperBound) are supported.",
           bundle: .module
         )
       case .blankMessageID: String(localized: "A message has a blank ID.", bundle: .module)
@@ -123,7 +123,7 @@ public enum ComparisonManifestError: CorpusEvaluationError, BoundedInputError, S
       case let .runCount(count, allowed):
         String(
           localized:
-            "The manifest has \(count, format: .number) runs; \(allowed.lowerBound, format: .number) to \(allowed.upperBound, format: .number) are supported.",
+            "The manifest has \(count) runs; \(allowed.lowerBound) to \(allowed.upperBound) are supported.",
           bundle: .module
         )
       case .blankSystem: String(localized: "A run has a blank system name.", bundle: .module)

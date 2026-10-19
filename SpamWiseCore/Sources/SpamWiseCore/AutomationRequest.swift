@@ -38,7 +38,7 @@ public enum AutomationError: AutomationFailure, Sendable, Equatable, LocalizedEr
         )
       case .tooManyRequests(let limit):
         String(
-          localized: "SpamWise remembers at most \(limit, format: .number) automation requests.",
+          localized: "SpamWise remembers at most \(limit) automation requests.",
           bundle: .module
         )
     }

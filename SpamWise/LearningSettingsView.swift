@@ -101,9 +101,7 @@ private struct DomainSuggestionsView: View {
             }
           } label: {
             Text(suggestion.domain)
-            Text(
-              "Known senders: \(senderCounts[suggestion.domain, default: 0], format: .number)"
-            )
+            Text("Known senders: \(senderCounts[suggestion.domain, default: 0])")
           }
         }
         OperationStatusView(operation: rules.senderRules)

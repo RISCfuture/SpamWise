@@ -83,7 +83,7 @@ extension AuditEvent.Change {
           case .domain: String(localized: "Removed the rule for domain \(value)")
         }
       case .senderRulesImported(let count):
-        String(localized: "Imported sender rules: \(count, format: .number)")
+        String(localized: "Imported sender rules: \(count)")
       case let .contentRuleSaved(field, pattern, disposition):
         switch disposition {
           case .allow:
@@ -94,15 +94,12 @@ extension AuditEvent.Change {
       case let .contentRuleRemoved(field, pattern):
         String(localized: "Removed the content rule for \(field.localizedTitle) “\(pattern)”")
       case .contentRulesImported(let count):
-        String(localized: "Imported content rules: \(count, format: .number)")
+        String(localized: "Imported content rules: \(count)")
       case let .corrected(scope, sender, label):
         Self.correction(scope: scope, sender: sender, label: label)
       case .backupRestored: String(localized: "Restored portable learning state; actions paused")
       case let .corpusImported(count, label):
-        String(
-          localized:
-            "Imported reviewed examples labeled \(label.localizedTitle): \(count, format: .number)"
-        )
+        String(localized: "Imported reviewed examples labeled \(label.localizedTitle): \(count)")
       case .corpusRelabeled(let label):
         String(localized: "Relabeled a reviewed example as \(label.localizedTitle)")
       case .corpusForgotten: String(localized: "Forgot a reviewed example and its learning")

@@ -38,13 +38,95 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld deseados o no deseados · %2$lld por revisar · %3$lld sin clasificar"
+            "value": "%#@arg1@ · %2$lld por revisar · %3$lld sin clasificar"
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg deseados o no deseados"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg deseado o no deseado"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg deseados o no deseados"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld légitimes ou indésirables · %2$lld à vérifier · %3$lld non classés"
+            "value": "%#@arg1@ · %2$lld à vérifier · %#@arg3@"
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg légitimes ou indésirables"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg légitime ou indésirable"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg légitimes ou indésirables"
+                    }
+                  }
+                }
+              }
+            },
+            "arg3": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg non classés"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg non classé"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg non classés"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -67,16 +149,70 @@
     },
     "A preview shows what SpamWise would decide for %lld messages at a time, without moving any mail.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "A preview shows what SpamWise would decide for %lld message at a time, without moving any mail."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "A preview shows what SpamWise would decide for %lld messages at a time, without moving any mail."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una vista previa muestra lo que SpamWise decidiría para %lld mensajes a la vez, sin mover ningún correo."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Una vista previa muestra lo que SpamWise decidiría para %lld de mensajes a la vez, sin mover ningún correo."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Una vista previa muestra lo que SpamWise decidiría para %lld mensaje a la vez, sin mover ningún correo."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Una vista previa muestra lo que SpamWise decidiría para %lld mensajes a la vez, sin mover ningún correo."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un aperçu montre ce que SpamWise déciderait pour %lld messages à la fois, sans déplacer aucun message."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Un aperçu montre ce que SpamWise déciderait pour %lld de messages à la fois, sans déplacer aucun message."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Un aperçu montre ce que SpamWise déciderait pour %lld message à la fois, sans déplacer aucun message."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Un aperçu montre ce que SpamWise déciderait pour %lld messages à la fois, sans déplacer aucun message."
+                }
+              }
+            }
           }
         }
       }
@@ -291,16 +427,100 @@
     },
     "Connected to Mail. Found the Inbox and Junk mailboxes for %lld of %lld accounts.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected to Mail. Found the Inbox and Junk mailboxes for %1$lld of %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg account"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg accounts"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Conectado a Mail. Se encontraron los buzones de entrada y de correo no deseado de %1$lld de %2$lld cuentas."
+            "value": "Conectado a Mail. Se encontraron los buzones de entrada y de correo no deseado de %1$lld de %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de cuentas"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg cuenta"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg cuentas"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connecté à Mail. Boîtes de réception et d’indésirables trouvées pour %1$lld comptes sur %2$lld."
+            "value": "Connecté à Mail. Boîtes de réception et d’indésirables trouvées pour %#@arg1@ sur %2$lld."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de comptes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg compte"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comptes"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -562,7 +782,6 @@
       }
     },
     "Settings changed: %@": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -594,59 +813,7 @@
         }
       }
     },
-    "Testing the selected message; waiting for Mail to show each move…": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Probando el mensaje seleccionado; esperando a que Mail muestre cada traslado…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Test du message sélectionné ; attente de l’affichage de chaque déplacement dans Mail…"
-          }
-        }
-      }
-    },
-    "Local Rspamd scanner": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Analizador local Rspamd"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Analyseur Rspamd local"
-          }
-        }
-      }
-    },
-    "Sends message data to your scanner at 127.0.0.1:11333. Its configuration may use online services. Disabled in local-only mode.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Envía los datos del mensaje a su analizador en 127.0.0.1:11333. Su configuración puede usar servicios en línea. Desactivado en el modo solo local."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Envoie les données du message à votre analyseur sur 127.0.0.1:11333. Sa configuration peut utiliser des services en ligne. Désactivé en mode local uniquement."
-          }
-        }
-      }
-    },
     "Provider data and retention terms": {
-      "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -663,7 +830,6 @@
       }
     },
     "Google’s unpaid-service terms allow model improvement and human review. Do not send personal mail under those terms. Confirm which terms apply to your project and region.": {
-      "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
@@ -680,7 +846,6 @@
       }
     },
     "Unreadable messages": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -696,36 +861,18 @@
         }
       }
     },
-    "Unreadable mail stays in place and is retried on the next sweep.": {
-      "extractionState": "manual",
+    "Unreadable messages: %lld": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los mensajes ilegibles permanecen en su sitio y se vuelven a intentar en el próximo recorrido."
+            "value": "Mensajes ilegibles: %lld"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les messages illisibles restent en place et seront réessayés au prochain parcours."
-          }
-        }
-      }
-    },
-    "Unreadable messages: %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mensajes ilegibles: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Messages illisibles : %@"
+            "value": "Messages illisibles : %lld"
           }
         }
       }
@@ -1498,38 +1645,6 @@
         }
       }
     },
-    "Content": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contenido"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contenu"
-          }
-        }
-      }
-    },
-    "Content rules": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reglas de contenido"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Règles de contenu"
-          }
-        }
-      }
-    },
     "Content type": {
       "localizations": {
         "es": {
@@ -1643,7 +1758,6 @@
       }
     },
     "Correction fixture could not be loaded.": {
-      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -1671,6 +1785,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Correction enregistrée. Action sur le message : %@."
+          }
+        }
+      }
+    },
+    "Correction saved. Mail action: %@. %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrección guardada. Acción de correo: %1$@. %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correction enregistrée. Action sur le message : %1$@. %2$@"
           }
         }
       }
@@ -1703,23 +1833,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corrections uniquement"
-          }
-        }
-      }
-    },
-    "Couldn’t read the message.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo leer el mensaje."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossible de lire le message."
           }
         }
       }
@@ -1784,22 +1897,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Décrivez ce que vous souhaitez recevoir. Vos préférences sont envoyées au fournisseur choisi avec les messages concernés."
-          }
-        }
-      }
-    },
-    "Disabled": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desactivado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Désactivé"
           }
         }
       }
@@ -1916,22 +2013,6 @@
         }
       }
     },
-    "Edit": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Editar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modifier"
-          }
-        }
-      }
-    },
     "Email address": {
       "localizations": {
         "es": {
@@ -1944,22 +2025,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adresse e-mail"
-          }
-        }
-      }
-    },
-    "Enabled": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activé"
           }
         }
       }
@@ -3757,7 +3822,6 @@
       }
     },
     "Restored portable learning state; actions paused": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -3775,16 +3839,172 @@
     },
     "Restores %lld rules and %lld examples. Later changes disable undo.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restores %#@arg1@ and %#@arg2@. Later changes disable undo."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg rule"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg rules"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg example"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg examples"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Restaura %lld reglas y %lld ejemplos. Los cambios posteriores impiden deshacer."
+            "value": "Restaura %#@arg1@ y %#@arg2@. Los cambios posteriores impiden deshacer."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de reglas"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg regla"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg reglas"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de ejemplos"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg ejemplo"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg ejemplos"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Restaure %lld règles et %lld exemples. Des modifications ultérieures empêchent l’annulation."
+            "value": "Restaure %#@arg1@ et %#@arg2@. Des modifications ultérieures empêchent l’annulation."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de règles"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg règle"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg règles"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg d’exemples"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exemple"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exemples"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3901,22 +4121,6 @@
         }
       }
     },
-    "Reviewed corpus": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corpus revisado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corpus vérifié"
-          }
-        }
-      }
-    },
     "Reviewed labels": {
       "localizations": {
         "es": {
@@ -4029,22 +4233,6 @@
         }
       }
     },
-    "Scope": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ámbito"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portée"
-          }
-        }
-      }
-    },
     "Search configuration history": {
       "localizations": {
         "es": {
@@ -4137,23 +4325,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Partager les domaines des expéditeurs avec les services d’enregistrement pour vérifier leur âge"
-          }
-        }
-      }
-    },
-    "Shared storage is unavailable.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El almacenamiento compartido no está disponible."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le stockage partagé est indisponible."
           }
         }
       }
@@ -4318,22 +4489,6 @@
         }
       }
     },
-    "State": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "État"
-          }
-        }
-      }
-    },
     "Statistics": {
       "localizations": {
         "es": {
@@ -4414,22 +4569,6 @@
         }
       }
     },
-    "Transfer": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transferir"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transfert"
-          }
-        }
-      }
-    },
     "Troubleshooting Mail integration": {
       "localizations": {
         "es": {
@@ -4479,7 +4618,6 @@
       }
     },
     "Undid correction rules and learning; Mail action unchanged": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -4752,7 +4890,6 @@
       }
     },
     "Threat assessment": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4774,100 +4911,7 @@
         }
       }
     },
-    "Not assessed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not assessed"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin evaluar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Non évalué"
-          }
-        }
-      }
-    },
-    "Mail placement does not establish message safety.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mail placement does not establish message safety."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La ubicación del correo no garantiza que el mensaje sea seguro."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’emplacement du courrier ne garantit pas la sécurité du message."
-          }
-        }
-      }
-    },
-    "No threats detected within assessed coverage": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No threats detected within assessed coverage"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se detectaron amenazas en el contenido evaluado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune menace détectée dans le contenu évalué"
-          }
-        }
-      }
-    },
-    "Assessment coverage": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Assessment coverage"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alcance de la evaluación"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portée de l’évaluation"
-          }
-        }
-      }
-    },
     "Detector": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4890,7 +4934,6 @@
       }
     },
     "Spam": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4913,7 +4956,6 @@
       }
     },
     "Phishing": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4936,7 +4978,6 @@
       }
     },
     "Spearphishing": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4959,7 +5000,6 @@
       }
     },
     "Fraud": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4982,7 +5022,6 @@
       }
     },
     "Malware": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5004,31 +5043,7 @@
         }
       }
     },
-    "Findings describe assessed content only. Scores are not calibrated probabilities.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Findings describe assessed content only. Scores are not calibrated probabilities."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los resultados solo describen el contenido evaluado. Las puntuaciones no son probabilidades calibradas."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les résultats concernent uniquement le contenu évalué. Les scores ne sont pas des probabilités calibrées."
-          }
-        }
-      }
-    },
     "App updates": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5051,7 +5066,6 @@
       }
     },
     "Check for updates": {
-      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5074,7 +5088,6 @@
       }
     },
     "Spamhaus service": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5091,7 +5104,6 @@
       }
     },
     "HTTPS subscription or trial": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5108,7 +5120,6 @@
       }
     },
     "Public DNS mirrors": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5125,7 +5136,6 @@
       }
     },
     "Review HTTPS access requirements": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5141,25 +5151,7 @@
         }
       }
     },
-    "Requires DNS Blocklists via HTTPS access. Free DNS-query keys may not include it.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Requiere acceso a DNS Blocklists via HTTPS. Las claves DNS gratuitas pueden no incluirlo."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nécessite un accès à DNS Blocklists via HTTPS. Les clés DNS gratuites peuvent ne pas l’inclure."
-          }
-        }
-      }
-    },
     "Spamhaus HTTPS query key": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5176,7 +5168,6 @@
       }
     },
     "Save query key": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5193,7 +5184,6 @@
       }
     },
     "No query key saved": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5210,7 +5200,6 @@
       }
     },
     "Query key saved in Keychain": {
-      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -5222,23 +5211,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Clé de requête enregistrée dans le trousseau"
-          }
-        }
-      }
-    },
-    "Shares sender and link domains with the selected service. Disabled in local-only mode.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comparte los dominios del remitente y de los enlaces con el servicio seleccionado. Desactivado en el modo solo local."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Partage les domaines des expéditeurs et des liens avec le service sélectionné. Désactivé en mode local uniquement."
           }
         }
       }
@@ -5339,19 +5311,18 @@
         }
       }
     },
-    "Known senders: %@": {
-      "extractionState": "manual",
+    "Known senders: %lld": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remitentes conocidos: %@"
+            "value": "Remitentes conocidos: %lld"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Expéditeurs connus : %@"
+            "value": "Expéditeurs connus : %lld"
           }
         }
       }
@@ -5436,18 +5407,72 @@
         }
       }
     },
-    "Requested mail actions for %@ previewed messages.": {
+    "Requested mail actions for %lld previewed messages.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Requested mail actions for %lld previewed message."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Requested mail actions for %lld previewed messages."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se solicitaron acciones en Mail para %@ mensajes previsualizados."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se solicitaron acciones en Mail para %lld de mensajes previsualizados."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se solicitaron acciones en Mail para %lld mensaje previsualizado."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se solicitaron acciones en Mail para %lld mensajes previsualizados."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Actions demandées pour %@ messages prévisualisés."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Actions demandées pour %lld de messages prévisualisés."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Actions demandées pour %lld message prévisualisé."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Actions demandées pour %lld messages prévisualisés."
+                }
+              }
+            }
           }
         }
       }
@@ -5804,69 +5829,18 @@
         }
       }
     },
-    "%@ is a shared mail provider, so this rule also applies to unrelated people who use it. Known senders at this domain: %@": {
+    "%@ is a shared mail provider, so this rule also applies to unrelated people who use it. Known senders at this domain: %lld": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ es un proveedor de correo compartido, así que esta regla también se aplica a personas sin relación que lo usan. Remitentes conocidos en este dominio: %2$@"
+            "value": "%1$@ es un proveedor de correo compartido, así que esta regla también se aplica a personas sin relación que lo usan. Remitentes conocidos en este dominio: %2$lld"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ est un fournisseur de messagerie partagé : cette règle s’applique donc aussi à des personnes sans lien qui l’utilisent. Expéditeurs connus sur ce domaine : %2$@"
-          }
-        }
-      }
-    },
-    "Similar corrections: %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correcciones similares: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corrections similaires : %@"
-          }
-        }
-      }
-    },
-    "Includes the message’s sender, subject, shortened text and evidence, your preferences, and up to %@ similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label. Enabled attachment/OCR text may be included. Mail can contain sensitive information.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Incluye el remitente, el asunto, el texto abreviado y los indicios del mensaje, tus preferencias y hasta %@ correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta. Puede incluir texto de adjuntos y OCR si están activados. El correo puede contener información sensible."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comprend l’expéditeur, l’objet, le texte abrégé et les indices du message, vos préférences et jusqu’à %@ corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette. Le texte des pièces jointes et de l’OCR peut être inclus si activé. Les messages peuvent contenir des données sensibles."
-          }
-        }
-      }
-    },
-    "Body length uses a four-characters-per-token estimate. Quoted text in replies is shortened. Attachment text is included only when enabled.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La longitud usa una estimación de cuatro caracteres por token. El texto citado en las respuestas se abrevia. El texto adjunto solo se incluye si está activado."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La longueur utilise une estimation de quatre caractères par jeton. Le texte cité dans les réponses est abrégé. Le texte des pièces jointes n’est inclus que si l’option est activée."
+            "value": "%1$@ est un fournisseur de messagerie partagé : cette règle s’applique donc aussi à des personnes sans lien qui l’utilisent. Expéditeurs connus sur ce domaine : %2$lld"
           }
         }
       }
@@ -6431,50 +6405,50 @@
         }
       }
     },
-    "Imported content rules: %@": {
+    "Imported content rules: %lld": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reglas de contenido importadas: %@"
+            "value": "Reglas de contenido importadas: %lld"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Règles de contenu importées : %@"
+            "value": "Règles de contenu importées : %lld"
           }
         }
       }
     },
-    "Imported sender rules: %@": {
+    "Imported sender rules: %lld": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reglas de remitente importadas: %@"
+            "value": "Reglas de remitente importadas: %lld"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Règles d’expéditeur importées : %@"
+            "value": "Règles d’expéditeur importées : %lld"
           }
         }
       }
     },
-    "Imported reviewed examples labeled %@: %@": {
+    "Imported reviewed examples labeled %@: %lld": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ejemplos revisados importados con la etiqueta %@: %@"
+            "value": "Ejemplos revisados importados con la etiqueta %1$@: %2$lld"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exemples vérifiés importés avec l’étiquette %@ : %@"
+            "value": "Exemples vérifiés importés avec l’étiquette %1$@ : %2$lld"
           }
         }
       }
@@ -6511,34 +6485,18 @@
         }
       }
     },
-    "Checking mail… %@ of %@": {
+    "Checking mail… %lld of %lld": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Comprobando el correo… %1$@ de %2$@"
+            "value": "Comprobando el correo… %1$lld de %2$lld"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vérification du courrier… %1$@ sur %2$@"
-          }
-        }
-      }
-    },
-    "Close": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cerrar"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fermer"
+            "value": "Vérification du courrier… %1$lld sur %2$lld"
           }
         }
       }
@@ -6735,18 +6693,46 @@
         }
       }
     },
-    "Showing %@ of %@": {
+    "Showing %lld of %lld": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mostrando %1$@ de %2$@"
+            "value": "Mostrando %1$lld de %2$lld"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ affichés sur %2$@"
+            "value": "%#@arg1@ sur %2$lld"
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg affichés"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg affiché"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg affichés"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -6815,18 +6801,72 @@
         }
       }
     },
-    "This week’s Review digest is ready: %@ messages": {
+    "This week’s Review digest is ready: %lld messages": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This week’s Review digest is ready: %lld message"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This week’s Review digest is ready: %lld messages"
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El resumen semanal de mensajes para revisar está listo: %@ mensajes"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "El resumen semanal de mensajes para revisar está listo: %lld de mensajes"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "El resumen semanal de mensajes para revisar está listo: %lld mensaje"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "El resumen semanal de mensajes para revisar está listo: %lld mensajes"
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le récapitulatif hebdomadaire des messages à vérifier est prêt : %@ messages"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Le récapitulatif hebdomadaire des messages à vérifier est prêt : %lld de messages"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Le récapitulatif hebdomadaire des messages à vérifier est prêt : %lld message"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Le récapitulatif hebdomadaire des messages à vérifier est prêt : %lld messages"
+                }
+              }
+            }
           }
         }
       }
@@ -6882,31 +6922,151 @@
     "%lld couldn’t be corrected.": {
       "localizations": {
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld no se pudieron corregir."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld no se pudieron corregir."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld no se pudo corregir."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld no se pudieron corregir."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld n’ont pas pu être corrigés."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld n’ont pas pu être corrigés."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld n’a pas pu être corrigé."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld n’ont pas pu être corrigés."
+                }
+              }
+            }
           }
         }
       }
     },
     "%lld messages couldn’t be read and were skipped, such as messages over %@.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@arg1@, such as messages over %2$@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message couldn’t be read and was skipped"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages couldn’t be read and were skipped"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pudieron leer %lld mensajes y se omitieron, por ejemplo los de más de %@."
+            "value": "%#@arg1@, por ejemplo los de más de %2$@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "No se pudieron leer %arg de mensajes y se omitieron"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "No se pudo leer %arg mensaje y se omitió"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "No se pudieron leer %arg mensajes y se omitieron"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld messages n’ont pas pu être lus et ont été ignorés, par exemple ceux de plus de %@."
+            "value": "%#@arg1@, par exemple ceux de plus de %2$@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages n’ont pas pu être lus et ont été ignorés"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message n’a pas pu être lu et a été ignoré"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages n’ont pas pu être lus et ont été ignorés"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -6916,13 +7076,41 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se conservan %lld de %lld. Puedes importar %lld más."
+            "value": "%#@arg1@ de %2$lld. Puedes importar %3$lld más."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se conservan %arg"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se conserva %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se conservan %arg"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld sur %lld conservés. Vous pouvez en importer %lld de plus."
+            "value": "Éléments conservés : %1$lld sur %2$lld. Vous pouvez en importer %3$lld de plus."
           }
         }
       }
@@ -7585,16 +7773,100 @@
     },
     "Finding this account’s mail server: %lld of %lld messages read.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding this account’s mail server: %1$lld of %#@arg2@ read."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Buscando el servidor de correo de esta cuenta: %1$lld de %2$lld mensajes leídos."
+            "value": "Buscando el servidor de correo de esta cuenta: %1$lld de %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes leídos"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje leído"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes leídos"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recherche du serveur de messagerie de ce compte : %1$lld messages lus sur %2$lld."
+            "value": "Recherche du serveur de messagerie de ce compte : %#@arg1@ sur %2$lld."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages lus"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message lu"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages lus"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -7665,16 +7937,70 @@
     },
     "Forget %lld reviewed messages?": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Forget %lld reviewed message?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Forget %lld reviewed messages?"
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Olvidar %lld mensajes revisados?"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Olvidar %lld de mensajes revisados?"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Olvidar %lld mensaje revisado?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Olvidar %lld mensajes revisados?"
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Oublier %lld messages vérifiés ?"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Oublier %lld de messages vérifiés ?"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Oublier %lld message vérifié ?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Oublier %lld messages vérifiés ?"
+                }
+              }
+            }
           }
         }
       }
@@ -7793,16 +8119,70 @@
     },
     "Import up to %lld .eml files at a time.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Import up to %lld .eml file at a time."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Import up to %lld .eml files at a time."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importa hasta %lld archivos .eml a la vez."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa hasta %lld de archivos .eml a la vez."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa hasta %lld archivo .eml a la vez."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importa hasta %lld archivos .eml a la vez."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importez jusqu’à %lld fichiers .eml à la fois."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez jusqu’à %lld de fichiers .eml à la fois."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez jusqu’à %lld fichier .eml à la fois."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Importez jusqu’à %lld fichiers .eml à la fois."
+                }
+              }
+            }
           }
         }
       }
@@ -7825,48 +8205,210 @@
     },
     "Imported %lld messages as Good.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Imported %lld message as Good."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Imported %lld messages as Good."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se importaron %lld mensajes como deseados."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importaron %lld de mensajes como deseados."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importó %lld mensaje como deseado."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importaron %lld mensajes como deseados."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld messages importés comme légitimes."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld de messages importés comme légitimes."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld message importé comme légitime."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld messages importés comme légitimes."
+                }
+              }
+            }
           }
         }
       }
     },
     "Imported %lld messages as Junk.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Imported %lld message as Junk."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Imported %lld messages as Junk."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se importaron %lld mensajes como no deseados."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importaron %lld de mensajes como no deseados."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importó %lld mensaje como no deseado."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importaron %lld mensajes como no deseados."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld messages importés comme indésirables."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld de messages importés comme indésirables."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld message importé comme indésirable."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld messages importés comme indésirables."
+                }
+              }
+            }
           }
         }
       }
     },
     "Imported %lld messages as Review.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Imported %lld message as Review."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Imported %lld messages as Review."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se importaron %lld mensajes para revisar."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importaron %lld de mensajes para revisar."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importó %lld mensaje para revisar."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se importaron %lld mensajes para revisar."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld messages importés comme à vérifier."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld de messages importés comme à vérifier."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld message importé comme à vérifier."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld messages importés comme à vérifier."
+                }
+              }
+            }
           }
         }
       }
@@ -7969,48 +8511,378 @@
     },
     "Marked %lld of %lld messages as Good.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marked %1$lld of %#@arg2@ as Good."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se marcaron %lld de %lld mensajes como deseados."
+            "value": "%#@arg1@ de %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcaron como deseados %arg"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcó como deseado %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcaron como deseados %arg"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld messages sur %lld marqués comme légitimes."
+            "value": "%#@arg1@ sur %2$lld."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages marqués comme légitimes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message marqué comme légitime"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages marqués comme légitimes"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
     "Marked %lld of %lld messages as Junk.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marked %1$lld of %#@arg2@ as Junk."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se marcaron %lld de %lld mensajes como no deseados."
+            "value": "%#@arg1@ de %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcaron como no deseados %arg"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcó como no deseado %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcaron como no deseados %arg"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld messages sur %lld marqués comme indésirables."
+            "value": "%#@arg1@ sur %2$lld."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages marqués comme indésirables"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message marqué comme indésirable"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages marqués comme indésirables"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
     "Marked %lld of %lld messages for Review.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marked %1$lld of %#@arg2@ for Review."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se marcaron %lld de %lld mensajes para revisión."
+            "value": "%#@arg1@ de %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcaron para revisión %arg"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcó para revisión %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Se marcaron para revisión %arg"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld messages sur %lld marqués pour vérification."
+            "value": "%#@arg1@ sur %2$lld."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages marqués pour vérification"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message marqué pour vérification"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages marqués pour vérification"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -8337,32 +9209,140 @@
     },
     "Remove %lld content rules?": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Remove %lld content rule?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Remove %lld content rules?"
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Eliminar %lld reglas de contenido?"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Eliminar %lld de reglas de contenido?"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Eliminar %lld regla de contenido?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Eliminar %lld reglas de contenido?"
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Supprimer %lld règles de contenu ?"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Supprimer %lld de règles de contenu ?"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Supprimer %lld règle de contenu ?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Supprimer %lld règles de contenu ?"
+                }
+              }
+            }
           }
         }
       }
     },
     "Remove %lld rules?": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Remove %lld rule?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Remove %lld rules?"
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Eliminar %lld reglas?"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Eliminar %lld de reglas?"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Eliminar %lld regla?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "¿Eliminar %lld reglas?"
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Supprimer %lld règles ?"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Supprimer %lld de règles ?"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Supprimer %lld règle ?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Supprimer %lld règles ?"
+                }
+              }
+            }
           }
         }
       }
@@ -9614,15 +10594,51 @@
     "Skipped %lld.": {
       "localizations": {
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se omitieron %lld."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se omitieron %lld."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se omitió %lld."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se omitieron %lld."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld ignorés."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld ignorés."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld ignoré."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld ignorés."
+                }
+              }
+            }
           }
         }
       }
@@ -9757,16 +10773,172 @@
     },
     "SpamWise couldn’t verify the senders of %lld of the %lld selected messages. If an address is forged, blocking it also sends the real sender’s mail to Junk.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise couldn’t verify %#@arg1@ of the %#@arg2@. If an address is forged, blocking it also sends the real sender’s mail to Junk."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "the sender of %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "the senders of %arg"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg selected message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg selected messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "SpamWise no pudo verificar los remitentes de %lld de los %lld mensajes seleccionados. Si una dirección está falsificada, bloquearla también envía a no deseado el correo del remitente real."
+            "value": "SpamWise no pudo verificar %#@arg1@ de %#@arg2@. Si una dirección está falsificada, bloquearla también envía a no deseado el correo del remitente real."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "los remitentes de %arg"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "el remitente de %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "los remitentes de %arg"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "los %arg de mensajes seleccionados"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje seleccionado"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "los %arg mensajes seleccionados"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "SpamWise n’a pas pu vérifier les expéditeurs de %lld des %lld messages sélectionnés. Si une adresse est usurpée, la bloquer envoie aussi les messages du véritable expéditeur dans les indésirables."
+            "value": "SpamWise n’a pas pu vérifier %#@arg1@ %#@arg2@. Si une adresse est usurpée, la bloquer envoie aussi les messages du véritable expéditeur dans les indésirables."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "les expéditeurs de %arg"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "l’expéditeur de %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "les expéditeurs de %arg"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "des %arg de messages sélectionnés"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "sur %arg message sélectionné"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "des %arg messages sélectionnés"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -9869,16 +11041,100 @@
     },
     "Stopped after %lld of %lld messages.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped after %1$lld of %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se detuvo tras %lld de %lld mensajes."
+            "value": "Se detuvo tras %1$lld de %#@arg2@."
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Arrêté après %lld messages sur %lld."
+            "value": "Arrêté après %#@arg1@ sur %2$lld."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -9997,16 +11253,100 @@
     },
     "To stay within %lld examples, SpamWise forgets up to %lld of your oldest corrections as learning examples. Your sender rules stay.": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To stay within %#@arg1@, SpamWise forgets up to %2$lld of your oldest corrections as learning examples. Your sender rules stay."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg example"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg examples"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Para no superar %lld ejemplos, SpamWise olvida hasta %lld de tus correcciones más antiguas como ejemplos de aprendizaje. Tus reglas de remitente se mantienen."
+            "value": "Para no superar %#@arg1@, SpamWise olvida hasta %2$lld de tus correcciones más antiguas como ejemplos de aprendizaje. Tus reglas de remitente se mantienen."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de ejemplos"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg ejemplo"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg ejemplos"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour ne pas dépasser %lld exemples, SpamWise oublie jusqu’à %lld de vos plus anciennes corrections comme exemples d’apprentissage. Vos règles d’expéditeur sont conservées."
+            "value": "Pour ne pas dépasser %#@arg1@, SpamWise oublie jusqu’à %2$lld de vos plus anciennes corrections comme exemples d’apprentissage. Vos règles d’expéditeur sont conservées."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg d’exemples"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exemple"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exemples"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -10157,16 +11497,100 @@
     },
     "%lld of %lld characters": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %#@arg2@"
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg character"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg characters"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld de %2$lld caracteres"
+            "value": "%1$lld de %#@arg2@"
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de caracteres"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg carácter"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg caracteres"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld sur %2$lld caractères"
+            "value": "%1$lld sur %#@arg2@"
+          },
+          "substitutions": {
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de caractères"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg caractère"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg caractères"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -10253,32 +11677,140 @@
     },
     "Each message’s sender, subject, shortened text and evidence are sent with your policy and up to %lld similar corrections from the same account. Mail can contain sensitive information.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Each message’s sender, subject, shortened text and evidence are sent with your policy and up to %lld similar correction from the same account. Mail can contain sensitive information."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Each message’s sender, subject, shortened text and evidence are sent with your policy and up to %lld similar corrections from the same account. Mail can contain sensitive information."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tu política y hasta %lld correcciones similares de la misma cuenta. El correo puede contener información confidencial."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tu política y hasta %lld de correcciones similares de la misma cuenta. El correo puede contener información confidencial."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tu política y hasta %lld corrección similar de la misma cuenta. El correo puede contener información confidencial."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tu política y hasta %lld correcciones similares de la misma cuenta. El correo puede contener información confidencial."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec votre politique et jusqu’à %lld corrections similaires du même compte. Les messages peuvent contenir des informations sensibles."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec votre politique et jusqu’à %lld de corrections similaires du même compte. Les messages peuvent contenir des informations sensibles."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec votre politique et jusqu’à %lld correction similaire du même compte. Les messages peuvent contenir des informations sensibles."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec votre politique et jusqu’à %lld corrections similaires du même compte. Les messages peuvent contenir des informations sensibles."
+                }
+              }
+            }
           }
         }
       }
     },
     "Each week, lists Review messages from the last %lld days that you haven’t resolved. Nothing is emailed.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Each week, lists Review messages from the last %lld day that you haven’t resolved. Nothing is emailed."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Each week, lists Review messages from the last %lld days that you haven’t resolved. Nothing is emailed."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cada semana, enumera los mensajes para revisar de los últimos %lld días que no has resuelto. No se envía ningún correo."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Cada semana, enumera los mensajes para revisar de los últimos %lld de días que no has resuelto. No se envía ningún correo."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Cada semana, enumera los mensajes para revisar del último %lld día que no has resuelto. No se envía ningún correo."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Cada semana, enumera los mensajes para revisar de los últimos %lld días que no has resuelto. No se envía ningún correo."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chaque semaine, liste les messages à vérifier des %lld derniers jours que vous n’avez pas traités. Aucun e-mail n’est envoyé."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Chaque semaine, liste les messages à vérifier des %lld de derniers jours que vous n’avez pas traités. Aucun e-mail n’est envoyé."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Chaque semaine, liste les messages à vérifier du dernier %lld jour que vous n’avez pas traités. Aucun e-mail n’est envoyé."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Chaque semaine, liste les messages à vérifier des %lld derniers jours que vous n’avez pas traités. Aucun e-mail n’est envoyé."
+                }
+              }
+            }
           }
         }
       }
@@ -10301,16 +11833,70 @@
     },
     "Keeps the text of up to %lld reviewed messages on this Mac for export. Turning this off deletes the kept text; labels and learning remain.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Keeps the text of up to %lld reviewed message on this Mac for export. Turning this off deletes the kept text; labels and learning remain."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Keeps the text of up to %lld reviewed messages on this Mac for export. Turning this off deletes the kept text; labels and learning remain."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conserva en este Mac el texto de hasta %lld mensajes revisados para exportarlo. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Conserva en este Mac el texto de hasta %lld de mensajes revisados para exportarlo. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Conserva en este Mac el texto de hasta %lld mensaje revisado para exportarlo. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Conserva en este Mac el texto de hasta %lld mensajes revisados para exportarlo. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conserve sur ce Mac le texte de %lld messages révisés au maximum pour l’exportation. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Conserve sur ce Mac le texte de %lld de messages révisés au maximum pour l’exportation. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Conserve sur ce Mac le texte de %lld message révisé au maximum pour l’exportation. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Conserve sur ce Mac le texte de %lld messages révisés au maximum pour l’exportation. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
+                }
+              }
+            }
           }
         }
       }
@@ -10493,16 +12079,70 @@
     },
     "Message text: about %lld tokens": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Message text: about %lld token"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Message text: about %lld tokens"
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Texto del mensaje: unos %lld tokens"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Texto del mensaje: unos %lld de tokens"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Texto del mensaje: aproximadamente %lld token"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Texto del mensaje: unos %lld tokens"
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Texte du message : environ %lld jetons"
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Texte du message : environ %lld de jetons"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Texte du message : environ %lld jeton"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Texte du message : environ %lld jetons"
+                }
+              }
+            }
           }
         }
       }
@@ -10589,16 +12229,70 @@
     },
     "Not saved. Shorten your policy to %lld characters or fewer.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Not saved. Shorten your policy to %lld character or fewer."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Not saved. Shorten your policy to %lld characters or fewer."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se ha guardado. Acorta tu política a %lld caracteres o menos."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No se ha guardado. Acorta tu política a %lld de caracteres o menos."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No se ha guardado. Acorta tu política a %lld carácter o menos."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No se ha guardado. Acorta tu política a %lld caracteres o menos."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Non enregistré. Raccourcissez votre politique à %lld caractères au maximum."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Non enregistré. Raccourcissez votre politique à %lld de caractères au maximum."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Non enregistré. Raccourcissez votre politique à %lld caractère au maximum."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Non enregistré. Raccourcissez votre politique à %lld caractères au maximum."
+                }
+              }
+            }
           }
         }
       }
@@ -11261,16 +12955,70 @@
     },
     "See what SpamWise would do with the %lld newest Inbox messages across your accounts. Nothing in Mail changes. Messages you’ve already previewed keep their result without a new request.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "See what SpamWise would do with the %lld newest Inbox message across your accounts. Nothing in Mail changes. Messages you’ve already previewed keep their result without a new request."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "See what SpamWise would do with the %lld newest Inbox messages across your accounts. Nothing in Mail changes. Messages you’ve already previewed keep their result without a new request."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mira qué haría SpamWise con los %lld mensajes más recientes de la bandeja de entrada de tus cuentas. Nada cambia en Mail. Los mensajes que ya simulaste conservan su resultado sin una nueva solicitud."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mira qué haría SpamWise con los %lld de mensajes más recientes de la bandeja de entrada de tus cuentas. Nada cambia en Mail. Los mensajes que ya simulaste conservan su resultado sin una nueva solicitud."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mira qué haría SpamWise con el %lld mensaje más reciente de la bandeja de entrada de tus cuentas. Nada cambia en Mail. Los mensajes que ya simulaste conservan su resultado sin una nueva solicitud."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mira qué haría SpamWise con los %lld mensajes más recientes de la bandeja de entrada de tus cuentas. Nada cambia en Mail. Los mensajes que ya simulaste conservan su resultado sin una nueva solicitud."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Découvrez ce que SpamWise ferait des %lld messages les plus récents de la boîte de réception de vos comptes. Rien ne change dans Mail. Les messages déjà simulés gardent leur résultat sans nouvelle requête."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Découvrez ce que SpamWise ferait des %lld de messages les plus récents de la boîte de réception de vos comptes. Rien ne change dans Mail. Les messages déjà simulés gardent leur résultat sans nouvelle requête."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Découvrez ce que SpamWise ferait du %lld message le plus récent de la boîte de réception de vos comptes. Rien ne change dans Mail. Les messages déjà simulés gardent leur résultat sans nouvelle requête."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Découvrez ce que SpamWise ferait des %lld messages les plus récents de la boîte de réception de vos comptes. Rien ne change dans Mail. Les messages déjà simulés gardent leur résultat sans nouvelle requête."
+                }
+              }
+            }
           }
         }
       }
@@ -11517,16 +13265,70 @@
     },
     "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar correction from the same account, with its sender domain, subject, a short excerpt and your label."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld de correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld corrección similar de la misma cuenta, con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld de corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld correction similaire du même compte, avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+                }
+              }
+            }
           }
         }
       }
@@ -11757,16 +13559,70 @@
     },
     "No unresolved Review items in the last %lld days.": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No unresolved Review items in the last %lld day."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No unresolved Review items in the last %lld days."
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay elementos de Revisar sin resolver en los últimos %lld días."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No hay elementos de Revisar sin resolver en los últimos %lld de días."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No hay elementos de Revisar sin resolver en el último %lld día."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No hay elementos de Revisar sin resolver en los últimos %lld días."
+                }
+              }
+            }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun élément À vérifier non résolu au cours des %lld derniers jours."
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Aucun élément À vérifier non résolu au cours des %lld de derniers jours."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Aucun élément À vérifier non résolu au cours du dernier %lld jour."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Aucun élément À vérifier non résolu au cours des %lld derniers jours."
+                }
+              }
+            }
           }
         }
       }
@@ -14125,16 +15981,152 @@
     },
     "Today: %lld messages, %lld Junk, %lld Review": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today: %#@arg1@, %2$lld Junk, %3$lld Review"
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hoy: %1$lld mensajes, %2$lld no deseados, %3$lld para revisar"
+            "value": "Hoy: %#@arg1@, %#@arg2@, %3$lld para revisar"
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg no deseados"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg no deseado"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg no deseados"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aujourd’hui : %1$lld messages, %2$lld indésirables, %3$lld à vérifier"
+            "value": "Aujourd’hui : %#@arg1@, %#@arg2@, %3$lld à vérifier"
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg indésirables"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg indésirable"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg indésirables"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

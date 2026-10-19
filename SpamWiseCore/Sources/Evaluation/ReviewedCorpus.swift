@@ -40,7 +40,7 @@ public enum ReviewedCorpusError: CorpusEvaluationError, BoundedInputError, Senda
       case let .tooManyLabels(count, limit):
         String(
           localized:
-            "The export has \(count, format: .number) labels; at most \(limit, format: .number) are supported.",
+            "The export has \(count) labels; at most \(limit) are supported.",
           bundle: .module
         )
       case let .messageTooLarge(sampleID, limit):

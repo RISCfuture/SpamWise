@@ -64,10 +64,8 @@ private struct BackgroundCheckView: View {
     if let progress = scanning.progress {
       ProgressView().controlSize(.small)
       if progress.total > 0 {
-        Text(
-          "Checking mail… \(progress.processed, format: .number) of \(progress.total, format: .number)"
-        )
-        .foregroundStyle(.secondary)
+        Text("Checking mail… \(progress.processed) of \(progress.total)")
+          .foregroundStyle(.secondary)
       } else {
         Text("Checking mail…").foregroundStyle(.secondary)
       }
@@ -106,7 +104,7 @@ private struct DigestAnnouncementView: View {
   var body: some View {
     HStack {
       Label(
-        "This week’s Review digest is ready: \(count, format: .number) messages",
+        "This week’s Review digest is ready: \(count) messages",
         systemImage: "tray.full"
       )
       Button("Open Digest", action: open).accessibilityIdentifier("activity.openDigest")

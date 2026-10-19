@@ -115,10 +115,8 @@ private struct ActivityTable: View {
     .safeAreaInset(edge: .bottom) {
       if activity.canShowMore {
         HStack {
-          Text(
-            "Showing \(activity.rows.count, format: .number) of \(activity.matchingCount, format: .number)"
-          )
-          .foregroundStyle(.secondary)
+          Text("Showing \(activity.rows.count) of \(activity.matchingCount)")
+            .foregroundStyle(.secondary)
           Button("Show More") { activity.showMore() }
             .accessibilityIdentifier("activity.showMore")
         }

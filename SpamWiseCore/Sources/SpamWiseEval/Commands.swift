@@ -128,7 +128,7 @@ struct ExportCommand: AsyncParsableCommand {
       throw ValidationError(
         String(
           localized:
-            "--limit must be from \(Self.limits.lowerBound, format: .number) to \(Self.limits.upperBound, format: .number).",
+            "--limit must be from \(Self.limits.lowerBound) to \(Self.limits.upperBound).",
           bundle: .module
         )
       )
@@ -146,7 +146,7 @@ struct ExportCommand: AsyncParsableCommand {
       print(
         String(
           localized:
-            "Exported \(count, format: .number) messages. Assign human labels before evaluating.",
+            "Exported \(count) messages. Assign human labels before evaluating.",
           bundle: .module
         )
       )

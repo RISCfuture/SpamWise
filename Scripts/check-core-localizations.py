@@ -3,8 +3,9 @@
 
 Every String(localized:) call passes `bundle: .module`, and the module's
 Localizable.xcstrings holds each key with translated es/fr values whose format
-specifiers match the key. Interpolations match any format specifier in a catalog
-key. Catalog keys that no call uses are reported too.
+specifiers match the key, in every plural variation and substitution.
+Interpolations match any format specifier in a catalog key. Catalog keys that no
+call uses are reported too.
 """
 
 import json
@@ -20,6 +21,7 @@ CALL = re.compile(r"String\(\s*localized:\s*(?=\")")
 MODULE_BUNDLE = re.compile(r"\s*,\s*bundle:\s*\.module\s*\)")
 SPECIFIER = re.compile(r"%(?:\d+\$)?(?:@|ll[du]|l[du]|[dufgesx]|lf)")
 POSITION = re.compile(r"%\d+\$")
+SUBSTITUTION = re.compile(r"%(?:\d+\$)?#@(\w+)@")
 ESCAPES = {"n": "\n", "t": "\t", "r": "\r", "0": "\0", '"': '"', "'": "'", "\\": "\\"}
 
 
@@ -115,17 +117,44 @@ def translated(entry, language):
     localization = entry.get("localizations", {}).get(language)
     if localization is None:
         return False
-    units = string_units(localization)
+    units = string_units(localization) + [
+        unit
+        for substitution in localization.get("substitutions", {}).values()
+        for unit in string_units(substitution)
+    ]
     return bool(units) and all(unit.get("state") == "translated" for unit in units)
 
 
 def string_units(node):
-    """Collect the string units of a localization, including every variation."""
+    """Collect the string units of a localization or substitution, including every variation."""
     units = [node["stringUnit"]] if "stringUnit" in node else []
     for variants in node.get("variations", {}).values():
         for variant in variants.values():
             units.extend(string_units(variant))
     return units
+
+
+def formats(localization):
+    """Each format a localization yields, with substitution variables replaced by their specifiers."""
+    substitutions = localization.get("substitutions", {})
+
+    def specifier(match):
+        substitution = substitutions.get(match[1])
+        return f"%{substitution['formatSpecifier']}" if substitution else ""
+
+    return [SUBSTITUTION.sub(specifier, unit["value"]) for unit in string_units(localization)]
+
+
+def substitution_problems(language, localization):
+    """Describe substitution variants that don't show their argument exactly once."""
+    return [
+        f"{language} substitution “{name}” variants must show %arg once"
+        for name, substitution in localization.get("substitutions", {}).items()
+        if any(
+            unit["value"].count("%arg") != 1 or specifier_types(unit["value"])
+            for unit in string_units(substitution)
+        )
+    ]
 
 
 def specifier_types(text):
@@ -147,11 +176,9 @@ def entry_problems(key, entry):
     problems = [f"{', '.join(missing)} missing"] if missing else []
     expected = specifier_types(key)
     for language, localization in entry.get("localizations", {}).items():
-        if any(
-            specifier_types(unit["value"]) != expected
-            for unit in string_units(localization)
-        ):
+        if any(specifier_types(value) != expected for value in formats(localization)):
             problems.append(f"{language} format specifiers differ from the key")
+        problems += substitution_problems(language, localization)
     return problems
 
 

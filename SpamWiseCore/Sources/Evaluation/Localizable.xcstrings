@@ -737,24 +737,102 @@
         }
       }
     },
-    "The cohort has %@ messages; %@ to %@ are supported.": {
+    "The cohort has %lld messages; %lld to %lld are supported.": {
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
-            "value": "The cohort has %1$@ messages; %2$@ to %3$@ are supported."
+            "state": "translated",
+            "value": "The cohort has %#@arg1@; %2$lld to %3$lld are supported."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "La cohorte tiene %1$@ mensajes; se admiten de %2$@ a %3$@."
+            "value": "La cohorte tiene %#@arg1@; se admiten de %2$lld a %3$lld."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de mensajes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensaje"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg mensajes"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La cohorte contient %1$@ messages ; de %2$@ à %3$@ sont pris en charge."
+            "value": "La cohorte contient %#@arg1@ ; de %2$lld à %3$lld sont pris en charge."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de messages"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg message"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg messages"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -775,24 +853,174 @@
         }
       }
     },
-    "The export has %@ labels; at most %@ are supported.": {
+    "The export has %lld labels; at most %lld are supported.": {
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
-            "value": "The export has %1$@ labels; at most %2$@ are supported."
+            "state": "translated",
+            "value": "The export has %#@arg1@; at most %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg label"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg labels"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg is supported"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg are supported"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "La exportación tiene %1$@ etiquetas; se admiten como máximo %2$@."
+            "value": "La exportación tiene %#@arg1@; %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de etiquetas"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg etiqueta"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg etiquetas"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se admiten como máximo %arg"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se admite como máximo %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "se admiten como máximo %arg"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L’exportation contient %1$@ étiquettes ; au maximum %2$@ sont prises en charge."
+            "value": "L’exportation contient %#@arg1@ ; %#@arg2@."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg d’étiquettes"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg étiquette"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg étiquettes"
+                    }
+                  }
+                }
+              }
+            },
+            "arg2": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "au maximum %arg sont prises en charge"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "au maximum %arg est prise en charge"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "au maximum %arg sont prises en charge"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -829,24 +1057,102 @@
         }
       }
     },
-    "The manifest has %@ runs; %@ to %@ are supported.": {
+    "The manifest has %lld runs; %lld to %lld are supported.": {
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
-            "value": "The manifest has %1$@ runs; %2$@ to %3$@ are supported."
+            "state": "translated",
+            "value": "The manifest has %#@arg1@; %2$lld to %3$lld are supported."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg run"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg runs"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El manifiesto tiene %1$@ ejecuciones; se admiten de %2$@ a %3$@."
+            "value": "El manifiesto tiene %#@arg1@; se admiten de %2$lld a %3$lld."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg de ejecuciones"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg ejecución"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg ejecuciones"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le manifeste contient %1$@ exécutions ; de %2$@ à %3$@ sont prises en charge."
+            "value": "Le manifeste contient %#@arg1@ ; de %2$lld à %3$lld sont prises en charge."
+          },
+          "substitutions": {
+            "arg1": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "many": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg d’exécutions"
+                    }
+                  },
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exécution"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exécutions"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

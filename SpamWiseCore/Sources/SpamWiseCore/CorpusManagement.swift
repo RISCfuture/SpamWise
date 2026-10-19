@@ -20,13 +20,13 @@ public enum CorpusError: CorpusFailure, Sendable, Equatable, LocalizedError {
     switch self {
       case .batchTooLarge(let limit):
         String(
-          localized: "Import at most \(limit, format: .number) messages at a time.",
+          localized: "Import at most \(limit) messages at a time.",
           bundle: .module
         )
       case let .labelLimitReached(limit, remaining):
         String(
           localized:
-            "SpamWise keeps at most \(limit, format: .number) imported labels; \(remaining, format: .number) more can be imported.",
+            "SpamWise keeps at most \(limit) imported labels; \(remaining) more can be imported.",
           bundle: .module
         )
       case .labelNotFound:

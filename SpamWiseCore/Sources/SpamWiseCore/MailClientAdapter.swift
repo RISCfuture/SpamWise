@@ -161,7 +161,7 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
       case let .selectionCount(minimum, maximum):
         String(
           localized:
-            "Select \(minimum, format: .number) to \(maximum, format: .number) messages in Mail, then try again.",
+            "Select \(minimum) to \(maximum) messages in Mail, then try again.",
           bundle: .module
         )
       case .timedOut: String(localized: "Check the message in Mail.", bundle: .module)
@@ -220,13 +220,13 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
       case let .selectionCount(minimum, maximum):
         String(
           localized:
-            "Mail doesn’t have \(minimum, format: .number) to \(maximum, format: .number) messages selected.",
+            "Mail doesn’t have \(minimum) to \(maximum) messages selected.",
           bundle: .module
         )
       case let .folderLimit(count, depth):
         String(
           localized:
-            "Mail has more than \(count, format: .number) mailboxes or folders nested more than \(depth, format: .number) levels deep.",
+            "Mail has more than \(count) mailboxes or folders nested more than \(depth) levels deep.",
           bundle: .module
         )
       case .timedOut:
