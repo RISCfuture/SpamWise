@@ -17,8 +17,12 @@ struct MailReviewView: View {
   var body: some View {
     NavigationStack {
       VStack(alignment: .leading) {
-        Text("Restore anything that isn’t junk. Nothing moves unless you choose Mark as Good.")
-          .foregroundStyle(.secondary)
+        HStack {
+          Text("Restore anything that isn’t junk. Nothing moves unless you choose Mark as Good.")
+            .foregroundStyle(.secondary)
+          Spacer()
+          HelpButton(page: "review-junk")
+        }
         Picker("Account", selection: account) {
           Text("Choose an account").tag(String?.none)
           ForEach(review.accounts) { Text($0.name).tag(Optional($0.id)) }

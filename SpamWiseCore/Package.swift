@@ -10,6 +10,17 @@ let swiftSettings: [SwiftSetting] = [
   .strictMemorySafety()
 ]
 let localizedStrings: [Resource] = [.process("Localizable.xcstrings")]
+
+/// Embeds an Info.plist listing the localizations, which a bare executable otherwise lacks.
+func embeddedInfoPlist(_ tool: String) -> [LinkerSetting] {
+  let plist = "\(Context.packageDirectory)/Support/\(tool)-Info.plist"
+  return [
+    .unsafeFlags(
+      ["-sectcreate", "__TEXT", "__info_plist", plist].flatMap { ["-Xlinker", $0] }
+    )
+  ]
+}
+
 let package = Package(
   name: "SpamWiseCore",
   defaultLocalization: "en",
@@ -78,14 +89,17 @@ let package = Package(
         "SpamWiseCore", "MailIntegration", "Evaluation",
         .product(name: "ArgumentParser", package: "swift-argument-parser")
       ],
-      resources: localizedStrings
+      resources: localizedStrings,
+      linkerSettings: embeddedInfoPlist("spamwise-eval")
     ),
     .executableTarget(
       name: "SpamWiseDaemon",
       dependencies: [
         "SpamWiseCore", "MailIntegration",
         .product(name: "ArgumentParser", package: "swift-argument-parser")
-      ]
+      ],
+      resources: localizedStrings,
+      linkerSettings: embeddedInfoPlist("spamwise-daemon")
     ),
     .testTarget(
       name: "SpamWiseCoreTests",

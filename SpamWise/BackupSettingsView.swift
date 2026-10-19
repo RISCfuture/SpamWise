@@ -13,6 +13,10 @@ struct BackupSettingsView: View {
         backup.restore(from: $0, recoveryKey: $1)
       }
       OperationStatusView(operation: backup.operation, identifier: "backup.status")
+      HStack {
+        Spacer()
+        HelpButton(page: "backup-and-restore")
+      }
     }
   }
 }

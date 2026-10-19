@@ -11,6 +11,8 @@ import SpamWiseCore
 @MainActor
 @Observable
 final class SharedStateModel {
+  /// An account's identifier and the name SpamWise shows for it.
+  typealias NamedAccount = (id: String, name: String)
   /// Presented parts and the change tokens that cover them; learning and claims stay in the store.
   private static let presentedParts: [(StateSlices.Parts, Set<StateSlice>)] = [
     (.rules, [.rules]), (.contentRules, [.contentRules, .contentRuleHits, .contentRuleSkips]),
@@ -33,6 +35,8 @@ final class SharedStateModel {
   private(set) var storageStatus: OperationStatus?
   /// Changes whenever the Activity log does.
   private(set) var recordsVersion = 0
+  /// The accounts that Activity records belong to.
+  private(set) var recordAccountIDs: Set<String> = []
   /// This week's unseen Review digest, announced instead of presented.
   private(set) var pendingDigest: ReviewDigest?
   /// Settings writes still in flight; while any are, reloads keep the edited settings.
@@ -53,10 +57,17 @@ final class SharedStateModel {
       && [.claude, .openAI, .gemini].contains(state.settings.advancedOptions.backend)
   }
   /// Accounts with recorded scan health, by display name.
-  var knownAccounts: [(id: String, name: String)] {
-    scanHealth.filter { !$0.key.hasPrefix(Self.folderHealthKeyPrefix) }
-      .map { (id: $0.key, name: $0.value.accountName) }
-      .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+  var knownAccounts: [NamedAccount] {
+    Self.byName(accountHealthIDs.map { (id: $0, name: scanHealth[$0]?.accountName ?? "") })
+  }
+  /// Accounts with Activity records or scan health, by display name, for filtering Activity.
+  var activityAccounts: [NamedAccount] {
+    Self.byName(
+      accountHealthIDs.union(recordAccountIDs).map { (id: $0, name: accountName(for: $0)) }
+    )
+  }
+  private var accountHealthIDs: Set<String> {
+    Set(scanHealth.keys.filter { !$0.hasPrefix(Self.folderHealthKeyPrefix) })
   }
 
   /**
@@ -73,6 +84,10 @@ final class SharedStateModel {
     if store == nil, reportsMissingStore {
       storageStatus = .failure(OperationFailure(SharedStorageError.unavailable))
     }
+  }
+
+  private static func byName(_ accounts: [NamedAccount]) -> [NamedAccount] {
+    accounts.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
   }
 
   /// The account's display name, or “Unknown account” when SpamWise has no name for it.
@@ -121,7 +136,11 @@ final class SharedStateModel {
       let health = try await MailHealthRepository.load(store)
       if health != scanHealth { scanHealth = health }
     }
-    if changed.contains(.records) { recordsVersion += 1 }
+    if changed.contains(.records) {
+      let accounts = try await StateRepository.activityAccountIDs(store)
+      if accounts != recordAccountIDs { recordAccountIDs = accounts }
+      recordsVersion += 1
+    }
     changeTokens = tokens
   }
 

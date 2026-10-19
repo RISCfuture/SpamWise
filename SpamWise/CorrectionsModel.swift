@@ -13,6 +13,9 @@ import MailIntegration
 @MainActor
 @Observable
 final class CorrectionsModel {
+  /// How many selected messages are corrected at once; Mail still runs one request at a time.
+  static let maximumOverlappingCorrections = 4
+  private static let selectionActivityReason = "Correcting selected mail"
   /// Corrections and undo requested from a decision’s inspector.
   let decision = TrackedOperation()
   /// Correcting the messages selected in Mail.
@@ -32,6 +35,8 @@ final class CorrectionsModel {
   /// A summary of the latest selected-message correction, for the menu bar.
   private(set) var selectionSummary: String?
   @ObservationIgnored private let services: AppServices
+  /// Results of the running selected-message correction, by position in Mail's selection.
+  @ObservationIgnored private var finishedSelection: [Int: SelectionCorrectionResult] = [:]
 
   init(services: AppServices) { self.services = services }
 
@@ -207,7 +212,11 @@ extension CorrectionsModel {
   /// Drops the waiting selection; nothing is saved.
   func cancelPendingSelection() { pendingSelection = nil }
 
-  /// Stops the running selection after the message being corrected.
+  /**
+   Stops the running selection before any further message starts.
+
+   Corrections already saved are kept; a move already sent to Mail may be reported unconfirmed.
+   */
   func cancelSelection() { selection.cancel() }
 
   /// Removes `rule`, which overrides a selected-message correction.
@@ -238,22 +247,61 @@ extension CorrectionsModel {
   private func correct(_ batch: SelectionBatch, pipeline: Pipeline) async throws -> String {
     selectionProgress = CorrectionProgress(completed: 0, total: batch.messages.count)
     defer { selectionProgress = nil }
-    for message in batch.messages {
-      guard !Task.isCancelled else {
-        selectionSummary = batch.stoppedSummary(after: selectionResults.count)
-        throw CancellationError()
-      }
-      selectionResults.append(await correct(message, in: batch, pipeline: pipeline))
-      selectionProgress?.completed += 1
+    await BackgroundActivity.run(Self.selectionActivityReason) {
+      await correctOverlapping(batch, pipeline: pipeline)
+    }
+    guard !Task.isCancelled else {
+      selectionSummary = batch.stoppedSummary(after: selectionResults.count)
+      throw CancellationError()
     }
     let summary = batch.summary(of: selectionResults)
     selectionSummary = summary
     return summary
   }
 
-  private func correct(_ message: ReviewMessage, in batch: SelectionBatch, pipeline: Pipeline)
-    async -> SelectionCorrectionResult
-  {
+  /**
+   Corrects the batch so that each message's wait for Mail to show it moved overlaps the next
+   messages' corrections, with up to ``maximumOverlappingCorrections`` in progress.
+
+   A message starts only once the previous one has been saved and its first command sent to
+   Mail, because a correction saved before then would supersede it. Results are published in
+   Mail's order as they finish. Once cancelled, no further message starts.
+   */
+  private func correctOverlapping(_ batch: SelectionBatch, pipeline: Pipeline) async {
+    finishedSelection = [:]
+    let mail = services.appleMail
+    await withTaskGroup(of: Void.self) { group in
+      var running = 0
+      for (index, message) in batch.messages.enumerated() {
+        if running == Self.maximumOverlappingCorrections, await group.next() != nil {
+          running -= 1
+        }
+        guard !Task.isCancelled else { break }
+        let (sent, signal) = AsyncStream<Void>.makeStream()
+        group.addTask { [self] in
+          let adapter = CommandReportingMail(mail: mail) { signal.finish() }
+          let result = await correct(message, in: batch, pipeline: pipeline, adapter: adapter)
+          signal.finish()
+          await publish(result, at: index)
+        }
+        running += 1
+        for await _ in sent {}
+      }
+    }
+  }
+
+  private func publish(_ result: SelectionCorrectionResult, at index: Int) {
+    finishedSelection[index] = result
+    selectionResults = finishedSelection.sorted { $0.key < $1.key }.map(\.value)
+    selectionProgress?.completed += 1
+  }
+
+  private func correct(
+    _ message: ReviewMessage,
+    in batch: SelectionBatch,
+    pipeline: Pipeline,
+    adapter: some MailClientAdapter
+  ) async -> SelectionCorrectionResult {
     if let reason = batch.skipReason(for: message) {
       return SelectionCorrectionResult(message: message, outcome: .skipped(reason))
     }
@@ -262,7 +310,7 @@ extension CorrectionsModel {
         envelope: message.envelope,
         label: batch.label,
         scope: batch.scope,
-        adapter: services.appleMail
+        adapter: adapter
       )
       let conflict = try? await pipeline.overridingRule(for: record)
       return SelectionCorrectionResult(

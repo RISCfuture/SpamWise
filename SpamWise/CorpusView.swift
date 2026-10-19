@@ -19,11 +19,15 @@ struct CorpusView: View {
   var body: some View {
     NavigationStack {
       VStack(alignment: .leading) {
-        Text(
-          "SpamWise learns from messages you’ve checked yourself. Importing them never creates rules or moves mail."
-        )
-        .foregroundStyle(.secondary)
-        .accessibilityIdentifier("corpus.title")
+        HStack {
+          Text(
+            "SpamWise learns from messages you’ve checked yourself. Importing them never creates rules or moves mail."
+          )
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("corpus.title")
+          Spacer()
+          HelpButton(page: "reviewed-messages-and-learning")
+        }
         CorpusSummary(corpus: corpus)
         CorpusTable(
           labels: corpus.labels,

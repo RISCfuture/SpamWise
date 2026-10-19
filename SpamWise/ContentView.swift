@@ -19,6 +19,27 @@ struct ContentView: View {
         ActivityView(model: model)
       }
     }
+    .modifier(LoginLaunchWindow(router: model.router, shared: model.shared))
+  }
+}
+
+/// Closes the window macOS presents when it opens SpamWise at login, once setup is known finished.
+private struct LoginLaunchWindow: ViewModifier {
+  let router: ActivityRouter
+  let shared: SharedStateModel
+  @Environment(\.dismissWindow)
+  private var dismissWindow
+
+  private var isReady: Bool { router.closesWindowAtLogin && shared.hasLoadedState }
+
+  func body(content: Content) -> some View {
+    content.onChange(of: isReady, initial: true) { _, ready in
+      guard ready else { return }
+      router.closesWindowAtLogin = false
+      if shared.settings.onboardingComplete, !shared.needsRecovery {
+        dismissWindow(id: "activity")
+      }
+    }
   }
 }
 
@@ -218,7 +239,7 @@ private struct ActivityFilterMenu: View {
     Menu {
       Picker("Account", selection: $activity.query.accountID) {
         Text("All accounts").tag(String?.none)
-        ForEach(shared.knownAccounts, id: \.id) { account in
+        ForEach(shared.activityAccounts, id: \.id) { account in
           Text(account.name).tag(Optional(account.id))
         }
       }

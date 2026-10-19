@@ -66,12 +66,23 @@ struct DaemonContext {
     let before = try await StateRepository.load(store, StateSlices()).settings
     try await change()
     let after = try await StateRepository.load(store, StateSlices()).settings
-    let changed = after.changedFields(from: before)
-    let location = usesSharedStore ? "the store shared with the app" : "this daemon's store"
-    print(
-      changed.isEmpty
-        ? "No settings changed in \(location)."
-        : "Changed settings in \(location): \(changed.joined(separator: ", "))."
-    )
+    print(settingChangesReport(after.changedFields(from: before)))
+  }
+
+  private func settingChangesReport(_ changed: [String]) -> String {
+    let fields = changed.joined(separator: ", ")
+    return switch (usesSharedStore, changed.isEmpty) {
+      case (true, true):
+        String(localized: "No settings changed in the store shared with the app.", bundle: .module)
+      case (true, false):
+        String(
+          localized: "Changed settings in the store shared with the app: \(fields).",
+          bundle: .module
+        )
+      case (false, true):
+        String(localized: "No settings changed in this daemon’s store.", bundle: .module)
+      case (false, false):
+        String(localized: "Changed settings in this daemon’s store: \(fields).", bundle: .module)
+    }
   }
 }

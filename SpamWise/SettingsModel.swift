@@ -175,6 +175,16 @@ final class SettingsModel {
     }
   }
 
+  /// Saves every acceptable edit still waiting in a draft, then waits for all queued writes.
+  func savePendingEdits() async {
+    policy.commit()
+    correctionLimit.commit()
+    bodyTokenBudget.commit()
+    notificationIntervalMin.commit()
+    resolverAddress.commit()
+    await tail?.value
+  }
+
   /// Sets or removes the monthly spending limit, in order with settings writes.
   func setSpendingLimit(usd: Double?) {
     guard let store = shared.store else { return }

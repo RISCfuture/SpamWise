@@ -10,15 +10,18 @@ struct RuleEditorView: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      Picker("Rules", selection: $kind) {
-        Text("Sender Rules").tag(RuleKind.sender)
-        Text("Content Rules").tag(RuleKind.content)
+      HStack {
+        Picker("Rules", selection: $kind) {
+          Text("Sender Rules").tag(RuleKind.sender)
+          Text("Content Rules").tag(RuleKind.content)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .fixedSize()
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("rules.kind")
+        HelpButton(page: "rules")
       }
-      .pickerStyle(.segmented)
-      .labelsHidden()
-      .fixedSize()
-      .frame(maxWidth: .infinity)
-      .accessibilityIdentifier("rules.kind")
       switch kind {
         case .sender: SenderRulesPane(rules: rules, shared: shared)
         case .content: ContentRulesPane(rules: rules, shared: shared)

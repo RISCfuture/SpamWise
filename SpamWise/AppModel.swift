@@ -79,9 +79,9 @@ public final class AppModel {
    Creates the model a launched app runs on, makes it available to App Intents
    and starts monitoring Mail.
 
-   Call this once, from the edition's `App` initializer.
+   ``SpamWiseAppDelegate`` calls this once, as the app starts.
    */
-  public static func launch() -> AppModel {
+  static func launch() -> AppModel {
     let model = AppModel(services: .launched())
     unsafe AppDependencyManager.shared.add(dependency: model)
     model.startMonitoring()

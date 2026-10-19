@@ -4,8 +4,8 @@ import SpamWiseCore
 /**
  Every window, menu and menu bar item SpamWise presents, shared by both editions.
 
- Each edition's `App` creates the model once with ``AppModel/launch()`` and passes
- what differs between them: the downloadable edition supplies an
+ Each edition's `App` passes the model its ``SpamWiseAppDelegate`` owns, and what
+ differs between the editions: the downloadable edition supplies an
  ``UpdateChecking`` so its update command and settings appear, and the App Store
  edition, which the store keeps current, supplies none.
  */
@@ -52,7 +52,7 @@ public struct SpamWiseScenes: Scene {
    Creates the scenes for a launched app.
 
    - Parameters:
-     - model: The app's single model, from ``AppModel/launch()``.
+     - model: The app’s single model, from ``SpamWiseAppDelegate/model``.
      - updates: The edition's update checker, or `nil` where the edition cannot
        update itself.
    */

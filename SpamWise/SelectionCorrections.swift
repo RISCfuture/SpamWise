@@ -1,5 +1,6 @@
 import Foundation
 import SpamWiseCore
+import MailIntegration
 
 /// The messages selected in Mail for one correction, read before any of them is corrected.
 struct SelectionBatch {
@@ -51,6 +52,37 @@ struct SelectionBatch {
       case .junk: String(localized: "Marked \(count) of \(total) messages as Junk.")
       case .review: String(localized: "Marked \(count) of \(total) messages for Review.")
     }
+  }
+}
+
+/// Apple Mail for one selected-message correction, reporting each command once Mail has it.
+struct CommandReportingMail: MailClientAdapter {
+  let mail: AppleMailAdapter
+  /// Called after each correction command is sent, before Mail is watched for the result.
+  let commandSent: @Sendable () async -> Void
+
+  func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? {
+    try await mail.lookup(identity)
+  }
+
+  func recentMessages(limit: Int) async throws -> [MailEnvelope] {
+    try await mail.recentMessages(limit: limit)
+  }
+
+  func supports(_ action: MailAction) -> Bool { mail.supports(action) }
+
+  func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
+    try await mail.perform(action, for: identity)
+  }
+
+  func performCorrection(_ action: MailAction, for identity: MessageIdentity) async throws
+    -> ActionReceipt
+  {
+    try await mail.performCorrection(action, for: identity, commandSent: commandSent)
+  }
+
+  func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
+    try await mail.markReadInJunk(identity)
   }
 }
 

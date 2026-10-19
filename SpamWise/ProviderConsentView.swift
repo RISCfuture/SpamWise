@@ -63,6 +63,12 @@ struct ProviderSharingSummary: View {
         this off stops future requests, but requests already sent can’t be recalled.
         """
       )
+      Text(
+        """
+        Keys stay in Keychain until you choose Remove in Settings → Accounts → Keys and passwords. \
+        Forget Connection removes a saved IMAP password.
+        """
+      )
       if backend == .gemini {
         Text(
           """

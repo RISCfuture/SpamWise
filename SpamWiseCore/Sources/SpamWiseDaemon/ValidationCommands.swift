@@ -1,4 +1,5 @@
 import ArgumentParser
+import Foundation
 import MailIntegration
 import SpamWiseCore
 
@@ -33,8 +34,15 @@ struct ValidateCommand: AsyncParsableCommand {
         )
         print(
           validated
-            ? "Read-only check passed; Inbox and Junk validated for this endpoint."
-            : "Read-only check passed, but the server lacks MOVE or a unique Junk mailbox; validation revoked."
+            ? String(
+              localized: "Read-only check passed; Inbox and Junk validated for this endpoint.",
+              bundle: .module
+            )
+            : String(
+              localized:
+                "Read-only check passed, but the server lacks MOVE or a unique Junk mailbox; validation revoked.",
+              bundle: .module
+            )
         )
       }
     }
@@ -69,10 +77,10 @@ struct ProbeCommand: AsyncParsableCommand {
       let context = try options.load()
       let account = context.configuration.account
       _ = try await context.adapter(allowingActions: false).testDisposableMessage(uid: uid)
-      print("Disposable probe restored to Inbox.")
+      print(String(localized: "Disposable probe restored to Inbox.", bundle: .module))
       try await context.reportingSettingChanges {
         try await IMAPAccountValidation.record(account, scope: .daemon, store: context.store)
-        print("Daemon validation recorded for this endpoint.")
+        print(String(localized: "Daemon validation recorded for this endpoint.", bundle: .module))
       }
     }
   }

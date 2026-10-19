@@ -156,6 +156,15 @@ extension StateRepository {
       }
     }
   }
+  /// The distinct accounts of retained Activity records, read from their indexed column.
+  public static func activityAccountIDs(_ store: Store) async throws -> Set<String> {
+    try await StatePersistence.prepared(store)
+    return try await store.snapshot { context in
+      var descriptor = FetchDescriptor<RecordRow>(predicate: #Predicate { $0.accountID != nil })
+      descriptor.propertiesToFetch = [\.accountID]
+      return Set(try context.fetch(descriptor).compactMap(\.accountID))
+    }
+  }
   /// Number of Activity records matching `query`.
   public static func activityCount(_ store: Store, matching query: ActivityQuery = .init())
     async throws -> Int

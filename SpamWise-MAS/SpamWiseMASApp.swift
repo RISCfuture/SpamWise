@@ -11,14 +11,13 @@ import SwiftUI
  */
 @main
 struct SpamWiseMASApp: App {
-  @State private var model: AppModel
+  @NSApplicationDelegateAdaptor private var delegate: SpamWiseAppDelegate
 
   var body: some Scene {
-    SpamWiseScenes(model: model)
+    SpamWiseScenes(model: delegate.model)
   }
 
   init() {
-    _model = State(initialValue: AppModel.launch())
     SpamWiseMASShortcuts.updateAppShortcutParameters()
   }
 }

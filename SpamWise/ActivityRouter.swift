@@ -56,6 +56,8 @@ final class ActivityRouter {
   var sheet: ActivitySheet?
   /// Whether the Activity window shows the selected decision's inspector.
   var showsInspector = false
+  /// Whether the Activity window closes once settings load, because macOS opened SpamWise at login.
+  var closesWindowAtLogin = false
 
   func present(_ sheet: ActivitySheet) { self.sheet = sheet }
 }

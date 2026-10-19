@@ -1,18 +1,32 @@
 import Foundation
 
 extension Pipeline {
+  /**
+   Whether `record`'s Junk decision still stands in `state`, which holds its message's claim.
+
+   An automatic decision stands until settings, rules or corrections change the revision. A
+   user's correction stands until another decision claims its message, so corrections of other
+   messages made meanwhile leave it in force.
+   */
+  private static func decisionStands(_ record: DecisionRecord, in state: AppState) -> Bool {
+    record.path == .correction
+      ? state.claimedActions[record.identity.key] == record.id
+      : state.revision == record.revision
+  }
+
   func markJunkRead(_ original: DecisionRecord, adapter: any MailClientAdapter) async throws
     -> DecisionRecord
   {
     guard original.outcome == .applied, original.decision.action == .moveToJunk,
       !Task.isCancelled
     else { return original }
+    let claim: StateSelection<String> = .only([original.identity.key])
     let claimed = try await StateRepository.update(
       store,
-      loading: StateSlices(records: .only([original.id]))
+      loading: StateSlices(records: .only([original.id]), claims: claim)
     ) { state -> DecisionRecord? in
       guard state.settings.mailOptions.markJunkRead,
-        !state.settings.paused, !state.settings.dryRun, state.revision == original.revision,
+        !state.settings.paused, !state.settings.dryRun, Self.decisionStands(original, in: state),
         let index = state.records.firstIndex(where: { $0.id == original.id }),
         state.records[index].readStatusOutcome == nil
       else { return nil }
@@ -23,8 +37,9 @@ extension Pipeline {
     let outcome: ActionOutcome, failure: String?
     do {
       try Task.checkCancellation()
-      let state = try await StateRepository.load(store, StateSlices())
-      guard state.revision == claimed.revision, !state.settings.paused, !state.settings.dryRun
+      let state = try await StateRepository.load(store, StateSlices(claims: claim))
+      guard Self.decisionStands(claimed, in: state), !state.settings.paused,
+        !state.settings.dryRun
       else {
         return try await finishReadStatus(claimed, outcome: .superseded, failure: nil)
       }

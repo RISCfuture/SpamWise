@@ -18,6 +18,9 @@ final class ScanCoordinator {
   static let pageLimit = 20
   /// The pause between the end of one automatic check and the start of the next.
   static let interval: Duration = .seconds(60)
+  /// Zero-based pages of older or folder mail that a preview can reach.
+  static let previewPages = 0...1000
+  private static let sweepReason = "Checking mail"
   /// ``interval`` as the user reads it, such as “1 minute”.
   static var intervalText: String {
     interval.formatted(.units(allowed: [.minutes, .seconds], width: .wide))
@@ -95,13 +98,13 @@ final class ScanCoordinator {
   /// Starts a sweep when automatic checks are allowed and the interval has passed.
   func scanIfDue() {
     guard canScanAutomatically, progress == nil, isDue else { return }
-    runner.request { [self] in await sweep() }
+    runner.request { [self] in await BackgroundActivity.run(Self.sweepReason) { await sweep() } }
   }
 
   /// Checks the newest Inbox mail now, or right after the sweep in progress.
   func requestInboxCheck() {
     guard canScanAutomatically else { return }
-    runner.request { [self] in await sweep() }
+    runner.request { [self] in await BackgroundActivity.run(Self.sweepReason) { await sweep() } }
   }
 
   /// Stops the sweep in progress; the next one starts at the usual interval.

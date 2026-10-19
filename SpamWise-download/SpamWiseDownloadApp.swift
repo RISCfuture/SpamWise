@@ -13,15 +13,14 @@ import SwiftUI
  */
 @main
 struct SpamWiseDownloadApp: App {
-  @State private var model: AppModel
+  @NSApplicationDelegateAdaptor private var delegate: SpamWiseAppDelegate
   private let updates = GitHubUpdates()
 
   var body: some Scene {
-    SpamWiseScenes(model: model, updates: updates)
+    SpamWiseScenes(model: delegate.model, updates: updates)
   }
 
   init() {
-    _model = State(initialValue: AppModel.launch())
     SpamWiseDownloadShortcuts.updateAppShortcutParameters()
     updates?.startAutomaticChecks()
   }

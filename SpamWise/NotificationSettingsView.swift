@@ -42,14 +42,18 @@ struct NotificationSettingsView: View {
     } header: {
       Text("Notifications")
     } footer: {
-      VStack(alignment: .leading) {
-        Text(notifications.permission)
-          .accessibilityIdentifier("notifications.status")
-        Text(
-          "Notifications show counts, never message content. Set both quiet hours the same to turn quiet hours off."
-        )
+      HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading) {
+          Text(notifications.permission)
+            .accessibilityIdentifier("notifications.status")
+          Text(
+            "Notifications show counts, never message content. Set both quiet hours the same to turn quiet hours off."
+          )
+        }
+        .foregroundStyle(.secondary)
+        Spacer()
+        HelpButton(page: "notifications")
       }
-      .foregroundStyle(.secondary)
     }
     .task { await notifications.refreshPermission() }
   }

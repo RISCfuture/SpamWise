@@ -44,7 +44,7 @@ struct ActivityStatisticsView: View {
           DatePicker("Through", selection: $end, displayedComponents: .date)
           Picker("Account", selection: $account) {
             Text("All accounts").tag(String?.none)
-            ForEach(shared.knownAccounts, id: \.id) { account in
+            ForEach(shared.activityAccounts, id: \.id) { account in
               Text(account.name).tag(Optional(account.id))
             }
           }
@@ -63,6 +63,8 @@ struct ActivityStatisticsView: View {
           HStack {
             Button("Export statistics") { exportStatistics() }.disabled(statistics == nil)
             Button("Export redacted diagnostics") { exportDiagnostics() }
+            Spacer()
+            HelpButton(page: "statistics")
           }
           StatusLabel(status: status)
         }

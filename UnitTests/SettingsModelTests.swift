@@ -66,6 +66,19 @@ struct `Optimistic settings edits` {
     #expect(!settings.hasLocalOnlyConflict)
   }
 
+  @Test
+  func `save a stepper edit still waiting in its draft before quitting`() async throws {
+    let store = try temporaryStore()
+    let shared = SharedStateModel(store: store)
+    let settings = SettingsModel(shared: shared)
+    await shared.refresh()
+    let edited = shared.settings.correctionLimit + 1
+    settings.correctionLimit.value = edited
+    await settings.savePendingEdits()
+    #expect(try await StateRepository.load(store, StateSlices()).settings.correctionLimit == edited)
+    #expect(!settings.correctionLimit.hasUnsavedEdit)
+  }
+
   private func temporaryStore() throws -> Store {
     try Store(
       url: FileManager.default.temporaryDirectory

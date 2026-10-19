@@ -9843,22 +9843,6 @@
         }
       }
     },
-    "SpamWise checks mail while it’s open, even with its windows closed. Mail must be open too.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise comprueba el correo mientras está abierto, incluso con sus ventanas cerradas. Mail también debe estar abierto."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise vérifie les messages tant qu’il est ouvert, même fenêtres fermées. Mail doit aussi être ouvert."
-          }
-        }
-      }
-    },
     "SpamWise checks your Inbox every minute. To check new mail as soon as it arrives, add a Mail rule that runs the SpamWise script.": {
       "localizations": {
         "es": {
@@ -16303,6 +16287,134 @@
           "stringUnit": {
             "state": "translated",
             "value": "Avec 95 % de confiance, au plus cette part des décisions que vous avez vérifiées a dû être modifiée."
+          }
+        }
+      }
+    },
+    "No API key for %@. New mail isn’t classified until you add one below.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay clave de API para %@. El correo nuevo no se clasifica hasta que añadas una abajo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune clé API pour %@. Les nouveaux messages ne sont pas classés tant que vous n’en ajoutez pas une ci-dessous."
+          }
+        }
+      }
+    },
+    "SpamWise checks mail while it’s open, even with its windows closed. At login it opens without a window; use its menu bar item. Mail must be open too.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise comprueba el correo mientras está abierto, incluso con sus ventanas cerradas. Al iniciar sesión se abre sin ventana; usa su ítem de la barra de menús. Mail también debe estar abierto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise vérifie les messages tant qu’il est ouvert, même fenêtres fermées. À l’ouverture de session, il s’ouvre sans fenêtre ; utilisez son icône dans la barre des menus. Mail doit aussi être ouvert."
+          }
+        }
+      }
+    },
+    "Keys stay in Keychain until you choose Remove in Settings → Accounts → Keys and passwords. Forget Connection removes a saved IMAP password.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las claves permanecen en el Llavero hasta que eliges Eliminar en Configuración → Cuentas → Claves y contraseñas. Olvidar conexión elimina una contraseña IMAP guardada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les clés restent dans le Trousseau jusqu’à ce que vous choisissiez Supprimer dans Réglages → Comptes → Clés et mots de passe. Oublier la connexion supprime un mot de passe IMAP enregistré."
+          }
+        }
+      }
+    },
+    "Sender and content rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas de remitente y de contenido"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles d’expéditeur et de contenu"
+          }
+        }
+      }
+    },
+    "Reviewing Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisar el correo no deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier les indésirables"
+          }
+        }
+      }
+    },
+    "Notifications and the Review digest": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones y resumen de mensajes para revisar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications et récapitulatif des messages à vérifier"
+          }
+        }
+      }
+    },
+    "Reviewed messages and learning": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensajes revisados y aprendizaje"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages vérifiés et apprentissage"
+          }
+        }
+      }
+    },
+    "Connecting with IMAP": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectar por IMAP"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se connecter en IMAP"
           }
         }
       }

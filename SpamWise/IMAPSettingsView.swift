@@ -21,6 +21,7 @@ struct IMAPSettingsView: View {
           if imap.operation.isBusy { ProgressView().controlSize(.small) }
           Spacer()
           if imap.hasSavedConnection { ForgetIMAPConnectionButton(imap: imap) }
+          HelpButton(page: "imap-connection")
         }
         OperationStatusView(operation: imap.operation, identifier: "imap.status")
       }.disabled(!storageReady)

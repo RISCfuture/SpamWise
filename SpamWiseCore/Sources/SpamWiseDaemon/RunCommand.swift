@@ -43,6 +43,28 @@ struct RunCommand: AsyncParsableCommand {
   )
   var model: ModelIdentifier?
 
+  private static func coverageReport(_ coverage: SweepCoverage) -> String {
+    String(
+      localized: """
+        Messages visited: \(coverage.visited, format: .number). Classified: \
+        \(coverage.classified, format: .number). For review: \
+        \(coverage.reviewed, format: .number). Unclassified: \
+        \(coverage.unclassified, format: .number).
+        """,
+      bundle: .module
+    )
+  }
+
+  private static func actionsReport(requested: Bool) -> String {
+    requested
+      ? String(localized: "Shared action gates applied.", bundle: .module)
+      : String(
+        localized:
+          "Dry run: previewed mail counts as processed, so live filtering in this store skips it.",
+        bundle: .module
+      )
+  }
+
   func validate() throws {
     if once, pollSeconds != nil { throw DaemonUsageError.onceWithPolling }
     if let pollSeconds, !Self.allowedPollSeconds.contains(pollSeconds) {
@@ -93,7 +115,9 @@ struct RunCommand: AsyncParsableCommand {
           authenticationFailures < Self.maximumAuthenticationFailures
         else { throw error }
         failures += 1
-        failure.report("Sweep failed; retrying in \(backoff(interval, failures)) seconds")
+        let delay = Duration.seconds(backoff(interval, failures))
+          .formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide))
+        failure.report(String(localized: "Sweep failed; retrying in \(delay)", bundle: .module))
       }
       try await Task.sleep(for: .seconds(failures == 0 ? interval : backoff(interval, failures)))
     }
@@ -121,19 +145,13 @@ struct RunCommand: AsyncParsableCommand {
     }
     if let error = failures.first { throw error }
     guard !summary.paused else {
-      print("Filtering paused; Inbox not read.")
+      print(String(localized: "Filtering paused; Inbox not read.", bundle: .module))
       return
     }
     let coverage =
       try await MailHealthRepository.load(context.store, key: adapter.accountID)?
       .coverage ?? SweepCoverage()
-    print(
-      "Visited \(coverage.visited) messages: \(coverage.classified) classified, "
-        + "\(coverage.reviewed) for review, \(coverage.unclassified) unclassified; "
-        + (actions
-          ? "shared action gates applied."
-          : "dry run; previewed mail counts as processed, so live filtering in this store skips it.")
-    )
+    print(Self.coverageReport(coverage), Self.actionsReport(requested: actions))
   }
 
   private func select(_ model: ModelIdentifier?, in context: DaemonContext) async throws {

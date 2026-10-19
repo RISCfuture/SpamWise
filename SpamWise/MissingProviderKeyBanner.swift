@@ -11,12 +11,22 @@ import SpamWiseCore
 struct MissingProviderKeyBanner: View {
   let credentials: CredentialsModel
   let backend: ModelBackend
+  /// Whether the banner sits above the key field, rather than in a window without one.
+  var isAboveKeyField = false
 
   var body: some View {
     if credentials.missingProviderKey == backend {
-      WarningLabel(
-        "No API key for \(backend.localizedTitle). New mail isn’t classified until you add one in Settings."
-      )
+      Group {
+        if isAboveKeyField {
+          WarningLabel(
+            "No API key for \(backend.localizedTitle). New mail isn’t classified until you add one below."
+          )
+        } else {
+          WarningLabel(
+            "No API key for \(backend.localizedTitle). New mail isn’t classified until you add one in Settings."
+          )
+        }
+      }
       .accessibilityIdentifier("credentials.missingKey")
     }
   }
@@ -27,4 +37,17 @@ struct MissingProviderKeyBanner: View {
   VStack { MissingProviderKeyBanner(credentials: model.credentials, backend: .openAI) }
     .frame(width: 480, height: 80)
     .task { await model.credentials.checkProviderKeyIfDue(for: .openAI) }
+}
+#Preview("Missing key above the key field") {
+  let model = PreviewHelper.model(backend: .openAI)
+  Form {
+    MissingProviderKeyBanner(
+      credentials: model.credentials,
+      backend: .openAI,
+      isAboveKeyField: true
+    )
+  }
+  .formStyle(.grouped)
+  .frame(width: 480, height: 120)
+  .task { await model.credentials.checkProviderKeyIfDue(for: .openAI) }
 }

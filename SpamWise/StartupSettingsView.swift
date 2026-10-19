@@ -26,7 +26,10 @@ struct StartupSettingsView: View {
         Button("Open Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
       }
       Text(
-        "SpamWise checks mail while it’s open, even with its windows closed. Mail must be open too."
+        """
+        SpamWise checks mail while it’s open, even with its windows closed. At login it opens \
+        without a window; use its menu bar item. Mail must be open too.
+        """
       )
       .foregroundStyle(.secondary)
       StatusLabel(status: failure)

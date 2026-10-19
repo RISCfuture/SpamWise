@@ -16,14 +16,30 @@ enum DaemonUsageError: Error, LocalizedError, Equatable {
 
   var errorDescription: String? {
     switch self {
-      case .missingConfiguration: "--config needs a configuration file path."
-      case .onceWithPolling: "--once cannot be combined with --poll-seconds."
+      case .missingConfiguration:
+        String(localized: "--config needs a configuration file path.", bundle: .module)
+      case .onceWithPolling:
+        String(localized: "--once cannot be combined with --poll-seconds.", bundle: .module)
       case .pollInterval(let range):
-        "--poll-seconds must be from \(range.lowerBound) to \(range.upperBound)."
-      case .pageLimit(let range): "--limit must be from \(range.lowerBound) to \(range.upperBound)."
+        String(
+          localized:
+            "--poll-seconds must be from \(range.lowerBound, format: .number.grouping(.never)) to \(range.upperBound, format: .number.grouping(.never)).",
+          bundle: .module
+        )
+      case .pageLimit(let range):
+        String(
+          localized:
+            "--limit must be from \(range.lowerBound, format: .number.grouping(.never)) to \(range.upperBound, format: .number.grouping(.never)).",
+          bundle: .module
+        )
       case .modelRequiresStatePath:
-        "--model changes the store's model; set statePath in the configuration so the app's model stays unchanged."
-      case .invalidProbeUID: "The probe UID must be a positive number."
+        String(
+          localized:
+            "--model changes the store’s model; set statePath in the configuration so the app’s model stays unchanged.",
+          bundle: .module
+        )
+      case .invalidProbeUID:
+        String(localized: "The probe UID must be a positive number.", bundle: .module)
     }
   }
 }
@@ -60,11 +76,63 @@ struct DaemonFailure {
   /// Whether the server rejected the credential.
   var isAuthentication: Bool { (error as? IMAPError) == .authenticationFailed }
 
-  /// The localized description and reason, which carry no server text or secrets.
+  /// The localized description and reason, then what to do next, all without server text or secrets.
   var message: String {
     let localized = error as? any LocalizedError
-    return [localized?.errorDescription ?? error.localizedDescription, localized?.failureReason]
-      .compactMap(\.self).filter { !$0.isEmpty }.joined(separator: " ")
+    return [
+      localized?.errorDescription ?? error.localizedDescription, localized?.failureReason,
+      suggestion
+    ]
+    .compactMap(\.self).filter { !$0.isEmpty }.joined(separator: " ")
+  }
+
+  /**
+   What to do next at the command line.
+
+   The errors' own suggestions are written for the app and name its Settings window, while the
+   daemon reads its account and credentials from the configuration file.
+   */
+  var suggestion: String? {
+    switch error {
+      case let error as IMAPError: Self.suggestion(for: error)
+      case IntegrationError.accountUnverified:
+        String(
+          localized: "Run spamwise-daemon validate with this configuration first.",
+          bundle: .module
+        )
+      case is DecodingError:
+        String(
+          localized: "Correct the configuration file, then run the command again.",
+          bundle: .module
+        )
+      case StoreError.missingAppGroup:
+        String(
+          localized: "Set statePath in the configuration file to use a store of the daemon’s own.",
+          bundle: .module
+        )
+      case StoreError.lockUnavailable:
+        String(localized: "Run the command again in a moment.", bundle: .module)
+      default: nil
+    }
+  }
+
+  private static func suggestion(for error: IMAPError) -> String? {
+    switch error {
+      case .authenticationFailed:
+        String(
+          localized: "Check the credential that the configuration file refers to.",
+          bundle: .module
+        )
+      case .invalidConfiguration:
+        String(localized: "Correct the account in the configuration file.", bundle: .module)
+      case .unavailable, .deadlineExceeded:
+        String(
+          localized:
+            "Check the server address in the configuration file and the network connection.",
+          bundle: .module
+        )
+      case .malformedResponse, .limitExceeded, .rejected, .unsupported: nil
+    }
   }
 
   /// Writes the category and message to standard error.
@@ -87,10 +155,13 @@ func runCancellable(_ operation: @escaping @Sendable () async throws -> Void) as
   do {
     try await task.value
   } catch is CancellationError {
-    print("Stopped.")
+    print(String(localized: "Stopped.", bundle: .module))
   } catch {
     DaemonFailure(error: error).report(
-      "Headless operation failed; uncertain actions are not retried"
+      String(
+        localized: "Headless operation failed; uncertain actions are not retried",
+        bundle: .module
+      )
     )
     throw ExitCode.failure
   }

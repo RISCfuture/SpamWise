@@ -21,6 +21,8 @@ struct FolderSettingsView: View {
           HStack {
             Button("Refresh Folders") { folders.discoverFolders() }
             if folders.plans.isBusy { ProgressView().controlSize(.small) }
+            Spacer()
+            HelpButton(page: "folders")
           }
           Picker("Folder", selection: $selection) {
             Text("Choose a folder").tag("")
@@ -144,7 +146,7 @@ private struct FolderPreviewControls: View {
   @Binding var page: Int
 
   var body: some View {
-    Stepper("Preview page \(page + 1)", value: $page, in: 0...1000)
+    Stepper("Preview page \(page + 1)", value: $page, in: ScanCoordinator.previewPages)
     HStack {
       Button("Preview This Page") {
         folders.previewPage(of: plan.folder, since: plan.startDate, page: page)

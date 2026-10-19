@@ -11,7 +11,7 @@ struct HistoricalInboxView: View {
     if let start = olderMail.inboxStart(accountID: accountID) {
       let operation = olderMail.operation(for: accountID)
       LabeledContent("Automatic filtering starts", value: start.formatted())
-      Stepper("Older mail page: \(page + 1)", value: $page, in: 0...1000)
+      Stepper("Older mail page: \(page + 1)", value: $page, in: ScanCoordinator.previewPages)
       HStack {
         Group {
           Button("Preview older Inbox mail") {
