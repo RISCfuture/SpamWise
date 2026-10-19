@@ -10,29 +10,37 @@ There is no published download or App Store listing to link yet.
 
 1. Open SpamWise and complete its setup, and allow SpamWise to control Mail when
    macOS asks.
-2. Start with dry run enabled. Choose an available on-device model or configure an
-   explicit provider. Enter API keys only in SpamWise, where they are saved in
-   Keychain; grant mail-sharing permission separately for a remote provider.
-3. Use Account settings to connect Mail; the check validates each account’s Inbox
-   and Junk mailboxes without changing mail. Keep dry run on until you have
-   reviewed its results, then turn it off in General and confirm.
+2. Start with dry run enabled. In setup, or later in Settings → Classifier, choose
+   Apple's on-device model or a cloud provider. Enter API keys only in SpamWise,
+   where they are saved in Keychain; a cloud provider also needs its own permission
+   to receive mail.
+3. In Settings → Accounts, choose Check Mail Connection. The check finds each
+   account’s Inbox and Junk mailboxes without changing mail. Keep dry run on until
+   you have reviewed its results, then turn it off in Settings → General and
+   confirm.
 4. Inspect Activity. Decisions, attempted mail actions and action failures are
    separate. Confidence thresholds are provisional and do not promise a particular
    accuracy rate.
 
 SpamWise and Mail must remain running for monitoring. Closing SpamWise’s windows
 leaves its menu-bar app running; quitting stops its monitor. Launch at login is
-optional in General settings. Screen lock and sleep/wake acceptance remain under
-test; no immediate-delivery guarantee is made.
+optional in Settings → General. Screen lock and sleep/wake acceptance remain under
+test; no immediate-delivery guarantee is made. The SpamWise menu-bar menu and the
+bottom of the Activity window show what filtering is doing, such as dry run, paused,
+offline or failing.
 
 ## If mail is not being classified
 
-Check Pause, account inclusion, the selected provider and mail-sharing permission.
-Contacts, reply history and Good corrections let mail skip classification only in
-accounts whose trusted receiving servers are configured, so that the sender's
-authentication can be checked; otherwise they count only as evidence for the model.
-Open Accounts and scan health for the last successful scan or reported failure.
-Unreadable mail stays in place while later readable messages can be processed.
+Check whether filtering is paused (Filtering → Resume Filtering), each account's
+Filter this account switch in Settings → Accounts, and the provider, API key and mail
+sharing in Settings → Classifier. Contacts, reply history and Good corrections let
+mail skip classification only in accounts with a trusted mail server, so that the
+sender's authentication can be checked; otherwise they count only as evidence for the
+model. Each account in Settings → Accounts shows its trusted mail server, or a server
+SpamWise detected for you to trust. Its Status shows the last check, a late, failing
+or stalled check, and how much older mail is still to check. Select an unclassified
+message in Activity and choose Classify Again once the cause is fixed. Unreadable
+mail stays in place while later readable messages can be processed.
 Permission failures and timeouts leave mail untouched. In System Settings →
 Privacy & Security → Automation, check SpamWise’s Mail permission. Contacts access
 is optional and is separate from Mail access.
@@ -43,14 +51,18 @@ not required. See the [tested compatibility matrix](mail-compatibility.md).
 
 ## Correcting a decision
 
-Use the Activity inspector or SpamWise’s menu-bar commands for selected Mail
-messages. Ordinary corrections create address rules. Choose domain scope explicitly
-when you intend to affect a whole domain. Address rules take precedence over domain
+Use the Filtering menu or the inspector in Activity, or the menu-bar commands for
+messages selected in Mail; a Correct Selected Mail shortcut in Shortcuts can do the
+same from a key while Mail is in front. Ordinary corrections create address rules.
+Choose domain scope explicitly when you intend to affect a whole domain. When
+SpamWise can't verify a sender, it asks before blocking the address, because the From
+address may be forged. Address rules take precedence over domain
 rules and relationship trust. A saved correction can remain in effect even if its
 mail action fails; check the displayed action outcome.
 
-Review Junk provides a bounded, read-only list until you explicitly choose to
-restore a message. Junk membership alone is not treated as a human training label.
+Review Junk, in the Filtering menu, provides a bounded, read-only list that says why
+each message is there, until you explicitly choose to restore one. It asks first when
+restoring would replace a Block rule. Junk membership alone is not treated as a human training label.
 SpamWise never deletes messages. If another filter or server rule moves mail again,
 inspect that filter’s configuration; a confirmed client-side move is not a promise
 that a server will leave the message there.

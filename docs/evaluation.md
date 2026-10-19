@@ -69,7 +69,7 @@ For `corpus`, optional `--state snapshot.json` reads an `AppState` with rules, c
 
 ## Reviewed-label exports
 
-Enable local reviewed-content retention in the app before correcting messages, then export reviewed labels from Settings. Labels created without retained text remain useful metadata but cannot supply evaluation input. Evaluate the export directly:
+Before correcting messages, turn on **Retain reviewed text for evaluation export** in Settings → Advanced → Evaluation data; then choose **Export reviewed labels…** there. Labels created without retained text remain useful metadata but cannot supply evaluation input. Evaluate the export directly:
 
 ```sh
 spamwise-eval reviewed /private/path/reviewed-labels.json --model mock \

@@ -41,8 +41,9 @@ developer’s private mailbox or API keys.
 3. Set an address rule and preview a matching synthetic message. Inspect its
    explanation and the separate dry-run action outcome. Replace the rule to verify
    that the latest correction at the same scope wins.
-4. Inspect Account settings: keys are stored in Keychain, provider sharing is a
-   separate opt-in, and the disclosure links to provider data terms. Leave remote
+4. Inspect Settings → Classifier and Settings → Accounts → Keys and passwords: keys
+   are stored in Keychain and can be removed, provider sharing is a separate opt-in,
+   and the sharing summary links to provider data terms. Leave remote
    sharing off unless review credentials and appropriate terms are supplied.
 5. For live moves, check the Mail connection so the account’s Inbox and Junk
    mailboxes are validated, then turn off dry run in General and confirm. Correct

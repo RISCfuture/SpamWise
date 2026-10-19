@@ -31,8 +31,9 @@ acknowledgement, and the Apple Events handlers rewritten since these probes stil
 a fresh signed run.
 
 Mail's account-specific special Inbox/Junk roles are used for moves; SpamWise does
-not guess a destination by name. Accounts → Mailbox destinations reads those roles
-without reading message bodies or enabling actions. Names alone do not prove Gmail
+not guess a destination by name. Check Mailboxes, under each account's Advanced
+disclosure in Settings → Accounts, reads those roles without reading message bodies or
+enabling actions. Names alone do not prove Gmail
 system labels. During authorized probe cleanup, Mail's Google Trash role mapped to a
 custom Deleted Messages folder; operator cleanup required exact-message Gmail system
 TRASH verification. The product exposes no Trash/delete action. A Junk role must be

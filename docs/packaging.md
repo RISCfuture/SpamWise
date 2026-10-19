@@ -58,19 +58,24 @@ bundle install
 bundle exec fastlane lanes
 bundle exec fastlane mac download_release version:1.0 build:42
 bundle exec fastlane mac release version:1.0 build:42
+bundle exec fastlane mac beta version:1.0 build:42
 ```
 
 `download_release` archives the download edition, exports it for Developer
 ID, refuses an app whose update repository is missing or malformed, notarizes
 and staples the app, builds `build/SpamWise-<version>.dmg` from the stapled
 app, then signs, notarizes and staples the disk image. `release` uploads the
-App Store edition to App Store Connect without submitting it for review.
-Both keep the archive's dSYMs as `build/SpamWise-<version>.dSYM.zip`.
+App Store edition to App Store Connect without submitting it for review, and
+`beta` uploads it to TestFlight. Each archive lane rebuilds the Help indexes
+first and keeps the archive's dSYMs as `build/SpamWise-<version>.dSYM.zip`.
 
-Pushing a version tag runs the same lanes in `.github/workflows/release.yml`.
-It first checks the changelog section and the update repository, then
-archives both editions, attaches the notarized disk image to a GitHub release
-and attaches the App Store build to its version.
+Pushing a version tag runs `.github/workflows/release.yml` through the shared
+XCUITestKit release workflow and the CI lanes: `ci_verify_release_notes` checks
+the changelog section and the update repository before anything is built,
+`ci_release` archives and ships each edition (`mas` and `download`), and
+`ci_finish_release` writes the store release notes and attaches the App Store
+build to its version. `ci_next_build_number` reports the commit-count build
+number. A final job attaches the notarized disk image to a GitHub release.
 
 ## App icon and signatures
 

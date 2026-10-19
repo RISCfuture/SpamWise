@@ -32,8 +32,10 @@ The following stay on your Mac, in SpamWise's containers:
   retention.
 
 Credentials are stored only in Keychain: your model-provider API keys, a Spamhaus query
-key and IMAP passwords or OAuth tokens. Portable backups are encrypted with a recovery
-key that you keep separately, and they exclude credentials. Exports can contain
+key and IMAP passwords or OAuth tokens. Settings → Accounts → Keys and passwords lists
+each saved credential with Remove, and Remove All SpamWise Keys and Passwords… deletes
+every one; Forget Connection… deletes the IMAP password. Portable backups are encrypted
+with a recovery key that you keep separately, and they exclude credentials. Exports can contain
 personal mail information, depending on the export you choose; keep those files
 private.
 
@@ -74,8 +76,8 @@ system version information in its request header. Provider terms, account settin
 retention exceptions and service locations govern their processing. Your provider
 may charge for requests separately from the free app.
 
-You can revoke mail-sharing permission in Account settings. Revocation stops new
-requests; it cannot recall requests already sent or delete a provider's records.
+You can revoke mail-sharing permission in Settings → Classifier, under Mail sharing.
+Revocation stops new requests; it cannot recall requests already sent or delete a provider's records.
 Contact the provider for its deletion and account-control options.
 
 ## On-device processing and optional evidence
@@ -122,8 +124,8 @@ Mail.
 
 Pause stops new processing. Dry run prevents mail actions but can still send
 authorized model and evidence requests. Quitting SpamWise stops its background
-monitor. You can forget retained examples, remove rules, revoke permissions or remove
-the app's stored data and credentials. See [support](support.md) and
+monitor. You can forget retained examples, remove rules, revoke permissions, remove
+saved keys and passwords in Settings, or remove the app's stored data. See [support](support.md) and
 [complete removal instructions](lifecycle.md). Removing the app alone leaves its data
 and Keychain credentials for reinstall.
 

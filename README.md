@@ -75,6 +75,33 @@ classify if no rule decided, choose an action, persist the decision and an
 at-most-once action claim, then ask the mail adapter to act. Any failure leaves the
 message where it is.
 
+Each package module resolves its strings from its own `Localizable.xcstrings` through
+`bundle: .module`, in English, Spanish and French. Processes share one SwiftData store
+in the App Group; transactions take a cross-process file lock, load only the state
+slices they need, and notice other processes' writes by polling change tokens.
+
+### App
+
+The `SpamWise Common` framework holds the app. `AppModel` composes feature models, each
+built from the shared `AppServices` and only the models it depends on:
+`SharedStateModel` and `SettingsModel` for stored state, `ScanCoordinator` for sweeps,
+and one model per feature, such as `CorrectionsModel`, `RulesModel`, `CorpusModel`,
+`CredentialsModel` and `AuthenticationTrustModel`. Views receive the narrowest model
+they need and never write to the store or Keychain directly.
+
+- Automatic sweeps run in their own coalescing task, one minute after the previous
+  sweep finishes and independently of user work; a check requested during a sweep runs
+  right after it.
+- Each user operation runs through a `TrackedOperation` and reports its own progress,
+  result or failure, with a recovery action, next to the control that started it.
+- Activity is one window. Its table pages 200 rows at a time from the store, with
+  store-backed sorting, and every sheet is an `ActivitySheet` case presented through
+  `ActivityRouter`. The menu bar and the Activity footer show one aggregate filtering
+  state, such as dry run, offline or failing.
+- Settings has General, Classifier, Accounts, Rules, Policy and Advanced tabs. Every
+  control applies on change; text fields and steppers save after a short pause or
+  when focus leaves them.
+
 ### Schemes
 
 | Scheme | Builds | Tests |
@@ -116,19 +143,23 @@ Scripts/check.sh            # CI's unsigned checks, with warnings as errors
 Scripts/ui-check.sh         # XCTest UI flows; development-signed
 ```
 
-`check.sh` checks localization coverage, runs the package tests, builds both editions
-and the extension, checks the app icon and runs the hostless unit tests. Products land
-in `.build/check/`; pass another name (`Scripts/check.sh feature-x`) to keep concurrent
-builds apart. The pieces can run alone:
+`check.sh` checks package localizations and the Help book, runs the package tests,
+builds both editions and the extension, checks the app icon and runs the hostless unit
+tests, failing on any warning. Products land in `.build/check/`; pass another name
+(`Scripts/check.sh feature-x`) to keep concurrent builds apart. The pieces can run
+alone:
 
 | Layer | Command |
 | --- | --- |
 | Package tests | `swift test --package-path SpamWiseCore -Xswiftc -warnings-as-errors` |
 | Hostless unit tests | `xcodebuild test -project SpamWise.xcodeproj -scheme "SpamWise Common" CODE_SIGNING_ALLOWED=NO` |
-| UI tests | `Scripts/ui-check.sh`, which signs for team `2NFSK2WB24` and runs `UITests` against the App Store edition |
+| UI tests | `Scripts/ui-check.sh`, which signs for team `2NFSK2WB24` and runs `UITests` from `SpamWise.xctestplan` against the App Store edition |
+| Package localizations | `python3 Scripts/check-core-localizations.py`: every package string uses its module's catalog and has matching es/fr values |
+| Help book | `python3 Scripts/check-help-book.py`: every anchor the app opens exists in all three languages, and links resolve |
 | Documentation | `xcodebuild docbuild -scheme SpamWiseCore-Package -destination 'platform=macOS,arch=arm64'`, run in `SpamWiseCore/` |
 | Store concurrency | `bash Scripts/store-check.sh <build-token>`: two processes make 50 transactions each, a third reads 100 |
-| Lint and format | `swift format format -i -r <dirs>`, `swiftlint lint --strict` |
+| Format | `swift format format -i -r SpamWise SpamWise-MAS SpamWise-download SpamWiseCore/Sources SpamWiseCore/Tests MailExtension UITests UnitTests` |
+| Lint | `swiftlint lint --strict`, with the house parent config that `.swiftlint.yml` names |
 
 The UI flows use isolated temporary storage and a simulated denied Mail permission, so
 they never touch mail. Two checks are opt-in because they spend money or need an
@@ -143,6 +174,25 @@ installed, indexed app:
 The [evaluation guide](docs/evaluation.md) covers the offline fixture check and
 labeled-corpus runs with `spamwise-eval`.
 
+### Continuous integration
+
+Pushes and pull requests to `main` run two workflows on Xcode 27 runners:
+
+| Workflow | Job | Checks |
+| --- | --- | --- |
+| `ci.yml` | Package Tests | `swift test` with warnings as errors |
+| | Unit Tests | The hostless `SpamWise Common` tests |
+| | Build Editions | Unsigned builds of both editions and the Mail extension |
+| | UI Tests | `UITests` against an ad-hoc-signed App Store edition in test mode |
+| | Documentation | The package's DocC; any warning in SpamWiseCore sources fails |
+| `lint.yml` | Run SwiftLint | `swiftlint lint --strict` |
+
+No CI job drives Mail: real actions need a signed app, a configured account and
+Automation approval. `site.yml` validates the prerelease site on pull requests that
+touch it and deploys only from a manual run on `main`; `release.yml` runs the release
+lanes for a pushed version tag. CI does not run the localization or Help checks, so
+run `Scripts/check.sh` before pushing.
+
 ## Running
 
 Complete the four setup steps. Allow SpamWise to control Mail when macOS asks;
@@ -154,7 +204,8 @@ Check the Mail connection in Settings → Accounts to validate each account's In
 Junk mailboxes, review the dry-run results in Activity, then turn dry run off in
 General. SpamWise filters only while it runs: closing its windows leaves the menu-bar
 app monitoring, and launch at login is optional. Automatic scans consider mail received
-after setup; older mail is filtered only through an explicit preview in Settings.
+after setup; older mail is filtered only through an explicit preview under the
+account's Older mail in Settings → Accounts.
 
 `spamwise-daemon` filters one IMAP account headlessly; see [IMAP](docs/imap.md).
 

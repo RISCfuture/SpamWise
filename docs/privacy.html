@@ -51,8 +51,10 @@ domains, kept seven days, or one hour when the age was unknown;</li>
 retention.</li>
 </ul>
 <p>Credentials are stored only in Keychain: your model-provider API keys, a Spamhaus query
-key and IMAP passwords or OAuth tokens. Portable backups are encrypted with a recovery
-key that you keep separately, and they exclude credentials. Exports can contain
+key and IMAP passwords or OAuth tokens. Settings → Accounts → Keys and passwords lists
+each saved credential with Remove, and Remove All SpamWise Keys and Passwords… deletes
+every one; Forget Connection… deletes the IMAP password. Portable backups are encrypted
+with a recovery key that you keep separately, and they exclude credentials. Exports can contain
 personal mail information, depending on the export you choose; keep those files
 private.</p>
 <p>Contacts matching happens on the Mac; your address book is never uploaded as a list.
@@ -89,8 +91,8 @@ address and API authentication. The Claude SDK also sends app, SDK and operating
 system version information in its request header. Provider terms, account settings,
 retention exceptions and service locations govern their processing. Your provider
 may charge for requests separately from the free app.</p>
-<p>You can revoke mail-sharing permission in Account settings. Revocation stops new
-requests; it cannot recall requests already sent or delete a provider's records.
+<p>You can revoke mail-sharing permission in Settings → Classifier, under Mail sharing.
+Revocation stops new requests; it cannot recall requests already sent or delete a provider's records.
 Contact the provider for its deletion and account-control options.</p>
 <h2 id="on-device-processing-and-optional-evidence">On-device processing and optional evidence</h2>
 <p>The on-device model performs inference on the Mac when available. Explicit local
@@ -129,8 +131,8 @@ The App Store edition contains no update checker; the App Store keeps it current
 Mail.</p>
 <p>Pause stops new processing. Dry run prevents mail actions but can still send
 authorized model and evidence requests. Quitting SpamWise stops its background
-monitor. You can forget retained examples, remove rules, revoke permissions or remove
-the app's stored data and credentials. See <a href="support.html">support</a> and
+monitor. You can forget retained examples, remove rules, revoke permissions, remove
+saved keys and passwords in Settings, or remove the app's stored data. See <a href="support.html">support</a> and
 <a href="lifecycle.html">complete removal instructions</a>. Removing the app alone leaves its data
 and Keychain credentials for reinstall.</p>
 <p>This policy is reviewed whenever data flows or provider terms change; the
