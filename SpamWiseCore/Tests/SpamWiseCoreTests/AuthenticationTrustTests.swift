@@ -43,6 +43,15 @@ func `lets Contacts and Allow rules decide only with trusted aligned authenticat
 }
 
 @Test
+func `reads each leading receiving server once, in lowercase`() {
+  #expect(
+    AuthenticationHeaders.leadingServers([
+      "MX.example; spf=pass", "relay.example; dkim=pass", "mx.example; dmarc=pass", "x; spf=pass"
+    ]) == ["mx.example", "relay.example"]
+  )
+}
+
+@Test
 func `detects an account's receiving servers before trusting them on confirmation`()
   async throws
 {
@@ -50,11 +59,6 @@ func `detects an account's receiving servers before trusting them on confirmatio
   let pipeline = Pipeline(
     store: store,
     classifier: MockClassifier(verdict: .init(label: .review, confidence: 50, reason: "Unknown"))
-  )
-  #expect(
-    AuthenticationHeaders.leadingServers([
-      "MX.example; spf=pass", "relay.example; dkim=pass", "mx.example; dmarc=pass", "x; spf=pass"
-    ]) == ["mx.example", "relay.example"]
   )
   func receive(_ index: Int) async throws -> AuthServerDetection? {
     let forged = index == 0 ? "Authentication-Results: forger.example; dmarc=pass\n" : ""
@@ -83,7 +87,11 @@ func `detects an account's receiving servers before trusting them on confirmatio
   let state = try await StateRepository.load(store, StateSlices())
   #expect(state.settings.mailOptions.trustedAuthServers == ["account-A": ["mx.example"]])
   #expect(state.revision > revision)
+}
+
+@Test
+func `refuses a receiving server name that is not a host`() async throws {
   await #expect(throws: AuthenticationTrustError.invalidServer) {
-    try await AuthenticationTrust.save(["mx example"], accountID: "account-A", store: store)
+    try await AuthenticationTrust.save(["mx example"], accountID: "account-A", store: testStore())
   }
 }

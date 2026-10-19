@@ -75,7 +75,8 @@ public enum CorpusManagement {
    Imports a bounded batch of human-reviewed examples, deduplicating by delivery-independent content.
 
    Evidence is derived from each complete message before its headers are discarded, so imported
-   samples train on the same features as live corrections.
+   samples train on the same message features as live corrections. They have no receiving
+   account, so learning leaves out the features that depend on one.
 
    - Throws: ``CorpusError`` when the batch is too large or would exceed the imported-label limit.
    */
@@ -238,7 +239,8 @@ extension AppState {
       message: sample.message,
       evidence: sample.evidence,
       label: label,
-      sampleID: sample.sampleID
+      sampleID: sample.sampleID,
+      hasAccountContext: false
     )
     var example = CorrectionExample(
       sender: sample.message.fromAddress,

@@ -24,7 +24,7 @@ extension Pipeline {
     return true
   }
 
-  private static func notAttemptedDescription(_ error: any Error) -> String {
+  static func notAttemptedDescription(_ error: any Error) -> String {
     actionFailureDescription(ActionNotAttempted(cause: error))
   }
 
@@ -44,7 +44,8 @@ extension Pipeline {
 
    Once any mail command may have been sent, this never throws: an outcome that cannot be saved
    is returned as observed, and the persisted claim prevents a repeat. A claim is released when
-   dispatch stops before any command was sent.
+   dispatch stops before any command was sent. Cancellation interrupts neither the saved outcome
+   nor the release.
 
    - Throws: When the decision cannot be claimed.
    */
@@ -69,7 +70,7 @@ extension Pipeline {
       case .notAttempted(let record): return await release(claim, as: record)
       case .attempted(let record): completed = record
     }
-    guard (try? await saveAfterAction(completed)) != nil else { return completed }
+    guard (try? await saveObservedOutcome(completed)) != nil else { return completed }
     do {
       return try await markJunkRead(completed, adapter: adapter)
     } catch {
@@ -102,6 +103,10 @@ extension Pipeline {
       }
       var record = state.records[index]
       let replaced = state.claimedActions[key]
+      if case .automatic = mode, replaced == record.id {
+        record.outcome = .duplicate
+        return ActionClaim(record: record, replacedClaim: replaced)
+      }
       if state.revision != record.revision {
         record.outcome = .superseded
       } else if state.settings.paused {
@@ -159,18 +164,29 @@ extension Pipeline {
   }
 
   /**
-   Saves `record` and restores the claim this dispatch replaced, in one transaction.
+   Saves the outcome of an action that may have been sent, retrying while storage is busy, even
+   when the dispatching task is cancelled.
+   */
+  func saveObservedOutcome(_ record: DecisionRecord) async throws {
+    try await Task { try await saveAfterAction(record) }.value
+  }
+
+  /**
+   Saves `record` and restores the claim this dispatch replaced, in one transaction that
+   cancellation does not interrupt.
 
    Nothing was sent, so at-most-once still holds. When the save fails the claim stays, which
    only prevents a later attempt.
    */
   private func release(_ claim: ActionClaim, as record: DecisionRecord) async -> DecisionRecord {
-    let key = record.identity.key
+    let key = record.identity.key, replaced = claim.replacedClaim, store = store
     let slices = StateSlices(records: .only([record.id]), claims: .only([key]))
-    try? await StateRepository.update(store, loading: slices) { state in
-      state.record(record)
-      if state.claimedActions[key] == record.id { state.claimedActions[key] = claim.replacedClaim }
-    }
+    try? await Task {
+      try await StateRepository.update(store, loading: slices) { state in
+        state.record(record)
+        if state.claimedActions[key] == record.id { state.claimedActions[key] = replaced }
+      }
+    }.value
     return record
   }
 

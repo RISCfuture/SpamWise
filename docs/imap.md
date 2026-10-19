@@ -128,9 +128,11 @@ paused run is read again. While filtering is paused, runs read nothing. Runs als
 maintain bounded Sent history for reply evidence, at most every 15 minutes, and
 action-enabled runs process due classification retries for the configured account.
 
-A dry run counts the mail it previews as processed. Live filtering that shares the
-store, including the app, then skips that mail instead of acting on it. While the app
-filters live, give dry-run polling its own `statePath`.
+A dry run records the decisions it previews without moving mail. Once filtering that
+shares the store is live, including the app's, it acts on that mail, reusing each
+decision made under unchanged rules and settings instead of classifying the message
+again. While the app filters live, dry-run polling in the same store therefore makes
+the decisions the app acts on; give it its own `statePath` to keep them apart.
 
 In poll mode a failed sweep is logged with its category and retried after a delay
 that doubles from the poll interval up to an hour. The daemon exits on configuration

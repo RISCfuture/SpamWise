@@ -84,6 +84,7 @@ and [packaging](docs/packaging.md) for limits and reproducible commands.
 - [ ] Ask for the same unverified-sender confirmation in the Correct Selected Mail App Intent that the app's Junk corrections ask for.
 - [ ] Add Help buttons for the newer Help pages (rules, folders, Review Junk, backup, notifications, reviewed messages, statistics, IMAP) on the screens they describe.
 - [ ] Test a selected-message correction batch in the hostless unit tests against a stub Apple Events runner.
+- [ ] Resolve correction records left pending when the process ends between saving a correction and recording its mail outcome, or when storage stays locked through every retry of that outcome. A claim failure is reported as a failed, not-attempted outcome, but nothing revisits a pending correction later; decide the age after which a pending correction with no action claim reads as not attempted.
 
 ## Live acceptance and external prerequisites
 

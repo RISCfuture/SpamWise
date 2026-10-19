@@ -31,8 +31,8 @@ struct GeneralSettingsView: View {
       } footer: {
         Text(
           """
-          In a dry run, Activity shows what SpamWise would do and mail stays where it is. Mail \
-          checked during a dry run keeps that decision; correct it in Activity to move it.
+          In a dry run, Activity shows what SpamWise would do and mail stays where it is. When you \
+          turn it off, SpamWise acts on the mail it checked that’s still in your Inbox.
           """
         )
         .foregroundStyle(.secondary)

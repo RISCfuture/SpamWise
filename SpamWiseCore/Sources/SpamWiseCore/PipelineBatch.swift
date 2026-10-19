@@ -42,14 +42,16 @@ extension Pipeline {
      - dryRun: Whether to suppress mail actions regardless of settings.
      - skipsSettled: Whether this is automatic discovery, which skips identities the
        processed-message index has settled, rechecks each one just before processing it so a
-       concurrent process's result is not classified again, and settles every result. An
-       index entry that cannot be written is retried after each message and stops the batch
-       when it still fails.
+       concurrent process's result is not classified again, and settles every result. A
+       message with an uncorrected dry-run decision under the current revision is dispatched
+       with that decision instead of being classified again. An index entry that cannot be
+       written is retried after each message and stops the batch when it still fails.
      - progress: Called after each processed message with the running count.
      - onCompletion: Called once every envelope has been handled, unless the batch stopped
        because filtering is paused.
    - Returns: The records of the processed messages.
-   - Throws: When a processed decision could not be persisted, or on cancellation.
+   - Throws: A storage error when a processed decision could not be persisted, or
+     cancellation.
    */
   @discardableResult
   public func processBatch(
@@ -60,26 +62,32 @@ extension Pipeline {
     progress: @Sendable (Int) async -> Void = { _ in },
     onCompletion: @Sendable () async throws -> Void = {}
   ) async throws -> [DecisionRecord] {
-    var handled: Set<String> = [], revision = 0
+    var handled: Set<String> = [], pass = DiscoveryPass(revision: 0, dryRun: dryRun)
     if skipsSettled {
       try await prepareDiscovery()
-      revision = try await StateRepository.load(store, StateSlices()).revision
-      handled = try await settledKeys(among: envelopes, revision: revision)
+      let state = try await StateRepository.load(store, StateSlices())
+      pass = DiscoveryPass(revision: state.revision, dryRun: dryRun || state.settings.dryRun)
+      handled = try await settledKeys(among: envelopes, pass: pass)
     }
     var records: [DecisionRecord] = []
     for envelope in envelopes where handled.insert(envelope.identity.key).inserted {
       try Task.checkCancellation()
-      if skipsSettled, try await !settledKeys(among: [envelope], revision: revision).isEmpty {
+      if skipsSettled, try await !settledKeys(among: [envelope], pass: pass).isEmpty {
         continue
       }
-      let record = await process(
-        envelope,
-        adapter: adapter,
-        forceDryRun: dryRun,
-        discovered: skipsSettled
-      )
+      let record: DecisionRecord
+      if skipsSettled, let reused = try await dispatchPreview(of: envelope, adapter, dryRun) {
+        record = reused
+      } else {
+        record = await process(
+          envelope,
+          adapter: adapter,
+          forceDryRun: dryRun,
+          discovered: skipsSettled
+        )
+      }
       guard record.outcome != .paused else { return records }
-      revision = max(revision, record.revision)
+      pass.revision = max(pass.revision, record.revision)
       try await requirePersisted(record)
       if skipsSettled { try await recordUnrecordedResults() }
       records.append(record)
@@ -133,23 +141,63 @@ extension Pipeline {
     return await process(envelope, adapter: adapter)
   }
 
-  /// Stops the batch when a decision never reached the store, as when `process` failed to save it.
+  /**
+   Stops the batch when a decision never reached the store, as when `process` failed to save it.
+
+   - Throws: The storage error that prevents reading the decision back, or
+     ``StoreError/lockUnavailable`` when storage is readable again but was busy when `process`
+     saved.
+   */
   private func requirePersisted(_ record: DecisionRecord) async throws {
     guard record.outcome != .duplicate else { return }
     let saved = StateSlices(records: .only([record.id]))
     guard try await !StateRepository.load(store, saved).records.isEmpty else {
-      throw DecisionRecordError.notFound
+      throw StoreError.lockUnavailable
     }
   }
 
-  private func settledKeys(among envelopes: [MailEnvelope], revision: Int) async throws
+  private func settledKeys(among envelopes: [MailEnvelope], pass: DiscoveryPass) async throws
     -> Set<String>
   {
     try await ProcessedMessageRepository.settledKeys(
       among: envelopes.map(\.identity.key),
-      revision: revision,
+      revision: pass.revision,
+      dryRun: pass.dryRun,
       in: store
     )
+  }
+
+  /**
+   Dispatches the uncorrected dry-run decision recorded for `envelope` under the current
+   revision, so mail previewed during a dry run is acted on without a new classification.
+
+   The decision is moved to the identity discovery found, which differs only in where the
+   message now is. Every action gate applies as for a new decision, including its action claim.
+
+   - Returns: The dispatched record, or nil when there is no such decision.
+   */
+  private func dispatchPreview(
+    of envelope: MailEnvelope,
+    _ adapter: (any MailClientAdapter)?,
+    _ dryRun: Bool
+  ) async throws -> DecisionRecord? {
+    let key = envelope.identity.key
+    guard
+      var preview = try await StateRepository.reusablePreviews(for: [envelope], in: store)[key],
+      preview.outcome == .dryRun, inFlight.insert(key).inserted
+    else { return nil }
+    defer { inFlight.remove(key) }
+    if preview.identity != envelope.identity {
+      preview.identity = envelope.identity
+      try await save(preview)
+    }
+    do {
+      let record = try await dispatch(preview, adapter: adapter, forceDryRun: dryRun)
+      await remember(record, discoveredAs: envelope.identity)
+      return record
+    } catch DecisionRecordError.notFound {
+      return nil
+    }
   }
 
   private func prepareDiscovery() async throws {
@@ -209,4 +257,11 @@ extension Pipeline {
       unrecordedResults[identity.key] = (record, failure)
     }
   }
+}
+
+/// The policy revision and dry-run state an automatic discovery batch settles results under.
+private struct DiscoveryPass {
+  var revision: Int
+  /// Whether the batch suppresses mail actions, by request or by setting.
+  let dryRun: Bool
 }

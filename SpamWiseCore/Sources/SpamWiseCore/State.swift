@@ -39,7 +39,12 @@ public struct Settings: Codable, Sendable, Equatable {
   }
   /// Creates default settings: dry run on, not paused, balanced strength and no validated accounts.
   public init() {}
-  /// Decodes each field independently, using its default when absent or unreadable.
+  /**
+   Decodes each field independently, using its default when absent or unreadable.
+
+   Unreadable Mail preferences take ``MailPreferences``' restrictive values instead, so they
+   never widen the account scope or allow external processing.
+   */
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     let defaults = Self()
@@ -53,7 +58,11 @@ public struct Settings: Codable, Sendable, Equatable {
     onboardingComplete = values.lenient(.onboardingComplete, default: defaults.onboardingComplete)
     validatedAccounts = values.lenient(.validatedAccounts, default: defaults.validatedAccounts)
     advancedOptions = values.lenient(.advancedOptions, default: defaults.advancedOptions)
-    mailOptions = values.lenient(.mailOptions, default: defaults.mailOptions)
+    mailOptions = values.lenient(
+      .mailOptions,
+      default: defaults.mailOptions,
+      unreadable: .restrictive
+    )
   }
   private enum CodingKeys: String, CodingKey {
     case strength, review, dryRun, paused, policy, correctionLimit, bodyTokenBudget

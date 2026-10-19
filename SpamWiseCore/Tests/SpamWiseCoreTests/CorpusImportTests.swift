@@ -5,6 +5,8 @@ import SpamWiseCore
 @Suite
 struct `Reviewed corpus import` {
   private static let importedCount = 20
+  /// A registration age that lookups report for long-established domains.
+  private static let establishedDomainAgeDays = 400
   private let store: Store
   /// The imported Junk examples, which differ only in subject and carry a List-Unsubscribe header.
   private let examples: [ParsedMessage]
@@ -91,5 +93,44 @@ struct `Reviewed corpus import` {
       try await CorpusManagement.capacity(store: store).remainingImports
         == RetentionLimits.reviewedLabels - Self.importedCount
     )
+  }
+
+  /// Live corrections whose domain ages were unknown, as without lookups, or found by lookups.
+  @Test(arguments: [Int?.none, Self.establishedDomainAgeDays])
+  func `learns nothing from account-dependent evidence that imported samples lack`(
+    liveDomainAgeDays: Int?
+  ) async throws {
+    for batch in 1...2 {
+      try await CorpusManagement.importMessages(
+        examples.map { relabelled($0, subject: "\($0.subject), batch \(batch)") },
+        label: .junk,
+        store: store
+      )
+    }
+    var learning = try await state().learning
+    for index in 0..<(3 * Self.importedCount) {
+      let good = relabelled(examples[0], subject: "Dinner plans \(index)")
+      learning.recordCorrection(
+        message: good,
+        evidence: .init(message: good, domainAgeDays: liveDomainAgeDays),
+        label: .inbox
+      )
+    }
+    let query = examples[0]
+    let unknownAge = learning.estimate(message: query, evidence: .init(message: query))
+    let knownAge = learning.estimate(
+      message: query,
+      evidence: .init(message: query, domainAgeDays: Self.establishedDomainAgeDays)
+    )
+    #expect(unknownAge.logisticMargin != nil)
+    #expect(unknownAge.logisticMargin == knownAge.logisticMargin)
+  }
+
+  /// `message` under a new subject, which gives it a new content identity.
+  private func relabelled(_ message: ParsedMessage, subject: String) -> ParsedMessage {
+    var renamed = message
+    renamed.subject = subject
+    renamed.hash = stableHash(Data(subject.utf8))
+    return renamed
   }
 }

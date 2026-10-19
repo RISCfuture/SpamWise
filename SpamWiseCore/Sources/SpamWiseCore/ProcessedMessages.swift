@@ -42,8 +42,8 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
   var retainedSince: Date { lastObserved ?? date }
   /// A paused, superseded or pending result never reached an outcome, so discovery revisits it.
   private var neverFinished: Bool { [.paused, .superseded, .pending].contains(outcome) }
-  /// Any outcome other than a failure, including dry runs and unavailable integrations.
-  private var keepsOutcomeAcrossRevisions: Bool { outcome != .unclassified }
+  /// Any outcome other than a failure or a dry run, including unavailable integrations.
+  private var keepsOutcomeAcrossRevisions: Bool { ![.unclassified, .dryRun].contains(outcome) }
   /// Unparseable content fails the same way on every attempt, whatever the revision.
   private var failsIdentically: Bool { failure == .unparseable }
 
@@ -87,15 +87,22 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
   /**
    Whether automatic discovery should leave this message alone.
 
-   Classified results stay settled across revisions, so going live never re-sends mail that
-   automatic discovery or a dry-run setting already previewed. That includes results whose
-   action found no validated integration: validating an account later does not act on them.
-   Unparseable messages stay settled because identical content fails the same way. Other
-   failures become due again after a revision change or, for transient causes, once their
-   backoff elapses.
+   A dry-run result stays settled only while discovery is still a dry run under the revision
+   that produced it. Once dry run is off or the policy changes, the message is due again, so
+   mail previewed during a dry run is acted on when filtering goes live. Other classified results
+   stay settled across revisions, including results whose action found no validated
+   integration: validating an account later does not act on them. Unparseable messages stay
+   settled because identical content fails the same way. Other failures become due again after
+   a revision change or, for transient causes, once their backoff elapses.
+
+   - Parameters:
+     - current: The current policy revision.
+     - dryRun: Whether the pass asking suppresses mail actions, by setting or by request.
+     - now: The time of the pass.
    */
-  public func isSettled(revision current: Int, now: Date = .now) -> Bool {
+  public func isSettled(revision current: Int, dryRun: Bool, now: Date = .now) -> Bool {
     if neverFinished { return false }
+    if outcome == .dryRun { return dryRun && revision == current }
     if keepsOutcomeAcrossRevisions { return true }
     return failsIdentically || (revision == current && !isTransientRetryDue(now: now))
   }
@@ -142,7 +149,8 @@ public enum ProcessedMessageRepository {
   }
 
   /**
-   Identity keys among `keys` that automatic discovery should skip.
+   Identity keys among `keys` that automatic discovery should skip; see
+   ``ProcessedMessage/isSettled(revision:dryRun:now:)``.
 
    Settled results not observed for a week have their retention renewed, so mail that stays in
    a swept mailbox is not forgotten and classified again. Results recorded only in Activity
@@ -151,11 +159,12 @@ public enum ProcessedMessageRepository {
   public static func settledKeys(
     among keys: some Sequence<String>,
     revision: Int,
+    dryRun: Bool,
     now: Date = .now,
     in store: Store
   ) async throws -> Set<String> {
     let settled = try await entries(for: keys, in: store).filter {
-      $0.value.isSettled(revision: revision, now: now)
+      $0.value.isSettled(revision: revision, dryRun: dryRun, now: now)
     }
     try await renewRetention(
       of: settled.filter { !$0.value.isRetained(at: now, for: observationRefreshSec) }.keys,

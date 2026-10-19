@@ -48,13 +48,20 @@ enum StatisticalLearning {
     return max(-maximumLogOdds, min(maximumLogOdds, logOdds))
   }
 
+  /**
+   The logit of a model fitted to `reviewed`, evaluated for `evidence`.
+
+   The features that depend on a receiving account are left out while any training sample lacks
+   that context, so the model cannot learn where its samples came from.
+   */
   static func logistic(evidence: EvidenceBundle, reviewed: [LearningSample]) -> Double? {
     let training = Array(reviewed.prefix(maximumLogisticSamples))
     guard training.count >= minimumLogisticSamples,
       hasMinimumClasses(training, perClass: minimumLogisticSamplesPerClass)
     else { return nil }
-    let query = LearningFeatures(evidence).vector
-    let vectors = training.map(\.features.vector)
+    let context = training.allSatisfy(\.features.hasAccountContext)
+    let query = LearningFeatures(evidence).vector(accountContext: context)
+    let vectors = training.map { $0.features.vector(accountContext: context) }
     var weights = Array(repeating: 0.0, count: query.count)
     for _ in 0..<iterations {
       var gradient = Array(repeating: 0.0, count: query.count)

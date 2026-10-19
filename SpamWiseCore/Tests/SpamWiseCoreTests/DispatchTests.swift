@@ -2,6 +2,9 @@ import Foundation
 import Testing
 import SpamWiseCore
 
+/// How long a test holds the store lock after cancelling, so the cancelled work waits for it.
+private let lockHoldAfterCancellation: Duration = .milliseconds(200)
+
 @Suite
 struct `Junk dispatch claims` {
   let store: Store
@@ -35,6 +38,26 @@ struct `Junk dispatch claims` {
     let records = try await StateRepository.load(store).records
     #expect(records.map(\.outcome) == [.requested])
     #expect(records.last?.id == moved.id)
+  }
+
+  @Test
+  func `saves an observed move when the dispatch is cancelled while storage is busy`()
+    async throws
+  {
+    let lock = try StoreLockHolder(store)
+    let (acted, signal) = AsyncStream.makeStream(of: Void.self)
+    await adapter.afterEachAction {
+      lock.hold()
+      signal.yield()
+    }
+    let message = try envelope(), pipeline = pipeline, adapter = adapter
+    let dispatch = Task { await pipeline.process(message, adapter: adapter) }
+    for await _ in acted { break }
+    dispatch.cancel()
+    try await Task.sleep(for: lockHoldAfterCancellation)
+    lock.release()
+    #expect(await dispatch.value.outcome == .applied)
+    #expect(try await StateRepository.load(store).records.map(\.outcome) == [.applied])
   }
 }
 
@@ -94,6 +117,32 @@ struct `Correction dispatch` {
     )
     #expect(try await StateRepository.load(store).rules.map(\.scope) == [.domain])
     #expect(try await pipeline.overridingRule(for: domainGood) == nil)
+  }
+
+  @Test
+  func `reports a correction whose mail steps never started through its outcome`()
+    async throws
+  {
+    let lock = try StoreLockHolder(store)
+    let (checked, signal) = AsyncStream.makeStream(of: Void.self)
+    await adapter.beforeEachSupportCheck {
+      lock.hold()
+      signal.yield()
+    }
+    let pipeline = pipeline, adapter = adapter, flagged = flagged
+    let correction = Task {
+      try await pipeline.correct(recordID: flagged.id, label: .inbox, adapter: adapter)
+    }
+    for await _ in checked { break }
+    correction.cancel()
+    try await Task.sleep(for: lockHoldAfterCancellation)
+    lock.release()
+    let good = try await correction.value
+    #expect(good.outcome == .failed)
+    #expect(good.actionError != nil)
+    let records = try await StateRepository.load(store).records
+    #expect(records.first { $0.id == good.id }?.outcome == .failed)
+    #expect(try await StateRepository.load(store).rules.map(\.disposition) == [.allow])
   }
 
   @Test

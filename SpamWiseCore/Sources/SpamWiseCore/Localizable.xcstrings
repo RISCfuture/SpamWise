@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "A newer version of SpamWise saved it in a format this version doesn’t read.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una versión más reciente de SpamWise los guardó en un formato que esta versión no lee."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une version plus récente de SpamWise les a enregistrées dans un format que cette version ne lit pas."
+          }
+        }
+      }
+    },
     "Allow SpamWise to control Mail in System Settings → Privacy & Security → Automation.": {
       "localizations": {
         "es": {
@@ -415,6 +431,22 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Install the latest version of SpamWise.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instala la versión más reciente de SpamWise."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installez la dernière version de SpamWise."
           }
         }
       }
@@ -915,6 +947,22 @@
         }
       }
     },
+    "Quit and reopen SpamWise. Your saved data is left unchanged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sal de SpamWise y vuelve a abrirlo. Tus datos guardados no se modifican."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quittez SpamWise et rouvrez-le. Vos données enregistrées restent inchangées."
+          }
+        }
+      }
+    },
     "Raise the limit in Settings, or wait until next month.": {
       "localizations": {
         "es": {
@@ -1123,6 +1171,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sélectionnez à nouveau le dossier."
+          }
+        }
+      }
+    },
+    "SpamWise can’t use its saved data.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no puede usar sus datos guardados."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise ne peut pas utiliser ses données enregistrées."
           }
         }
       }
@@ -1949,6 +2013,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impossible de mettre à jour les règles d’expéditeurs."
+          }
+        }
+      }
+    },
+    "The shared database couldn’t be opened.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo abrir la base de datos compartida."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’ouvrir la base de données partagée."
           }
         }
       }

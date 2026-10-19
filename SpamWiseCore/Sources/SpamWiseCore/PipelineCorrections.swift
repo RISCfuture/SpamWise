@@ -42,8 +42,9 @@ extension Pipeline {
    its separately recorded mail steps.
 
    Message text for the label and learning is read before saving and only when a setting
-   needs it; when it is unavailable the correction is saved without it. Problems with the mail
-   steps are reported through the returned record's outcome.
+   needs it; when it is unavailable the correction is saved without it. Once the correction is
+   saved, every problem with its mail steps, including a claim that cannot be recorded, is
+   reported through the returned record's outcome.
 
    - Throws: ``CorrectionError`` when the record or its sender cannot be corrected, or a
      storage error when the correction cannot be saved; nothing is saved either way.
@@ -90,12 +91,16 @@ extension Pipeline {
     ) { state in
       try state.applyCorrection(request, message: reviewed)
     }
-    return try await dispatch(
-      correction.record,
-      adapter: adapter,
-      forceDryRun: false,
-      mode: .correction(steps: correction.steps)
-    )
+    do {
+      return try await dispatch(
+        correction.record,
+        adapter: adapter,
+        forceDryRun: false,
+        mode: .correction(steps: correction.steps)
+      )
+    } catch {
+      return await recordUnstarted(correction.record, cause: error)
+    }
   }
   /**
    The sender rule that still decides mail from a corrected sender against its new label.
@@ -111,6 +116,16 @@ extension Pipeline {
         case (.inbox, .allow), (.junk, .block): nil
       }
     }
+  }
+  /// Records that a saved correction's mail steps never started, so its outcome does not stay pending.
+  private func recordUnstarted(_ correction: DecisionRecord, cause: any Error) async
+    -> DecisionRecord
+  {
+    var record = correction
+    record.outcome = .failed
+    record.actionError = Self.notAttemptedDescription(cause)
+    try? await saveObservedOutcome(record)
+    return record
   }
   /// Bounded message text for the reviewed label and learning, or nil when no setting needs it.
   private func reviewedMessage(

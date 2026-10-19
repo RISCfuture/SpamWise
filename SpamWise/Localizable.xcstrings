@@ -12039,18 +12039,18 @@
         }
       }
     },
-    "In a dry run, Activity shows what SpamWise would do and mail stays where it is. Mail checked during a dry run keeps that decision; correct it in Activity to move it.": {
+    "In a dry run, Activity shows what SpamWise would do and mail stays where it is. When you turn it off, SpamWise acts on the mail it checked that’s still in your Inbox.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "En una simulación, Actividad muestra lo que haría SpamWise y el correo se queda donde está. El correo revisado durante una simulación conserva esa decisión; corrígelo en Actividad para moverlo."
+            "value": "En una simulación, Actividad muestra lo que haría SpamWise y el correo se queda donde está. Cuando la desactivas, SpamWise actúa sobre el correo revisado que sigue en tu buzón de entrada."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pendant une simulation, Activité montre ce que ferait SpamWise et les messages restent où ils sont. Les messages examinés pendant une simulation gardent cette décision ; corrigez-les dans Activité pour les déplacer."
+            "value": "Pendant une simulation, Activité montre ce que ferait SpamWise et les messages restent où ils sont. Quand vous la désactivez, SpamWise agit sur les messages examinés qui sont toujours dans votre boîte de réception."
           }
         }
       }

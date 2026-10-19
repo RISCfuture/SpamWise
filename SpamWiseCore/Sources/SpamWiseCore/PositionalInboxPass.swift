@@ -32,13 +32,6 @@ public struct PositionalInboxPass: Sendable {
     self.request = request; self.processing = processing; self.read = read
   }
 
-  /// Messages a page's actions moved out of the Inbox, conservatively including uncertain moves.
-  private static func departures(_ records: [DecisionRecord]) -> Int {
-    records.count {
-      $0.decision.action == .moveToJunk && [.requested, .applied, .failed].contains($0.outcome)
-    }
-  }
-
   /// Processes new mail from the newest position, then backfill pages.
   public func run() async throws -> InboxTraversal {
     var budget = Self.maximumPagesPerRun
@@ -79,7 +72,7 @@ public struct PositionalInboxPass: Sendable {
       }
       let processed = try await processing(page)
       let position = segment.end + page.visitedCount
-      segment.end = max(offset, position - Self.departures(processed.records))
+      segment.end = max(offset, position - processed.records.count(where: \.mayHaveLeftMailbox))
       segment.total = page.total
       segment.visited += page.visitedCount
       segment.unavailable += page.unavailableCount
@@ -110,5 +103,13 @@ extension PositionalInboxPass {
       segment.end = offset
       return segment
     }
+  }
+}
+
+extension DecisionRecord {
+  /// Whether this record's move may have taken its message out of its mailbox, counting uncertain moves.
+  var mayHaveLeftMailbox: Bool {
+    [.moveToJunk, .moveToInbox].contains(decision.action)
+      && [.requested, .applied, .failed].contains(outcome)
   }
 }

@@ -3,6 +3,13 @@ import SwiftData
 
 /// Explicit privacy and account scope for Mail.app workflows.
 public struct MailPreferences: Codable, Sendable, Equatable {
+  /// Preferences for unreadable stored values: local-only processing of no accounts.
+  static var restrictive: Self {
+    var preferences = Self()
+    preferences.localOnly = true
+    preferences.accountIDs = []
+    return preferences
+  }
   /// Suppresses all external evidence and requires an on-device classifier.
   public var localOnly = false
   /// Included Mail account identifiers; nil includes all configured accounts.
@@ -27,12 +34,25 @@ public struct MailPreferences: Codable, Sendable, Equatable {
   public var notifications = NotificationPreferences()
   /// Creates defaults that include every account, trust no receiving server and enable no folder plans.
   public init() {}
-  /// Decodes each field independently, using its default when absent or unreadable.
+  /**
+   Decodes each field independently, using its default when absent.
+
+   An unreadable field also takes its default, except that local-only processing and the account
+   selection take their restrictive values: local only, and no accounts.
+   */
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
-    let defaults = Self()
-    localOnly = values.lenient(.localOnly, default: defaults.localOnly)
-    accountIDs = values.lenient(.accountIDs, default: defaults.accountIDs)
+    let defaults = Self(), restrictive = Self.restrictive
+    localOnly = values.lenient(
+      .localOnly,
+      default: defaults.localOnly,
+      unreadable: restrictive.localOnly
+    )
+    accountIDs = values.lenient(
+      .accountIDs,
+      default: defaults.accountIDs,
+      unreadable: restrictive.accountIDs
+    )
     trustExclusions = values.lenient(.trustExclusions, default: defaults.trustExclusions)
     excludeOwnAddresses = values.lenient(
       .excludeOwnAddresses,

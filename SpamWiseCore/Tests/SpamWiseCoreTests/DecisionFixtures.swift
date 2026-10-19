@@ -15,6 +15,7 @@ actor RecordingAdapter: MailClientAdapter {
   var persistedBeforeAction: [Bool] = []
   private var observedStore: Store?
   private var afterAction: (@Sendable () throws -> Void)?
+  private var supportCheck: (@Sendable () -> Void)?
 
   private static func isClaimed(_ identity: MessageIdentity, in store: Store) async throws -> Bool {
     let state = try await StateRepository.load(
@@ -52,7 +53,12 @@ actor RecordingAdapter: MailClientAdapter {
   func allow() { failure = nil }
   func deny(with error: any Error = IntegrationError.permissionDenied) { failure = error }
   func refuse(_ action: MailAction) { unsupported.insert(action) }
-  func supports(_ action: MailAction) -> Bool { !unsupported.contains(action) }
+  func supports(_ action: MailAction) -> Bool {
+    supportCheck?()
+    return !unsupported.contains(action)
+  }
+  /// Runs `body` whenever dispatch asks whether an action is supported, before it claims the action.
+  func beforeEachSupportCheck(_ body: @escaping @Sendable () -> Void) { supportCheck = body }
   func moveIdentity(to identity: MessageIdentity) { updatedIdentity = identity }
 }
 func testStore() throws -> Store {
@@ -74,6 +80,21 @@ func blockStorage(_ store: Store) throws {
   let lock = store.url.path + ".lock"
   try? FileManager.default.removeItem(atPath: lock)
   try FileManager.default.createDirectory(atPath: lock, withIntermediateDirectories: false)
+}
+/// Holds a store's transaction lock from outside the store, as another process would.
+final class StoreLockHolder: Sendable {
+  private let handle: FileHandle
+
+  init(_ store: Store) throws {
+    let path = store.url.path + ".lock"
+    if !FileManager.default.fileExists(atPath: path) {
+      FileManager.default.createFile(atPath: path, contents: nil)
+    }
+    handle = try FileHandle(forUpdating: URL(filePath: path))
+  }
+
+  func hold() { flock(handle.fileDescriptor, LOCK_EX) }
+  func release() { flock(handle.fileDescriptor, LOCK_UN) }
 }
 /// Makes `store` available again after ``blockStorage(_:)``.
 func restoreStorage(_ store: Store) throws {

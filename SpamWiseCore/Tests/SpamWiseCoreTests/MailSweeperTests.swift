@@ -77,8 +77,14 @@ private actor StubSweepSource: PositionalInboxSource {
   }
   func lookup(_: MessageIdentity) throws -> MailEnvelope? { nil }
   func recentMessages(limit _: Int) throws -> [MailEnvelope] { [] }
-  func perform(_ action: MailAction, for _: MessageIdentity) throws -> ActionReceipt {
+  /// Records `action`; a move takes the message out of every folder.
+  func perform(_ action: MailAction, for identity: MessageIdentity) throws -> ActionReceipt {
     actions.append(action)
+    if [.moveToJunk, .moveToInbox].contains(action) {
+      for folder in folderMessages.keys {
+        folderMessages[folder]?.removeAll { $0.identity.key == identity.key }
+      }
+    }
     return ActionReceipt(confirmed: true)
   }
 }
@@ -99,15 +105,36 @@ struct `Mail sweeper` {
   init() throws { store = try testStore() }
 
   private func sweeper(_ source: StubSweepSource, label: MailLabel = .inbox) -> MailSweeper {
+    sweeper(source) { _ in label }
+  }
+
+  /// A sweeper whose classifier labels each message by its subject.
+  private func sweeper(
+    _ source: StubSweepSource,
+    labelling label: @escaping @Sendable (String) -> MailLabel
+  ) -> MailSweeper {
     let classified = classified
     let pipeline = Pipeline(
       store: store,
       classifier: MockClassifier(operation: { input in
         classified.append(input.message.subject)
-        return Verdict(label: label, confidence: 99, reason: "fixture")
+        return Verdict(label: label(input.message.subject), confidence: 99, reason: "fixture")
       })
     )
     return MailSweeper(source: source, store: store, pipeline: pipeline)
+  }
+
+  /// Saves an enabled filtering plan for `folder` and turns on live actions for its account.
+  private func filterLive(_ folder: MailFolder) async throws {
+    var plan = MailFolderPlan(folder: folder)
+    plan.enabled = true
+    plan.startDate = .distantPast
+    let saved = plan
+    try await StateRepository.editSettings(store) {
+      $0.mailOptions.folderPlans = [saved]
+      $0.validatedAccounts = [folder.accountID]
+      $0.dryRun = false
+    }
   }
 
   private func records() async throws -> [DecisionRecord] {
@@ -187,6 +214,25 @@ struct `Mail sweeper` {
     let recorded = try await records().count
     try await sweeper.sweep(dryRun: true, limit: 20)
     #expect(try await records().count == recorded)
+  }
+
+  @Test
+  func `reaches folder mail that moved up into positions the previous page emptied`()
+    async throws
+  {
+    let folder = MailFolder(accountID: "account", path: ["Newsletters"])
+    try await filterLive(folder)
+    let source = StubSweepSource([("account", [])])
+    await source.place(
+      (1...6).map { StubSweepSource.message("account", $0, mailbox: folder.path[0]) },
+      in: folder
+    )
+    let junk: Set = ["Message 3", "Message 4"]
+    let sweeper = sweeper(source) { junk.contains($0) ? .junk : .inbox }
+
+    for _ in 1...3 { try await sweeper.sweep(dryRun: false, limit: 2) }
+    #expect(classified.all == (1...6).map { "Message \($0)" })
+    #expect(await source.actions == [.moveToJunk, .moveToJunk])
   }
 
   @Test

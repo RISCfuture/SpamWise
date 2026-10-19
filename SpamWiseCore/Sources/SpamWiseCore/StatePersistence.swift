@@ -10,7 +10,12 @@ enum StatePersistence {
   private static let entitySchema = 2
   private static let preparedStores = Mutex<Set<URL>>([])
 
-  /// Imports a single-document snapshot once per process, before any other state access.
+  /**
+   Imports a single-document snapshot once per process, before any other state access.
+
+   - Throws: ``StoredStateError/newerVersion`` when a newer version marked the entity schema, so
+     this version neither reads nor writes that state.
+   */
   static func prepared(_ store: Store) async throws {
     guard !preparedStores.withLock({ $0.contains(store.url) }) else { return }
     try await store.transaction { context in
@@ -28,7 +33,11 @@ enum StatePersistence {
    version is never imported over newer state.
    */
   private static func importLegacyState(_ context: ModelContext) throws {
-    guard try context.document(schemaKey) == nil else { return }
+    if let mark = try context.document(schemaKey) {
+      let schema = try? JSONDecoder().decode(Int.self, from: mark)
+      guard let schema, schema <= entitySchema else { throw StoredStateError.newerVersion }
+      return
+    }
     if let legacy = try context.document(legacyStateKey) {
       do {
         let state = try JSONDecoder().decode(AppState.self, from: legacy)
@@ -53,6 +62,78 @@ enum StatePersistence {
       StateSlice.allCases.map(\.rawValue),
       stamp: context.nextChangeStamp()
     )
+  }
+}
+
+/// What shared storage holds when it opens.
+public enum StoredStateCondition: Sendable, Equatable {
+  /// Nothing has been saved yet, as on a first run.
+  case empty
+  /// Saved state that this version reads.
+  case readable
+  /// Unreadable data was set aside and awaits a recovery decision.
+  case needsRecovery([StateRecovery.Entry])
+}
+
+/// Shared storage that holds data this version can't use; nothing in it is changed.
+public enum StoredStateError: StorageFailure, Sendable, Equatable, LocalizedError {
+  /// A newer version of SpamWise saved the data in a format this version doesn't support.
+  case newerVersion
+  /// The shared database couldn't be opened or read.
+  case unreadable
+  /// A general description of the storage problem.
+  public var errorDescription: String? {
+    String(localized: "SpamWise can’t use its saved data.", bundle: .module)
+  }
+  /// Why the saved data can't be used.
+  public var failureReason: String? {
+    switch self {
+      case .newerVersion:
+        String(
+          localized: "A newer version of SpamWise saved it in a format this version doesn’t read.",
+          bundle: .module
+        )
+      case .unreadable:
+        String(localized: "The shared database couldn’t be opened.", bundle: .module)
+    }
+  }
+  /// What the user can do; the saved data stays as it is.
+  public var recoverySuggestion: String? {
+    switch self {
+      case .newerVersion:
+        String(localized: "Install the latest version of SpamWise.", bundle: .module)
+      case .unreadable:
+        String(
+          localized: "Quit and reopen SpamWise. Your saved data is left unchanged.",
+          bundle: .module
+        )
+    }
+  }
+}
+
+extension StateRepository {
+  /**
+   Opens shared storage and reports what it holds, so a first run can be told apart from data
+   that can't be read.
+
+   - Throws: ``StoredStateError`` when the database can't be opened or a newer version wrote
+     it, ``StoreError`` while storage is busy or missing, or cancellation.
+   */
+  public static func condition(_ store: Store) async throws -> StoredStateCondition {
+    do {
+      let entries = try await StateRecovery.entries(store)
+      guard entries.isEmpty else { return .needsRecovery(entries) }
+      let saved = try await store.transaction { context in
+        try context.document(StateTransaction.policyKey) != nil
+      }
+      return saved ? .readable : .empty
+    } catch let error as any StorageFailure {
+      throw error
+    } catch is CancellationError {
+      throw CancellationError()
+    } catch {
+      throw StoredStateError.unreadable
+    }
   }
 }
 

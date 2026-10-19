@@ -57,10 +57,10 @@ public struct MailSweepSummary: Sendable, Equatable {
 
  A sweep maintains Sent history on its own schedule, then runs one Inbox pass per account in
  scope, then one page of each enabled folder plan. It decides which messages are new with the
- processed-message index (see ``ProcessedMessage/isSettled(revision:now:)``), saves each pass's
- cursor, coverage and failures in ``MailScanHealth``, requests due retries after live passes and
- observes training folders. A failing account or folder is recorded and the sweep continues;
- cancellation always ends it.
+ processed-message index (see ``ProcessedMessage/isSettled(revision:dryRun:now:)``), saves each
+ pass's cursor, coverage and failures in ``MailScanHealth``, requests due retries after live
+ passes and observes training folders. A failing account or folder is recorded and the sweep
+ continues; cancellation always ends it.
  */
 public actor MailSweeper {
   /// Receives sweep events.

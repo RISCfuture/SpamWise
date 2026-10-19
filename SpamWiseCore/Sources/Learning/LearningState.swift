@@ -140,6 +140,8 @@ public struct LearningState: Codable, Sendable, Equatable {
      - label: The label the user chose.
      - sampleID: The sample's identity, when it differs from the identity of
        `message`, such as the identity of the text that was classified.
+     - hasAccountContext: Whether `evidence` was gathered for the account that received
+       `message`; an imported message has none.
      - date: When the correction was made.
    */
   public mutating func recordCorrection(
@@ -147,11 +149,12 @@ public struct LearningState: Codable, Sendable, Equatable {
     evidence: EvidenceBundle,
     label: MailLabel,
     sampleID: String? = nil,
+    hasAccountContext: Bool = true,
     date: Date = .now
   ) {
     let sample = LearningSample.make(
       message: message,
-      evidence: evidence,
+      features: LearningFeatures(evidence, hasAccountContext: hasAccountContext),
       label: label,
       provenance: .explicitCorrection,
       id: sampleID,
@@ -224,7 +227,7 @@ public struct LearningState: Codable, Sendable, Equatable {
     samples.append(
       LearningSample.make(
         message: message,
-        evidence: evidence,
+        features: LearningFeatures(evidence),
         label: verdict.label,
         provenance: .highConfidencePrediction,
         date: date
@@ -337,7 +340,7 @@ public struct LearningState: Codable, Sendable, Equatable {
 extension LearningSample {
   static func make(
     message: ParsedMessage,
-    evidence: EvidenceBundle,
+    features: LearningFeatures,
     label: MailLabel,
     provenance: LearningProvenance,
     id: String? = nil,
@@ -349,7 +352,7 @@ extension LearningSample {
       label: label,
       provenance: provenance,
       tokens: tokens(for: message),
-      features: LearningFeatures(evidence)
+      features: features
     )
   }
 

@@ -88,78 +88,137 @@ private actor HistoryEvents: AppleEventRunner {
     return .list([.integer(rows.count), .list(Array(rows.dropFirst(offset).prefix(limit)))])
   }
 }
-@Test
-func `gates only on confirmed authenticated receipts from exact non-freemail senders`()
-  throws
-{
-  var state = AppState()
-  for row in HistoryRows.receipts {
-    state.record(
-      .init(
-        identity: try HistoryRows.envelope(row).identity,
-        decision: .init(label: .inbox, action: .none, reason: .model("Wanted")),
-        outcome: .dryRun
+/// Receipts the model kept in the Inbox during a dry run, one of them corrected to Junk.
+@Suite
+struct `Receipt history` {
+  private static let trustedServers: Set<String> = ["mx.example"]
+  private var state = AppState()
+  private let sent: [MailEnvelope]
+  private let inbox: [MailEnvelope]
+
+  init() throws {
+    for row in HistoryRows.receipts {
+      state.record(
+        .init(
+          identity: try HistoryRows.envelope(row).identity,
+          decision: .init(label: .inbox, action: .none, reason: .model("Wanted")),
+          outcome: .dryRun
+        )
       )
+    }
+    correct(&state, key: try HistoryRows.key(HistoryRows.corrected), as: .junk)
+    sent = try HistoryRows.sent.compactMap { try MailRow($0).envelope }
+    inbox = try HistoryRows.inbox.compactMap { try MailRow($0).envelope }
+  }
+
+  /// The history ingested from the fixture's mailboxes, after the user kept the shop receipt.
+  private func confirmedIndex() throws -> HistoryIndex {
+    var state = state
+    correct(&state, key: try HistoryRows.key(HistoryRows.shop), as: .inbox)
+    return ingested(eligible: state.historyEligibleInbox)
+  }
+
+  private func ingested(
+    eligible: [String: InboxEligibility]? = nil,
+    trustedAuthServers: Set<String> = Self.trustedServers
+  ) -> HistoryIndex {
+    var index = HistoryIndex()
+    index.received["prior.example"] = 4
+    if let eligible {
+      index.ingest(
+        sent: sent,
+        inbox: inbox,
+        eligible: eligible,
+        trustedAuthServers: trustedAuthServers
+      )
+    } else {
+      index.ingest(sent: sent, inbox: inbox, trustedAuthServers: trustedAuthServers)
+    }
+    return index
+  }
+
+  @Test
+  func `counts no receipts from Inbox mail without eligibility`() throws {
+    #expect(ingested().senderReceipts == nil)
+  }
+
+  @Test
+  func `excludes a receipt the user corrected to Junk`() throws {
+    #expect(state.historyEligibleInbox[try HistoryRows.key(HistoryRows.corrected)] == nil)
+  }
+
+  @Test
+  func `authenticates no receipt until the user confirms one`() {
+    #expect(ingested(eligible: state.historyEligibleInbox).authenticatedSenderReceipts == nil)
+  }
+
+  @Test
+  func `counts receipts from exact non-freemail senders the model kept`() throws {
+    #expect(
+      try confirmedIndex().senderReceipts == [
+        "orders@shop.example.org": 1, "billing@store.example.net": 1,
+        "orders@outlet.example.com": 1
+      ]
     )
   }
-  let correctedKey = try HistoryRows.key(HistoryRows.corrected)
-  correct(&state, key: correctedKey, as: .junk)
-  let sent = try HistoryRows.sent.compactMap { try MailRow($0).envelope }
-  let inbox = try HistoryRows.inbox.compactMap { try MailRow($0).envelope }
-  var index = HistoryIndex()
-  index.received["prior.example"] = 4
-  index.ingest(sent: sent, inbox: inbox, trustedAuthServers: ["mx.example"])
-  #expect(index.senderReceipts == nil)
-  #expect(state.historyEligibleInbox[correctedKey] == nil)
-  index.ingest(
-    sent: sent,
-    inbox: inbox,
-    eligible: state.historyEligibleInbox,
-    trustedAuthServers: ["mx.example"]
-  )
-  #expect(index.authenticatedSenderReceipts == nil)
-  correct(&state, key: try HistoryRows.key(HistoryRows.shop), as: .inbox)
-  index.ingest(
-    sent: sent,
-    inbox: inbox,
-    eligible: state.historyEligibleInbox,
-    trustedAuthServers: ["MX.example"]
-  )
-  #expect(index.received["prior.example"] == 4)
-  #expect(index.received["deals4u@gmail.com"] == 1)
-  #expect(index.summary(address: "friend@gmail.com", domain: "gmail.com").receivedCount == 0)
-  #expect(
-    index.senderReceipts == [
-      "orders@shop.example.org": 1, "billing@store.example.net": 1, "orders@outlet.example.com": 1
-    ]
-  )
-  #expect(index.authenticatedSenderReceipts == ["orders@shop.example.org": 1])
-  #expect(
-    index.summary(address: "billing@store.example.net", domain: "store.example.net").receiptCount
-      == 1
-  )
-  #expect(index.replied.count == 100)
-  #expect(index.replied.values.allSatisfy { $0 == 1 })
-  #expect(index.availability == .partial)
-  let shop = try MIMEParser().parse(HistoryRows.envelope(HistoryRows.shop).raw)
-  let authenticated = EvidenceBundle(message: shop, trustedAuthServers: ["mx.example"])
-  #expect(
-    gate("orders@shop.example.org", index, authentication: authenticated.senderAuthentication)
-      == .allow
-  )
-  #expect(gate("orders@shop.example.org", index, authentication: .unverified) == nil)
-  #expect(gate("billing@store.example.net", index, authentication: .alignedPass) == nil)
-  #expect(gate("friend@gmail.com", index, authentication: .alignedPass) == nil)
-  #expect(
-    Gates.evaluate(
-      address: "deals4u@gmail.com",
-      domain: "gmail.com",
-      rules: [],
-      contact: nil,
-      history: .init(receiptCount: 1, authenticatedReceiptCount: 1),
-      authentication: .alignedPass
-    ) == nil
-  )
+
+  @Test
+  func `authenticates only a confirmed receipt through a trusted server in any case`() throws {
+    var state = state
+    correct(&state, key: try HistoryRows.key(HistoryRows.shop), as: .inbox)
+    let index = ingested(eligible: state.historyEligibleInbox, trustedAuthServers: ["MX.example"])
+    #expect(index.authenticatedSenderReceipts == ["orders@shop.example.org": 1])
+  }
+
+  @Test
+  func `adds received counts to the stored ones`() throws {
+    let index = try confirmedIndex()
+    #expect(index.received["prior.example"] == 4)
+    #expect(index.received["deals4u@gmail.com"] == 1)
+    #expect(index.summary(address: "friend@gmail.com", domain: "gmail.com").receivedCount == 0)
+    #expect(
+      index.summary(address: "billing@store.example.net", domain: "store.example.net")
+        .receiptCount == 1
+    )
+  }
+
+  @Test
+  func `counts replies with bare carriage returns and reports unreadable mail as partial`()
+    throws
+  {
+    let index = try confirmedIndex()
+    #expect(index.replied.count == 100)
+    #expect(index.replied.values.allSatisfy { $0 == 1 })
+    #expect(index.availability == .partial)
+  }
+
+  @Test
+  func `allows a sender only through its confirmed authenticated receipt`() throws {
+    let index = try confirmedIndex()
+    let shop = try MIMEParser().parse(HistoryRows.envelope(HistoryRows.shop).raw)
+    let authenticated = EvidenceBundle(message: shop, trustedAuthServers: Self.trustedServers)
+    #expect(
+      gate("orders@shop.example.org", index, authentication: authenticated.senderAuthentication)
+        == .allow
+    )
+    #expect(gate("orders@shop.example.org", index, authentication: .unverified) == nil)
+    #expect(gate("billing@store.example.net", index, authentication: .alignedPass) == nil)
+    #expect(gate("friend@gmail.com", index, authentication: .alignedPass) == nil)
+  }
+
+  @Test
+  func `never allows a freemail sender through receipts`() {
+    #expect(
+      Gates.evaluate(
+        address: "deals4u@gmail.com",
+        domain: "gmail.com",
+        rules: [],
+        contact: nil,
+        history: .init(receiptCount: 1, authenticatedReceiptCount: 1),
+        authentication: .alignedPass
+      ) == nil
+    )
+  }
 }
 private func correct(_ state: inout AppState, key: String, as label: MailLabel) {
   for index in state.records.indices where state.records[index].identity.key == key {
@@ -195,6 +254,22 @@ func `reads Sent history from its high-water mark on its own schedule`() async t
   #expect(replied?.values.allSatisfy { $0 == 1 } == true)
   #expect(try await maintenance.runIfDue(for: accounts, now: now + HistoryMaintenance.interval))
   #expect(await runner.sentOffsets["account"] == [0, 20, 0])
+}
+@Test
+func `maintains each account's Sent history on its own schedule`() async throws {
+  let store = try testStore(), now = Date.now
+  let runner = HistoryEvents(accounts: ["app", "daemon"])
+  let maintenance = HistoryMaintenance(source: AppleMailAdapter(runner: runner), store: store)
+  let app = MailAccount(id: "app", name: "app"), daemon = MailAccount(id: "daemon", name: "daemon")
+  #expect(try await maintenance.runIfDue(for: [app], now: now))
+  #expect(try await maintenance.runIfDue(for: [daemon], now: now.addingTimeInterval(60)))
+  #expect(await runner.sentOffsets["daemon"] == [0, 20])
+  #expect(try await maintenance.runIfDue(for: [app], now: now + HistoryMaintenance.interval))
+  #expect(await runner.sentOffsets["app"] == [0, 20, 0])
+}
+@Test
+func `fails maintenance when the only due mailbox fails`() async throws {
+  let now = Date.now
   let lone = HistoryEvents(failingSent: "account")
   await #expect(throws: IntegrationError.self) {
     try await HistoryMaintenance(source: AppleMailAdapter(runner: lone), store: testStore())

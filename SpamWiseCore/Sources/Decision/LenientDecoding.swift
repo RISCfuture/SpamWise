@@ -23,6 +23,19 @@ extension KeyedDecodingContainer {
     // swiftlint:disable:next redundant_nil_coalescing
     ((try? decodeIfPresent(T.self, forKey: key)) ?? nil) ?? fallback
   }
+
+  /**
+   Decodes a field that limits what may happen, such as a privacy setting, so a value written by
+   a different version never widens that limit.
+
+   - Returns: The decoded value, `fallback` when the key is missing or null, or `restrictive` when
+     its value cannot be read.
+   */
+  public func lenient<T: Decodable>(_ key: Key, default fallback: T, unreadable restrictive: T) -> T
+  {
+    guard contains(key), (try? decodeNil(forKey: key)) == false else { return fallback }
+    return (try? decode(T.self, forKey: key)) ?? restrictive
+  }
 }
 
 extension ActionOutcome: FallbackDecodable {

@@ -1,6 +1,18 @@
 import Foundation
 
 extension MailSweeper {
+  /**
+   The position of the page after `page`, read from `offset`, less the messages its actions moved
+   out of the folder; zero completes the traversal.
+   */
+  private static func folderOffset(after page: MailPage, from offset: Int, departures: Int)
+    -> Int
+  {
+    let end = offset + page.visitedCount
+    guard page.visitedCount > 0, end < page.total else { return 0 }
+    return max(offset, end - departures)
+  }
+
   /// Sweeps one page of each enabled folder plan in scope; returns the number that failed.
   func sweepFolders(dryRun: Bool, limit: Int, onEvent: @escaping EventHandler) async throws
     -> Int
@@ -30,7 +42,10 @@ extension MailSweeper {
     return failures
   }
 
-  /// Handles the plan's next page and advances its cursor past every visited position.
+  /**
+   Handles the plan's next page and advances its cursor past every visited position, less the
+   messages the page's actions moved out of the folder.
+   */
   private func sweepFolder(
     _ plan: MailFolderPlan,
     dryRun: Bool,
@@ -47,6 +62,7 @@ extension MailSweeper {
       since: plan.purpose == .filter ? plan.startDate : nil
     )
     coverage = SweepCoverage()
+    let departures: Int
     if plan.purpose == .filter {
       let processed = try await process(
         page,
@@ -56,8 +72,10 @@ extension MailSweeper {
         onEvent: onEvent
       )
       guard processed.completed else { return }
+      departures = processed.records.count(where: \.mayHaveLeftMailbox)
     } else {
-      guard try await train(page, plan: plan) else { return }
+      guard let trained = try await train(page, plan: plan) else { return }
+      departures = trained
       try await TrainingFolders.observe(
         page.messages.map(\.identity),
         planID: plan.id,
@@ -70,7 +88,12 @@ extension MailSweeper {
     let coverage = coverage
     try await MailHealthRepository.update(store, accountID: key, name: plan.folder.displayName) {
       $0.coverage = coverage
-      $0.complete(count: page.visitedCount, total: page.total, unavailable: page.unavailableCount)
+      $0.complete(
+        through: Self.folderOffset(after: page, from: offset, departures: departures),
+        visited: page.visitedCount,
+        total: page.total,
+        unavailable: page.unavailableCount
+      )
     }
   }
 
@@ -80,33 +103,36 @@ extension MailSweeper {
    A placement that cannot be corrected is recorded with a claim, so it is not retried every
    sweep, and the rest of the page continues.
 
-   - Returns: False when filtering paused or the plan stopped applying part way through.
+   - Returns: The number of placements whose correction may have moved them out of the folder,
+     or nil when filtering paused or the plan stopped applying part way through.
    */
-  private func train(_ page: MailPage, plan: MailFolderPlan) async throws -> Bool {
+  private func train(_ page: MailPage, plan: MailFolderPlan) async throws -> Int? {
     guard plan.trainingBaselineValidated else { throw TrainingFolderError.planInactive }
     let label: MailLabel = plan.purpose == .trainGood ? .inbox : .junk
+    var departures = 0
     for envelope in page.messages {
       try Task.checkCancellation()
       let claims = try await StateRepository.load(store, StateSlices([.training])).trainingClaims
       guard claims[TrainingFolders.key(planID: plan.id, identity: envelope.identity)] == nil
       else { coverage.classified += 1; continue }
       do {
-        _ = try await pipeline.correct(
+        let correction = try await pipeline.correct(
           envelope: envelope,
           label: label,
           adapter: source,
           trainingPlanID: plan.id
         )
+        if correction.mayHaveLeftMailbox { departures += 1 }
         coverage.classified += 1
       } catch {
         try Self.rethrowCancellation(error)
-        guard try await isActive(plan) else { return false }
+        guard try await isActive(plan) else { return nil }
         try await recordTrainingFailure(envelope, plan: plan, error: error)
         coverage.unclassified += 1
       }
     }
     coverage.unclassified += page.unavailableCount
-    return true
+    return departures
   }
 
   /// Whether filtering is running and the plan is still enabled for training.

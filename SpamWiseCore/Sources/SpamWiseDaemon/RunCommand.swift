@@ -59,8 +59,10 @@ struct RunCommand: AsyncParsableCommand {
     requested
       ? String(localized: "Shared action gates applied.", bundle: .module)
       : String(
-        localized:
-          "Dry run: previewed mail counts as processed, so live filtering in this store skips it.",
+        localized: """
+          Dry run: no mail was moved. Live filtering in this store acts on previewed mail once dry \
+          run is off.
+          """,
         bundle: .module
       )
   }

@@ -40,9 +40,10 @@ public actor Pipeline {
      - adapter: The client that can act on the message.
      - forceDryRun: Whether to suppress mail actions regardless of settings.
      - timeout: Seconds allowed for classification.
-     - discovered: Whether automatic discovery found the message. Its result then settles in
-       the processed-message index even when a forced dry run previews it while filtering is
-       live; other forced previews leave the message due for live filtering.
+     - discovered: Whether automatic discovery found the message. Its result is then recorded
+       in the processed-message index even when a forced dry run previews it while filtering
+       is live, where a dry-run result settles the message only for later dry-run passes.
+       Other forced previews are recorded only while the dry-run setting is on.
    */
   public func process(
     _ envelope: MailEnvelope,

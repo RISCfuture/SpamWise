@@ -46,11 +46,13 @@ private actor InboxFixtureEvents: AppleEventRunner {
   }
 }
 
-@Test
-func `checks every newly delivered Inbox message first and never reads before the boundary`()
-  async throws
+/**
+ A sweeper over `events` whose classifier keeps every message and counts its calls, with the
+ account's filtering boundary at message 6.
+ */
+private func boundedInboxSweeper(_ events: InboxFixtureEvents, store: Store, calls: Counter)
+  async throws -> MailSweeper
 {
-  let store = try testStore(), calls = Counter(), events = InboxFixtureEvents(count: 80)
   let pipeline = Pipeline(
     store: store,
     classifier: MockClassifier(operation: { _ in
@@ -58,15 +60,19 @@ func `checks every newly delivered Inbox message first and never reads before th
       return Verdict(label: .inbox, confidence: 99, reason: "wanted")
     })
   )
-  let sweeper = MailSweeper(
-    source: AppleMailAdapter(runner: events),
-    store: store,
-    pipeline: pipeline
-  )
-  let start = InboxFixtureEvents.received(6)
   try await MailHealthRepository.update(store, accountID: "account", name: "account") {
-    $0.inboxStart = start
+    $0.inboxStart = InboxFixtureEvents.received(6)
   }
+  return MailSweeper(source: AppleMailAdapter(runner: events), store: store, pipeline: pipeline)
+}
+
+@Test
+func `checks every newly delivered Inbox message first and never reads before the boundary`()
+  async throws
+{
+  let store = try testStore(), calls = Counter(), events = InboxFixtureEvents(count: 80)
+  let sweeper = try await boundedInboxSweeper(events, store: store, calls: calls)
+  let start = InboxFixtureEvents.received(6)
   let tick = { _ = try await sweeper.sweep(dryRun: true, limit: 10) }
   let backfillOffset = { try await MailHealthRepository.load(store)["account"]?.nextOffset ?? 0 }
   try await tick()
@@ -87,9 +93,20 @@ func `checks every newly delivered Inbox message first and never reads before th
   #expect(Set(afterBurst) == Set(6...133))
   #expect(calls.value == 128)
   #expect(try await MailHealthRepository.load(store)["account"]?.inboxStart == start)
+}
+
+@Test
+func `starts filtering an account added after setup from when it is first checked`()
+  async throws
+{
+  let store = try testStore(), calls = Counter(), events = InboxFixtureEvents(count: 10)
+  let sweeper = try await boundedInboxSweeper(events, store: store, calls: calls)
+  try await sweeper.sweep(dryRun: true, limit: 10)
+  let classified = calls.value
   await events.addAccount("added")
-  try await tick()
-  #expect(calls.value == 128)
+  try await sweeper.sweep(dryRun: true, limit: 10)
+  #expect(calls.value == classified)
+  let start = InboxFixtureEvents.received(6)
   #expect(try await MailHealthRepository.load(store)["added"]?.inboxStart ?? start > start)
 }
 

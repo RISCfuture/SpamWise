@@ -4,15 +4,16 @@ import SwiftData
 /**
  Keeps each account's Sent correspondence history current with as little reading as possible.
 
- Maintenance runs at most once per interval. Each mailbox keeps a bounded high-water mark: the
- newest Sent message already counted. A run reads from the newest message until it reaches the
- mark, then continues a bounded backfill toward the newest 1,000 messages. Once the backfill is
- complete and the newest page holds the mark, a run reads only that one page. Sent pages hold
- headers only. Inbox history is ingested from the pages the sweeper already reads, so maintenance
- never reads Inbox mail.
+ Maintenance reads each account at most once per interval, so sources sharing a store, such as
+ the app and the IMAP daemon, keep separate schedules. Each mailbox keeps a bounded high-water
+ mark: the newest Sent message already counted. A run reads from the newest message until it
+ reaches the mark, then continues a bounded backfill toward the newest 1,000 messages. Once the
+ backfill is complete and the newest page holds the mark, a run reads only that one page. Sent
+ pages hold headers only. Inbox history is ingested from the pages the sweeper already reads, so
+ maintenance never reads Inbox mail.
  */
 public struct HistoryMaintenance: Sendable {
-  /// Shortest time between automatic maintenance runs.
+  /// Shortest time between automatic maintenance runs of one account.
   public static let interval: TimeInterval = 900
   private static let stateKey = "history-maintenance-v1"
   private static let headPageSize = 20
@@ -35,36 +36,37 @@ public struct HistoryMaintenance: Sendable {
   }
 
   /**
-   Reads new Sent history for `accounts` when the interval has elapsed since the previous run.
+   Reads new Sent history for those of `accounts` whose interval has elapsed since their
+   previous run.
 
-   A mailbox that fails contributes nothing without stopping the others.
+   Each account's progress is saved as soon as its mailbox is read, without replacing progress
+   another process saved meanwhile. A mailbox that fails contributes nothing without stopping
+   the others.
 
-   - Returns: Whether a run happened.
-   - Throws: Cancellation, or a failure when every mailbox failed or Mail denied permission.
+   - Returns: Whether any account was due.
+   - Throws: Cancellation, or a failure when every due mailbox failed or Mail denied permission.
    */
   @discardableResult
   public func runIfDue(for accounts: [MailAccount], now: Date = .now)
     async throws -> Bool
   {
-    var state = try await store.read(Self.stateKey, default: MaintenanceState())
-    guard state.lastRun.map({ now.timeIntervalSince($0) >= Self.interval }) ?? true else {
-      return false
-    }
+    let state = try await store.read(Self.stateKey, default: MaintenanceState())
+    let due = accounts.filter { state.cursors[$0.id]?.isDue(at: now) ?? true }
+    guard !due.isEmpty else { return false }
     var failure: (any Error)?, succeeded = false
-    for account in accounts {
+    for account in due {
       try Task.checkCancellation()
-      let key = account.id
+      var cursor = state.cursors[account.id] ?? .init()
       do {
-        state.cursors[key] = try await maintain(account.id, cursor: state.cursors[key] ?? .init())
+        cursor = try await maintain(account.id, cursor: cursor)
         succeeded = true
       } catch let error where Self.isIsolated(error) {
         failure = error
-        state.cursors[key, default: .init()].recordFailure(pageSize: Self.pageSize)
+        cursor.recordFailure(pageSize: Self.pageSize)
       }
+      cursor.lastRun = now
+      try await save(cursor, for: account.id)
     }
-    state.lastRun = now
-    let saved = state
-    try await store.update(Self.stateKey, default: MaintenanceState()) { $0 = saved }
     if let failure, !succeeded { throw failure }
     return true
   }
@@ -91,6 +93,13 @@ public struct HistoryMaintenance: Sendable {
         trustedAuthServers: trusted[account.id] ?? [],
         in: store
       )
+    }
+  }
+
+  /// Replaces one account's cursor, leaving every other account's as currently stored.
+  private func save(_ cursor: SentCursor, for accountID: String) async throws {
+    try await store.update(Self.stateKey, default: MaintenanceState()) {
+      $0.cursors[accountID] = cursor
     }
   }
 
@@ -178,13 +187,12 @@ public struct HistoryMaintenance: Sendable {
 }
 
 extension HistoryMaintenance {
-  /// Durable maintenance progress shared by every process using the store.
+  /// Durable maintenance progress shared by every process using the store, by account.
   struct MaintenanceState: Codable, Sendable {
-    var lastRun: Date?
     var cursors: [String: SentCursor] = [:]
   }
 
-  /// One account's Sent history position.
+  /// One account's Sent history position and schedule.
   struct SentCursor: Codable, Sendable {
     /// Identity key of the newest Sent message already counted.
     var mark: String?
@@ -192,6 +200,13 @@ extension HistoryMaintenance {
     var backfillOffset: Int? = 0
     /// Consecutive failed runs on the current backfill page.
     var failures = 0
+    /// Time of the account's latest run, successful or not.
+    var lastRun: Date?
+
+    /// Whether the interval has elapsed since the account's latest run.
+    func isDue(at now: Date) -> Bool {
+      lastRun.map { now.timeIntervalSince($0) >= HistoryMaintenance.interval } ?? true
+    }
 
     /// Moves the mark to the newest message, continuing the backfill after a head that never reached it.
     mutating func advanceHead(to read: HeadRead) {

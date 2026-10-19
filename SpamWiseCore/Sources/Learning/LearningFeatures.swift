@@ -9,6 +9,10 @@ import Signals
  begins with the bias term, migrate by position. Increment ``schemaVersion`` and
  migrate older versions in `init(from:)` whenever an existing feature changes
  meaning.
+
+ Domain age and trusted authentication depend on the receiving account's settings, so a
+ sample recorded without that account, such as an imported message, holds zero for them and
+ is marked as lacking account context.
  */
 public struct LearningFeatures: Codable, Sendable, Equatable {
   /// Schema version of features recorded by this build.
@@ -36,35 +40,51 @@ public struct LearningFeatures: Codable, Sendable, Equatable {
   public let listUnsubscribe: Double
   /// Distinct link domains, saturating at one for ten or more.
   public let linkDomainDensity: Double
-
-  /// Estimator inputs, beginning with the unregularized bias term at ``biasIndex``.
-  var vector: [Double] {
-    [
-      Self.bias, abuseHeavyTLD, youngDomain, unknownDomainAge, trustedAuthenticationFailure,
-      replyToMismatch, listUnsubscribe, linkDomainDensity
-    ]
-  }
+  /// Whether the domain-age and trusted-authentication features reflect a receiving account.
+  public let hasAccountContext: Bool
 
   /// Whether every value is finite and within the bounded unit range.
   var isValid: Bool {
     version >= Self.legacySchemaVersion
-      && vector.allSatisfy { $0.isFinite && Self.valueRange.contains($0) }
+      && vector().allSatisfy { $0.isFinite && Self.valueRange.contains($0) }
   }
 
   private static func indicator(_ condition: Bool) -> Double { condition ? 1 : 0 }
+
+  /**
+   Estimator inputs, beginning with the unregularized bias term at ``biasIndex``.
+
+   - Parameter accountContext: Whether to include the features that depend on the receiving
+     account; excluded features are zero.
+   */
+  func vector(accountContext: Bool = true) -> [Double] {
+    let context = accountContext ? 1.0 : 0
+    return [
+      Self.bias, abuseHeavyTLD, youngDomain * context, unknownDomainAge * context,
+      trustedAuthenticationFailure * context, replyToMismatch, listUnsubscribe, linkDomainDensity
+    ]
+  }
 }
 
 extension LearningFeatures {
-  /// Derives the current schema's features from classification evidence.
-  init(_ evidence: EvidenceBundle) {
+  /**
+   Derives the current schema's features from classification evidence.
+
+   - Parameter hasAccountContext: Whether `evidence` was gathered for a receiving account;
+     without one, the features that depend on it are zero.
+   */
+  init(_ evidence: EvidenceBundle, hasAccountContext: Bool = true) {
     version = Self.schemaVersion
+    self.hasAccountContext = hasAccountContext
     abuseHeavyTLD = Self.indicator(evidence.tldIsAbuseHeavy)
     youngDomain = Self.indicator(
-      evidence.domainAgeDays.map { (0..<Self.youngDomainAgeDays).contains($0) } ?? false
+      hasAccountContext
+        && evidence.domainAgeDays.map { (0..<Self.youngDomainAgeDays).contains($0) } ?? false
     )
-    unknownDomainAge = Self.indicator(evidence.domainAgeDays == nil)
+    unknownDomainAge = Self.indicator(hasAccountContext && evidence.domainAgeDays == nil)
     trustedAuthenticationFailure = Self.indicator(
-      evidence.authResults.contains { $0.trusted && ["fail", "softfail"].contains($0.result) }
+      hasAccountContext
+        && evidence.authResults.contains { $0.trusted && ["fail", "softfail"].contains($0.result) }
     )
     replyToMismatch = Self.indicator(
       evidence.replyToDomain != nil && evidence.fromDomain != nil
@@ -74,7 +94,10 @@ extension LearningFeatures {
     linkDomainDensity = min(1, Double(evidence.linkDomains.count) / Self.saturatedLinkDomainCount)
   }
 
-  /// Decodes named features, zero-filling absent values and migrating positional version-one vectors.
+  /**
+   Decodes named features, zero-filling absent values and migrating positional version-one
+   vectors; a sample without the account-context mark has account context.
+   */
   public init(from decoder: any Decoder) throws {
     if let legacy = try? decoder.singleValueContainer().decode([Double].self) {
       self.init(legacyVector: legacy)
@@ -92,7 +115,8 @@ extension LearningFeatures {
       trustedAuthenticationFailure: try value(.trustedAuthenticationFailure),
       replyToMismatch: try value(.replyToMismatch),
       listUnsubscribe: try value(.listUnsubscribe),
-      linkDomainDensity: try value(.linkDomainDensity)
+      linkDomainDensity: try value(.linkDomainDensity),
+      hasAccountContext: try values.decodeIfPresent(Bool.self, forKey: .hasAccountContext) ?? true
     )
   }
 
@@ -108,13 +132,14 @@ extension LearningFeatures {
       trustedAuthenticationFailure: value(.trustedAuthenticationFailure),
       replyToMismatch: value(.replyToMismatch),
       listUnsubscribe: value(.listUnsubscribe),
-      linkDomainDensity: value(.linkDomainDensity)
+      linkDomainDensity: value(.linkDomainDensity),
+      hasAccountContext: true
     )
   }
 
   private enum CodingKeys: String, CodingKey {
     case version, abuseHeavyTLD, youngDomain, unknownDomainAge, trustedAuthenticationFailure
-    case replyToMismatch, listUnsubscribe, linkDomainDensity
+    case replyToMismatch, listUnsubscribe, linkDomainDensity, hasAccountContext
   }
 
   private enum VersionOnePosition: Int {

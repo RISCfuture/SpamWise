@@ -221,18 +221,18 @@
         }
       }
     },
-    "Dry run: previewed mail counts as processed, so live filtering in this store skips it.": {
+    "Dry run: no mail was moved. Live filtering in this store acts on previewed mail once dry run is off.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Simulación: el correo previsualizado cuenta como procesado, así que el filtrado real en este almacén lo omite."
+            "value": "Simulación: no se movió ningún correo. El filtrado real en este almacén actuará sobre el correo previsualizado cuando se desactive la simulación."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Simulation : le courrier prévisualisé compte comme traité, donc le filtrage réel dans ce stockage l’ignore."
+            "value": "Simulation : aucun message n’a été déplacé. Le filtrage réel dans ce stockage agira sur le courrier prévisualisé une fois la simulation désactivée."
           }
         }
       }
