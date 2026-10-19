@@ -1,9 +1,21 @@
 #!/bin/bash
+#
+# Builds a Developer ID signed, sandboxed evidence probe app and records its network activity while
+# it runs the OCR and privacy cases.
+#
+#   Scripts/evidence-runtime-check.sh <signing-identity> [build-token]
+#
+# Products and logs land in .build/<build-token>/ (.build/check/ by default).
+
 set -euo pipefail
-worker="${1:?Pass a token from agent-lock worker}"
-identity="${2:?Pass a Developer ID Application signing identity}"
-export AGENT_WORKER_ID="$worker"
-build_root=".build/$worker"
+cd "$(dirname "$0")/.."
+
+identity="${1:?Pass a Developer ID Application signing identity}"
+token="${2:-check}"
+case "$token" in
+  *[!a-zA-Z0-9-]*) echo "Build tokens may contain only letters, digits and hyphens." >&2; exit 2 ;;
+esac
+build_root=".build/$token"
 app="$build_root/SpamWiseEvidenceProbe.app"
 contents="$app/Contents"
 mkdir -p "$contents/MacOS" "$contents/Resources"

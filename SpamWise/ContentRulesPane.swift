@@ -160,13 +160,17 @@ struct ContentRuleFormView: View {
         Picker("Match", selection: $rule.operation) {
           ForEach(ContentRuleOperator.allCases, id: \.self) { Text($0.localizedTitle).tag($0) }
         }
-        TextField("Expression", text: $rule.pattern)
+        TextField(
+          "Expression",
+          text: $rule.pattern,
+          prompt: Text(verbatim: rule.operation.examplePattern)
+        )
         Picker("Action", selection: $rule.disposition) {
           Text("Allow").tag(RuleDisposition.allow)
           Text("Block").tag(RuleDisposition.block)
         }
         Toggle("Use this rule", isOn: $rule.enabled)
-        TextField("Notes", text: $rule.note, axis: .vertical)
+        TextField("Notes", text: $rule.note, prompt: Text("Optional"), axis: .vertical)
         Text("Matching ignores capitalization. A rule that takes too long to check doesn’t match.")
           .foregroundStyle(.secondary)
         HStack {
@@ -231,6 +235,14 @@ extension ContentRuleOperator {
       case .contains: String(localized: "Contains")
       case .equals: String(localized: "Equals")
       case .regularExpression: String(localized: "Regular expression")
+    }
+  }
+
+  /// An expression of the kind this operator matches, shown in the empty field.
+  fileprivate var examplePattern: String {
+    switch self {
+      case .contains, .equals: String(localized: "limited-time offer")
+      case .regularExpression: #"free\s+gift"#
     }
   }
 }

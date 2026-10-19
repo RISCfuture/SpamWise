@@ -20,6 +20,8 @@ struct BackupSheet: View {
               }
           }
           OperationStatusView(operation: backup.operation, identifier: "backup.status")
+        } footer: {
+          if task == .export { BackupContentsNote() }
         }
       }
       .formStyle(.grouped)

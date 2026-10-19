@@ -1,12 +1,25 @@
 #!/bin/bash
+#
+# Runs the evidence probes against a synthetic HTTP fault fixture and a temporary native Rspamd
+# worker on 127.0.0.1:11333, then verifies that every listener it started has stopped.
+#
+#   Scripts/rspamd-runtime-check.sh <rspamd-source-directory> <rspamd-build-directory> \
+#     <unsigned-probe-executable> <signed-probe-app-executable> [build-token]
+#
+# Pass absolute paths. Logs land in .build/<build-token>/rspamd/ (.build/check/ by default).
+
 set -euo pipefail
-worker="${1:?Pass a token from agent-lock worker}"
-source_root="${2:?Pass the absolute Rspamd source directory}"
-rspamd_build="${3:?Pass the absolute Rspamd build directory}"
-probe="${4:?Pass the absolute unsandboxed evidence probe executable}"
-signed_probe="${5:?Pass the absolute sandboxed evidence probe executable}"
-export AGENT_WORKER_ID="$worker"
-evidence_root="$PWD/.build/$worker/rspamd"
+cd "$(dirname "$0")/.."
+
+source_root="${1:?Pass the absolute Rspamd source directory}"
+rspamd_build="${2:?Pass the absolute Rspamd build directory}"
+probe="${3:?Pass the absolute unsandboxed evidence probe executable}"
+signed_probe="${4:?Pass the absolute sandboxed evidence probe executable}"
+token="${5:-check}"
+case "$token" in
+  *[!a-zA-Z0-9-]*) echo "Build tokens may contain only letters, digits and hyphens." >&2; exit 2 ;;
+esac
+evidence_root="$PWD/.build/$token/rspamd"
 mkdir -p "$evidence_root"
 runtime="$(mktemp -d "$evidence_root/runtime.XXXXXX")"
 daemon_pid=""
@@ -31,26 +44,26 @@ if lsof -nP -iTCP:11333 -iTCP:11334 -sTCP:LISTEN >/dev/null 2>&1; then
   exit 1
 fi
 swiftc -swift-version 6 -strict-concurrency=complete -strict-memory-safety -warnings-as-errors \
-  -parse-as-library -module-cache-path "$PWD/.build/$worker/cache" \
+  -parse-as-library -module-cache-path "$PWD/.build/$token/cache" \
   Scripts/rspamd-http-fixture.swift -o "$evidence_root/http-fixture"
 "$evidence_root/http-fixture" > "$evidence_root/http-fixture.log" 2>&1 &
 fixture_pid=$!
 ready=false
 for _ in {1..50}; do
   if ! kill -0 "$fixture_pid" 2>/dev/null; then cat "$evidence_root/http-fixture.log" >&2; exit 1; fi
-  if rg -q 'ready 11333' "$evidence_root/http-fixture.log" && \
-    rg -q 'ready 11334' "$evidence_root/http-fixture.log"; then ready=true; break; fi
+  if grep -Eq 'ready 11333' "$evidence_root/http-fixture.log" && \
+    grep -Eq 'ready 11334' "$evidence_root/http-fixture.log"; then ready=true; break; fi
   sleep 0.1
 done
 if [[ "$ready" != true ]]; then echo 'HTTP fixture did not become ready.' >&2; exit 1; fi
 "$signed_probe" rspamd-http-faults > "$evidence_root/http-faults.log" 2>&1
 cat "$evidence_root/http-faults.log"
-if rg -q 'redirect-received|invalid-request|failed ' "$evidence_root/http-fixture.log"; then
+if grep -Eq 'redirect-received|invalid-request|failed ' "$evidence_root/http-fixture.log"; then
   cat "$evidence_root/http-fixture.log" >&2
   exit 1
 fi
 for expected in redirect-sent overflow-sent failure-sent timeout-closed cancel-closed marker-sent ordinary-sent; do
-  if ! rg -q "^$expected$" "$evidence_root/http-fixture.log"; then
+  if ! grep -Eq "^$expected$" "$evidence_root/http-fixture.log"; then
     echo "Missing HTTP fixture observation: $expected" >&2
     exit 1
   fi

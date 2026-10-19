@@ -31,7 +31,11 @@ struct SettingsView: View {
         }
         .navigationTitle(Text(selectedPane.title))
       } else {
-        SettingsLoadingView(shared: model.shared)
+        StorageLoadingView(
+          shared: model.shared,
+          unavailableTitle: "Settings Unavailable",
+          loadingTitle: "Loading settings…"
+        )
       }
     }
     .frame(minWidth: 640, idealWidth: 700, maxWidth: 800, minHeight: 540, idealHeight: 640)
@@ -110,27 +114,4 @@ private struct SettingsPaneView: View {
   }
 }
 
-/// Stands in for Settings until they are read, so no control shows defaults it would save.
-private struct SettingsLoadingView: View {
-  let shared: SharedStateModel
-
-  var body: some View {
-    if case .failure(let failure) = shared.storageStatus {
-      ContentUnavailableView {
-        Label("Settings Unavailable", systemImage: "exclamationmark.triangle")
-      } description: {
-        Text(failure.description)
-      } actions: {
-        Button("Try Again") { Task { await shared.refresh() } }
-      }
-    } else {
-      ProgressView("Loading settings…")
-    }
-  }
-}
-
 #Preview("Settings") { SettingsView(model: PreviewHelper.model()) }
-#Preview("Loading") {
-  SettingsLoadingView(shared: SharedStateModel(store: nil, reportsMissingStore: false))
-}
-#Preview("Unavailable") { SettingsLoadingView(shared: SharedStateModel(store: nil)) }

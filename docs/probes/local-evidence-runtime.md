@@ -24,8 +24,8 @@ entitlement, container, launch and integration configuration.
 From the repository root:
 
 ```sh
-bash Scripts/evidence-runtime-check.sh <build-token> \
-  'Developer ID Application: Timothy Morgan (2NFSK2WB24)'
+bash Scripts/evidence-runtime-check.sh \
+  'Developer ID Application: Timothy Morgan (2NFSK2WB24)' [build-token]
 ```
 
 The script compiles the package and harness with warnings treated as errors,

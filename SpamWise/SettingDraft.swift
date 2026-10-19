@@ -83,7 +83,12 @@ final class SettingDraft<Value: Equatable & Sendable> {
 extension View {
   /// Commits `draft` when editing ends: on Return, when focus leaves the field, or on disappear.
   func commitsDraft<Value>(_ draft: SettingDraft<Value>) -> some View {
-    modifier(DraftCommit(commit: draft.commit))
+    commitsEdits(draft.commit)
+  }
+
+  /// Runs `commit` when editing ends: on Return, when focus leaves the field, or on disappear.
+  func commitsEdits(_ commit: @escaping () -> Void) -> some View {
+    modifier(DraftCommit(commit: commit))
   }
 }
 

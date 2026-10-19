@@ -2,15 +2,26 @@ import SwiftUI
 
 /// A sheet's only button: Done, which Escape also activates.
 struct DoneToolbarItem: ToolbarContent {
-  let dismiss: DismissAction
-  var identifier = "sheet.done"
+  let identifier: String
+  let done: () -> Void
 
   var body: some ToolbarContent {
     ToolbarItem(placement: .cancellationAction) {
-      Button("Done") { dismiss() }
+      Button("Done", action: done)
         .keyboardShortcut(.cancelAction)
         .accessibilityIdentifier(identifier)
     }
+  }
+
+  /// Done that closes the sheet.
+  init(dismiss: DismissAction, identifier: String = "sheet.done") {
+    self.init(identifier: identifier) { dismiss() }
+  }
+
+  /// Done that runs `done`, for a sheet that may ask before closing.
+  init(identifier: String, done: @escaping () -> Void) {
+    self.identifier = identifier
+    self.done = done
   }
 }
 

@@ -13,6 +13,13 @@ struct ContentView: View {
           .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
       } else if model.shared.needsRecovery {
         StorageRecoveryView(recovery: model.recovery)
+      } else if !model.shared.hasLoadedSettings {
+        StorageLoadingView(
+          shared: model.shared,
+          unavailableTitle: "SpamWise Data Unavailable",
+          loadingTitle: "Loading…"
+        )
+        .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
       } else if !model.shared.settings.onboardingComplete {
         OnboardingView(model: model)
       } else {

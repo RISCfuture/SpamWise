@@ -88,14 +88,14 @@ sending one after interruption could launch a replacement solely to shut it down
 The extraction checks need no signing identity:
 
 ```sh
-bash Tools/DocumentWorker/extraction-check.sh <build-token>
+bash Tools/DocumentWorker/extraction-check.sh [build-token]
 ```
 
 The full harness runs them first, then the signed cases:
 
 ```sh
-bash Tools/DocumentWorker/check.sh <build-token> \
-  'Developer ID Application: Timothy Morgan (2NFSK2WB24)'
+bash Tools/DocumentWorker/check.sh \
+  'Developer ID Application: Timothy Morgan (2NFSK2WB24)' [build-token]
 ```
 
 Expect several minutes because macOS throttles repeated service launches. The
@@ -105,8 +105,9 @@ runtime, verifies signatures and executes both. It temporarily listens only on
 from the shell establishes that the listener exists before testing service denial.
 Temporary marker files and the listener are removed after use.
 
-The build token is any name of letters, digits and hyphens. Results and signed
-bundles are retained in `.build/<build-token>/document-worker/`.
+The optional build token is any name of letters, digits and hyphens, `check` by
+default. Results and signed bundles are retained in
+`.build/<build-token>/document-worker/`.
 `results.log` covers document, identity, resource and recovery cases;
 `sandbox.log` covers network and filesystem denial; `unauthorized.log` checks an
 otherwise valid, same-team signed caller with the wrong bundle identifier;

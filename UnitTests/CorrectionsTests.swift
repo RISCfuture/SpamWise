@@ -153,6 +153,18 @@ struct `Selected-message corrections` {
     #expect(corrections.selectionResults.map(\.message.subject) == mail.subjects)
   }
 
+  @Test
+  func `ask before blocking senders whose check fails`() async throws {
+    let mail = SelectedInbox(count: 2)
+    let corrections = CorrectionsModel(
+      services: try await services(mail: mail, checksSendersWith: unreadableStore())
+    )
+    #expect(corrections.correctSelection(.junk) {})
+    await corrections.selection.run { nil }.value
+    #expect(try #require(corrections.pendingSelection).unverifiedIDs.count == mail.count)
+    #expect(corrections.selectionResults.isEmpty)
+  }
+
   /// Corrects Mail's selection as Junk, confirming its unverified senders, and waits for the batch.
   private func markJunkCorrected(_ count: Int, with corrections: CorrectionsModel) async throws {
     #expect(corrections.correctSelection(.junk) {})
@@ -162,12 +174,15 @@ struct `Selected-message corrections` {
     await corrections.selection.run { nil }.value
   }
 
-  /// Live services over a temporary store that acts on `mail`'s account and marks Junk read.
-  private func services(mail: SelectedInbox) async throws -> AppServices {
-    let store = try Store(
-      url: FileManager.default.temporaryDirectory
-        .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
-    )
+  /**
+   Live services over a temporary store that acts on `mail`'s account and marks Junk read.
+
+   The pipeline checks senders against `pipelineStore` when one is given, or else the same store.
+   */
+  private func services(mail: SelectedInbox, checksSendersWith pipelineStore: Store? = nil)
+    async throws -> AppServices
+  {
+    let store = try Store(url: temporaryStoreURL())
     try await StateRepository.update(store) { state in
       state.settings.dryRun = false
       state.settings.validatedAccounts = [SelectedInbox.accountID]
@@ -176,7 +191,7 @@ struct `Selected-message corrections` {
     return AppServices(
       store: store,
       pipeline: Pipeline(
-        store: store,
+        store: pipelineStore ?? store,
         classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "Unused"))
       ),
       appleMail: AppleMailAdapter(
@@ -187,6 +202,19 @@ struct `Selected-message corrections` {
       preferences: try #require(UserDefaults(suiteName: "codes.tim.SpamWise.UnitTests.\(UUID())")),
       uiTesting: true
     )
+  }
+
+  private func temporaryStoreURL() -> URL {
+    FileManager.default.temporaryDirectory
+      .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
+  }
+
+  /// A store whose location is a directory, so every transaction on it fails.
+  private func unreadableStore() throws -> Store {
+    let url = temporaryStoreURL()
+    let store = try Store(url: url)
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    return store
   }
 }
 

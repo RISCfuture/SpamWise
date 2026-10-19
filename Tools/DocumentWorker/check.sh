@@ -1,10 +1,21 @@
 #!/bin/bash
+#
+# Runs the extraction checks, then builds, signs and exercises the sandboxed document worker.
+#
+#   bash Tools/DocumentWorker/check.sh <signing-identity> [build-token]
+#
+# Results land in .build/<build-token>/document-worker/ (.build/check/ by default).
+
 set -euo pipefail
-worker="${1:?Pass a token from agent-lock worker}"
-identity="${2:?Pass a Developer ID Application identity}"
-export AGENT_WORKER_ID="$worker"
-bash Tools/DocumentWorker/extraction-check.sh "$worker"
-build_root=".build/$worker/document-worker"
+cd "$(dirname "$0")/../.."
+
+identity="${1:?Pass a Developer ID Application identity}"
+token="${2:-check}"
+case "$token" in
+  *[!a-zA-Z0-9-]*) echo "Build tokens may contain only letters, digits and hyphens." >&2; exit 2 ;;
+esac
+bash Tools/DocumentWorker/extraction-check.sh "$token"
+build_root=".build/$token/document-worker"
 host="$build_root/DocumentProbe.app"
 service="$host/Contents/XPCServices/DocumentWorker.xpc"
 mkdir -p "$host/Contents/MacOS" "$service/Contents/MacOS" "$build_root/cache"
@@ -86,7 +97,7 @@ codesign --force --options runtime --timestamp --sign "$identity" --entitlements
 codesign --force --options runtime --timestamp --sign "$identity" --entitlements "$build_root/host.entitlements" "$production"
 codesign --verify --deep --strict "$production"
 "$production/Contents/MacOS/DocumentProbe" --smoke | tee "$build_root/production.log"
-if nm "$production_service/Contents/MacOS/DocumentWorker" | rg 'WorkerProbes|exercise'; then
+if nm "$production_service/Contents/MacOS/DocumentWorker" | grep -E 'WorkerProbes|exercise'; then
   echo 'Production worker contains diagnostic entry points.' >&2
   exit 1
 fi

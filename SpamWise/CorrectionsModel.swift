@@ -238,8 +238,9 @@ extension CorrectionsModel {
     let messages = await ReviewMessage.load(selected.messages)
     var unverified: Set<String> = []
     for message in messages where message.isReadable {
-      let warning = try? await pipeline.correctionWarning(envelope: message.envelope, label: label)
-      if warning == .unauthenticatedSender { unverified.insert(message.id) }
+      if await hasUnverifiedSender(message, correctingTo: label, pipeline: pipeline) {
+        unverified.insert(message.id)
+      }
     }
     return SelectionBatch(
       label: label,
@@ -248,6 +249,21 @@ extension CorrectionsModel {
       unverifiedIDs: unverified,
       unreadableCount: selected.unavailableCount
     )
+  }
+
+  /// Whether correcting `message` to `label` needs confirmation for its sender; a failed check does.
+  private func hasUnverifiedSender(
+    _ message: ReviewMessage,
+    correctingTo label: MailLabel,
+    pipeline: Pipeline
+  ) async -> Bool {
+    let warning: CorrectionWarning?
+    do {
+      warning = try await pipeline.correctionWarning(envelope: message.envelope, label: label)
+    } catch {
+      warning = .check(label: label, evidence: nil)
+    }
+    return warning == .unauthenticatedSender
   }
 
   private func correct(_ batch: SelectionBatch, pipeline: Pipeline) async throws -> String {

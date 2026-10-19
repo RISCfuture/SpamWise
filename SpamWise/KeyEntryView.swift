@@ -3,7 +3,8 @@ import SpamWiseCore
 
 /**
  Entry for a cloud provider's API key. A Claude key is verified with one test request before it
- is saved; other providers' keys are saved without a request.
+ is saved, so it can't be saved while Keep filtering on this Mac is on; other providers' keys are
+ saved without a request.
 
  Return in the field submits the key, and the submit button is the default while a key is typed.
  The typed key clears once it is saved.
@@ -12,6 +13,8 @@ struct KeyEntryView: View {
   let credentials: CredentialsModel
   /// The model a Claude key is verified with; its provider chooses the key.
   let model: ModelIdentifier
+  /// Whether Keep filtering on this Mac is on, which rules out a verification request.
+  let isLocalOnly: Bool
   @State private var localKey = ""
   private let externalKey: Binding<String>?
 
@@ -22,6 +25,7 @@ struct KeyEntryView: View {
     verifies ? credentials.claudeKey : credentials.providerKey
   }
   private var draft: String { key.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines) }
+  private var canSubmit: Bool { !draft.isEmpty && !operation.isBusy && !(verifies && isLocalOnly) }
 
   var body: some View {
     SecureField(
@@ -33,8 +37,8 @@ struct KeyEntryView: View {
     .accessibilityIdentifier("setup.key")
     HStack {
       Button(verifies ? "Verify and save key" : "Save key", action: submit)
-        .keyboardShortcut(draft.isEmpty ? nil : .defaultAction)
-        .disabled(draft.isEmpty || operation.isBusy)
+        .keyboardShortcut(canSubmit ? .defaultAction : nil)
+        .disabled(!canSubmit)
         .accessibilityIdentifier("setup.saveKey")
       if operation.isBusy {
         ProgressView().controlSize(.small)
@@ -51,12 +55,7 @@ struct KeyEntryView: View {
       Text("A key is saved in Keychain. Enter a new one to replace it.")
         .foregroundStyle(.secondary)
     }
-    Text(
-      verifies
-        ? "SpamWise checks the key with one short test request to \(model.displayName), which may incur a small API charge, then saves it only in Keychain."
-        : "The key is saved only in Keychain, without a request. A dry run shows whether it works."
-    )
-    .foregroundStyle(.secondary)
+    KeyEntryNote(model: model, isLocalOnly: isLocalOnly)
     OperationStatusView(operation: operation, identifier: "setup.keyStatus")
   }
 
@@ -66,20 +65,23 @@ struct KeyEntryView: View {
    - Parameters:
      - credentials: Saves the key.
      - model: The model a Claude key is verified with.
+     - isLocalOnly: Whether Keep filtering on this Mac is on, which rules out verification.
      - key: The typed key, when the caller keeps it across views; otherwise the view keeps it.
    */
   init(
     credentials: CredentialsModel,
     model: ModelIdentifier = .claudeHaiku,
+    isLocalOnly: Bool,
     key: Binding<String>? = nil
   ) {
     self.credentials = credentials
     self.model = model
+    self.isLocalOnly = isLocalOnly
     externalKey = key
   }
 
   private func submit() {
-    guard !draft.isEmpty, !operation.isBusy else { return }
+    guard canSubmit else { return }
     let run =
       verifies
       ? credentials.verifyClaudeKey(draft, model: model)
@@ -89,6 +91,31 @@ struct KeyEntryView: View {
       await run.value
       if operation.failure == nil { key.wrappedValue = "" }
     }
+  }
+}
+
+/// What saving the key involves, or why a Claude key can't be verified now.
+private struct KeyEntryNote: View {
+  let model: ModelIdentifier
+  let isLocalOnly: Bool
+
+  var body: some View {
+    Group {
+      if model.backend != .claude {
+        Text(
+          "The key is saved only in Keychain, without a request. A dry run shows whether it works."
+        )
+      } else if isLocalOnly {
+        Text(
+          "Verifying sends a test request to \(model.displayName), so it’s unavailable while Keep filtering on this Mac is on."
+        )
+      } else {
+        Text(
+          "SpamWise checks the key with one short test request to \(model.displayName), which may incur a small API charge, then saves it only in Keychain."
+        )
+      }
+    }
+    .foregroundStyle(.secondary)
   }
 }
 
@@ -123,9 +150,20 @@ extension ModelBackend {
 }
 
 #Preview("Claude key") {
-  Form { KeyEntryView(credentials: PreviewHelper.model().credentials) }.formStyle(.grouped)
+  Form { KeyEntryView(credentials: PreviewHelper.model().credentials, isLocalOnly: false) }
+    .formStyle(.grouped)
+}
+#Preview("Claude key, local only") {
+  Form { KeyEntryView(credentials: PreviewHelper.model().credentials, isLocalOnly: true) }
+    .formStyle(.grouped)
 }
 #Preview("OpenAI key") {
-  Form { KeyEntryView(credentials: PreviewHelper.model().credentials, model: .gptMini) }
-    .formStyle(.grouped)
+  Form {
+    KeyEntryView(
+      credentials: PreviewHelper.model().credentials,
+      model: .gptMini,
+      isLocalOnly: false
+    )
+  }
+  .formStyle(.grouped)
 }

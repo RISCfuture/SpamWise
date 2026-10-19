@@ -87,7 +87,11 @@ final class CredentialsModel {
     savedKeys = await Self.providersWithSavedKeys()
   }
 
-  /// Sends one synthetic message to the Claude `model` with `key`, then saves the key if it works.
+  /**
+   Sends one synthetic message to the Claude `model` with `key`, then saves the key if it works.
+
+   Nothing is sent while Keep filtering on this Mac is on; the check fails with the reason.
+   */
   @discardableResult
   func verifyClaudeKey(_ key: String, model: ModelIdentifier = .claudeHaiku)
     -> Task<Void, Never>
@@ -97,6 +101,8 @@ final class CredentialsModel {
     return claudeKey.run { [self] in
       guard !credential.isEmpty else { throw ClassificationError.missingCredential }
       let store = try services.requireStore()
+      guard try await !StateRepository.load(store, StateSlices()).settings.mailOptions.localOnly
+      else { throw KeyVerificationError.localOnly }
       let message = try MIMEParser().parse(Data(Self.verificationMessage.utf8))
       let verdict = try await SpendingLimitedClassifier(
         ClaudeClassifier(model: model, key: { credential }),

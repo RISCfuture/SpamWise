@@ -20,12 +20,13 @@ credentials, model calls, paid services, or public blocklist queries are involve
 Build native Rspamd separately from its pinned source package, then build the
 client harness with `Scripts/evidence-runtime-check.sh`. Keep an unsigned copy of
 the compiled harness executable before signing, for the sandbox comparison. Pass
-absolute paths and any build token (letters, digits and hyphens):
+absolute paths and, optionally, a build token of letters, digits and hyphens
+(`check` by default):
 
 ```sh
-bash Scripts/rspamd-runtime-check.sh <build-token> \
+bash Scripts/rspamd-runtime-check.sh \
   <rspamd-source-directory> <rspamd-build-directory> \
-  <unsigned-probe-executable> <signed-probe-app-executable>
+  <unsigned-probe-executable> <signed-probe-app-executable> [build-token]
 ```
 
 The script uses `127.0.0.1:11333` for the scanner and `127.0.0.1:11334` for a

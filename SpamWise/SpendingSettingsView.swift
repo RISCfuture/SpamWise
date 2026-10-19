@@ -25,11 +25,16 @@ struct SpendingSettingsView: View {
       )
       .accessibilityIdentifier("spending.limitEnabled")
       if spending.limitMicroUSD != nil {
-        TextField("Monthly limit", value: $limitUSD, format: .currency(code: "USD"))
-          .accessibilityIdentifier("spending.limit")
-          .onChange(of: limitUSD) { _, amount in
-            if amount != spending.limitUSD { settings.setSpendingLimit(usd: amount) }
-          }
+        TextField(
+          "Monthly limit",
+          value: $limitUSD,
+          format: .currency(code: "USD"),
+          prompt: Text(Self.defaultLimitUSD, format: .currency(code: "USD"))
+        )
+        .accessibilityIdentifier("spending.limit")
+        .onChange(of: limitUSD) { _, amount in
+          if amount != spending.limitUSD { settings.setSpendingLimit(usd: amount) }
+        }
         if let error = settings.spendingLimitError {
           Text(error).textSelection(.enabled).accessibilityIdentifier("spending.limitError")
         }

@@ -33,6 +33,22 @@
         }
       }
     },
+    "%@ Request UUID: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ UUID de solicitud: %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ UUID de la demande : %2$@"
+          }
+        }
+      }
+    },
     "%lld Good or Junk · %lld Review · %lld not classified": {
       "localizations": {
         "es": {
@@ -261,6 +277,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adresses qui ne comptent pas comme des personnes que vous connaissez"
+          }
+        }
+      }
+    },
+    "Advanced. Leave empty for a new request. To retry a run safely, enter the Request UUID its result or error shows.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avanzado. Déjalo vacío para una solicitud nueva. Para reintentar una ejecución de forma segura, introduce el UUID de solicitud que muestra su resultado o error."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avancé. Laissez vide pour une nouvelle demande. Pour réessayer une exécution sans risque, saisissez l’UUID de la demande indiqué dans son résultat ou son erreur."
           }
         }
       }
@@ -733,6 +765,38 @@
         }
       }
     },
+    "Discard Changes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descartar cambios"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner les modifications"
+          }
+        }
+      }
+    },
+    "Discard changes to this folder plan?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Descartar los cambios de este plan de carpeta?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner les modifications de cette configuration du dossier ?"
+          }
+        }
+      }
+    },
     "Discard Set-Aside Data": {
       "localizations": {
         "es": {
@@ -777,6 +841,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "La simulation s’active : les messages restent inchangés jusqu’à ce que vous la désactiviez dans Général. Les vérifications automatiques utilisent désormais la nouvelle connexion."
+          }
+        }
+      }
+    },
+    "Keep filtering on this Mac is on, so SpamWise sends nothing to providers.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantener el filtrado en este Mac está activado, así que SpamWise no envía nada a los proveedores."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder le filtrage sur ce Mac est activé, donc SpamWise n’envoie rien aux fournisseurs."
+          }
+        }
+      }
+    },
+    "limited-time offer": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "oferta por tiempo limitado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "offre à durée limitée"
+          }
+        }
+      }
+    },
+    "Loading…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement…"
+          }
+        }
+      }
+    },
+    "Optional": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif"
           }
         }
       }
@@ -841,6 +969,102 @@
           "stringUnit": {
             "state": "translated",
             "value": "Las condiciones de los servicios gratuitos de Google permiten mejorar los modelos y la revisión humana. No envíe correo personal bajo esas condiciones. Confirme qué condiciones se aplican a su proyecto y región."
+          }
+        }
+      }
+    },
+    "SpamWise Data Unavailable": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos de SpamWise no disponibles"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Données de SpamWise indisponibles"
+          }
+        }
+      }
+    },
+    "SpamWise includes the open-source software below. Their notices and licenses follow.\n\n**ClaudeForFoundationModels** (revision 0262e1a). Copyright 2026 Anthropic PBC. Licensed under the Apache License, Version 2.0.\n\n**SwiftNIO**, **swift-nio-imap**, **swift-nio-transport-services**, **swift-collections**, **swift-atomics**, **swift-system** and **swift-se0270-range-set**. Copyright Apple Inc. and the Swift and SwiftNIO project authors. Licensed under the Apache License, Version 2.0.\n\n**Public Suffix List**. Licensed under the Mozilla Public License, Version 2.0. Source: [publicsuffix.org](https://publicsuffix.org/list/).": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise incluye el software de código abierto que se indica a continuación. Después se reproducen sus avisos y licencias.\n\n**ClaudeForFoundationModels** (revisión 0262e1a). Copyright 2026 Anthropic PBC. Con licencia Apache, versión 2.0.\n\n**SwiftNIO**, **swift-nio-imap**, **swift-nio-transport-services**, **swift-collections**, **swift-atomics**, **swift-system** y **swift-se0270-range-set**. Copyright Apple Inc. y los autores de los proyectos Swift y SwiftNIO. Con licencia Apache, versión 2.0.\n\n**Public Suffix List**. Con licencia pública de Mozilla, versión 2.0. Fuente: [publicsuffix.org](https://publicsuffix.org/list/)."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise inclut les logiciels libres ci-dessous. Leurs mentions et licences suivent.\n\n**ClaudeForFoundationModels** (révision 0262e1a). Copyright 2026 Anthropic PBC. Sous licence Apache, version 2.0.\n\n**SwiftNIO**, **swift-nio-imap**, **swift-nio-transport-services**, **swift-collections**, **swift-atomics**, **swift-system** et **swift-se0270-range-set**. Copyright Apple Inc. et les auteurs des projets Swift et SwiftNIO. Sous licence Apache, version 2.0.\n\n**Public Suffix List**. Sous licence publique Mozilla, version 2.0. Source : [publicsuffix.org](https://publicsuffix.org/list/)."
+          }
+        }
+      }
+    },
+    "SpamWise is not affiliated with, endorsed by, or sponsored by Anthropic. Claude is a trademark of Anthropic PBC.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no está afiliada, respaldada ni patrocinada por Anthropic. Claude es una marca comercial de Anthropic PBC."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise n’est ni affiliée à Anthropic, ni approuvée ou parrainée par Anthropic. Claude est une marque d’Anthropic PBC."
+          }
+        }
+      }
+    },
+    "The key wasn’t verified.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clave no se ha verificado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clé n’a pas été vérifiée."
+          }
+        }
+      }
+    },
+    "This edition also includes **swift-log**, licensed under the Apache License, Version 2.0; **GitHubUpdateChecker**, **swift-markdown-ui** and **NetworkImage**, licensed under the MIT License; and **swift-cmark**, licensed under the BSD 2-Clause License.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta edición también incluye **swift-log**, con licencia Apache, versión 2.0; **GitHubUpdateChecker**, **swift-markdown-ui** y **NetworkImage**, con licencia MIT; y **swift-cmark**, con licencia BSD de 2 cláusulas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette édition inclut aussi **swift-log**, sous licence Apache, version 2.0 ; **GitHubUpdateChecker**, **swift-markdown-ui** et **NetworkImage**, sous licence MIT ; et **swift-cmark**, sous licence BSD à 2 clauses."
+          }
+        }
+      }
+    },
+    "Turn off Keep filtering on this Mac in Classifier settings, then try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactiva Mantener el filtrado en este Mac en la configuración de Clasificador y vuelve a intentarlo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivez Garder le filtrage sur ce Mac dans les réglages Classificateur, puis réessayez."
           }
         }
       }
@@ -4681,6 +4905,22 @@
         }
       }
     },
+    "Unsaved changes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambios sin guardar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifications non enregistrées"
+          }
+        }
+      }
+    },
     "Usage": {
       "localizations": {
         "es": {
@@ -4809,6 +5049,22 @@
         }
       }
     },
+    "Verifying sends a test request to %@, so it’s unavailable while Keep filtering on this Mac is on.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La verificación envía una solicitud de prueba a %@, así que no está disponible mientras Mantener el filtrado en este Mac esté activado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La vérification envoie une requête de test à %@ : elle est indisponible tant que Garder le filtrage sur ce Mac est activé."
+          }
+        }
+      }
+    },
     "Weekly Review digest": {
       "localizations": {
         "es": {
@@ -4853,6 +5109,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quelles données sont envoyées"
+          }
+        }
+      }
+    },
+    "Your changes to this plan haven’t been saved.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los cambios de este plan no se han guardado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les modifications de cette configuration n’ont pas été enregistrées."
           }
         }
       }
@@ -6001,22 +6273,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rechercher des mises à jour…"
-          }
-        }
-      }
-    },
-    "SpamWise includes the open-source software below. The complete notices are in CREDITS.md in the [SpamWise repository](https://github.com/RISCfuture/SpamWise).\n\n**ClaudeForFoundationModels** (revision 0262e1a). Copyright 2026 Anthropic PBC. Licensed under the Apache License, Version 2.0.\n\n**swift-log**. Copyright 2018–2019 The SwiftLog Project. Licensed under the Apache License, Version 2.0. Contains a derivation of the lock implementation from SwiftNIO.\n\n**SwiftNIO** and **swift-nio-imap**. Copyright Apple Inc. and the SwiftNIO project authors. Licensed under the Apache License, Version 2.0.\n\n**Public Suffix List**. Licensed under the Mozilla Public License, Version 2.0. Source: [publicsuffix.org](https://publicsuffix.org/list/).\n\nThe downloadable edition also includes **GitHubUpdateChecker**, **swift-markdown-ui** and **NetworkImage**, licensed under the MIT License, and **swift-cmark**, licensed under the BSD 2-Clause License.\n\nThe Apache License, Version 2.0 is available at [apache.org](https://www.apache.org/licenses/LICENSE-2.0).\n\nSpamWise is not affiliated with, endorsed by, or sponsored by Anthropic. Claude is a trademark of Anthropic PBC.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise incluye el software de código abierto que se indica a continuación. Los avisos completos están en CREDITS.md, en el [repositorio de SpamWise](https://github.com/RISCfuture/SpamWise).\n\n**ClaudeForFoundationModels** (revisión 0262e1a). Copyright 2026 Anthropic PBC. Con licencia Apache, versión 2.0.\n\n**swift-log**. Copyright 2018–2019 The SwiftLog Project. Con licencia Apache, versión 2.0. Contiene una derivación de la implementación de bloqueos de SwiftNIO.\n\n**SwiftNIO** y **swift-nio-imap**. Copyright Apple Inc. y los autores del proyecto SwiftNIO. Con licencia Apache, versión 2.0.\n\n**Public Suffix List**. Con licencia pública de Mozilla, versión 2.0. Fuente: [publicsuffix.org](https://publicsuffix.org/list/).\n\nLa edición descargable también incluye **GitHubUpdateChecker**, **swift-markdown-ui** y **NetworkImage**, con licencia MIT, y **swift-cmark**, con licencia BSD de 2 cláusulas.\n\nLa licencia Apache, versión 2.0 está disponible en [apache.org](https://www.apache.org/licenses/LICENSE-2.0).\n\nSpamWise no está afiliada, respaldada ni patrocinada por Anthropic. Claude es una marca comercial de Anthropic PBC."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise inclut les logiciels libres ci-dessous. Les mentions complètes figurent dans CREDITS.md, dans le [dépôt SpamWise](https://github.com/RISCfuture/SpamWise).\n\n**ClaudeForFoundationModels** (révision 0262e1a). Copyright 2026 Anthropic PBC. Sous licence Apache, version 2.0.\n\n**swift-log**. Copyright 2018–2019 The SwiftLog Project. Sous licence Apache, version 2.0. Contient une dérivation de l’implémentation des verrous de SwiftNIO.\n\n**SwiftNIO** et **swift-nio-imap**. Copyright Apple Inc. et les auteurs du projet SwiftNIO. Sous licence Apache, version 2.0.\n\n**Public Suffix List**. Sous licence publique Mozilla, version 2.0. Source : [publicsuffix.org](https://publicsuffix.org/list/).\n\nL’édition téléchargeable inclut aussi **GitHubUpdateChecker**, **swift-markdown-ui** et **NetworkImage**, sous licence MIT, et **swift-cmark**, sous licence BSD à 2 clauses.\n\nLa licence Apache, version 2.0 est disponible sur [apache.org](https://www.apache.org/licenses/LICENSE-2.0).\n\nSpamWise n’est ni affiliée à Anthropic, ni approuvée ou parrainée par Anthropic. Claude est une marque d’Anthropic PBC."
           }
         }
       }
@@ -9551,22 +9807,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enregistrer la connexion"
-          }
-        }
-      }
-    },
-    "Save Exceptions": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guardar excepciones"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrer les exceptions"
           }
         }
       }
@@ -13879,22 +14119,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "« %@ » n’est pas un UUID."
-          }
-        }
-      }
-    },
-    "Advanced. Leave empty for a new request. To retry an interrupted run safely, enter the UUID it used.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avanzado. Déjalo vacío para una solicitud nueva. Para reintentar de forma segura una ejecución interrumpida, introduce el UUID que usó."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avancé. Laissez vide pour une nouvelle demande. Pour réessayer sans risque une exécution interrompue, saisissez l’UUID qu’elle a utilisé."
           }
         }
       }

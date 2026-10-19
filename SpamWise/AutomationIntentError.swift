@@ -83,3 +83,21 @@ nonisolated enum AutomationIntentError: AutomationFailure, LocalizedError, Equat
     }
   }
 }
+
+/// A Shortcuts action failure with the Request UUID it ran under, so a retry can enter it again.
+nonisolated struct AutomationRequestFailure: AutomationFailure, LocalizedError,
+  CustomLocalizedStringResourceConvertible
+{
+  /// The request the failed run claimed, or would have claimed.
+  let requestID: UUID
+  /// What stopped the run.
+  let failure: AutomationIntentError
+
+  /// The failure as Shortcuts shows it, followed by the Request UUID.
+  var localizedStringResource: LocalizedStringResource {
+    "\(OperationFailure.describe(failure)) Request UUID: \(requestID.uuidString)"
+  }
+  var errorDescription: String? { failure.errorDescription }
+  var failureReason: String? { failure.failureReason }
+  var recoverySuggestion: String? { failure.recoverySuggestion }
+}

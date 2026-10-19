@@ -82,7 +82,8 @@ final class SettingsModel {
     settings.advancedOptions.externalEvidence ?? ExternalEvidenceSettings()
   }
 
-  /// Applies `edit` locally, then persists it after every earlier settings write.
+  /// Applies `edit` locally, then persists it after every earlier settings write; a failed write
+  /// puts the stored settings back once no other write is pending.
   @discardableResult
   func editSettings(
     _ edit: @escaping @Sendable (inout SpamWiseCore.Settings) -> Void
@@ -96,6 +97,7 @@ final class SettingsModel {
         try await StateRepository.editSettings(store, edit)
         saveFailure = nil
       } catch {
+        shared.reloadSettingsAfterFailedWrite()
         saveFailure = OperationFailure(
           message: String(localized: "Settings could not be saved; mail stays unchanged.")
         )

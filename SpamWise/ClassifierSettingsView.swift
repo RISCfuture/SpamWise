@@ -21,6 +21,7 @@ struct ClassifierSettingsView: View {
       }
       APIKeySection(
         model: model.settings.settings.advancedOptions.model,
+        isLocalOnly: model.settings.settings.mailOptions.localOnly,
         credentials: model.credentials
       )
       Section {
@@ -168,6 +169,7 @@ private struct ProviderFooter: View {
 /// The selected provider's API key, saved only in Keychain.
 private struct APIKeySection: View {
   let model: ModelIdentifier
+  let isLocalOnly: Bool
   let credentials: CredentialsModel
 
   var body: some View {
@@ -178,7 +180,8 @@ private struct APIKeySection: View {
           backend: model.backend,
           isAboveKeyField: true
         )
-        KeyEntryView(credentials: credentials, model: model).id(model.backend)
+        KeyEntryView(credentials: credentials, model: model, isLocalOnly: isLocalOnly)
+          .id(model.backend)
       }
     }
   }

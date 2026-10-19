@@ -19,7 +19,7 @@ struct AdvancedSettingsView: View {
         activity: model.activity
       )
       NotificationSettingsView(notifications: model.notifications, settings: settings)
-      Section { BackupSettingsView(backup: model.backup) }
+      BackupSettingsView(backup: model.backup)
       DiagnosticsSection(model: model)
     }.formStyle(.grouped)
   }

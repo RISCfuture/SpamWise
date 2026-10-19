@@ -33,8 +33,8 @@ struct RelationshipSettingsView: View {
         "Don’t treat my own addresses as people I know",
         isOn: settings.mailBinding(\.excludeOwnAddresses)
       )
-      TrustExclusionsView(relationships: relationships, shared: shared)
     }
+    TrustExclusionsView(relationships: relationships, shared: shared)
   }
 }
 

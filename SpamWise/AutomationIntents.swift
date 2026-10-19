@@ -28,7 +28,7 @@ struct PreviewSelectedMailIntent: AppIntent, CancellableIntent {
   @Parameter(
     title: "Request UUID",
     description:
-      "Advanced. Leave empty for a new request. To retry an interrupted run safely, enter the UUID it used."
+      "Advanced. Leave empty for a new request. To retry a run safely, enter the Request UUID its result or error shows."
   )
   var requestID: String?
   @Dependency var model: AppModel
@@ -61,7 +61,7 @@ struct CorrectSelectedMailIntent: AppIntent, CancellableIntent {
   @Parameter(
     title: "Request UUID",
     description:
-      "Advanced. Leave empty for a new request. To retry an interrupted run safely, enter the UUID it used."
+      "Advanced. Leave empty for a new request. To retry a run safely, enter the Request UUID its result or error shows."
   )
   var requestID: String?
   @Dependency var model: AppModel
@@ -83,8 +83,9 @@ struct CorrectSelectedMailIntent: AppIntent, CancellableIntent {
 /**
  The identifier that protects one preview or correction against repetition.
 
- Each run gets a new identifier unless the shortcut supplies one. Running again with the same
- identifier returns the saved result instead of repeating the work.
+ Each run gets a new identifier unless the shortcut supplies one, and its reply or failure names
+ the identifier used. Running again with the same identifier returns the saved result instead of
+ repeating the work.
  */
 nonisolated enum AutomationRequestID {
   /// The identifier in `text`, or a new one when `text` is empty or absent.
@@ -95,6 +96,23 @@ nonisolated enum AutomationRequestID {
       throw AutomationIntentError.invalidRequestID(trimmed)
     }
     return id
+  }
+}
+
+/// A preview or correction reply, with the Request UUID that a retry enters to replay it.
+nonisolated struct IdentifiedAutomationReply: Encodable {
+  let requestID: UUID
+  let reply: AutomationReply
+
+  /// Encodes the reply's fields and `requestID` side by side in one object.
+  func encode(to encoder: any Encoder) throws {
+    try reply.encode(to: encoder)
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(requestID, forKey: .requestID)
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case requestID
   }
 }
 
@@ -154,9 +172,11 @@ nonisolated private enum AutomationContext {
         envelope: selected,
         adapter: adapter
       )
-      return try JSONEncoder.pretty.encodeText(reply)
+      return try JSONEncoder.pretty.encodeText(
+        IdentifiedAutomationReply(requestID: id, reply: reply)
+      )
     } catch is CancellationError { throw CancellationError() } catch {
-      throw AutomationIntentError(error)
+      throw AutomationRequestFailure(requestID: id, failure: AutomationIntentError(error))
     }
   }
 

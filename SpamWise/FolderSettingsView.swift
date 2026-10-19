@@ -2,16 +2,29 @@ import SwiftUI
 import SpamWiseCore
 import MailIntegration
 
-/// Mail folders SpamWise filters or learns from: the saved plans, and a plan being added or changed.
+/**
+ Mail folders SpamWise filters or learns from: the saved plans, and a plan being added or changed.
+
+ Choosing another folder or closing the sheet asks first while the plan has unsaved changes.
+ */
 struct FolderSettingsView: View {
   let folders: FolderPlansModel
   let shared: SharedStateModel
   let accounts: [MailAccount]
   @State private var selection = ""
   @State private var plan: MailFolderPlan?
+  @State private var isEdited = false
+  @State private var pendingDiscard: DiscardedPlanContinuation?
   @State private var page = 0
   @Environment(\.dismiss)
   private var dismiss
+
+  private var folderSelection: Binding<String> {
+    Binding(get: { selection }, set: { id in afterConfirmingDiscard(.select(id)) })
+  }
+  private var confirmsDiscard: Binding<Bool> {
+    Binding(get: { pendingDiscard != nil }, set: { if !$0 { pendingDiscard = nil } })
+  }
 
   var body: some View {
     NavigationStack {
@@ -24,18 +37,29 @@ struct FolderSettingsView: View {
             Spacer()
             HelpButton(page: "folders")
           }
-          Picker("Folder", selection: $selection) {
+          Picker("Folder", selection: folderSelection) {
             Text("Choose a folder").tag("")
             ForEach(folders.folders) { folder in
               Text("\(accountName(folder.accountID)): \(folder.displayName)").tag(folder.id)
             }
           }
           if let plan {
-            FolderPlanFields(plan: Binding(get: { self.plan ?? plan }, set: { self.plan = $0 }))
+            FolderPlanFields(
+              plan: Binding(
+                get: { self.plan ?? plan },
+                set: {
+                  self.plan = $0
+                  isEdited = true
+                }
+              )
+            )
             HStack {
-              Button("Save Plan") { folders.save(plan) }
+              Button("Save Plan") { save(plan) }
                 .accessibilityIdentifier("folders.save")
               if folders.saving.isBusy { ProgressView().controlSize(.small) }
+              if isEdited, !folders.saving.isBusy {
+                Text("Unsaved changes").foregroundStyle(.secondary)
+              }
             }
             OperationStatusView(operation: folders.saving, identifier: "folders.saveStatus")
             if plan.purpose == .filter {
@@ -46,22 +70,63 @@ struct FolderSettingsView: View {
       }
       .formStyle(.grouped)
       .navigationTitle("Folders")
-      .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "folders.done") }
-    }
-    .frame(minWidth: 600, minHeight: 540)
-    .onChange(of: selection) { _, id in
-      page = 0
-      folders.saving.status = nil
-      plan = folders.folders.first { $0.id == id }.map { folder in
-        shared.settings.mailOptions.folderPlans.first { $0.id == id }
-          ?? MailFolderPlan(folder: folder)
+      .toolbar {
+        DoneToolbarItem(identifier: "folders.done") { afterConfirmingDiscard(.close) }
+      }
+      .confirmationDialog(
+        "Discard changes to this folder plan?",
+        isPresented: confirmsDiscard,
+        titleVisibility: .visible,
+        presenting: pendingDiscard
+      ) { continuation in
+        Button("Discard Changes", role: .destructive) { proceed(continuation) }
+        Button("Cancel", role: .cancel) {}
+      } message: { _ in
+        Text("Your changes to this plan haven’t been saved.")
       }
     }
+    .frame(minWidth: 600, minHeight: 540)
+    .interactiveDismissDisabled(isEdited)
   }
 
   private func accountName(_ id: String) -> String {
     accounts.first { $0.id == id }?.name ?? shared.scanHealth[id]?.accountName ?? id
   }
+
+  private func save(_ edited: MailFolderPlan) {
+    Task {
+      await folders.save(edited).value
+      if folders.saving.failure == nil, plan == edited { isEdited = false }
+    }
+  }
+
+  private func afterConfirmingDiscard(_ continuation: DiscardedPlanContinuation) {
+    if isEdited { pendingDiscard = continuation } else { proceed(continuation) }
+  }
+
+  private func proceed(_ continuation: DiscardedPlanContinuation) {
+    switch continuation {
+      case .close: dismiss()
+      case .select(let id): select(id)
+    }
+  }
+
+  private func select(_ id: String) {
+    selection = id
+    isEdited = false
+    page = 0
+    folders.saving.status = nil
+    plan = folders.folders.first { $0.id == id }.map { folder in
+      shared.settings.mailOptions.folderPlans.first { $0.id == id }
+        ?? MailFolderPlan(folder: folder)
+    }
+  }
+}
+
+/// What happens once the user agrees to discard a plan's unsaved changes.
+private enum DiscardedPlanContinuation: Equatable {
+  case select(String)
+  case close
 }
 
 /// Every saved plan, including those whose folder Mail no longer lists, with Disable and Remove.

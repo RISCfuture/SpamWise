@@ -157,7 +157,7 @@ alone:
 | Package localizations | `python3 Scripts/check-core-localizations.py`: every package string uses its module's catalog and has matching es/fr values |
 | Help book | `python3 Scripts/check-help-book.py`: every anchor the app opens exists in all three languages, and links resolve |
 | Documentation | `xcodebuild docbuild -scheme SpamWiseCore-Package -destination 'platform=macOS,arch=arm64'`, run in `SpamWiseCore/` |
-| Store concurrency | `bash Scripts/store-check.sh <build-token>`: two processes make 50 transactions each, a third reads 100 |
+| Store concurrency | `bash Scripts/store-check.sh`: two processes make 50 transactions each, a third reads 100 |
 | Format | `swift format format -i -r SpamWise SpamWise-MAS SpamWise-download SpamWiseCore/Sources SpamWiseCore/Tests MailExtension UITests UnitTests` |
 | Lint | `swiftlint lint --strict`, with the house parent config that `.swiftlint.yml` names |
 

@@ -19,6 +19,22 @@ struct `Optimistic settings edits` {
   }
 
   @Test
+  func `show the stored value again once their write fails`() async throws {
+    let store = try temporaryStore()
+    let shared = SharedStateModel(store: store)
+    let settings = SettingsModel(shared: shared)
+    await shared.refresh()
+    let lock = try StoreLock(store)
+    let write = settings.setSetting(\.paused, to: true)
+    #expect(shared.settings.paused)
+    await write.value
+    lock.release()
+    await shared.refresh()
+    #expect(settings.saveFailure != nil)
+    #expect(!shared.settings.paused)
+  }
+
+  @Test
   func `persist rapid edits in the order made`() async throws {
     let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
@@ -89,6 +105,26 @@ struct `Optimistic settings edits` {
   /// Waits for every settings write queued so far.
   private func settled(_ settings: SettingsModel) async {
     await settings.editSettings { _ in }.value
+  }
+}
+
+@MainActor
+@Suite
+struct `Set-aside storage` {
+  @Test
+  func `asks for recovery when data is set aside after launch`() async throws {
+    let store = try Store(
+      url: FileManager.default.temporaryDirectory
+        .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
+    )
+    let shared = SharedStateModel(store: store)
+    await shared.refresh()
+    try await store.update("state.contacts", default: "unreadable") { _ in }
+    try await StateRepository.update(store, loading: StateSlices([.contacts])) {
+      $0.lastDigestWeek = "2026-W42"
+    }
+    await shared.refresh()
+    #expect(shared.needsRecovery)
   }
 }
 

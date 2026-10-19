@@ -25,6 +25,25 @@ struct `Shortcuts action failures` {
   }
 
   @Test
+  func `reply with the request UUID beside the decision`() throws {
+    let replyJSON = Data(
+      #"""
+      {"recordID": "6F0E4D52-2A6B-4F37-9A49-0F9F1D2C3B4A", "label": "inbox", "action": "none",
+       "outcome": "noAction", "reason": "Known sender"}
+      """#.utf8
+    )
+    let reply = try JSONDecoder().decode(AutomationReply.self, from: replyJSON)
+    let requestID = UUID()
+    let encoded = try JSONEncoder().encode(
+      IdentifiedAutomationReply(requestID: requestID, reply: reply)
+    )
+    let fields = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: String])
+    #expect(fields["requestID"] == requestID.uuidString)
+    #expect(fields["recordID"] == "6F0E4D52-2A6B-4F37-9A49-0F9F1D2C3B4A")
+    #expect(fields["reason"] == "Known sender")
+  }
+
+  @Test
   func `start a new request unless the shortcut supplies a UUID`() throws {
     let saved = UUID()
     #expect(try AutomationRequestID.resolve(" \(saved.uuidString)\n") == saved)

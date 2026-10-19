@@ -38,7 +38,12 @@ struct SetupClassifierView: View {
     }
     if advanced.backend.isCloud {
       Section(advanced.backend.localizedTitle) {
-        KeyEntryView(credentials: credentials, model: advanced.model, key: $draftKey)
+        KeyEntryView(
+          credentials: credentials,
+          model: advanced.model,
+          isLocalOnly: settings.settings.mailOptions.localOnly,
+          key: $draftKey
+        )
         ProviderConsentView(settings: settings, backend: advanced.backend)
       }
     }

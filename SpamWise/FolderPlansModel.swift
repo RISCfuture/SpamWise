@@ -43,7 +43,8 @@ final class FolderPlansModel {
   }
 
   /// Validates and saves `plan`, replacing the saved plan for its folder.
-  func save(_ plan: MailFolderPlan) {
+  @discardableResult
+  func save(_ plan: MailFolderPlan) -> Task<Void, Never> {
     saving.run { [self] in
       try await FolderPlans.save(plan, source: services.appleMail, in: services.requireStore())
       return String(localized: "Folder plan saved. Dry run and Pause apply to it too.")

@@ -27,7 +27,7 @@ final class SharedStateModel {
   var scanHealth: [String: MailScanHealth] = [:]
   /// This month's spending ledger, or nil when it could not be read.
   var spending: MonthlySpending?
-  /// Whether the first reload finished.
+  /// Whether the first reload finished; ``hasLoadedSettings`` says whether it read storage.
   private(set) var hasLoadedState: Bool
   /// Whether settings were read from storage, so edits never write defaults over them.
   private(set) var hasLoadedSettings: Bool
@@ -41,12 +41,14 @@ final class SharedStateModel {
   private(set) var pendingDigest: ReviewDigest?
   /// Settings writes still in flight; while any are, reloads keep the edited settings.
   var settingsWritesInFlight = 0
-  /// Unreadable data set aside when storage opened, awaiting the user's recovery decision.
+  /// Unreadable data set aside, rechecked whenever storage changes, awaiting the user's decision.
   var recoveryEntries: [StateRecovery.Entry] = []
   @ObservationIgnored let store: Store?
   @ObservationIgnored private var changeTokens: [StateSlice: Int] = [:]
   @ObservationIgnored private var spendingToken: Int?
   @ObservationIgnored private var lastDigestCheck: (week: String, time: ContinuousClock.Instant)?
+  /// Whether the shown settings may hold an edit whose write failed, so they must be reread.
+  @ObservationIgnored private var settingsNeedReload = false
 
   var settings: SpamWiseCore.Settings { state.settings }
   /// Whether set-aside data needs the user to restore a backup or keep the current state.
@@ -111,6 +113,9 @@ final class SharedStateModel {
     }
   }
 
+  /// Rereads settings at the next reload with no write in flight, replacing unsaved edits.
+  func reloadSettingsAfterFailedWrite() { settingsNeedReload = true }
+
   /// Records that the user opened this week's digest, so it is no longer announced.
   func markDigestSeen(_ digest: ReviewDigest) async {
     pendingDigest = nil
@@ -127,10 +132,15 @@ final class SharedStateModel {
     let changed = Set(
       StateSlice.allCases.filter { changeTokens.isEmpty || tokens[$0] != changeTokens[$0] }
     )
-    guard !changed.isEmpty else { return }
-    if changeTokens.isEmpty { try await checkRecovery(store) }
+    let rereadsSettings = settingsNeedReload && settingsWritesInFlight == 0
+    guard !changed.isEmpty || rereadsSettings else { return }
+    try await checkRecovery(store)
     var next = try await reloadedState(changed, from: store)
-    if settingsWritesInFlight > 0 { next.settings = state.settings }
+    if settingsWritesInFlight > 0 {
+      next.settings = state.settings
+    } else {
+      settingsNeedReload = false
+    }
     if next != state { state = next }
     if changed.contains(.mailHealth) {
       let health = try await MailHealthRepository.load(store)

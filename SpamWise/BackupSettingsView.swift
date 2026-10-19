@@ -2,22 +2,39 @@ import SwiftUI
 import UniformTypeIdentifiers
 import SpamWiseCore
 
-/// Backup and restore in Advanced settings.
+/// Backup and restore in Advanced settings, as one section.
 struct BackupSettingsView: View {
   let backup: BackupModel
 
   var body: some View {
-    DisclosureGroup("Backup and restore") {
+    Section {
       BackupExportView(backup: backup)
       BackupRestoreControls(isBusy: backup.operation.isBusy) {
         backup.restore(from: $0, recoveryKey: $1)
       }
       OperationStatusView(operation: backup.operation, identifier: "backup.status")
-      HStack {
+    } header: {
+      Text("Backup and restore")
+    } footer: {
+      HStack(alignment: .firstTextBaseline) {
+        BackupContentsNote()
         Spacer()
         HelpButton(page: "backup-and-restore")
       }
     }
+  }
+}
+
+/// What a backup holds and what stays on this Mac, for a backup section's footer.
+struct BackupContentsNote: View {
+  var body: some View {
+    Text(
+      """
+      A backup holds your rules, policy, corrections and learning, encrypted with a recovery key. \
+      Keys, passwords and spending stay on this Mac.
+      """
+    )
+    .foregroundStyle(.secondary)
   }
 }
 
@@ -38,13 +55,6 @@ struct BackupExportView: View {
   @State private var fileStatus: OperationStatus?
 
   var body: some View {
-    Text(
-      """
-      A backup holds your rules, policy, corrections and learning, encrypted with a recovery key. \
-      Keys, passwords and spending stay on this Mac.
-      """
-    )
-    .foregroundStyle(.secondary)
     if let recoveryKey {
       RecoveryKeyView(key: recoveryKey)
       Button("Create New Recovery Key…") { confirmingNewKey = true }

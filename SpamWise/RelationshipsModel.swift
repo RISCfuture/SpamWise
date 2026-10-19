@@ -17,8 +17,20 @@ final class RelationshipsModel {
   @ObservationIgnored private let shared: SharedStateModel
   @ObservationIgnored private var lastContactsRefresh: ContinuousClock.Instant?
 
+  /// Exclusions typed but not yet saved, kept until they save so switching away never drops them.
+  private(set) var exclusionsEdit: String?
+
   var contactsNeedRefresh: Bool {
     lastContactsRefresh.map { .now - $0 >= Self.contactsRefreshInterval } ?? true
+  }
+  /// The addresses excluded from automatic trust, one per line: the unsaved edit, or else the
+  /// saved list. Setting it records an edit, which ``commitTrustExclusions()`` saves.
+  var exclusionsText: String {
+    get { exclusionsEdit ?? savedExclusionsText }
+    set { exclusionsEdit = newValue == savedExclusionsText ? nil : newValue }
+  }
+  private var savedExclusionsText: String {
+    shared.settings.mailOptions.trustExclusions.sorted().joined(separator: "\n")
   }
 
   init(services: AppServices, shared: SharedStateModel) {
@@ -46,10 +58,14 @@ final class RelationshipsModel {
     }
   }
 
-  /// Saves `addresses`, one per line, as excluded from automatic trust.
-  func saveTrustExclusions(_ addresses: String) {
-    exclusions.run { [self] in
-      try await TrustExclusions.save(addresses, store: services.requireStore())
+  /// Saves the edited exclusions; an edit that can't be saved stays, with the reason.
+  @discardableResult
+  func commitTrustExclusions() -> Task<Void, Never> {
+    guard let edit = exclusionsEdit else { return Task {} }
+    return exclusions.run { [self] in
+      try await TrustExclusions.save(edit, store: services.requireStore())
+      await shared.refresh()
+      if exclusionsEdit == edit { exclusionsEdit = nil }
       return nil
     }
   }
