@@ -385,13 +385,15 @@ func `enforces provider deadlines and response limits`() async throws {
   let slow = OpenAIClassifier(
     key: { "fixture" },
     http: ModelHTTPClient { _ in
-      try? await Task.sleep(for: .seconds(1))
+      try? await Task.sleep(for: .seconds(60))
       return .init(status: 200, body: Data(openAIResponse.utf8))
     }
   )
+  let start = ContinuousClock.now
   await #expect(throws: ClassificationError.timeout) {
     try await slow.classify(providerInput(timeout: 0.01))
   }
+  #expect(ContinuousClock.now - start < .seconds(10))
   let oversized = GeminiClassifier(
     key: { "fixture" },
     http: providerHTTP(String(repeating: " ", count: 65_537))

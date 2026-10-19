@@ -154,7 +154,7 @@ struct `Unavailable threat assessment` {
   @Test
   func `keeps a late assessment unknown and the classification it outlasted`() async {
     let delayed = pipeline { _ in
-      try await Task.sleep(for: .seconds(3))
+      try await Task.sleep(for: .seconds(60))
       return [.init(kind: .phishing, status: .detected, reason: "Late", coverage: "Fixture")]
     }
     let expired = await delayed.process(selected)

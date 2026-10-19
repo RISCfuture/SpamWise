@@ -67,7 +67,7 @@ func `runs corrections and lookups interactively and automatic actions in the ba
 func `runs an interactive call while a background call is still running`() async throws {
   let source = """
     on slow()
-        delay 1
+        delay 4
         return 1
     end slow
     on quick()
@@ -78,10 +78,10 @@ func `runs an interactive call while a background call is still running`() async
   let interactive = AppleScriptExecutor(lane: .interactive, source: source)
   _ = try await interactive.call("quick", [])
   let slow = Task { try await background.call("slow", []) }
-  try await Task.sleep(for: .milliseconds(200))
+  try await Task.sleep(for: .seconds(1))
   let clock = ContinuousClock(), start = clock.now
   #expect(try await interactive.call("quick", []) == .integer(2))
-  #expect(clock.now - start < .milliseconds(500))
+  #expect(clock.now - start < .seconds(2))
   #expect(try await slow.value == .integer(1))
 }
 
@@ -219,7 +219,7 @@ func `rejects a disposable probe whose move reverts before the settling window e
   )
   let probe = AppleMailAdapter(
     runner: reverting,
-    moveSettlingTime: .milliseconds(40),
+    moveSettlingTime: .seconds(1),
     observationInterval: .milliseconds(5)
   )
   await #expect(throws: IntegrationError.actionUnconfirmed) {

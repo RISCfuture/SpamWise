@@ -4,26 +4,52 @@ import Testing
 import SpamWiseCore
 @testable import Signals
 
+/// A deadline that only a stalled fixture response can reach, however loaded the machine is.
+private let unhurriedDeadline = Duration.seconds(30)
+
 @Test
 func `bounds HTTPS responses and sends only domain and header credentials`() async throws {
   let configuration = fixtureConfiguration(SpamhausFixtureProtocol.self)
   let listed = try await SpamhausHTTPS.query(
     domain: "listed.example.org",
     key: "synthetic-key",
-    timeout: .milliseconds(500),
+    timeout: unhurriedDeadline,
     configuration: configuration
   )
   #expect(listed.addresses == ["127.0.1.4"])
-  for domain in ["large.example.org", "redirect.example.org", "slow.example.org"] {
-    await #expect(throws: (any Error).self) {
+  let rejections: [(domain: String, error: BoundedHTTPError)] = [
+    ("large.example.org", .responseTooLarge), ("redirect.example.org", .unexpectedResponse)
+  ]
+  for (domain, error) in rejections {
+    await #expect(throws: error) {
       try await SpamhausHTTPS.query(
         domain: domain,
         key: "synthetic-key",
-        timeout: .milliseconds(50),
+        timeout: unhurriedDeadline,
         configuration: configuration
       )
     }
   }
+}
+
+@Test
+func `abandons an HTTPS response that never arrives once its deadline passes`() async {
+  let start = ContinuousClock.now
+  let error = await #expect(throws: (any Error).self) {
+    try await SpamhausHTTPS.query(
+      domain: "slow.example.org",
+      key: "synthetic-key",
+      timeout: .milliseconds(50),
+      configuration: fixtureConfiguration(SpamhausFixtureProtocol.self)
+    )
+  }
+  #expect(error.map(isDeadlineExpiry) == true)
+  #expect(ContinuousClock.now - start < .seconds(10))
+}
+
+/// Whether `error` reports an expired deadline, from the client's own timer or URLSession's.
+private func isDeadlineExpiry(_ error: any Error) -> Bool {
+  error as? BoundedHTTPError == .timeout || (error as? URLError)?.code == .timedOut
 }
 
 @Test
