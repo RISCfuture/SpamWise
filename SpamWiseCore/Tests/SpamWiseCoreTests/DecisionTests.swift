@@ -49,25 +49,27 @@ func `records a pause without acting`() async throws {
   #expect(await adapter.actions.isEmpty)
 }
 
-@Test
-func `leaves mail unclassified without acting when classification fails`() async throws {
+@Test(arguments: [ClassificationError.network, .contextExceeded])
+func `leaves mail unclassified without acting when classification fails`(
+  failure: ClassificationError
+) async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   let pipeline = Pipeline(
     store: store,
-    classifier: MockClassifier(operation: { _ in throw ClassificationError.network })
+    classifier: MockClassifier(operation: { _ in throw failure })
   )
   #expect(await pipeline.process(try envelope(), adapter: adapter).outcome == .unclassified)
   #expect(await adapter.actions.isEmpty)
 }
 
 @Test
-func `sends mail whose context exceeds every prompt limit to Review`() async throws {
+func `sends mail whose evidence alone exceeds the prompt limit to Review`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   let pipeline = Pipeline(
     store: store,
-    classifier: MockClassifier(operation: { _ in throw ClassificationError.contextExceeded })
+    classifier: MockClassifier(operation: { _ in throw ClassificationError.evidenceExceedsPrompt })
   )
   let record = await pipeline.process(try envelope(), adapter: adapter)
   #expect(record.decision.label == .review)

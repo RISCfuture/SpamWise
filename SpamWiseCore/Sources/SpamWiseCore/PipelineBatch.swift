@@ -173,8 +173,9 @@ extension Pipeline {
 
    The decision is moved to the identity discovery found, which differs only in where the
    message now is. Every action gate applies as for a new decision, including its action claim.
+   A preview applied or corrected meanwhile is returned as stored, without dispatch.
 
-   - Returns: The dispatched record, or nil when there is no such decision.
+   - Returns: The dispatched or stored record, or nil when there is no such decision.
    */
   private func dispatchPreview(
     of envelope: MailEnvelope,
@@ -183,20 +184,44 @@ extension Pipeline {
   ) async throws -> DecisionRecord? {
     let key = envelope.identity.key
     guard
-      var preview = try await StateRepository.reusablePreviews(for: [envelope], in: store)[key],
-      preview.outcome == .dryRun, inFlight.insert(key).inserted
+      let found = try await StateRepository.reusablePreviews(for: [envelope], in: store)[key],
+      found.outcome == .dryRun, inFlight.insert(key).inserted
     else { return nil }
     defer { inFlight.remove(key) }
-    if preview.identity != envelope.identity {
-      preview.identity = envelope.identity
-      try await save(preview)
+    guard let preview = try await adoptPreview(found.id, discoveredAs: envelope.identity) else {
+      return nil
     }
+    guard preview.outcome == .dryRun else { return preview }
     do {
       let record = try await dispatch(preview, adapter: adapter, forceDryRun: dryRun)
       await remember(record, discoveredAs: envelope.identity)
       return record
     } catch DecisionRecordError.notFound {
       return nil
+    }
+  }
+
+  /**
+   Moves a stored preview to the identity discovery found, in one transaction that reads it
+   afresh.
+
+   A record that is no longer an uncorrected preview, such as one applied meanwhile, is
+   returned as stored and left unchanged.
+
+   - Returns: The stored record, or nil when it is gone.
+   */
+  func adoptPreview(_ recordID: UUID, discoveredAs identity: MessageIdentity) async throws
+    -> DecisionRecord?
+  {
+    try await StateRepository.update(store, loading: StateSlices(records: .only([recordID]))) {
+      state -> DecisionRecord? in
+      guard let index = state.records.firstIndex(where: { $0.id == recordID }) else {
+        return nil
+      }
+      if state.records[index].outcome == .dryRun, state.records[index].correctedLabel == nil {
+        state.records[index].identity = identity
+      }
+      return state.records[index]
     }
   }
 

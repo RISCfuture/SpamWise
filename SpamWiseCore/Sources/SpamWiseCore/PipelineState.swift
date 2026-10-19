@@ -1,7 +1,7 @@
 import Foundation
 
 extension Pipeline {
-  private static let maximumPostActionSaveAttempts = 3
+  static let maximumPostActionSaveAttempts = 3
   /// Reads settings, `identity`'s action claim and the record that holds it.
   func claimState(for identity: MessageIdentity) async throws -> AppState {
     try await StateRepository.transaction(store) { transaction in

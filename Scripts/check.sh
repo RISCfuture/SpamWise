@@ -48,6 +48,9 @@ done
 xcode -scheme MailExtension build
 xcode -scheme "SpamWise Common" test
 
-if grep -En 'warning:|error:' "$build_root/package.log" "$build_root/app.log"; then
+# Compiler, linker and build-system diagnostics. Tests that open a corrupt store on purpose make
+# CoreData log "error:" lines at runtime, which are not diagnostics.
+diagnostic='^(.+:[0-9]+(:[0-9]+)?: |ld: )?(warning|error): '
+if grep -En "$diagnostic" "$build_root/package.log" "$build_root/app.log"; then
   exit 1
 fi

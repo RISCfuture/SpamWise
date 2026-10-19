@@ -170,7 +170,7 @@ public struct IMAPDaemonConfiguration: Codable, Sendable {
   /**
    Reads the referenced API key for `backend`, for an explicit `providerCredentials` map.
 
-   - Throws: ``ClassificationError/missingCredential`` when the map has no reference for
+   - Throws: `ClassificationError.missingCredential` when the map has no reference for
      `backend` or its secret is unset or unreadable without interaction.
    */
   public func providerKey(for backend: ModelBackend) throws -> String {

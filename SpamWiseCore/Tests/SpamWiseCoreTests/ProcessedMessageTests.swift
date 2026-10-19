@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import SpamWiseCore
+@testable import SpamWiseCore
 
 @Suite
 struct `Processed-message index` {
@@ -97,9 +97,10 @@ struct `Processed-message index` {
   @Test(arguments: [
     (dryRun: true, policyChanged: false, settled: true),
     (false, false, false),
-    (true, true, false)
+    (true, true, true),
+    (false, true, false)
   ])
-  func `settles a dry-run result only while dry run stays on under the same policy`(
+  func `settles a dry-run result only while dry run stays on, whatever the policy`(
     dryRun: Bool,
     policyChanged: Bool,
     settled: Bool
@@ -129,6 +130,14 @@ struct `Processed-message index` {
   }
 
   @Test
+  func `keeps previewed mail settled when the policy changes during a dry run`() async throws {
+    try await sweep([previewed], dryRun: true)
+    try await StateRepository.editSettings(store) { $0.strength = .aggressive }
+    #expect(try await sweep([previewed], dryRun: true) == 0)
+    #expect(calls.value == 1)
+  }
+
+  @Test
   func `classifies mail previewed under an earlier policy again when it goes live`()
     async throws
   {
@@ -137,6 +146,21 @@ struct `Processed-message index` {
     #expect(try await sweep([previewed], dryRun: false) == 1)
     #expect(calls.value == 2)
     #expect(await adapter.actions == [.moveToJunk])
+  }
+
+  @Test
+  func `keeps a preview applied while discovery moves it to where the message now is`()
+    async throws
+  {
+    try await sweep([previewed], dryRun: true)
+    try await enableActions(store)
+    let stale = try #require(try await StateRepository.load(store).records.first)
+    _ = try await pipeline.applyPreview(recordID: stale.id, adapter: adapter)
+    var moved = previewed.identity
+    moved.localID = 7
+    let adopted = try await pipeline.adoptPreview(stale.id, discoveredAs: moved)
+    #expect(adopted?.outcome == .applied)
+    #expect(try await StateRepository.load(store).records.map(\.outcome) == [.applied])
   }
 
   @Test

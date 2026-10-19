@@ -239,45 +239,22 @@ struct `integrates bounded IMAP messages` {
   func `treats mail returned to Inbox after a Junk move as an implicit Good correction`()
     async throws
   {
-    let raw =
-      "From: Sender <sender@example.com>\r\nMessage-ID: <wanted@example.com>\r\n"
-      + "Subject: Newsletter\r\n\r\nWanted after all"
-    let server = IMAPTestServer(
-      IMAPTranscript.authenticated().roles().select(validity: 33).body(raw, uid: 7)
-        .move(uid: 7, to: "Junk Mail", copyUID: (40, 90))
-        .examine("Junk Mail", validity: 40).body(raw, uid: 90)
-        .examine(validity: 33).body(raw, uid: 95)
-    )
-    let store = try await Self.validatedStore()
-    try await StateRepository.editSettings(store) { $0.dryRun = false }
-    let adapter = await server.adapter(validations: store)
-    let pipeline = Pipeline(
-      store: store,
-      classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "spam"))
-    )
-    let original = IMAPAdapter.envelope(
-      Data(raw.utf8),
-      account: "account",
-      uid: 7,
-      mailbox: "INBOX",
-      validity: 33
-    )
-    #expect(await pipeline.process(original, adapter: adapter).outcome == .applied)
-    let rescued = IMAPAdapter.envelope(
-      Data(raw.utf8),
-      account: "account",
-      uid: 95,
-      mailbox: "INBOX",
-      validity: 33
-    )
-    let corrections = await pipeline.correctMailReturnedFromJunk([rescued], adapter: adapter)
-    #expect(corrections.map(\.decision.label) == [.inbox])
-    let again = await pipeline.process(rescued, adapter: adapter)
-    #expect(again.decision.action == .moveToInbox && again.outcome == .applied)
-    #expect(await pipeline.correctMailReturnedFromJunk([rescued], adapter: adapter).isEmpty)
-    #expect(await server.commands.filter { $0.hasPrefix("UID MOVE") }.count == 1)
-    let rules = try await StateRepository.load(store).rules
+    let returned = try await ReturnedFromJunk()
+    #expect(await returned.correctRescued().map(\.decision.label) == [.inbox])
+    let rules = try await StateRepository.load(returned.store).rules
     #expect(rules.contains { $0.value == "sender@example.com" && $0.disposition == .allow })
+  }
+
+  @Test
+  func `never classifies, moves or corrects mail returned from Junk a second time`()
+    async throws
+  {
+    let returned = try await ReturnedFromJunk()
+    _ = await returned.correctRescued()
+    let again = await returned.pipeline.process(returned.rescued, adapter: returned.adapter)
+    #expect(again.decision.action == .moveToInbox && again.outcome == .applied)
+    #expect(await returned.correctRescued().isEmpty)
+    #expect(await returned.server.commands.filter { $0.hasPrefix("UID MOVE") }.count == 1)
   }
 
   @Test
@@ -396,5 +373,49 @@ struct `integrates bounded IMAP messages` {
       _ = try await denied.adapter().testDisposableMessage(uid: 7)
     }
     #expect(await !denied.commands.contains { $0.hasPrefix("UID MOVE") })
+  }
+
+  /// Moves a message to Junk over IMAP; the message is then found in Inbox again under UID 95.
+  private struct ReturnedFromJunk {
+    static let raw =
+      "From: Sender <sender@example.com>\r\nMessage-ID: <wanted@example.com>\r\n"
+      + "Subject: Newsletter\r\n\r\nWanted after all"
+
+    let server: IMAPTestServer, store: Store, adapter: IMAPAdapter, pipeline: Pipeline
+    let rescued = IMAPAdapter.envelope(
+      Data(Self.raw.utf8),
+      account: "account",
+      uid: 95,
+      mailbox: "INBOX",
+      validity: 33
+    )
+
+    init() async throws {
+      server = IMAPTestServer(
+        IMAPTranscript.authenticated().roles().select(validity: 33).body(Self.raw, uid: 7)
+          .move(uid: 7, to: "Junk Mail", copyUID: (40, 90))
+          .examine("Junk Mail", validity: 40).body(Self.raw, uid: 90)
+          .examine(validity: 33).body(Self.raw, uid: 95)
+      )
+      store = try await validatedStore()
+      try await StateRepository.editSettings(store) { $0.dryRun = false }
+      adapter = await server.adapter(validations: store)
+      pipeline = Pipeline(
+        store: store,
+        classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "spam"))
+      )
+      let original = IMAPAdapter.envelope(
+        Data(Self.raw.utf8),
+        account: "account",
+        uid: 7,
+        mailbox: "INBOX",
+        validity: 33
+      )
+      #expect(await pipeline.process(original, adapter: adapter).outcome == .applied)
+    }
+
+    func correctRescued() async -> [DecisionRecord] {
+      await pipeline.correctMailReturnedFromJunk([rescued], adapter: adapter)
+    }
   }
 }

@@ -129,6 +129,22 @@
         }
       }
     },
+    "The message’s evidence alone exceeds the prompt limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los indicios del mensaje superan por sí solos el límite de la solicitud."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les indices du message dépassent à eux seuls la limite de la requête."
+          }
+        }
+      }
+    },
     "The provider could not be reached.": {
       "localizations": {
         "es": {

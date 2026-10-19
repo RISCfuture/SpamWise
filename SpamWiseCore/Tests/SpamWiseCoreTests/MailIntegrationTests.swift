@@ -54,10 +54,13 @@ func `runs corrections and lookups interactively and automatic actions in the ba
   ])
   let adapter = AppleMailAdapter(runner: runner)
   _ = try await adapter.perform(.orangeFlag, for: MailReply.identity())
+  _ = try await adapter.markReadInJunk(MailReply.identity())
   #expect(Set(await runner.lanes) == [.background])
+  let automatic = await runner.lanes.count
   _ = try await adapter.lookup(MailReply.identity())
   _ = try await adapter.performCorrection(.orangeFlag, for: MailReply.identity())
-  #expect(await runner.lanes.dropFirst(2).allSatisfy { $0 == .interactive })
+  _ = try await adapter.markCorrectionReadInJunk(MailReply.identity())
+  #expect(await runner.lanes.dropFirst(automatic).allSatisfy { $0 == .interactive })
 }
 
 @Test
@@ -225,36 +228,60 @@ func `rejects a disposable probe whose move reverts before the settling window e
   #expect(await reverting.moves.count == 1)
 }
 
+/// A pipeline that has just moved a message to Junk, whose recheck finds it gone when `reverted`.
+private struct SettlingJunkMove {
+  static let window = Duration.seconds(1)
+
+  let store: Store, pipeline: Pipeline, record: DecisionRecord, elapsed: Duration
+
+  init(reverted: Bool) async throws {
+    store = try testStore()
+    try await StateRepository.update(store) { state in
+      state.settings.dryRun = false
+      state.settings.validatedAccounts = ["account"]
+    }
+    let junk = MailReply.found(MailReply.message(mailbox: "Junk", localID: 2))
+    let runner = StubAppleEvents(
+      [.findMessages: [MailReply.found(MailReply.message())], .applyAction: [MailReply.applied]],
+      observations: [.junk: [junk, junk] + (reverted ? [MailReply.found()] : [])]
+    )
+    let adapter = AppleMailAdapter(
+      runner: runner,
+      moveSettlingTime: Self.window,
+      observationInterval: .milliseconds(1)
+    )
+    pipeline = Pipeline(store: store, classifier: junkClassifier)
+    let message = MailEnvelope(
+      identity: MailReply.identity(),
+      raw: Data(MailReply.probeSource.utf8)
+    )
+    let clock = ContinuousClock(), start = clock.now
+    record = await pipeline.process(message, adapter: adapter)
+    elapsed = clock.now - start
+  }
+
+  func settledOutcome() async throws -> ActionOutcome? {
+    await pipeline.settleMoves()
+    let saved = try await StateRepository.load(store, StateSlices(records: .only([record.id])))
+    return saved.records.first?.outcome
+  }
+}
+
 @Test(arguments: [false, true])
 func `rechecks an automatic move once the settling window ends`(reverted: Bool) async throws {
-  let store = try testStore()
-  try await StateRepository.update(store) { state in
-    state.settings.dryRun = false
-    state.settings.validatedAccounts = ["account"]
-  }
-  let junk = MailReply.found(MailReply.message(mailbox: "Junk", localID: 2))
-  let runner = StubAppleEvents(
-    [.findMessages: [MailReply.found(MailReply.message())], .applyAction: [MailReply.applied]],
-    observations: [.junk: [junk, junk] + (reverted ? [MailReply.found()] : [])]
-  )
-  let window = Duration.seconds(1)
-  let adapter = AppleMailAdapter(
-    runner: runner,
-    moveSettlingTime: window,
-    observationInterval: .milliseconds(1)
-  )
-  let pipeline = Pipeline(store: store, classifier: junkClassifier)
-  let message = MailEnvelope(
-    identity: MailReply.identity(),
-    raw: Data(MailReply.probeSource.utf8)
-  )
-  let clock = ContinuousClock(), start = clock.now
-  let record = await pipeline.process(message, adapter: adapter)
-  #expect(clock.now - start < window)
-  #expect(record.outcome == .applied)
-  await pipeline.settleMoves()
-  let saved = try await StateRepository.load(store, StateSlices(records: .only([record.id])))
-  #expect(saved.records.first?.outcome == (reverted ? .requested : .applied))
+  let move = try await SettlingJunkMove(reverted: reverted)
+  #expect(move.elapsed < SettlingJunkMove.window)
+  #expect(move.record.outcome == .applied)
+  #expect(try await move.settledOutcome() == (reverted ? .requested : .applied))
+}
+
+@Test
+func `keeps an automatic move applied when a correction moves the message before the recheck`()
+  async throws
+{
+  let move = try await SettlingJunkMove(reverted: true)
+  _ = try await move.pipeline.correct(recordID: move.record.id, label: .inbox)
+  #expect(try await move.settledOutcome() == .applied)
 }
 
 @Test

@@ -2,9 +2,9 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test
-func `extracts optional text attachments without interpreting active documents`() throws {
-  let source = """
+@Suite
+struct `Text attachment extraction` {
+  private static let source = """
     From: person@example.org
     Content-Type: text/html; charset=utf-8
     Content-Disposition: attachment; filename=invoice.html
@@ -12,55 +12,90 @@ func `extracts optional text attachments without interpreting active documents`(
     <script>fetch('https://attacker.example')</script><img \
     src="https://attacker.example/pixel"><p>Invoice offer</p>
     """
-  let raw = Data(source.utf8)
-  #expect(try MIMEParser().parse(raw).text.isEmpty)
-  #expect(
-    try DocumentInspection(raw: raw, includeTextAttachments: false).coverage.map(\.status)
-      == [.omitted]
-  )
-  let inline = try MIMEParser().parse(
-    Data(source.replacingOccurrences(of: "attachment;", with: "inline;").utf8)
-  )
-  #expect(inline.text == "Invoice offer")
-  #expect(inline.urls == ["https://attacker.example/pixel"])
-  #expect(inline.attachments?.first?.filename == "invoice.html")
-  let extracted = try MIMEParser(includeTextAttachments: true).parse(raw)
-  #expect(extracted.text.contains("Invoice offer"))
-  #expect(!extracted.text.contains("fetch"))
-  let inspected = try DocumentInspection(raw: raw)
-  #expect(inspected.message == extracted)
-  #expect(inspected.coverage.map(\.status) == [.extracted])
-  let oversized = Data((source + String(repeating: "x", count: 66_000)).utf8)
-  let unavailable = try DocumentInspection(raw: oversized)
-  #expect(unavailable.message.text.isEmpty)
-  #expect(unavailable.coverage.map(\.status) == [.unavailable])
-  let mixed = Data(
-    ("From: person@example.org\nContent-Type: multipart/mixed; boundary=documents\n\n"
-      + "--documents\nContent-Type: text/plain\n\nBody evidence\n"
-      + "--documents\n" + source + String(repeating: "x", count: 66_000)
-      + "\n--documents--\n").utf8
-  )
-  let preserved = try DocumentInspection(raw: mixed)
-  #expect(preserved.message.text.contains("Body evidence"))
-  #expect(!preserved.message.text.contains("Invoice offer"))
-  #expect(preserved.coverage.map(\.status) == [.unavailable])
-  for mediaType in ["application/pdf", "application/vnd.ms-word.document.macroEnabled.12"] {
-    let unsupported = Data(source.replacingOccurrences(of: "text/html", with: mediaType).utf8)
+  private static let oversizedPadding = String(repeating: "x", count: 66_000)
+  private let raw = Data(Self.source.utf8)
+
+  @Test
+  func `leaves attachments out of the body text unless asked to include them`() throws {
+    #expect(try MIMEParser().parse(raw).text.isEmpty)
+    #expect(
+      try DocumentInspection(raw: raw, includeTextAttachments: false).coverage.map(\.status)
+        == [.omitted]
+    )
+  }
+
+  @Test
+  func `reads an inline HTML part as body text`() throws {
+    let inline = try MIMEParser().parse(
+      Data(Self.source.replacingOccurrences(of: "attachment;", with: "inline;").utf8)
+    )
+    #expect(inline.text == "Invoice offer")
+    #expect(inline.urls == ["https://attacker.example/pixel"])
+    #expect(inline.attachments?.first?.filename == "invoice.html")
+  }
+
+  @Test
+  func `extracts attachment text without running its scripts`() throws {
+    let extracted = try MIMEParser(includeTextAttachments: true).parse(raw)
+    #expect(extracted.text.contains("Invoice offer"))
+    #expect(!extracted.text.contains("fetch"))
+    let inspected = try DocumentInspection(raw: raw)
+    #expect(inspected.message == extracted)
+    #expect(inspected.coverage.map(\.status) == [.extracted])
+  }
+
+  @Test
+  func `reports an oversized attachment as unavailable`() throws {
+    let unavailable = try DocumentInspection(raw: Data((Self.source + Self.oversizedPadding).utf8))
+    #expect(unavailable.message.text.isEmpty)
+    #expect(unavailable.coverage.map(\.status) == [.unavailable])
+  }
+
+  @Test
+  func `keeps the body when an attachment is too large to extract`() throws {
+    let mixed = Data(
+      ("From: person@example.org\nContent-Type: multipart/mixed; boundary=documents\n\n"
+        + "--documents\nContent-Type: text/plain\n\nBody evidence\n"
+        + "--documents\n" + Self.source + Self.oversizedPadding
+        + "\n--documents--\n").utf8
+    )
+    let preserved = try DocumentInspection(raw: mixed)
+    #expect(preserved.message.text.contains("Body evidence"))
+    #expect(!preserved.message.text.contains("Invoice offer"))
+    #expect(preserved.coverage.map(\.status) == [.unavailable])
+  }
+
+  @Test(arguments: ["application/pdf", "application/vnd.ms-word.document.macroEnabled.12"])
+  func `reports documents it can't read as unsupported`(_ mediaType: String) throws {
+    let unsupported = Data(
+      Self.source.replacingOccurrences(of: "text/html", with: mediaType).utf8
+    )
     let message = try MIMEParser(includeTextAttachments: true).parse(unsupported)
     #expect(message.text.isEmpty)
     #expect(message.attachments?.first?.mediaType == mediaType.lowercased())
     #expect(try DocumentInspection(raw: unsupported).coverage.map(\.status) == [.unsupported])
   }
-  let malformed = Data(
-    source.replacingOccurrences(of: "\n\n", with: "\nContent-Transfer-Encoding: base64\n\n").utf8
-  )
-  let degraded = try DocumentInspection(raw: malformed)
-  #expect(degraded.coverage.map(\.status) == [.extracted])
-  #expect(degraded.message.decodingIssues?.contains(.invalidBase64) == true)
-  let inlinePDF = Data("From: a@example.org\nContent-Type: application/pdf\n\n%PDF-broken".utf8)
-  let pdf = try DocumentInspection(raw: inlinePDF)
-  #expect(pdf.message.text.isEmpty)
-  #expect(pdf.coverage.map(\.status) == [.unsupported])
+
+  @Test
+  func `extracts an attachment with invalid base64 and records the issue`() throws {
+    let malformed = Data(
+      Self.source.replacingOccurrences(
+        of: "\n\n",
+        with: "\nContent-Transfer-Encoding: base64\n\n"
+      ).utf8
+    )
+    let degraded = try DocumentInspection(raw: malformed)
+    #expect(degraded.coverage.map(\.status) == [.extracted])
+    #expect(degraded.message.decodingIssues?.contains(.invalidBase64) == true)
+  }
+
+  @Test
+  func `reports an inline PDF body as unsupported`() throws {
+    let inlinePDF = Data("From: a@example.org\nContent-Type: application/pdf\n\n%PDF-broken".utf8)
+    let pdf = try DocumentInspection(raw: inlinePDF)
+    #expect(pdf.message.text.isEmpty)
+    #expect(pdf.coverage.map(\.status) == [.unsupported])
+  }
 }
 
 @Test

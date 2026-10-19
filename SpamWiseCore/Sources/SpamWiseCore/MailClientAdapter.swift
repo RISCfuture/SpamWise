@@ -64,6 +64,8 @@ public protocol MailClientAdapter: Sendable {
     -> ActionReceipt
   /// Marks an exact message read only while it remains in this account's Junk mailbox.
   func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt
+  /// Marks a message read in Junk as a step of the user's correction, which someone is waiting for.
+  func markCorrectionReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt
 }
 extension MailClientAdapter {
   /// Integrations support every action unless they say otherwise.
@@ -77,6 +79,12 @@ extension MailClientAdapter {
   /// Unsupported integrations leave read status unchanged.
   public func markReadInJunk(_: MessageIdentity) throws -> ActionReceipt {
     throw IntegrationError.unavailable
+  }
+  /// Integrations without request priorities mark corrected mail read as they mark other mail.
+  public func markCorrectionReadInJunk(_ identity: MessageIdentity) async throws
+    -> ActionReceipt
+  {
+    try await markReadInJunk(identity)
   }
 }
 /// Failures while resolving messages or executing mail-client operations.

@@ -31,14 +31,21 @@ public enum StateRepository {
       return result
     }
   }
-  /// Runs `body` under the store lock with a transaction that has read only settings.
+  /**
+   Runs `body` under the store lock with a transaction that has read only settings.
+
+   Data that reading set aside for recovery is saved even when `body` commits nothing.
+   */
   static func transaction<R: Sendable>(
     _ store: Store,
     _ body: @Sendable (StateTransaction) throws -> R
   ) async throws -> R {
     try await StatePersistence.prepared(store)
     return try await store.transaction { context in
-      try body(StateTransaction(context: context))
+      let transaction = try StateTransaction(context: context)
+      let result = try body(transaction)
+      try transaction.keepSetAsideData()
+      return result
     }
   }
 }

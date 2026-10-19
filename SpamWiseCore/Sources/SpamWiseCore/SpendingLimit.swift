@@ -169,7 +169,7 @@ public enum SpendingLimit {
 /// Counts each paid request in the monthly spending ledger and enforces the user’s optional limit.
 public struct SpendingLimitedClassifier: Classifier {
   private static let unbilledFailures: Set<ClassificationError> = [
-    .missingCredential, .consentRequired, .rateLimited, .contextExceeded
+    .missingCredential, .consentRequired, .rateLimited, .contextExceeded, .evidenceExceedsPrompt
   ]
   private static let settlementRetryDelay = Duration.milliseconds(50)
   private let classifier: any Classifier

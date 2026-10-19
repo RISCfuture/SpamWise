@@ -84,6 +84,10 @@ struct CommandReportingMail: MailClientAdapter {
   func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
     try await mail.markReadInJunk(identity)
   }
+
+  func markCorrectionReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
+    try await mail.markCorrectionReadInJunk(identity)
+  }
 }
 
 /// Why a selected message was left uncorrected.

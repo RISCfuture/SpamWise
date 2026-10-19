@@ -70,8 +70,8 @@ public enum PromptBuilder {
    is cut, and the message is marked `shortenedToFit` so the model treats its size as weak junk
    evidence.
 
-   - Throws: ``ClassificationError/contextExceeded`` only when the evidence, subject and policy
-     alone exceed the limit.
+   - Throws: ``ClassificationError/evidenceExceedsPrompt`` only when the evidence, subject and
+     policy alone exceed the limit.
    */
   public static func prompt(_ input: ClassificationInput) throws -> String {
     let body = QuotedReply(input.message)
@@ -79,7 +79,7 @@ public enum PromptBuilder {
     while true {
       let prompt = try render(input, body: body, budget: budget)
       if prompt.utf8.count <= maximumPromptBytes { return prompt }
-      guard budget.shrink() else { throw ClassificationError.contextExceeded }
+      guard budget.shrink() else { throw ClassificationError.evidenceExceedsPrompt }
     }
   }
 

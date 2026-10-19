@@ -49,6 +49,16 @@ struct `First read of shared storage` {
     #expect(!shared.isStorageReadable)
   }
 
+  @Test
+  func `asks for recovery instead of starting setup when settings can't be decoded`()
+    async throws
+  {
+    try await store.update("state.policy", default: "not settings") { _ in }
+    let shared = await firstRead()
+    #expect(MainWindowContent(shared) == .recovery)
+    #expect(!shared.isStorageReadable)
+  }
+
   private func firstRead() async -> SharedStateModel {
     let shared = SharedStateModel(store: store)
     await shared.refresh()

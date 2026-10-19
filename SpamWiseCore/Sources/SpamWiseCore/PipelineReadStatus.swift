@@ -43,7 +43,10 @@ extension Pipeline {
       else {
         return try await finishReadStatus(claimed, outcome: .superseded, failure: nil)
       }
-      let receipt = try await adapter.markReadInJunk(claimed.identity)
+      let receipt =
+        claimed.path == .correction
+        ? try await adapter.markCorrectionReadInJunk(claimed.identity)
+        : try await adapter.markReadInJunk(claimed.identity)
       outcome = receipt.confirmed ? .applied : .requested
       failure = nil
     } catch {

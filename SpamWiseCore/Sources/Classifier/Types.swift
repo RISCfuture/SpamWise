@@ -224,8 +224,10 @@ public enum ClassificationError: String, ClassificationFailure, Codable, Sendabl
   case timeout
   /// The provider could not be reached.
   case network
-  /// The bounded prompt or model context limit was exceeded.
+  /// The provider's context window or request size limit was exceeded.
   case contextExceeded = "contextExceeded"
+  /// The evidence, subject and policy alone exceed the prompt limit, however the rest is shortened.
+  case evidenceExceedsPrompt = "evidenceExceedsPrompt"
   /// The provider declined to generate a classification.
   case refused
   /// The provider response did not satisfy the verdict contract.
@@ -257,6 +259,11 @@ public enum ClassificationError: String, ClassificationFailure, Codable, Sendabl
       case .network: String(localized: "The provider could not be reached.", bundle: .module)
       case .contextExceeded:
         String(localized: "The message context exceeds the classification limit.", bundle: .module)
+      case .evidenceExceedsPrompt:
+        String(
+          localized: "The message’s evidence alone exceeds the prompt limit.",
+          bundle: .module
+        )
       case .refused:
         String(localized: "The provider declined to classify the message.", bundle: .module)
       case .invalidOutput:

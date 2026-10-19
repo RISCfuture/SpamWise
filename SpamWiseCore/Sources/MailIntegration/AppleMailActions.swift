@@ -117,6 +117,12 @@ extension AppleMailAdapter {
     try Task.checkCancellation()
     return .init(confirmed: try await applyChange(.markRead, to: target.location))
   }
+  /// Marks a corrected message read in Junk without waiting behind sweeps and automatic actions.
+  public func markCorrectionReadInJunk(_ identity: MessageIdentity) async throws
+    -> ActionReceipt
+  {
+    try await interactively { try await markReadInJunk(identity) }
+  }
   /// Explicit UI probe: only a selected Inbox message named [SpamWise Probe] is eligible.
   public func testDisposableMessage() async throws -> String {
     try await interactively { try await probe() }

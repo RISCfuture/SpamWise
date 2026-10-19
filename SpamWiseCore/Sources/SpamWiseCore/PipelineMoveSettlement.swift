@@ -1,18 +1,50 @@
 import Foundation
 
 extension Pipeline {
-  private static func markUnsettled(_ recordID: UUID, in store: Store) async {
-    try? await StateRepository.update(store, loading: StateSlices(records: .only([recordID]))) {
-      state in
-      guard let index = state.records.firstIndex(where: { $0.id == recordID }),
-        state.records[index].outcome == .applied
+  /// Marks an applied move unconfirmed unless a later decision or correction for the message explains where it went.
+  private static func markUnsettled(_ recordID: UUID, in store: Store) async throws {
+    try await StateRepository.transaction(store) { transaction in
+      try transaction.load(StateSlices(records: .only([recordID])))
+      guard let moved = transaction.state.records.first(where: { $0.id == recordID }),
+        moved.outcome == .applied
       else { return }
-      state.records[index].outcome = .requested
-      state.records[index].actionError = String(
+      let key = moved.identity.key
+      try transaction.load(
+        StateSlices(
+          records: .only(try transaction.recordIDs(identityKey: key)),
+          claims: .only([key])
+        )
+      )
+      guard !isSuperseded(moved, in: transaction.state) else { return }
+      var unsettled = moved
+      unsettled.outcome = .requested
+      unsettled.actionError = String(
         localized:
           "Mail showed the move, but the message later left its destination. Its result is unknown; not retried.",
         bundle: .module
       )
+      transaction.state.record(unsettled)
+      try transaction.commit()
+    }
+  }
+
+  /// Whether a correction, a later claim or a newer record for the same message may have moved it since.
+  private static func isSuperseded(_ moved: DecisionRecord, in state: AppState) -> Bool {
+    moved.correctedLabel != nil || state.claimedActions[moved.identity.key] != moved.id
+      || state.records.contains { $0.id != moved.id && $0.date > moved.date }
+  }
+
+  /// Marks the move unconfirmed, retrying while storage is busy; a move that still can't be marked keeps its applied outcome.
+  private static func recordUnsettled(_ recordID: UUID, in store: Store) async {
+    for _ in 1...maximumPostActionSaveAttempts {
+      do {
+        try await markUnsettled(recordID, in: store)
+        return
+      } catch let error as StoreError where error.retryable {
+        continue
+      } catch {
+        return
+      }
     }
   }
 
@@ -20,14 +52,16 @@ extension Pipeline {
    Rechecks a move once its provider's settling window ends, without holding up dispatch.
 
    When the moved message is no longer the destination's one copy, an applied outcome becomes
-   requested: the command was sent but its result is unknown. Nothing is sent again.
+   requested: the command was sent but its result is unknown. Nothing is sent again. A record
+   that a correction or later decision for the same message has superseded keeps its outcome,
+   because that later action may have moved the message.
    */
   func scheduleCheck(of settlement: MoveSettlement, recordID: UUID) {
     let store = self.store, checkID = UUID()
     moveSettlements[checkID] = Task {
       try? await Task.sleep(until: settlement.due)
       if !Task.isCancelled, await !settlement.verify() {
-        await Self.markUnsettled(recordID, in: store)
+        await Self.recordUnsettled(recordID, in: store)
       }
       self.finishSettlement(checkID)
     }

@@ -8,12 +8,15 @@
  and skipped elements drop the rest of the input; once markup has no closing `>`, later `<`
  characters are kept as text.
 
- Text inside concealed elements is kept apart from the visible text: elements with a `hidden`
- attribute, zero `width` or `height` attributes, or inline styles that hide them, make them
- zero-size or make them transparent. Open elements are tracked by name, so an end tag closes
- the latest open element it names and any opened inside it; void elements never open. Browsers
- build a fuller tree, so concealment is a heuristic: it orders text and links, and never drops
- them.
+ Text inside concealed elements is kept apart from the visible text. Elements with a `hidden`
+ attribute, zero `width` or `height` attributes, or inline styles that remove them, make them
+ zero-size or fully transparent conceal everything inside them. A zero `font-size`, a
+ `transparent` colour and `visibility: hidden` are inherited as CSS inherits them, so a
+ descendant that sets an absolute font size, another colour or `visibility: visible` shows its
+ text again, as in layouts that zero the font size of a container to remove the whitespace
+ between inline blocks. Open elements are tracked by name, so an end tag closes the latest open
+ element it names and any opened inside it; void elements never open. Browsers build a fuller
+ tree, so concealment is a heuristic: it orders text and links, and never drops them.
 
  Alongside the text, the conversion keeps link sources ranked by ``LinkVisibility``: visible
  text and anchor `href`s, then other URL-bearing attributes, then concealed or `aria-hidden`
@@ -49,12 +52,19 @@ struct HTMLText {
     "aria-hidden", "style", "hidden", "width", "height"
   ]
   private static let maximumOpenElements = 256
-  private static let zeroSizeProperties: Set<String> = [
-    "font-size", "width", "height", "max-width", "max-height", "opacity"
+  /// Properties whose zero value removes an element's content however its descendants are styled.
+  private static let removingZeroProperties: Set<String> = [
+    "width", "height", "max-width", "max-height", "opacity"
   ]
-  private static let hidingDeclarations: Set<String> = [
-    "display:none", "visibility:hidden", "visibility:collapse", "color:transparent"
+  private static let invisibleValues: Set<String> = ["hidden", "collapse"]
+  /// Values that keep an inherited property as the parent computed it.
+  private static let inheritingValues: Set<String> = [
+    "inherit", "unset", "revert", "revert-layer", "currentcolor"
   ]
+  /// Font sizes computed from the parent's, which stay zero inside a zero-size parent.
+  private static let relativeFontSizes: Set<String> = ["smaller", "larger"]
+  private static let relativeFontUnits = ["%", "em", "ex", "ch"]
+  private static let rootRelativeFontUnit = "rem"
   private static let numberScalars = Set("0123456789.+-".unicodeScalars)
   private static let importantMarker = "!important"
   private static let lineBreakTags: Set<String> = ["br", "/p", "/div", "/li"]
@@ -82,10 +92,9 @@ struct HTMLText {
   private var attributeLinkSource: [Unicode.Scalar] = []
   private var hiddenLinkSource: [Unicode.Scalar] = []
   private var openElements: [OpenElement] = []
-  private var concealingElements = 0
-  private var ariaHiddenElements = 0
-  private var isConcealed: Bool { concealingElements > 0 }
-  private var linksAreHidden: Bool { isConcealed || ariaHiddenElements > 0 }
+  private var concealment: Concealment { openElements.last?.concealment ?? Concealment() }
+  private var isConcealed: Bool { concealment.conceals }
+  private var linksAreHidden: Bool { concealment.hidesLinks }
   private var tagsCanClose = true
   private var unterminatedQuotes: Set<Unicode.Scalar> = []
 
@@ -190,17 +199,61 @@ struct HTMLText {
     String(String.UnicodeScalarView(scalars))
   }
 
-  /// Whether an inline style hides its element, makes it zero-size or makes it transparent.
-  private static func hidesContent(style: String) -> Bool {
-    compacted(style).split(separator: ";").contains { declaration in
-      let text =
-        declaration.hasSuffix(importantMarker)
-        ? declaration.dropLast(importantMarker.count) : declaration[...]
-      guard let colon = text.firstIndex(of: ":") else { return false }
-      let property = String(text[..<colon]), value = text[text.index(after: colon)...]
-      return hidingDeclarations.contains(String(text))
-        || (zeroSizeProperties.contains(property) && isZero(value))
+  /// How an element with an inline style hides its content, given how its parent does.
+  private static func concealment(style: String, inheriting inherited: Concealment)
+    -> Concealment
+  {
+    var result = inherited
+    for (property, value) in declarations(style) {
+      switch property {
+        case "display": result.isRemoved = result.isRemoved || value == "none"
+        case "visibility": result.isInvisible = isInvisible(value) ?? result.isInvisible
+        case "font-size": result.hasZeroFontSize = hasZeroSize(value) ?? result.hasZeroFontSize
+        case "color": result.isTransparent = isTransparent(value) ?? result.isTransparent
+        default:
+          result.isRemoved =
+            result.isRemoved || (removingZeroProperties.contains(property) && isZero(value))
+      }
     }
+    return result
+  }
+
+  /**
+   The compacted value of each property an inline style declares.
+
+   As in CSS, the last declaration of a property wins unless an earlier one is `!important`.
+   */
+  private static func declarations(_ style: String) -> [String: String] {
+    var declarations: [String: (value: String, isImportant: Bool)] = [:]
+    for declaration in compacted(style).split(separator: ";") {
+      let isImportant = declaration.hasSuffix(importantMarker)
+      let text = isImportant ? declaration.dropLast(importantMarker.count) : declaration[...]
+      guard let colon = text.firstIndex(of: ":") else { continue }
+      let property = String(text[..<colon])
+      guard isImportant || declarations[property]?.isImportant != true else { continue }
+      declarations[property] = (String(text[text.index(after: colon)...]), isImportant)
+    }
+    return declarations.mapValues(\.value)
+  }
+
+  /// Whether a `visibility` value hides text, or `nil` when it keeps the parent's visibility.
+  private static func isInvisible(_ value: String) -> Bool? {
+    inheritingValues.contains(value) ? nil : invisibleValues.contains(value)
+  }
+
+  /// Whether a `font-size` value is zero, or `nil` when it is computed from the parent's size.
+  private static func hasZeroSize(_ value: String) -> Bool? {
+    if isZero(value) { return true }
+    let isRelative =
+      inheritingValues.contains(value) || relativeFontSizes.contains(value)
+      || (relativeFontUnits.contains { value.hasSuffix($0) }
+        && !value.hasSuffix(rootRelativeFontUnit))
+    return isRelative ? nil : false
+  }
+
+  /// Whether a `color` value is transparent, or `nil` when it keeps the parent's colour.
+  private static func isTransparent(_ value: String) -> Bool? {
+    inheritingValues.contains(value) ? nil : value == "transparent"
   }
 
   /// Lowercased text without whitespace, as CSS and enumerated attribute values compare.
@@ -266,7 +319,7 @@ struct HTMLText {
 
   /// Records a start tag's links, then tracks it as open unless it is void or skipped.
   private mutating func open(_ tag: Tag) {
-    var element = OpenElement(name: tag.name, conceals: false, ariaHidden: false)
+    var element = OpenElement(name: tag.name, concealment: concealment)
     var links: [(name: String, value: Range<Int>)] = []
     for attribute in tag.attributes {
       let name = Self.string(input[attribute.name].map(lowercased))
@@ -275,15 +328,17 @@ struct HTMLText {
       let value = Self.string(Self.decodedValue(input, in: attribute.value))
       switch name {
         case "aria-hidden":
-          element.ariaHidden = element.ariaHidden || Self.compacted(value) == "true"
-        case "style": element.conceals = element.conceals || Self.hidesContent(style: value)
-        case "hidden": element.conceals = true
-        default: element.conceals = element.conceals || Self.isZero(value)
+          element.concealment.isAriaHidden =
+            element.concealment.isAriaHidden || Self.compacted(value) == "true"
+        case "style":
+          element.concealment = Self.concealment(style: value, inheriting: element.concealment)
+        case "hidden": element.concealment.isRemoved = true
+        default: element.concealment.isRemoved = element.concealment.isRemoved || Self.isZero(value)
       }
     }
     for link in links {
       let visibility: LinkVisibility =
-        if linksAreHidden || element.conceals || element.ariaHidden {
+        if element.concealment.hidesLinks {
           .hidden
         } else if Self.anchorElements.contains(tag.name) && link.name == "href" {
           .visible
@@ -298,30 +353,17 @@ struct HTMLText {
     push(element)
   }
 
-  /// Tracks an open element; at the nesting limit it replaces the innermost one, keeping each
-  /// way either of them hides content.
+  /// Tracks an open element; at the nesting limit it replaces the innermost one, whose
+  /// concealment it already inherits.
   private mutating func push(_ element: OpenElement) {
-    var element = element
-    if openElements.count >= Self.maximumOpenElements {
-      let innermost = openElements.removeLast()
-      count(innermost, by: -1)
-      element.conceals = element.conceals || innermost.conceals
-      element.ariaHidden = element.ariaHidden || innermost.ariaHidden
-    }
+    if openElements.count >= Self.maximumOpenElements { openElements.removeLast() }
     openElements.append(element)
-    count(element, by: 1)
   }
 
   /// Closes the latest open element named `name` and every element opened inside it.
   private mutating func close(_ name: String) {
     guard let position = openElements.lastIndex(where: { $0.name == name }) else { return }
-    for element in openElements[position...] { count(element, by: -1) }
     openElements.removeSubrange(position...)
-  }
-
-  private mutating func count(_ element: OpenElement, by change: Int) {
-    if element.conceals { concealingElements += change }
-    if element.ariaHidden { ariaHiddenElements += change }
   }
 
   /// Skips `<!`, `<?` or `</` markup that is not a comment or tag up to its first `>`.
@@ -550,13 +592,29 @@ struct HTMLText {
     }
   }
 
-  /// An element whose end tag has not been read, and how it hides its content.
+  /// An element whose end tag has not been read, and how it and its ancestors hide its content.
   private struct OpenElement {
     var name: String
-    /// Whether attributes or inline style conceal the element's content from view.
-    var conceals: Bool
-    /// Whether the element is hidden from assistive technology, though still shown.
-    var ariaHidden: Bool
+    var concealment: Concealment
+  }
+
+  /// How an element's own attributes and style, and those it inherits, hide its content.
+  private struct Concealment {
+    /// Whether the element or an ancestor is removed or zero-size, which no descendant undoes.
+    var isRemoved = false
+    /// Whether the computed font size is zero.
+    var hasZeroFontSize = false
+    /// Whether the computed text colour is transparent.
+    var isTransparent = false
+    /// Whether the computed `visibility` hides the text.
+    var isInvisible = false
+    /// Whether the element or an ancestor is hidden from assistive technology, though still shown.
+    var isAriaHidden = false
+
+    /// Whether the content is concealed from view.
+    var conceals: Bool { isRemoved || hasZeroFontSize || isTransparent || isInvisible }
+    /// Whether links in the content rank as hidden.
+    var hidesLinks: Bool { conceals || isAriaHidden }
   }
 
   /// Attribute positions of the HTML tokenizer that decide whether `=` begins a value.

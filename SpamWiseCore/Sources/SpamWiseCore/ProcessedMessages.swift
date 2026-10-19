@@ -87,9 +87,11 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
   /**
    Whether automatic discovery should leave this message alone.
 
-   A dry-run result stays settled only while discovery is still a dry run under the revision
-   that produced it. Once dry run is off or the policy changes, the message is due again, so
-   mail previewed during a dry run is acted on when filtering goes live. Other classified results
+   A dry-run result stays settled while discovery is still a dry run, whatever the revision, so
+   policy changes and corrections during a dry run make no new provider requests for mail
+   already previewed. Once dry run is off, the message is due again, so mail previewed during a
+   dry run is acted on when filtering goes live: a preview made under the current revision is
+   acted on as recorded, and an earlier one is classified again. Other classified results
    stay settled across revisions, including results whose action found no validated
    integration: validating an account later does not act on them. Unparseable messages stay
    settled because identical content fails the same way. Other failures become due again after
@@ -102,7 +104,7 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
    */
   public func isSettled(revision current: Int, dryRun: Bool, now: Date = .now) -> Bool {
     if neverFinished { return false }
-    if outcome == .dryRun { return dryRun && revision == current }
+    if outcome == .dryRun { return dryRun }
     if keepsOutcomeAcrossRevisions { return true }
     return failsIdentically || (revision == current && !isTransientRetryDue(now: now))
   }

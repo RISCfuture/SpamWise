@@ -110,6 +110,10 @@ extension StateTransaction {
     )
     return Set(rows.compactMap { UUID(uuidString: $0.key) })
   }
+  /// Saves documents that reading set aside for recovery, which only a commit would otherwise save.
+  func keepSetAsideData() throws {
+    if context.hasChanges { try context.save() }
+  }
   /// Writes every changed slice, stamps its change token, and saves.
   func commit() throws {
     try stage()

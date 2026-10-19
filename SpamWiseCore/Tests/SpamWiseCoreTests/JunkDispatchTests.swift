@@ -89,6 +89,15 @@ struct `Junk dispatch with actions enabled` {
     #expect(await adapter.readRequests == 1)
   }
 
+  @Test
+  func `marks corrected Junk read as a step of the correction`() async throws {
+    try await enableMarkingRead()
+    let first = await pipeline.process(try envelope(), adapter: adapter)
+    _ = try await pipeline.correct(recordID: first.id, label: .junk, adapter: adapter)
+    #expect(await adapter.readRequests == 2)
+    #expect(await adapter.correctionReadRequests == 1)
+  }
+
   @Test(arguments: [false, true])
   func `records Junk read status separately from the correction outcome`(readSucceeds: Bool)
     async throws

@@ -64,8 +64,28 @@ func `interprets only documented HTTPS DBL listings`() async throws {
   }
 }
 
+/// A consented HTTPS Spamhaus lookup that reads its key and sends its queries through the given boundaries.
+private func keyedLookup(
+  key: @escaping @Sendable () throws -> String,
+  httpsQuery: SpamhausDomainLookup.HTTPSQuery? = nil
+) -> SpamhausDomainLookup {
+  SpamhausDomainLookup(
+    configuration: .init(termsAcknowledged: true, transport: .https),
+    key: key,
+    httpsQuery: httpsQuery
+  )
+}
+
+/// A consented lookup whose credential access is recorded as an issue.
+private func lookupThatMustNotReadItsKey() -> SpamhausDomainLookup {
+  keyedLookup {
+    Issue.record("Cancellation and expired budgets must prevent credential access")
+    throw KeychainError.missing
+  }
+}
+
 @Test
-func `bounds keyed queries and leaves unavailable credentials unknown`() async {
+func `reads no Spamhaus key without consent`() async {
   let disabled = SpamhausDomainLookup(
     configuration: .init(transport: .https),
     key: {
@@ -73,8 +93,11 @@ func `bounds keyed queries and leaves unavailable credentials unknown`() async {
     }
   )
   #expect(await disabled.lookup(domains: ["example.org"]).isEmpty)
-  let missing = SpamhausDomainLookup(
-    configuration: .init(termsAcknowledged: true, transport: .https),
+}
+
+@Test
+func `sends no keyed query and leaves the domain unknown without a saved key`() async {
+  let missing = keyedLookup(
     key: { throw KeychainError.missing },
     httpsQuery: { _, _, _ in
       Issue.record("Missing credentials must not send a request")
@@ -82,38 +105,40 @@ func `bounds keyed queries and leaves unavailable credentials unknown`() async {
     }
   )
   #expect(await missing.lookup(domains: ["example.org"]).first?.status == .unknown)
-  let bounded = SpamhausDomainLookup(
-    configuration: .init(termsAcknowledged: true, transport: .https),
+}
+
+@Test
+func `bounds keyed queries by count and deadline`() async {
+  let bounded = keyedLookup(
     key: { "synthetic-key" },
     httpsQuery: { domain, key, timeout in
       #expect(!domain.contains("/"))
       #expect(key == "synthetic-key")
       #expect(timeout <= .milliseconds(20))
-      try await Task.sleep(for: .seconds(1))
+      try await Task.sleep(for: .seconds(10))
       return .init(status: .answered, addresses: ["127.0.1.2"])
     }
   )
   let domains = (1...10).map { "example\($0).org" } + ["bad/path.org", "127.0.0.1"]
   let start = ContinuousClock.now
   let findings = await bounded.lookup(domains: domains, timeout: 0.02)
-  #expect(ContinuousClock.now - start < .seconds(0.5))
+  #expect(ContinuousClock.now - start < SpamhausDomainLookup.maximumQueryTime - .seconds(1))
   #expect(findings.map(\.subject) == (1...5).map { "example\($0).org" } + ["5 more domains"])
   #expect(findings.allSatisfy { $0.status == .unknown })
-  let expired = SpamhausDomainLookup(
-    configuration: .init(termsAcknowledged: true, transport: .https),
-    key: {
-      Issue.record("Cancellation and expired budgets must prevent credential access")
-      throw KeychainError.missing
-    }
-  )
-  for timeout in [0, -1, .infinity, .nan] {
-    #expect(
-      await expired.lookup(domains: ["example.org"], timeout: timeout).first?.status == .unknown
-    )
-  }
+}
+
+@Test(arguments: [0, -1, .infinity, .nan])
+func `reads no Spamhaus key once the time budget has run out`(_ timeout: Double) async {
+  let lookup = lookupThatMustNotReadItsKey()
+  #expect(await lookup.lookup(domains: ["example.org"], timeout: timeout).first?.status == .unknown)
+}
+
+@Test
+func `reads no Spamhaus key once the lookup is cancelled`() async {
+  let lookup = lookupThatMustNotReadItsKey()
   let cancelled = Task {
     try? await Task.sleep(for: .seconds(10))
-    return await expired.lookup(domains: ["example.org"])
+    return await lookup.lookup(domains: ["example.org"])
   }
   cancelled.cancel()
   #expect(await cancelled.value.first?.status == .unknown)

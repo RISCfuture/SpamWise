@@ -229,6 +229,24 @@ struct `Stored state condition` {
   }
 
   @Test
+  func `sets aside settings it can't decode and asks for recovery`() async throws {
+    try await store.update("state.policy", default: "not settings") { _ in }
+    guard case .needsRecovery(let entries) = try await StateRepository.condition(store) else {
+      Issue.record("Undecodable settings were reported as readable")
+      return
+    }
+    #expect(entries.map(\.source) == ["policy"])
+    #expect(try await StateRecovery.preservedData(store)["policy"] != nil)
+  }
+
+  @Test
+  func `keeps settings that a read set aside`() async throws {
+    try await store.update("state.policy", default: "not settings") { _ in }
+    _ = try await StateRepository.load(store, StateSlices())
+    #expect(try await StateRecovery.entries(store).map(\.source) == ["policy"])
+  }
+
+  @Test
   func `refuses state a newer version saved without changing it`() async throws {
     try await store.update("state.schema", default: 0) { $0 = 3 }
     await #expect(throws: StoredStateError.newerVersion) {

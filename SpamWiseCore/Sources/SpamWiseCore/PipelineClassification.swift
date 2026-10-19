@@ -129,7 +129,7 @@ extension Pipeline {
       verdict = try await withDeadline(seconds: remaining) {
         try await classifier.classify(input)
       }.validated()
-    } catch ClassificationError.contextExceeded {
+    } catch ClassificationError.evidenceExceedsPrompt {
       return .oversizedContext
     }
     if advanced.bayes {

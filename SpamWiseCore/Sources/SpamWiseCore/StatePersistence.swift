@@ -116,16 +116,19 @@ extension StateRepository {
    Opens shared storage and reports what it holds, so a first run can be told apart from data
    that can't be read.
 
+   Settings and usage totals are decoded first; one that can't be decoded is set aside, and the
+   store then needs recovery.
+
    - Throws: ``StoredStateError`` when the database can't be opened or a newer version wrote
      it, ``StoreError`` while storage is busy or missing, or cancellation.
    */
   public static func condition(_ store: Store) async throws -> StoredStateCondition {
     do {
+      let saved = try await transaction(store) { transaction in
+        try transaction.context.document(StateTransaction.policyKey) != nil
+      }
       let entries = try await StateRecovery.entries(store)
       guard entries.isEmpty else { return .needsRecovery(entries) }
-      let saved = try await store.transaction { context in
-        try context.document(StateTransaction.policyKey) != nil
-      }
       return saved ? .readable : .empty
     } catch let error as any StorageFailure {
       throw error

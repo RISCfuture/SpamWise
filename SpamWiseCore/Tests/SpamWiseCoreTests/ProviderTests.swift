@@ -68,67 +68,98 @@ func `classifies thousands of paid requests by default and settles each to measu
   #expect(spending.committedMicroUSD == UInt64(requests) * measuredMicroUSD)
 }
 
-@Test
-func `reserves each paid request’s maximum cost and refunds only requests that cannot have billed`()
-  async throws
-{
-  let store = try testStore()
-  let input = try providerInput()
-  let rates = ModelTokenPricing.rates(for: spendingModel)
-  let maximum = try rates.maximumCost(of: input)
-  let measured = Verdict(
-    label: .inbox,
-    confidence: 93,
-    reason: "Personal correspondence",
-    usage: .init(
-      input: 1_000,
-      output: 100,
-      cached: 200,
-      estimated: false,
-      modelID: spendingModel.rawValue,
-      pricing: rates
+/// Failures that occur before a provider can bill the request.
+private let unbilledFailures: [any Error & Sendable] = [
+  ClassificationError.missingCredential, ClassificationError.consentRequired,
+  ClassificationError.rateLimited, ClassificationError.contextExceeded,
+  ClassificationError.evidenceExceedsPrompt, CancellationError(), StoreError.lockUnavailable
+]
+
+@Suite
+struct `Spending reservations for paid requests` {
+  private static let measuredMicroUSD: UInt64 = 1_065
+  private let store: Store
+  private let input: ClassificationInput
+  private let maximum: Double
+  private let measured: Verdict
+
+  /// Sets a limit of two maximum-cost requests, which last month's reservations reached.
+  init() async throws {
+    store = try testStore()
+    input = try providerInput()
+    let rates = ModelTokenPricing.rates(for: spendingModel)
+    maximum = try rates.maximumCost(of: input)
+    measured = Verdict(
+      label: .inbox,
+      confidence: 93,
+      reason: "Personal correspondence",
+      usage: .init(
+        input: 1_000,
+        output: 100,
+        cached: 200,
+        estimated: false,
+        modelID: spendingModel.rawValue,
+        pricing: rates
+      )
     )
-  )
-  let lastMonth = try #require(
-    Calendar(identifier: .gregorian).date(byAdding: .month, value: -1, to: .now)
-  )
-  try await SpendingLimit.setLimit(usd: 2 * maximum, store: store, at: lastMonth)
-  _ = try await SpendingLimit.reserve(usd: 2 * maximum, store: store, at: lastMonth)
-
-  _ = try await spendingLimited(store) {
-    let reserved = try await SpendingLimit.load(store).committedUSD
-    #expect(abs(reserved - maximum) < 0.000_001)
-    return measured
+    let lastMonth = try #require(
+      Calendar(identifier: .gregorian).date(byAdding: .month, value: -1, to: .now)
+    )
+    try await SpendingLimit.setLimit(usd: 2 * maximum, store: store, at: lastMonth)
+    _ = try await SpendingLimit.reserve(usd: 2 * maximum, store: store, at: lastMonth)
   }
-  .classify(input)
-  #expect(try await SpendingLimit.load(store).committedMicroUSD == 1_065)
 
-  let unbilled: [any Error & Sendable] = [
-    ClassificationError.missingCredential, ClassificationError.consentRequired,
-    ClassificationError.rateLimited, ClassificationError.contextExceeded, CancellationError(),
-    StoreError.lockUnavailable
-  ]
-  for failure in unbilled {
-    let thrown = await #expect(throws: (any Error).self) {
-      _ = try await spendingLimited(store) { throw failure }.classify(input)
-    }
-    #expect(thrown.map { String(reflecting: $0) } == String(reflecting: failure))
+  private func classify(_ outcome: @escaping @Sendable () async throws -> Verdict) async throws {
+    _ = try await spendingLimited(store, outcome: outcome).classify(input)
   }
-  #expect(try await SpendingLimit.load(store).committedMicroUSD == 1_065)
 
-  await #expect(throws: ClassificationError.network) {
-    _ = try await spendingLimited(store) { throw ClassificationError.network }.classify(input)
-  }
-  await #expect(throws: SpendingLimitError.limitReached) {
-    _ = try await spendingLimited(store) {
-      Issue.record("The spending limit must refuse the request before dispatch")
+  @Test
+  func `reserves a request's maximum cost in a new month and settles it to measured usage`()
+    async throws
+  {
+    let store = store, maximum = maximum, measured = measured
+    try await classify {
+      let reserved = try await SpendingLimit.load(store).committedUSD
+      #expect(abs(reserved - maximum) < 0.000_001)
       return measured
     }
-    .classify(input)
+    #expect(try await SpendingLimit.load(store).committedMicroUSD == Self.measuredMicroUSD)
   }
-  let spending = try await SpendingLimit.load(store)
-  #expect(abs(spending.committedUSD - 0.001_065 - maximum) < 0.000_001)
-  #expect(spending.limitReached && spending.requests == 8)
+
+  @Test(arguments: unbilledFailures)
+  func `refunds a request that failed before it could be billed`(
+    _ failure: any Error & Sendable
+  ) async throws {
+    let thrown = await #expect(throws: (any Error).self) { try await classify { throw failure } }
+    #expect(thrown.map { String(reflecting: $0) } == String(reflecting: failure))
+    #expect(try await SpendingLimit.load(store).committedMicroUSD == 0)
+  }
+
+  @Test
+  func `keeps the maximum cost of a request that may have billed`() async throws {
+    await #expect(throws: ClassificationError.network) {
+      try await classify { throw ClassificationError.network }
+    }
+    #expect(abs(try await SpendingLimit.load(store).committedUSD - maximum) < 0.000_001)
+  }
+
+  @Test
+  func `refuses a request before dispatch once reservations reach the limit`() async throws {
+    let measured = measured
+    try await classify { measured }
+    await #expect(throws: ClassificationError.network) {
+      try await classify { throw ClassificationError.network }
+    }
+    await #expect(throws: SpendingLimitError.limitReached) {
+      try await classify {
+        Issue.record("The spending limit must refuse the request before dispatch")
+        return measured
+      }
+    }
+    let spending = try await SpendingLimit.load(store)
+    #expect(abs(spending.committedUSD - 0.001_065 - maximum) < 0.000_001)
+    #expect(spending.limitReached && spending.requests == 2)
+  }
 }
 
 @Test

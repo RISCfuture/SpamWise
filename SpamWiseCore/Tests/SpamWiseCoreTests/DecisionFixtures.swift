@@ -10,6 +10,8 @@ actor RecordingAdapter: MailClientAdapter {
   var lookups = 0
   var message: MailEnvelope?
   var readRequests = 0
+  /// Read-status requests made as a step of a user's correction, also counted in `readRequests`.
+  var correctionReadRequests = 0
   var failRead = true
   /// Whether each performed action found its decision and claim already persisted in the observed store.
   var persistedBeforeAction: [Bool] = []
@@ -29,6 +31,10 @@ actor RecordingAdapter: MailClientAdapter {
     readRequests += 1
     if failRead { throw IntegrationError.staleMessage }
     return .init(confirmed: true)
+  }
+  func markCorrectionReadInJunk(_ identity: MessageIdentity) throws -> ActionReceipt {
+    correctionReadRequests += 1
+    return try markReadInJunk(identity)
   }
   func allowMarkRead() { failRead = false }
   func lookup(_: MessageIdentity) throws -> MailEnvelope? {
