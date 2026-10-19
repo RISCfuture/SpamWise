@@ -56,28 +56,28 @@ private actor StubSweepSource: PositionalInboxSource {
     folderMessages[folder.id] = envelopes
   }
 
-  func sweepAccounts() async throws -> [MailAccount] {
+  func sweepAccounts() throws -> [MailAccount] {
     accountIDs.map { MailAccount(id: $0, name: $0) }
   }
-  func inboxSweepPage(accountID: String, offset: Int, limit: Int, since: Date?) async throws
+  func inboxSweepPage(accountID: String, offset: Int, limit: Int, since _: Date?) throws
     -> MailPage
   {
     if let failure = failures[accountID] { throw failure }
     return Self.page(inboxes[accountID] ?? [], offset: offset, limit: limit)
   }
-  func folderPage(_ folder: MailFolder, offset: Int, limit: Int, since: Date?) async throws
+  func folderPage(_ folder: MailFolder, offset: Int, limit: Int, since _: Date?) throws
     -> MailPage
   {
     Self.page(folderMessages[folder.id] ?? [], offset: offset, limit: limit)
   }
-  func historyPage(accountID: String, mailbox: HistoryMailbox, offset: Int, limit: Int)
-    async throws -> MailPage
+  func historyPage(accountID _: String, mailbox _: HistoryMailbox, offset _: Int, limit _: Int)
+    throws -> MailPage
   {
     MailPage(messages: [], total: 0, visitedCount: 0)
   }
-  func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? { nil }
-  func recentMessages(limit: Int) async throws -> [MailEnvelope] { [] }
-  func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
+  func lookup(_: MessageIdentity) throws -> MailEnvelope? { nil }
+  func recentMessages(limit _: Int) throws -> [MailEnvelope] { [] }
+  func perform(_ action: MailAction, for _: MessageIdentity) throws -> ActionReceipt {
     actions.append(action)
     return ActionReceipt(confirmed: true)
   }
@@ -87,11 +87,11 @@ private actor StubSweepSource: PositionalInboxSource {
 private final class ClassifiedSubjects: Sendable {
   private let subjects = Mutex<[String]>([])
   var all: [String] { subjects.withLock { $0 } }
+
   func append(_ subject: String) { subjects.withLock { $0.append(subject) } }
 }
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Mail sweeper` {
   private let store: Store
   private let classified = ClassifiedSubjects()
@@ -139,7 +139,8 @@ struct `Mail sweeper` {
     #expect(state.histories["account"]?.received["example.org"] == 4)
   }
 
-  @Test func `ends the sweep on cancellation without recording an account failure`() async throws {
+  @Test
+  func `ends the sweep on cancellation without recording an account failure`() async throws {
     let source = StubSweepSource([
       ("cancelled", [StubSweepSource.message("cancelled", 1)]),
       ("later", [StubSweepSource.message("later", 1)])
@@ -211,7 +212,8 @@ struct `Mail sweeper` {
     #expect(await source.actions.isEmpty)
   }
 
-  @Test func `shrinks a timed-out page and then skips a backfill position that keeps stalling`() {
+  @Test
+  func `shrinks a timed-out page and then skips a backfill position that keeps stalling`() {
     var health = MailScanHealth(accountName: "account")
     health.complete(through: 40, visited: 40, total: 100)
     let stalled = InboxTraversal(end: 40, total: 100, stalledOffset: 40)

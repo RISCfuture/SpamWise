@@ -73,6 +73,7 @@ private struct GeminiResponse: Decodable {
   var candidates: [Candidate]?
   var promptFeedback: Feedback?
   var usageMetadata: Usage?
+
   struct Candidate: Decodable { var finishReason: String; var content: Content? }
   struct Content: Decodable { var parts: [Part] }
   struct Part: Decodable { var text: String?; var thought: Bool? }

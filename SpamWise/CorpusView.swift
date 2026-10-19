@@ -13,7 +13,8 @@ struct CorpusView: View {
   @State private var exporting = false
   @State private var export: RulesDocument?
   @State private var exportStatus: OperationStatus?
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     NavigationStack {

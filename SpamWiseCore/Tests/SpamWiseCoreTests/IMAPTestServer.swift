@@ -107,6 +107,7 @@ struct IMAPTranscript: Sendable {
     var sequence: Int
     var uid: Int
     var size: Int
+
     init(_ sequence: Int, uid: Int, size: Int) {
       self.sequence = sequence; self.uid = uid; self.size = size
     }
@@ -183,8 +184,9 @@ private struct CommandInput {
   private var buffered: [UInt8] = []
 
   private static func synchronizingLiteralLength(_ line: [UInt8]) -> Int? {
-    let text = String(decoding: line, as: UTF8.self)
-    guard text.hasSuffix("}"), let open = text.lastIndex(of: "{") else { return nil }
+    guard let text = String(bytes: line, encoding: .utf8), text.hasSuffix("}"),
+      let open = text.lastIndex(of: "{")
+    else { return nil }
     return Int(text[text.index(after: open)..<text.index(before: text.endIndex)])
   }
 
@@ -197,7 +199,7 @@ private struct CommandInput {
       try await channel.writeInbound(ByteBuffer(string: "+ go ahead\r\n"))
       command += try await bytes(literal, from: channel)
     }
-    let text = String(decoding: command, as: UTF8.self)
+    let text = try #require(String(bytes: command, encoding: .utf8))
     let parts = text.split(separator: " ", maxSplits: 1)
     return (String(parts.first ?? ""), parts.count > 1 ? String(parts[1]) : "")
   }

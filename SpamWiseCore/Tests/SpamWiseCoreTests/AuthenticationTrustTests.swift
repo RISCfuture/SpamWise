@@ -42,7 +42,8 @@ func `lets Contacts and Allow rules decide only with trusted aligned authenticat
   }
 }
 
-@Test func `detects an account's receiving servers before trusting them on confirmation`()
+@Test
+func `detects an account's receiving servers before trusting them on confirmation`()
   async throws
 {
   let store = try testStore()

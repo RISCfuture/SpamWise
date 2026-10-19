@@ -5,7 +5,8 @@ struct ActivityDateFilterView: View {
   @Binding var query: ActivityQuery
   @State private var start = Date.now
   @State private var end = Date.now
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     NavigationStack {

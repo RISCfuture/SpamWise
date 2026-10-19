@@ -96,7 +96,7 @@ public enum PromptBuilder {
   private static func escapedJSON<T: Encodable>(_ value: T) throws -> String {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
-    return String(decoding: try encoder.encode(value), as: UTF8.self)
+    return try encoder.encodeText(value)
       .replacingOccurrences(of: "<", with: "\\u003C")
       .replacingOccurrences(of: ">", with: "\\u003E")
   }

@@ -92,7 +92,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
 
   /// Sender, Reply-To and Return-Path domains, then link domains, without duplicates.
   public var reputationDomains: [String] {
-    ([fromDomain, replyToDomain, returnPathDomain].compactMap { $0 } + linkDomains).uniqued()
+    ([fromDomain, replyToDomain, returnPathDomain].compactMap(\.self) + linkDomains).uniqued()
   }
 
   /**
@@ -159,7 +159,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
       displayName ? "display name" : nil,
       authResults ? "authentication results" : nil,
       linkDomains ? "link domains" : nil
-    ].compactMap { $0 }
+    ].compactMap(\.self)
     return fields.isEmpty ? [] : ["Evidence truncated: " + fields.joined(separator: ", ")]
   }
 
@@ -290,6 +290,7 @@ extension EvidenceBundle {
     if trusted.contains(where: { Self.failureResults.contains($0.result) }) { return .failed }
     return .unverified
   }
+
   private func isAligned(_ result: AuthResult) -> Bool {
     guard ["dkim", "dmarc"].contains(result.mechanism), let fromDomain, let domain = result.domain
     else { return false }

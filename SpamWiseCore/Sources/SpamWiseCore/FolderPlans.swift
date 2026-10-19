@@ -18,7 +18,7 @@ public enum FolderPlanError: Error, LocalizedError, Sendable, Equatable {
   /// The specific cause.
   public var failureReason: String? {
     switch self {
-      case .misnamed(let folder, let required):
+      case let .misnamed(folder, required):
         String(localized: "The folder “\(folder)” isn’t named “\(required)”.", bundle: .module)
       case .notEmpty(let folder, _):
         String(localized: "The folder “\(folder)” isn’t empty.", bundle: .module)

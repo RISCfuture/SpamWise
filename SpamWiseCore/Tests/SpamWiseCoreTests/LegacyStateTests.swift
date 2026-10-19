@@ -3,7 +3,8 @@ import SwiftData
 import Testing
 import SpamWiseCore
 
-@Test func `loads legacy Activity records with typed reasons and without stored placeholders`()
+@Test
+func `loads legacy Activity records with typed reasons and without stored placeholders`()
   async throws
 {
   let encoded = try JSONEncoder().encode(AppState())
@@ -98,7 +99,8 @@ private func legacyRecord(
   ]
 }
 
-@Test func `imports a single-document store once and sets aside an unreadable one`() async throws {
+@Test
+func `imports a single-document store once and sets aside an unreadable one`() async throws {
   let identity = MessageIdentity(accountID: "account", contentHash: "digest")
   var legacy = AppState()
   legacy.settings.paused = true
@@ -142,7 +144,8 @@ private func legacyRecord(
   #expect(try await StateRecovery.entries(unreadable).isEmpty)
 }
 
-@Test func `decodes legacy settings with defaults for options they lack`() throws {
+@Test
+func `decodes legacy settings with defaults for options they lack`() throws {
   var object = try #require(
     JSONSerialization.jsonObject(with: JSONEncoder().encode(AppState())) as? [String: Any]
   )
@@ -162,6 +165,68 @@ private func legacyRecord(
   #expect(decoded.settings.incomingRoute == .mailRule)
 }
 
+@Test
+func `keeps the stored names of camel-case enum cases`() {
+  let pinned: [(any RawRepresentable<String>, String)] = [
+    (AppleModelBackend.onDevice, "onDevice"),
+    (AppleModelBackend.privateCloudCompute, "privateCloudCompute"),
+    (ModelBackend.onDevice, "onDevice"),
+    (ModelBackend.privateCloudCompute, "privateCloudCompute"),
+    (ModelBackend.openAI, "openAI"),
+    (ThreatStatus.notDetected, "notDetected"),
+    (ClassificationError.missingCredential, "missingCredential"),
+    (ClassificationError.consentRequired, "consentRequired"),
+    (ClassificationError.rateLimited, "rateLimited"),
+    (ClassificationError.contextExceeded, "contextExceeded"),
+    (ClassificationError.invalidOutput, "invalidOutput"),
+    (ReviewTreatment.orangeFlag, "orangeFlag"),
+    (ReviewTreatment.orangeBackground, "orangeBackground"),
+    (MailAction.orangeFlag, "orangeFlag"),
+    (MailAction.orangeBackground, "orangeBackground"),
+    (MailAction.moveToJunk, "moveToJunk"),
+    (MailAction.moveToInbox, "moveToInbox"),
+    (MailAction.clearOrangeFlag, "clearOrangeFlag"),
+    (MailAction.clearOrangeBackground, "clearOrangeBackground"),
+    (ActionOutcome.noAction, "noAction"),
+    (ActionOutcome.dryRun, "dryRun"),
+    (ActionOutcome.integrationUnavailable, "integrationUnavailable"),
+    (LearningPartition.heldOut, "heldOut"),
+    (LearningProvenance.explicitCorrection, "explicitCorrection"),
+    (LearningProvenance.highConfidencePrediction, "highConfidencePrediction"),
+    (DecodingIssue.invalidCharacters, "invalidCharacters"),
+    (DecodingIssue.unknownCharset, "unknownCharset"),
+    (DecodingIssue.invalidQuotedPrintable, "invalidQuotedPrintable"),
+    (DecodingIssue.invalidEncodedWord, "invalidEncodedWord"),
+    (DecodingIssue.unknownTransferEncoding, "unknownTransferEncoding"),
+    (DecodingIssue.malformedPartHeaders, "malformedPartHeaders"),
+    (DecodingIssue.ambiguousPartHeaders, "ambiguousPartHeaders"),
+    (DecodingIssue.malformedMessageHeaders, "malformedMessageHeaders"),
+    (DecodingIssue.incompleteMultipart, "incompleteMultipart"),
+    (DecodingIssue.invalidMultipartBoundary, "invalidMultipartBoundary"),
+    (DecodingIssue.partLimitExceeded, "partLimitExceeded"),
+    (ContentRuleField.listID, "listID"),
+    (ContentRuleField.replyTo, "replyTo"),
+    (ContentRuleField.contentType, "contentType"),
+    (ContentRuleField.attachmentNames, "attachmentNames"),
+    (ContentRuleField.attachmentTypes, "attachmentTypes"),
+    (ContentRuleOperator.regularExpression, "regularExpression"),
+    (ExternalEvidenceStatus.notListed, "notListed"),
+    (SpamhausTransport.publicDNS, "publicDNS"),
+    (MailTransport.appleMail, "appleMail"),
+    (ReviewedLabel.Origin.reviewedImport, "reviewedImport"),
+    (AuditEvent.Kind.senderRule, "senderRule"),
+    (AuditEvent.Kind.contentRule, "contentRule"),
+    (AuditEvent.Kind.backupRestore, "backupRestore"),
+    (AuditEvent.Kind.corpusImport, "corpusImport"),
+    (AuditEvent.Kind.corpusForget, "corpusForget"),
+    (MailFolderPurpose.trainGood, "trainGood"),
+    (MailFolderPurpose.trainJunk, "trainJunk"),
+    (IncomingRoute.mailRule, "mailRule"),
+    (DecisionPath.unreadableSender, "unreadableSender")
+  ]
+  for (value, name) in pinned { #expect(value.rawValue == name) }
+}
+
 /// Writes `snapshot` into an unversioned single-document store.
 private func legacyStore(_ snapshot: Data) throws -> Store {
   let store = try testStore()
@@ -176,9 +241,12 @@ private func legacyStore(_ snapshot: Data) throws -> Store {
 }
 
 private enum Unversioned {
-  @Model final class StoredValue {
-    @Attribute(.unique) var key: String
+  @Model
+  final class StoredValue {
+    @Attribute(.unique)
+    var key: String
     var payload: Data
+
     init(key: String, payload: Data) { self.key = key; self.payload = payload }
   }
 }

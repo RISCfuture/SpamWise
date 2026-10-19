@@ -6,7 +6,8 @@ import MailIntegration
 struct MailReviewView: View {
   let review: JunkReviewModel
   @State private var selection: JunkReviewRow.ID?
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   private var selected: JunkReviewRow? { review.rows.first { $0.id == selection } }
   private var account: Binding<String?> {
@@ -188,7 +189,8 @@ private extension SenderRule {
 /// A message’s text in its own sheet.
 struct MessagePreviewSheet: View {
   let preview: MessagePreview
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     NavigationStack {

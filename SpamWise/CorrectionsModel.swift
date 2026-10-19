@@ -10,7 +10,9 @@ import MailIntegration
  it, because the Block rule it saves could also catch the real sender. After a correction, a
  sender rule that still decides the sender’s mail is offered for removal.
  */
-@MainActor @Observable final class CorrectionsModel {
+@MainActor
+@Observable
+final class CorrectionsModel {
   /// Corrections and undo requested from a decision’s inspector.
   let decision = TrackedOperation()
   /// Correcting the messages selected in Mail.
@@ -164,7 +166,8 @@ extension CorrectionsModel {
        show ``pendingSelection``.
    - Returns: Whether the request started; a request made during another batch is rejected.
    */
-  @discardableResult func correctSelection(
+  @discardableResult
+  func correctSelection(
     _ label: MailLabel,
     scope: RuleScope = .address,
     confirm: @escaping @MainActor () -> Void

@@ -1,6 +1,7 @@
 import SwiftUI
 
-@MainActor enum Help {
+@MainActor
+enum Help {
   private static let bookNameKey = "CFBundleHelpBookName"
 
   /// The registered help book, as the app's Info.plist names it.
@@ -35,14 +36,17 @@ struct HelpButton: NSViewRepresentable {
     button.setAccessibilityLabel(String(localized: "Help for \(Help.localizedTitle(for: page))"))
   }
 
-  func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSButton, context: Context) -> CGSize? {
+  func sizeThatFits(_: ProposedViewSize, nsView: NSButton, context _: Context) -> CGSize? {
     nsView.intrinsicContentSize
   }
 
-  @MainActor final class Coordinator: NSObject {
+  @MainActor
+  final class Coordinator: NSObject {
     var page: String
+
     init(page: String) { self.page = page }
-    @objc func showHelp() { Help.open(page) }
+    @objc
+    func showHelp() { Help.open(page) }
   }
 }
 

@@ -2,7 +2,8 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `consumes retries only within the selected account`() async throws {
+@Test
+func `consumes retries only within the selected account`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enqueueFailedRetries(store: store, accountIDs: ["account-A", "account-B"])
   let due = Date().addingTimeInterval(35)
@@ -15,7 +16,7 @@ import SpamWiseCore
   )
   await successful.retryDue(adapter: adapter, now: due, accountID: "account-A")
   let state = try await StateRepository.load(store)
-  #expect(state.retries.map { $0.identity.accountID } == ["account-B"])
+  #expect(state.retries.map(\.identity.accountID) == ["account-B"])
   #expect(state.records.last?.identity.accountID == "account-A")
   #expect(state.records.last?.decision.label == .inbox)
   #expect(await adapter.actions.isEmpty)
@@ -56,7 +57,7 @@ func `retains unstarted retries across cancellation and restart`(cancelBeforeSta
   let pending = try await StateRepository.load(reopened)
   let expected =
     cancelBeforeStart ? ["account-A", "account-B", "account-C"] : ["account-B", "account-C"]
-  #expect(pending.retries.compactMap { $0.identity.accountID } == expected)
+  #expect(pending.retries.compactMap(\.identity.accountID) == expected)
   let resumed = Pipeline(
     store: reopened,
     classifier: MockClassifier(
@@ -68,7 +69,7 @@ func `retains unstarted retries across cancellation and restart`(cancelBeforeSta
   #expect(finished.retries.isEmpty)
   #expect(
     Set(
-      finished.records.filter { $0.decision.label == .inbox }.compactMap { $0.identity.accountID }
+      finished.records.filter { $0.decision.label == .inbox }.compactMap(\.identity.accountID)
     ) == Set(expected)
   )
   #expect(await adapter.actions.isEmpty)

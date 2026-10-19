@@ -1,3 +1,5 @@
+parent_config: https://gist.githubusercontent.com/RISCfuture/c57d132e5e0160a768df1625e20ae3b8/raw/.swiftlint.yml
+
 included:
   - SpamWise
   - SpamWise-MAS
@@ -7,46 +9,18 @@ included:
   - SpamWiseCore/Tests
   - UnitTests
   - UITests
-# swift-format owns layout; these rules disagree with its multiline output.
+
+excluded:
+  - .build
+  - .superpowers  # scratch snapshots of source files, not sources
+  - Tools/Corpus
+  - DerivedData
+
 disabled_rules:
-  - opening_brace
-  - switch_case_alignment
-  - closure_parameter_position
-  - optional_data_string_conversion
-line_length:
-  warning: 120
-  error: 200
-  ignores_comments: true
-  ignores_urls: true
-  ignores_interpolated_strings: true
-function_body_length:
-  warning: 80
-  error: 100
-type_body_length:
-  warning: 400
-  error: 500
-cyclomatic_complexity:
-  warning: 20
-  error: 25
-nesting:
-  type_level: 2
-identifier_name:
-  excluded: [id, fd, i, n, p, cf]
-opt_in_rules:
-  - type_contents_order
-type_contents_order:
-  order:
-    - [type_alias, associated_type]
-    - [case]
-    - [type_property]
-    - [instance_property]
-    - [ib_inspectable]
-    - [ib_outlet]
-    - [initializer]
-    - [type_method]
-    - [view_life_cycle_method]
-    - [ib_action, ib_segue_action]
-    - [other_method]
-    - [subscript]
-    - [deinitializer]
-    - [subtype]
+  # Nimble is not a dependency; the tests use XCTest and Swift Testing.
+  - prefer_nimble
+  # swift-format owns layout, and it wraps a long call chain with some calls sharing a line.
+  - multiline_function_chains
+  # raw_value_for_camel_cased_codable_enum requires the explicit raw values that pin persisted
+  # camel-case names, and this rule reports exactly those values as redundant.
+  - redundant_string_enum_value

@@ -4,7 +4,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `integrates bounded IMAP messages` {
   private static let validated =
     IMAPTranscript.authenticated().roles().examine(validity: 33, exists: 0)

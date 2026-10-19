@@ -4,7 +4,9 @@ import SpamWiseCore
 import MailIntegration
 
 /// Opens, previews and exports the message behind a recorded decision.
-@MainActor @Observable final class MessageAccessModel {
+@MainActor
+@Observable
+final class MessageAccessModel {
   /// Reading the message from Mail.
   let operation = TrackedOperation()
   @ObservationIgnored private let services: AppServices

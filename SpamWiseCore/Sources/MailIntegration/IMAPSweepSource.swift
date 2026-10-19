@@ -3,7 +3,7 @@ public import SpamWiseCore
 
 extension IMAPAdapter: MailSweepSource {
   /// The one account this connection serves.
-  public func sweepAccounts() async throws -> [MailAccount] {
+  public func sweepAccounts() throws -> [MailAccount] {
     [MailAccount(id: accountID, name: configuration.username + "@" + configuration.host)]
   }
 
@@ -15,7 +15,7 @@ extension IMAPAdapter: MailSweepSource {
    pass completes a traversal of its own.
    */
   public func sweepInbox(
-    of account: MailAccount,
+    of _: MailAccount,
     _ request: InboxPassRequest,
     processing: @escaping InboxPageProcessor
   ) async throws -> InboxTraversal {
@@ -31,14 +31,14 @@ extension IMAPAdapter: MailSweepSource {
   }
 
   /// The newest Inbox messages, within the adapter's size budget.
-  public func recentInboxPage(accountID: String, limit: Int) async throws -> MailPage {
+  public func recentInboxPage(accountID _: String, limit: Int) async throws -> MailPage {
     let messages = try await recentMessages(limit: limit)
     return MailPage(messages: messages, total: messages.count, visitedCount: messages.count)
   }
 
   /// Reads one page of the Sent mailbox or Inbox, newest first; no Sent role yields an empty page.
   public func historyPage(
-    accountID: String,
+    accountID _: String,
     mailbox: HistoryMailbox,
     offset: Int,
     limit: Int

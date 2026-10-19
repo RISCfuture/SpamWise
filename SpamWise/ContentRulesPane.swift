@@ -144,11 +144,12 @@ private struct ContentRuleTable: View {
 /// Adds or edits one content rule; it closes only once the rule is saved.
 struct ContentRuleFormView: View {
   let rules: RulesModel
-  @State var rule: ContentRule
+  @State private var rule: ContentRule
   let isNew: Bool
   @State private var saving = TrackedOperation()
   @State private var testing = TrackedOperation()
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     NavigationStack {
@@ -187,6 +188,12 @@ struct ContentRuleFormView: View {
       }
     }
     .frame(minWidth: 480, idealWidth: 520)
+  }
+
+  init(rules: RulesModel, rule: ContentRule, isNew: Bool) {
+    self.rules = rules
+    _rule = State(initialValue: rule)
+    self.isNew = isNew
   }
 
   private func save() {

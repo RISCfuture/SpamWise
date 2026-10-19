@@ -3,7 +3,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Encrypted state backup` {
   private let store: Store
   private let backedUp: AppState
@@ -26,18 +25,21 @@ struct `Encrypted state backup` {
     archive = try StateBackup.export(backedUp, recoveryKey: key)
   }
 
-  @Test func `encrypts the archive`() {
-    #expect(!String(decoding: archive, as: UTF8.self).contains("friend@example.org"))
+  @Test
+  func `encrypts the archive`() {
+    #expect(!archive.contains(Data("friend@example.org".utf8)))
   }
 
-  @Test func `rejects a different recovery key without changing state`() async throws {
+  @Test
+  func `rejects a different recovery key without changing state`() async throws {
     await #expect(throws: BackupError.self) {
       try await StateBackup.restore(archive, recoveryKey: StateBackup.recoveryKey(), store: store)
     }
     #expect(try await StateRepository.load(store).revision == backedUp.revision)
   }
 
-  @Test func `rejects a damaged archive without changing state`() async throws {
+  @Test
+  func `rejects a damaged archive without changing state`() async throws {
     var damaged = archive; damaged[0] ^= 1
     await #expect(throws: BackupError.self) {
       try await StateBackup.restore(damaged, recoveryKey: key, store: store)
@@ -45,7 +47,8 @@ struct `Encrypted state backup` {
     #expect(try await StateRepository.load(store).revision == backedUp.revision)
   }
 
-  @Test func `restores rules with actions disabled and spending preserved`() async throws {
+  @Test
+  func `restores rules with actions disabled and spending preserved`() async throws {
     try await StateBackup.restore(archive, recoveryKey: key, store: store)
     let restored = try await StateRepository.load(store)
     #expect(restored.rules == backedUp.rules)

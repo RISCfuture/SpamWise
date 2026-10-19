@@ -3,7 +3,7 @@ public import Foundation
 /// Incoming integration chosen independently of the classifier provider.
 public enum MailTransport: String, Codable, Sendable, CaseIterable {
   /// Accesses mail through the Apple Mail integration.
-  case appleMail
+  case appleMail = "appleMail"
   /// Accesses an explicitly configured account through IMAP.
   case imap
 }
@@ -47,7 +47,7 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
   /// Decodes each field independently, using its default when absent or unreadable.
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
-    let defaults = AdvancedSettings()
+    let defaults = Self()
     backend = values.lenient(.backend, default: defaults.backend)
     mailSharingConsent = values.lenient(.mailSharingConsent, default: defaults.mailSharingConsent)
     domainRegistrationLookup = values.lenient(
@@ -170,7 +170,8 @@ public struct ReviewedLabel: Codable, Sendable, Equatable, Identifiable {
   }
   /// Explicit human label sources; predictions have separate learning provenance.
   public enum Origin: String, Codable, Sendable, FallbackDecodable {
-    case correction, reviewedImport
+    case correction
+    case reviewedImport = "reviewedImport"
     /// An unrecognized source is treated as an explicit correction.
     public static var fallback: Self { .correction }
   }

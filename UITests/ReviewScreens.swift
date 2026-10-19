@@ -1,8 +1,10 @@
 import XCTest
 
-@MainActor struct StatisticsScreen {
+@MainActor
+struct StatisticsScreen {
   let app: XCUIApplication
   var decisionCount: String { app.staticTexts["statistics.decisions"].value as? String ?? "" }
+
   func close() {
     app.buttons["statistics.done"].click()
     XCTAssertTrue(
@@ -11,12 +13,14 @@ import XCTest
   }
 }
 
-@MainActor struct CorpusScreen {
+@MainActor
+struct CorpusScreen {
   let app: XCUIApplication
   private var labels: XCUIElementQuery {
     app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "corpus.label."))
   }
   var labelCount: Int { labels.count }
+
   func forgetFirstExample() {
     labels.firstMatch.click()
     app.buttons["corpus.forget"].click()

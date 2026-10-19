@@ -3,10 +3,11 @@ import Testing
 import SpamWiseCore
 @testable import SpamWiseCommon
 
-@MainActor @Suite
-// swiftlint:disable:next type_name
+@MainActor
+@Suite
 struct `Tracked user operations` {
-  @Test func `run one at a time in the order requested`() async {
+  @Test
+  func `run one at a time in the order requested`() async {
     let operation = TrackedOperation()
     let gate = Gate()
     var events: [String] = []
@@ -30,7 +31,8 @@ struct `Tracked user operations` {
     #expect(!operation.isBusy)
   }
 
-  @Test func `show a failure until the next run succeeds silently`() async {
+  @Test
+  func `show a failure until the next run succeeds silently`() async {
     let operation = TrackedOperation()
     await operation.run { throw IntegrationError.unavailable }.value
     #expect(
@@ -41,7 +43,8 @@ struct `Tracked user operations` {
     #expect(operation.status == nil)
   }
 
-  @Test func `offer to rerun only work marked safe to repeat`() async {
+  @Test
+  func `offer to rerun only work marked safe to repeat`() async {
     let operation = TrackedOperation()
     var attempts = 0
     await operation.run(retryable: true) {
@@ -55,7 +58,8 @@ struct `Tracked user operations` {
     #expect(attempts == 2)
   }
 
-  @Test func `report cancelled runs instead of dropping them`() async {
+  @Test
+  func `report cancelled runs instead of dropping them`() async {
     let operation = TrackedOperation()
     var queuedRan = false
     let running = operation.run {
@@ -74,10 +78,11 @@ struct `Tracked user operations` {
   }
 }
 
-@MainActor @Suite
-// swiftlint:disable:next type_name
+@MainActor
+@Suite
 struct `Coalesced background work` {
-  @Test func `runs once more after requests made while it runs`() async {
+  @Test
+  func `runs once more after requests made while it runs`() async {
     let runner = CoalescingRunner()
     let gate = Gate()
     let finished = Counter()
@@ -97,7 +102,8 @@ struct `Coalesced background work` {
     #expect(runs == 2)
   }
 
-  @Test func `drops the coalesced request when cancelled`() async {
+  @Test
+  func `drops the coalesced request when cancelled`() async {
     let runner = CoalescingRunner()
     let finished = Counter()
     var runs = 0
@@ -116,7 +122,8 @@ struct `Coalesced background work` {
 }
 
 /// Holds work at ``wait()`` until the test opens it.
-@MainActor final class Gate {
+@MainActor
+final class Gate {
   private var waiter: CheckedContinuation<Void, Never>?
   private var isOpen = false
 
@@ -137,7 +144,8 @@ struct `Coalesced background work` {
 }
 
 /// Counts finished work and lets a test wait for a total.
-@MainActor final class Counter {
+@MainActor
+final class Counter {
   private(set) var value = 0
 
   func increment() { value += 1 }

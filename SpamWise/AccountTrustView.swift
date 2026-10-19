@@ -61,7 +61,7 @@ private struct TrustDetectionView: View {
         Text("SpamWise couldn’t tell which server receives this account’s mail. Enter it yourself.")
           .foregroundStyle(.secondary)
         Button("Enter Server…", action: edit)
-      case .collecting(let observed, let required):
+      case let .collecting(observed, required):
         Text("Finding this account’s mail server: \(observed) of \(required) messages read.")
           .foregroundStyle(.secondary)
         Button("Enter Server…", action: edit)
@@ -85,7 +85,8 @@ private struct TrustedServersEditor: View {
   let trust: AuthenticationTrustModel
   let accountID: String
   @State private var text: String
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   private var operation: TrackedOperation { trust.operation(for: accountID) }
 

@@ -6,7 +6,8 @@ struct AutomationDeniedView: View {
   static let settingsURL = URL(
     string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation"
   )
-  @Environment(\.openURL) private var openURL
+  @Environment(\.openURL)
+  private var openURL
 
   var body: some View {
     Label {

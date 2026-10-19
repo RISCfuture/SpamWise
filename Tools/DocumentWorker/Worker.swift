@@ -100,7 +100,7 @@ final class DocumentWorker: NSObject, DocumentWorkerProtocol, Sendable {
 }
 
 private final class WorkerListener: NSObject, NSXPCListenerDelegate {
-  func listener(_ listener: NSXPCListener, shouldAcceptNewConnection connection: NSXPCConnection)
+  func listener(_: NSXPCListener, shouldAcceptNewConnection connection: NSXPCConnection)
     -> Bool
   {
     guard connection.effectiveUserIdentifier == geteuid(), connection.processIdentifier > 0 else {
@@ -119,7 +119,8 @@ private final class WorkerListener: NSObject, NSXPCListenerDelegate {
   }
 }
 
-@main private enum WorkerMain {
+@main
+private enum WorkerMain {
   static func main() {
     guard WorkerResources.install() else { _exit(71) }
     let listener = NSXPCListener.service(), delegate = WorkerListener()

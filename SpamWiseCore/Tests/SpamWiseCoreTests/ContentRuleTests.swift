@@ -2,7 +2,8 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `orders content rules and skips pathological expressions`() async throws {
+@Test
+func `orders content rules and skips pathological expressions`() async throws {
   var message = try MIMEParser().parse(fixture("filler-spam"))
   message.subject = "Example newsletter"
   var older = ContentRule()
@@ -80,7 +81,8 @@ import SpamWiseCore
   #expect(state.contentRuleHits.isEmpty)
 }
 
-@Test func `imports an exported content rule once`() async throws {
+@Test
+func `imports an exported content rule once`() async throws {
   let store = try testStore()
   var rule = ContentRule(); rule.pattern = "newsletter"
   let archive = try ContentRuleManagement.exportRules([rule])
@@ -89,7 +91,8 @@ import SpamWiseCore
   #expect(try await StateRepository.load(store).contentRules.count == 1)
 }
 
-@Test func `turns a content rule off without changing its precedence`() async throws {
+@Test
+func `turns a content rule off without changing its precedence`() async throws {
   let store = try testStore()
   var rule = ContentRule(); rule.pattern = "newsletter"
   try await ContentRuleManagement.save(rule, store: store)
@@ -100,7 +103,8 @@ import SpamWiseCore
   #expect(disabled.updatedAt == saved.updatedAt)
 }
 
-@Test func `refuses to export an invalid regular expression`() {
+@Test
+func `refuses to export an invalid regular expression`() {
   var rule = ContentRule(); rule.pattern = "["; rule.operation = .regularExpression
   #expect(throws: ContentRuleError.invalid) { try ContentRuleManagement.exportRules([rule]) }
 }

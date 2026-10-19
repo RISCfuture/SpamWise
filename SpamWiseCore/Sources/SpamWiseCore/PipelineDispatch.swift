@@ -30,7 +30,7 @@ extension Pipeline {
 
   private static func actionFailureDescription(_ error: any Error) -> String {
     if let error = error as? any MailIntegrationFailure & LocalizedError {
-      return [error.errorDescription, error.failureReason].compactMap { $0 }
+      return [error.errorDescription, error.failureReason].compactMap(\.self)
         .joined(separator: " ")
     }
     return String(

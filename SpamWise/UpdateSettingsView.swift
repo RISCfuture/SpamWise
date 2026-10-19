@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct UpdateSettingsView: View {
-  @Environment(\.updates) private var updates
+  @Environment(\.updates)
+  private var updates
 
   var body: some View {
     if let updates {
@@ -81,7 +82,9 @@ struct UpdateMenuButton: View {
 }
 
 #if DEBUG
-  @MainActor @Observable private final class PreviewUpdateChecker: UpdateChecking {
+  @MainActor
+  @Observable
+  private final class PreviewUpdateChecker: UpdateChecking {
     var canCheckForUpdates = true
     var lastCheckDate: Date?
     var cadence = UpdateCheckCadence.daily
@@ -93,7 +96,7 @@ struct UpdateMenuButton: View {
       self.hasSkippedVersions = hasSkippedVersions
     }
 
-    func checkForUpdatesAndShowUI() async {}
+    func checkForUpdatesAndShowUI() {}
 
     func resetSkippedVersions() { hasSkippedVersions = false }
   }

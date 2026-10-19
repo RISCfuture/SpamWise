@@ -11,7 +11,7 @@ nonisolated enum FileImportError: FileImportFailure, LocalizedError, Equatable {
   var errorDescription: String? { String(localized: "Couldn’t read the file.") }
   var failureReason: String? {
     switch self {
-      case .tooLarge(let name, let maximumBytes):
+      case let .tooLarge(name, maximumBytes):
         String(
           localized:
             "“\(name)” is larger than \(Measurement(value: Double(maximumBytes), unit: UnitInformationStorage.bytes), format: .byteCount(style: .file))."

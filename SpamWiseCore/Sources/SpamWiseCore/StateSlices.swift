@@ -21,7 +21,7 @@ public enum StateSelection<Key: Hashable & Sendable>: Sendable {
  */
 public struct StateSlices: Sendable {
   /// Everything in the store, including the whole Activity log.
-  public static let everything = StateSlices(
+  public static let everything = Self(
     .all,
     records: .all,
     retries: .all,
@@ -56,25 +56,25 @@ public struct StateSlices: Sendable {
   /// Whole collections and documents a transaction can read.
   public struct Parts: OptionSet, Sendable {
     /// Explicit sender rules.
-    public static let rules = Parts(rawValue: 1 << 0)
+    public static let rules = Self(rawValue: 1 << 0)
     /// Content rules and their winning-match and skip counts.
-    public static let contentRules = Parts(rawValue: 1 << 1)
+    public static let contentRules = Self(rawValue: 1 << 1)
     /// Quoted correction examples.
-    public static let corrections = Parts(rawValue: 1 << 2)
+    public static let corrections = Self(rawValue: 1 << 2)
     /// Derived learning state.
-    public static let learning = Parts(rawValue: 1 << 3)
+    public static let learning = Self(rawValue: 1 << 3)
     /// The correction undo snapshot.
-    public static let undo = Parts(rawValue: 1 << 4)
+    public static let undo = Self(rawValue: 1 << 4)
     /// Cached Contacts and own addresses.
-    public static let contacts = Parts(rawValue: 1 << 5)
+    public static let contacts = Self(rawValue: 1 << 5)
     /// Training-folder claims and observations.
-    public static let training = Parts(rawValue: 1 << 6)
+    public static let training = Self(rawValue: 1 << 6)
     /// Existing audit events, needed only to display them.
-    public static let audit = Parts(rawValue: 1 << 7)
+    public static let audit = Self(rawValue: 1 << 7)
     /// History import identities, needed only to import more history.
-    public static let historyImports = Parts(rawValue: 1 << 8)
+    public static let historyImports = Self(rawValue: 1 << 8)
     /// Receiving-server identifiers observed in each account's mail.
-    public static let authentication = Parts(rawValue: 1 << 9)
+    public static let authentication = Self(rawValue: 1 << 9)
     /// Every part.
     public static let all: Parts = [
       .rules, .contentRules, .corrections, .learning, .undo, .contacts, .training, .audit,

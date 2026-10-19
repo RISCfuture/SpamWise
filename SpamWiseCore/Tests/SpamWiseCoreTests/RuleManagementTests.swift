@@ -3,7 +3,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Sender rule management` {
   private let store: Store
   /// State after saving one address Allow rule for `Person@Example.com`.
@@ -20,12 +19,13 @@ struct `Sender rule management` {
     saved = try await StateRepository.load(store)
   }
 
-  @Test func `normalizes saved addresses to lowercase`() {
+  @Test
+  func `normalizes saved addresses to lowercase`() {
     #expect(saved.rules.map(\.value) == ["person@example.com"])
   }
 
-  @Test func `rejects an import with an invalid rule without changing rules or audit`() async throws
-  {
+  @Test
+  func `rejects an import with an invalid rule without changing rules or audit`() async throws {
     let invalid = Data(
       #"{"version":1,"rules":[{"scope":"domain","value":"com","disposition":"block","updatedAt":0}]}"#
         .utf8
@@ -38,13 +38,15 @@ struct `Sender rule management` {
     #expect(state.auditEvents.count == saved.auditEvents.count)
   }
 
-  @Test func `imports exported rules with their identities`() async throws {
+  @Test
+  func `imports exported rules with their identities`() async throws {
     let other = try testStore()
     try await RuleManagement.importRules(RuleManagement.exportRules(saved.rules), store: other)
     #expect(try await StateRepository.load(other).rules.map(\.id) == saved.rules.map(\.id))
   }
 
-  @Test func `replaces the same-scope rule and invalidates stale work`() async throws {
+  @Test
+  func `replaces the same-scope rule and invalidates stale work`() async throws {
     try await RuleManagement.save(
       scope: .address,
       value: "person@example.com",

@@ -15,6 +15,7 @@ actor RecordingAdapter: MailClientAdapter {
   var persistedBeforeAction: [Bool] = []
   private var observedStore: Store?
   private var afterAction: (@Sendable () throws -> Void)?
+
   private static func isClaimed(_ identity: MessageIdentity, in store: Store) async throws -> Bool {
     let state = try await StateRepository.load(
       store,
@@ -23,18 +24,18 @@ actor RecordingAdapter: MailClientAdapter {
     guard let id = state.claimedActions[identity.key] else { return false }
     return state.records.contains { $0.id == id && $0.outcome == .requested }
   }
-  func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
+  func markReadInJunk(_: MessageIdentity) throws -> ActionReceipt {
     readRequests += 1
     if failRead { throw IntegrationError.staleMessage }
     return .init(confirmed: true)
   }
   func allowMarkRead() { failRead = false }
-  func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? {
+  func lookup(_: MessageIdentity) throws -> MailEnvelope? {
     lookups += 1
     return message
   }
   func retain(_ envelope: MailEnvelope) { message = envelope }
-  func recentMessages(limit: Int) async throws -> [MailEnvelope] { [] }
+  func recentMessages(limit _: Int) throws -> [MailEnvelope] { [] }
   func perform(_ action: MailAction, for identity: MessageIdentity) async throws -> ActionReceipt {
     if let failure { throw failure }
     if let observedStore {
@@ -51,7 +52,7 @@ actor RecordingAdapter: MailClientAdapter {
   func allow() { failure = nil }
   func deny(with error: any Error = IntegrationError.permissionDenied) { failure = error }
   func refuse(_ action: MailAction) { unsupported.insert(action) }
-  func supports(_ action: MailAction) async -> Bool { !unsupported.contains(action) }
+  func supports(_ action: MailAction) -> Bool { !unsupported.contains(action) }
   func moveIdentity(to identity: MessageIdentity) { updatedIdentity = identity }
 }
 func testStore() throws -> Store {
@@ -125,6 +126,7 @@ struct FixtureThreatDetector: ThreatDetector {
 final class Counter: Sendable {
   private let storage = Mutex(0)
   var value: Int { storage.withLock { $0 } }
+
   func increment() { storage.withLock { $0 += 1 } }
 }
 

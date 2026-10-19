@@ -38,7 +38,8 @@ private struct FailureLabel: View {
   let failure: OperationFailure
   let identifier: String?
   let retry: () -> Void
-  @Environment(\.openURL) private var openURL
+  @Environment(\.openURL)
+  private var openURL
 
   var body: some View {
     VStack(alignment: .leading) {

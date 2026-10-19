@@ -6,7 +6,9 @@ import SpamWiseCore
  Resolves SpamWise data that couldn't be read and was set aside: restore an encrypted backup, or
  keep the current state. A copy of the set-aside data can be saved first, for support.
  */
-@MainActor @Observable final class StorageRecoveryModel {
+@MainActor
+@Observable
+final class StorageRecoveryModel {
   /// Saving a copy, restoring a backup or keeping the current state.
   let operation = TrackedOperation()
   @ObservationIgnored private let services: AppServices

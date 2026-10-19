@@ -10,7 +10,8 @@ struct ReviewDigestView: View {
   @State private var digest: ReviewDigest?
   @State private var path: [DigestRoute] = []
   @State private var loadFailure: OperationFailure?
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     NavigationStack(path: $path) {

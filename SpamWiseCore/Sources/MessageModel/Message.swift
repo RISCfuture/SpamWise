@@ -56,33 +56,33 @@ public struct ParsedMessage: Codable, Sendable, Equatable {
 /// A recoverable decoding problem; the affected text was decoded lossily instead of rejected.
 public enum DecodingIssue: String, Codable, Sendable, CaseIterable {
   /// Bytes were invalid for the declared character set and were replaced or reinterpreted.
-  case invalidCharacters
+  case invalidCharacters = "invalidCharacters"
   /// The character set was unknown or ambiguous, so text was decoded as UTF-8 or Windows-1252.
-  case unknownCharset
+  case unknownCharset = "unknownCharset"
   /// A quoted-printable escape was invalid and kept literally.
-  case invalidQuotedPrintable
+  case invalidQuotedPrintable = "invalidQuotedPrintable"
   /// Base64 content had characters outside the alphabet, data after padding or an incomplete group.
-  case invalidBase64
+  case invalidBase64 = "invalidBase64"
   /// An RFC 2047 encoded word could not be decoded and was kept verbatim.
-  case invalidEncodedWord
+  case invalidEncodedWord = "invalidEncodedWord"
   /// A part declared an unknown transfer encoding and was read as 8-bit text.
-  case unknownTransferEncoding
+  case unknownTransferEncoding = "unknownTransferEncoding"
   /// A nested part had unreadable header lines, which were ignored or, when the part began with
   /// one, read with the rest of the part as plain text.
-  case malformedPartHeaders
+  case malformedPartHeaders = "malformedPartHeaders"
   /// The message or a part repeated its Content-Type, Content-Transfer-Encoding or
   /// Content-Disposition header, or its multipart boundary, and its content was skipped; or a
   /// part repeated its filename, which was dropped.
-  case ambiguousPartHeaders
+  case ambiguousPartHeaders = "ambiguousPartHeaders"
   /// Unreadable message header lines were ignored.
-  case malformedMessageHeaders
+  case malformedMessageHeaders = "malformedMessageHeaders"
   /// A multipart body closed before its first part or lacked a delimiter; the early close was
   /// ignored and a missing delimiter left the rest of the body in the final part.
-  case incompleteMultipart
+  case incompleteMultipart = "incompleteMultipart"
   /// A multipart body had no usable boundary parameter and was read as plain text.
-  case invalidMultipartBoundary
+  case invalidMultipartBoundary = "invalidMultipartBoundary"
   /// The message had more than 128 parts or nesting deeper than 12 levels; the rest was skipped.
-  case partLimitExceeded
+  case partLimitExceeded = "partLimitExceeded"
 
   /// Whether the issue left content unread or misread its structure, where mail apps may differ.
   public var concealsContent: Bool {

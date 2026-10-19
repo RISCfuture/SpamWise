@@ -21,7 +21,8 @@ private func reviewRecord(
   return record
 }
 
-@Test func `excludes corrected mail from the Review digest`() {
+@Test
+func `excludes corrected mail from the Review digest`() {
   var state = AppState()
   state.records = [reviewRecord()]
   #expect(ReviewDigest(state: state).records.count == 1)
@@ -43,7 +44,8 @@ func `filters Activity by case-insensitive text and exact account`(
   #expect(query.apply(to: [reviewRecord()]).isEmpty != matches)
 }
 
-@Test func `counts corrected decisions as mistakes and failed actions separately`() {
+@Test
+func `counts corrected decisions as mistakes and failed actions separately`() {
   let statistics = ActivityStatistics(records: [
     reviewRecord(outcome: .failed, correctedLabel: .inbox)
   ])
@@ -55,7 +57,8 @@ func `filters Activity by case-insensitive text and exact account`(
   #expect(statistics.accountDailyCounts["account"]?.values.reduce(0, +) == 1)
 }
 
-@Test func `bounds the reviewed disagreement rate above the observed share`() throws {
+@Test
+func `bounds the reviewed disagreement rate above the observed share`() throws {
   let statistics = ActivityStatistics(
     records: [reviewRecord(correctedLabel: .inbox)]
       + (1...9).map { _ in reviewRecord(correctedLabel: .review) }
@@ -64,7 +67,8 @@ func `filters Activity by case-insensitive text and exact account`(
   #expect(bound > 0.1 && bound < 0.5)
 }
 
-@Test func `pages Activity in the requested order with newest first among ties`() async throws {
+@Test
+func `pages Activity in the requested order with newest first among ties`() async throws {
   let store = try testStore()
   let senders = ["carol@example.com", "alice@example.com", "bob@example.com", "alice@example.com"]
   let records = senders.enumerated().map { index, sender in
@@ -81,26 +85,29 @@ func `filters Activity by case-insensitive text and exact account`(
   #expect(query.apply(to: records).prefix(3).map(\.id) == page.map(\.id))
 }
 
-@Test func `ranks failed Mail actions ahead of less confident Review`() {
+@Test
+func `ranks failed Mail actions ahead of less confident Review`() {
   let failed = reviewRecord(outcome: .failed, confidence: 50)
   let uncertain = reviewRecord(outcome: .noAction, confidence: 1)
   #expect(ReviewPriority.precedes(failed, uncertain))
   #expect(!ReviewPriority.precedes(uncertain, failed))
 }
 
-@Test func `summarizes diagnostic reasons without sender or explanation text`() throws {
+@Test
+func `summarizes diagnostic reasons without sender or explanation text`() throws {
   var unconsented = reviewRecord()
   unconsented.decision.reason = .classificationFailed(.consentRequired)
   var state = AppState()
   state.records = [reviewRecord(), unconsented]
   let summary = DiagnosticSummary(state: state)
   #expect(summary.reasons == ["model": 1, "unclassified: consentRequired": 1])
-  let diagnostic = String(decoding: try JSONEncoder().encode(summary), as: UTF8.self)
+  let diagnostic = try JSONEncoder().encodeText(summary)
   #expect(!diagnostic.contains("person@example.com"))
   #expect(!diagnostic.contains("uncertain"))
 }
 
-@Test func `reads the records of chosen messages newest first`() async throws {
+@Test
+func `reads the records of chosen messages newest first`() async throws {
   let store = try testStore()
   let older = reviewRecord()
   var newer = reviewRecord(outcome: .applied)

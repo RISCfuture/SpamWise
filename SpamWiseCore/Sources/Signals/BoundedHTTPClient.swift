@@ -154,16 +154,16 @@ private final class RedirectRefusingDelegate: NSObject, URLSessionTaskDelegate, 
   init(challenges: BoundedHTTPClient.ChallengePolicy) { self.challenges = challenges }
 
   func urlSession(
-    _ session: URLSession,
-    task: URLSessionTask,
-    willPerformHTTPRedirection response: HTTPURLResponse,
-    newRequest request: URLRequest,
+    _: URLSession,
+    task _: URLSessionTask,
+    willPerformHTTPRedirection _: HTTPURLResponse,
+    newRequest _: URLRequest,
     completionHandler: @escaping @Sendable (URLRequest?) -> Void
   ) { completionHandler(nil) }
 
   func urlSession(
-    _ session: URLSession,
-    task: URLSessionTask,
+    _: URLSession,
+    task _: URLSessionTask,
     didReceive challenge: URLAuthenticationChallenge,
     completionHandler:
       @escaping @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void

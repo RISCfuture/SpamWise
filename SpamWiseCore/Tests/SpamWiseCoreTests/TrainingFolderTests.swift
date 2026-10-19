@@ -3,7 +3,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Training folder corrections` {
   private let store: Store
   private let adapter = RecordingAdapter()
@@ -39,7 +38,8 @@ struct `Training folder corrections` {
     try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [plan] }
   }
 
-  @discardableResult private func correct() async throws -> DecisionRecord {
+  @discardableResult
+  private func correct() async throws -> DecisionRecord {
     try await pipeline.correct(
       envelope: selected,
       label: .inbox,
@@ -62,14 +62,16 @@ struct `Training folder corrections` {
 
   private func state() async throws -> AppState { try await StateRepository.load(store) }
 
-  @Test func `refuses corrections from a folder whose baseline is unvalidated`() async throws {
+  @Test
+  func `refuses corrections from a folder whose baseline is unvalidated`() async throws {
     var unvalidated = plan
     unvalidated.trainingBaselineValidated = false
     try await save(unvalidated)
     await #expect(throws: TrainingFolderError.planInactive) { try await correct() }
   }
 
-  @Test func `corrects each placement once in dry run without classifying or moving it`()
+  @Test
+  func `corrects each placement once in dry run without classifying or moving it`()
     async throws
   {
     try await correct()
@@ -78,7 +80,8 @@ struct `Training folder corrections` {
     #expect(await adapter.actions.isEmpty)
   }
 
-  @Test func `keeps claims and discards observations when a sweep cannot release them`()
+  @Test
+  func `keeps claims and discards observations when a sweep cannot release them`()
     async throws
   {
     try await correct()
@@ -90,14 +93,16 @@ struct `Training folder corrections` {
     #expect(try await state().trainingObservations[plan.id]?.isEmpty == true)
   }
 
-  @Test func `releases the claim once a complete sweep no longer finds the message`() async throws {
+  @Test
+  func `releases the claim once a complete sweep no longer finds the message`() async throws {
     let first = try await correct()
     try await observe()
     #expect(try await state().trainingClaims.isEmpty)
     #expect(try await correct().id != first.id)
   }
 
-  @Test func `keeps the claim when the training correction's move failed`() async throws {
+  @Test
+  func `keeps the claim when the training correction's move failed`() async throws {
     let record = try await correct()
     try await StateRepository.update(store) { state in
       if let index = state.records.firstIndex(where: { $0.id == record.id }) {

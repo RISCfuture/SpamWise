@@ -29,38 +29,42 @@ private func message(_ id: String, readable: Bool = true) -> ReviewMessage {
 }
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Junk provenance` {
-  @Test func `credits SpamWise for its latest move to Junk`() {
+  @Test
+  func `credits SpamWise for its latest move to Junk`() {
     let provenance = JunkProvenance(records: [record(.moveToJunk), record(.moveToInbox)])
     #expect(provenance == .spamWise(.model("Repeated promotion")))
   }
 
-  @Test func `credits the user for a correction to Junk`() {
+  @Test
+  func `credits the user for a correction to Junk`() {
     #expect(JunkProvenance(records: [record(.moveToJunk, path: .correction)]) == .userCorrection)
   }
 
-  @Test func `blames another filter when SpamWise last moved the message to the Inbox`() {
+  @Test
+  func `blames another filter when SpamWise last moved the message to the Inbox`() {
     let provenance = JunkProvenance(records: [record(.moveToInbox), record(.moveToJunk)])
     #expect(provenance == .elsewhere)
   }
 
-  @Test func `ignores moves that dry run or a failure kept from happening`() {
+  @Test
+  func `ignores moves that dry run or a failure kept from happening`() {
     let provenance = JunkProvenance(records: [
       record(.moveToJunk, outcome: .dryRun), record(.moveToJunk, outcome: .failed)
     ])
     #expect(provenance == .elsewhere)
   }
 
-  @Test func `is unknown without any record`() {
+  @Test
+  func `is unknown without any record`() {
     #expect(JunkProvenance(records: []) == .unknown)
   }
 }
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Selected-message batches` {
-  @Test func `skip unreadable and unverified messages individually`() {
+  @Test
+  func `skip unreadable and unverified messages individually`() {
     let batch = SelectionBatch(
       label: .junk,
       scope: .address,
@@ -73,7 +77,8 @@ struct `Selected-message batches` {
     #expect(batch.skipReason(for: message("c", readable: false)) == .unreadable)
   }
 
-  @Test func `summarize corrections, unmoved mail and skipped messages`() {
+  @Test
+  func `summarize corrections, unmoved mail and skipped messages`() {
     let messages = [message("a"), message("b"), message("c")]
     let batch = SelectionBatch(
       label: .junk,
@@ -95,10 +100,11 @@ struct `Selected-message batches` {
   }
 }
 
-@MainActor @Suite
-// swiftlint:disable:next type_name
+@MainActor
+@Suite
 struct `Decision corrections` {
-  @Test func `wait for confirmation before blocking an unverified sender`() {
+  @Test
+  func `wait for confirmation before blocking an unverified sender`() {
     let corrections = CorrectionsModel(services: .preview())
     let unverified = record(.none)
     corrections.correct(unverified, label: .junk)
@@ -108,7 +114,8 @@ struct `Decision corrections` {
     #expect(corrections.pendingDecision == nil)
   }
 
-  @Test func `save a Good correction without asking`() {
+  @Test
+  func `save a Good correction without asking`() {
     let corrections = CorrectionsModel(services: .preview())
     corrections.correct(record(.none), label: .inbox)
     #expect(corrections.pendingDecision == nil)
@@ -116,10 +123,11 @@ struct `Decision corrections` {
   }
 }
 
-@MainActor @Suite
-// swiftlint:disable:next type_name
+@MainActor
+@Suite
 struct `Reviewed-message capacity` {
-  @Test func `counts the corrections an import would displace`() {
+  @Test
+  func `counts the corrections an import would displace`() {
     let shared = SharedStateModel(store: nil, reportsMissingStore: false)
     let corpus = CorpusModel(services: .preview(), shared: shared)
     shared.state.reviewedLabels = (0..<RetentionLimits.reviewedLabels - 2).map {

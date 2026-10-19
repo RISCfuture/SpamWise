@@ -8,14 +8,14 @@ public enum LearningPartition: String, Codable, Sendable {
   /// Selected when evaluating the training split.
   case training
   /// Selected by default when evaluating reviewed labels.
-  case heldOut
+  case heldOut = "heldOut"
 }
 /// Evidence provenance distinguishes explicit corrections from classifier predictions.
 public enum LearningProvenance: String, Codable, Sendable {
   /// A label selected by the user.
-  case explicitCorrection
+  case explicitCorrection = "explicitCorrection"
   /// A prediction admitted by the independent learning gates.
-  case highConfidencePrediction
+  case highConfidencePrediction = "highConfidencePrediction"
 }
 
 /// Bounded features and tokens for local learning without retaining complete message bodies.
@@ -177,7 +177,8 @@ public struct LearningState: Codable, Sendable, Equatable {
   }
 
   /// Admits only independently high-confidence, noncontradictory binary predictions into Bayes training.
-  @discardableResult public mutating func admitPrediction(
+  @discardableResult
+  public mutating func admitPrediction(
     message: ParsedMessage,
     evidence: EvidenceBundle,
     verdict: Verdict,
@@ -322,10 +323,10 @@ public struct LearningState: Codable, Sendable, Equatable {
   private mutating func enforceBounds() {
     var sampleIDs: Set<String> = []
     samples = samples.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date > $1.date }
-      .filter { sampleIDs.insert($0.id).inserted }.prefix(maximumSamples).map { $0 }
+      .filter { sampleIDs.insert($0.id).inserted }.prefix(maximumSamples).map(\.self)
     var fingerprintIDs: Set<String> = []
     fingerprints = fingerprints.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date > $1.date }
-      .filter { fingerprintIDs.insert($0.id).inserted }.prefix(maximumFingerprints).map { $0 }
+      .filter { fingerprintIDs.insert($0.id).inserted }.prefix(maximumFingerprints).map(\.self)
   }
 
   private enum CodingKeys: String, CodingKey {

@@ -20,7 +20,7 @@ struct EvaluationRun {
   static func with<T>(
     _ options: ClassifierOptions,
     seed: AppState,
-    _ body: (EvaluationRun) async throws -> T
+    _ body: (Self) async throws -> T
   ) async throws -> T {
     let temporary = FileManager.default.temporaryDirectory.appending(
       path: "SpamWise-eval-\(UUID())"
@@ -35,7 +35,7 @@ struct EvaluationRun {
       underlying: await options.classifier()
     )
     return try await body(
-      EvaluationRun(pipeline: Pipeline(store: store, classifier: cache), cache: cache)
+      Self(pipeline: Pipeline(store: store, classifier: cache), cache: cache)
     )
   }
 

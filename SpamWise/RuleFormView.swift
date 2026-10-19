@@ -2,7 +2,8 @@ import SwiftUI
 import SpamWiseCore
 
 struct RuleFormView: View {
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
   let rules: RulesModel
   let rule: SenderRule?
   @State private var scope: RuleScope

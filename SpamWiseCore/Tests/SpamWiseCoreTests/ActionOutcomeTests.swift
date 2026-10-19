@@ -2,7 +2,8 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `records action failures separately from verdicts`() async throws {
+@Test
+func `records action failures separately from verdicts`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   await adapter.deny(); try await enableActions(store)
   let pipeline = Pipeline(

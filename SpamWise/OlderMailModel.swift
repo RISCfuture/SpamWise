@@ -4,7 +4,9 @@ import SpamWiseCore
 import MailIntegration
 
 /// Previews of Inbox mail received before automatic filtering started, applied only on request.
-@MainActor @Observable final class OlderMailModel {
+@MainActor
+@Observable
+final class OlderMailModel {
   /// Previewed records awaiting the user's decision to apply them, by account.
   private(set) var previews: [String: [UUID]] = [:]
   @ObservationIgnored private let services: AppServices

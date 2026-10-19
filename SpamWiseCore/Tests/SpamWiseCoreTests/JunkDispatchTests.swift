@@ -3,7 +3,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Junk dispatch with actions enabled` {
   private let store: Store
   private let adapter = RecordingAdapter()
@@ -36,31 +35,36 @@ struct `Junk dispatch with actions enabled` {
     try await StateRepository.editSettings(store) { $0.mailOptions.markJunkRead = true }
   }
 
-  @Test func `persists the decision and action claim before acting`() async throws {
+  @Test
+  func `persists the decision and action claim before acting`() async throws {
     let record = await pipeline.process(try envelope(), adapter: adapter)
     #expect(record.outcome == .applied)
     #expect(await adapter.actions == [.moveToJunk])
     #expect(await adapter.persistedBeforeAction == [true])
   }
 
-  @Test func `records the identity Mail reports after the move`() async throws {
+  @Test
+  func `records the identity Mail reports after the move`() async throws {
     #expect(await pipeline.process(try envelope(), adapter: adapter).identity == moved)
   }
 
-  @Test func `charges the measured cost to the decision's month`() async throws {
+  @Test
+  func `charges the measured cost to the decision's month`() async throws {
     let record = await pipeline.process(try envelope(), adapter: adapter)
     let costs = try await StateRepository.load(store).costByMonth
     #expect(costs[AppState.monthKey(record.date)] == record.verdict?.usage.estimatedCost)
   }
 
-  @Test func `acts once for a repeated delivery`() async throws {
+  @Test
+  func `acts once for a repeated delivery`() async throws {
     let first = await pipeline.process(try envelope(), adapter: adapter)
     let second = await pipeline.process(try envelope(), adapter: adapter)
     #expect(first.id == second.id)
     #expect(await adapter.actions == [.moveToJunk])
   }
 
-  @Test func `previews a processed message without acting or reusing its record`() async throws {
+  @Test
+  func `previews a processed message without acting or reusing its record`() async throws {
     let first = await pipeline.process(try envelope(), adapter: adapter)
     let preview = await pipeline.process(try envelope(), adapter: adapter, forceDryRun: true)
     #expect(preview.id != first.id)
@@ -68,7 +72,8 @@ struct `Junk dispatch with actions enabled` {
     #expect(await adapter.actions == [.moveToJunk])
   }
 
-  @Test func `requests read status only once enabled and not again for a repeated delivery`()
+  @Test
+  func `requests read status only once enabled and not again for a repeated delivery`()
     async throws
   {
     _ = await pipeline.process(try envelope(), adapter: adapter)

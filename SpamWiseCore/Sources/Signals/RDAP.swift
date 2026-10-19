@@ -88,7 +88,7 @@ public actor RDAPLookup {
   }
   private func save(_ domain: String, age: Int?, now: Date) {
     cache = cache.filter { $0.value.expires > now }
-    if cache.count >= Self.maximumCachedDomains, let key = cache.keys.sorted().first {
+    if cache.count >= Self.maximumCachedDomains, let key = cache.keys.min() {
       cache.removeValue(forKey: key)
     }
     cache[domain] = Entry(
@@ -105,6 +105,7 @@ public actor RDAPLookup {
   private struct Bootstrap: Codable { var services: [[[String]]] }
   private struct Response: Decodable {
     var events: [Event]?
+
     struct Event: Decodable { var eventAction: String; var eventDate: String }
   }
 }

@@ -2,7 +2,8 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `extracts optional text attachments without interpreting active documents`() throws {
+@Test
+func `extracts optional text attachments without interpreting active documents`() throws {
   let source = """
     From: person@example.org
     Content-Type: text/html; charset=utf-8
@@ -62,7 +63,8 @@ import SpamWiseCore
   #expect(pdf.coverage.map(\.status) == [.unsupported])
 }
 
-@Test func `reads RFC 2231 parameters and drops repeated filenames`() throws {
+@Test
+func `reads RFC 2231 parameters and drops repeated filenames`() throws {
   func filename(_ disposition: String) throws -> (String?, [DecodingIssue]?) {
     let message = try MIMEParser().parse(
       Data(

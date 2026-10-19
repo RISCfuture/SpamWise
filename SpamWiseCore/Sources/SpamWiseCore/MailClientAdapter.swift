@@ -37,7 +37,7 @@ public protocol MailClientAdapter: Sendable {
 }
 extension MailClientAdapter {
   /// Integrations support every action unless they say otherwise.
-  public func supports(_ action: MailAction) async -> Bool { true }
+  public func supports(_: MailAction) -> Bool { true }
   /// Integrations without broader resolution apply corrections where the message was recorded.
   public func performCorrection(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
@@ -45,7 +45,7 @@ extension MailClientAdapter {
     try await perform(action, for: identity)
   }
   /// Unsupported integrations leave read status unchanged.
-  public func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
+  public func markReadInJunk(_: MessageIdentity) throws -> ActionReceipt {
     throw IntegrationError.unavailable
   }
 }
@@ -156,9 +156,9 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
             "Select one message in the account’s Inbox whose subject starts with “[SpamWise Probe]”.",
           bundle: .module
         )
-      case .selectionCount(let minimum, let maximum) where minimum == 1 && maximum == 1:
+      case let .selectionCount(minimum, maximum) where minimum == 1 && maximum == 1:
         String(localized: "Select one message in Mail, then try again.", bundle: .module)
-      case .selectionCount(let minimum, let maximum):
+      case let .selectionCount(minimum, maximum):
         String(
           localized:
             "Select \(minimum, format: .number) to \(maximum, format: .number) messages in Mail, then try again.",
@@ -215,15 +215,15 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
           localized: "The message is too large for SpamWise to read, so it was left unchanged.",
           bundle: .module
         )
-      case .selectionCount(let minimum, let maximum) where minimum == 1 && maximum == 1:
+      case let .selectionCount(minimum, maximum) where minimum == 1 && maximum == 1:
         String(localized: "Mail doesn’t have exactly one message selected.", bundle: .module)
-      case .selectionCount(let minimum, let maximum):
+      case let .selectionCount(minimum, maximum):
         String(
           localized:
             "Mail doesn’t have \(minimum, format: .number) to \(maximum, format: .number) messages selected.",
           bundle: .module
         )
-      case .folderLimit(let count, let depth):
+      case let .folderLimit(count, depth):
         String(
           localized:
             "Mail has more than \(count, format: .number) mailboxes or folders nested more than \(depth, format: .number) levels deep.",

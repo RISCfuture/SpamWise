@@ -6,11 +6,11 @@ public enum ModelBackend: String, Codable, Sendable, CaseIterable {
   /// Uses the explicitly selected Claude model.
   case claude
   /// Uses Apple’s available on-device model.
-  case onDevice
+  case onDevice = "onDevice"
   /// Uses Apple’s explicitly authorized Private Cloud Compute model.
-  case privateCloudCompute
+  case privateCloudCompute = "privateCloudCompute"
   /// Uses the supported OpenAI Responses model.
-  case openAI
+  case openAI = "openAI"
   /// Uses the supported Gemini model.
   case gemini
 

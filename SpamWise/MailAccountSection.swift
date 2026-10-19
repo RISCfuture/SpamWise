@@ -197,7 +197,7 @@ private struct AccountCoverageView: View {
     if summary.backlog > 0 {
       LabeledContent("Older mail still to check", value: summary.backlog.formatted())
     }
-    UnreadableMailView(count: summary.unreadable)
+    UnreadableMailView(messageCount: summary.unreadable)
   }
 }
 

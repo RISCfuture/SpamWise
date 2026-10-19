@@ -96,6 +96,7 @@ public struct CorrectionUndo: Codable, Sendable, Equatable {
     var corrections: [CorrectionExample]
     var learning: LearningState
     var labels: [ReviewedLabel]
+
     init(state: AppState) {
       rules = state.rules; corrections = state.corrections
       learning = state.learning; labels = state.reviewedLabels

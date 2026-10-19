@@ -10,6 +10,7 @@ private actor InboxFixtureEvents: AppleEventRunner {
   private var accountIDs = ["account"]
   private var arrivals: (read: Int, localIDs: ClosedRange<Int>)?
   private var inboxReads = 0
+
   init(count: Int) { localIDs = Array((1...count).reversed()) }
   /// Messages arrive an hour apart, and messages 1 through 5 arrive before the boundary.
   static func received(_ localID: Int) -> Date {
@@ -22,7 +23,7 @@ private actor InboxFixtureEvents: AppleEventRunner {
   }
   /// Reports another account, as when one is added in Mail after setup.
   func addAccount(_ id: String) { accountIDs.append(id) }
-  func run(_ request: MailRequest) async throws -> ScriptValue {
+  func run(_ request: MailRequest) throws -> ScriptValue {
     if request == .accounts { return .list(accountIDs.map { .list([.string($0), .string($0)]) }) }
     if case .accountPage(.sent, _, _, _, true, _, _) = request {
       return MailReply.page(total: 0, [])
@@ -92,7 +93,8 @@ func `checks every newly delivered Inbox message first and never reads before th
   #expect(try await MailHealthRepository.load(store)["added"]?.inboxStart ?? start > start)
 }
 
-@Test func `applies a current older mail preview and supersedes a stale one`() async throws {
+@Test
+func `applies a current older mail preview and supersedes a stale one`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   let pipeline = Pipeline(

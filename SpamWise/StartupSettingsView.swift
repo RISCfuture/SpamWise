@@ -6,7 +6,8 @@ struct StartupSettingsView: View {
   @State private var status = SMAppService.mainApp.status
   @State private var failure: OperationStatus?
   @State private var busy = false
-  @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.scenePhase)
+  private var scenePhase
 
   var body: some View {
     Section("Startup") {

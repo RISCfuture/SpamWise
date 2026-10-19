@@ -4,13 +4,13 @@
   import SpamWiseCore
 
   struct DeniedAppleEventRunner: AppleEventRunner {
-    func run(_ request: MailRequest) async throws -> ScriptValue {
+    func run(_: MailRequest) throws -> ScriptValue {
       throw IntegrationError.permissionDenied
     }
   }
 
   struct SelectedFixtureAppleEventRunner: AppleEventRunner {
-    func run(_ request: MailRequest) async throws -> ScriptValue {
+    func run(_ request: MailRequest) throws -> ScriptValue {
       guard case .selection = request else { throw IntegrationError.permissionDenied }
       let message = ScriptValue.list([
         .string("ui-test"), .string("Inbox"), .integer(1), .string("automation@example.org"),
@@ -60,7 +60,8 @@
       }
     }
 
-    @MainActor private static func seedVisualState(in store: Store) async throws {
+    @MainActor
+    private static func seedVisualState(in store: Store) async throws {
       let review = PreviewHelper.record, failed = PreviewHelper.failedRecord
       let corrections = PreviewHelper.corrections
       try await MailHealthRepository.update(store, accountID: "ui-test", name: "Example account") {

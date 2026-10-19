@@ -42,7 +42,8 @@ public struct HistoryMaintenance: Sendable {
    - Returns: Whether a run happened.
    - Throws: Cancellation, or a failure when every mailbox failed or Mail denied permission.
    */
-  @discardableResult public func runIfDue(for accounts: [MailAccount], now: Date = .now)
+  @discardableResult
+  public func runIfDue(for accounts: [MailAccount], now: Date = .now)
     async throws -> Bool
   {
     var state = try await store.read(Self.stateKey, default: MaintenanceState())

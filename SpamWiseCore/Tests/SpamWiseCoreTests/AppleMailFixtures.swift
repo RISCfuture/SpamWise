@@ -9,7 +9,7 @@ actor StubAppleEvents: AppleEventRunner {
   private(set) var requests: [MailRequest] = []
   var moves: [MailMessageLocation] {
     requests.compactMap { request in
-      guard case .apply(let command, let location) = request, command.destination != nil else {
+      guard case let .apply(command, location) = request, command.destination != nil else {
         return nil
       }
       return location
@@ -24,6 +24,7 @@ actor StubAppleEvents: AppleEventRunner {
   var appliedCount: Int {
     requests.count { if case .apply = $0 { true } else { false } }
   }
+
   init(_ responses: [MailHandler: [ScriptValue]], delays: [MailHandler: Duration] = [:]) {
     self.responses = responses; self.delays = delays
   }

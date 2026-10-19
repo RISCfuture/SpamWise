@@ -98,7 +98,7 @@ public enum PolicyDistiller {
     }.sorted {
       $0.correctionIDs.count == $1.correctionIDs.count
         ? $0.id < $1.id : $0.correctionIDs.count > $1.correctionIDs.count
-    }.prefix(min(maximumSuggestions, max(0, limit))).map { $0 }
+    }.prefix(min(maximumSuggestions, max(0, limit))).map(\.self)
   }
 }
 
@@ -120,7 +120,7 @@ enum LearningText {
       .filter { $0.count >= minimumTokenCharacters && !stopWords.contains($0) }.prefix(
         maximumTokens
       )
-      .map { $0 }
+      .map(\.self)
   }
 
   /// Selects distinct tokens with the smallest stable hashes, independent of spelling and order.

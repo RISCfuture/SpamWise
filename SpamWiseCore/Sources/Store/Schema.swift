@@ -9,9 +9,11 @@ package enum StoreSchemaV1: VersionedSchema {
   package static var models: [any PersistentModel.Type] { [StoredValue.self] }
 
   /// A small keyed document with a JSON payload.
-  @Model package final class StoredValue {
+  @Model
+  package final class StoredValue {
     /// Unique document name.
-    @Attribute(.unique) package var key: String
+    @Attribute(.unique)
+    package var key: String
     /// JSON-encoded document value.
     package var payload: Data
     /// Creates a document row.
@@ -69,9 +71,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// The latest change-counter value at which a named slice was written.
-@Model package final class ChangeRow {
+@Model
+package final class ChangeRow {
   /// Slice name.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Counter value of the latest write.
   package var value: Int
   /// Creates a counter row.
@@ -79,10 +83,12 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// One Activity decision, with indexed columns for paged and predicate fetches.
-@Model package final class RecordRow: PayloadRow {
+@Model
+package final class RecordRow: PayloadRow {
   #Index<RecordRow>([\.date], [\.identityKey], [\.changeStamp])
   /// Record identifier.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Account-scoped message identity key.
   package var identityKey: String
   /// Mail account identifier, when known.
@@ -115,10 +121,12 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// A durable at-most-once action claim for one message identity.
-@Model package final class ClaimRow {
+@Model
+package final class ClaimRow {
   #Index<ClaimRow>([\.date])
   /// Message identity key.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Record that requested the action.
   package var recordID: String
   /// Time the claim was first written.
@@ -130,9 +138,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// One bounded classification retry.
-@Model package final class RetryRow: PayloadRow {
+@Model
+package final class RetryRow: PayloadRow {
   /// Message identity key.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Mail account identifier, when known.
   package var accountID: String?
   /// JSON-encoded retry job.
@@ -144,9 +154,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// One account's correspondence counts, with its import identities stored separately.
-@Model package final class HistoryRow: PayloadRow {
+@Model
+package final class HistoryRow: PayloadRow {
   /// Mail account identifier.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// JSON-encoded counts, without import identities.
   package var payload: Data
   /// JSON-encoded bounded import identities used only while importing history.
@@ -158,9 +170,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// One explicit reviewed label.
-@Model package final class LabelRow: OrderedPayloadRow {
+@Model
+package final class LabelRow: OrderedPayloadRow {
   /// Content identity.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Ascending position, oldest first.
   package var order: Int
   /// JSON-encoded label.
@@ -172,9 +186,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// One quoted correction example.
-@Model package final class CorrectionRow: OrderedPayloadRow {
+@Model
+package final class CorrectionRow: OrderedPayloadRow {
   /// Example identifier.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Ascending position, oldest first.
   package var order: Int
   /// JSON-encoded example.
@@ -186,9 +202,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// One explicit sender rule.
-@Model package final class SenderRuleRow: OrderedPayloadRow {
+@Model
+package final class SenderRuleRow: OrderedPayloadRow {
   /// Scoped rule identity.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Ascending position, oldest first.
   package var order: Int
   /// JSON-encoded rule.
@@ -200,9 +218,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// One user-authored content rule.
-@Model package final class ContentRuleRow: OrderedPayloadRow {
+@Model
+package final class ContentRuleRow: OrderedPayloadRow {
   /// Rule identifier.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Ascending position, oldest first.
   package var order: Int
   /// JSON-encoded rule.
@@ -214,9 +234,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// The winning-match count of one content rule.
-@Model package final class ContentRuleHitRow: PayloadRow {
+@Model
+package final class ContentRuleHitRow: PayloadRow {
   /// Rule identifier.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// JSON-encoded count.
   package var payload: Data
   /// Creates a count row.
@@ -224,9 +246,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// One configuration or learning audit event.
-@Model package final class AuditRow: OrderedPayloadRow {
+@Model
+package final class AuditRow: OrderedPayloadRow {
   /// Event identifier.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// Ascending position, oldest first.
   package var order: Int
   /// JSON-encoded event.
@@ -238,9 +262,11 @@ package protocol OrderedPayloadRow: PayloadRow {
 }
 
 /// Durable sweep progress for one account or configured folder.
-@Model package final class MailHealthRow: PayloadRow {
+@Model
+package final class MailHealthRow: PayloadRow {
   /// Account identifier or folder cursor key.
-  @Attribute(.unique) package var key: String
+  @Attribute(.unique)
+  package var key: String
   /// JSON-encoded progress.
   package var payload: Data
   /// Creates a progress row.

@@ -3,7 +3,8 @@ import Testing
 import SpamWiseCore
 @testable import Evaluation
 
-@Test func `separates graymail and failures from binary calibration`() throws {
+@Test
+func `separates graymail and failures from binary calibration`() throws {
   let observations = [
     EvaluationObservation(
       file: "good/a",
@@ -55,7 +56,8 @@ import SpamWiseCore
   #expect(BinomialBound.upper95(errors: 0, trials: 0) == nil)
 }
 
-@Test func `caches model responses while recomputing threshold decisions`() async throws {
+@Test
+func `caches model responses while recomputing threshold decisions`() async throws {
   let message = try MIMEParser().parse(fixture("filler-spam"))
   let input = ClassificationInput(message: message, evidence: .init(message: message))
   let calls = Counter()
@@ -96,7 +98,8 @@ import SpamWiseCore
   #expect(calls.value == 3)
 }
 
-@Test func `partitions reviewed content and reports missing retained messages`() throws {
+@Test
+func `partitions reviewed content and reports missing retained messages`() throws {
   let message = try MIMEParser().parse(fixture("personal"))
   let identity = MessageIdentity(
     accountID: "fixture",
@@ -134,7 +137,8 @@ import SpamWiseCore
   #expect(migrated.heldOut == label.heldOut)
 }
 
-@Test func `collapses redelivered reviewed content and rejects conflicting labels`() throws {
+@Test
+func `collapses redelivered reviewed content and rejects conflicting labels`() throws {
   let original = try MIMEParser().parse(fixture("personal"))
   var redelivered = original
   redelivered.headers["received"] = ["another delivery route"]
@@ -156,7 +160,8 @@ import SpamWiseCore
   }
 }
 
-@Test func `compares identical frozen cohorts and rejects leakage or missing results`() throws {
+@Test
+func `compares identical frozen cohorts and rejects leakage or missing results`() throws {
   let url = try #require(
     Bundle.module.url(forResource: "comparison", withExtension: "json", subdirectory: "Fixtures")
   )
@@ -190,7 +195,8 @@ import SpamWiseCore
   }
 }
 
-@Test func `invalidates threat cache across account evidence policy and enriched text`()
+@Test
+func `invalidates threat cache across account evidence policy and enriched text`()
   async throws
 {
   let message = try MIMEParser().parse(fixture("personal")), calls = Counter()
@@ -240,7 +246,8 @@ import SpamWiseCore
   #expect(await cached.hits == 1)
 }
 
-@Test func `keeps threat truth and unknown coverage separate across objectives and languages`()
+@Test
+func `keeps threat truth and unknown coverage separate across objectives and languages`()
   throws
 {
   let message = try MIMEParser().parse(fixture("personal"))
@@ -339,7 +346,8 @@ func `refuses evaluation spending without an explicit ledger and ceiling and sto
   #expect(await cached.refusal is BudgetError)
 }
 
-@Test func `selects the lowest threshold meeting each target on training data and validates it`() {
+@Test
+func `selects the lowest threshold meeting each target on training data and validates it`() {
   let training =
     rows(3000, truth: .good, label: .inbox, partition: .training)
     + rows(2, truth: .good, label: .junk, confidence: 92, partition: .training)
@@ -360,7 +368,8 @@ func `refuses evaluation spending without an explicit ledger and ceiling and sto
   #expect(calibration.curve.first { $0.threshold == 93 }?.cumulativePrecision == 10.0 / 11)
 }
 
-@Test func `seeds receipt history for the order-confirmation fixture sender`() throws {
+@Test
+func `seeds receipt history for the order-confirmation fixture sender`() throws {
   let url = URL(filePath: #filePath).deletingLastPathComponent()
     .appending(path: "../../../eval/fixture-state.json").standardized
   let state = try JSONDecoder().decode(AppState.self, from: Data(contentsOf: url))

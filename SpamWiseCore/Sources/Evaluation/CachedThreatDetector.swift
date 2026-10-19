@@ -4,7 +4,7 @@ public import SpamWiseCore
 /// Caches independent findings by effective content, account, evidence and complete detector identity.
 public actor CachedThreatDetector: ThreatDetector {
   /// The underlying inference identity, including its network requirement.
-  public nonisolated let identity: ThreatDetectorIdentity
+  nonisolated public let identity: ThreatDetectorIdentity
   private let directory: URL
   private let underlying: any ThreatDetector
   /// Valid responses reused without inference.

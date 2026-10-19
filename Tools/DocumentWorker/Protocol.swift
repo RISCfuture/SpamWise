@@ -34,8 +34,17 @@ struct DocumentResult: Codable, Sendable, Equatable {
   }
 
   enum Status: String, Codable, Sendable {
-    case extracted, encrypted, malformed, inputLimit, pageLimit, unreadable
-    case unavailable, deadline, invalidReply, busy, cancelled
+    case extracted
+    case encrypted
+    case malformed
+    case inputLimit = "inputLimit"
+    case pageLimit = "pageLimit"
+    case unreadable
+    case unavailable
+    case deadline
+    case invalidReply = "invalidReply"
+    case busy
+    case cancelled
   }
 }
 
@@ -47,7 +56,8 @@ struct DocumentResult: Codable, Sendable, Equatable {
   }
 #endif
 
-@objc protocol DocumentWorkerProtocol {
+@objc
+protocol DocumentWorkerProtocol {
   func identity(withReply reply: @escaping @Sendable (Int32) -> Void)
   func inspectPDF(_ data: Data, withReply reply: @escaping @Sendable (Data) -> Void)
   func terminate()

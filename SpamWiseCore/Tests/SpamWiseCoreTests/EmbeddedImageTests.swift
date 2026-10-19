@@ -37,7 +37,8 @@ extension EmbeddedImageOCR {
   }
 }
 
-@Test func `recognizes text only from bounded embedded image bytes`() async throws {
+@Test
+func `recognizes text only from bounded embedded image bytes`() async throws {
   let ocr = EmbeddedImageOCR { data in
     #expect(data == Data(base64Encoded: pixelPNG))
     return "Offer shown inside image"
@@ -63,7 +64,8 @@ extension EmbeddedImageOCR {
   #expect(text.count <= 3000)
 }
 
-@Test func `rejects oversized image payloads and dimensions before recognition`()
+@Test
+func `rejects oversized image payloads and dimensions before recognition`()
   async throws
 {
   let ocr = EmbeddedImageOCR { _ in

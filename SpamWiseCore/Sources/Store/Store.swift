@@ -70,7 +70,7 @@ public actor Store {
   private static let lockBackoffFactor = 2
   private static let containers = Mutex<[URL: ModelContainer]>([:])
   /// Location of the durable shared store.
-  public nonisolated let url: URL
+  nonisolated public let url: URL
   /// Creates the parent directory of `url` with owner-only permissions; the database opens on first use.
   public init(url: URL) throws {
     self.url = url
@@ -99,7 +99,7 @@ public actor Store {
     }
   }
   /// Reads the stored documents among several keys in one transaction, omitting absent keys.
-  public func read<T: Codable & Sendable>(_ keys: Set<String>, as type: T.Type) async throws
+  public func read<T: Codable & Sendable>(_ keys: Set<String>, as _: T.Type) async throws
     -> [String: T]
   {
     try await transaction { context in try context.documents(keys, as: T.self) }
@@ -110,9 +110,10 @@ public actor Store {
    The body receives the stored documents among `keys`, omitting absent keys. Documents it adds
    or changes for those keys are committed; other keys and removed entries are left unchanged.
    */
-  @discardableResult public func update<T: Codable & Sendable, R: Sendable>(
+  @discardableResult
+  public func update<T: Codable & Sendable, R: Sendable>(
     _ keys: Set<String>,
-    as type: T.Type,
+    as _: T.Type,
     _ body: @Sendable (inout [String: T]) throws -> R
   ) async throws -> R {
     try await transaction { context in
@@ -126,7 +127,8 @@ public actor Store {
     }
   }
   /// Atomically reads, modifies, and commits a small keyed document.
-  @discardableResult public func update<T: Codable & Sendable, R: Sendable>(
+  @discardableResult
+  public func update<T: Codable & Sendable, R: Sendable>(
     _ key: String,
     default fallback: T,
     _ body: @Sendable (inout T) throws -> R
@@ -229,7 +231,7 @@ extension ModelContext {
       .payload
   }
   /// Decoded documents among `keys`, omitting absent keys.
-  package func documents<T: Decodable>(_ keys: Set<String>, as type: T.Type) throws -> [String: T] {
+  package func documents<T: Decodable>(_ keys: Set<String>, as _: T.Type) throws -> [String: T] {
     let wanted = Array(keys)
     return try fetch(
       FetchDescriptor<StoredValue>(predicate: #Predicate { wanted.contains($0.key) })

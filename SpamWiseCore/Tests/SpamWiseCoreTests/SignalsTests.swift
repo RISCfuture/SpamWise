@@ -35,7 +35,8 @@ func `prioritizes address rules over domain and authenticated relationship gates
   #expect(gate?.reason == expected)
 }
 
-@Test func `replaces same scope rules with the latest correction`() {
+@Test
+func `replaces same scope rules with the latest correction`() {
   let old = SenderRule(scope: .address, value: "Jane@example.org", disposition: .block)
   let new = SenderRule(scope: .address, value: "jane@example.org", disposition: .allow)
   let rules = Gates.replacing(new, in: [old])
@@ -53,7 +54,8 @@ func `summarizes missing history without inventing a relationship`(
   #expect(history.summary.contains(phrase))
 }
 
-@Test func `leaves a sender with unknown contacts and history to the classifier`() {
+@Test
+func `leaves a sender with unknown contacts and history to the classifier`() {
   #expect(
     Gates.evaluate(
       address: "jane@example.org",
@@ -92,8 +94,9 @@ func `allows contacts and correspondents only with aligned trusted authenticatio
 actor StubRDAP: HTTPFetcher {
   var calls = 0
   var fail: Bool
+
   init(fail: Bool = false) { self.fail = fail }
-  func fetch(_ url: URL) async throws -> Data {
+  func fetch(_ url: URL) throws -> Data {
     calls += 1
     if fail { throw URLError(.timedOut) }
     if url.host == "data.iana.org" {
@@ -105,11 +108,13 @@ actor StubRDAP: HTTPFetcher {
   }
 }
 
-@Test func `leaves domain age unknown after an RDAP lookup failure`() async {
+@Test
+func `leaves domain age unknown after an RDAP lookup failure`() async {
   #expect(await RDAPLookup(fetcher: StubRDAP(fail: true)).ageDays(domain: "example.com") == nil)
 }
 
-@Test func `caches RDAP registration age`() async throws {
+@Test
+func `caches RDAP registration age`() async throws {
   let network = StubRDAP(), rdap = RDAPLookup(fetcher: network)
   let now = try #require(ISO8601DateFormatter().date(from: "2026-01-11T00:00:00Z"))
   #expect(await rdap.ageDays(domain: "example.com", now: now) == 10)
@@ -118,7 +123,6 @@ actor StubRDAP: HTTPFetcher {
 }
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Store sharing between instances` {
   private let first: Store, second: Store
 
@@ -134,11 +138,13 @@ struct `Store sharing between instances` {
     }
   }
 
-  @Test func `shares committed documents across instances`() async throws {
+  @Test
+  func `shares committed documents across instances`() async throws {
     #expect(try await second.read("rules", default: [SenderRule]()).count == 1)
   }
 
-  @Test func `rolls back a transaction whose body throws`() async throws {
+  @Test
+  func `rolls back a transaction whose body throws`() async throws {
     await #expect(throws: ParseError.tooLarge) {
       try await second.update("rules", default: [SenderRule]()) { rules in
         rules = []; throw ParseError.tooLarge

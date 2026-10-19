@@ -32,7 +32,10 @@ extension Pipeline {
   func saveAfterAction(_ record: DecisionRecord) async throws {
     var attempt = 1
     while true {
-      do { return try await save(record) } catch let error as StoreError
+      do {
+        try await save(record)
+        return
+      } catch let error as StoreError
         where error.retryable && attempt < Self.maximumPostActionSaveAttempts
       {
         attempt += 1

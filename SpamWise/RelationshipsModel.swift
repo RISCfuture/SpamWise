@@ -3,7 +3,9 @@ import Observation
 import SpamWiseCore
 
 /// Relationship evidence: Contacts, imported correspondence history and trust exclusions.
-@MainActor @Observable final class RelationshipsModel {
+@MainActor
+@Observable
+final class RelationshipsModel {
   private static let contactsRefreshInterval: Duration = .seconds(3600)
   /// Connecting or refreshing Contacts.
   let contacts = TrackedOperation()

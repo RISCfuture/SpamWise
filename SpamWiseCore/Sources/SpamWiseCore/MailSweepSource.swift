@@ -132,8 +132,8 @@ public protocol MailSweepSource: MailClientAdapter {
 
 extension MailSweepSource {
   /// Clients without configurable folders cannot resolve any folder plan.
-  public func folderPage(_ folder: MailFolder, offset: Int, limit: Int, since: Date?)
-    async throws -> MailPage
+  public func folderPage(_: MailFolder, offset _: Int, limit _: Int, since _: Date?)
+    throws -> MailPage
   {
     throw IntegrationError.folderUnresolved
   }

@@ -1,6 +1,7 @@
 import XCTest
 
-@MainActor struct ActivityScreen {
+@MainActor
+struct ActivityScreen {
   let app: XCUIApplication
 
   /// The footer's filtering state, read from its `activity.mode.<state>` identifier.
@@ -90,7 +91,8 @@ import XCTest
   }
 }
 
-@MainActor enum UITestApplication {
+@MainActor
+enum UITestApplication {
   static func make(url: URL? = nil) -> XCUIApplication {
     let appURL =
       url

@@ -16,7 +16,9 @@ public struct MailFolder: Codable, Sendable, Hashable, Identifiable {
 
 /// The operation explicitly selected for a dedicated mailbox.
 public enum MailFolderPurpose: String, Codable, Sendable, CaseIterable {
-  case filter, trainGood, trainJunk
+  case filter
+  case trainGood = "trainGood"
+  case trainJunk = "trainJunk"
 }
 
 /// Opt-in processing scope; removing or renaming a mailbox fails closed.

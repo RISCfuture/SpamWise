@@ -86,7 +86,8 @@ func `skips settled mail but not live previews across eviction, failures and ret
   )
   #expect(calls.value == classified + 1)
 }
-@Test func `records unavailable shared storage as a transient failure`() async throws {
+@Test
+func `records unavailable shared storage as a transient failure`() async throws {
   let store = try testStore(), fresh = try envelope("unsolicited-newsletter")
   let unclassifiable = MockClassifier(operation: { _ in throw ClassificationError.network })
   let pipeline = Pipeline(store: store, classifier: unclassifiable)
@@ -132,7 +133,8 @@ func `skips settled mail but not live previews across eviction, failures and ret
   )
   #expect(settled == [fresh.identity.key])
 }
-@Test func `keeps evicted action claims without classifying again`() async throws {
+@Test
+func `keeps evicted action claims without classifying again`() async throws {
   let store = try testStore(), adapter = RecordingAdapter(), calls = Counter()
   try await enableActions(store)
   let pipeline = Pipeline(
@@ -151,7 +153,8 @@ func `skips settled mail but not live previews across eviction, failures and ret
   #expect(await adapter.actions == [.moveToJunk])
   #expect(try await StateRepository.load(store).records.isEmpty)
 }
-@Test func `settles existing Activity once without classifying it again`() async throws {
+@Test
+func `settles existing Activity once without classifying it again`() async throws {
   let store = try testStore(), calls = Counter()
   let classifier = MockClassifier(operation: { _ in
     calls.increment()

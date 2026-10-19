@@ -90,8 +90,9 @@ enum ResolverQuery {
 
   private static func isAddress(_ record: res_9_ns_rr, for name: String) -> Bool {
     let owner = unsafe withUnsafeBytes(of: record.name) {
-      unsafe String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self)
+      unsafe String(bytes: $0.prefix { $0 != 0 }, encoding: .utf8)
     }
+    guard let owner else { return false }
     return unsafe record.type == UInt16(ns_t_a.rawValue)
       && record.rr_class == UInt16(ns_c_in.rawValue)
       && Int(record.rdlength) == addressRecordBytes
@@ -103,6 +104,6 @@ enum ResolverQuery {
     guard unsafe inet_ntop(AF_INET, rdata, &text, socklen_t(text.count)) != nil else {
       return nil
     }
-    return String(decoding: text.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
+    return String(bytes: text.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, encoding: .utf8)
   }
 }

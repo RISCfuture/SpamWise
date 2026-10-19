@@ -19,6 +19,8 @@ extension KeyedDecodingContainer {
    - Returns: The decoded value, or `fallback` when the key is missing or its value cannot be read.
    */
   public func lenient<T: Decodable>(_ key: Key, default fallback: T) -> T {
+    // When `T` is itself optional, `?? nil` collapses a decoded `.some(nil)`, so it falls back too.
+    // swiftlint:disable:next redundant_nil_coalescing
     ((try? decodeIfPresent(T.self, forKey: key)) ?? nil) ?? fallback
   }
 }

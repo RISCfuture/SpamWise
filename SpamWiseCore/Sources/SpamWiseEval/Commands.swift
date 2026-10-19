@@ -14,9 +14,9 @@ struct ReportOutput: ParsableArguments {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     encoder.dateEncodingStrategy = .iso8601
-    let data = try encoder.encode(report)
-    if let output { try data.write(to: URL(filePath: output), options: .atomic) }
-    print(String(decoding: data, as: UTF8.self))
+    let text = try encoder.encodeText(report)
+    if let output { try Data(text.utf8).write(to: URL(filePath: output), options: .atomic) }
+    print(text)
   }
 }
 

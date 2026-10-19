@@ -2,7 +2,8 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test(arguments: FilteringStrength.allCases) func `selects actions at each decision threshold`(
+@Test(arguments: FilteringStrength.allCases)
+func `selects actions at each decision threshold`(
   _ strength: FilteringStrength
 ) throws {
   func action(_ label: MailLabel, _ confidence: Int) throws -> Decision {
@@ -17,25 +18,29 @@ import SpamWiseCore
   #expect(try action(.junk, strength.threshold).action == .moveToJunk)
 }
 
-@Test func `annotates Review with the chosen treatment`() throws {
+@Test
+func `annotates Review with the chosen treatment`() throws {
   let verdict = Verdict(label: .review, confidence: 50, reason: "uncertain")
   #expect(try Decision.evaluate(verdict, review: .orangeBackground).action == .orangeBackground)
 }
 
-@Test func `rejects confidence outside 0 through 100`() {
+@Test
+func `rejects confidence outside 0 through 100`() {
   #expect(throws: ClassificationError.self) {
     try Decision.evaluate(.init(label: .junk, confidence: 999, reason: "invalid"))
   }
 }
 
-@Test func `records a dry run without acting by default`() async throws {
+@Test
+func `records a dry run without acting by default`() async throws {
   let adapter = RecordingAdapter()
   let pipeline = Pipeline(store: try testStore(), classifier: junkClassifier)
   #expect(await pipeline.process(try envelope(), adapter: adapter).outcome == .dryRun)
   #expect(await adapter.actions.isEmpty)
 }
 
-@Test func `records a pause without acting`() async throws {
+@Test
+func `records a pause without acting`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   try await StateRepository.update(store) { $0.settings.paused = true }
@@ -44,7 +49,8 @@ import SpamWiseCore
   #expect(await adapter.actions.isEmpty)
 }
 
-@Test func `leaves mail unclassified without acting when classification fails`() async throws {
+@Test
+func `leaves mail unclassified without acting when classification fails`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   let pipeline = Pipeline(
@@ -81,7 +87,8 @@ func `makes no evidence lookups in local-only mode or with lookups off`(
   #expect(await network.calls == 0)
 }
 
-@Test func `rejects cloud classification in local-only mode before reading credentials`()
+@Test
+func `rejects cloud classification in local-only mode before reading credentials`()
   async throws
 {
   let store = try testStore()
@@ -101,7 +108,8 @@ func `makes no evidence lookups in local-only mode or with lookups off`(
   }
 }
 
-@Test func `supersedes pending verdicts when a correction arrives`() async throws {
+@Test
+func `supersedes pending verdicts when a correction arrives`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   let initial = Pipeline(
@@ -141,7 +149,8 @@ func `makes no evidence lookups in local-only mode or with lookups off`(
   #expect(await adapter.actions == [.moveToInbox])
 }
 
-@Test func `prevents actions after persistence fails`() async throws {
+@Test
+func `prevents actions after persistence fails`() async throws {
   let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
   try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
   let store = try Store(url: dir)

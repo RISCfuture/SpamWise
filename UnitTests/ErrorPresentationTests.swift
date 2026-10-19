@@ -4,7 +4,6 @@ import SpamWiseCore
 @testable import SpamWiseCommon
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Shortcuts action failures` {
   @Test(arguments: [
     (IntegrationError.permissionDenied as any Error, AutomationIntentError.permissionDenied),
@@ -25,7 +24,8 @@ struct `Shortcuts action failures` {
     #expect(AutomationIntentError(underlying) == expected)
   }
 
-  @Test func `start a new request unless the shortcut supplies a UUID`() throws {
+  @Test
+  func `start a new request unless the shortcut supplies a UUID`() throws {
     let saved = UUID()
     #expect(try AutomationRequestID.resolve(" \(saved.uuidString)\n") == saved)
     #expect(try AutomationRequestID.resolve(nil) != AutomationRequestID.resolve(" "))
@@ -36,11 +36,11 @@ struct `Shortcuts action failures` {
 }
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Bounded file imports` {
   private static let maximumBytes = 8
 
-  @Test func `read a file at the limit and refuse a larger one`() throws {
+  @Test
+  func `read a file at the limit and refuse a larger one`() throws {
     let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: directory) }

@@ -9,7 +9,9 @@ import SpamWiseCore
  Each control writes only its own field. Steppers and text fields edit through a
  ``SettingDraft``, so a burst of clicks or keystrokes makes one write.
  */
-@MainActor @Observable final class SettingsModel {
+@MainActor
+@Observable
+final class SettingsModel {
   private static let stepperDelay: Duration = .milliseconds(600)
   private static let textDelay: Duration = .milliseconds(1500)
   /// The default policy in the user's language, shown in place of the stored English default.
@@ -32,41 +34,39 @@ import SpamWiseCore
   /// The filtering policy, saved after a pause in typing; one over the limit stays unsaved.
   @ObservationIgnored private(set) lazy var policy = SettingDraft(
     delay: Self.textDelay,
-    persisted: { [unowned self] in Self.displayedPolicy(settings.policy) },
+    persisted: { [shared] in Self.displayedPolicy(shared.state.settings.policy) },
     accepts: { $0.count <= ClassificationLimits.maximumPolicyCharacters },
-    save: { [unowned self] in setSetting(\.policy, to: $0) }
+    save: { [weak self] in self?.setSetting(\.policy, to: $0) }
   )
   /// How many similar corrections accompany each message.
   @ObservationIgnored private(set) lazy var correctionLimit = SettingDraft(
     delay: Self.stepperDelay,
-    persisted: { [unowned self] in settings.correctionLimit },
-    save: { [unowned self] in setSetting(\.correctionLimit, to: $0) }
+    persisted: { [shared] in shared.state.settings.correctionLimit },
+    save: { [weak self] in self?.setSetting(\.correctionLimit, to: $0) }
   )
   /// How much message text accompanies each message, in estimated tokens.
   @ObservationIgnored private(set) lazy var bodyTokenBudget = SettingDraft(
     delay: Self.stepperDelay,
-    persisted: { [unowned self] in settings.bodyTokenBudget },
-    save: { [unowned self] in setSetting(\.bodyTokenBudget, to: $0) }
+    persisted: { [shared] in shared.state.settings.bodyTokenBudget },
+    save: { [weak self] in self?.setSetting(\.bodyTokenBudget, to: $0) }
   )
   /// The shortest time between notifications, in minutes.
   @ObservationIgnored private(set) lazy var notificationIntervalMin = SettingDraft(
     delay: Self.stepperDelay,
-    persisted: { [unowned self] in settings.mailOptions.notifications.intervalMin },
-    save: { [unowned self] in setSetting(\.mailOptions.notifications.intervalMin, to: $0) }
+    persisted: { [shared] in shared.state.settings.mailOptions.notifications.intervalMin },
+    save: { [weak self] in self?.setSetting(\.mailOptions.notifications.intervalMin, to: $0) }
   )
   /// The DNS resolver for public Spamhaus lookups; only an IPv4 address is saved.
   @ObservationIgnored private(set) lazy var resolverAddress = SettingDraft(
     delay: Self.textDelay,
-    persisted: { [unowned self] in evidence.resolverAddress },
+    persisted: { [shared] in Self.evidence(in: shared.state.settings).resolverAddress },
     accepts: { IPv4Address($0) != nil },
-    save: { [unowned self] address in editEvidence { $0.resolverAddress = address } }
+    save: { [weak self] address in self?.editEvidence { $0.resolverAddress = address } }
   )
 
   var settings: SpamWiseCore.Settings { shared.state.settings }
   /// The optional evidence configuration, or its disabled defaults.
-  var evidence: ExternalEvidenceSettings {
-    settings.advancedOptions.externalEvidence ?? ExternalEvidenceSettings()
-  }
+  var evidence: ExternalEvidenceSettings { Self.evidence(in: settings) }
   /// Whether local-only mode is on while a network provider is still selected.
   var hasLocalOnlyConflict: Bool {
     settings.mailOptions.localOnly && settings.advancedOptions.backend != .onDevice
@@ -78,8 +78,13 @@ import SpamWiseCore
     policy == PromptBuilder.defaultPolicy ? localizedDefaultPolicy : policy
   }
 
+  private static func evidence(in settings: SpamWiseCore.Settings) -> ExternalEvidenceSettings {
+    settings.advancedOptions.externalEvidence ?? ExternalEvidenceSettings()
+  }
+
   /// Applies `edit` locally, then persists it after every earlier settings write.
-  @discardableResult func editSettings(
+  @discardableResult
+  func editSettings(
     _ edit: @escaping @Sendable (inout SpamWiseCore.Settings) -> Void
   ) -> Task<Void, Never> {
     guard let store = shared.store else { return Task {} }
@@ -98,7 +103,8 @@ import SpamWiseCore
     }
   }
 
-  @discardableResult func setSetting<T: Sendable>(
+  @discardableResult
+  func setSetting<T: Sendable>(
     _ key: any WritableKeyPath<SpamWiseCore.Settings, T> & Sendable,
     to value: T
   ) -> Task<Void, Never> {
@@ -232,7 +238,8 @@ import SpamWiseCore
   }
 
   /// Runs `write` after every earlier settings write, then reloads shared storage.
-  @discardableResult private func enqueueWrite(
+  @discardableResult
+  private func enqueueWrite(
     _ write: @escaping @MainActor () async -> Void
   ) -> Task<Void, Never> {
     let previous = tail

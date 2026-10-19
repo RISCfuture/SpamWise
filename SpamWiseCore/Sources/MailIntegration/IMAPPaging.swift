@@ -8,6 +8,7 @@ extension IMAPAdapter {
   private static let maximumArrivalPages = 5
   private static let maximumArrivalScanPages = 20
   private static let maximumBackfillDepth = 10_000
+
   static func messages(
     mailbox: String,
     account: String,
@@ -24,7 +25,7 @@ extension IMAPAdapter {
     } else {
       selected = try await select(mailbox, writable: false, session: session)
     }
-    guard selected.count > 0 else { return ([], 0) }
+    guard !selected.isEmpty else { return ([], 0) }
     let last = max(1, selected.count - offset)
     let first = max(1, last - min(limit, maximumPageSize) + 1)
     let metadata = try await metadata(
@@ -165,7 +166,7 @@ extension IMAPAdapter {
     async throws -> Int
   {
     if let uidNext = selection.uidNext { return uidNext - 1 }
-    guard selection.count > 0 else { return 0 }
+    guard !selection.isEmpty else { return 0 }
     let count = selection.count
     guard let newest = try await metadata(range: count...count, limit: 1, session: session).first
     else { throw IMAPError.malformedResponse }

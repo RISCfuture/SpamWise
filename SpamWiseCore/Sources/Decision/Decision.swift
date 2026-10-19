@@ -18,9 +18,9 @@ public enum FilteringStrength: String, Codable, Sendable, CaseIterable {
 /// The annotation applied to Review messages left in Inbox.
 public enum ReviewTreatment: String, Codable, Sendable, CaseIterable {
   /// Marks Review messages with an orange flag.
-  case orangeFlag
+  case orangeFlag = "orangeFlag"
   /// Marks Review messages with an orange background.
-  case orangeBackground
+  case orangeBackground = "orangeBackground"
   /// The mail action that applies this annotation.
   public var action: MailAction { self == .orangeFlag ? .orangeFlag : .orangeBackground }
 }
@@ -29,20 +29,20 @@ public enum MailAction: String, Codable, Sendable {
   /// Leaves the message unchanged.
   case none
   /// Applies the orange Review flag.
-  case orangeFlag
+  case orangeFlag = "orangeFlag"
   /// Applies the orange Review background.
-  case orangeBackground
+  case orangeBackground = "orangeBackground"
   /// Moves the message into the account’s Junk mailbox.
-  case moveToJunk
+  case moveToJunk = "moveToJunk"
   /// Moves the message into the account’s Inbox.
-  case moveToInbox
+  case moveToInbox = "moveToInbox"
   /// Removes the orange Review flag, leaving any other flag the user set.
-  case clearOrangeFlag
+  case clearOrangeFlag = "clearOrangeFlag"
   /// Removes the orange Review background, leaving any other color the user set.
-  case clearOrangeBackground
+  case clearOrangeBackground = "clearOrangeBackground"
 
   /// The action that removes this Review annotation, or nil when this is not an annotation.
-  public var clearingAnnotation: MailAction? {
+  public var clearingAnnotation: Self? {
     switch self {
       case .orangeFlag: .clearOrangeFlag
       case .orangeBackground: .clearOrangeBackground
@@ -53,9 +53,9 @@ public enum MailAction: String, Codable, Sendable {
 /// Observed dispatch state, independent of the model verdict.
 public enum ActionOutcome: String, Codable, Sendable {
   /// The decision requires no mail operation.
-  case noAction
+  case noAction = "noAction"
   /// Dry run suppressed the intended operation.
-  case dryRun
+  case dryRun = "dryRun"
   /// The user paused filtering.
   case paused
   /// The decision is persisted and awaits dispatch evaluation.
@@ -73,7 +73,7 @@ public enum ActionOutcome: String, Codable, Sendable {
   /// An existing action claim or in-flight operation suppressed duplicate work.
   case duplicate
   /// No validated integration could perform the action.
-  case integrationUnavailable
+  case integrationUnavailable = "integrationUnavailable"
 }
 /// An intended label and supported mail action.
 public struct Decision: Codable, Sendable, Equatable {
@@ -119,7 +119,7 @@ public struct Decision: Codable, Sendable, Equatable {
     strength: FilteringStrength = .balanced,
     review: ReviewTreatment = .orangeFlag,
     concealsContent: Bool = false
-  ) throws -> Decision {
+  ) throws -> Self {
     try evaluate(
       verdict,
       reason: reason,
@@ -146,7 +146,7 @@ public struct Decision: Codable, Sendable, Equatable {
     junkThreshold: Int,
     review: ReviewTreatment = .orangeFlag,
     concealsContent: Bool = false
-  ) throws -> Decision {
+  ) throws -> Self {
     _ = try verdict.validated()
     var label =
       verdict.label == .junk && verdict.confidence < junkThreshold

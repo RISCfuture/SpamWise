@@ -21,7 +21,7 @@ public enum ThreatStatus: String, Codable, Sendable {
   /// Evidence supports the objective.
   case detected
   /// The covered analysis did not detect the objective.
-  case notDetected
+  case notDetected = "notDetected"
   /// The objective could not be assessed.
   case unknown
 }
@@ -144,7 +144,7 @@ public struct ThreatAssessment: Codable, Sendable, Equatable {
     input: ThreatInput,
     reason: String,
     detector: ThreatDetectorIdentity? = nil
-  ) throws -> ThreatAssessment {
+  ) throws -> Self {
     try .init(
       input: input,
       detector: detector,
@@ -180,5 +180,4 @@ public struct ThreatAssessment: Codable, Sendable, Equatable {
       else { throw ClassificationError.invalidOutput }
     }
   }
-
 }

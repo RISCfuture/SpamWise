@@ -37,7 +37,7 @@ struct OperationFailure: Equatable {
     }
     let details = (error as? any LocalizedError).map {
       [$0.errorDescription, $0.failureReason, $0.recoverySuggestion]
-        .compactMap { $0 }.filter { !$0.isEmpty }
+        .compactMap(\.self).filter { !$0.isEmpty }
     }
     guard let details, !details.isEmpty else {
       return String(
@@ -63,7 +63,9 @@ struct OperationFailure: Equatable {
  never dropped. Each run's result replaces ``status``: its message, nothing on a silent success,
  or its failure. Different operations run independently of each other.
  */
-@MainActor @Observable final class TrackedOperation {
+@MainActor
+@Observable
+final class TrackedOperation {
   /// Whether a run is executing or waiting for an earlier one.
   private(set) var isBusy = false
   /// The latest run's result, cleared when a run starts.
@@ -86,7 +88,8 @@ struct OperationFailure: Equatable {
      - work: Returns a neutral message to show, or nil to show nothing.
    - Returns: The run, which finishes after its status is set.
    */
-  @discardableResult func run(
+  @discardableResult
+  func run(
     retryable: Bool = false,
     _ work: @escaping @MainActor () async throws -> String?
   ) -> Task<Void, Never> {

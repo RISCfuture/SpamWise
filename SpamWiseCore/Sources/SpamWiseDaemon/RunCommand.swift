@@ -69,7 +69,8 @@ struct RunCommand: AsyncParsableCommand {
       scope: .allAccounts
     )
     guard let pollSeconds else {
-      return try await sweep(with: sweeper, adapter: adapter, context: context)
+      try await sweep(with: sweeper, adapter: adapter, context: context)
+      return
     }
     try await poll(every: pollSeconds) {
       try await sweep(with: sweeper, adapter: adapter, context: context)
@@ -119,7 +120,10 @@ struct RunCommand: AsyncParsableCommand {
       if case .accountFailed(_, let error) = event { failures.append(error) }
     }
     if let error = failures.first { throw error }
-    guard !summary.paused else { return print("Filtering paused; Inbox not read.") }
+    guard !summary.paused else {
+      print("Filtering paused; Inbox not read.")
+      return
+    }
     let coverage =
       try await MailHealthRepository.load(context.store, key: adapter.accountID)?
       .coverage ?? SweepCoverage()
@@ -149,5 +153,6 @@ struct RunCommand: AsyncParsableCommand {
 private final class FailureLog: Sendable {
   private let errors = Mutex<[any Error]>([])
   var first: (any Error)? { errors.withLock { $0.first } }
+
   func append(_ error: any Error) { errors.withLock { $0.append(error) } }
 }

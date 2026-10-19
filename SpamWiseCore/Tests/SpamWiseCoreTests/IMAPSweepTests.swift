@@ -4,7 +4,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `sweeps new IMAP Inbox mail` {
   private static func inbox(exists: Int, uidNext: Int? = nil) -> IMAPTranscript {
     IMAPTranscript.authenticated().examine(validity: 33, exists: exists, uidNext: uidNext)
@@ -79,7 +78,7 @@ struct `sweeps new IMAP Inbox mail` {
     async throws
   {
     let store = try testStore()
-    let raw = String(decoding: try fixture("filler-spam"), as: UTF8.self)
+    let raw = try #require(String(data: fixture("filler-spam"), encoding: .utf8))
     _ = try await Self.committedSweep(
       IMAPTestServer(Self.inbox(exists: 0, uidNext: 1)),
       limit: 20,

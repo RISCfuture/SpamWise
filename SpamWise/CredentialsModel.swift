@@ -3,7 +3,9 @@ import Observation
 import SpamWiseCore
 
 /// Provider and lookup-service keys, stored only in Keychain.
-@MainActor @Observable final class CredentialsModel {
+@MainActor
+@Observable
+final class CredentialsModel {
   private static let verificationMessage = """
     From: setup@example.org
     Subject: API connection check
@@ -31,14 +33,16 @@ import SpamWiseCore
 
   init(services: AppServices) { self.services = services }
 
-  @concurrent private static func save(_ credential: String, in keychain: APIKeychain?)
+  @concurrent
+  private static func save(_ credential: String, in keychain: APIKeychain?)
     async throws
   {
     guard let keychain else { throw ClassificationError.configuration }
     try keychain.save(credential)
   }
 
-  @concurrent private static func providersWithSavedKeys() async -> Set<ModelBackend> {
+  @concurrent
+  private static func providersWithSavedKeys() async -> Set<ModelBackend> {
     Set(
       ModelBackend.allCases.filter { backend in
         (try? APIKeychain(backend: backend)?.exists()) == true
@@ -46,17 +50,20 @@ import SpamWiseCore
     )
   }
 
-  @concurrent private static func spamhausKeyStatus() async throws -> String {
+  @concurrent
+  private static func spamhausKeyStatus() async throws -> String {
     try APIKeychain(service: APIKeychain.spamhausService).exists()
       ? String(localized: "Query key saved in Keychain") : String(localized: "No query key saved")
   }
 
   /// Whether `credential` is saved, read from its attributes without loading the secret.
-  @concurrent private static func exists(_ credential: StoredCredential) async throws -> Bool {
+  @concurrent
+  private static func exists(_ credential: StoredCredential) async throws -> Bool {
     try credential.keychain?.exists() ?? false
   }
 
-  @concurrent private static func delete(_ credentials: [StoredCredential]) async throws {
+  @concurrent
+  private static func delete(_ credentials: [StoredCredential]) async throws {
     for credential in credentials { try credential.keychain?.delete() }
   }
 
@@ -81,7 +88,8 @@ import SpamWiseCore
   }
 
   /// Sends one synthetic message to the Claude `model` with `key`, then saves the key if it works.
-  @discardableResult func verifyClaudeKey(_ key: String, model: ModelIdentifier = .claudeHaiku)
+  @discardableResult
+  func verifyClaudeKey(_ key: String, model: ModelIdentifier = .claudeHaiku)
     -> Task<Void, Never>
   {
     precondition(model.backend == .claude, "Only Claude keys are verified with a request.")
@@ -103,7 +111,8 @@ import SpamWiseCore
   }
 
   /// Saves `key` for `backend` without making a request.
-  @discardableResult func saveProviderKey(_ key: String, for backend: ModelBackend)
+  @discardableResult
+  func saveProviderKey(_ key: String, for backend: ModelBackend)
     -> Task<Void, Never>
   {
     let credential = key.trimmingCharacters(in: .whitespacesAndNewlines)

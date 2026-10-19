@@ -17,7 +17,8 @@ func `parses required message fixtures`(_ name: String) throws {
   #expect(!message.text.isEmpty)
   #expect(message.fromAddress.contains("@"))
 }
-@Test func `decodes MIME and folded headers`() async throws {
+@Test
+func `decodes MIME and folded headers`() async throws {
   let message = try MIMEParser().parse(fixture("encoded"))
   #expect(message.subject == "Café with lunch")
   #expect(message.fromDisplayName == "José")
@@ -113,7 +114,7 @@ private func structuralMessages() throws -> [StructuralMessage] {
     ),
     .init(source: "From: a@example.org\nSubject: Headers only", text: "", issues: nil),
     .init(
-      source: String(decoding: try fixture("malformed"), as: UTF8.self),
+      source: try #require(String(data: fixture("malformed"), encoding: .utf8)),
       text: "unterminated",
       issues: [.incompleteMultipart]
     ),
@@ -191,7 +192,8 @@ private func degradedMessage() throws -> Data {
   return Data(raw + Array("--b--\n".utf8))
 }
 
-@Test func `parses display-name senders and rejects malformed or oversized messages`() throws {
+@Test
+func `parses display-name senders and rejects malformed or oversized messages`() throws {
   for sender in [
     #""friend@example.org"@attacker.example"#, "friend@example.org trailing", "a..b@example.org",
     "a@example..org", "a@example.org, b@example.org", "Jane <a@example.org> <b@example.org>",
@@ -269,7 +271,8 @@ private func degradedMessage() throws -> Data {
     try MIMEParser().parse(Data(repeating: 65, count: 2_100_000))
   }
 }
-@Test func `resolves registrable domains at public suffix boundaries`() throws {
+@Test
+func `resolves registrable domains at public suffix boundaries`() throws {
   let domains = DomainResolver()
   #expect(domains.registrableDomain("mail.shop.example.co.uk") == "example.co.uk")
   #expect(domains.registrableDomain("a.user.github.io") == "user.github.io")
@@ -285,7 +288,8 @@ private func degradedMessage() throws -> Data {
     try RuleManagement.normalized("公司.cn", scope: .domain)
   }
 }
-@Test func `excludes scripts and remote images from HTML text`() throws {
+@Test
+func `excludes scripts and remote images from HTML text`() throws {
   let raw =
     """
     From: a@example.com
@@ -352,7 +356,8 @@ private func degradedMessage() throws -> Data {
   }
 }
 
-@Test func `preserves conflicting MIME alternative text in bounded prompt`() throws {
+@Test
+func `preserves conflicting MIME alternative text in bounded prompt`() throws {
   let raw = """
     From: stranger@example.org
     Content-Type: multipart/alternative; boundary=part

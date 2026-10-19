@@ -6,8 +6,9 @@ import MailIntegration
 
 nonisolated enum AutomationLabel: String, AppEnum {
   case good = "inbox", junk = "spam", review = "needs-review"
+
   static let typeDisplayRepresentation: TypeDisplayRepresentation = "Mail label"
-  static let caseDisplayRepresentations: [AutomationLabel: DisplayRepresentation] = [
+  static let caseDisplayRepresentations: [Self: DisplayRepresentation] = [
     .good: "Good", .junk: "Junk", .review: "Review"
   ]
   var label: MailLabel {
@@ -55,7 +56,8 @@ struct CorrectSelectedMailIntent: AppIntent, CancellableIntent {
   static var parameterSummary: some ParameterSummary {
     Summary("Correct selected Mail as \(\.$label)")
   }
-  @Parameter(title: "Label") var label: AutomationLabel
+  @Parameter(title: "Label")
+  var label: AutomationLabel
   @Parameter(
     title: "Request UUID",
     description:
@@ -108,14 +110,19 @@ public struct SpamWiseStatusIntent: AppIntent {
   /// Returns the same redacted diagnostics as the exported file.
   public func perform() async throws -> some IntentResult & ReturnsValue<String> {
     let data = try await AutomationContext.diagnostics(model: model)
-    return .result(value: String(decoding: data, as: UTF8.self))
+    guard let text = String(data: data, encoding: .utf8) else {
+      throw AutomationIntentError.failed(reason: nil)
+    }
+    return .result(value: text)
   }
 }
 
 struct ExportSpamWiseDiagnosticsIntent: AppIntent {
   static let title: LocalizedStringResource = "Export SpamWise Diagnostics"
   static var supportedModes: IntentModes { .background }
+
   @Dependency var model: AppModel
+
   func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
     let data = try await AutomationContext.diagnostics(model: model)
     return .result(
@@ -147,8 +154,7 @@ nonisolated private enum AutomationContext {
         envelope: selected,
         adapter: adapter
       )
-      let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-      return String(decoding: try encoder.encode(reply), as: UTF8.self)
+      return try JSONEncoder.pretty.encodeText(reply)
     } catch is CancellationError { throw CancellationError() } catch {
       throw AutomationIntentError(error)
     }

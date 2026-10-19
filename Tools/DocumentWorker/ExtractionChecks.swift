@@ -2,7 +2,8 @@ import Foundation
 import PDFKit
 
 /// In-process extraction checks that need no signing, XPC service or sandbox.
-@main private enum ExtractionChecks {
+@main
+private enum ExtractionChecks {
   private static let fixtureCharacters = 3100
   private static let samples: [(name: String, text: String)] = [
     ("latin", String(repeating: "x", count: fixtureCharacters)),

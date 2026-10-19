@@ -22,9 +22,8 @@ public enum ReviewPriority {
   private static func rank(_ record: DecisionRecord) -> Int {
     if [.failed, .requested, .integrationUnavailable].contains(record.outcome) { return 0 }
     if let label = record.verdict?.label {
-      let signals = [record.evidence?.bayesLogOdds, record.evidence?.learnedMargin].compactMap {
-        $0
-      }
+      let evidence = record.evidence
+      let signals = [evidence?.bayesLogOdds, evidence?.learnedMargin].compactMap(\.self)
       if signals.contains(where: { (label == .junk && $0 < 0) || (label == .inbox && $0 > 0) }) {
         return 1
       }

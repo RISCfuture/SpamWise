@@ -1,6 +1,7 @@
 import XCTest
 
-@MainActor struct GeneralSettingsScreen {
+@MainActor
+struct GeneralSettingsScreen {
   let app: XCUIApplication
 
   var dryRunToggle: XCUIElement { app.switches["settings.dryRun"] }
@@ -54,7 +55,8 @@ import XCTest
   }
 }
 
-@MainActor struct LiveFilteringConfirmation {
+@MainActor
+struct LiveFilteringConfirmation {
   let app: XCUIApplication
 
   static func waitForLanding(in app: XCUIApplication) -> Self {
@@ -76,7 +78,8 @@ import XCTest
 }
 
 extension UITests {
-  @MainActor func testLeavingDryRunRequiresConfirmation() throws {
+  @MainActor
+  func testLeavingDryRunRequiresConfirmation() throws {
     continueAfterFailure = false
     let activity = ActivityScreen.launchCorrectionFixture()
     XCTAssertEqual(activity.mode, "filtering")

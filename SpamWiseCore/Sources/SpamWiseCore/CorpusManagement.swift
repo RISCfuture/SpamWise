@@ -23,7 +23,7 @@ public enum CorpusError: CorpusFailure, Sendable, Equatable, LocalizedError {
           localized: "Import at most \(limit, format: .number) messages at a time.",
           bundle: .module
         )
-      case .labelLimitReached(let limit, let remaining):
+      case let .labelLimitReached(limit, remaining):
         String(
           localized:
             "SpamWise keeps at most \(limit, format: .number) imported labels; \(remaining, format: .number) more can be imported.",
@@ -163,6 +163,7 @@ private struct ImportedSample: Sendable {
   let message: ParsedMessage
   let evidence: EvidenceBundle
   let sampleID: String
+
   init(_ message: ParsedMessage) {
     evidence = EvidenceBundle(message: message)
     self.message = message.boundedForRetention()
@@ -190,7 +191,8 @@ extension AppState {
    - Returns: Whether `label` is kept; a correction label is not kept when imported labels fill
      the limit.
    */
-  @discardableResult mutating func insertReviewedLabel(_ label: ReviewedLabel) -> Bool {
+  @discardableResult
+  mutating func insertReviewedLabel(_ label: ReviewedLabel) -> Bool {
     let sampleID = label.linkedSampleID
     reviewedLabels.removeAll { $0.id == label.id || $0.linkedSampleID == sampleID }
     reviewedLabels.append(label)

@@ -1,6 +1,7 @@
 import XCTest
 
-@MainActor struct EvidenceScreen {
+@MainActor
+struct EvidenceScreen {
   let app: XCUIApplication
 
   var termsNotice: XCUIElement { app.descendants(matching: .any)["spamhaus.consentRequired"] }
@@ -54,7 +55,8 @@ import XCTest
 }
 
 extension UITests {
-  @MainActor func testSpamhausConsentTracksSelectedService() throws {
+  @MainActor
+  func testSpamhausConsentTracksSelectedService() throws {
     continueAfterFailure = false
     let activity = ActivityScreen.launchCorrectionFixture()
     let evidence = activity.openEvidenceSettings()
@@ -75,5 +77,4 @@ extension UITests {
     XCTAssertFalse(reopened.hasAcceptedTerms)
     XCTAssertTrue(reopened.termsNotice.exists)
   }
-
 }

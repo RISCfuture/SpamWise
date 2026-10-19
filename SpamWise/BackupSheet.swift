@@ -5,7 +5,8 @@ import SpamWiseCore
 struct BackupSheet: View {
   let backup: BackupModel
   let task: BackupTask
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     NavigationStack {
@@ -38,7 +39,8 @@ enum BackupTask: String, Equatable {
 struct BackupCommands: Commands {
   let router: ActivityRouter
   let shared: SharedStateModel
-  @Environment(\.openWindow) private var openWindow
+  @Environment(\.openWindow)
+  private var openWindow
 
   var body: some Commands {
     CommandGroup(after: .importExport) {

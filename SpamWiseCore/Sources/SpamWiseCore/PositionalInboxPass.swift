@@ -16,6 +16,7 @@ import Foundation
 public struct PositionalInboxPass: Sendable {
   /// Reads the page at a position with at most the given number of messages.
   public typealias PageReader = @Sendable (_ offset: Int, _ limit: Int) async throws -> MailPage
+
   private static let maximumPagesPerRun = 5
   private static let maximumBackfillDepth = 10_000
   private let request: InboxPassRequest

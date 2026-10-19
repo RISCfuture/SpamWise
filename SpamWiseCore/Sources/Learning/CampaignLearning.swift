@@ -52,7 +52,7 @@ enum CampaignContent {
       (0..<(words.count - wordsPerShingle + 1)).map {
         stableHash(Data(words[$0..<($0 + wordsPerShingle)].joined(separator: " ").utf8))
       }
-    ).sorted().prefix(maximumShingles).map { $0 }
+    ).sorted().prefix(maximumShingles).map(\.self)
     return shingles.count >= minimumShingles ? shingles : nil
   }
 
@@ -88,10 +88,10 @@ enum CampaignContent {
         let similarity = overlap(fingerprint.shingles, shingles)
         return similarity >= minimumOverlap
           ? CampaignMatch(fingerprintID: fingerprint.id, similarity: similarity) : nil
-      }.sorted {
+      }.min {
         $0.similarity == $1.similarity
           ? $0.fingerprintID < $1.fingerprintID : $0.similarity > $1.similarity
-      }.first
+      }
   }
 
   private static func isTrustedDMARCPass(_ result: AuthResult) -> Bool {

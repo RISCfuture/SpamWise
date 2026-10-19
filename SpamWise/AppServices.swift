@@ -3,7 +3,8 @@ import SpamWiseCore
 import MailIntegration
 
 /// The long-lived integrations every feature model draws its dependencies from.
-@MainActor struct AppServices {
+@MainActor
+struct AppServices {
   private static let uiTestingArgument = "--ui-testing"
   private static let uiAutomationArgument = "--ui-automation"
   /// Durable shared state; nil when the App Group container could not be opened.

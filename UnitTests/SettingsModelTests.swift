@@ -3,10 +3,11 @@ import Testing
 import SpamWiseCore
 @testable import SpamWiseCommon
 
-@MainActor @Suite
-// swiftlint:disable:next type_name
+@MainActor
+@Suite
 struct `Optimistic settings edits` {
-  @Test func `survive a reload while their write is pending`() async throws {
+  @Test
+  func `survive a reload while their write is pending`() async throws {
     let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     await shared.refresh()
@@ -17,7 +18,8 @@ struct `Optimistic settings edits` {
     #expect(shared.settings.policy == "Edited here")
   }
 
-  @Test func `persist rapid edits in the order made`() async throws {
+  @Test
+  func `persist rapid edits in the order made`() async throws {
     let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     let settings = SettingsModel(shared: shared)
@@ -30,7 +32,8 @@ struct `Optimistic settings edits` {
     #expect(shared.settingsWritesInFlight == 0)
   }
 
-  @Test func `change only their own field and withdraw terms with the Spamhaus service`()
+  @Test
+  func `change only their own field and withdraw terms with the Spamhaus service`()
     async throws
   {
     let store = try temporaryStore()
@@ -49,7 +52,8 @@ struct `Optimistic settings edits` {
     #expect(saved.advancedOptions.externalEvidence?.termsAcknowledged == false)
   }
 
-  @Test func `switch to the on-device model when filtering is kept on this Mac`() async throws {
+  @Test
+  func `switch to the on-device model when filtering is kept on this Mac`() async throws {
     let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     let settings = SettingsModel(shared: shared)
@@ -75,10 +79,11 @@ struct `Optimistic settings edits` {
   }
 }
 
-@MainActor @Suite
-// swiftlint:disable:next type_name
+@MainActor
+@Suite
 struct `Setting drafts` {
-  @Test func `save a burst of edits once`() async {
+  @Test
+  func `save a burst of edits once`() async {
     let setting = PersistedSetting()
     let draft = setting.draft()
     for value in 1...5 { draft.value = value }
@@ -87,7 +92,8 @@ struct `Setting drafts` {
     #expect(!draft.hasUnsavedEdit)
   }
 
-  @Test func `follow the persisted value only while unedited`() {
+  @Test
+  func `follow the persisted value only while unedited`() {
     let setting = PersistedSetting()
     let draft = setting.draft()
     setting.value = 3
@@ -99,7 +105,8 @@ struct `Setting drafts` {
     #expect(setting.saves == [4])
   }
 
-  @Test func `keep an unacceptable edit unsaved`() {
+  @Test
+  func `keep an unacceptable edit unsaved`() {
     let setting = PersistedSetting()
     let draft = setting.draft(accepting: 0...10)
     draft.value = 11
@@ -112,7 +119,8 @@ struct `Setting drafts` {
 }
 
 /// A stored setting that records each save.
-@MainActor private final class PersistedSetting {
+@MainActor
+private final class PersistedSetting {
   private static let debounce: Duration = .milliseconds(20)
   var value = 0
   private(set) var saves: [Int] = []

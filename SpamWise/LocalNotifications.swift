@@ -2,7 +2,8 @@ import AppKit
 import UserNotifications
 import SpamWiseCore
 
-@MainActor final class LocalNotifications: NSObject, UNUserNotificationCenterDelegate {
+@MainActor
+final class LocalNotifications: NSObject, UNUserNotificationCenterDelegate {
   func configure() {
     let center = UNUserNotificationCenter.current()
     center.delegate = self
@@ -54,7 +55,7 @@ import SpamWiseCore
     )
   }
   nonisolated func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
+    _: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse
   ) async {
     let destination =

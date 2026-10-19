@@ -14,7 +14,8 @@ struct OnboardingView: View {
   var close: (() -> Void)?
   @State private var step: SetupStep = .welcome
   @State private var draftKey = ""
-  @Environment(\.openWindow) private var openWindow
+  @Environment(\.openWindow)
+  private var openWindow
 
   private var settings: SpamWiseCore.Settings { model.shared.settings }
   private var readiness: ClassifierReadiness {

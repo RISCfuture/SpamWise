@@ -79,10 +79,10 @@ public enum NotificationPlanning {
     }
     return try await store.update(key, default: Ledger()) { ledger in
       guard now.timeIntervalSince(ledger.lastBatch ?? since) >= intervalSec else { return nil }
-      ledger.claims.formIntersection(Set(records.map { $0.identity.key }))
+      ledger.claims.formIntersection(Set(records.map(\.identity.key)))
       let pending = eligible.filter { !ledger.claims.contains($0.identity.key) }
       guard !pending.isEmpty else { return nil }
-      ledger.claims.formUnion(pending.map { $0.identity.key })
+      ledger.claims.formUnion(pending.map(\.identity.key))
       ledger.lastBatch = now
       return NotificationBatch(
         review: pending.filter { $0.decision.label == .review }.count,

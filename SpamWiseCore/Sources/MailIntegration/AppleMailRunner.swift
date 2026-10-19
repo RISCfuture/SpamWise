@@ -7,11 +7,13 @@ import Carbon.OpenScripting
 
 /// Sendable subset of Apple Event results used by the Mail adapter.
 public indirect enum ScriptValue: Sendable, Equatable {
-  case string(String), integer(Int), list([ScriptValue]), boolean(Bool)
+  case string(String), integer(Int), list([Self]), boolean(Bool)
+
   var string: String? { if case .string(let value) = self { value } else { nil } }
   var integer: Int? { if case .integer(let value) = self { value } else { nil } }
-  var list: [ScriptValue]? { if case .list(let value) = self { value } else { nil } }
-  static func decode(_ descriptor: NSAppleEventDescriptor) -> ScriptValue {
+  var list: [Self]? { if case .list(let value) = self { value } else { nil } }
+
+  static func decode(_ descriptor: NSAppleEventDescriptor) -> Self {
     if descriptor.descriptorType == typeAEList {
       return .list(
         (1...max(1, descriptor.numberOfItems)).compactMap { descriptor.atIndex($0) }.map(decode)
@@ -29,7 +31,8 @@ public indirect enum ScriptValue: Sendable, Equatable {
 
 /// Positional handler parameter encoded as an Apple Event descriptor.
 enum ScriptArgument: Sendable {
-  case string(String), integer(Int), boolean(Bool), date(Date), list([ScriptArgument])
+  case string(String), integer(Int), boolean(Bool), date(Date), list([Self])
+
   var descriptor: NSAppleEventDescriptor {
     switch self {
       case .string(let value): NSAppleEventDescriptor(string: value)
@@ -56,13 +59,15 @@ public struct SystemAppleEventRunner: AppleEventRunner {
     _ = unsafe NSAppleScript(source: "return true")?.executeAndReturnError(nil)
   }()
   /// Initializes AppleScript on the main actor before dispatching work to its serial executor.
-  @MainActor public init() { _ = Self.initialized }
+  @MainActor
+  public init() { _ = Self.initialized }
   /// Requests Mail Automation consent without blocking queued Mail handler calls.
   public static func requestMailPermission() async throws {
     try await MailAutomationPermission.request()
   }
   /// Reads Mail Automation consent without prompting, launching Mail or waiting for a script.
-  @concurrent public static func mailAutomationStatus() async -> MailAutomationStatus {
+  @concurrent
+  public static func mailAutomationStatus() async -> MailAutomationStatus {
     let target = NSAppleEventDescriptor(bundleIdentifier: "com.apple.mail")
     let status = unsafe AEDeterminePermissionToAutomateTarget(
       target.aeDesc,
@@ -171,6 +176,8 @@ final class AppleScriptLibrary {
 
   init(source: String) throws(AppleScriptFailure) {
     guard let script = NSAppleScript(source: source) else { throw AppleScriptFailure(number: nil) }
+    // NSAppleScript reports errors through an NSDictionary out-parameter.
+    // swiftlint:disable:next legacy_objc_type
     var error: NSDictionary?
     guard unsafe script.compileAndReturnError(&error) else {
       throw AppleScriptFailure(number: error?[NSAppleScript.errorNumber] as? Int)
@@ -200,6 +207,8 @@ final class AppleScriptLibrary {
   func call(_ handler: String, _ arguments: [ScriptArgument]) throws(AppleScriptFailure)
     -> ScriptValue
   {
+    // NSAppleScript reports errors through an NSDictionary out-parameter.
+    // swiftlint:disable:next legacy_objc_type
     var error: NSDictionary?
     let result: NSAppleEventDescriptor? = unsafe script.executeAppleEvent(
       Self.event(handler, arguments),
@@ -230,28 +239,28 @@ extension MailRequest {
     switch self {
       case .accounts, .folders: []
       case .selection(let maximumCount): [.integer(maximumCount)]
-      case .unifiedPage(let role, let offset, let limit):
+      case let .unifiedPage(role, offset, limit):
         [.string(role.rawValue)] + Self.window(offset: offset, limit: limit)
       case let .accountPage(role, accountID, offset, limit, headersOnly, since, before):
         [.string(role.rawValue), .string(accountID)] + Self.window(offset: offset, limit: limit)
           + [.boolean(headersOnly)] + Self.optional(since) + Self.optional(before)
-      case .folderPage(let folder, let offset, let limit, let since):
+      case let .folderPage(folder, offset, limit, since):
         [.string(folder.accountID), .list(folder.path.map(ScriptArgument.string))]
           + Self.window(offset: offset, limit: limit)
           + Self.optional(since)
       case .destinations(let accountID): [.string(accountID)]
-      case .find(let accountID, let messageID, let localID, let mailbox):
+      case let .find(accountID, messageID, localID, mailbox):
         [
           .string(accountID), .string(messageID ?? ""), .integer(localID ?? -1),
           .string(mailbox ?? "")
         ]
-      case .apply(let command, let location):
+      case let .apply(command, location):
         [
           .string(command.rawValue), .string(location.accountID), .string(location.mailbox),
           .integer(location.localID), .string(location.messageID ?? ""),
           .integer(location.byteCount)
         ]
-      case .observe(let accountID, let role, let messageID):
+      case let .observe(accountID, role, messageID):
         [.string(accountID), .string(role.rawValue), .string(messageID)]
     }
   }

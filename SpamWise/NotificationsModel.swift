@@ -3,7 +3,9 @@ import Observation
 import SpamWiseCore
 
 /// Count-only summary notifications: permission, preferences and delivery.
-@MainActor @Observable final class NotificationsModel {
+@MainActor
+@Observable
+final class NotificationsModel {
   /// Notification permission, as last read.
   private(set) var permission = String(localized: "Notifications not requested")
   /// Turning notifications on or off.

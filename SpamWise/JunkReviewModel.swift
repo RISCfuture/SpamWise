@@ -9,7 +9,9 @@ import MailIntegration
  The review is emptied when it closes, so it opens with no account. Choosing an account loads
  its first page, and a page change takes effect only once that page has loaded.
  */
-@MainActor @Observable final class JunkReviewModel {
+@MainActor
+@Observable
+final class JunkReviewModel {
   /// Messages listed per page.
   static let pageSize = 20
   /// The account whose Junk is shown, if one is chosen.

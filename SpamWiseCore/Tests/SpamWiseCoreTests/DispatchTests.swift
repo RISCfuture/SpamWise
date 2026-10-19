@@ -2,8 +2,8 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `releases unattempted claims and never adds a failure record after acting`() async throws
-{
+@Test
+func `releases unattempted claims and never adds a failure record after acting`() async throws {
   let store = try testStore(), adapter = RecordingAdapter()
   try await enableActions(store)
   let pipeline = Pipeline(
@@ -24,7 +24,8 @@ import SpamWiseCore
   #expect(records.map(\.outcome) == [.failed, .requested])
   #expect(records.last?.id == moved.id)
 }
-@Test func `restores the corrected label's mail state and overrides conflicting sender rules`()
+@Test
+func `restores the corrected label's mail state and overrides conflicting sender rules`()
   async throws
 {
   let store = try testStore(), adapter = RecordingAdapter()

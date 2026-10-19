@@ -3,7 +3,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Monthly spending limit` {
   private static let october = Date(timeIntervalSince1970: 1_792_000_000)
   private static let november = Date(timeIntervalSince1970: 1_794_700_000)
@@ -23,7 +22,8 @@ struct `Monthly spending limit` {
     try await SpendingLimit.reserve(usd: usd, store: store, at: date)
   }
 
-  @Test func `bounds concurrent reservations by the limit`() async throws {
+  @Test
+  func `bounds concurrent reservations by the limit`() async throws {
     let store = store
     let outcomes = await withTaskGroup(of: (any Error)?.self, returning: [(any Error)?].self) {
       group in
@@ -43,7 +43,7 @@ struct `Monthly spending limit` {
     }
     let successes = outcomes.filter { $0 == nil }.count
     #expect(
-      outcomes.compactMap { $0 }.allSatisfy {
+      outcomes.compactMap(\.self).allSatisfy {
         $0 as? SpendingLimitError == .limitReached || $0 is StoreError
       }
     )
@@ -54,7 +54,8 @@ struct `Monthly spending limit` {
     )
   }
 
-  @Test func `refuses a reservation beyond the limit`() async throws {
+  @Test
+  func `refuses a reservation beyond the limit`() async throws {
     for _ in 0..<2 { _ = try await reserve() }
     await #expect(throws: SpendingLimitError.limitReached) { _ = try await reserve() }
     let spending = try await SpendingLimit.load(store, at: Self.october)
@@ -62,13 +63,15 @@ struct `Monthly spending limit` {
     #expect(spending.limitReached)
   }
 
-  @Test func `accepts a smaller reservation that still fits`() async throws {
+  @Test
+  func `accepts a smaller reservation that still fits`() async throws {
     for _ in 0..<2 { _ = try await reserve() }
     _ = try await reserve(0.05)
     #expect(try await !SpendingLimit.load(store, at: Self.october).limitReached)
   }
 
-  @Test func `starts a new month with the same limit and settles measured cost`() async throws {
+  @Test
+  func `starts a new month with the same limit and settles measured cost`() async throws {
     for _ in 0..<2 { _ = try await reserve() }
     let reservation = try await reserve(at: Self.november)
     try await SpendingLimit.settle(reservation, costUSD: 0.000_138, store: store)
@@ -84,7 +87,8 @@ struct `Monthly spending limit` {
     }
   }
 
-  @Test func `records one deferred decision however often refused mail is swept`() async throws {
+  @Test
+  func `records one deferred decision however often refused mail is swept`() async throws {
     let refused = Pipeline(
       store: store,
       classifier: MockClassifier(operation: { _ in throw SpendingLimitError.limitReached })

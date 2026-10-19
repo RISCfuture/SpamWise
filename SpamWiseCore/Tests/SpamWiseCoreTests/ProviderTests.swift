@@ -41,7 +41,8 @@ func `reads only the configured provider credential and fails without fallback`(
   #expect(try await SpendingLimit.load(store).requests == 0)
 }
 
-@Test func `classifies thousands of paid requests by default and settles each to measured usage`()
+@Test
+func `classifies thousands of paid requests by default and settles each to measured usage`()
   async throws
 {
   let store = try testStore()
@@ -130,7 +131,8 @@ func `reserves each paid request’s maximum cost and refunds only requests that
   #expect(spending.limitReached && spending.requests == 8)
 }
 
-@Test func `preserves provider pricing through persistence and migrates legacy usage`() throws {
+@Test
+func `preserves provider pricing through persistence and migrates legacy usage`() throws {
   let data = Data(
     #"""
     {"input":1000,"output":100,"cached":200,"estimated":false,"modelID":"gpt-5.4-mini",
@@ -189,7 +191,8 @@ private let geminiResponse =
       "thoughtsTokenCount":20,"cachedContentTokenCount":200}}
   """#
 
-@Test func `encodes isolated provider requests and accounts for billed tokens`()
+@Test
+func `encodes isolated provider requests and accounts for billed tokens`()
   async throws
 {
   let openAI = OpenAIClassifier(
@@ -262,7 +265,8 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
   }
 }
 
-@Test func `retains billing provenance after introductory rates end`() throws {
+@Test
+func `retains billing provenance after introductory rates end`() throws {
   let introductory = ModelTokenPricing.rates(
     for: .geminiFlash,
     at: Date(timeIntervalSince1970: 1_798_761_599)
@@ -292,7 +296,8 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
   #expect(abs(sonnet.estimatedCost - 0.00262) < 0.00000001)
 }
 
-@Test func `rejects provider refusals and rate limits without a verdict`() async throws {
+@Test
+func `rejects provider refusals and rate limits without a verdict`() async throws {
   let refused =
     #"{"status":"completed","output":[{"type":"message","content":[{"type":"refusal","refusal":"No"}]}]}"#
   let openAI = OpenAIClassifier(
@@ -314,7 +319,8 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
   }
 }
 
-@Test func `enforces provider deadlines and response limits`() async throws {
+@Test
+func `enforces provider deadlines and response limits`() async throws {
   let slow = OpenAIClassifier(
     key: { "fixture" },
     http: ModelHTTPClient { _ in
@@ -334,7 +340,8 @@ func `rejects malformed truncated and invalid Gemini usage responses`(_ response
   }
 }
 
-@Test func `preserves Apple backend errors and validates session results`() async throws {
+@Test
+func `preserves Apple backend errors and validates session results`() async throws {
   let apple = AppleClassifier(
     backend: .privateCloudCompute,
     generate: { backend, _, _, _ in

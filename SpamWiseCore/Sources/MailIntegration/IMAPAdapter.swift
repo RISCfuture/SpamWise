@@ -5,9 +5,10 @@ public import SpamWiseCore
 /// Client-independent, bounded IMAP adapter using explicit TLS credentials and UID-scoped actions.
 public actor IMAPAdapter: MailClientAdapter {
   typealias Connector = @Sendable (IMAPConfiguration) async throws -> IMAPConnection
+
   private static let probeSubjectPrefix = "[SpamWise Probe]"
   /// Explicit account identity used to scope retries and persisted actions.
-  public nonisolated let accountID: String
+  nonisolated public let accountID: String
   let configuration: IMAPConfiguration
   private let credentials: @Sendable () async throws -> IMAPCredential
   /// Holds validation evidence and the persisted sweep cursor.
@@ -118,7 +119,7 @@ public actor IMAPAdapter: MailClientAdapter {
     }
   }
   /// Moves are unsupported once a connection showed the server lacks UID MOVE; Review keywords are checked per mailbox.
-  public func supports(_ action: MailAction) async -> Bool {
+  public func supports(_ action: MailAction) -> Bool {
     switch action {
       case .moveToInbox, .moveToJunk: observedCapabilities.map(Self.supportsMove) ?? true
       case .none, .orangeFlag, .orangeBackground, .clearOrangeFlag, .clearOrangeBackground: true
@@ -246,7 +247,10 @@ extension IMAPAdapter {
   }
 
   private func checkIn(_ session: IMAPSession) {
-    guard idleSession == nil, session.isReusable else { return session.close() }
+    guard idleSession == nil, session.isReusable else {
+      session.close()
+      return
+    }
     idleSession = session
   }
 }

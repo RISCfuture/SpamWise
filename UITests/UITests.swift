@@ -1,7 +1,8 @@
 import XCTest
 
 final class UITests: XCTestCase {
-  @MainActor func testRegisteredAutomationStatus() async throws {
+  @MainActor
+  func testRegisteredAutomationStatus() async throws {
     try XCTSkipUnless(
       ProcessInfo.processInfo.environment["SPAMWISE_INTENTS_TEST"] == "1",
       "Requires the current signed app to be indexed by macOS App Intents."
@@ -42,11 +43,15 @@ final class UITests: XCTestCase {
     settings.close()
     let status = try await automation.status()
     let exported = try await automation.exportDiagnostics()
-    XCTAssertTrue(NSDictionary(dictionary: exported).isEqual(to: status))
+    XCTAssertEqual(
+      try JSONSerialization.data(withJSONObject: exported, options: .sortedKeys),
+      try JSONSerialization.data(withJSONObject: status, options: .sortedKeys)
+    )
     XCTAssertEqual(status["outcomes"] as? [String: Int], ["dryRun": 2, "failed": 1, "noAction": 1])
   }
 
-  @MainActor func testCorrectionsKeepRulesWhenMailActionFails() throws {
+  @MainActor
+  func testCorrectionsKeepRulesWhenMailActionFails() throws {
     continueAfterFailure = false
     let activity = ActivityScreen.launchCorrectionFixture()
     let statistics = activity.openStatistics()
@@ -101,7 +106,8 @@ final class UITests: XCTestCase {
     retainedSettings.close()
   }
 
-  @MainActor func testOnboardingAndOfflineActivity() throws {
+  @MainActor
+  func testOnboardingAndOfflineActivity() throws {
     continueAfterFailure = false
     let introduction = IntroductionScreen.launchOffline()
     XCTAssertTrue(introduction.isVisible)
@@ -133,7 +139,8 @@ enum UITestTiming {
   static let transition: TimeInterval = 5
 }
 
-@MainActor struct IntroductionScreen {
+@MainActor
+struct IntroductionScreen {
   let app: XCUIApplication
 
   var isVisible: Bool { app.staticTexts["setup.intro"].exists }
@@ -157,7 +164,8 @@ enum UITestTiming {
   }
 }
 
-@MainActor struct CredentialScreen {
+@MainActor
+struct CredentialScreen {
   let app: XCUIApplication
 
   var isVisible: Bool { app.secureTextFields["setup.key"].exists }
@@ -190,7 +198,8 @@ enum UITestTiming {
   }
 }
 
-@MainActor struct MailSetupScreen {
+@MainActor
+struct MailSetupScreen {
   let app: XCUIApplication
 
   var hasPermissionDeniedStatus: Bool { app.staticTexts["mail.permissionDenied"].exists }
@@ -209,7 +218,8 @@ enum UITestTiming {
   }
 }
 
-@MainActor struct FinishSetupScreen {
+@MainActor
+struct FinishSetupScreen {
   let app: XCUIApplication
 
   func finish() -> ActivityScreen {
@@ -218,7 +228,8 @@ enum UITestTiming {
   }
 }
 
-@MainActor struct DecisionScreen {
+@MainActor
+struct DecisionScreen {
   let app: XCUIApplication
 
   /// Whether the inspector omits the threat section, as it does when no detector ran.
@@ -296,7 +307,8 @@ enum UITestTiming {
   }
 }
 
-@MainActor struct RulesScreen {
+@MainActor
+struct RulesScreen {
   let app: XCUIApplication
 
   var addressRule: String { ruleValue("settings.rule.address.newsletter@example.org") }
@@ -348,7 +360,8 @@ enum UITestTiming {
   }
 }
 
-@MainActor struct RuleFormScreen {
+@MainActor
+struct RuleFormScreen {
   let app: XCUIApplication
 
   var canSave: Bool { app.buttons["rules.save"].isEnabled }

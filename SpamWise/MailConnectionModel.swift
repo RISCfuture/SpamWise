@@ -4,7 +4,9 @@ import SpamWiseCore
 import MailIntegration
 
 /// The Apple Mail connection: Automation permission, accounts and their mailbox roles.
-@MainActor @Observable final class MailConnectionModel {
+@MainActor
+@Observable
+final class MailConnectionModel {
   /// Accounts Mail reported at the latest discovery.
   var accounts: [MailAccount] = []
   /// Whether Mail Automation is allowed, as last read without prompting.

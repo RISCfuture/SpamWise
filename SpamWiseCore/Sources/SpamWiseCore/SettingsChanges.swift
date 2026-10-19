@@ -20,6 +20,7 @@ extension Settings {
     projection.mailOptions.notifications = defaults.mailOptions.notifications
     return projection
   }
+
   private static func object(_ settings: Settings) -> Any {
     (try? JSONEncoder().encode(settings)).flatMap { try? JSONSerialization.jsonObject(with: $0) }
       ?? [String: Any]()

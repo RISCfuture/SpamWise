@@ -3,7 +3,7 @@ public import Foundation
 /// How SpamWise receives incoming mail.
 public enum IncomingRoute: String, Codable, Sendable, CaseIterable, FallbackDecodable {
   /// Checks each included Apple Mail account's Inbox through Automation.
-  case mailRule
+  case mailRule = "mailRule"
   /// Checks an explicitly configured IMAP account.
   case imap
   /// An unrecognized route uses the default Automation route.
@@ -42,7 +42,7 @@ public struct Settings: Codable, Sendable, Equatable {
   /// Decodes each field independently, using its default when absent or unreadable.
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
-    let defaults = Settings()
+    let defaults = Self()
     strength = values.lenient(.strength, default: defaults.strength)
     review = values.lenient(.review, default: defaults.review)
     dryRun = values.lenient(.dryRun, default: defaults.dryRun)
@@ -77,7 +77,7 @@ public enum DecisionPath: String, Codable, CodingKeyRepresentable, Sendable, Cas
   /// A provider connection check.
   case verification
   /// A message without one readable sender, flagged for Review instead of classified.
-  case unreadableSender
+  case unreadableSender = "unreadableSender"
   /// A failure that left the message unclassified.
   case error
 

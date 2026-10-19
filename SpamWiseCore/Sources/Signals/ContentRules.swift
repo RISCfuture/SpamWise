@@ -3,11 +3,20 @@ public import MessageModel
 
 /// Message fields eligible for explicit content rules.
 public enum ContentRuleField: String, Codable, Sendable, CaseIterable {
-  case subject, body, listID, recipients, replyTo, contentType, attachmentNames, attachmentTypes
+  case subject
+  case body
+  case listID = "listID"
+  case recipients
+  case replyTo = "replyTo"
+  case contentType = "contentType"
+  case attachmentNames = "attachmentNames"
+  case attachmentTypes = "attachmentTypes"
 }
 /// Supported bounded match operators.
 public enum ContentRuleOperator: String, Codable, Sendable, CaseIterable {
-  case contains, equals, regularExpression
+  case contains
+  case equals
+  case regularExpression = "regularExpression"
 }
 /// A user-authored rule evaluated after sender rules and before relationship trust.
 public struct ContentRule: Codable, Sendable, Identifiable, Equatable {
@@ -155,10 +164,12 @@ public enum ContentRules {
     deadline: ContinuousClock.Instant
   ) throws(ContentRuleError) -> Bool {
     try validate(rule)
+    // NSString searches the UTF-16 windows directly, even one that splits a surrogate pair.
+    // swiftlint:disable:next legacy_objc_type
     let field = NSString(string: text)
     switch rule.operation {
       case .contains:
-        return try anyWindow(of: field, deadline: deadline) { window in
+        return try anyWindow(ofLength: field.length, deadline: deadline) { window in
           field.range(of: rule.pattern, options: .caseInsensitive, range: window).location
             != NSNotFound
         }
@@ -167,25 +178,26 @@ public enum ContentRules {
           && field.compare(rule.pattern, options: .caseInsensitive) == .orderedSame
       case .regularExpression:
         let expression = try expression(rule.pattern)
-        return try anyWindow(of: field, deadline: deadline) { window throws(ContentRuleError) in
-          try regex(expression, field: field, window: window, deadline: deadline)
+        return try anyWindow(ofLength: field.length, deadline: deadline) {
+          window throws(ContentRuleError) in
+          try regex(expression, text: text, window: window, deadline: deadline)
         }
     }
   }
   private static func anyWindow(
-    of field: NSString,
+    ofLength length: Int,
     deadline: ContinuousClock.Instant,
     _ matches: (NSRange) throws(ContentRuleError) -> Bool
   ) throws(ContentRuleError) -> Bool {
-    for window in windows(of: field) {
+    for window in windows(ofLength: length) {
       try checkDeadline(deadline)
       if try matches(window) { return true }
     }
     return false
   }
-  /// Overlapping UTF-16 ranges that cover the field's bounded prefix.
-  private static func windows(of field: NSString) -> [NSRange] {
-    let length = min(field.length, maximumFieldUTF16Units)
+  /// Overlapping UTF-16 ranges that cover the bounded prefix of a field `fieldLength` units long.
+  private static func windows(ofLength fieldLength: Int) -> [NSRange] {
+    let length = min(fieldLength, maximumFieldUTF16Units)
     guard length > windowUTF16Units else { return [NSRange(location: 0, length: length)] }
     return stride(
       from: 0,
@@ -205,13 +217,13 @@ public enum ContentRules {
   }
   private static func regex(
     _ expression: NSRegularExpression,
-    field: NSString,
+    text: String,
     window: NSRange,
     deadline: ContinuousClock.Instant
   ) throws(ContentRuleError) -> Bool {
     var found = false
     unsafe expression.enumerateMatches(
-      in: field as String,
+      in: text,
       options: regularExpressionOptions,
       range: window
     ) {

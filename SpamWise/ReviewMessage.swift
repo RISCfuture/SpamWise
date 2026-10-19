@@ -18,7 +18,8 @@ struct ReviewMessage: Identifiable, Sendable {
   }
 
   /// Parses each envelope away from the main actor.
-  @concurrent static func load(_ envelopes: [MailEnvelope]) async -> [Self] {
+  @concurrent
+  static func load(_ envelopes: [MailEnvelope]) async -> [Self] {
     envelopes.map { envelope in
       let message = try? MIMEParser().parse(envelope.raw)
       return Self(
@@ -31,7 +32,8 @@ struct ReviewMessage: Identifiable, Sendable {
   }
 
   /// Parses one message’s body text away from the main actor.
-  @concurrent static func text(of envelope: MailEnvelope) async throws -> String {
+  @concurrent
+  static func text(of envelope: MailEnvelope) async throws -> String {
     try MIMEParser().parse(envelope.raw).text
   }
 }

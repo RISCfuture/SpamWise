@@ -7,6 +7,7 @@ extension Pipeline {
   private static let domainLookupBudgetDivisor = 3.0
   private static let contactFreshnessSec = 86_400.0
   private static let maximumRuleNoteCharacters = 120
+
   private static func decodingFindings(_ message: ParsedMessage) -> [String] {
     guard let issues = message.decodingIssues else { return [] }
     return [

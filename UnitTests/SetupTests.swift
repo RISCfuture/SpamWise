@@ -4,9 +4,9 @@ import SpamWiseCore
 @testable import SpamWiseCommon
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Classifier readiness` {
-  @Test func `asks for a cloud provider's key, then consent, before it is ready`() {
+  @Test
+  func `asks for a cloud provider's key, then consent, before it is ready`() {
     var settings = SpamWiseCore.Settings()
     settings.advancedOptions.select(.geminiFlash)
     #expect(readiness(settings, savedKeys: []) == .needsKey)
@@ -18,14 +18,16 @@ struct `Classifier readiness` {
     #expect(readiness(settings, savedKeys: [.gemini]) == .ready)
   }
 
-  @Test func `blocks a configured cloud provider when filtering stays on this Mac`() {
+  @Test
+  func `blocks a configured cloud provider when filtering stays on this Mac`() {
     var settings = SpamWiseCore.Settings()
     settings.advancedOptions.mailSharingConsent = [.claude]
     settings.mailOptions.localOnly = true
     #expect(readiness(settings, savedKeys: [.claude]) == .blockedByLocalOnly)
   }
 
-  @Test func `needs only Apple Intelligence for the on-device model`() {
+  @Test
+  func `needs only Apple Intelligence for the on-device model`() {
     var settings = SpamWiseCore.Settings()
     settings.advancedOptions.select(.appleOnDevice)
     settings.mailOptions.localOnly = true
@@ -49,9 +51,9 @@ struct `Classifier readiness` {
 }
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Setup dry-run summary` {
-  @Test func `counts Junk and Review and shows each message's verdict`() {
+  @Test
+  func `counts Junk and Review and shows each message's verdict`() {
     let summary = DryRunSummary(
       MailPreview(
         records: [
@@ -70,7 +72,8 @@ struct `Setup dry-run summary` {
     #expect(!summary.isEmpty)
   }
 
-  @Test func `explains missing consent before other setup problems`() {
+  @Test
+  func `explains missing consent before other setup problems`() {
     let summary = DryRunSummary(
       MailPreview(
         records: [

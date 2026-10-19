@@ -3,7 +3,9 @@ import Observation
 import SpamWiseCore
 
 /// Encrypted backups of rules, policy, corrections and learning.
-@MainActor @Observable final class BackupModel {
+@MainActor
+@Observable
+final class BackupModel {
   /// What a successful restore leaves the user to do.
   static var restoredMessage: String {
     String(

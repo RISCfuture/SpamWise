@@ -43,8 +43,14 @@ public struct AuditEvent: Codable, Sendable, Equatable, Identifiable {
 
   /// Supported configuration and learning event categories.
   public enum Kind: String, Codable, Sendable {
-    case settings, senderRule, contentRule, correction, backupRestore, corpusImport, corpusForget,
-      undo
+    case settings
+    case senderRule = "senderRule"
+    case contentRule = "contentRule"
+    case correction
+    case backupRestore = "backupRestore"
+    case corpusImport = "corpusImport"
+    case corpusForget = "corpusForget"
+    case undo
   }
 
   /// One configuration or learning mutation and the values it affected.

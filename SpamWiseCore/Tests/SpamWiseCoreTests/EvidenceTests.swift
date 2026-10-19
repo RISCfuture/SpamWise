@@ -2,19 +2,22 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `flags abuse-heavy TLDs and leaves domain age unknown`() throws {
+@Test
+func `flags abuse-heavy TLDs and leaves domain age unknown`() throws {
   let evidence = EvidenceBundle(message: try MIMEParser().parse(fixture("filler-spam")))
   #expect(evidence.tldIsAbuseHeavy)
   #expect(evidence.domainAgeDays == nil)
 }
 
-@Test func `trusts authentication results only from configured receiving servers`() throws {
+@Test
+func `trusts authentication results only from configured receiving servers`() throws {
   let message = try MIMEParser().parse(fixture("filler-spam"))
   let untrusted = EvidenceBundle(message: message)
   #expect(untrusted.authResults.count == 3)
   #expect(untrusted.authResults.allSatisfy { !$0.trusted })
   let trusted = EvidenceBundle(message: message, trustedAuthServers: ["mx.example"])
-  #expect(trusted.authResults.allSatisfy { $0.trusted })
+  let allTrusted = trusted.authResults.allSatisfy(\.trusted)
+  #expect(allTrusted)
 }
 
 @Test(arguments: [
@@ -36,14 +39,16 @@ func `derives sender authentication from the trusted server's results`(
   #expect(try authentication(results, server: server) == expected)
 }
 
-@Test func `ignores trusted results below the topmost Authentication-Results header`() throws {
+@Test
+func `ignores trusted results below the topmost Authentication-Results header`() throws {
   #expect(
     try authentication("dkim=none", below: "mx.example; dmarc=pass header.from=example.org")
       == .unverified
   )
 }
 
-@Test func `never trusts results without an authserv-id`() {
+@Test
+func `never trusts results without an authserv-id`() {
   let exchange = AuthenticationHeaders.parse(
     ["spf=pass (sender IP is 192.0.2.1) smtp.mailfrom=example.org; dkim=pass header.d=example.org"],
     trustedServers: ["spf=pass"]
@@ -52,7 +57,8 @@ func `derives sender authentication from the trusted server's results`(
   #expect(exchange.allSatisfy { !$0.trusted && $0.server.isEmpty })
 }
 
-@Test func `bounds flooded sender, authentication and link evidence`() throws {
+@Test
+func `bounds flooded sender, authentication and link evidence`() throws {
   let links = (1...25).reversed().map { "https://link\($0).com/" }.joined(separator: " ")
   let flooded = EvidenceBundle(
     message: try MIMEParser().parse(
@@ -81,7 +87,8 @@ func `derives sender authentication from the trusted server's results`(
   )
 }
 
-@Test func `caps recorded findings, ignoring duplicates, and notes the omission`() throws {
+@Test
+func `caps recorded findings, ignoring duplicates, and notes the omission`() throws {
   var evidence = EvidenceBundle(message: try MIMEParser().parse(fixture("filler-spam")))
   evidence.record(findings: (1...40).map { "Finding \($0)" } + ["Finding 1"])
   #expect(evidence.auxiliaryFindings?.count == 32)

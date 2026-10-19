@@ -4,7 +4,8 @@ import SpamWiseCore
 struct AuditTrailView: View {
   let shared: SharedStateModel
   @State private var search = ""
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   private var events: [AuditEvent] {
     shared.state.auditEvents.reversed().filter {

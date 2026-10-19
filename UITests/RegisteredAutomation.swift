@@ -2,7 +2,8 @@ import AppIntents
 import AppIntentsTesting
 import XCTest
 
-@MainActor struct RegisteredAutomation {
+@MainActor
+struct RegisteredAutomation {
   private let definitions = IntentDefinitions(bundleIdentifier: "codes.tim.SpamWise")
 
   func preview() -> AnyAppIntent {
@@ -36,7 +37,7 @@ import XCTest
   }
 
   private func diagnostics(_ data: Data) throws -> [String: Any] {
-    let text = String(decoding: data, as: UTF8.self)
+    let text = try XCTUnwrap(String(data: data, encoding: .utf8))
     for privateValue in ["newsletter@example.org", "Your weekly digest", "ui-test"] {
       XCTAssertFalse(text.contains(privateValue))
     }

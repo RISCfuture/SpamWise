@@ -14,7 +14,8 @@ struct MailMenuView: View {
   let corrections: CorrectionsModel
   let router: ActivityRouter
   let storageReady: Bool
-  @Environment(\.openWindow) private var openWindow
+  @Environment(\.openWindow)
+  private var openWindow
 
   /// Corrections and Pause wait for setup, whose window cannot show their results.
   private var canActOnMail: Bool { storageReady && shared.settings.onboardingComplete }

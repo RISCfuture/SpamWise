@@ -1,7 +1,8 @@
 import ArgumentParser
 
 /// Offline and explicitly authorized live evaluation of SpamWise against human-labeled mail.
-@main struct SpamWiseEvaluation: AsyncParsableCommand {
+@main
+struct SpamWiseEvaluation: AsyncParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "spamwise-eval",
     abstract: "Evaluates SpamWise against independently labeled mail.",

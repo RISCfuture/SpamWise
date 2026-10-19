@@ -11,7 +11,9 @@ import MailIntegration
  model they need. This type composes them and runs the background monitor that keeps shared
  state current and starts automatic mail checks.
  */
-@MainActor @Observable public final class AppModel {
+@MainActor
+@Observable
+public final class AppModel {
   private static let monitorInterval: Duration = .seconds(3)
   let services: AppServices
   let shared: SharedStateModel

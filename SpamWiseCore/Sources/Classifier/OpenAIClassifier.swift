@@ -69,6 +69,7 @@ private struct OpenAIResponse: Decodable {
   var status: String?
   var output: [Item]?
   var usage: Usage?
+
   struct Item: Decodable {
     var type: String
     var content: [Content]?

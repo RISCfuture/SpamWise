@@ -83,6 +83,7 @@ public struct RspamdLookup: Sendable {
 
   private struct Response: Decodable {
     var symbols: [String: Symbol]
+
     struct Symbol: Decodable { var score: Double }
   }
 }

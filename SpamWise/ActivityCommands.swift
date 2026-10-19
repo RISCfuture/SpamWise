@@ -24,7 +24,8 @@ struct ActivityCommands: Commands {
 }
 
 /// Opens the Activity window and presents `sheet` in it.
-@MainActor private func show(
+@MainActor
+private func show(
   _ sheet: ActivitySheet,
   router: ActivityRouter,
   openWindow: OpenWindowAction
@@ -35,8 +36,10 @@ struct ActivityCommands: Commands {
 
 private struct FilteringMenuItems: View {
   let model: AppModel
-  @FocusedValue(\.selectedDecision) private var selected
-  @Environment(\.openWindow) private var openWindow
+  @FocusedValue(\.selectedDecision)
+  private var selected
+  @Environment(\.openWindow)
+  private var openWindow
 
   var body: some View {
     PauseFilteringButton(settings: model.settings, paused: model.shared.settings.paused)
@@ -96,8 +99,10 @@ private struct SelectedDecisionCorrections: View {
 
 private struct ViewMenuItems: View {
   let model: AppModel
-  @FocusedValue(\.selectedDecision) private var selected
-  @Environment(\.openWindow) private var openWindow
+  @FocusedValue(\.selectedDecision)
+  private var selected
+  @Environment(\.openWindow)
+  private var openWindow
 
   var body: some View {
     InspectorToggle(router: model.router)
@@ -112,7 +117,8 @@ private struct ViewMenuItems: View {
 
 private struct ToolsMenuItems: View {
   let model: AppModel
-  @Environment(\.openWindow) private var openWindow
+  @Environment(\.openWindow)
+  private var openWindow
 
   var body: some View {
     Button("Reviewed Corpus") { show(.corpus, router: model.router, openWindow: openWindow) }

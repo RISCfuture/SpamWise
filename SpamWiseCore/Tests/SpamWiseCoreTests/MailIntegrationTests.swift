@@ -3,7 +3,8 @@ import Testing
 import SpamWiseCore
 @testable import MailIntegration
 
-@Test func `refuses unscoped identities and unverifiable moves before contacting Mail`() async {
+@Test
+func `refuses unscoped identities and unverifiable moves before contacting Mail`() async {
   let runner = StubAppleEvents([:])
   let adapter = AppleMailAdapter(runner: runner)
   await #expect(throws: IntegrationError.accountUnresolved) {
@@ -15,7 +16,8 @@ import SpamWiseCore
   #expect(await runner.requests.isEmpty)
 }
 
-@Test func `refuses an automatic action once the message has left its recorded mailbox`()
+@Test
+func `refuses an automatic action once the message has left its recorded mailbox`()
   async throws
 {
   let runner = StubAppleEvents([.findMessages: [MailReply.found()]])
@@ -26,7 +28,8 @@ import SpamWiseCore
   #expect(await runner.appliedCount == 0)
 }
 
-@Test func `corrects a message wherever it has moved within its account`() async throws {
+@Test
+func `corrects a message wherever it has moved within its account`() async throws {
   let receipts = MailReply.message(mailbox: "Receipts", localID: 7)
   let runner = StubAppleEvents([
     .findMessages: [MailReply.found(), MailReply.found(receipts)],
@@ -42,7 +45,8 @@ import SpamWiseCore
   #expect(receipt.updatedIdentity?.localID == 8)
 }
 
-@Test func `resolves duplicate Message-IDs by content and local ID`() throws {
+@Test
+func `resolves duplicate Message-IDs by content and local ID`() throws {
   let identity = MailReply.identity(localID: 2)
   let other = try MailRow(MailReply.message(localID: 1, source: "From: a@example.org\n\nOther"))
   let first = try MailRow(MailReply.message(localID: 2))
@@ -62,7 +66,8 @@ import SpamWiseCore
   #expect(try AppleMailAdapter.select(identity, from: []) == nil)
 }
 
-@Test func `reports a move as unconfirmed when its observation is cancelled`() async throws {
+@Test
+func `reports a move as unconfirmed when its observation is cancelled`() async throws {
   let unobserved = StubAppleEvents([
     .findMessages: [MailReply.found(MailReply.message())],
     .applyAction: [MailReply.applied],
@@ -77,7 +82,8 @@ import SpamWiseCore
   #expect(try await polling.value.confirmed == false)
 }
 
-@Test func `reports a move that exceeds the call time limit as unconfirmed`() async throws {
+@Test
+func `reports a move that exceeds the call time limit as unconfirmed`() async throws {
   let slowMove = StubAppleEvents(
     [.findMessages: [MailReply.found(MailReply.message())], .applyAction: [MailReply.applied]],
     delays: [.applyAction: .seconds(10)]
@@ -86,7 +92,8 @@ import SpamWiseCore
   #expect(try await limited.perform(.moveToJunk, for: MailReply.identity()).confirmed == false)
 }
 
-@Test func `times out a lookup that exceeds the call time limit`() async {
+@Test
+func `times out a lookup that exceeds the call time limit`() async {
   let slowRead = StubAppleEvents(
     [.findMessages: [MailReply.found(MailReply.message())]],
     delays: [.findMessages: .seconds(10)]
@@ -97,7 +104,8 @@ import SpamWiseCore
   }
 }
 
-@Test func `stops the disposable probe when its first move does not settle`() async throws {
+@Test
+func `stops the disposable probe when its first move does not settle`() async throws {
   let inbox = MailReply.message()
   let unstable = StubAppleEvents([
     .selectedRows: [MailReply.selection(inbox)],
@@ -116,7 +124,8 @@ import SpamWiseCore
   #expect(await unstable.moves.count == 1)
 }
 
-@Test func `refuses to probe a selected message that is not a probe`() async {
+@Test
+func `refuses to probe a selected message that is not a probe`() async {
   let ordinary = MailReply.selection(MailReply.message(source: "From: a@example.org\r\n\r\nMail"))
   let runner = StubAppleEvents([.selectedRows: [ordinary]])
   await #expect(throws: IntegrationError.notProbeMessage) {
@@ -125,7 +134,8 @@ import SpamWiseCore
   #expect(await runner.appliedCount == 0)
 }
 
-@Test func `moves the disposable probe to Junk and back after each move settles`() async throws {
+@Test
+func `moves the disposable probe to Junk and back after each move settles`() async throws {
   let inbox = MailReply.message(), junk = MailReply.message(mailbox: "Junk", localID: 2)
   let restored = MailReply.message(localID: 3)
   let settled = StubAppleEvents([
@@ -143,7 +153,8 @@ import SpamWiseCore
   #expect(await settled.searchedMailboxes == ["Inbox", "Junk", "Inbox"])
 }
 
-@Test @MainActor
+@Test
+@MainActor
 func `invokes compiled handlers with typed arguments and private error numbers`() throws {
   let library = try AppleScriptLibrary(
     source: """
@@ -173,7 +184,9 @@ func `invokes compiled handlers with typed arguments and private error numbers`(
   _ = try AppleScriptLibrary(source: MailScripts.library)
 }
 
-@Test @MainActor func `decodes Apple Event booleans`() throws {
+@Test
+@MainActor
+func `decodes Apple Event booleans`() throws {
   for (source, expected) in [
     ("return true", ScriptValue.boolean(true)),
     ("return false", .boolean(false)),
@@ -184,7 +197,8 @@ func `invokes compiled handlers with typed arguments and private error numbers`(
   }
 }
 
-@Test func `persists Inbox sweep progress and wraps after the last page`() async throws {
+@Test
+func `persists Inbox sweep progress and wraps after the last page`() async throws {
   let store = try testStore()
   try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
     $0.complete(count: 20, total: 21)
@@ -203,7 +217,8 @@ func `invokes compiled handlers with typed arguments and private error numbers`(
   #expect(health["other"]?.failure == "unavailable")
 }
 
-@Test func `persists the unreadable count with sweep progress`() async throws {
+@Test
+func `persists the unreadable count with sweep progress`() async throws {
   let store = try testStore()
   try await MailHealthRepository.update(store, accountID: "account", name: "Test") {
     $0.complete(count: 2, total: 3, unavailable: 1)
@@ -213,7 +228,8 @@ func `invokes compiled handlers with typed arguments and private error numbers`(
   #expect(resumed?.unavailableCount == 1)
 }
 
-@Test func `reports the completed sweep's unreadable count until the next sweep completes`() {
+@Test
+func `reports the completed sweep's unreadable count until the next sweep completes`() {
   var health = MailScanHealth(accountName: "Test")
   health.complete(count: 2, total: 3, unavailable: 1)
   health.complete(count: 1, total: 3)

@@ -8,7 +8,9 @@ import SpamWiseCore
  The Activity log is not copied: ``recordsVersion`` changes whenever it does, and views page
  through it with ``ActivityModel``.
  */
-@MainActor @Observable final class SharedStateModel {
+@MainActor
+@Observable
+final class SharedStateModel {
   /// Presented parts and the change tokens that cover them; learning and claims stay in the store.
   private static let presentedParts: [(StateSlices.Parts, Set<StateSlice>)] = [
     (.rules, [.rules]), (.contentRules, [.contentRules, .contentRuleHits, .contentRuleSkips]),

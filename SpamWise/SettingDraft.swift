@@ -7,7 +7,9 @@ import SwiftUI
  elsewhere. An edit is saved once `delay` passes without another edit, or at once through
  ``commit()``. An edit that `accepts` rejects stays pending, and unsaved, until it is corrected.
  */
-@MainActor @Observable final class SettingDraft<Value: Equatable & Sendable> {
+@MainActor
+@Observable
+final class SettingDraft<Value: Equatable & Sendable> {
   /// The edit not yet saved, if any.
   private(set) var edit: Value?
   @ObservationIgnored private let delay: Duration

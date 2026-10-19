@@ -8,7 +8,9 @@ import SpamWiseCore
  Until an account trusts a server, Contacts, correspondence history and Allow rules only inform
  the classifier for that account's mail.
  */
-@MainActor @Observable final class AuthenticationTrustModel {
+@MainActor
+@Observable
+final class AuthenticationTrustModel {
   /// Trusted servers and detection progress by account identifier.
   var accounts: [String: AccountAuthentication] = [:]
   /// Reading every account's trust; its failure explains an empty or stale list.
@@ -53,7 +55,8 @@ import SpamWiseCore
   }
 
   /// Replaces the account's trusted servers with those listed in `text`.
-  @discardableResult func save(_ text: String, accountID: String) -> Task<Void, Never> {
+  @discardableResult
+  func save(_ text: String, accountID: String) -> Task<Void, Never> {
     let servers = Self.servers(in: text)
     return change(accountID) { store in
       try await AuthenticationTrust.save(servers, accountID: accountID, store: store)
@@ -67,7 +70,8 @@ import SpamWiseCore
     }
   }
 
-  @discardableResult private func change(
+  @discardableResult
+  private func change(
     _ accountID: String,
     _ edit: @escaping @MainActor (Store) async throws -> Void
   ) -> Task<Void, Never> {

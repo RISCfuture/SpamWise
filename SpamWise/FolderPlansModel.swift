@@ -4,7 +4,9 @@ import SpamWiseCore
 import MailIntegration
 
 /// Mail.app folders that SpamWise filters or learns from, and previews of their mail.
-@MainActor @Observable final class FolderPlansModel {
+@MainActor
+@Observable
+final class FolderPlansModel {
   /// Folders Mail reported at the latest discovery.
   private(set) var folders: [MailFolder] = []
   /// Discovering folders, and enabling or removing saved plans.

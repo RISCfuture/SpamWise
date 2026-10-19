@@ -3,7 +3,9 @@ import Observation
 import SpamWiseCore
 
 /// The reviewed corpus: messages the user labeled, imported or corrected.
-@MainActor @Observable final class CorpusModel {
+@MainActor
+@Observable
+final class CorpusModel {
   /// Importing, relabeling, forgetting and rebuilding reviewed examples.
   let operation = TrackedOperation()
   @ObservationIgnored private let services: AppServices
@@ -20,7 +22,8 @@ import SpamWiseCore
   }
 
   /// Reads and parses each file away from the main actor, naming the files that can’t be read.
-  @concurrent private static func read(_ urls: [URL]) async -> CorpusFiles {
+  @concurrent
+  private static func read(_ urls: [URL]) async -> CorpusFiles {
     var files = CorpusFiles()
     for url in urls {
       do {

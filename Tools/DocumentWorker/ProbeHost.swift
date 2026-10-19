@@ -1,7 +1,8 @@
 import Darwin
 import Foundation
 
-@main private enum DocumentProbeHost {
+@main
+private enum DocumentProbeHost {
   static func main() async {
     do {
       try await run()

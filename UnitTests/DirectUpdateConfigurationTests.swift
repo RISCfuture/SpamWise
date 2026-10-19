@@ -3,7 +3,6 @@ import Testing
 @testable import SpamWiseCommon
 
 @Suite
-// swiftlint:disable:next type_name
 struct `checks only a valid GitHub repository` {
   @Test(arguments: ["", "$(UPDATE_OWNER)", "../owner", "-owner", "owner-", "a--b", "a/b", "é"])
   func `rejects unsafe or unconfigured owners`(_ owner: String) {
@@ -17,7 +16,8 @@ struct `checks only a valid GitHub repository` {
     #expect(DirectUpdateConfiguration(owner: "publisher", repository: repository) == nil)
   }
 
-  @Test func `accepts GitHub owner and repository names`() throws {
+  @Test
+  func `accepts GitHub owner and repository names`() throws {
     let configuration = try #require(
       DirectUpdateConfiguration(owner: "test-publisher", repository: "test.app_1")
     )
@@ -25,7 +25,8 @@ struct `checks only a valid GitHub repository` {
     #expect(configuration.repository == "test.app_1")
   }
 
-  @Test func `reads only SpamWise bundles without store receipts`() throws {
+  @Test
+  func `reads only SpamWise bundles without store receipts`() throws {
     let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: root) }
     #expect(

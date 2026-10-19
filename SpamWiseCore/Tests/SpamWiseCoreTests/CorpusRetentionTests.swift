@@ -2,7 +2,8 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `keeps imported labels at the limit and rolls off the oldest correction labels`()
+@Test
+func `keeps imported labels at the limit and rolls off the oldest correction labels`()
   async throws
 {
   let store = try testStore(), adapter = RecordingAdapter()

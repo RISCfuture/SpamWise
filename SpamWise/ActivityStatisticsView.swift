@@ -9,7 +9,7 @@ struct ActivityStatisticsView: View {
   let activity: ActivityModel
   let shared: SharedStateModel
   @State private var start =
-    Calendar.current.date(byAdding: .day, value: -ActivityStatisticsView.defaultRangeDays, to: .now)
+    Calendar.current.date(byAdding: .day, value: -Self.defaultRangeDays, to: .now)
     ?? .now
   @State private var end = Date.now
   @State private var account: String?
@@ -17,7 +17,8 @@ struct ActivityStatisticsView: View {
   @State private var status: OperationStatus?
   @State private var export: RulesDocument?
   @State private var showsExport = false
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   private var query: ActivityQuery {
     var query = ActivityQuery()
@@ -121,7 +122,8 @@ struct DailyAccountCount: Identifiable {
   var id: String { "\(account)|\(day.timeIntervalSinceReferenceDate)" }
 
   /// Every account's daily counts, named for display and ordered by day.
-  @MainActor static func points(_ statistics: ActivityStatistics, shared: SharedStateModel)
+  @MainActor
+  static func points(_ statistics: ActivityStatistics, shared: SharedStateModel)
     -> [Self]
   {
     statistics.accountDailyCounts.flatMap { account, days in

@@ -16,6 +16,7 @@ public enum ResourceDeadlineError: OperationDeadlineError, Sendable, LocalizedEr
 private final class DeadlineRace<T: Sendable>: Sendable {
   static var minimumTimeoutSec: TimeInterval { 0.001 }
   private let state = Mutex(State())
+
   func install(_ continuation: CheckedContinuation<T, any Error>) {
     let existing = state.withLock { state -> Result<T, any Error>? in
       if let result = state.result { return result }

@@ -51,7 +51,8 @@ extension Pipeline {
    - Returns: The records of the processed messages.
    - Throws: When a processed decision could not be persisted, or on cancellation.
    */
-  @discardableResult public func processBatch(
+  @discardableResult
+  public func processBatch(
     _ envelopes: [MailEnvelope],
     adapter: (any MailClientAdapter)?,
     dryRun: Bool,
@@ -208,5 +209,4 @@ extension Pipeline {
       unrecordedResults[identity.key] = (record, failure)
     }
   }
-
 }

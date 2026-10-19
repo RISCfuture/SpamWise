@@ -4,7 +4,9 @@ import SpamWiseCore
 import MailIntegration
 
 /// Sender and content rules: editing, transfer and testing against the message selected in Mail.
-@MainActor @Observable final class RulesModel {
+@MainActor
+@Observable
+final class RulesModel {
   /// Removing, importing and exporting sender rules.
   let senderRules = TrackedOperation()
   /// Removing, importing, exporting and turning content rules on or off.
@@ -34,7 +36,8 @@ import MailIntegration
   }
 
   /// Parses `envelope` away from the main actor.
-  @concurrent private static func parse(_ envelope: MailEnvelope) async throws -> ParsedMessage {
+  @concurrent
+  private static func parse(_ envelope: MailEnvelope) async throws -> ParsedMessage {
     try MIMEParser().parse(envelope.raw)
   }
 

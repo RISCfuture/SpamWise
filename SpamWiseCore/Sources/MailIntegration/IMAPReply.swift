@@ -48,7 +48,7 @@ struct IMAPReply {
         case .simpleAttribute(let attribute):
           guard fetch != nil, body == nil else { throw IMAPError.malformedResponse }
           try fetch?.record(attribute)
-        case .streamingBegin(.body(let section, nil), let byteCount) where section == .complete:
+        case let .streamingBegin(.body(section, nil), byteCount) where section == .complete:
           try beginBody(byteCount: byteCount)
         case .streamingBegin: throw IMAPError.malformedResponse
         case .streamingBytes(let buffer): try appendBody(buffer)

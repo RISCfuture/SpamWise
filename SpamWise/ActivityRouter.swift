@@ -49,7 +49,9 @@ struct MessagePreview: Identifiable, Hashable {
  Presenting a sheet while another is up replaces it, so a request from the menu bar, a
  notification or the Tools menu is shown rather than lost.
  */
-@MainActor @Observable final class ActivityRouter {
+@MainActor
+@Observable
+final class ActivityRouter {
   /// The sheet the Activity window shows.
   var sheet: ActivitySheet?
   /// Whether the Activity window shows the selected decision's inspector.

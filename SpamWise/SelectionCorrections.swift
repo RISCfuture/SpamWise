@@ -97,7 +97,7 @@ struct SelectionCorrectionResult: Identifiable {
 
   /// This result without `rule` as its conflict, once the rule is removed.
   func withoutConflict(_ rule: SenderRule) -> Self {
-    guard case .corrected(let record, let conflict) = outcome, conflict?.id == rule.id else {
+    guard case let .corrected(record, conflict) = outcome, conflict?.id == rule.id else {
       return self
     }
     return Self(message: message, outcome: .corrected(record, conflict: nil))

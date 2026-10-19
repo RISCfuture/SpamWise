@@ -1,7 +1,8 @@
 import Foundation
 import SpamWiseCore
 
-@MainActor enum PreviewHelper {
+@MainActor
+enum PreviewHelper {
 
   static var record: DecisionRecord {
     DecisionRecord(

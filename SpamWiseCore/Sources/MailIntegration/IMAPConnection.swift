@@ -64,6 +64,7 @@ enum IMAPPipeline {
 private final class IMAPLineEndingCoalescer: ChannelInboundHandler {
   typealias InboundIn = ByteBuffer
   typealias InboundOut = ByteBuffer
+
   private static let carriageReturn = UInt8(ascii: "\r")
   private var holdsCarriageReturn = false
 
@@ -86,6 +87,7 @@ private final class IMAPLineEndingCoalescer: ChannelInboundHandler {
 /// Forwards decoded responses to the session and closes the channel on any protocol failure.
 private final class IMAPResponseForwarder: ChannelInboundHandler {
   typealias InboundIn = Response
+
   private let continuation: AsyncThrowingStream<Response, any Error>.Continuation
 
   init(continuation: AsyncThrowingStream<Response, any Error>.Continuation) {

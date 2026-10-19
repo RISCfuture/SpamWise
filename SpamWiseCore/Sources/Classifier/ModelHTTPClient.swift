@@ -6,7 +6,7 @@ public struct ModelHTTPClient: Sendable {
   /// Maximum accepted provider response size.
   public static let maximumResponseBytes = 65_536
   /// Ephemeral HTTPS requests with no redirects, cookies, or disk cache.
-  public static let live = ModelHTTPClient { request in
+  public static let live = Self { request in
     do {
       let response = try await transport.send(request)
       return .init(status: response.status, body: response.body)

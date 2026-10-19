@@ -22,13 +22,15 @@ func `reports the most limiting status before any account is validated`(
   #expect(derived.allowsAutomaticChecks == (status == .rolesNotValidated))
 }
 
-@Test func `stops automatic checks while paused`() {
+@Test
+func `stops automatic checks while paused`() {
   var paused = onboarded
   paused.paused = true
   #expect(!FilteringStatus(settings: paused, mailAutomation: .granted).allowsAutomaticChecks)
 }
 
-@Test func `preserves safety settings and validated accounts during field edits`() async throws {
+@Test
+func `preserves safety settings and validated accounts during field edits`() async throws {
   let store = try testStore()
   try await enableActions(store)
   try await StateRepository.editSettings(store) {
@@ -47,14 +49,14 @@ func `reports the most limiting status before any account is validated`(
   )
 }
 
-@Test func `clamps an edited body token budget to the supported maximum`() async throws {
+@Test
+func `clamps an edited body token budget to the supported maximum`() async throws {
   let store = try testStore()
   try await StateRepository.editSettings(store) { $0.bodyTokenBudget = 50_000 }
   #expect(try await StateRepository.load(store).settings.bodyTokenBudget == 4000)
 }
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Mailbox role validation` {
   private let store: Store
 
@@ -70,13 +72,15 @@ struct `Mailbox role validation` {
     try await StateRepository.load(store).settings
   }
 
-  @Test func `validates only accounts whose roles resolved uniquely`() async throws {
+  @Test
+  func `validates only accounts whose roles resolved uniquely`() async throws {
     let settings = try await settings()
     #expect(settings.validatedAccounts == ["account-A"])
     #expect(FilteringStatus(settings: settings, mailAutomation: .granted) == .filtering)
   }
 
-  @Test func `refuses actions in an account without validated roles`() async throws {
+  @Test
+  func `refuses actions in an account without validated roles`() async throws {
     let adapter = RecordingAdapter()
     var unvalidated = try envelope()
     unvalidated.identity.accountID = "account-B"
@@ -86,7 +90,8 @@ struct `Mailbox role validation` {
     #expect(await adapter.actions.isEmpty)
   }
 
-  @Test func `drops removed and failed accounts and restores dry run when none remain`()
+  @Test
+  func `drops removed and failed accounts and restores dry run when none remain`()
     async throws
   {
     try await StateRepository.recordMailboxRoles(["account-B": true], in: store)

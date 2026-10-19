@@ -27,7 +27,6 @@ func `treats hours in an overnight or daytime period, or any invalid hour, as qu
 }
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Notification batches` {
   private static let now = Date(timeIntervalSince1970: 1_800_014_400)
   private let store: Store
@@ -66,12 +65,14 @@ struct `Notification batches` {
     )
   }
 
-  @Test func `counts unresolved Review without announcing Inbox by default`() async throws {
+  @Test
+  func `counts unresolved Review without announcing Inbox by default`() async throws {
     let batch = try #require(await claim(store))
     #expect(batch.review == 1 && batch.good == 0)
   }
 
-  @Test func `announces a decision once across restarts`() async throws {
+  @Test
+  func `announces a decision once across restarts`() async throws {
     _ = try await claim(store)
     #expect(try await claim(Store(url: store.url), after: 4000) == nil)
   }

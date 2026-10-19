@@ -4,9 +4,9 @@ import FoundationModels
 /// Explicit Apple execution location; availability never selects another backend.
 public enum AppleModelBackend: String, Codable, CaseIterable, Sendable {
   /// Executes using the available model on this Mac.
-  case onDevice
+  case onDevice = "onDevice"
   /// Executes using the explicitly authorized Private Cloud Compute model.
-  case privateCloudCompute
+  case privateCloudCompute = "privateCloudCompute"
 
   /// Model identity recorded with usage and cache keys for this execution location.
   public var model: ModelIdentifier {
@@ -22,6 +22,7 @@ public struct AppleClassifier: Classifier {
   /// Injectable generation boundary preserving the chosen backend and bounded session configuration.
   public typealias Generate =
     @Sendable (AppleModelBackend, String, String, Int) async throws -> Verdict
+
   private let backend: AppleModelBackend
   private let generate: Generate
 

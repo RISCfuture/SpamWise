@@ -30,7 +30,7 @@ public struct MailPreferences: Codable, Sendable, Equatable {
   /// Decodes each field independently, using its default when absent or unreadable.
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
-    let defaults = MailPreferences()
+    let defaults = Self()
     localOnly = values.lenient(.localOnly, default: defaults.localOnly)
     accountIDs = values.lenient(.accountIDs, default: defaults.accountIDs)
     trustExclusions = values.lenient(.trustExclusions, default: defaults.trustExclusions)

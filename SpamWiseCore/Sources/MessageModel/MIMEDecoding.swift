@@ -34,6 +34,9 @@ extension MIMEParser {
     )
     if let text = String(data: data, encoding: encoding) { return text }
     issues.insert(.invalidCharacters)
+    // Replacing only the invalid bytes keeps the rest of a declared UTF-8 body readable, and
+    // `issues` reports the repair.
+    // swiftlint:disable:next optional_data_string_conversion
     return encoding == .utf8 ? String(decoding: data, as: UTF8.self) : fallbackText(data)
   }
 

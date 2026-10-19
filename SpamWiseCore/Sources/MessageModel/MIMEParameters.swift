@@ -187,13 +187,13 @@ struct MIMEHeaderValue {
       switch section {
         case .plain: plain.append(value)
         case .extended: extended.append(value)
-        case .continued(let number, let isExtended):
+        case let .continued(number, isExtended):
           sections[number, default: []].append((value, isExtended))
       }
     }
 
     func resolved(issues: inout Set<DecodingIssue>) -> MIMEParameter {
-      let forms = [!plain.isEmpty, !extended.isEmpty, !sections.isEmpty].filter { $0 }.count
+      let forms = [!plain.isEmpty, !extended.isEmpty, !sections.isEmpty].filter(\.self).count
       guard forms <= 1, plain.count <= 1, extended.count <= 1,
         sections.values.allSatisfy({ $0.count == 1 }),
         sections.isEmpty || sections.keys.sorted() == Array(0..<sections.count)

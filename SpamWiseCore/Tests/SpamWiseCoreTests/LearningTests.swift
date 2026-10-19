@@ -7,9 +7,9 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `learns from bounded corrections` {
-  @Test func `retrieves related older corrections before unrelated recent examples`() throws {
+  @Test
+  func `retrieves related older corrections before unrelated recent examples`() throws {
     let message = try learningMessage("Your observatory telescope shipment has arrived")
     let relevant = correction("observatory telescope shipment", date: 1)
     let irrelevant = correction(
@@ -26,7 +26,8 @@ struct `learns from bounded corrections` {
     )
   }
 
-  @Test func `distills only repeated noncontradictory domain corrections`() {
+  @Test
+  func `distills only repeated noncontradictory domain corrections`() {
     let examples = (0..<3).map {
       correction("advertisement \($0)", sender: "sender\($0)@shop.example", date: Double($0))
     }
@@ -65,7 +66,8 @@ struct `learns from bounded corrections` {
     #expect(state.knownSenderCounts(atDomains: ["shop.example"]) == ["shop.example": 4])
   }
 
-  @Test func `matches authenticated campaigns and invalidates them after explicit good`() throws {
+  @Test
+  func `matches authenticated campaigns and invalidates them after explicit good`() throws {
     let message = try learningMessage(campaignText, authenticated: true)
     var state = LearningState()
     state.recordCorrection(message: message, evidence: .init(message: message), label: .junk)
@@ -98,7 +100,8 @@ struct `learns from bounded corrections` {
     #expect(state.campaignMatch(for: generic, evidence: authenticatedEvidence(generic)) == nil)
   }
 
-  @Test func `lets a later junk correction override an earlier good campaign signature`() throws {
+  @Test
+  func `lets a later junk correction override an earlier good campaign signature`() throws {
     let issues = try (0..<3).map {
       try learningMessage(campaignText + " issue\($0)", id: "\($0)", authenticated: true)
     }
@@ -117,7 +120,8 @@ struct `learns from bounded corrections` {
     #expect(state.campaignMatch(for: issues[2], evidence: authenticatedEvidence(issues[2])) != nil)
   }
 
-  @Test func `retains bounded records and restores safe limits when decoding`() throws {
+  @Test
+  func `retains bounded records and restores safe limits when decoding`() throws {
     var state = LearningState(maximumSamples: 3, maximumFingerprints: 2)
     for index in 0..<5 {
       let message = try learningMessage(campaignText + " unique\(index)", id: "\(index)")
@@ -146,7 +150,8 @@ struct `learns from bounded corrections` {
     #expect(migrated.linkDomainDensity == 0.5)
   }
 
-  @Test func `trains on every explicit label and refuses contradictory self training`() throws {
+  @Test
+  func `trains on every explicit label and refuses contradictory self training`() throws {
     var state = LearningState()
     let query = try learningMessage("casino jackpot lottery prize lucky winner claim reward")
     #expect(state.estimate(message: query, evidence: .init(message: query)).bayesLogOdds == nil)
@@ -200,7 +205,8 @@ struct `learns from bounded corrections` {
     )
   }
 
-  @Test func `learns directional regularized weights from enriched evidence`() async throws {
+  @Test
+  func `learns directional regularized weights from enriched evidence`() async throws {
     var state = LearningState()
     try trainLearningState(&state)
     let query = try learningMessage("casino jackpot lottery prize lucky winner claim reward")

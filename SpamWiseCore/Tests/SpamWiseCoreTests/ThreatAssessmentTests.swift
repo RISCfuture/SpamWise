@@ -2,7 +2,8 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test func `assesses trusted mail independently without changing explicit rule actions`()
+@Test
+func `assesses trusted mail independently without changing explicit rule actions`()
   async throws
 {
   let store = try testStore(), adapter = RecordingAdapter()
@@ -60,7 +61,8 @@ import SpamWiseCore
   #expect(decoded.threats == nil)
 }
 
-@Test func `keeps unavailable threat assessments unknown and excludes network detectors locally`()
+@Test
+func `keeps unavailable threat assessments unknown and excludes network detectors locally`()
   async throws
 {
   let store = try testStore(), selected = try envelope(), calls = Counter()

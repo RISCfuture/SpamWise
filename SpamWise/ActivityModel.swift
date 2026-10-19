@@ -8,7 +8,9 @@ import SpamWiseCore
 
  Without a store, as in previews, the model filters the fixture records it was given.
  */
-@MainActor @Observable final class ActivityModel {
+@MainActor
+@Observable
+final class ActivityModel {
   /// Records added to the table each time the user asks for more.
   static let pageSize = 200
   private static let searchDelay: Duration = .milliseconds(250)

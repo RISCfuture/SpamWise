@@ -11,7 +11,9 @@ import MailIntegration
  requested while one runs follows it instead of being dropped. The pipeline and adapters are
  actors, so corrections and other user work interleave safely with a sweep.
  */
-@MainActor @Observable final class ScanCoordinator {
+@MainActor
+@Observable
+final class ScanCoordinator {
   /// Messages read per page by sweeps and previews.
   static let pageLimit = 20
   /// The pause between the end of one automatic check and the start of the next.
@@ -177,7 +179,7 @@ import MailIntegration
 
   private func handle(_ event: MailSweepEvent) async {
     switch event {
-      case .processed(let count, let total):
+      case let .processed(count, total):
         progress = ScanProgress(processed: count, total: total)
       case .historyUnavailable:
         historyUnavailable = true

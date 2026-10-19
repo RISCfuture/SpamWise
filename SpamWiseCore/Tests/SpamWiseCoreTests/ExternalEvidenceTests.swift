@@ -4,7 +4,8 @@ import Testing
 import SpamWiseCore
 @testable import Signals
 
-@Test func `bounds HTTPS responses and sends only domain and header credentials`() async throws {
+@Test
+func `bounds HTTPS responses and sends only domain and header credentials`() async throws {
   let configuration = fixtureConfiguration(SpamhausFixtureProtocol.self)
   let listed = try await SpamhausHTTPS.query(
     domain: "listed.example.org",
@@ -25,7 +26,8 @@ import SpamWiseCore
   }
 }
 
-@Test func `interprets only documented HTTPS DBL listings`() async throws {
+@Test
+func `interprets only documented HTTPS DBL listings`() async throws {
   let fixtures: [SpamhausResponseFixture] = [
     .init(200, #"{"status":200,"resp":[2002,2004,2104]}"#, .listed),
     .init(404, #"{"status":404}"#, .notListed),
@@ -62,7 +64,8 @@ import SpamWiseCore
   }
 }
 
-@Test func `bounds keyed queries and leaves unavailable credentials unknown`() async {
+@Test
+func `bounds keyed queries and leaves unavailable credentials unknown`() async {
   let disabled = SpamhausDomainLookup(
     configuration: .init(transport: .https),
     key: {
@@ -127,7 +130,8 @@ func `keeps blocklist error codes out of spam evidence`(_ address: String) async
   #expect(result.first?.status == .unknown)
 }
 
-@Test func `requires consent and valid domain names for blocklist queries`() async {
+@Test
+func `requires consent and valid domain names for blocklist queries`() async {
   let disabled = SpamhausDomainLookup(
     configuration: .init(),
     query: { _, _ in
@@ -152,7 +156,8 @@ func `keeps blocklist error codes out of spam evidence`(_ address: String) async
   #expect(result.first?.subject == "example.com")
 }
 
-@Test func `posts raw mail to loopback Rspamd and extracts only valid evidence symbols`() async {
+@Test
+func `posts raw mail to loopback Rspamd and extracts only valid evidence symbols`() async {
   let lookup = RspamdLookup(configuration: fixtureConfiguration(RspamdFixtureProtocol.self))
   let result = await lookup.lookup(raw: RspamdFixtureProtocol.message("valid"))
   #expect(result.status == .observed)
@@ -171,7 +176,8 @@ func `keeps blocklist error codes out of spam evidence`(_ address: String) async
   }
 }
 
-@Test func `resolves blocklist answers in process through only the configured resolver`()
+@Test
+func `resolves blocklist answers in process through only the configured resolver`()
   async throws
 {
   let resolver = try await LoopbackDNSResolver()
@@ -198,7 +204,8 @@ func `keeps blocklist error codes out of spam evidence`(_ address: String) async
   }
 }
 
-@Test func `decodes saved scanner selections without enabling removed transports`() throws {
+@Test
+func `decodes saved scanner selections without enabling removed transports`() throws {
   func decoded(_ json: String) throws -> ExternalEvidenceSettings {
     try JSONDecoder().decode(ExternalEvidenceSettings.self, from: Data(json.utf8))
   }
@@ -211,7 +218,7 @@ func `keeps blocklist error codes out of spam evidence`(_ address: String) async
   #expect(try !decoded("{\(base),\"rspamcPath\":\"/bin/rspamc\"}").localRspamd)
   var enabled = ExternalEvidenceSettings()
   enabled.localRspamd = true
-  #expect(try decoded(String(decoding: JSONEncoder().encode(enabled), as: UTF8.self)) == enabled)
+  #expect(try decoded(JSONEncoder().encodeText(enabled)) == enabled)
 }
 
 private func fixtureConfiguration(_ protocolClass: AnyClass)
@@ -220,13 +227,13 @@ private func fixtureConfiguration(_ protocolClass: AnyClass)
   let name = NSStringFromClass(protocolClass)
   return {
     let configuration = URLSessionConfiguration.ephemeral
-    configuration.protocolClasses = [NSClassFromString(name)].compactMap { $0 }
+    configuration.protocolClasses = [NSClassFromString(name)].compactMap(\.self)
     return configuration
   }
 }
 
 private final class SpamhausFixtureProtocol: URLProtocol {
-  override static func canInit(with request: URLRequest) -> Bool { true }
+  override static func canInit(with _: URLRequest) -> Bool { true }
   override static func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
   override func startLoading() {
@@ -273,7 +280,7 @@ private final class RspamdFixtureProtocol: URLProtocol {
     "failure": (500, #"{"symbols":{}}"#)
   ]
 
-  override static func canInit(with request: URLRequest) -> Bool { true }
+  override static func canInit(with _: URLRequest) -> Bool { true }
   override static func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
   static func message(_ scenario: String) -> Data {
@@ -283,7 +290,7 @@ private final class RspamdFixtureProtocol: URLProtocol {
   override func startLoading() {
     #expect(request.url?.absoluteString == "http://127.0.0.1:11333/checkv2")
     #expect(request.httpMethod == "POST")
-    let scenario = String(decoding: body(), as: UTF8.self).components(separatedBy: "\r\n\r\n").last
+    let scenario = String(data: body(), encoding: .utf8)?.components(separatedBy: "\r\n\r\n").last
     guard let url = request.url, let scenario, let fixture = Self.responses[scenario] else {
       Issue.record("Unexpected Rspamd scan: \(scenario ?? "none")")
       client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
@@ -367,7 +374,7 @@ private final class LoopbackDNSResolver: Sendable {
 
   private static func response(to query: Data) -> Data {
     var bytes = [UInt8](query)
-    let missing = String(decoding: query, as: UTF8.self).contains("missing")
+    let missing = query.contains(Data("missing".utf8))
     bytes[headerFlagsOffset] = responseFlag | (bytes[headerFlagsOffset] & recursionDesiredFlag)
     bytes[responseCodeOffset] = recursionAvailableFlag | (missing ? nameErrorCode : 0)
     bytes[answerCountOffset] = missing ? 0 : 1

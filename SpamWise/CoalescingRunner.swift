@@ -6,7 +6,9 @@ import Observation
  A request made while the work runs is not dropped: all such requests coalesce into a single
  further run once the current one finishes.
  */
-@MainActor @Observable final class CoalescingRunner {
+@MainActor
+@Observable
+final class CoalescingRunner {
   /// Whether the work is running.
   private(set) var isRunning = false
   @ObservationIgnored private var task: Task<Void, Never>?

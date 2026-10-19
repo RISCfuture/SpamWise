@@ -67,7 +67,7 @@ private actor HistoryEvents: AppleEventRunner {
     self.failingSent = failingSent
   }
 
-  func run(_ request: MailRequest) async throws -> ScriptValue {
+  func run(_ request: MailRequest) throws -> ScriptValue {
     if request == .accounts {
       return .list(accountIDs.map { .list([.string($0), .string($0), .list([])]) })
     }
@@ -88,7 +88,8 @@ private actor HistoryEvents: AppleEventRunner {
     return .list([.integer(rows.count), .list(Array(rows.dropFirst(offset).prefix(limit)))])
   }
 }
-@Test func `gates only on confirmed authenticated receipts from exact non-freemail senders`()
+@Test
+func `gates only on confirmed authenticated receipts from exact non-freemail senders`()
   throws
 {
   var state = AppState()
@@ -180,7 +181,8 @@ private func gate(
     authentication: authentication
   )?.disposition
 }
-@Test func `reads Sent history from its high-water mark on its own schedule`() async throws {
+@Test
+func `reads Sent history from its high-water mark on its own schedule`() async throws {
   let store = try testStore(), now = Date.now
   let runner = HistoryEvents(accounts: ["broken", "account"], failingSent: "broken")
   let maintenance = HistoryMaintenance(source: AppleMailAdapter(runner: runner), store: store)

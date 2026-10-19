@@ -4,7 +4,8 @@ import SpamWiseCore
 /// The progress and per-message results of correcting the messages selected in Mail.
 struct CorrectionResultsView: View {
   let corrections: CorrectionsModel
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     NavigationStack {
@@ -88,7 +89,7 @@ private struct SelectionResultRow: View {
     VStack(alignment: .leading) {
       Text(result.message.displaySubject)
       switch result.outcome {
-        case .corrected(let record, let conflict):
+        case let .corrected(record, conflict):
           Text("Correction saved. Mail action: \(record.outcome.localizedTitle).")
             .foregroundStyle(.secondary)
           if let error = record.actionError { Text(error).foregroundStyle(.secondary) }

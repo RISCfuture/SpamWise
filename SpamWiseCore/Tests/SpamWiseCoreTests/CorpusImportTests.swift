@@ -3,7 +3,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Reviewed corpus import` {
   private static let importedCount = 20
   private let store: Store
@@ -34,27 +33,32 @@ struct `Reviewed corpus import` {
 
   private func state() async throws -> AppState { try await StateRepository.load(store) }
 
-  @Test func `derives learning features from each complete message`() {
+  @Test
+  func `derives learning features from each complete message`() {
     #expect(imported.learning.samples.count == Self.importedCount)
     #expect(imported.learning.samples.allSatisfy { $0.features.listUnsubscribe == 1 })
   }
 
-  @Test func `stores labels without rules, Activity or message text`() {
+  @Test
+  func `stores labels without rules, Activity or message text`() {
     #expect(imported.reviewedLabels.count == Self.importedCount)
     #expect(imported.rules.count == 1)
     #expect(imported.records.isEmpty)
     #expect(imported.reviewedLabels.allSatisfy { $0.message == nil })
   }
 
-  @Test func `links each label to a correction example and holds some out`() {
+  @Test
+  func `links each label to a correction example and holds some out`() {
     let labels = imported.reviewedLabels
     #expect(
       labels.allSatisfy { label in imported.corrections.contains { $0.sampleID == label.sampleID } }
     )
-    #expect(labels.contains { $0.heldOut })
+    let holdsSomeOut = labels.contains(where: \.heldOut)
+    #expect(holdsSomeOut)
   }
 
-  @Test func `replaces the label of a reimported message whose delivery differs`() async throws {
+  @Test
+  func `replaces the label of a reimported message whose delivery differs`() async throws {
     var redelivered = examples[0]
     redelivered.hash = "different delivery"
     try await CorpusManagement.importMessages([redelivered], label: .inbox, store: store)
@@ -63,14 +67,15 @@ struct `Reviewed corpus import` {
     #expect(labels.last?.label == .inbox)
   }
 
-  @Test func `relabels an imported label`() async throws {
+  @Test
+  func `relabels an imported label`() async throws {
     let label = try #require(imported.reviewedLabels.last)
     try await CorpusManagement.relabel(id: label.id, label: .review, store: store)
     #expect(try await state().reviewedLabels.last?.label == .review)
   }
 
-  @Test func `forgets an imported label and its learning while keeping sender rules`() async throws
-  {
+  @Test
+  func `forgets an imported label and its learning while keeping sender rules`() async throws {
     let label = try #require(imported.reviewedLabels.last)
     try await CorpusManagement.forget(id: label.id, store: store)
     let forgotten = try await state()
@@ -80,7 +85,8 @@ struct `Reviewed corpus import` {
     #expect(forgotten.rules == imported.rules)
   }
 
-  @Test func `reports the remaining import capacity`() async throws {
+  @Test
+  func `reports the remaining import capacity`() async throws {
     #expect(
       try await CorpusManagement.capacity(store: store).remainingImports
         == RetentionLimits.reviewedLabels - Self.importedCount

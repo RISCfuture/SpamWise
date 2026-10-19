@@ -10,7 +10,8 @@ struct FolderSettingsView: View {
   @State private var selection = ""
   @State private var plan: MailFolderPlan?
   @State private var page = 0
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     NavigationStack {
@@ -132,7 +133,7 @@ private struct SavedFolderPlanRow: View {
     } else if let failure = health?.failure {
       WarningLabel(verbatim: failure)
     }
-    UnreadableMailView(count: health?.unavailableCount ?? 0)
+    UnreadableMailView(messageCount: health?.unavailableCount ?? 0)
   }
 }
 

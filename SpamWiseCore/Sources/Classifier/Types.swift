@@ -64,7 +64,7 @@ public struct Verdict: Codable, Sendable, Equatable {
     self.usage = usage
   }
   /// Rejects confidence outside 0 through 100 and empty explanations.
-  public func validated() throws -> Verdict {
+  public func validated() throws -> Self {
     guard ClassificationLimits.confidenceRange.contains(confidence),
       !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     else { throw ClassificationError.invalidOutput }
@@ -77,7 +77,7 @@ public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {
   private static let maximumSubjectCharacters = 100
   private static let maximumExcerptCharacters = 160
   /// Stable identity used for persistence and presentation.
-  public var id: UUID = UUID()
+  public var id = UUID()
   /// Timestamp when this record was created.
   public var date: Date = .now
   /// Sender address used for local retrieval and rules; prompts carry only its domain.
@@ -195,23 +195,23 @@ public protocol ClassificationFailure: Error {}
 /// A classification failure that leaves the message unchanged.
 public enum ClassificationError: String, ClassificationFailure, Codable, Sendable, LocalizedError {
   /// No acceptable provider credential is available.
-  case missingCredential
+  case missingCredential = "missingCredential"
   /// The selected provider or model configuration is unavailable.
   case configuration
   /// The user has not allowed this provider to receive private mail context.
-  case consentRequired
+  case consentRequired = "consentRequired"
   /// The provider refused a request because of a rate limit.
-  case rateLimited
+  case rateLimited = "rateLimited"
   /// The operation exceeded its deadline.
   case timeout
   /// The provider could not be reached.
   case network
   /// The bounded prompt or model context limit was exceeded.
-  case contextExceeded
+  case contextExceeded = "contextExceeded"
   /// The provider declined to generate a classification.
   case refused
   /// The provider response did not satisfy the verdict contract.
-  case invalidOutput
+  case invalidOutput = "invalidOutput"
   /// The caller cancelled classification.
   case cancelled
   /// Whether a transient classification failure is eligible for bounded retry.

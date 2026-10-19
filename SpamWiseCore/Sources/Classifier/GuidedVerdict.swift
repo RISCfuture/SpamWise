@@ -3,10 +3,12 @@ import FoundationModels
 import ClaudeForFoundationModels
 
 /// Guided-generation label whose raw values match ``MailLabel``.
-@Generable enum GuidedLabel: String { case inbox, review, junk }
+@Generable
+enum GuidedLabel: String { case inbox, review, junk }
 
 /// Guided-generation verdict shared by every Foundation Models session.
-@Generable struct GuidedVerdict {
+@Generable
+struct GuidedVerdict {
   var label: GuidedLabel
   @Guide(description: "Uncalibrated confidence from 0 through 100", .range(0...100))
   var confidence: Int

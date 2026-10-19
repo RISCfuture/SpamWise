@@ -174,7 +174,7 @@ extension StateTransaction {
         row.payload = payload
         if parts.contains(.historyImports) {
           row.imports = imports
-        } else if index.importedIDs.count > 0 {
+        } else if !index.importedIDs.isEmpty {
           throw StoreError.unloadedChange(StateSlice.histories.rawValue)
         }
       } else {
@@ -225,7 +225,7 @@ extension StateTransaction {
    - Returns: Whether any row was written or deleted.
    */
   private func commitRows<Element: Encodable & Equatable, Row: PayloadRow>(
-    _ slice: StateSlice,
+    _: StateSlice,
     _ current: [Element],
     _ previous: [Element],
     _ codec: RowCodec<Element, Row>,
@@ -300,6 +300,7 @@ struct ContactsDocument: Codable, Equatable {
   var contactAddresses: Set<String>?
   var contactsUpdatedAt: Date?
   var ownAddresses: Set<String> = []
+
   init() {}
   init(_ state: AppState) {
     contactAddresses = state.contactAddresses; contactsUpdatedAt = state.contactsUpdatedAt
@@ -310,6 +311,7 @@ struct ContactsDocument: Codable, Equatable {
 struct TrainingDocument: Codable, Equatable {
   var claims: [String: UUID] = [:]
   var observations: [String: Set<String>] = [:]
+
   init() {}
   init(_ state: AppState) {
     claims = state.trainingClaims; observations = state.trainingObservations
@@ -320,6 +322,7 @@ struct TrainingDocument: Codable, Equatable {
 struct HitCount: Encodable, Equatable {
   let id: String
   let count: Int
+
   func encode(to encoder: any Encoder) throws {
     var container = encoder.singleValueContainer()
     try container.encode(count)

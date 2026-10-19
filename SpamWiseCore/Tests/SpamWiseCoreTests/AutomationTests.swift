@@ -3,7 +3,6 @@ import Testing
 import SpamWiseCore
 
 @Suite
-// swiftlint:disable:next type_name
 struct `Automation request replay` {
   private let store: Store
   private let adapter = RecordingAdapter()
@@ -28,7 +27,8 @@ struct `Automation request replay` {
     )
   }
 
-  @Test func `replays a preview without classifying again`() async throws {
+  @Test
+  func `replays a preview without classifying again`() async throws {
     let requestID = UUID()
     let first = try await execute(.preview, requestID)
     #expect(first.outcome == .dryRun)
@@ -36,7 +36,8 @@ struct `Automation request replay` {
     #expect(try await StateRepository.load(store).records.count == 1)
   }
 
-  @Test func `refuses to reuse a request for a different command`() async throws {
+  @Test
+  func `refuses to reuse a request for a different command`() async throws {
     let requestID = UUID()
     _ = try await execute(.preview, requestID)
     await #expect(throws: AutomationError.requestReused) {
@@ -44,7 +45,8 @@ struct `Automation request replay` {
     }
   }
 
-  @Test func `replays a correction without repeating its action or example`() async throws {
+  @Test
+  func `replays a correction without repeating its action or example`() async throws {
     let requestID = UUID()
     let corrected = try await execute(.correct(.inbox), requestID)
     #expect(corrected.outcome == .applied)

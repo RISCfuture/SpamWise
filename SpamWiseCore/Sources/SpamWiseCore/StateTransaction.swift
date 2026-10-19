@@ -167,7 +167,7 @@ extension StateTransaction {
       return fallback
     }
   }
-  private func decoded<T: Decodable>(_ rows: [some PayloadRow], as type: T.Type) -> [T] {
+  private func decoded<T: Decodable>(_ rows: [some PayloadRow], as _: T.Type) -> [T] {
     rows.compactMap { try? decoder.decode(T.self, from: $0.payload) }
   }
   private func fetch<Row: PayloadRow>(_ slice: StateSlice, _ selection: StateSelection<String>)
@@ -201,7 +201,7 @@ extension StateTransaction {
   }
   private func loadUnordered<Element: Decodable, Row: PayloadRow>(
     _ slice: StateSlice,
-    _ row: Row.Type,
+    _: Row.Type,
     _ selection: StateSelection<String>,
     merging existing: [Element],
     key: (Element) -> String

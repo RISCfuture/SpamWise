@@ -13,6 +13,13 @@ struct IMAPMailboxSelection {
   var permanentFlags: [PermanentFlag]
   /// The UID the server predicts for the next message, when reported.
   var uidNext: Int?
+
+  /// Whether the mailbox holds no messages.
+  var isEmpty: Bool {
+    // `count` is the number EXISTS reported, not a collection with its own `isEmpty`.
+    // swiftlint:disable:next empty_count
+    count == 0
+  }
 }
 
 /// Server-designated special-use mailboxes; names retain their wire encoding.
@@ -75,7 +82,9 @@ extension IMAPAdapter {
     )
     var junk: Set<String> = [], sent: Set<String> = []
     for case .mailboxData(.list(let info)) in reply.untagged {
-      let mailbox = String(decoding: info.path.name.bytes, as: UTF8.self)
+      guard let mailbox = String(bytes: info.path.name.bytes, encoding: .utf8) else {
+        throw IMAPError.malformedResponse
+      }
       do { try IMAPWireText.validate(mailbox) } catch { throw IMAPError.malformedResponse }
       guard !info.attributes.contains(.noSelect), !info.attributes.contains(trashAttribute) else {
         continue

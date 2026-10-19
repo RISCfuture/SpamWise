@@ -91,7 +91,7 @@ enum Diagnostics {
       case let error as DecodingError: describe(error)
       case let error as any LocalizedError:
         [error.errorDescription, error.failureReason, error.recoverySuggestion]
-          .compactMap { $0 }.joined(separator: " ")
+          .compactMap(\.self).joined(separator: " ")
       default: error.localizedDescription
     }
   }

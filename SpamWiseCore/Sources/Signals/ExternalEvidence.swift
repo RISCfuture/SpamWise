@@ -3,7 +3,10 @@ import MessageModel
 
 /// Optional evidence status, distinct from any mail classification or action.
 public enum ExternalEvidenceStatus: String, Codable, Sendable {
-  case unknown, notListed, listed, observed
+  case unknown
+  case notListed = "notListed"
+  case listed
+  case observed
 }
 
 /// Named origin of an optional evidence observation.
@@ -53,7 +56,7 @@ public struct ExternalEvidenceFinding: Codable, Sendable, Equatable {
 /// Explicit service selection; a failed transport never falls back to another service.
 public enum SpamhausTransport: String, Codable, Sendable {
   /// Public mirrors through a user-owned, attributable DNS resolver.
-  case publicDNS
+  case publicDNS = "publicDNS"
   /// Subscription or trial access to DNS Blocklists via HTTPS.
   case https
 }

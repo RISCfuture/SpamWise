@@ -193,7 +193,7 @@ public enum CorrectionWarning: Sendable, Equatable {
   case unauthenticatedSender
 
   /// The warning for correcting a message with `evidence` to `label`; nil when none applies.
-  public static func check(label: MailLabel, evidence: EvidenceBundle?) -> CorrectionWarning? {
+  public static func check(label: MailLabel, evidence: EvidenceBundle?) -> Self? {
     label == .junk && evidence?.senderAuthentication != .alignedPass
       ? .unauthenticatedSender : nil
   }

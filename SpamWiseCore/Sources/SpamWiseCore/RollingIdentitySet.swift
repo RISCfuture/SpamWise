@@ -13,6 +13,8 @@ public struct RollingIdentitySet: Codable, Sendable, Equatable {
   private var members: Set<String> = []
   /// Number of remembered identities.
   public var count: Int { order.count }
+  /// Whether the set remembers no identities.
+  public var isEmpty: Bool { order.isEmpty }
   /// Creates a set holding at most `capacity` of the latest `identities`.
   public init(capacity: Int, _ identities: [String] = []) {
     self.capacity = max(1, capacity)
@@ -33,7 +35,8 @@ public struct RollingIdentitySet: Codable, Sendable, Equatable {
   /// Whether `identity` is remembered.
   public func contains(_ identity: String) -> Bool { members.contains(identity) }
   /// Remembers `identity`, forgetting the oldest member when full.
-  @discardableResult public mutating func insert(_ identity: String) -> (
+  @discardableResult
+  public mutating func insert(_ identity: String) -> (
     inserted: Bool, memberAfterInsert: String
   ) {
     guard members.insert(identity).inserted else { return (false, identity) }

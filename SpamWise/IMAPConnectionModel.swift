@@ -4,7 +4,9 @@ import SpamWiseCore
 import MailIntegration
 
 /// The draft and actions behind the app's separate IMAP connection.
-@MainActor @Observable final class IMAPConnectionModel {
+@MainActor
+@Observable
+final class IMAPConnectionModel {
   /// The implicit-TLS IMAP port a new draft starts with.
   static let defaultPort = String(IMAPConfiguration.defaultPort)
   var host = ""
@@ -31,7 +33,8 @@ import MailIntegration
 
   private static func newAccountID() -> String { "imap:" + UUID().uuidString }
 
-  @concurrent private static func deleteCredential(service: String) async throws {
+  @concurrent
+  private static func deleteCredential(service: String) async throws {
     try APIKeychain(service: service).delete()
   }
 

@@ -67,6 +67,7 @@ public actor MailSweeper {
   public typealias EventHandler = @Sendable (MailSweepEvent) async -> Void
   /// Turns a failure into the sanitized text saved in scan health.
   public typealias FailureDescription = @Sendable (any Error) -> String
+
   let source: any MailSweepSource
   let store: Store
   let pipeline: Pipeline
@@ -122,7 +123,8 @@ public actor MailSweeper {
      - onEvent: Receives progress and health events.
    - Throws: Cancellation, or a failure reading the source's accounts or the store.
    */
-  @discardableResult public func sweep(
+  @discardableResult
+  public func sweep(
     dryRun: Bool,
     limit: Int,
     onEvent: @escaping EventHandler = { _ in }
