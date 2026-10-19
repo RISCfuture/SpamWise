@@ -98,8 +98,13 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   /**
    Creates bounded evidence, recording a finding when a message field exceeds its limit.
 
-   - Parameter trustedAuthServers: Receiving-server identifiers of the message's account. Only
-     their topmost Authentication-Results headers produce trusted results.
+   - Parameters:
+     - message: The message to gather evidence from.
+     - history: Known correspondence with the sender.
+     - contact: Whether the sender is a contact; nil when unknown.
+     - domainAgeDays: The sender domain's registration age in days; nil when unknown.
+     - trustedAuthServers: Receiving-server identifiers of the message's account. Only
+       their topmost Authentication-Results headers produce trusted results.
    */
   public init(
     message: ParsedMessage,

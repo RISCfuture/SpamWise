@@ -112,7 +112,7 @@ scheme with automatic signing to try the app.
 ## Testing
 
 ```sh
-Scripts/check.sh            # everything CI runs, with warnings as errors
+Scripts/check.sh            # CI's unsigned checks, with warnings as errors
 Scripts/ui-check.sh         # XCTest UI flows; development-signed
 ```
 
@@ -126,6 +126,7 @@ builds apart. The pieces can run alone:
 | Package tests | `swift test --package-path SpamWiseCore -Xswiftc -warnings-as-errors` |
 | Hostless unit tests | `xcodebuild test -project SpamWise.xcodeproj -scheme "SpamWise Common" CODE_SIGNING_ALLOWED=NO` |
 | UI tests | `Scripts/ui-check.sh`, which signs for team `2NFSK2WB24` and runs `UITests` against the App Store edition |
+| Documentation | `xcodebuild docbuild -scheme SpamWiseCore-Package -destination 'platform=macOS,arch=arm64'`, run in `SpamWiseCore/` |
 | Store concurrency | `bash Scripts/store-check.sh <build-token>`: two processes make 50 transactions each, a third reads 100 |
 | Lint and format | `swift format format -i -r <dirs>`, `swiftlint lint --strict` |
 

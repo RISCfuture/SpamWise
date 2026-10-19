@@ -11,9 +11,13 @@ public enum CorrectionRetrieval {
   /**
    Selects relevant corrections; sender and content matches outrank recency.
 
-   - Parameter senderAuthenticated: Whether trusted authentication confirmed the From domain.
-     Only then do examples from the same sender or domain rank higher, because a forged From
-     address must not pull in the examples of the sender it imitates.
+   - Parameters:
+     - message: The message the examples are for.
+     - corrections: The saved corrections to choose from.
+     - limit: The most examples to return; never more than 100.
+     - senderAuthenticated: Whether trusted authentication confirmed the From domain.
+       Only then do examples from the same sender or domain rank higher, because a forged From
+       address must not pull in the examples of the sender it imitates.
    */
   public static func examples(
     for message: ParsedMessage,

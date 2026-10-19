@@ -74,14 +74,14 @@ public struct EvaluationObservation: Codable, Sendable {
     )
   }
 
-  /// This result as ``Decision`` would label it at `strength`; results without a verdict are unchanged.
+  /// This result as `Decision` would label it at `strength`; results without a verdict are unchanged.
   public func decided(strength: FilteringStrength) -> Self {
     decided { verdict in
       try Decision.evaluate(verdict, strength: strength, concealsContent: concealsContent)
     }
   }
 
-  /// This result as ``Decision`` would label it at an explicit Junk confidence threshold.
+  /// This result as `Decision` would label it at an explicit Junk confidence threshold.
   public func decided(junkThreshold: Int) -> Self {
     decided { verdict in
       try Decision.evaluate(verdict, junkThreshold: junkThreshold, concealsContent: concealsContent)

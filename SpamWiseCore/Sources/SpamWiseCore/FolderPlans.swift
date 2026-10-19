@@ -69,7 +69,9 @@ public enum FolderPlans {
   /**
    Lists every saved plan, including plans whose folder no longer resolves.
 
-   - Parameter folders: The folders the client currently lists, or nil when unknown.
+   - Parameters:
+     - store: The store holding the saved plans.
+     - folders: The folders the client currently lists, or nil when unknown.
    */
   public static func list(in store: Store, resolving folders: [MailFolder]? = nil) async throws
     -> [FolderPlanStatus]

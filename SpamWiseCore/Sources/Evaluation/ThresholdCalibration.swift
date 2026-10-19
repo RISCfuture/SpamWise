@@ -8,7 +8,7 @@ public struct ThresholdPoint: Codable, Sendable {
   public var modelJunkVerdicts: Int
   /// Fraction of those verdicts that were actually junk; nil when there were none.
   public var cumulativePrecision: Double?
-  /// Whole-cohort metrics with ``Decision`` applied at this threshold, including the
+  /// Whole-cohort metrics with `Decision` applied at this threshold, including the
   /// false-positive upper bound.
   public var metrics: BinaryMetrics
 

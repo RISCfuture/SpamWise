@@ -134,8 +134,13 @@ public struct LearningState: Codable, Sendable, Equatable {
   /**
    Stores an explicit correction, replacing the same content's prior label and campaign evidence.
 
-   - Parameter sampleID: The sample's identity, when it differs from the identity of
-     `message`, such as the identity of the text that was classified.
+   - Parameters:
+     - message: The corrected message.
+     - evidence: The evidence gathered for `message`.
+     - label: The label the user chose.
+     - sampleID: The sample's identity, when it differs from the identity of
+       `message`, such as the identity of the text that was classified.
+     - date: When the correction was made.
    */
   public mutating func recordCorrection(
     message: ParsedMessage,

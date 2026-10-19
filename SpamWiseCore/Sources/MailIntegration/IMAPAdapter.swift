@@ -127,7 +127,7 @@ public actor IMAPAdapter: MailClientAdapter {
   /// Performs a UID MOVE or Review keyword change after persisted validation and an exact content recheck.
   /// Review is stored as the `$SpamWiseReview` keyword, or `\Flagged` where the mailbox admits no new keywords;
   /// clearing Review removes the same flag.
-  /// Failures before the mail command is sent throw ``ActionNotAttempted``.
+  /// Failures before the mail command is sent throw `ActionNotAttempted`.
   public func perform(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
   {
