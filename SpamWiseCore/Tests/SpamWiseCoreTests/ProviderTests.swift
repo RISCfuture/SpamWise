@@ -222,43 +222,73 @@ private let geminiResponse =
       "thoughtsTokenCount":20,"cachedContentTokenCount":200}}
   """#
 
-@Test
-func `encodes isolated provider requests and accounts for billed tokens`()
-  async throws
-{
-  let openAI = OpenAIClassifier(
+/// An OpenAI classifier whose provider checks each request with `inspect`, then answers with ``openAIResponse``.
+private func openAIClassifier(
+  inspecting inspect: @escaping @Sendable (URLRequest) throws -> Void = { _ in }
+) -> OpenAIClassifier {
+  OpenAIClassifier(
     key: { "fixture" },
     http: ModelHTTPClient { request in
-      #expect(request.url?.absoluteString == "https://api.openai.com/v1/responses")
-      #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer fixture")
-      let body = try #require(request.httpBody)
-      let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
-      #expect(json["model"] as? String == "gpt-5.4-mini")
-      #expect(json["store"] as? Bool == false)
-      #expect(json["max_output_tokens"] as? Int == 1024)
-      #expect(json["previous_response_id"] == nil)
+      try inspect(request)
       return .init(status: 200, body: Data(openAIResponse.utf8))
     }
   )
-  let result = try await openAI.classify(providerInput())
+}
+
+/// A Gemini classifier whose provider checks each request with `inspect`, then answers with ``geminiResponse``.
+private func geminiClassifier(
+  inspecting inspect: @escaping @Sendable (URLRequest) throws -> Void = { _ in }
+) -> GeminiClassifier {
+  GeminiClassifier(
+    key: { "fixture" },
+    http: ModelHTTPClient { request in
+      try inspect(request)
+      return .init(status: 200, body: Data(geminiResponse.utf8))
+    }
+  )
+}
+
+@Test
+func `sends OpenAI an unstored bounded request for its model`() async throws {
+  let classifier = openAIClassifier { request in
+    #expect(request.url?.absoluteString == "https://api.openai.com/v1/responses")
+    #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer fixture")
+    let body = try #require(request.httpBody)
+    let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+    #expect(json["model"] as? String == "gpt-5.4-mini")
+    #expect(json["store"] as? Bool == false)
+    #expect(json["max_output_tokens"] as? Int == 1024)
+    #expect(json["previous_response_id"] == nil)
+  }
+  _ = try await classifier.classify(providerInput())
+}
+
+@Test
+func `accounts OpenAI usage and cost with cached input`() async throws {
+  let result = try await openAIClassifier().classify(providerInput())
   #expect(result.label == .inbox)
   #expect(result.usage.output == 100)
   #expect(result.usage.modelID == "gpt-5.4-mini")
   #expect(abs(result.usage.estimatedCost - 0.001065) < 0.00000001)
-  let gemini = GeminiClassifier(
-    key: { "fixture" },
-    http: ModelHTTPClient { request in
-      #expect(request.url?.query == nil)
-      #expect(request.value(forHTTPHeaderField: "x-goog-api-key") == "fixture")
-      #expect(request.url?.path == "/v1beta/models/gemini-3.8-flash:generateContent")
-      return .init(status: 200, body: Data(geminiResponse.utf8))
-    }
-  )
-  let googleResult = try await gemini.classify(providerInput())
-  #expect(googleResult.label == .review)
-  #expect(googleResult.usage.output == 100)
-  #expect(googleResult.usage.cached == 200)
-  #expect(googleResult.usage.modelID == "gemini-3.8-flash")
+}
+
+@Test
+func `sends Gemini its key in a header rather than the URL`() async throws {
+  let classifier = geminiClassifier { request in
+    #expect(request.url?.query == nil)
+    #expect(request.value(forHTTPHeaderField: "x-goog-api-key") == "fixture")
+    #expect(request.url?.path == "/v1beta/models/gemini-3.8-flash:generateContent")
+  }
+  _ = try await classifier.classify(providerInput())
+}
+
+@Test
+func `accounts Gemini thinking tokens as output and cached input`() async throws {
+  let result = try await geminiClassifier().classify(providerInput())
+  #expect(result.label == .review)
+  #expect(result.usage.output == 100)
+  #expect(result.usage.cached == 200)
+  #expect(result.usage.modelID == "gemini-3.8-flash")
 }
 
 @Test(arguments: [

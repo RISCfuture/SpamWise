@@ -228,16 +228,19 @@ func `rejects a disposable probe whose move reverts before the settling window e
   #expect(await reverting.moves.count == 1)
 }
 
-/// A pipeline that has just moved a message to Junk, whose recheck finds it gone when `reverted`.
+/**
+ A pipeline that has just moved a message to Junk, automatically or through the user's Mark Junk
+ correction, whose recheck finds it gone when `reverted`.
+ */
 private struct SettlingJunkMove {
   static let window = Duration.seconds(1)
 
   let store: Store, pipeline: Pipeline, record: DecisionRecord, elapsed: Duration
 
-  init(reverted: Bool) async throws {
+  init(reverted: Bool, byCorrection: Bool = false) async throws {
     store = try testStore()
     try await StateRepository.update(store) { state in
-      state.settings.dryRun = false
+      state.settings.dryRun = byCorrection
       state.settings.validatedAccounts = ["account"]
     }
     let junk = MailReply.found(MailReply.message(mailbox: "Junk", localID: 2))
@@ -255,9 +258,14 @@ private struct SettlingJunkMove {
       identity: MailReply.identity(),
       raw: Data(MailReply.probeSource.utf8)
     )
-    let clock = ContinuousClock(), start = clock.now
-    record = await pipeline.process(message, adapter: adapter)
-    elapsed = clock.now - start
+    let clock = ContinuousClock()
+    var start = clock.now, moved = await pipeline.process(message, adapter: adapter)
+    if byCorrection {
+      try await StateRepository.update(store) { $0.settings.dryRun = false }
+      start = clock.now
+      moved = try await pipeline.correct(recordID: moved.id, label: .junk, adapter: adapter)
+    }
+    (record, elapsed) = (moved, clock.now - start)
   }
 
   func settledOutcome() async throws -> ActionOutcome? {
@@ -267,9 +275,12 @@ private struct SettlingJunkMove {
   }
 }
 
-@Test(arguments: [false, true])
-func `rechecks an automatic move once the settling window ends`(reverted: Bool) async throws {
-  let move = try await SettlingJunkMove(reverted: reverted)
+@Test(arguments: [false, true], [false, true])
+func `rechecks a move once the settling window ends`(reverted: Bool, byCorrection: Bool)
+  async throws
+{
+  let move = try await SettlingJunkMove(reverted: reverted, byCorrection: byCorrection)
+  #expect(move.record.path == (byCorrection ? .correction : .model))
   #expect(move.elapsed < SettlingJunkMove.window)
   #expect(move.record.outcome == .applied)
   #expect(try await move.settledOutcome() == (reverted ? .requested : .applied))

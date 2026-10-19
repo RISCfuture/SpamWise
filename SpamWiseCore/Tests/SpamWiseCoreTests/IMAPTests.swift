@@ -307,43 +307,46 @@ struct `integrates bounded IMAP messages` {
   }
 
   @Test
-  func `binds validation to the endpoint, keeps it through Apple Mail checks and revokes it`()
-    async throws
-  {
-    let store = try testStore()
-    var configuration = IMAPConfiguration(
-      id: "imap:test",
-      host: "imap.example.com",
-      username: "user"
-    )
-    var check = IMAPValidation(
-      supportsMove: true,
-      junkMailbox: "Junk",
-      sentMailbox: nil,
-      inboxValidity: 33
-    )
-    #expect(try await !IMAPAccountValidation.isValidated(configuration, store: store))
-    #expect(try await IMAPAccountValidation.record(check, for: configuration, store: store))
-    #expect(try await IMAPAccountValidation.isValidated(configuration, store: store))
-    #expect(try await StateRepository.load(store).settings.dryRun)
-    try await StateRepository.recordMailboxRoles(["mail:removed": true], in: store)
+  func `validates an account whose check passes and leaves dry run on`() async throws {
+    let account = try IMAPValidationFixture()
+    #expect(try await !account.isValidated())
+    #expect(try await account.recordCheck())
+    #expect(try await account.isValidated())
+    #expect(try await StateRepository.load(account.store).settings.dryRun)
+  }
+
+  @Test
+  func `keeps an IMAP validation through Apple Mail role checks`() async throws {
+    let account = try await IMAPValidationFixture.validated()
+    try await StateRepository.recordMailboxRoles(["mail:removed": true], in: account.store)
     try await StateRepository.recordAppleMailRoles(
       ["mail:current": false],
-      in: store,
+      in: account.store,
       reportedAccounts: ["mail:current"]
     )
-    #expect(try await StateRepository.load(store).settings.validatedAccounts == ["imap:test"])
-    #expect(try await IMAPAccountValidation.isValidated(configuration, store: store))
-    configuration.host = "IMAP.Example.com"
-    #expect(try await IMAPAccountValidation.isValidated(configuration, store: store))
-    configuration.host = "other.example.com"
-    #expect(try await !IMAPAccountValidation.isValidated(configuration, store: store))
-    configuration.host = "imap.example.com"
-    try await StateRepository.editSettings(store) { $0.dryRun = false }
-    check.junkMailbox = nil
-    #expect(try await !IMAPAccountValidation.record(check, for: configuration, store: store))
-    #expect(try await !IMAPAccountValidation.isValidated(configuration, store: store))
-    let settings = try await StateRepository.load(store).settings
+    #expect(
+      try await StateRepository.load(account.store).settings.validatedAccounts == ["imap:test"]
+    )
+    #expect(try await account.isValidated())
+  }
+
+  @Test
+  func `binds validation to the endpoint's host regardless of case`() async throws {
+    var account = try await IMAPValidationFixture.validated()
+    account.configuration.host = "IMAP.Example.com"
+    #expect(try await account.isValidated())
+    account.configuration.host = "other.example.com"
+    #expect(try await !account.isValidated())
+  }
+
+  @Test
+  func `revokes validation and restores dry run when a later check fails`() async throws {
+    var account = try await IMAPValidationFixture.validated()
+    try await StateRepository.editSettings(account.store) { $0.dryRun = false }
+    account.check.junkMailbox = nil
+    #expect(try await !account.recordCheck())
+    #expect(try await !account.isValidated())
+    let settings = try await StateRepository.load(account.store).settings
     #expect(settings.validatedAccounts.isEmpty)
     #expect(settings.dryRun)
   }
@@ -373,6 +376,41 @@ struct `integrates bounded IMAP messages` {
       _ = try await denied.adapter().testDisposableMessage(uid: 7)
     }
     #expect(await !denied.commands.contains { $0.hasPrefix("UID MOVE") })
+  }
+
+  /// An IMAP account and a passing validation check in a fresh store.
+  private struct IMAPValidationFixture {
+    let store: Store
+    var configuration = IMAPConfiguration(
+      id: "imap:test",
+      host: "imap.example.com",
+      username: "user"
+    )
+    var check = IMAPValidation(
+      supportsMove: true,
+      junkMailbox: "Junk",
+      sentMailbox: nil,
+      inboxValidity: 33
+    )
+
+    init() throws {
+      store = try testStore()
+    }
+
+    /// A fixture whose account has passed its check.
+    static func validated() async throws -> Self {
+      let account = try Self()
+      try #require(await account.recordCheck())
+      return account
+    }
+
+    func recordCheck() async throws -> Bool {
+      try await IMAPAccountValidation.record(check, for: configuration, store: store)
+    }
+
+    func isValidated() async throws -> Bool {
+      try await IMAPAccountValidation.isValidated(configuration, store: store)
+    }
   }
 
   /// Moves a message to Junk over IMAP; the message is then found in Inbox again under UID 95.

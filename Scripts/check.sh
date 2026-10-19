@@ -48,9 +48,10 @@ done
 xcode -scheme MailExtension build
 xcode -scheme "SpamWise Common" test
 
-# Compiler, linker and build-system diagnostics. Tests that open a corrupt store on purpose make
+# Compiler, linker and build-system diagnostics, including Xcode's project- and asset-scoped ones,
+# which name an absolute path with no line. Tests that open a corrupt store on purpose make
 # CoreData log "error:" lines at runtime, which are not diagnostics.
-diagnostic='^(.+:[0-9]+(:[0-9]+)?: |ld: )?(warning|error): '
+diagnostic='^((.+:[0-9]+(:[0-9]+)?|/[^:]+): |ld: )?(warning|error): '
 if grep -En "$diagnostic" "$build_root/package.log" "$build_root/app.log"; then
   exit 1
 fi

@@ -28,9 +28,13 @@ extension Pipeline {
     }
   }
 
-  /// Whether a correction, a later claim or a newer record for the same message may have moved it since.
+  /**
+   Whether a correction of an automatic decision, a later claim or a newer record for the same
+   message may have moved it since. A correction's own label doesn't supersede its move.
+   */
   private static func isSuperseded(_ moved: DecisionRecord, in state: AppState) -> Bool {
-    moved.correctedLabel != nil || state.claimedActions[moved.identity.key] != moved.id
+    (moved.path != .correction && moved.correctedLabel != nil)
+      || state.claimedActions[moved.identity.key] != moved.id
       || state.records.contains { $0.id != moved.id && $0.date > moved.date }
   }
 
