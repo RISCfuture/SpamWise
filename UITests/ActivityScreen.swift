@@ -1,104 +1,85 @@
 import XCTest
 
+/// The filtering states the Activity footer identifies as `activity.mode.<state>`.
+enum FilteringMode: String {
+  case filtering, paused, mailNotAuthorized
+}
+
 @MainActor
 struct ActivityScreen {
+  private static let fixtureSubject = "activity.subject.00000000-0000-0000-0000-000000000001"
   let app: XCUIApplication
 
-  /// The footer's filtering state, read from its `activity.mode.<state>` identifier.
-  var mode: String? {
-    Self.modeElement(in: app).identifier.split(separator: ".").last.map(String.init)
-  }
+  /**
+   Launches Activity with one recorded Junk decision, isolated storage and a denied Mail
+   connection.
 
-  private static func modeElement(in app: XCUIApplication) -> XCUIElement {
-    app.descendants(matching: .any)
-      .matching(NSPredicate(format: "identifier BEGINSWITH %@", "activity.mode.")).firstMatch
-  }
-
-  static func launchCorrectionFixture(automation: Bool = false, appURL: URL? = nil) -> Self {
-    let app = UITestApplication.make(url: appURL)
-    app.launchArguments = [
-      "--ui-testing", "--ui-corrections", "-AppleLanguages", "(en)"
-    ]
-    if automation { app.launchArguments.append("--ui-automation") }
-    app.launch()
-    return waitForLanding(in: app)
-  }
-
-  static func waitForLanding(in app: XCUIApplication) -> Self {
-    XCTAssertTrue(modeElement(in: app).waitForExistence(timeout: UITestTiming.launch))
+   - Parameter automation: Whether Mail instead returns one synthetic selected message, for
+     App Intents.
+   */
+  static func launchCorrectionFixture(automation: Bool = false) -> Self {
+    let app = UITestApplication.launch(
+      arguments: ["--ui-testing", "--ui-corrections"] + (automation ? ["--ui-automation"] : [])
+    )
+    XCTAssertTrue(modes(in: app).firstMatch.waitForExistence(timeout: UITestTiming.launch))
     return Self(app: app)
   }
 
+  static func waitForLanding(in app: XCUIApplication) -> Self {
+    XCTAssertTrue(modes(in: app).firstMatch.waitForExistence(timeout: UITestTiming.transition))
+    return Self(app: app)
+  }
+
+  private static func modes(in app: XCUIApplication) -> XCUIElementQuery {
+    app.descendants(matching: .any).identified(byPrefix: "activity.mode.")
+  }
+
+  /// Waits until the footer shows `mode`.
+  func waitForMode(_ mode: FilteringMode) -> Bool {
+    app.descendants(matching: .any)["activity.mode.\(mode.rawValue)"]
+      .waitForExistence(timeout: UITestTiming.transition)
+  }
+
   func openFixture() -> DecisionScreen {
-    let subject = app.staticTexts["activity.subject.00000000-0000-0000-0000-000000000001"]
+    let subject = app.staticTexts[Self.fixtureSubject]
     XCTAssertTrue(subject.waitForExistence(timeout: UITestTiming.transition))
     subject.click()
-    XCTAssertTrue(app.buttons["correction.good"].waitForExistence(timeout: UITestTiming.transition))
-    return DecisionScreen(app: app)
+    return DecisionScreen.waitForLanding(in: app)
   }
 
   func openRulesSettings() -> RulesScreen {
-    app.typeKey(",", modifierFlags: .command)
-    // Native Settings toolbar tabs expose their titles instead of SwiftUI identifiers.
-    let rules = app.toolbars.buttons["Rules"]
-    XCTAssertTrue(rules.waitForExistence(timeout: UITestTiming.transition))
-    rules.click()
-    XCTAssertTrue(
-      app.descendants(matching: .any)["settings.rules.content"]
-        .waitForExistence(timeout: UITestTiming.transition)
-    )
-    return RulesScreen(app: app)
+    openSettingsPane("Rules")
+    return RulesScreen.waitForLanding(in: app)
   }
 
   func openGeneralSettings() -> GeneralSettingsScreen {
-    app.typeKey(",", modifierFlags: .command)
-    let general = app.toolbars.buttons["General"]
-    XCTAssertTrue(general.waitForExistence(timeout: UITestTiming.transition))
-    general.click()
+    openSettingsPane("General")
     return GeneralSettingsScreen.waitForLanding(in: app)
   }
 
   func openEvidenceSettings() -> EvidenceScreen {
-    app.typeKey(",", modifierFlags: .command)
-    let advanced = app.toolbars.buttons["Advanced"]
-    XCTAssertTrue(advanced.waitForExistence(timeout: UITestTiming.transition))
-    advanced.click()
+    openSettingsPane("Advanced")
     return EvidenceScreen.waitForLanding(in: app)
   }
 
   func openStatistics() -> StatisticsScreen {
     app.buttons["activity.statistics"].click()
-    XCTAssertTrue(
-      app.staticTexts["statistics.decisions"].waitForExistence(timeout: UITestTiming.transition)
-    )
-    return StatisticsScreen(app: app)
+    return StatisticsScreen.waitForLanding(in: app)
   }
 
   func openCorpus() -> CorpusScreen {
     app.typeKey("c", modifierFlags: [.command, .option])
-    XCTAssertTrue(
-      app.staticTexts["corpus.title"].waitForExistence(timeout: UITestTiming.transition)
-    )
-    return CorpusScreen(app: app)
+    return CorpusScreen.waitForLanding(in: app)
   }
 
-  func pause() {
-    app.buttons["activity.pause"].click()
-    XCTAssertTrue(
-      app.descendants(matching: .any)["activity.mode.paused"]
-        .waitForExistence(timeout: UITestTiming.transition)
-    )
-  }
-}
+  func pause() { app.buttons["activity.pause"].click() }
 
-@MainActor
-enum UITestApplication {
-  static func make(url: URL? = nil) -> XCUIApplication {
-    let appURL =
-      url
-      ?? ProcessInfo.processInfo.environment["SPAMWISE_INTENTS_APP_PATH"].map {
-        URL(filePath: $0)
-      }
-    return appURL.map { XCUIApplication(url: $0) } ?? XCUIApplication()
+  /// Opens Settings on the tab titled by `titleKey`.
+  private func openSettingsPane(_ titleKey: String) {
+    app.typeKey(",", modifierFlags: .command)
+    // Native Settings tabs expose only their titles, not SwiftUI accessibility identifiers.
+    let tab = app.toolbars.buttons[AppText.localized(titleKey)]
+    XCTAssertTrue(tab.waitForExistence(timeout: UITestTiming.transition))
+    tab.click()
   }
 }

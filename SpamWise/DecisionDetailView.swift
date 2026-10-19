@@ -33,7 +33,11 @@ struct DecisionDetailView: View {
         if let undo = shared.state.correctionUndo, undo.isAvailable(in: shared.state) {
           UndoCorrectionButton(corrections: corrections, undo: undo)
         }
-        OperationStatusView(operation: corrections.decision, identifier: "correction.status")
+        OperationStatusView(
+          operation: corrections.decision,
+          identifier: corrections.decisionOutcome.map { "correction.status.\($0.rawValue)" }
+            ?? "correction.status"
+        )
       }
       MessageAccessSection(row: row, messages: messages, presentPreview: presentPreview)
       Section {

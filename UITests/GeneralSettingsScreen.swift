@@ -1,17 +1,11 @@
 import XCTest
 
+/// The General settings tab.
 @MainActor
 struct GeneralSettingsScreen {
   let app: XCUIApplication
 
-  var dryRunToggle: XCUIElement { app.switches["settings.dryRun"] }
-  var isDryRun: Bool { (dryRunToggle.value as? NSNumber)?.boolValue == true }
-  var canChangeDryRun: Bool { dryRunToggle.isEnabled }
-  var hasMailPermissionDeniedStatus: Bool {
-    app.staticTexts["settings.mailPermissionDenied"].waitForExistence(
-      timeout: UITestTiming.transition
-    )
-  }
+  private var dryRunToggle: XCUIElement { app.switches["settings.dryRun"] }
 
   static func waitForLanding(in app: XCUIApplication) -> Self {
     XCTAssertTrue(
@@ -20,33 +14,33 @@ struct GeneralSettingsScreen {
     return Self(app: app)
   }
 
+  /// Waits until dry run is on or off.
+  func waitForDryRun(_ isOn: Bool) -> Bool { dryRunToggle.waitForSwitch(isOn) }
+
+  /// Waits until the dry-run switch can or can't be changed.
+  func waitForDryRunChangeable(_ isChangeable: Bool) -> Bool {
+    dryRunToggle.waitForEnabled(isChangeable)
+  }
+
+  /// Waits for the status that reports Mail permission as denied.
+  func waitForMailPermissionDenied() -> Bool {
+    app.staticTexts["settings.mailPermissionDenied"].waitForExistence(
+      timeout: UITestTiming.transition
+    )
+  }
+
+  /// Turns dry run on, which needs no confirmation.
   func turnOnDryRun() {
     dryRunToggle.click()
-    waitForDryRun(true)
+    XCTAssertTrue(waitForDryRun(true))
   }
 
-  func checkMailConnection() {
-    app.buttons["settings.checkMail"].click()
-  }
+  func checkMailConnection() { app.buttons["settings.checkMail"].click() }
 
+  /// Asks to turn dry run off, which the app confirms first.
   func requestLiveFiltering() -> LiveFilteringConfirmation {
     dryRunToggle.click()
     return LiveFilteringConfirmation.waitForLanding(in: app)
-  }
-
-  func waitForDryRun(_ expected: Bool) {
-    XCTAssertEqual(
-      XCTWaiter.wait(
-        for: [
-          XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", NSNumber(value: expected)),
-            object: dryRunToggle
-          )
-        ],
-        timeout: UITestTiming.transition
-      ),
-      .completed
-    )
   }
 
   func close() -> ActivityScreen {
@@ -55,9 +49,12 @@ struct GeneralSettingsScreen {
   }
 }
 
+/// The confirmation shown before dry run turns off.
 @MainActor
 struct LiveFilteringConfirmation {
   let app: XCUIApplication
+
+  private var confirmButton: XCUIElement { app.buttons["settings.dryRun.confirm"] }
 
   static func waitForLanding(in app: XCUIApplication) -> Self {
     XCTAssertTrue(
@@ -68,28 +65,16 @@ struct LiveFilteringConfirmation {
 
   func cancel() -> GeneralSettingsScreen {
     app.buttons["settings.dryRun.cancel"].click()
-    return GeneralSettingsScreen(app: app)
+    return dismissed()
   }
 
   func confirm() -> GeneralSettingsScreen {
-    app.buttons["settings.dryRun.confirm"].click()
-    return GeneralSettingsScreen(app: app)
+    confirmButton.click()
+    return dismissed()
   }
-}
 
-extension UITests {
-  @MainActor
-  func testLeavingDryRunRequiresConfirmation() throws {
-    continueAfterFailure = false
-    let activity = ActivityScreen.launchCorrectionFixture()
-    XCTAssertEqual(activity.mode, "filtering")
-    let settings = activity.openGeneralSettings()
-    XCTAssertFalse(settings.isDryRun)
-    settings.turnOnDryRun()
-    let cancelled = settings.requestLiveFiltering().cancel()
-    cancelled.waitForDryRun(true)
-    let confirmed = cancelled.requestLiveFiltering().confirm()
-    confirmed.waitForDryRun(false)
-    XCTAssertEqual(confirmed.close().mode, "filtering")
+  private func dismissed() -> GeneralSettingsScreen {
+    XCTAssertTrue(confirmButton.waitForNonExistence(timeout: UITestTiming.transition))
+    return GeneralSettingsScreen.waitForLanding(in: app)
   }
 }

@@ -7,54 +7,84 @@ import Testing
 import SpamWiseCore
 
 @Suite
-struct `learns from bounded corrections` {
+struct `Correction retrieval` {
+  let message: ParsedMessage
+  let relevant = correction("observatory telescope shipment", date: 1)
+  let irrelevant = correction(
+    "casino lucky jackpot prize",
+    sender: "prize@casino.example",
+    date: 2
+  )
+
+  init() throws {
+    message = try learningMessage("Your observatory telescope shipment has arrived")
+  }
+
   @Test
-  func `retrieves related older corrections before unrelated recent examples`() throws {
-    let message = try learningMessage("Your observatory telescope shipment has arrived")
-    let relevant = correction("observatory telescope shipment", date: 1)
-    let irrelevant = correction(
-      "casino lucky jackpot prize",
-      sender: "prize@casino.example",
-      date: 2
-    )
+  func `retrieves related older corrections before unrelated recent examples`() {
     let results = CorrectionRetrieval.examples(for: message, from: [irrelevant, relevant], limit: 1)
     #expect(results.map(\.id) == [relevant.id])
+  }
+
+  @Test
+  func `retrieves nothing when the limit is zero`() {
     #expect(CorrectionRetrieval.examples(for: message, from: [relevant], limit: 0).isEmpty)
+  }
+
+  @Test
+  func `retrieves the same examples whatever their stored order`() {
     #expect(
       CorrectionRetrieval.examples(for: message, from: [relevant, irrelevant], limit: 2)
         == CorrectionRetrieval.examples(for: message, from: [irrelevant, relevant], limit: 2)
     )
   }
+}
+
+/// Corrections that must not produce a domain rule suggestion.
+enum UnsuggestedCorrections: CaseIterable, Sendable {
+  case contradictedByGood, oneExampleRepeated, sharedProviderDomains, alreadyDecidedByRule
+
+  var examples: [CorrectionExample] {
+    switch self {
+      case .contradictedByGood:
+        repeatedShopJunk
+          + [correction("receipt", sender: "orders@shop.example", label: .inbox, date: 5)]
+      case .oneExampleRepeated: Array(repeating: repeatedShopJunk[0], count: 8)
+      case .sharedProviderDomains: friendsAtSharedProviders
+      case .alreadyDecidedByRule: repeatedShopJunk
+    }
+  }
+
+  var rules: [SenderRule] {
+    self == .alreadyDecidedByRule
+      ? [SenderRule(scope: .domain, value: "shop.example", disposition: .allow)] : []
+  }
+}
+
+@Suite
+struct `Policy suggestions` {
+  @Test
+  func `suggests a rule for a domain corrected the same way by several senders`() throws {
+    let suggestions = PolicyDistiller.suggestions(from: repeatedShopJunk, rules: [])
+    let suggestion = try #require(suggestions.first)
+    #expect(suggestions.count == 1)
+    #expect(suggestion.domain == "shop.example")
+    #expect(suggestion.label == .junk)
+  }
+
+  @Test(arguments: UnsuggestedCorrections.allCases)
+  func `makes no suggestion for corrections that don't agree independently`(
+    _ corrections: UnsuggestedCorrections
+  ) {
+    #expect(
+      PolicyDistiller.suggestions(from: corrections.examples, rules: corrections.rules).isEmpty
+    )
+  }
 
   @Test
-  func `distills only repeated noncontradictory domain corrections`() {
-    let examples = (0..<3).map {
-      correction("advertisement \($0)", sender: "sender\($0)@shop.example", date: Double($0))
-    }
-    let suggestions = PolicyDistiller.suggestions(from: examples, rules: [])
-    #expect(suggestions.count == 1)
-    #expect(suggestions.first?.domain == "shop.example")
-    #expect(suggestions.first?.label == .junk)
-    let good = correction("receipt", sender: "orders@shop.example", label: .inbox, date: 5)
-    #expect(PolicyDistiller.suggestions(from: examples + [good], rules: []).isEmpty)
-    #expect(
-      PolicyDistiller.suggestions(from: Array(repeating: examples[0], count: 8), rules: []).isEmpty
-    )
-    let friends = (0..<3).flatMap { index in
-      ["gmail.com", "outlook.co.uk"].map {
-        correction(
-          "dinner \(index)",
-          sender: "friend\(index)@\($0)",
-          label: .inbox,
-          date: Double(index)
-        )
-      }
-    }
-    #expect(PolicyDistiller.suggestions(from: friends, rules: []).isEmpty)
-    let decided = [SenderRule(scope: .domain, value: "shop.example", disposition: .allow)]
-    #expect(PolicyDistiller.suggestions(from: examples, rules: decided).isEmpty)
+  func `counts known senders at a domain from corrections and records`() {
     var state = AppState()
-    state.corrections = examples + friends
+    state.corrections = repeatedShopJunk + friendsAtSharedProviders
     state.record(
       .init(
         identity: .init(accountID: "account", contentHash: "news"),
@@ -65,37 +95,68 @@ struct `learns from bounded corrections` {
     )
     #expect(state.knownSenderCounts(atDomains: ["shop.example"]) == ["shop.example": 4])
   }
+}
+
+@Suite
+struct `Campaign fingerprints` {
+  let message: ParsedMessage
+
+  init() throws { message = try learningMessage(campaignText, authenticated: true) }
+
+  private func junkCampaign() -> LearningState {
+    var state = LearningState()
+    state.recordCorrection(message: message, evidence: authenticatedEvidence(message), label: .junk)
+    return state
+  }
 
   @Test
-  func `matches authenticated campaigns and invalidates them after explicit good`() throws {
-    let message = try learningMessage(campaignText, authenticated: true)
+  func `learns no campaign from a correction without trusted authentication`() {
     var state = LearningState()
     state.recordCorrection(message: message, evidence: .init(message: message), label: .junk)
     #expect(state.campaignMatch(for: message, evidence: authenticatedEvidence(message)) == nil)
-    state.recordCorrection(message: message, evidence: authenticatedEvidence(message), label: .junk)
+  }
+
+  @Test
+  func `matches an authenticated junk campaign only for authenticated mail`() {
+    let state = junkCampaign()
     #expect(state.campaignMatch(for: message, evidence: authenticatedEvidence(message)) != nil)
     #expect(state.campaignMatch(for: message, evidence: .init(message: message)) == nil)
+  }
+
+  @Test
+  func `matches no campaign for the same text from a different sender`() throws {
     let unrelatedSender = try learningMessage(
       campaignText,
       sender: "different@unrelated.example",
       authenticated: true
     )
     #expect(
-      state.campaignMatch(for: unrelatedSender, evidence: authenticatedEvidence(unrelatedSender))
-        == nil
+      junkCampaign().campaignMatch(
+        for: unrelatedSender,
+        evidence: authenticatedEvidence(unrelatedSender)
+      ) == nil
     )
+  }
+
+  @Test
+  func `forgets a campaign after an explicit good correction`() {
+    var state = junkCampaign()
     state.recordCorrection(
       message: message,
       evidence: authenticatedEvidence(message),
       label: .inbox
     )
     #expect(state.campaignMatch(for: message, evidence: authenticatedEvidence(message)) == nil)
-    #expect(state.samples.count == 1)
-    #expect(state.samples.first?.label == .inbox)
+    #expect(state.samples.map(\.label) == [.inbox])
+  }
+
+  @Test
+  func `learns no campaign from generic boilerplate`() throws {
     let generic = try learningMessage(
       "Thank you\nUnsubscribe privacy policy manage preferences contact us",
       authenticated: true
     )
+    var state = LearningState()
     state.recordCorrection(message: generic, evidence: authenticatedEvidence(generic), label: .junk)
     #expect(state.campaignMatch(for: generic, evidence: authenticatedEvidence(generic)) == nil)
   }
@@ -119,9 +180,14 @@ struct `learns from bounded corrections` {
     #expect(state.fingerprints.map(\.label) == [.junk])
     #expect(state.campaignMatch(for: issues[2], evidence: authenticatedEvidence(issues[2])) != nil)
   }
+}
 
-  @Test
-  func `retains bounded records and restores safe limits when decoding`() throws {
+@Suite
+struct `Bounded learning state` {
+  /// Five junk corrections recorded into room for three samples and two fingerprints.
+  let state: LearningState
+
+  init() throws {
     var state = LearningState(maximumSamples: 3, maximumFingerprints: 2)
     for index in 0..<5 {
       let message = try learningMessage(campaignText + " unique\(index)", id: "\(index)")
@@ -132,13 +198,30 @@ struct `learns from bounded corrections` {
         date: Date(timeIntervalSince1970: Double(index))
       )
     }
+    self.state = state
+  }
+
+  @Test
+  func `keeps the newest samples and fingerprints within their limits`() {
     #expect(state.samples.count == 3)
     #expect(state.samples.first?.date == Date(timeIntervalSince1970: 4))
     #expect(state.fingerprints.count <= 2)
+  }
+
+  @Test
+  func `round-trips its samples through JSON`() throws {
     let restored = try JSONDecoder().decode(LearningState.self, from: JSONEncoder().encode(state))
     #expect(restored.samples == state.samples)
+  }
+
+  @Test
+  func `decodes an empty document as an empty state`() throws {
     let empty = try JSONDecoder().decode(LearningState.self, from: Data("{}".utf8))
     #expect(empty.samples.isEmpty)
+  }
+
+  @Test
+  func `migrates legacy sample features to the current schema`() throws {
     let legacy = try JSONDecoder().decode(
       LearningState.self,
       from: Data(legacySampleJSON(id: try #require(state.samples.first?.id)).utf8)
@@ -149,54 +232,94 @@ struct `learns from bounded corrections` {
     #expect(migrated.unknownDomainAge == 1)
     #expect(migrated.linkDomainDensity == 0.5)
   }
+}
+
+@Suite
+struct `Statistical training` {
+  private static let junkVerdict = Verdict(label: .junk, confidence: 99, reason: "classifier")
+  let query: ParsedMessage
+
+  init() throws {
+    query = try learningMessage("casino jackpot lottery prize lucky winner claim reward")
+  }
+
+  /// Evidence for the query whose only learned signal is whether its TLD is abuse-heavy.
+  private func evidence(abuseHeavyTLD: Bool) -> EvidenceBundle {
+    var evidence = EvidenceBundle(message: query)
+    evidence.tldIsAbuseHeavy = abuseHeavyTLD
+    return evidence
+  }
+
+  private func trained() throws -> LearningState {
+    var state = LearningState()
+    try trainLearningState(&state)
+    return state
+  }
 
   @Test
-  func `trains on every explicit label and refuses contradictory self training`() throws {
-    var state = LearningState()
-    let query = try learningMessage("casino jackpot lottery prize lucky winner claim reward")
-    #expect(state.estimate(message: query, evidence: .init(message: query)).bayesLogOdds == nil)
-    #expect(state.estimate(message: query, evidence: .init(message: query)).logisticMargin == nil)
-    try trainLearningState(&state)
+  func `has no statistical estimate before training`() {
+    let estimate = LearningState().estimate(message: query, evidence: .init(message: query))
+    #expect(estimate.bayesLogOdds == nil)
+    #expect(estimate.logisticMargin == nil)
+  }
+
+  @Test
+  func `estimates junk odds after training on every explicit label`() throws {
+    let state = try trained()
     let estimate = state.estimate(message: query, evidence: .init(message: query))
     #expect((estimate.bayesLogOdds ?? 0) > 0)
     #expect(estimate.logisticMargin != nil)
     #expect(estimate.trainingCount == state.samples.count)
-    let high = Verdict(label: .junk, confidence: 99, reason: "classifier")
-    var junkEvidence = EvidenceBundle(message: query)
-    junkEvidence.tldIsAbuseHeavy = true
-    let contradictory = state.admitPrediction(
-      message: query,
-      evidence: .init(message: query),
-      verdict: high,
-      hasContradiction: true
-    )
-    let lowConfidence = state.admitPrediction(
-      message: query,
-      evidence: .init(message: query),
-      verdict: .init(label: .junk, confidence: 98, reason: "classifier"),
-      hasContradiction: false
-    )
+  }
+
+  @Test(arguments: [(confidence: 99, hasContradiction: true), (98, false)])
+  func `refuses self training from a contradicted or less confident verdict`(
+    confidence: Int,
+    hasContradiction: Bool
+  ) throws {
+    var state = try trained()
     let admitted = state.admitPrediction(
       message: query,
-      evidence: junkEvidence,
-      verdict: high,
+      evidence: evidence(abuseHeavyTLD: true),
+      verdict: .init(label: .junk, confidence: confidence, reason: "classifier"),
+      hasContradiction: hasContradiction
+    )
+    #expect(!admitted)
+  }
+
+  @Test
+  func `admits a confident consistent prediction once`() throws {
+    var state = try trained()
+    let first = state.admitPrediction(
+      message: query,
+      evidence: evidence(abuseHeavyTLD: true),
+      verdict: Self.junkVerdict,
       hasContradiction: false
     )
     let duplicate = state.admitPrediction(
       message: query,
       evidence: .init(message: query),
-      verdict: high,
+      verdict: Self.junkVerdict,
       hasContradiction: false
     )
-    #expect(!contradictory)
-    #expect(!lowConfidence)
-    #expect(admitted)
+    #expect(first)
     #expect(!duplicate)
+  }
+
+  @Test
+  func `keeps an explicit good label over a self-trained prediction`() throws {
+    var state = try trained()
+    _ = state.admitPrediction(
+      message: query,
+      evidence: evidence(abuseHeavyTLD: true),
+      verdict: Self.junkVerdict,
+      hasContradiction: false
+    )
     state.recordCorrection(message: query, evidence: .init(message: query), label: .inbox)
     let overridingGood = state.admitPrediction(
       message: query,
       evidence: .init(message: query),
-      verdict: high,
+      verdict: Self.junkVerdict,
       hasContradiction: false
     )
     #expect(!overridingGood)
@@ -206,23 +329,28 @@ struct `learns from bounded corrections` {
   }
 
   @Test
-  func `learns directional regularized weights from enriched evidence`() async throws {
-    var state = LearningState()
-    try trainLearningState(&state)
-    let query = try learningMessage("casino jackpot lottery prize lucky winner claim reward")
-    var evidence = EvidenceBundle(message: query)
-    evidence.tldIsAbuseHeavy = true
-    let junk = state.estimate(message: query, evidence: evidence)
+  func `learns directional regularized weights from evidence`() throws {
+    let state = try trained()
+    let junk = state.estimate(message: query, evidence: evidence(abuseHeavyTLD: true))
+    let good = state.estimate(message: query, evidence: evidence(abuseHeavyTLD: false))
     #expect((junk.logisticMargin ?? 0) > 0)
-    evidence.tldIsAbuseHeavy = false
-    #expect((state.estimate(message: query, evidence: evidence).logisticMargin ?? 0) < 0)
+    #expect((good.logisticMargin ?? 0) < 0)
+  }
+
+  @Test
+  func `refuses self training that the learned weights contradict`() throws {
+    var state = try trained()
     let inconsistent = state.admitPrediction(
       message: query,
-      evidence: evidence,
+      evidence: evidence(abuseHeavyTLD: false),
       verdict: .init(label: .junk, confidence: 100, reason: "model"),
       hasContradiction: false
     )
     #expect(!inconsistent)
+  }
+
+  @Test
+  func `infers learned weights from the pipeline's enriched evidence`() async throws {
     let fixture = try await enrichedInferenceFixture()
     let enrichedEvidence = try #require(fixture.record.evidence)
     #expect(enrichedEvidence.domainAgeDays != nil)
@@ -230,6 +358,23 @@ struct `learns from bounded corrections` {
       fixture.learning.estimate(message: fixture.message, evidence: enrichedEvidence).logisticMargin
     )
     #expect(enrichedEvidence.learnedMargin == expected)
+  }
+}
+
+/// Junk corrections from three senders at one shop domain.
+private let repeatedShopJunk = (0..<3).map {
+  correction("advertisement \($0)", sender: "sender\($0)@shop.example", date: Double($0))
+}
+
+/// Good corrections from friends at two shared mail-provider domains.
+private let friendsAtSharedProviders = (0..<3).flatMap { index in
+  ["gmail.com", "outlook.co.uk"].map {
+    correction(
+      "dinner \(index)",
+      sender: "friend\(index)@\($0)",
+      label: .inbox,
+      date: Double(index)
+    )
   }
 }
 

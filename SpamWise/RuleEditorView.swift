@@ -147,7 +147,9 @@ private struct SenderRuleTable: View {
       TableColumn("Applies To") { rule in Text(rule.scope.localizedTitle) }.width(120)
       TableColumn("Action") { rule in
         Text(rule.disposition.localizedTitle)
-          .accessibilityIdentifier("settings.rule.\(rule.scope.rawValue).\(rule.value)")
+          .accessibilityIdentifier(
+            "settings.rule.\(rule.scope.rawValue).\(rule.value).\(rule.disposition.rawValue)"
+          )
       }.width(80)
     }
     .contextMenu(forSelectionType: SenderRule.ID.self) { ids in

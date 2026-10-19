@@ -19,7 +19,7 @@ struct ThreatAssessmentView: View {
   var body: some View {
     if findings.isEmpty {
       Text("No threats found in the parts that were checked")
-        .accessibilityIdentifier("threats.status")
+        .accessibilityIdentifier("threats.status.clear")
     }
     ForEach(findings, id: \.kind) { finding in
       LabeledContent(finding.kind.localizedTitle, value: finding.reason)

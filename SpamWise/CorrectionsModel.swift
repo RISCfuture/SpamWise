@@ -22,6 +22,8 @@ final class CorrectionsModel {
   let selection = TrackedOperation()
   /// Removing a sender rule that overrides a correction.
   let ruleRemoval = TrackedOperation()
+  /// The Mail action outcome of the decision correction whose result ``decision`` shows.
+  private(set) var decisionOutcome: ActionOutcome?
   /// A decision correction waiting for the user to confirm an unverified sender.
   private(set) var pendingDecision: PendingCorrection?
   /// A rule that still decides the sender’s mail after the latest decision correction.
@@ -71,6 +73,7 @@ extension CorrectionsModel {
   /// Classifies an unclassified record's message again, under the same dry-run and pause rules.
   func retryClassification(_ record: DecisionRecord) {
     decision.run { [self] in
+      decisionOutcome = nil
       let pipeline = try services.requirePipeline()
       let adapter = try await services.adapter(for: record)
       let result = try await pipeline.retryUnclassified(recordID: record.id, adapter: adapter)
@@ -115,6 +118,7 @@ extension CorrectionsModel {
   func undoLatestCorrection() {
     conflict = nil
     decision.run { [self] in
+      decisionOutcome = nil
       try await CorrectionUndo.apply(store: services.requireStore())
       return String(
         localized: "Correction undone. Use a separate correction to request a Mail action."
@@ -135,6 +139,7 @@ extension CorrectionsModel {
   private func perform(_ correction: PendingCorrection) {
     conflict = nil
     decision.run { [self] in
+      decisionOutcome = nil
       let pipeline = try services.requirePipeline()
       let record = correction.record
       var adapter: (any MailClientAdapter)?, adapterFailure: String?
@@ -152,6 +157,7 @@ extension CorrectionsModel {
       if let rule = try? await pipeline.overridingRule(for: result) {
         conflict = RuleConflict(recordID: record.id, rule: rule)
       }
+      decisionOutcome = result.outcome
       let failures = [result.actionError, adapterFailure].compactMap(\.self)
       return Self.savedStatus(result, failures: failures)
     }

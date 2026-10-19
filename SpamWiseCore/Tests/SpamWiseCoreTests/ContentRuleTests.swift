@@ -2,40 +2,78 @@ import Foundation
 import Testing
 import SpamWiseCore
 
-@Test
-func `orders content rules and skips pathological expressions`() async throws {
-  var message = try MIMEParser().parse(fixture("filler-spam"))
-  message.subject = "Example newsletter"
-  var older = ContentRule()
-  older.pattern = "NEWSLETTER"; older.disposition = .allow
-  var newer = ContentRule()
-  newer.pattern = "^Example.*"; newer.operation = .regularExpression
-  newer.updatedAt = older.updatedAt.addingTimeInterval(1)
-  #expect(
-    ContentRules.evaluate([older, newer], message: message).matching.map(\.id)
-      == [newer.id, older.id]
-  )
-  newer.enabled = false
-  #expect(ContentRules.evaluate([older, newer], message: message).matching.map(\.id) == [older.id])
-  newer.enabled = true; newer.pattern = "(a+)+$"
-  older.pattern = "aaa!"
-  message.subject = String(repeating: "a", count: 10_000) + "!"
-  let pathological = ContentRules.evaluate([older, newer], message: message)
-  #expect(pathological.matching.map(\.id) == [older.id])
-  #expect(pathological.skipped == [newer.id: .timeout])
-  #expect(pathological.decisive == nil)
-  newer.pattern = "a$"
-  message.subject = String(repeating: "a", count: 40_000) + "tail"
-  #expect(ContentRules.evaluate([newer], message: message) == .init())
-  newer.pattern = "a{3}tail$"; older.pattern = "TAIL"
-  let windowed = ContentRules.evaluate([older, newer], message: message)
-  #expect(windowed.matching.map(\.id) == [newer.id, older.id])
-  #expect(windowed.decisive == newer)
-  var clusters = older
-  let family = "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}"
-  clusters.pattern = String(repeating: family, count: 256)
-  #expect(throws: ContentRuleError.invalid) { try ContentRules.validate(clusters) }
-  let raw = Data(
+@Suite
+struct `Content rule evaluation` {
+  /// A rule saved before `newer`, matching the fixture subject case-insensitively.
+  let older: ContentRule
+  /// A regular-expression rule saved one second after `older`.
+  let newer: ContentRule
+  let message: ParsedMessage
+
+  init() throws {
+    var message = try MIMEParser().parse(fixture("filler-spam"))
+    message.subject = "Example newsletter"
+    var older = ContentRule()
+    older.pattern = "NEWSLETTER"; older.disposition = .allow
+    var newer = ContentRule()
+    newer.pattern = "^Example.*"; newer.operation = .regularExpression
+    newer.updatedAt = older.updatedAt.addingTimeInterval(1)
+    (self.older, self.newer, self.message) = (older, newer, message)
+  }
+
+  @Test
+  func `orders matching rules newest first`() {
+    #expect(
+      ContentRules.evaluate([older, newer], message: message).matching.map(\.id)
+        == [newer.id, older.id]
+    )
+  }
+
+  @Test
+  func `ignores a disabled rule`() {
+    var disabled = newer
+    disabled.enabled = false
+    #expect(
+      ContentRules.evaluate([older, disabled], message: message).matching.map(\.id) == [older.id]
+    )
+  }
+
+  @Test
+  func `skips a pathological expression and lets no lower rule decide`() {
+    var pathological = newer, literal = older, message = message
+    pathological.pattern = "(a+)+$"
+    literal.pattern = "aaa!"
+    message.subject = String(repeating: "a", count: 10_000) + "!"
+    let evaluation = ContentRules.evaluate([literal, pathological], message: message)
+    #expect(evaluation.matching.map(\.id) == [literal.id])
+    #expect(evaluation.skipped == [pathological.id: .timeout])
+    #expect(evaluation.decisive == nil)
+  }
+
+  @Test
+  func `anchors expressions at the end of a subject longer than one window`() {
+    var anchored = newer, literal = older, message = message
+    message.subject = String(repeating: "a", count: 40_000) + "tail"
+    anchored.pattern = "a$"
+    #expect(ContentRules.evaluate([anchored], message: message) == .init())
+    anchored.pattern = "a{3}tail$"; literal.pattern = "TAIL"
+    let windowed = ContentRules.evaluate([literal, anchored], message: message)
+    #expect(windowed.matching.map(\.id) == [anchored.id, literal.id])
+    #expect(windowed.decisive == anchored)
+  }
+
+  @Test
+  func `rejects a pattern of more than 256 grapheme clusters`() {
+    var clusters = older
+    let family = "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}"
+    clusters.pattern = String(repeating: family, count: 256)
+    #expect(throws: ContentRuleError.invalid) { try ContentRules.validate(clusters) }
+  }
+}
+
+@Suite
+struct `Content rules on MIME headers and attachments` {
+  private static let raw = Data(
     """
     From: person@example.org
     To: =?utf-8?q?Jo?= =?utf-8?q?s=C3=A9?= <jose@example.org>
@@ -55,20 +93,38 @@ func `orders content rules and skips pathological expressions`() async throws {
 
     """.utf8
   )
-  message = try MIMEParser().parse(raw)
-  newer.field = .attachmentNames; newer.pattern = "invoice.pdf"; newer.operation = .contains
-  #expect(ContentRules.evaluate([newer], message: message).matching.count == 1)
-  newer.pattern = "Invoice 123.html"
-  #expect(ContentRules.evaluate([newer], message: message).matching.count == 1)
-  newer.field = .recipients; newer.pattern = "José <"
-  #expect(ContentRules.evaluate([newer], message: message).matching.count == 1)
-  #expect(message.text.isEmpty)
-  #expect(message.attachments?.first?.mediaType == "application/pdf")
-  newer.field = .subject; newer.pattern = "("; newer.operation = .regularExpression
-  newer.disposition = .allow
-  older.pattern = "courtesy kit"; older.disposition = .block
-  let store = try testStore(), unusable = newer, outranked = older
-  try await StateRepository.update(store) { $0.contentRules = [unusable, outranked] }
+  let message: ParsedMessage
+
+  init() throws { message = try MIMEParser().parse(Self.raw) }
+
+  @Test(arguments: [
+    (ContentRuleField.attachmentNames, "invoice.pdf"),
+    (.attachmentNames, "Invoice 123.html"),
+    (.recipients, "José <")
+  ])
+  func `matches decoded attachment names and recipients`(field: ContentRuleField, pattern: String) {
+    var rule = ContentRule()
+    rule.field = field; rule.pattern = pattern; rule.operation = .contains
+    #expect(ContentRules.evaluate([rule], message: message).matching.count == 1)
+  }
+
+  @Test
+  func `keeps attachment content out of the message text`() {
+    #expect(message.text.isEmpty)
+    #expect(message.attachments?.first?.mediaType == "application/pdf")
+  }
+}
+
+@Test
+func `leaves the decision to the classifier when an unusable rule outranks a matching one`()
+  async throws
+{
+  var unusable = ContentRule(), outranked = ContentRule()
+  unusable.pattern = "("; unusable.operation = .regularExpression; unusable.disposition = .allow
+  unusable.updatedAt = outranked.updatedAt.addingTimeInterval(1)
+  outranked.pattern = "courtesy kit"; outranked.disposition = .block
+  let store = try testStore(), rules = [unusable, outranked]
+  try await StateRepository.update(store) { $0.contentRules = rules }
   let pipeline = Pipeline(
     store: store,
     classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "lure"))
