@@ -82,7 +82,7 @@ struct OnboardingView: View {
       SetupNavigation(
         step: $step,
         isBusy: isBusy,
-        canFinish: model.services.storageReady,
+        canFinish: model.shared.isStorageReadable,
         continueTitle: continueTitle,
         continuesByDefault: step != .classifier || draftKey.isEmpty,
         finish: finishTitle,

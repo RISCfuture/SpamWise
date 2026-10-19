@@ -8,25 +8,60 @@ struct ContentView: View {
 
   var body: some View {
     Group {
-      if !model.shared.hasLoadedState {
-        ProgressView().controlSize(.large)
+      switch MainWindowContent(model.shared) {
+        case .loading:
+          ProgressView().controlSize(.large)
+            .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
+        case .recovery:
+          StorageRecoveryView(recovery: model.recovery)
+        case .unavailable, .newerVersion:
+          StorageLoadingView(
+            shared: model.shared,
+            unavailableTitle: "SpamWise Data Unavailable",
+            loadingTitle: "Loading…"
+          )
           .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
-      } else if model.shared.needsRecovery {
-        StorageRecoveryView(recovery: model.recovery)
-      } else if !model.shared.hasLoadedSettings {
-        StorageLoadingView(
-          shared: model.shared,
-          unavailableTitle: "SpamWise Data Unavailable",
-          loadingTitle: "Loading…"
-        )
-        .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
-      } else if !model.shared.settings.onboardingComplete {
-        OnboardingView(model: model)
-      } else {
-        ActivityView(model: model)
+        case .setup:
+          OnboardingView(model: model)
+        case .activity:
+          ActivityView(model: model)
       }
     }
     .modifier(LoginLaunchWindow(router: model.router, shared: model.shared))
+  }
+}
+
+/// What the main window shows, given what has been read from shared storage.
+enum MainWindowContent: Equatable {
+  /// The first read of shared storage is still running.
+  case loading
+  /// A newer version of SpamWise saved the data, so this version leaves it unread.
+  case newerVersion
+  /// Unreadable data was set aside and awaits a restore or a decision to keep the current state.
+  case recovery
+  /// Settings couldn't be read, so no screen shows defaults it would save over them.
+  case unavailable
+  /// First-run setup.
+  case setup
+  /// The Activity log.
+  case activity
+
+  @MainActor
+  init(_ shared: SharedStateModel) {
+    self =
+      if !shared.hasLoadedState {
+        .loading
+      } else if shared.storedStateError == .newerVersion {
+        .newerVersion
+      } else if shared.needsRecovery {
+        .recovery
+      } else if !shared.hasLoadedSettings {
+        .unavailable
+      } else if !shared.settings.onboardingComplete {
+        .setup
+      } else {
+        .activity
+      }
   }
 }
 
@@ -43,9 +78,7 @@ private struct LoginLaunchWindow: ViewModifier {
     content.onChange(of: isReady, initial: true) { _, ready in
       guard ready else { return }
       router.closesWindowAtLogin = false
-      if shared.settings.onboardingComplete, !shared.needsRecovery {
-        dismissWindow(id: "activity")
-      }
+      if MainWindowContent(shared) == .activity { dismissWindow(id: "activity") }
     }
   }
 }

@@ -33,6 +33,8 @@ final class SharedStateModel {
   private(set) var hasLoadedSettings: Bool
   /// Shared storage problems the user should know about.
   private(set) var storageStatus: OperationStatus?
+  /// Why the latest read found shared storage unusable; nil once a read succeeds.
+  private(set) var storedStateError: StoredStateError?
   /// Changes whenever the Activity log does.
   private(set) var recordsVersion = 0
   /// The accounts that Activity records belong to.
@@ -41,7 +43,7 @@ final class SharedStateModel {
   private(set) var pendingDigest: ReviewDigest?
   /// Settings writes still in flight; while any are, reloads keep the edited settings.
   var settingsWritesInFlight = 0
-  /// Unreadable data set aside, rechecked whenever storage changes, awaiting the user's decision.
+  /// Unreadable data set aside, rechecked at every reload, awaiting the user's decision.
   var recoveryEntries: [StateRecovery.Entry] = []
   @ObservationIgnored let store: Store?
   @ObservationIgnored private var changeTokens: [StateSlice: Int] = [:]
@@ -49,10 +51,18 @@ final class SharedStateModel {
   @ObservationIgnored private var lastDigestCheck: (week: String, time: ContinuousClock.Instant)?
   /// Whether the shown settings may hold an edit whose write failed, so they must be reread.
   @ObservationIgnored private var settingsNeedReload = false
+  /// Whether storage was found readable, so a first run is told apart from unusable data.
+  @ObservationIgnored private var hasCheckedStoredState = false
 
   var settings: SpamWiseCore.Settings { state.settings }
   /// Whether set-aside data needs the user to restore a backup or keep the current state.
   var needsRecovery: Bool { !recoveryEntries.isEmpty }
+  /// Whether setup can be saved: storage was read, and no data awaits recovery.
+  var isStorageReadable: Bool {
+    store != nil && hasLoadedSettings && storedStateError == nil && !needsRecovery
+  }
+  /// Whether reading storage again can succeed; data a newer version saved is never read.
+  var canRetryLoading: Bool { store != nil && storedStateError != .newerVersion }
   var monthCost: Double { state.costByMonth[AppState.monthKey(.now), default: 0] }
   var spendingLimitReached: Bool {
     spending?.limitReached == true
@@ -98,17 +108,26 @@ final class SharedStateModel {
       ?? String(localized: "Unknown account")
   }
 
-  /// Reloads only the slices whose change tokens moved, and publishes only real differences.
+  /**
+   Reloads the slices whose change tokens moved and rechecks set-aside data, publishing only real
+   differences.
+
+   The first successful reload also tells a first run from data this version can't use.
+   */
   func refresh() async {
     defer { hasLoadedState = true }
-    guard let store else { return }
+    guard let store, canRetryLoading else { return }
     do {
+      try await checkStoredState(store)
       try await reloadChangedSlices(from: store)
       hasLoadedSettings = true
+      try await checkRecovery(store)
+      storedStateError = nil
       await reloadSpendingIfChanged(from: store)
       try await checkDigest(store)
       if case .failure = storageStatus, !needsRecovery { storageStatus = nil }
     } catch {
+      if let error = error as? StoredStateError { storedStateError = error }
       storageStatus = .failure(OperationFailure(error))
     }
   }
@@ -134,7 +153,6 @@ final class SharedStateModel {
     )
     let rereadsSettings = settingsNeedReload && settingsWritesInFlight == 0
     guard !changed.isEmpty || rereadsSettings else { return }
-    try await checkRecovery(store)
     var next = try await reloadedState(changed, from: store)
     if settingsWritesInFlight > 0 {
       next.settings = state.settings
@@ -178,8 +196,22 @@ final class SharedStateModel {
     if case .failure = storageStatus { storageStatus = nil }
   }
 
+  /// Tells a first run from data this version can't use, waiting out a briefly busy store.
+  private func checkStoredState(_ store: Store) async throws {
+    guard !hasCheckedStoredState else { return }
+    let condition = try await LockRetry.firstLoad.run {
+      try await StateRepository.condition(store)
+    }
+    hasCheckedStoredState = true
+    if case .needsRecovery(let entries) = condition { showRecovery(entries) }
+  }
+
   private func checkRecovery(_ store: Store) async throws {
-    recoveryEntries = try await StateRecovery.entries(store)
+    showRecovery(try await StateRecovery.entries(store))
+  }
+
+  private func showRecovery(_ entries: [StateRecovery.Entry]) {
+    if entries != recoveryEntries { recoveryEntries = entries }
     guard needsRecovery else { return }
     let message = String(
       localized:

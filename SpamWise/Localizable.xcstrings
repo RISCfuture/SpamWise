@@ -16642,6 +16642,22 @@
           }
         }
       }
+    },
+    "Data Saved by a Newer Version": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos guardados por una versión más reciente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Données enregistrées par une version plus récente"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

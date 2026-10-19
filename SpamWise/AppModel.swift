@@ -88,8 +88,12 @@ public final class AppModel {
     return model
   }
 
-  /// Finishes setup and starts automatic filtering from now for the accounts in scope.
+  /**
+   Finishes setup and starts automatic filtering from now for the accounts in scope; does nothing
+   until shared storage has been read.
+   */
   func finishSetup() {
+    guard shared.isStorageReadable else { return }
     settings.completeOnboarding()
     let scope = shared.settings.mailOptions.accountIDs
     scanning.startInboxFiltering(
