@@ -6751,18 +6751,18 @@
         }
       }
     },
-    "Some accounts or folders couldn’t be checked. See Settings → Accounts for scan health.": {
+    "Some accounts or folders couldn’t be checked. See their status in Settings → Accounts.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pudieron comprobar algunas cuentas o carpetas. Consulta el estado de las comprobaciones en Ajustes → Cuentas."
+            "value": "No se pudieron comprobar algunas cuentas o carpetas. Consulta su estado en Ajustes → Cuentas."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Certains comptes ou dossiers n’ont pas pu être vérifiés. Consultez l’état des vérifications dans Réglages → Comptes."
+            "value": "Certains comptes ou dossiers n’ont pas pu être vérifiés. Consultez leur état dans Réglages → Comptes."
           }
         }
       }

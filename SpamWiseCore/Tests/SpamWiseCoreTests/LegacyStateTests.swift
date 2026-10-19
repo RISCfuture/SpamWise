@@ -69,7 +69,7 @@ import SpamWiseCore
     decoded.records.prefix(3).map(\.decision.reason.localizedDescription) == [
       "Blocked by your rule for this sender’s domain",
       "Not classified: the monthly spending limit was reached, so nothing was sent to the provider.",
-      "Not classified: Allow mail sharing with the selected provider in Account settings first."
+      "Not classified: Allow mail sharing with the selected provider in Settings → Classifier first."
     ]
   )
   #expect(decoded.auditEvents.map(\.change) == [.recorded("Saved domain:shop.example: block")])

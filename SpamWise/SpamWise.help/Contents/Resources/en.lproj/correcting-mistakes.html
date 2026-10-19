@@ -1,12 +1,39 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<title>Correcting mistakes — SpamWise Help</title><meta name="description" content="Select an Activity row and choose Mark as Good or Mark as Junk. SpamWise saves an address rule and a bounded correction before attempting the supported mail action. The latest correction replaces the prior rule for that address. A failed mail action does not undo the saved correction.">
-<link rel="stylesheet" href="help.css"></head><body><nav aria-label="Help topics"><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
+<title>Correcting mistakes — SpamWise Help</title><meta name="description" content="Correct a decision in Activity or in Mail, and how SpamWise remembers your correction.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Help topics"><h2>Get started</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li></ul><h2>Everyday use</h2><ul><li><a href="activity.html">Using Activity</a></li><li><a href="correcting-mistakes.html" aria-current="page">Correcting mistakes</a></li><li><a href="review-junk.html">Reviewing Junk</a></li><li><a href="notifications.html">Notifications and the Review digest</a></li><li><a href="statistics.html">Statistics</a></li><li><a href="shortcuts.html">Shortcuts</a></li></ul><h2>Rules and learning</h2><ul><li><a href="rules.html">Sender and content rules</a></li><li><a href="folders.html">Folders</a></li><li><a href="reviewed-messages-and-learning.html">Reviewed messages and learning</a></li></ul><h2>Accounts and data</h2><ul><li><a href="imap-connection.html">Connecting with IMAP</a></li><li><a href="backup-and-restore.html">Backup and restore</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
 <main><a name="correcting-mistakes" id="correcting-mistakes"></a><h1>Correcting mistakes</h1>
-<p>Select an Activity row and choose Mark as Good or Mark as Junk. SpamWise saves an address rule and a bounded correction before attempting the supported mail action. The latest correction replaces the prior rule for that address. A failed mail action does not undo the saved correction.</p>
-<p>Mark as Review records uncertainty and removes the address rule for that sender. It does not remove an explicit domain rule. Review is a separate label, not a Good or Junk training example.</p>
-<p>Use Correct entire domain only when you want all senders on that registrable domain affected. Address rules still take precedence. In Rules settings, add, edit, remove, import, or export sender rules. Import validates the complete archive before merging and replaces matching address or domain scopes. Rule exports contain no message bodies or credentials.</p>
-<p>Learning suggestions summarize repeated, noncontradictory corrections. Review the scope before applying a suggestion; it never changes policy automatically. An explicit Good correction suppresses matching learned Junk campaigns. Rules and trusted relationships remain authoritative.</p>
-<p>Corrections invalidate queued retries and stale classifications before dispatch. An action already delivered to Mail or an IMAP server cannot be recalled. Inspect the separate outcome and action error, and restore the message manually if needed. Pause and dry run prevent new requests; they do not reverse earlier ones.</p>
-<p>Enable local reviewed-content retention if you want to export a labeled calibration corpus later. Labels alone remain useful, but automatic mailbox placement is not a human-reviewed label. Statistical hold-out counts do not establish end-to-end calibration of rules, retrieval, or campaign matching.</p>
+<h2><a name="in-activity" id="in-activity"></a>Correct a message in Activity</h2>
+<p>Select the message in Activity, then choose one of these from the Filtering menu:</p>
+<ul>
+<li>Mark as Good (Shift-Command-G) moves the message to Inbox.</li>
+<li>Mark as Junk (Shift-Command-J) moves it to the account’s Junk mailbox.</li>
+<li>Mark for Review (Shift-Command-R) returns it to Inbox with the Review mark.</li>
+</ul>
+<p>You can also use the Good, Junk and Review buttons under Correct this decision in the inspector. SpamWise saves your correction first, then asks Mail to move the message. If the move fails, the correction stays saved, and the inspector’s Outcome shows what happened in Mail.</p>
+<h2><a name="what-it-remembers" id="what-it-remembers"></a>What a correction remembers</h2>
+<ul>
+<li>Mark as Good creates an Allow rule for the sender’s address, and Mark as Junk creates a Block rule. A new correction replaces the earlier rule for that address.</li>
+<li>Mark for Review removes the sender’s address rule. A rule for the sender’s domain stays in force.</li>
+<li>Each correction is also kept as an example for your provider and for learning. See <a href="reviewed-messages-and-learning.html">Reviewed messages and learning</a>.</li>
+</ul>
+<p>If SpamWise couldn’t verify that a message really came from its sender, it asks before blocking, because blocking a forged address also sends the real sender’s mail to Junk. Choose Block Sender Anyway or Cancel. If a domain rule still decides the sender’s mail against your correction, SpamWise says so; choose Keep Rule or Remove Rule.</p>
+<h2><a name="correct-domain" id="correct-domain"></a>Correct a whole domain</h2>
+<p>To allow or block every sender at a domain, choose Correct entire domain… in the inspector, then Allow this domain or Block this domain. For domains many people share, such as large mail providers, SpamWise asks first, because the rule would also apply to unrelated people. A rule for an address still wins over a rule for its domain.</p>
+<h2><a name="in-mail" id="in-mail"></a>Correct messages selected in Mail</h2>
+<p>Select one or more messages in Mail. Then, in the SpamWise menu-bar menu, under Selected messages in Mail, choose Mark as Good, Mark as Junk or Mark for Review, or choose Correct Senders’ Domains → Allow Senders’ Domains or Block Senders’ Domains. The menu shows progress; choose Show Correction Results… for details. If some senders can’t be verified, choose Confirm Unverified Senders… to decide whether to block them.</p>
+<p>The menu-bar commands have no keyboard shortcuts. To correct the message selected in Mail with a key:</p>
+
+<ol>
+<li>Open the Shortcuts app and create a shortcut.</li>
+<li>Add SpamWise’s Correct Selected Mail action and set its Label to Good, Junk or Review.</li>
+<li>Open Shortcut Details, choose Add Keyboard Shortcut and press the keys you want, such as Control-Option-J.</li>
+</ol>
+<p>Make one shortcut for each label you use. The keys work in any app, including Mail, and correct the one message selected in Mail.</p>
+
+<h2><a name="undo-correction" id="undo-correction"></a>Undo a correction</h2>
+<p>To undo your latest correction’s rules and learning, choose Undo latest correction… in the inspector, then Undo rules and learning. Mail doesn’t move, so move the message yourself if needed. Undo isn’t available once you’ve made later changes.</p>
+<h2><a name="classify-again" id="classify-again"></a>Classify a message again</h2>
+<p>If a message wasn’t classified, for example because your provider was unavailable, select it and choose Filtering → Classify Again, or Classify Again in the inspector. Dry run and Pause still apply.</p>
 </main></body></html>

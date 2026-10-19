@@ -20,16 +20,23 @@ same extension and share one store.
 
 ## Help book
 
-`SpamWise/SpamWise.help` contains six pages per language and a Core Spotlight
-Help index. Each edition's Info.plist registers the book with
-`CFBundleHelpBookFolder` and `CFBundleHelpBookName`. Rebuild the index after
-editing HTML:
+`SpamWise/SpamWise.help` contains sixteen task pages per language, an
+`index.html` access page and a Core Spotlight Help index. Every page repeats the
+same grouped topic list, and each page and section starts with an `<a name>`
+anchor named after it. Each edition's Info.plist registers the book with
+`CFBundleHelpBookFolder` and `CFBundleHelpBookName`; the folder is copied whole,
+so a new page needs no project change. Rebuild the index after editing HTML:
 
 ```sh
 Scripts/help-index.sh
 ```
 
-The release lanes run it before every archive.
+The release lanes run it before every archive. `Scripts/check-help-book.py`,
+which `check.sh` runs, fails when an anchor the app opens through
+`HelpButton(page:)`, `Help.open(_:)` or `Help.localizedTitle(for:)` is missing
+in any language, when an anchor appears on two pages, when a language lacks one
+of the English pages, when an element is left unclosed, or when a link between
+pages reaches no page or anchor.
 
 ## Versions
 

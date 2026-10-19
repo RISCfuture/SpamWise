@@ -192,7 +192,7 @@ import MailIntegration
         OperationFailure(
           message: String(
             localized:
-              "Some accounts or folders couldn’t be checked. See Settings → Accounts for scan health."
+              "Some accounts or folders couldn’t be checked. See their status in Settings → Accounts."
           )
         )
       )

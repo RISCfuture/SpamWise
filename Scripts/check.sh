@@ -1,7 +1,8 @@
 #!/bin/bash
 #
-# Runs every offline check a change has to pass: the SpamWiseCore package tests, warning-free
-# unsigned builds of both editions and the Mail extension, and the hostless unit tests.
+# Runs every offline check a change has to pass: the localization and Help book checks, the
+# SpamWiseCore package tests, warning-free unsigned builds of both editions and the Mail
+# extension, and the hostless unit tests.
 #
 #   Scripts/check.sh [build-token]
 #
@@ -25,6 +26,7 @@ if grep -En 'relativePath = "?(\.\.(/|"|;)|/)' SpamWise.xcodeproj/project.pbxpro
 fi
 
 python3 Scripts/check-core-localizations.py
+python3 Scripts/check-help-book.py
 swift test --package-path SpamWiseCore --scratch-path "$build_root/swiftpm" \
   -Xswiftc -warnings-as-errors > "$build_root/package.log" 2>&1 \
   || { tail -65 "$build_root/package.log"; exit 1; }

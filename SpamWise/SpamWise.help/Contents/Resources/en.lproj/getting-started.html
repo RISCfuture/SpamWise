@@ -1,12 +1,41 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<title>Getting started — SpamWise Help</title><meta name="description" content="SpamWise classifies messages as Inbox, Review, or Junk. It never deletes messages or moves them to Trash. Start in dry run to see intended decisions without requesting mail actions.">
-<link rel="stylesheet" href="help.css"></head><body><nav aria-label="Help topics"><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
+<title>Getting started — SpamWise Help</title><meta name="description" content="Set up SpamWise, choose how it classifies mail, connect it to Mail and try a dry run before it changes any mail.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Help topics"><h2>Get started</h2><ul><li><a href="getting-started.html" aria-current="page">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li></ul><h2>Everyday use</h2><ul><li><a href="activity.html">Using Activity</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="review-junk.html">Reviewing Junk</a></li><li><a href="notifications.html">Notifications and the Review digest</a></li><li><a href="statistics.html">Statistics</a></li><li><a href="shortcuts.html">Shortcuts</a></li></ul><h2>Rules and learning</h2><ul><li><a href="rules.html">Sender and content rules</a></li><li><a href="folders.html">Folders</a></li><li><a href="reviewed-messages-and-learning.html">Reviewed messages and learning</a></li></ul><h2>Accounts and data</h2><ul><li><a href="imap-connection.html">Connecting with IMAP</a></li><li><a href="backup-and-restore.html">Backup and restore</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
 <main><a name="getting-started" id="getting-started"></a><h1>Getting started</h1>
-<p>SpamWise classifies messages as Inbox, Review, or Junk. It never deletes messages or moves them to Trash. Start in dry run to see intended decisions without requesting mail actions.</p>
-<p>Complete the four setup steps: privacy, optional Anthropic key verification, Mail and optional Contacts access, then an optional dry run on 20 recent Inbox messages. You can finish offline and return to Settings.</p>
-<p>Provider selection is explicit. Claude verification uses a synthetic message and stores a successful key in Keychain. OpenAI, Gemini, Apple on-device, and Private Cloud Compute have separate availability requirements. SpamWise never silently substitutes another provider or model. Advanced learning and evidence features start disabled.</p>
-<p>Allow Automation when asked. Dry-run checks start as soon as Mail Automation is allowed. Use Check Mail connection in Settings → Accounts so SpamWise can confirm, without changing any mail, that each account’s Inbox and Junk mailboxes resolve uniquely. Dry run stays on until you turn it off in General and confirm; only accounts with validated mailboxes are then filtered. SpamWise checks every move afterward. If Mail doesn’t confirm a move, SpamWise doesn’t retry or reverse it, and Activity shows the failure so you can check the message in Mail. An optional move test with a message whose subject begins [SpamWise Probe] is in Settings → Advanced.</p>
-<p>For the Mail-rule route, copy the bundled script to ~/Library/Application Scripts/com.apple.mail/ and select it in a Mail rule. When the rule runs, SpamWise checks each included account’s newest Inbox mail first; it also checks every minute while running. Keep SpamWise running. IMAP requires its own TLS configuration, credentials, and read-only validation before any action is enabled.</p>
-<p>Automatic filtering considers only mail received after setup finishes or, for an account added or included later, after SpamWise first checks it. To filter older Inbox mail, turn dry run off, open Settings → Accounts → Accounts and scan health, preview a page of older mail, review the decisions in Activity, then apply them. Mail previewed in dry run keeps its recorded decision when dry run is turned off.</p>
+<p>SpamWise sorts your incoming mail in Apple Mail. Good mail stays in Inbox. Review mail stays in Inbox with an orange flag or background, so you can check it. Junk moves to the account’s Junk mailbox. SpamWise never deletes mail or moves it to Trash.</p>
+<h2><a name="setup-steps" id="setup-steps"></a>Set up SpamWise</h2>
+<p>When you first open SpamWise, it walks you through four steps.</p>
+<ol>
+<li>Read how SpamWise handles your privacy, then choose Continue.</li>
+<li>Choose a Provider, which classifies the mail your rules and known senders don’t decide:
+<ul>
+<li>Apple on-device classifies mail on this Mac with Apple Intelligence. Mail isn’t sent anywhere, and there’s no API key or charge.</li>
+<li>Claude, OpenAI and Gemini classify mail with your own API key, and your provider account is charged for each message. Enter the key, choose Verify and save key or Save key, then turn on “Allow mail context to be sent to <var>provider</var>”.</li>
+</ul>
+To decide later, choose Skip for now; you can choose a provider any time in Settings → Classifier.</li>
+<li>Choose Check Mail Connection and allow SpamWise to control Mail when macOS asks. SpamWise finds each account’s Inbox and Junk mailboxes without changing any mail. To help it recognize people you know, choose Connect Contacts and Import Inbox and Sent History.</li>
+<li>Choose Dry run recent mail to see what SpamWise would do with your 20 newest Inbox messages. Nothing in Mail changes. Then choose Finish setup.</li>
+</ol>
+<p>To go through these steps again, choose Show setup in Settings → General.</p>
+<h2><a name="start-filtering" id="start-filtering"></a>Start filtering</h2>
+<p>Dry run stays on after setup: Activity shows what SpamWise would do, and your mail stays where it is. When the decisions look right:</p>
+<ol>
+<li>Choose SpamWise → Settings, then General.</li>
+<li>Turn off “Dry run — do not change mail”, then choose Turn off dry run.</li>
+</ol>
+<p>The switch becomes available once SpamWise has found the Inbox and Junk mailboxes of at least one account, and only those accounts are filtered. SpamWise checks every move afterward. If Mail doesn’t confirm a move, SpamWise doesn’t retry or reverse it, and Activity shows the failure so you can check the message in Mail.</p>
+<p>Mail checked during a dry run keeps its decision. To move one of those messages, correct it in Activity.</p>
+<h2><a name="keep-running" id="keep-running"></a>Keep SpamWise running</h2>
+<p>SpamWise checks each account’s Inbox every minute while both SpamWise and Mail are open. Closing SpamWise’s windows leaves it running in the menu bar; quitting it stops filtering. To open it automatically, turn on Open SpamWise at login in Settings → General. To check new mail the moment it arrives, see <a href="troubleshooting-mail-integration.html#new-mail">Check new mail sooner</a>.</p>
+<h2><a name="older-mail" id="older-mail"></a>Sort older mail</h2>
+<p>Automatic filtering covers mail that arrives after setup, or after you include an account. To sort mail that was already in your Inbox:</p>
+<ol>
+<li>Turn off dry run.</li>
+<li>In Settings → Accounts, open Older mail under the account.</li>
+<li>Choose Preview older Inbox mail, then check the decisions in Activity.</li>
+<li>Choose Apply previewed decisions. To continue, increase Older mail page and preview the next page.</li>
+</ol>
+<p>Previews send messages to your provider, which can cost money. Changing settings discards previews you haven’t applied.</p>
 </main></body></html>

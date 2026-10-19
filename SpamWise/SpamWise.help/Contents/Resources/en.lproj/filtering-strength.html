@@ -1,10 +1,20 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<title>Filtering strength — SpamWise Help</title><meta name="description" content="Conservative requires a model confidence of at least 99 for Junk, Balanced 95, and Aggressive 90. Lower-confidence Junk verdicts become Review. These thresholds are provisional and uncalibrated. Model confidence, Bayesian log odds, logistic margins, and campaign similarity are not calibrated probabilities.">
-<link rel="stylesheet" href="help.css"></head><body><nav aria-label="Help topics"><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
+<title>Filtering strength — SpamWise Help</title><meta name="description" content="Choose how confident your provider must be before SpamWise moves a message to Junk.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Help topics"><h2>Get started</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="filtering-strength.html" aria-current="page">Filtering strength</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li></ul><h2>Everyday use</h2><ul><li><a href="activity.html">Using Activity</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="review-junk.html">Reviewing Junk</a></li><li><a href="notifications.html">Notifications and the Review digest</a></li><li><a href="statistics.html">Statistics</a></li><li><a href="shortcuts.html">Shortcuts</a></li></ul><h2>Rules and learning</h2><ul><li><a href="rules.html">Sender and content rules</a></li><li><a href="folders.html">Folders</a></li><li><a href="reviewed-messages-and-learning.html">Reviewed messages and learning</a></li></ul><h2>Accounts and data</h2><ul><li><a href="imap-connection.html">Connecting with IMAP</a></li><li><a href="backup-and-restore.html">Backup and restore</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
 <main><a name="filtering-strength" id="filtering-strength"></a><h1>Filtering strength</h1>
-<p>Conservative requires a model confidence of at least 99 for Junk, Balanced 95, and Aggressive 90. Lower-confidence Junk verdicts become Review. These thresholds are provisional and uncalibrated. Model confidence, Bayesian log odds, logistic margins, and campaign similarity are not calibrated probabilities.</p>
-<p>Use dry run and inspect explanations before enabling automatic actions. Conservative sends more uncertain messages to Review. Review remains in Inbox with an orange flag or background. Optional learning does not lower the selected threshold or override explicit rules and trusted relationships.</p>
-<p>Bayes requires at least 20 explicitly reviewed training examples per binary class. Logistic fitting requires at least 100 reviewed training examples, including 30 per class. Those are availability gates, not quality guarantees. Predicted labels cannot satisfy the reviewed-data minimums.</p>
-<p>The evaluation CLI reports observed errors, confidence buckets, costs, and candidate thresholds. With zero false positives, roughly 1,500 representative good messages are needed for a 95% rule-of-three upper bound of 0.2%. A small synthetic fixture set cannot establish this target. Choose thresholds on training data and validate them with a separate representative held-out corpus.</p>
+<p>In Settings → General, Filtering strength sets how confident your provider must be before SpamWise moves a message to Junk:</p>
+<ul>
+<li>Conservative: at least 99% confident.</li>
+<li>Balanced: at least 95% confident.</li>
+<li>Aggressive: at least 90% confident.</li>
+</ul>
+<p>A Junk answer below that confidence becomes Review instead. Conservative sends more uncertain mail to Review; Aggressive moves more of it to Junk, with more risk of moving mail you want. Filtering strength doesn’t change what your rules or people you know decide.</p>
+<h2><a name="choose-strength" id="choose-strength"></a>Choose a strength</h2>
+<p>Confidence is your provider’s own estimate, not a measured accuracy. Start in dry run and look at the Confidence column in Activity for messages you would call Junk. Choose the strength that moves the mail you want moved, and correct mistakes as you go: corrections create rules, which always come first.</p>
+<h2><a name="review-mail" id="review-mail"></a>Review mail</h2>
+<p>Review mail stays in Inbox so you can decide. Under Review treatment, choose Orange flag (keep in Inbox) or Orange background (keep in Inbox). To get a list of unresolved Review mail every week, see <a href="notifications.html#review-digest">the Review digest</a>.</p>
+<h2><a name="junk-mail" id="junk-mail"></a>Junk mail</h2>
+<p>To mark Junk as read once Mail confirms its move, turn on Mark as read after a confirmed Junk move.</p>
 </main></body></html>

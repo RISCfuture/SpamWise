@@ -229,7 +229,8 @@ public enum ClassificationError: String, ClassificationFailure, Codable, Sendabl
         String(localized: "The selected model configuration is unavailable.", bundle: .module)
       case .consentRequired:
         String(
-          localized: "Allow mail sharing with the selected provider in Account settings first.",
+          localized:
+            "Allow mail sharing with the selected provider in Settings → Classifier first.",
           bundle: .module
         )
       case .rateLimited:

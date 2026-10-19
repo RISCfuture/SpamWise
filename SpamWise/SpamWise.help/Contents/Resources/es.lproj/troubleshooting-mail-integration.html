@@ -1,12 +1,56 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<title>Resolver problemas de integración con Mail — Ayuda de SpamWise</title><meta name="description" content="Automatización denegada: abre Ajustes del Sistema → Privacidad y seguridad → Automatización y permite que SpamWise controle Mail. Vuelve a comprobar la conexión. El acceso a Contactos es opcional; denegarlo deja ese indicio como desconocido. No concedas Acceso total al disco ni desactives las protecciones del sistema como solución.">
-<link rel="stylesheet" href="help.css"></head><body><nav aria-label="Temas de ayuda"><ul><li><a href="getting-started.html">Primeros pasos</a></li><li><a href="how-decisions-are-made.html">Cómo se toman las decisiones</a></li><li><a href="what-data-is-sent.html">Qué datos se envían</a></li><li><a href="correcting-mistakes.html">Corregir errores</a></li><li><a href="filtering-strength.html">Intensidad del filtrado</a></li><li><a href="troubleshooting-mail-integration.html">Resolver problemas de integración con Mail</a></li></ul></nav>
+<title>Resolver problemas de integración con Mail — Ayuda de SpamWise</title><meta name="description" content="Permite que SpamWise controle Mail, averigua por qué no se movió el correo y restaura un mensaje.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Temas de ayuda"><h2>Primeros pasos</h2><ul><li><a href="getting-started.html">Primeros pasos</a></li><li><a href="how-decisions-are-made.html">Cómo se toman las decisiones</a></li><li><a href="filtering-strength.html">Intensidad del filtrado</a></li><li><a href="what-data-is-sent.html">Qué datos se envían</a></li></ul><h2>Uso diario</h2><ul><li><a href="activity.html">Usar Actividad</a></li><li><a href="correcting-mistakes.html">Corregir errores</a></li><li><a href="review-junk.html">Revisar el correo no deseado</a></li><li><a href="notifications.html">Notificaciones y resumen de mensajes para revisar</a></li><li><a href="statistics.html">Estadísticas</a></li><li><a href="shortcuts.html">Atajos</a></li></ul><h2>Reglas y aprendizaje</h2><ul><li><a href="rules.html">Reglas de remitente y de contenido</a></li><li><a href="folders.html">Carpetas</a></li><li><a href="reviewed-messages-and-learning.html">Mensajes revisados y aprendizaje</a></li></ul><h2>Cuentas y datos</h2><ul><li><a href="imap-connection.html">Conectar por IMAP</a></li><li><a href="backup-and-restore.html">Copia de seguridad y restauración</a></li><li><a href="troubleshooting-mail-integration.html" aria-current="page">Resolver problemas de integración con Mail</a></li></ul></nav>
 <main><a name="troubleshooting-mail-integration" id="troubleshooting-mail-integration"></a><h1>Resolver problemas de integración con Mail</h1>
-<p>Automatización denegada: abre Ajustes del Sistema → Privacidad y seguridad → Automatización y permite que SpamWise controle Mail. Vuelve a comprobar la conexión. El acceso a Contactos es opcional; denegarlo deja ese indicio como desconocido. No concedas Acceso total al disco ni desactives las protecciones del sistema como solución.</p>
-<p>Sin acción automática: comprueba que la configuración esté completa, SpamWise esté abierto, pausa y simulación estén desactivadas y los buzones de Entrada y No deseado de la cuenta estén validados en Ajustes → Cuentas. La barra de menús y Actividad muestran qué detiene el filtrado, como la simulación, la falta de permiso de Automatización de Mail o que Mail no esté abierto. MailKit solo admite simulaciones hasta validar las llamadas entrantes, la identidad de cuenta y los tiempos con la aplicación firmada. El correo enviado a No deseado por el servidor queda fuera del análisis automático de Entrada. El correo recibido antes de terminar la configuración, o antes de añadir o incluir una cuenta posterior, no se filtra automáticamente; previsualízalo desde Ajustes → Cuentas. El correo previsualizado durante la simulación conserva su decisión registrada.</p>
-<p>Un movimiento en Apple Mail solo se confirma después de observar el buzón esperado y el contenido original sin cambios. La espera de 30 segundos no es una confirmación del servidor. Los mensajes ambiguos, modificados, recuperados o ausentes provocan un fallo seguro. Inspecciona Mail y restaura manualmente el mensaje de prueba si hace falta; no se usa ninguna acción de Papelera.</p>
-<p>IMAP requiere credenciales TLS explícitas, validación de cuenta de solo lectura, identidad de cuenta/buzón/UIDVALIDITY/UID y destinos de uso especial descubiertos. Las acciones requieren que el servidor admita UID MOVE. Si faltan funciones, cambia UIDVALIDITY o hay destinos ambiguos, el correo no cambia. Las pruebas de protocolo sin conexión no implican aceptación de IMAP en vivo.</p>
-<p>Proveedor no disponible: comprueba el modelo seleccionado y la credencial de ese proveedor en el Llavero. Apple en el dispositivo requiere hardware compatible y disponibilidad del modelo. Private Cloud Compute requiere además una autorización administrada de Apple; sin ella no está disponible. OpenAI y Gemini necesitan credenciales propias configuradas y verificación en vivo. Ningún proveedor recurre silenciosamente a otro.</p>
-<p>Una compilación o notarización correcta no demuestra el funcionamiento de llamadas de Mail en vivo, proveedores externos, compatibilidad de cuentas IMAP, calibración ni aceptación en Mac App Store. Mantén visibles las comprobaciones pendientes y usa mensajes prescindibles en las pruebas de aceptación.</p>
+<h2><a name="automation-denied" id="automation-denied"></a>SpamWise no tiene permiso para controlar Mail</h2>
+<p>SpamWise lee y mueve el correo a través de Mail, y para eso necesita tu permiso. Si Ajustes → Cuentas indica “SpamWise no tiene permiso para controlar Mail, así que no puede comprobar ni mover el correo”:</p>
+<ol>
+<li>Elige Abrir ajustes de Automatización. También puedes abrir Ajustes del Sistema → Privacidad y seguridad → Automatización.</li>
+<li>Debajo de SpamWise, activa Mail.</li>
+<li>En SpamWise, elige Comprobar conexión con Mail.</li>
+</ol>
+<p>SpamWise no necesita acceso total al disco, así que no se lo concedas ni desactives las funciones de seguridad de macOS. Si Ajustes te pide que abras Mail, ábrelo; SpamWise comprueba tus cuentas en cuanto Mail está abierto.</p>
+<p>El acceso a Contactos es opcional. Para permitirlo, activa SpamWise en Ajustes del Sistema → Privacidad y seguridad → Contactos y después elige Conectar Contactos en Ajustes → Cuentas.</p>
+<h2><a name="no-action" id="no-action"></a>No se movió el correo</h2>
+<p>Selecciona el mensaje en Actividad y comprueba su Resultado en el inspector. El menú de SpamWise de la barra de menús y la parte inferior de la ventana Actividad también indican qué está frenando el filtrado. Causas frecuentes:</p>
+<ul>
+<li><strong>La simulación está activada.</strong> El Resultado es Simulación. Desactiva “Simulación — no modificar el correo” en Ajustes → General. El correo comprobado durante una simulación conserva su decisión; corrígelo en Actividad para moverlo.</li>
+<li><strong>SpamWise no ha encontrado los buzones de entrada y de correo no deseado de la cuenta.</strong> La cuenta indica “SpamWise no moverá el correo de esta cuenta hasta que encuentre los buzones de entrada y de correo no deseado.” Elige Comprobar conexión con Mail, o abre Avanzado debajo de la cuenta y elige Comprobar buzones. Mail debe mostrar exactamente un buzón de entrada y un buzón de correo no deseado para la cuenta.</li>
+<li><strong>El filtrado está en pausa.</strong> El Resultado es En pausa. Elige Filtrado → Reanudar filtrado.</li>
+<li><strong>La cuenta no está incluida.</strong> Activa Filtrar esta cuenta debajo de la cuenta en Ajustes → Cuentas. El filtrado empieza con el correo que llega a partir de entonces.</li>
+<li><strong>No hay clave de API o el envío de correo está desactivado.</strong> La Clasificación es Sin clasificar. En Ajustes → Clasificador, añade la clave en Clave de API y activa “Permitir el envío del contexto del correo a <var>proveedor</var>”. Después elige Volver a clasificar.</li>
+<li><strong>Se alcanzó el límite de gasto mensual.</strong> Sube el límite en Uso y gasto, en Ajustes → Clasificador, o espera al mes siguiente.</li>
+<li><strong>El correo llegó antes de que empezara el filtrado.</strong> El correo anterior no se clasifica automáticamente; consulta <a href="getting-started.html#older-mail">Clasificar correo anterior</a>.</li>
+<li><strong>Mail no está abierto o el Mac no tiene conexión.</strong> Las comprobaciones se reanudan cuando se abre Mail o vuelve la conexión.</li>
+<li><strong>La clasificación es Deseado o Revisar.</strong> El correo Deseado se queda en Entrada, y el correo para Revisar se queda en Entrada con su marca naranja.</li>
+</ul>
+<h2><a name="restore-message" id="restore-message"></a>Restaurar un mensaje</h2>
+<p>SpamWise nunca elimina correo. Todo lo que movió está en el buzón de correo no deseado de la cuenta.</p>
+<ul>
+<li>En Actividad, selecciona el mensaje y elige Filtrado → Marcar como deseado. SpamWise lo mueve a Entrada y permite a su remitente.</li>
+<li>O elige Filtrado → Revisar correo no deseado, elige la cuenta, selecciona el mensaje y elige Marcar como deseado y restaurar. Consulta <a href="review-junk.html">Revisar el correo no deseado</a>.</li>
+<li>Si mueves tú el mensaje a Entrada en Mail, márcalo también como deseado en Actividad para que SpamWise permita al remitente la próxima vez.</li>
+</ul>
+<p>Deshacer la última corrección… restaura las reglas y el aprendizaje, pero no mueve el correo.</p>
+<h2><a name="not-classified" id="not-classified"></a>Los mensajes no se clasifican</h2>
+<ul>
+<li>“No hay clave de API para <var>proveedor</var>”: añade una en Clave de API, en Ajustes → Clasificador.</li>
+<li>Apple en el dispositivo necesita Apple Intelligence. Actívalo en Ajustes del Sistema → Apple Intelligence y Siri, o elige otro proveedor.</li>
+<li>“El correo no se clasifica mientras el filtrado se mantenga en este Mac con un proveedor de red seleccionado”: elige Apple en el dispositivo como Proveedor o desactiva Mantener el filtrado en este Mac.</li>
+<li>Si el proveedor está ocupado, no responde o tarda demasiado, los mensajes se quedan donde están. Selecciona uno y elige Volver a clasificar más tarde. SpamWise nunca cambia de proveedor por su cuenta.</li>
+</ul>
+<h2><a name="check-failed" id="check-failed"></a>No se pudo comprobar parte del correo</h2>
+<p>Si Actividad o el menú de la barra de menús indican “No se pudo comprobar parte del correo — consulta Ajustes → Cuentas”, el Estado de cada cuenta en Ajustes → Cuentas muestra el problema. Un mensaje que Mail no puede cargar se queda donde está y se vuelve a intentar más tarde, y SpamWise sigue comprobando los mensajes posteriores. Mantén SpamWise y Mail abiertos.</p>
+<h2><a name="new-mail" id="new-mail"></a>Comprobar antes el correo nuevo</h2>
+<p>SpamWise comprueba tu Entrada cada minuto. Para comprobar el correo nuevo en cuanto llega, añade una regla de Mail que ejecute el script de SpamWise:</p>
+<ol>
+<li>En Ajustes → Cuentas, en Correo nuevo, elige Mostrar script en el Finder.</li>
+<li>Copia el script seleccionado en la carpeta ~/Library/Application Scripts/com.apple.mail. Para abrir la carpeta, elige Ir → Ir a la carpeta en el Finder.</li>
+<li>En Mail, elige Mail → Ajustes, haz clic en Reglas y después en Añadir regla. Ajusta la condición a Todos los mensajes y la acción a Ejecutar AppleScript, y elige el script de SpamWise.</li>
+</ol>
+<p>No hace falta activar SpamWise en los ajustes de extensiones de Mail.</p>
+<h2><a name="move-test" id="move-test"></a>Probar el movimiento de un mensaje</h2>
+<p>Para comprobar que SpamWise puede mover correo en una cuenta, envíate un mensaje cuyo asunto empiece por “[SpamWise Probe]”. Selecciónalo en la Entrada de Mail, abre Diagnóstico en Ajustes → Avanzado y elige Probar el mensaje seleccionado. SpamWise lo mueve a No deseado y de vuelta, y le pone una bandera naranja. La simulación no cambia.</p>
 </main></body></html>
