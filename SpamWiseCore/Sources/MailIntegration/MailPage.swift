@@ -7,7 +7,7 @@ struct MailRow: Sendable {
   let source: String?
   /// The message envelope, or nil when its source is missing, empty or over the size limit.
   var envelope: MailEnvelope? {
-    guard let source, !source.isEmpty, source.utf8.count <= MailScripts.maximumMessageBytes
+    guard let source, !source.isEmpty, source.utf8.count <= MIMEParser.maximumMessageBytes
     else { return nil }
     let raw = Data(source.utf8)
     return .init(

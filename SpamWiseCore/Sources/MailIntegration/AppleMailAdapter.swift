@@ -6,6 +6,8 @@ public import SpamWiseCore
 
  Every handler call runs under a wall-clock limit. Mutating calls that pass that limit, or are
  cancelled after they start, report an unconfirmed receipt because Mail may still apply them.
+ Corrections, lookups, selections, account and destination reads and the disposable probe run
+ on the interactive lane; sweeps, pages and automatic actions run on the background lane.
  */
 public actor AppleMailAdapter: MailClientAdapter {
   /// Default wall-clock limit for one handler call.
@@ -43,20 +45,26 @@ public actor AppleMailAdapter: MailClientAdapter {
     self.observationInterval = max(.zero, observationInterval)
   }
 
-  /// Runs one handler request under the adapter's wall-clock limit.
+  /// Runs one handler request on the current task's lane under the adapter's wall-clock limit.
   func invoke(_ request: MailRequest) async throws -> ScriptValue {
-    let runner = self.runner
+    let runner = self.runner, lane = ScriptLane.current
     do {
       return try await withResourceDeadline(seconds: callTimeLimit.timeInterval) {
-        try await runner.run(request)
+        try await runner.run(request, lane: lane)
       }
     } catch ResourceDeadlineError.timeout {
       throw IntegrationError.timedOut
     }
   }
+  /// Runs `operation` with its handler calls on the interactive lane.
+  func interactively<Value>(_ operation: () async throws -> Value) async throws -> Value {
+    try await ScriptLane.$current.withValue(.interactive, operation: operation)
+  }
   /// Reads Mail account identifiers and display names.
   public func accounts() async throws -> [MailAccount] {
-    guard let rows = try await invoke(.accounts).list else { throw IntegrationError.scriptFailed }
+    guard let rows = try await interactively({ try await invoke(.accounts) }).list else {
+      throw IntegrationError.scriptFailed
+    }
     return try rows.map { row in
       guard let fields = row.list, (2...3).contains(fields.count), let id = fields[0].string,
         let name = fields[1].string
@@ -146,7 +154,10 @@ extension AppleMailAdapter {
     )
   }
   private func selection(maximumCount: Int) async throws -> MailPage {
-    guard let result = try await invoke(.selection(maximumCount: maximumCount)).list,
+    guard
+      let result = try await interactively({
+        try await invoke(.selection(maximumCount: maximumCount))
+      }).list,
       result.count == 2, let count = result[0].integer, let values = result[1].list
     else { throw IntegrationError.scriptFailed }
     guard (1...maximumCount).contains(count) else {

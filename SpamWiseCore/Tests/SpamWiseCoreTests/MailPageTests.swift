@@ -6,7 +6,7 @@ import SpamWiseCore
 private let oversized = MailReply.message(
   localID: 1,
   messageID: "oversized",
-  source: String(repeating: "x", count: MailScripts.maximumMessageBytes + 1)
+  source: String(repeating: "x", count: MIMEParser.maximumMessageBytes + 1)
 )
 private let readable = MailReply.message(
   localID: 2,

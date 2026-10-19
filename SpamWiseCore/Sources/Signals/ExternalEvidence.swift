@@ -19,9 +19,9 @@ public enum EvidenceSource: String, Codable, Sendable {
 
 /// Bounded external observations for a classifier to interpret alongside trusted gates.
 public struct ExternalEvidenceFinding: Codable, Sendable, Equatable {
-  private static let maximumSubjectCharacters = 253
+  private static let maximumSubjectScalars = 253
   private static let maximumDetails = 20
-  private static let maximumDetailCharacters = 120
+  private static let maximumDetailScalars = 120
   /// Evidence source, such as Spamhaus DBL or local Rspamd.
   public let source: EvidenceSource
   /// Domain or message scope queried.
@@ -45,10 +45,10 @@ public struct ExternalEvidenceFinding: Codable, Sendable, Equatable {
     details: [String] = []
   ) {
     self.source = source
-    self.subject = String(subject.prefix(Self.maximumSubjectCharacters))
+    self.subject = subject.prefix(unicodeScalars: Self.maximumSubjectScalars)
     self.status = status
     self.details = details.prefix(Self.maximumDetails).map {
-      String($0.prefix(Self.maximumDetailCharacters))
+      $0.prefix(unicodeScalars: Self.maximumDetailScalars)
     }
   }
 }

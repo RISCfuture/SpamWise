@@ -2,6 +2,14 @@ import Foundation
 import NIOIMAP
 import SpamWiseCore
 
+/// The outcome of storing Review on one message.
+struct ReviewMarking {
+  /// Whether the server confirmed the Review flag.
+  var receipt: ActionReceipt
+  /// Whether SpamWise set `\Flagged` as the Review fallback, so clearing Review may remove it.
+  var setFlagged: Bool
+}
+
 /// A message confirmed at its recorded UIDVALIDITY and content hash.
 struct IMAPRevalidation {
   /// The mailbox as selected for the check.
@@ -79,15 +87,27 @@ extension IMAPAdapter {
     return moved
   }
 
+  /**
+   Stores the Review flag, reporting whether SpamWise newly set the `\Flagged` fallback.
+
+   Where `\Flagged` stands in for the Review keyword and the message is already flagged, the
+   flag is the user's: nothing is stored, and the message already shows as flagged.
+   */
   static func markForReview(_ identity: MessageIdentity, session: IMAPSession)
-    async throws -> ActionReceipt
+    async throws -> ReviewMarking
   {
     let target = try await notAttempted {
       let revalidated = try await revalidatePresent(identity, writable: true, session: session)
       guard let flag = reviewFlag(permitted: revalidated.selection.permanentFlags) else {
         throw IMAPError.unsupported
       }
-      return (uid: revalidated.uid, flag: flag)
+      let userFlagged =
+        flag == .flagged
+        ? try await flags(uid: revalidated.uid, session: session).contains(.flagged) : false
+      return (uid: revalidated.uid, flag: flag, userFlagged: userFlagged)
+    }
+    guard !target.userFlagged else {
+      return ReviewMarking(receipt: .init(confirmed: true), setFlagged: false)
     }
     let reply = try await session.command(
       .uidStore(try uidSet(target.uid), [], .flags(.add(silent: false, list: [target.flag])))
@@ -95,13 +115,24 @@ extension IMAPAdapter {
     let confirmed = reply.fetches.contains {
       $0.uid == target.uid && $0.flags?.contains(target.flag) == true
     }
-    return .init(confirmed: confirmed)
+    return ReviewMarking(
+      receipt: .init(confirmed: confirmed),
+      setFlagged: confirmed && target.flag == .flagged
+    )
   }
 
-  /// Removes the flag ``markForReview(_:session:)`` would store; a mailbox that admits neither has nothing to clear.
-  static func clearReview(_ identity: MessageIdentity, session: IMAPSession)
-    async throws -> ActionReceipt
-  {
+  /**
+   Removes the flag ``markForReview(_:session:)`` stores; a mailbox that admits neither has
+   nothing to clear.
+
+   - Parameter removesFlagged: Whether SpamWise set the `\Flagged` fallback on this message.
+     Without that evidence a `\Flagged` fallback is the user's own flag and stays.
+   */
+  static func clearReview(
+    _ identity: MessageIdentity,
+    removesFlagged: Bool,
+    session: IMAPSession
+  ) async throws -> ActionReceipt {
     let target = try await notAttempted {
       let revalidated = try await revalidatePresent(identity, writable: true, session: session)
       return (
@@ -109,7 +140,9 @@ extension IMAPAdapter {
         flag: reviewFlag(permitted: revalidated.selection.permanentFlags)
       )
     }
-    guard let flag = target.flag else { return .init(confirmed: true) }
+    guard let flag = target.flag, flag != .flagged || removesFlagged else {
+      return .init(confirmed: true)
+    }
     let reply = try await session.command(
       .uidStore(try uidSet(target.uid), [], .flags(.remove(silent: false, list: [flag])))
     )

@@ -12,7 +12,8 @@ public struct AuthResult: Codable, Sendable, Equatable {
   public var result: String
   /// Whether the reporting server is in the configured trust set.
   public var trusted: Bool
-  /// The authenticated domain: DKIM `header.d`, DMARC `header.from` or SPF `smtp.mailfrom`.
+  /// The authenticated domain: DKIM `header.d`, DMARC `header.from` or SPF `smtp.mailfrom`;
+  /// nil when absent or longer than a DNS name.
   public var domain: String?
 }
 /// How the reporting servers the user trusts authenticated the From domain.
@@ -27,10 +28,10 @@ public enum SenderAuthentication: Sendable, Equatable {
 /// Optional evidence supplied to classification; missing values mean unknown.
 public struct EvidenceBundle: Codable, Sendable, Equatable {
   private static let maximumLinkDomains = 20
-  private static let maximumDisplayNameCharacters = 256
+  private static let maximumDisplayNameScalars = 256
   private static let maximumAuthResults = 20
   private static let maximumAuxiliaryFindings = 32
-  private static let maximumFindingCharacters = 1024
+  private static let maximumFindingScalars = 1024
   private static let abuseHeavyTLDs: Set<String> = ["lat", "world", "top", "click", "xyz"]
   private static let findingsTruncation = "Evidence truncated: further findings omitted"
   private static let displayNameSeparators = CharacterSet.whitespaces.union(
@@ -40,7 +41,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   private static let surroundingPunctuation = CharacterSet.alphanumerics.inverted
   /// Normalized sender email address.
   public var fromAddress: String
-  /// Decoded sender display name, bounded to 256 characters; this is an untrusted claim.
+  /// Decoded sender display name, bounded to 256 Unicode scalars; this is an untrusted claim.
   public var fromDisplayName: String
   /**
    An address claimed in the From display name or comments at a registrable domain other than the
@@ -65,7 +66,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   public var tldIsAbuseHeavy: Bool
   /// Known registration age in days; nil means unknown.
   public var domainAgeDays: Int?
-  /// At most 20 distinct registrable link domains, in order of first appearance.
+  /// At most 20 distinct registrable link domains, in the ranked order of the message's URLs.
   public var linkDomains: [String]
   /// Whether a List-Unsubscribe header exists; this is weak evidence.
   public var listUnsubscribePresent: Bool
@@ -122,7 +123,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
     let domains = message.urls.compactMap { URL(string: $0)?.host }
       .compactMap(resolver.registrableDomain).uniqued()
     fromAddress = message.fromAddress
-    fromDisplayName = String(message.fromDisplayName.prefix(Self.maximumDisplayNameCharacters))
+    fromDisplayName = message.fromDisplayName.prefix(unicodeScalars: Self.maximumDisplayNameScalars)
     let fromDomain = resolver.domain(ofAddress: message.fromAddress)
     self.fromDomain = fromDomain
     mismatchedDisplayNameAddress = Self.claimedAddresses(
@@ -145,7 +146,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
     trustedServersConfigured = !trustedServers.isEmpty
     record(
       findings: Self.truncation(
-        displayName: message.fromDisplayName.count > Self.maximumDisplayNameCharacters,
+        displayName: message.fromDisplayName.unicodeScalars.count > Self.maximumDisplayNameScalars,
         authResults: claims.count > Self.maximumAuthResults,
         linkDomains: domains.count > Self.maximumLinkDomains
       )
@@ -175,9 +176,9 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
       .compactMap { MIMEParser.address($0.trimmingCharacters(in: surroundingPunctuation)) }
   }
 
-  /// Appends distinct findings, keeping at most 32 of up to 1,024 characters each.
+  /// Appends distinct findings, keeping at most 32 of up to 1,024 Unicode scalars each.
   public mutating func record(findings: [String]) {
-    let truncated = findings.map { String($0.prefix(Self.maximumFindingCharacters)) }
+    let truncated = findings.map { $0.prefix(unicodeScalars: Self.maximumFindingScalars) }
     let combined = ((auxiliaryFindings ?? []) + truncated).uniqued()
     auxiliaryFindings = combined.isEmpty ? nil : Self.bounded(findings: combined)
   }
@@ -186,6 +187,7 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
 public enum AuthenticationHeaders {
   private static let maximumHeaders = 10
   private static let maximumServerCharacters = 253
+  private static let maximumDomainBytes = 253
   private static let serverDelimiters = CharacterSet.whitespacesAndNewlines.union(
     CharacterSet(charactersIn: ";=")
   )
@@ -258,6 +260,7 @@ public enum AuthenticationHeaders {
     let domain = domainProperties[match[0], default: []].lazy
       .compactMap { captures(propertyPattern($0), in: field)?.first }
       .first?.split(separator: "@").last.map(String.init)
+      .flatMap { $0.utf8.count <= maximumDomainBytes ? $0 : nil }
     return AuthResult(
       server: server,
       mechanism: match[0],

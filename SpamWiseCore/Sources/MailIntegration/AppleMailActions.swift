@@ -9,6 +9,15 @@ enum MessageSearchScope {
   case account
 }
 
+/// When a move's receipt reports it confirmed.
+enum MoveConfirmation {
+  /// Once Mail shows the message in its destination twice in a row; the receipt carries a
+  /// recheck for when the settling window ends.
+  case observed
+  /// Only after the settling window, once the message is still the destination's one copy.
+  case settled
+}
+
 /// A uniquely resolved message: its exact current location and its verified envelope.
 struct ResolvedMessage {
   let location: MailMessageLocation
@@ -59,13 +68,15 @@ extension AppleMailAdapter {
 
   /// Resolves the message anywhere in its account and rejects changed content.
   public func lookup(_ identity: MessageIdentity) async throws -> MailEnvelope? {
-    try await resolve(identity, scope: .account).envelope
+    try await interactively { try await resolve(identity, scope: .account).envelope }
   }
   /// Opens exactly one verified message in Mail's own viewer.
   public func open(_ identity: MessageIdentity) async throws {
-    let target = try await resolve(identity, scope: .account)
-    guard try await invoke(.apply(.open, target: target.location)) == .boolean(true) else {
-      throw IntegrationError.scriptFailed
+    try await interactively {
+      let target = try await resolve(identity, scope: .account)
+      guard try await invoke(.apply(.open, target: target.location)) == .boolean(true) else {
+        throw IntegrationError.scriptFailed
+      }
     }
   }
   /// Acts only while the message remains in its recorded mailbox, then observes the result.
@@ -96,7 +107,9 @@ extension AppleMailAdapter {
     for identity: MessageIdentity,
     commandSent: @Sendable () async -> Void
   ) async throws -> ActionReceipt {
-    try await perform(action, for: identity, scope: .account, commandSent: commandSent)
+    try await interactively {
+      try await perform(action, for: identity, scope: .account, commandSent: commandSent)
+    }
   }
   /// Marks read only after rechecking the exact message and its account's Junk membership.
   public func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
@@ -106,16 +119,20 @@ extension AppleMailAdapter {
   }
   /// Explicit UI probe: only a selected Inbox message named [SpamWise Probe] is eligible.
   public func testDisposableMessage() async throws -> String {
+    try await interactively { try await probe() }
+  }
+
+  private func probe() async throws -> String {
     let selected = try await selectedMessage()
     guard selected.identity.messageID != nil else { throw IntegrationError.missingMessageID }
     guard let account = selected.identity.accountID,
       try MIMEParser().parse(selected.raw).subject.hasPrefix(Self.probeSubjectPrefix),
       try await observedIdentity(of: selected.identity, in: .inbox) != nil
     else { throw IntegrationError.notProbeMessage }
-    let junk = try Self.movedIdentity(await perform(.moveToJunk, for: selected.identity))
-    let inbox = try Self.movedIdentity(await perform(.moveToInbox, for: junk))
+    let junk = try Self.movedIdentity(await settledMove(.moveToJunk, of: selected.identity))
+    let inbox = try Self.movedIdentity(await settledMove(.moveToInbox, of: junk))
     guard try await perform(.orangeFlag, for: inbox).confirmed,
-      try await observedIdentity(of: inbox, in: .inbox) != nil
+      try await settledIdentity(of: inbox, in: .inbox) != nil
     else { throw IntegrationError.actionUnconfirmed }
     return account
   }
@@ -160,10 +177,17 @@ extension AppleMailAdapter {
     guard let values = try await invoke(request).list else { throw IntegrationError.scriptFailed }
     return try values.map(MailRow.init)
   }
+  /// Moves the probe and confirms it only once the full settling window has passed.
+  private func settledMove(_ action: MailAction, of identity: MessageIdentity) async throws
+    -> ActionReceipt
+  {
+    try await perform(action, for: identity, scope: .recordedMailbox, confirmation: .settled)
+  }
   private func perform(
     _ action: MailAction,
     for identity: MessageIdentity,
     scope: MessageSearchScope,
+    confirmation: MoveConfirmation = .observed,
     commandSent: @Sendable () async -> Void = {}
   ) async throws -> ActionReceipt {
     guard let command = MailCommand(action) else { return .init(confirmed: true) }
@@ -177,7 +201,7 @@ extension AppleMailAdapter {
     guard applied else { return .init(confirmed: false) }
     guard let destination = command.destination else { return .init(confirmed: true) }
     guard target.location.messageID != nil else { return .init(confirmed: false) }
-    return await observeMove(of: target.envelope.identity, to: destination)
+    return await observeMove(of: target, to: destination, confirmation: confirmation)
   }
   /// Reports whether Mail confirmed the change; cancellation or timeout after sending is unknown.
   private func applyChange(_ command: MailCommand, to location: MailMessageLocation) async throws
@@ -191,17 +215,28 @@ extension AppleMailAdapter {
       return false
     }
   }
-  /// Polls until Mail shows the moved message in its destination twice in a row.
-  private func observeMove(of identity: MessageIdentity, to role: MailboxRole) async
-    -> ActionReceipt
-  {
+  /**
+   Polls until Mail shows the moved message in its destination twice in a row.
+
+   Providers can revert or relocate a move once their server syncs, so the move is confirmed as
+   settled only after ``moveSettlingTime``: an observed confirmation carries a recheck due then,
+   and a settled one waits for the window and requires the destination's one copy.
+   */
+  private func observeMove(
+    of target: ResolvedMessage,
+    to role: MailboxRole,
+    confirmation: MoveConfirmation
+  ) async -> ActionReceipt {
     let clock = ContinuousClock(), deadline = clock.now + moveSettlingTime
+    let identity = target.envelope.identity, byteCount = target.location.byteCount
     var observed: MessageIdentity?, consecutive = 0
-    while consecutive < Self.requiredObservations, clock.now < deadline {
+    while clock.now < deadline,
+      confirmation == .settled || consecutive < Self.requiredObservations
+    {
       do {
         try Task.checkCancellation()
-        try await Task.sleep(for: observationInterval)
-        observed = try await observedIdentity(of: identity, in: role)
+        try await Task.sleep(for: min(observationInterval, deadline - clock.now))
+        observed = try await observedIdentity(of: identity, in: role, byteCount: byteCount)
         consecutive = observed == nil ? 0 : consecutive + 1
       } catch is CancellationError {
         return .init(confirmed: false)
@@ -209,19 +244,55 @@ extension AppleMailAdapter {
         consecutive = 0
       }
     }
-    guard consecutive >= Self.requiredObservations, let observed else {
-      return .init(confirmed: false)
+    switch confirmation {
+      case .observed:
+        guard consecutive >= Self.requiredObservations, let observed else {
+          return .init(confirmed: false)
+        }
+        let settlement = MoveSettlement(due: deadline) {
+          (try? await self.settledIdentity(of: observed, in: role, byteCount: byteCount)) != nil
+        }
+        return .init(confirmed: true, updatedIdentity: observed, settlement: settlement)
+      case .settled:
+        guard !Task.isCancelled, observed != nil,
+          let settled = try? await settledIdentity(of: identity, in: role, byteCount: byteCount)
+        else { return .init(confirmed: false) }
+        return .init(confirmed: true, updatedIdentity: settled)
     }
-    return .init(confirmed: true, updatedIdentity: observed)
   }
-  private func observedIdentity(of identity: MessageIdentity, in role: MailboxRole) async throws
-    -> MessageIdentity?
+  /// The moved message when it is the only copy with its content in the account's `role` mailbox.
+  private func settledIdentity(
+    of identity: MessageIdentity,
+    in role: MailboxRole,
+    byteCount: Int = -1
+  ) async throws -> MessageIdentity? {
+    let copies = try await copies(of: identity, in: role, byteCount: byteCount)
+    return copies.count == 1 ? copies[0] : nil
+  }
+  private func observedIdentity(
+    of identity: MessageIdentity,
+    in role: MailboxRole,
+    byteCount: Int = -1
+  )
+    async throws -> MessageIdentity?
   {
-    guard let account = identity.accountID, let messageID = identity.messageID else { return nil }
-    let request = MailRequest.observe(accountID: account, role: role, messageID: messageID)
+    try await copies(of: identity, in: role, byteCount: byteCount).first
+  }
+  private func copies(of identity: MessageIdentity, in role: MailboxRole, byteCount: Int)
+    async throws -> [MessageIdentity]
+  {
+    guard let account = identity.accountID, let messageID = identity.messageID else { return [] }
+    let request = MailRequest.observe(
+      accountID: account,
+      role: role,
+      messageID: messageID,
+      byteCount: byteCount
+    )
     guard let values = try await invoke(request).list else { throw IntegrationError.scriptFailed }
-    return try values.map(MailRow.init).compactMap(\.envelope).first {
-      $0.identity.accountID == account && $0.identity.contentHash == identity.contentHash
-    }?.identity
+    var seen = Set<Int>()
+    return try values.map(MailRow.init).filter { seen.insert($0.location.localID).inserted }
+      .compactMap(\.envelope).map(\.identity).filter {
+        $0.accountID == account && $0.contentHash == identity.contentHash
+      }
   }
 }

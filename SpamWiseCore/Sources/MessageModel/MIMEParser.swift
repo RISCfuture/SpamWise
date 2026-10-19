@@ -22,6 +22,7 @@ public struct MIMEParser: Sendable {
     "MIME alternatives differ; the one mail apps display comes first, "
     + "and all following text is untrusted."
   private static let attachedTextNotice = "Untrusted attached text:\n"
+  private static let concealedTextNotice = "Text the HTML conceals from view:\n"
   private let includeTextAttachments: Bool
   /// Creates a bounded parser with optional plain-text and HTML attachment extraction.
   public init(includeTextAttachments: Bool = false) {
@@ -47,6 +48,15 @@ public struct MIMEParser: Sendable {
     return
       ([alternativesNotice]
       + alternatives.map { "[Alternative \($0.offset + 1)]\n" + $0.element.prefix(share) })
+      .joined(separator: "\n")
+  }
+
+  /// The visible text, then any concealed text under a notice, so concealed text is cut first.
+  private static func htmlText(_ html: HTMLText.Conversion) -> String {
+    let visible = html.text.trimmingCharacters(in: .whitespacesAndNewlines)
+    let concealed = html.concealedText.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !concealed.isEmpty else { return visible }
+    return [visible, concealedTextNotice + concealed].filter { !$0.isEmpty }
       .joined(separator: "\n")
   }
 
@@ -108,12 +118,18 @@ public struct MIMEParser: Sendable {
   private struct Extraction {
     let includeTextAttachments: Bool
     var issues: Set<DecodingIssue>
-    /// Distinct URLs in order of first appearance, up to the URL limit.
-    private(set) var urls: [String] = []
+    /// Distinct URLs, visible ones first, each visibility in order of first appearance, up to
+    /// the URL limit.
+    var urls: [String] {
+      Array(
+        LinkVisibility.allCases.flatMap { rankedURLs[$0] ?? [] }.uniqued()
+          .prefix(MIMEParser.maximumURLs)
+      )
+    }
     private(set) var attachments: [AttachmentMetadata] = []
     private(set) var coverage: [AttachmentTextCoverage] = []
     private(set) var images: [InlineImage] = []
-    private var seenURLs: Set<String> = []
+    private var rankedURLs: [LinkVisibility: [String]] = [:]
 
     init(includeTextAttachments: Bool, issues: Set<DecodingIssue>) {
       self.includeTextAttachments = includeTextAttachments
@@ -194,16 +210,20 @@ public struct MIMEParser: Sendable {
         issues: &issues
       )
       guard part.mediaType == "text/html" else {
-        collectURLs(in: decoded)
+        collectURLs(in: decoded, visibility: .visible)
         return decoded.trimmingCharacters(in: .whitespacesAndNewlines)
       }
       let html = HTMLText.convert(decoded, limit: MIMEParser.maximumTextCharacters)
-      collectURLs(in: html.linkSource)
-      return html.text.trimmingCharacters(in: .whitespacesAndNewlines)
+      for (visibility, source) in html.linkSources {
+        collectURLs(in: source, visibility: visibility)
+      }
+      return MIMEParser.htmlText(html)
     }
 
-    private mutating func collectURLs(in text: String) {
-      guard urls.count < MIMEParser.maximumURLs,
+    private mutating func collectURLs(in text: String, visibility: LinkVisibility) {
+      var ranked = rankedURLs[visibility] ?? []
+      defer { rankedURLs[visibility] = ranked }
+      guard ranked.count < MIMEParser.maximumURLs,
         let expression = try? NSRegularExpression(
           pattern: MIMEParser.urlPattern,
           options: .caseInsensitive
@@ -211,10 +231,10 @@ public struct MIMEParser: Sendable {
       else { return }
       for match in expression.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
         guard let range = Range(match.range, in: text),
-          let url = MIMEParser.normalizedURL(String(text[range])), seenURLs.insert(url).inserted
+          let url = MIMEParser.normalizedURL(String(text[range])), !ranked.contains(url)
         else { continue }
-        urls.append(url)
-        if urls.count == MIMEParser.maximumURLs { return }
+        ranked.append(url)
+        if ranked.count == MIMEParser.maximumURLs { return }
       }
     }
   }

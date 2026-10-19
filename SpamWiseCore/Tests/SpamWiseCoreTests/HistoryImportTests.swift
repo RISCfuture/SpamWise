@@ -41,7 +41,7 @@ private enum HistoryRows {
     )
   }
   static func row(_ mailbox: String, id: String, _ content: ScriptValue) -> ScriptValue {
-    let byteCount = content.string?.utf8.count ?? MailScripts.maximumMessageBytes + 1
+    let byteCount = content.string?.utf8.count ?? MIMEParser.maximumMessageBytes + 1
     return .list([
       .string("account"), .string(mailbox), .integer(1), .string("<\(id)>"), .integer(byteCount),
       content

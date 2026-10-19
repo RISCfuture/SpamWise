@@ -124,9 +124,14 @@ extension Pipeline {
       timeout: remaining
     )
     let classifier = self.classifier
-    let verdict = try await withDeadline(seconds: remaining) {
-      try await classifier.classify(input)
-    }.validated()
+    let verdict: Verdict
+    do {
+      verdict = try await withDeadline(seconds: remaining) {
+        try await classifier.classify(input)
+      }.validated()
+    } catch ClassificationError.contextExceeded {
+      return .oversizedContext
+    }
     if advanced.bayes {
       try? await trainPrediction(
         message,

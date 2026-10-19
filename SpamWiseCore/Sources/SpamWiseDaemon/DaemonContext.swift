@@ -50,15 +50,10 @@ struct DaemonContext {
 
   /// A classifier using the configuration's provider credential references, or the shared Keychain.
   func classifier() -> ConfiguredClassifier {
-    guard let references = configuration.providerCredentials else {
+    guard configuration.providerCredentials != nil else {
       return ConfiguredClassifier(store: store)
     }
-    return ConfiguredClassifier(store: store) { backend in
-      guard let reference = references[backend.rawValue] else {
-        throw ClassificationError.missingCredential
-      }
-      return try reference.resolvedSecret()
-    }
+    return ConfiguredClassifier(store: store, credential: configuration.providerKey)
   }
 
   /// Runs `change`, then prints every shared setting it changed.

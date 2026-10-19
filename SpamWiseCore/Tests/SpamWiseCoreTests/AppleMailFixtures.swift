@@ -5,8 +5,11 @@ import SpamWiseCore
 /// Answers Mail handler requests by handler, repeating each handler's last scripted response.
 actor StubAppleEvents: AppleEventRunner {
   private var responses: [MailHandler: [ScriptValue]]
+  private var observations: [MailboxRole: [ScriptValue]]
   private let delays: [MailHandler: Duration]
   private(set) var requests: [MailRequest] = []
+  /// The lane of each request, in order.
+  private(set) var lanes: [ScriptLane] = []
   var moves: [MailMessageLocation] {
     requests.compactMap { request in
       guard case let .apply(command, location) = request, command.destination != nil else {
@@ -25,20 +28,30 @@ actor StubAppleEvents: AppleEventRunner {
     requests.count { if case .apply = $0 { true } else { false } }
   }
 
-  init(_ responses: [MailHandler: [ScriptValue]], delays: [MailHandler: Duration] = [:]) {
-    self.responses = responses; self.delays = delays
+  /// Scripts responses by handler, with observations of each mailbox role answered separately.
+  init(
+    _ responses: [MailHandler: [ScriptValue]],
+    observations: [MailboxRole: [ScriptValue]] = [:],
+    delays: [MailHandler: Duration] = [:]
+  ) {
+    self.responses = responses; self.observations = observations; self.delays = delays
+  }
+  private static func next(from queue: inout [ScriptValue]) throws -> ScriptValue {
+    guard let next = queue.first else { throw IntegrationError.scriptFailed }
+    if queue.count > 1 { queue.removeFirst() }
+    return next
+  }
+  func run(_ request: MailRequest, lane: ScriptLane) async throws -> ScriptValue {
+    lanes.append(lane)
+    return try await run(request)
   }
   func run(_ request: MailRequest) async throws -> ScriptValue {
     requests.append(request)
     if let delay = delays[request.handler] { try await Task.sleep(for: delay) }
-    guard var queue = responses[request.handler], let next = queue.first else {
-      throw IntegrationError.scriptFailed
+    if case .observe(_, let role, _, _) = request, observations[role] != nil {
+      return try Self.next(from: &observations[role, default: []])
     }
-    if queue.count > 1 {
-      queue.removeFirst()
-      responses[request.handler] = queue
-    }
-    return next
+    return try Self.next(from: &responses[request.handler, default: []])
   }
 }
 
@@ -59,7 +72,7 @@ enum MailReply {
   ) -> ScriptValue {
     .list([
       .string(account), .string(mailbox), .integer(localID), .string(messageID),
-      .integer(byteCount ?? source?.utf8.count ?? MailScripts.maximumMessageBytes + 1),
+      .integer(byteCount ?? source?.utf8.count ?? MIMEParser.maximumMessageBytes + 1),
       source.map(ScriptValue.string) ?? .boolean(false)
     ])
   }

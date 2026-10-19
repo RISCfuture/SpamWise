@@ -85,8 +85,10 @@ with the same Message-ID; same-account duplicates are ambiguous and left untouch
 move immediately after self-sent mail arrived proved unstable: Mail later put the
 message in Recovered Messages. After each move, SpamWise polls the message every two
 seconds and confirms the move after two consecutive matching observations, giving up
-after 30 seconds. That is an observation of Mail's local state, not a server
-acknowledgement, and the Apple Events handlers rewritten since these probes still need
+after 30 seconds. Once those 30 seconds have passed it checks again, and records the
+outcome as unconfirmed if the message is no longer the destination's only copy; the
+disposable probe instead waits the full 30 seconds before each move counts. That is an
+observation of Mail's local state, not a server acknowledgement, and the Apple Events handlers rewritten since these probes still need
 a fresh signed run.</p>
 <p>Mail's account-specific special Inbox/Junk roles are used for moves; SpamWise does
 not guess a destination by name. Check Mailboxes, under each account's Advanced

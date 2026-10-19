@@ -16,7 +16,9 @@ extension AppleMailAdapter {
   /// Reads special-mailbox names without changing messages or enabling actions.
   public func destinations(accountID: String) async throws -> MailDestinations {
     guard !accountID.isEmpty,
-      let fields = try await invoke(.destinations(accountID: accountID)).list,
+      let fields = try await interactively({
+        try await invoke(.destinations(accountID: accountID))
+      }).list,
       fields.count == 2, let inbox = fields[0].list, let junk = fields[1].list,
       inbox.allSatisfy({ $0.string != nil }), junk.allSatisfy({ $0.string != nil })
     else { throw IntegrationError.scriptFailed }

@@ -7,6 +7,7 @@ public actor IMAPAdapter: MailClientAdapter {
   typealias Connector = @Sendable (IMAPConfiguration) async throws -> IMAPConnection
 
   private static let probeSubjectPrefix = "[SpamWise Probe]"
+  private static let maximumFlaggedFallbacks = 1000
   /// Explicit account identity used to scope retries and persisted actions.
   nonisolated public let accountID: String
   let configuration: IMAPConfiguration
@@ -19,6 +20,10 @@ public actor IMAPAdapter: MailClientAdapter {
   private var observedCapabilities: Set<String>?
   private var sweepCursor = IMAPSweepCursor()
   private var sweepCursorKey: String { "imap-sweep-v1:" + configuration.endpointFingerprint }
+  /// Identity keys of messages where SpamWise set `\Flagged` as the Review fallback.
+  private var flaggedFallbackKey: String {
+    "imap-review-flagged-v1:" + configuration.endpointFingerprint
+  }
 
   /// Creates an adapter that connects with verified TLS through Network.framework.
   /// - Parameters:
@@ -91,7 +96,7 @@ public actor IMAPAdapter: MailClientAdapter {
   public func nextInboxSweep(limit: Int, cursorStore: Store? = nil) async throws
     -> IMAPInboxSweep
   {
-    let saved = try await cursorStore?.read(sweepCursorKey, default: sweepCursor) ?? sweepCursor
+    let saved = try await savedCursor(in: cursorStore)
     guard limit > 0 else { return IMAPInboxSweep(messages: [], cursor: saved) }
     let account = configuration.id
     let (messages, next) = try await withSession { session in
@@ -127,7 +132,7 @@ public actor IMAPAdapter: MailClientAdapter {
   }
   /// Performs a UID MOVE or Review keyword change after persisted validation and an exact content recheck.
   /// Review is stored as the `$SpamWiseReview` keyword, or `\Flagged` where the mailbox admits no new keywords;
-  /// clearing Review removes the same flag.
+  /// clearing Review removes the same flag, but removes `\Flagged` only where SpamWise set it.
   /// Failures before the mail command is sent throw `ActionNotAttempted`.
   public func perform(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
@@ -142,9 +147,9 @@ public actor IMAPAdapter: MailClientAdapter {
         case .moveToInbox, .moveToJunk:
           try await Self.move(identity, for: action, session: session)
         case .orangeFlag, .orangeBackground:
-          try await Self.markForReview(identity, session: session)
+          try await markForReview(identity, session: session)
         case .clearOrangeFlag, .clearOrangeBackground:
-          try await Self.clearReview(identity, session: session)
+          try await clearReview(identity, session: session)
         case .none: .init(confirmed: true)
       }
     }
@@ -191,6 +196,49 @@ extension IMAPAdapter {
         store: validations
       )
     else { throw IntegrationError.accountUnverified }
+  }
+
+  /// Stores Review, remembering a `\Flagged` fallback SpamWise set so clearing Review can remove it.
+  private func markForReview(_ identity: MessageIdentity, session: IMAPSession) async throws
+    -> ActionReceipt
+  {
+    let marking = try await Self.markForReview(identity, session: session)
+    if marking.setFlagged {
+      try? await validations?.update(flaggedFallbackKey, default: [String]()) { keys in
+        keys.removeAll { $0 == identity.key }
+        keys.append(identity.key)
+        keys.removeFirst(max(0, keys.count - Self.maximumFlaggedFallbacks))
+      }
+    }
+    return marking.receipt
+  }
+
+  /// Clears Review; a `\Flagged` fallback is removed only when SpamWise recorded setting it.
+  private func clearReview(_ identity: MessageIdentity, session: IMAPSession) async throws
+    -> ActionReceipt
+  {
+    let recorded =
+      (try? await validations?.read(flaggedFallbackKey, default: [String]()))?
+      .contains(identity.key) ?? false
+    let receipt = try await Self.clearReview(
+      identity,
+      removesFlagged: recorded,
+      session: session
+    )
+    if recorded, receipt.confirmed {
+      try? await validations?.update(flaggedFallbackKey, default: [String]()) {
+        $0.removeAll { $0 == identity.key }
+      }
+    }
+    return receipt
+  }
+
+  /// The saved sweep cursor, read under the legacy endpoint key when the current key has none.
+  private func savedCursor(in store: Store?) async throws -> IMAPSweepCursor {
+    guard let store else { return sweepCursor }
+    let legacyKey = "imap-sweep-v1:" + configuration.legacyEndpointFingerprint
+    let saved = try await store.read([sweepCursorKey, legacyKey], as: IMAPSweepCursor.self)
+    return saved[sweepCursorKey] ?? saved[legacyKey] ?? sweepCursor
   }
 
   private func validateIdentity(_ identity: MessageIdentity) throws {

@@ -4,6 +4,7 @@ import OSLog
 import Dispatch
 import CoreServices
 import Carbon.OpenScripting
+import OSAKit
 
 /// Sendable subset of Apple Event results used by the Mail adapter.
 public indirect enum ScriptValue: Sendable, Equatable {
@@ -47,13 +48,38 @@ enum ScriptArgument: Sendable {
   }
 }
 
+/// The AppleScript execution lane that carries one Mail handler call.
+public enum ScriptLane: Sendable {
+  /// Sweeps, page reads and automatic actions.
+  case background
+  /// Corrections, lookups and other requests someone is waiting for.
+  case interactive
+
+  /// The lane for handler calls made by the current task.
+  @TaskLocal static var current = Self.background
+}
+
 /// Injectable execution boundary for Mail Apple Events.
 public protocol AppleEventRunner: Sendable {
   /// Invokes one handler of the compiled Mail library and returns transferable result values.
   func run(_ request: MailRequest) async throws -> ScriptValue
+  /// Invokes one handler on `lane`, so interactive calls never wait behind background ones.
+  func run(_ request: MailRequest, lane: ScriptLane) async throws -> ScriptValue
 }
 
-/// Serializes Mail handler calls off the UI thread and sanitizes integration failures.
+extension AppleEventRunner {
+  /// Runners without separate lanes run every call the same way.
+  public func run(_ request: MailRequest, lane _: ScriptLane) async throws -> ScriptValue {
+    try await run(request)
+  }
+}
+
+/**
+ Runs Mail handler calls off the UI thread and sanitizes integration failures.
+
+ Each lane serializes its calls on its own queue with its own AppleScript component instance,
+ so a long background page never delays an interactive correction.
+ */
 public struct SystemAppleEventRunner: AppleEventRunner {
   @MainActor private static let initialized: Void = {
     _ = unsafe NSAppleScript(source: "return true")?.executeAndReturnError(nil)
@@ -78,9 +104,13 @@ public struct SystemAppleEventRunner: AppleEventRunner {
     if status == noErr { return .granted }
     return status == procNotFound ? .mailNotRunning : .notAuthorized
   }
-  /// Invokes the requested Mail handler and returns a sendable result.
+  /// Invokes the requested Mail handler on the background lane and returns a sendable result.
   public func run(_ request: MailRequest) async throws -> ScriptValue {
-    try await AppleScriptExecutor.shared.run(request)
+    try await run(request, lane: .background)
+  }
+  /// Invokes the requested Mail handler on `lane` and returns a sendable result.
+  public func run(_ request: MailRequest, lane: ScriptLane) async throws -> ScriptValue {
+    try await AppleScriptExecutor.mail(lane).run(request)
   }
 }
 
@@ -111,31 +141,52 @@ private enum MailAutomationPermission {
   }
 }
 
-private actor AppleScriptExecutor {
-  static let shared = AppleScriptExecutor()
-  private let queue = DispatchSerialQueue(label: "codes.tim.SpamWise.apple-events")
+/// Serializes handler calls of one compiled library on a queue it owns for its entire lifetime.
+actor AppleScriptExecutor {
+  private static let background = AppleScriptExecutor(lane: .background)
+  private static let interactive = AppleScriptExecutor(lane: .interactive)
+  private let queue: DispatchSerialQueue
   // The actor owns this queue for its entire lifetime, including every AppleScript call.
   nonisolated var unownedExecutor: UnownedSerialExecutor { unsafe queue.asUnownedSerialExecutor() }
   private let logger = Logger(subsystem: "codes.tim.SpamWise", category: "AppleEvents")
+  private let source: String
   private var library: AppleScriptLibrary?
+
+  /// Creates an executor that compiles `source` on first use, on a queue named for `lane`.
+  init(lane: ScriptLane, source: String = MailScripts.library) {
+    queue = DispatchSerialQueue(label: "codes.tim.SpamWise.apple-events.\(lane)")
+    self.source = source
+  }
+
+  /// The executor that runs Mail handler calls on `lane`.
+  static func mail(_ lane: ScriptLane) -> AppleScriptExecutor {
+    switch lane {
+      case .background: background
+      case .interactive: interactive
+    }
+  }
 
   func run(_ request: MailRequest) throws -> ScriptValue {
     try Task.checkCancellation()
     try MailAutomationPermission.check(askUser: false)
     do {
-      let result = try compiledLibrary().call(request.handler.rawValue, request.arguments)
+      let result = try call(request.handler.rawValue, request.arguments)
       logger.info("Mail handler \(request.handler.rawValue) returned")
       return result
-    } catch let failure as AppleScriptFailure {
-      logger.error(
-        "Mail handler \(request.handler.rawValue) failed: code \(failure.number ?? 0)"
-      )
-      throw failure.integrationError
+    } catch {
+      logger.error("Mail handler \(request.handler.rawValue) failed: code \(error.number ?? 0)")
+      throw error.integrationError
     }
   }
-  private func compiledLibrary() throws -> AppleScriptLibrary {
+  /// Invokes a handler of the compiled library by its lowercase name.
+  func call(_ handler: String, _ arguments: [ScriptArgument]) throws(AppleScriptFailure)
+    -> ScriptValue
+  {
+    try compiledLibrary().call(handler, arguments)
+  }
+  private func compiledLibrary() throws(AppleScriptFailure) -> AppleScriptLibrary {
     if let library { return library }
-    let compiled = try AppleScriptLibrary(source: MailScripts.library)
+    let compiled = try AppleScriptLibrary(source: source)
     library = compiled
     return compiled
   }
@@ -170,17 +221,26 @@ extension MailScriptError {
   }
 }
 
-/// A compiled AppleScript whose handlers are invoked by Apple Event.
+/// A compiled AppleScript, with its own AppleScript component instance, whose handlers are
+/// invoked by Apple Event.
 final class AppleScriptLibrary {
-  private let script: NSAppleScript
+  private let script: OSAScript
 
   init(source: String) throws(AppleScriptFailure) {
-    guard let script = NSAppleScript(source: source) else { throw AppleScriptFailure(number: nil) }
-    // NSAppleScript reports errors through an NSDictionary out-parameter.
+    guard let language = OSALanguage(forName: "AppleScript") else {
+      throw AppleScriptFailure(number: nil)
+    }
+    let script = OSAScript(
+      source: source,
+      from: nil,
+      languageInstance: OSALanguageInstance(language: language),
+      using: []
+    )
+    // OSAScript reports errors through an NSDictionary out-parameter.
     // swiftlint:disable:next legacy_objc_type
     var error: NSDictionary?
     guard unsafe script.compileAndReturnError(&error) else {
-      throw AppleScriptFailure(number: error?[NSAppleScript.errorNumber] as? Int)
+      throw AppleScriptFailure(number: error?[OSAScriptErrorNumber] as? Int)
     }
     self.script = script
   }
@@ -207,14 +267,14 @@ final class AppleScriptLibrary {
   func call(_ handler: String, _ arguments: [ScriptArgument]) throws(AppleScriptFailure)
     -> ScriptValue
   {
-    // NSAppleScript reports errors through an NSDictionary out-parameter.
+    // OSAScript reports errors through an NSDictionary out-parameter.
     // swiftlint:disable:next legacy_objc_type
     var error: NSDictionary?
     let result: NSAppleEventDescriptor? = unsafe script.executeAppleEvent(
       Self.event(handler, arguments),
       error: &error
     )
-    if let error { throw AppleScriptFailure(number: error[NSAppleScript.errorNumber] as? Int) }
+    if let error { throw AppleScriptFailure(number: error[OSAScriptErrorNumber] as? Int) }
     guard let result else { throw AppleScriptFailure(number: nil) }
     return ScriptValue.decode(result)
   }
@@ -260,8 +320,8 @@ extension MailRequest {
           .integer(location.localID), .string(location.messageID ?? ""),
           .integer(location.byteCount)
         ]
-      case let .observe(accountID, role, messageID):
-        [.string(accountID), .string(role.rawValue), .string(messageID)]
+      case let .observe(accountID, role, messageID, byteCount):
+        [.string(accountID), .string(role.rawValue), .string(messageID), .integer(byteCount)]
     }
   }
   /// A presence flag followed by the date, or the epoch when absent.

@@ -75,6 +75,11 @@ struct IMAPTranscript: Sendable {
     )
   }
 
+  /// A UID FETCH of one message's flags.
+  func flags(uid: Int, _ flags: String, sequence: Int = 1) -> Self {
+    then("UID FETCH \(uid) (FLAGS)", "* \(sequence) FETCH (UID \(uid) FLAGS (\(flags)))")
+  }
+
   /// Sequence-range metadata for each row.
   func metadata(_ rows: [Row]) -> Self {
     var copy = self

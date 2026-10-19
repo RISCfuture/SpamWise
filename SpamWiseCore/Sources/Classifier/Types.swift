@@ -49,6 +49,23 @@ public struct TokenUsage: Codable, Sendable, Equatable {
 }
 /// Model output kept separate from action policy and integration outcomes.
 public struct Verdict: Codable, Sendable, Equatable {
+  private static let oversizedContextConfidence = 50
+  /**
+   The Review verdict for a message whose context exceeds every prompt limit.
+
+   Senders control that size, so it is weak Junk evidence: the message reaches Review rather
+   than staying unclassified.
+   */
+  public static var oversizedContext: Self {
+    Self(
+      label: .review,
+      confidence: oversizedContextConfidence,
+      reason: String(
+        localized: "The message is too large to classify, which is weak junk evidence.",
+        bundle: .module
+      )
+    )
+  }
   /// The explicit Inbox, Review, or Junk label.
   public var label: MailLabel
   /// Uncalibrated model confidence on the integer scale 0 through 100.
@@ -63,6 +80,7 @@ public struct Verdict: Codable, Sendable, Equatable {
     self.reason = String(reason.prefix(ClassificationLimits.maximumReasonCharacters))
     self.usage = usage
   }
+
   /// Rejects confidence outside 0 through 100 and empty explanations.
   public func validated() throws -> Self {
     guard ClassificationLimits.confidenceRange.contains(confidence),
@@ -73,9 +91,9 @@ public struct Verdict: Codable, Sendable, Equatable {
 }
 /// A bounded quotation of an explicit user correction.
 public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {
-  private static let maximumSenderCharacters = 254
-  private static let maximumSubjectCharacters = 100
-  private static let maximumExcerptCharacters = 160
+  private static let maximumSenderScalars = 254
+  private static let maximumSubjectScalars = 100
+  private static let maximumExcerptScalars = 160
   /// Stable identity used for persistence and presentation.
   public var id = UUID()
   /// Timestamp when this record was created.
@@ -103,14 +121,14 @@ public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {
     label: MailLabel,
     promptScope: PromptScope?
   ) {
-    self.sender = String(sender.prefix(Self.maximumSenderCharacters)); self.domain = domain
-    self.subject = String(subject.prefix(Self.maximumSubjectCharacters))
-    self.excerpt = String(excerpt.prefix(Self.maximumExcerptCharacters)); self.label = label
+    self.sender = sender.prefix(unicodeScalars: Self.maximumSenderScalars); self.domain = domain
+    self.subject = subject.prefix(unicodeScalars: Self.maximumSubjectScalars)
+    self.excerpt = excerpt.prefix(unicodeScalars: Self.maximumExcerptScalars); self.label = label
     self.promptScope = promptScope
   }
   /// Replaces the excerpt with the bounded start of the corrected message's text.
   public mutating func quote(_ text: String) {
-    excerpt = String(text.prefix(Self.maximumExcerptCharacters))
+    excerpt = text.prefix(unicodeScalars: Self.maximumExcerptScalars)
   }
   /// Whether a prompt for mail in `accountID` may quote this example.
   public func isQuotable(inAccount accountID: String?) -> Bool {

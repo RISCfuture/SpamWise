@@ -3,6 +3,7 @@ import Network
 import NIOCore
 import NIOIMAP
 import NIOTransportServices
+import SpamWiseCore
 
 /// A connected channel whose pipeline decodes IMAP responses into an ordered, bounded stream.
 struct IMAPConnection: Sendable {
@@ -16,13 +17,11 @@ struct IMAPConnection: Sendable {
 enum IMAPPipeline {
   /// Connections close this long after they are established, whatever they are doing.
   static let sessionLifetime = TimeAmount.seconds(30)
-  /// Largest accepted message body; matches the adapter's per-message bound.
-  static let maximumBodyBytes = 2_000_000
   private static let maximumBufferedResponses = 8192
   private static let maximumFetchAttributes = 16
   private static let parserOptions = ResponseParser.Options(
     messageAttributeLimit: maximumFetchAttributes,
-    bodySizeLimit: UInt64(maximumBodyBytes) + 1
+    bodySizeLimit: UInt64(MIMEParser.maximumMessageBytes) + 1
   )
 
   /// Connects with Network.framework TLS, verifying the certificate chain and hostname; plaintext and STARTTLS are unsupported.

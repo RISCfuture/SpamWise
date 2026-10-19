@@ -1,4 +1,5 @@
 import Foundation
+import SpamWiseCore
 
 /// Script conditions raised by the Mail handler library.
 ///
@@ -32,17 +33,16 @@ enum MailHandler: String, CaseIterable {
 enum MailScripts {
   private typealias Failure = MailScriptError
   private typealias Handler = MailHandler
-  /// Largest message source read into memory.
-  static let maximumMessageBytes = 2_000_000
   /// Largest combined source size read by one handler call.
   static let maximumPageBytes = 4_000_000
   /// Largest number of mailbox positions visited by one page.
   static let maximumPageSize = 1000
   /// Largest selection read for a batch correction.
   static let maximumSelectionCount = 50
-  /// Largest number of candidates returned when resolving one message.
+  /// Largest number of candidates returned when resolving one message, after candidates with the
+  /// recorded local ID, then with the expected size.
   static let maximumMatches = 8
-  /// Largest number of mailboxes visited when resolving one message.
+  /// Largest number of mailboxes searched for a message anywhere in its account.
   static let maximumSearchedMailboxes = 100
   /// Limit for each individual Apple Event sent to Mail.
   static let eventTimeoutSeconds = 8
@@ -125,7 +125,8 @@ enum MailScripts {
     end identityFields
     on readSource(m, fields)
         set byteCount to item 5 of fields
-        if byteCount < 0 or byteCount > \(maximumMessageBytes) then return fields & {false}
+        if byteCount < 0 or byteCount > \(MIMEParser.maximumMessageBytes) then return fields & \
+    {false}
         tell application "Mail"
             try
                 return fields & {source of m}
@@ -144,7 +145,8 @@ enum MailScripts {
                 return fields & {false}
             end try
         end tell
-        if (count of characters of rawHeaders) > \(maximumMessageBytes) then return fields & {false}
+        if (count of characters of rawHeaders) > \(MIMEParser.maximumMessageBytes) then return \
+    fields & {false}
         return fields & {rawHeaders}
     end readHeaders
     on budgetedEnvelope(m, remainingBytes)
@@ -186,7 +188,7 @@ enum MailScripts {
                     set end of rows to my readHeaders(m, fields)
                 else
                     set byteCount to item 5 of fields
-                    set readable to byteCount ≥ 0 and byteCount ≤ \(maximumMessageBytes)
+                    set readable to byteCount ≥ 0 and byteCount ≤ \(MIMEParser.maximumMessageBytes)
                     if readable and byteCount > remainingBytes and (count of rows) > 0 then ¬
                         exit repeat
                     set end of rows to my readSource(m, fields)
@@ -271,23 +273,34 @@ enum MailScripts {
             set preferred to my namedBoxes(specialBoxes, wantedMailbox)
             if (count of preferred) > 0 then return preferred
         end if
+        set walkLimit to \(maximumSearchedMailboxes)
+        if wantedMailbox is not "" then set walkLimit to \(maximumFolders)
         tell application "Mail" to set pending to mailboxes of targetAccount
         set visited to {}
         set nextIndex to 1
-        repeat while nextIndex ≤ (count of pending) and nextIndex ≤ \(maximumSearchedMailboxes)
+        repeat while nextIndex ≤ (count of pending) and nextIndex ≤ walkLimit
             set candidate to contents of item nextIndex of pending
             set nextIndex to nextIndex + 1
             set end of visited to candidate
             tell application "Mail" to set pending to pending & (mailboxes of candidate)
         end repeat
         if wantedMailbox is "" then return specialBoxes & visited
-        return my namedBoxes(visited, wantedMailbox)
+        set found to my namedBoxes(visited, wantedMailbox)
+        if (count of found) is 0 and nextIndex ≤ (count of pending) then error "Mailbox count \
+    limit" number \(Failure.folderLimit.rawValue)
+        return found
     end searchBoxes
-    on matchesIn(targetBox, wantedID, wantedLocal)
+    on matchesIn(targetBox, wantedID, wantedLocal, wantedBytes)
         tell application "Mail"
-            if wantedID is not "" then return (every message of targetBox whose message id is \
-    wantedID)
-            return (every message of targetBox whose id is wantedLocal)
+            if wantedID is "" then return (every message of targetBox whose id is wantedLocal)
+            set exact to {}
+            if wantedLocal ≥ 0 then set exact to (every message of targetBox whose message id is \
+    wantedID and id is wantedLocal)
+            set sized to {}
+            if wantedBytes ≥ 0 then set sized to (every message of targetBox whose message id is \
+    wantedID and id is not wantedLocal and message size is wantedBytes)
+            return exact & sized & (every message of targetBox whose message id is wantedID and id \
+    is not wantedLocal and message size is not wantedBytes)
         end tell
     end matchesIn
     on \(Handler.findMessages.rawValue)(accountID, wantedID, wantedLocal, wantedMailbox)
@@ -295,24 +308,24 @@ enum MailScripts {
             set rows to {}
             set boxes to my searchBoxes(accountID, wantedMailbox)
             repeat with b in boxes
-                set rows to my appendMatches(my matchesIn(contents of b, wantedID, wantedLocal), \
-    rows)
+                set rows to my appendMatches(my matchesIn(contents of b, wantedID, wantedLocal, \
+    -1), rows)
                 if (count of rows) ≥ \(maximumMatches) then return rows
             end repeat
             return rows
         end timeout
     end \(Handler.findMessages.rawValue)
-    on \(Handler.observeMessages.rawValue)(accountID, roleName, wantedID)
+    on \(Handler.observeMessages.rawValue)(accountID, roleName, wantedID, wantedBytes)
         with timeout of \(eventTimeoutSeconds) seconds
             set targetBox to my roleBox(roleName, accountID)
-            return my appendMatches(my matchesIn(targetBox, wantedID, -1), {})
+            return my appendMatches(my matchesIn(targetBox, wantedID, -1, wantedBytes), {})
         end timeout
     end \(Handler.observeMessages.rawValue)
     on exactMessage(accountID, mailboxName, wantedLocal, wantedID, expectedBytes)
         set found to {}
         set boxes to my searchBoxes(accountID, mailboxName)
         repeat with b in boxes
-            set found to found & (my matchesIn(contents of b, "", wantedLocal))
+            set found to found & (my matchesIn(contents of b, "", wantedLocal, -1))
         end repeat
         if (count of found) is not 1 then error "Message left its mailbox" number \
     \(Failure.messageMissing.rawValue)

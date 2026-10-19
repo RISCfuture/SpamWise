@@ -127,7 +127,9 @@ public enum PromptBuilder {
     let fitted = body.fitted(to: budget.bodyCharacters)
     return Content(
       evidence: input.evidence,
-      subject: String(input.message.subject.prefix(ClassificationLimits.maximumSubjectCharacters)),
+      subject: input.message.subject.prefix(
+        unicodeScalars: ClassificationLimits.maximumSubjectScalars
+      ),
       text: fitted.text,
       quotedText: fitted.quotedText,
       omittedQuotedCharacters: fitted.omittedQuotedCharacters,

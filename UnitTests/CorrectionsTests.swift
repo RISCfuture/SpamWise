@@ -251,7 +251,7 @@ private actor SelectedInbox: AppleEventRunner {
         return .boolean(move(target))
       case .apply(.markRead, _):
         return .boolean(true)
-      case let .observe(_, .junk, messageID) where moved == messages.count:
+      case let .observe(_, .junk, messageID, _) where moved == messages.count:
         return .list(
           messages.filter { $0.messageID == messageID && $0.mailbox == "Junk" }.map(\.row)
         )

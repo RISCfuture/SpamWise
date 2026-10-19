@@ -835,6 +835,22 @@
         }
       }
     },
+    "Mail showed the move, but the message later left its destination. Its result is unknown; not retried.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail mostró el traslado, pero después el mensaje salió de su destino. Se desconoce el resultado; no se reintenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail a affiché le déplacement, mais le message a ensuite quitté sa destination. Le résultat est inconnu ; aucune nouvelle tentative."
+          }
+        }
+      }
+    },
     "Mark-as-read status could not be saved. The confirmed Junk move is retained.": {
       "localizations": {
         "es": {

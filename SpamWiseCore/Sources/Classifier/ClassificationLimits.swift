@@ -12,7 +12,7 @@ public enum ClassificationLimits {
   public static let bodyTokenBudgetRange = 100...4000
   /// Characters of filtering policy a request quotes; longer policies are truncated.
   public static let maximumPolicyCharacters = 4000
-  static let maximumSubjectCharacters = 500
+  static let maximumSubjectScalars = 500
   static let charactersPerToken = 4
   static let maximumInputTokens = 1_000_000
   static let maximumOutputTokens = 100_000

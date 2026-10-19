@@ -104,10 +104,20 @@ extension IMAPAdapter {
     let matching = reply.fetches.filter { $0.uid == uid }
     guard matching.count <= 1 else { throw IntegrationError.ambiguous }
     guard let message = matching.first else { return nil }
-    guard let size = message.size, size <= IMAPPipeline.maximumBodyBytes, let body = message.body,
+    guard let size = message.size, size <= MIMEParser.maximumMessageBytes, let body = message.body,
       body.count == size
     else { throw IMAPError.malformedResponse }
     return body
+  }
+
+  /// Reads one message's flags by UID without changing them.
+  static func flags(uid: Int, session: IMAPSession) async throws -> [Flag] {
+    let reply = try await session.command(.uidFetch(try uidSet(uid), [.flags], []))
+    let matching = reply.fetches.filter { $0.uid == uid }
+    guard matching.count == 1, let flags = matching[0].flags else {
+      throw IMAPError.malformedResponse
+    }
+    return flags
   }
 
   /// The destination UIDVALIDITY and UID a COPYUID response code assigns to `uid`, when present.

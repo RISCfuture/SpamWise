@@ -113,6 +113,22 @@
         }
       }
     },
+    "The message is too large to classify, which is weak junk evidence.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El mensaje es demasiado grande para clasificarlo, lo que es un indicio débil de correo no deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le message est trop volumineux pour être classé, ce qui est un faible indice d’indésirable."
+          }
+        }
+      }
+    },
     "The provider could not be reached.": {
       "localizations": {
         "es": {

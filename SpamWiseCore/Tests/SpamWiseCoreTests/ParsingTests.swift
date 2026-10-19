@@ -301,7 +301,7 @@ func `excludes scripts and remote images from HTML text`() throws {
   let message = try MIMEParser().parse(Data(raw.utf8))
   #expect(!message.text.contains("hidden"))
   #expect(message.text.contains("Hello & welcome"))
-  #expect(message.urls == ["https://track.example/pixel", "https://example.org"])
+  #expect(message.urls == ["https://example.org", "https://track.example/pixel"])
   let obscured = try MIMEParser().parse(
     Data(
       ("From: a@example.com\nContent-Type: text/html\n\n"
@@ -353,6 +353,36 @@ func `excludes scripts and remote images from HTML text`() throws {
     let html = Data(("From: a@example.com\nContent-Type: text/html\n\n" + flood).utf8)
     let elapsed = try clock.measure { _ = try MIMEParser().parse(html) }
     #expect(elapsed < .seconds(5))
+  }
+}
+
+@Test
+func `ranks visible links first and moves concealed text after the visible text`() throws {
+  let html = """
+    <div style="display: none"><a href="https://decoy1.example">x</a> hidden instructions<br></div>
+    <span hidden>https://decoy2.example</span><p style="font-size:0px !important">tiny \
+    https://decoy3.example</p><a aria-hidden="TRUE" href="https://decoy4.example">gone</a>
+    <img src="https://images.example/pixel.png" width="1"><table><tr><td width="0">zero</td>
+    </tr></table><a href="https://listed.example/login">Sign in</a> at https://text.example
+    <span style="visibility:hidden;color:red">vanished</span> <b style="opacity:0.5">half</b>
+    """
+  let message = try MIMEParser().parse(
+    Data(("From: a@example.com\nContent-Type: text/html\n\n" + html).utf8)
+  )
+  #expect(
+    message.urls == [
+      "https://listed.example/login", "https://text.example", "https://images.example/pixel.png",
+      "https://decoy1.example", "https://decoy2.example", "https://decoy3.example",
+      "https://decoy4.example"
+    ]
+  )
+  let parts = message.text.components(separatedBy: "Text the HTML conceals from view:\n")
+  #expect(parts.count == 2)
+  #expect(parts[0].contains("Sign in at https://text.example"))
+  for visible in ["half", "gone"] { #expect(parts[0].contains(visible)) }
+  for concealed in ["hidden instructions", "tiny", "zero", "vanished"] {
+    #expect(!parts[0].contains(concealed))
+    #expect(parts[1].contains(concealed))
   }
 }
 

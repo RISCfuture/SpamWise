@@ -65,12 +65,13 @@ extension Pipeline {
     )
     guard claim.record.outcome == .requested, let adapter else { return claim.record }
     if let abandoned = await abandonedBeforeAction(claim) { return abandoned }
-    let completed: DecisionRecord
+    let completed: DecisionRecord, settlements: [MoveSettlement]
     switch await perform(steps, on: claim.record, adapter: adapter, mode: mode) {
       case .notAttempted(let record): return await release(claim, as: record)
-      case .attempted(let record): completed = record
+      case let .attempted(record, pending): (completed, settlements) = (record, pending)
     }
     guard (try? await saveObservedOutcome(completed)) != nil else { return completed }
+    for settlement in settlements { scheduleCheck(of: settlement, recordID: completed.id) }
     do {
       return try await markJunkRead(completed, adapter: adapter)
     } catch {
@@ -197,13 +198,13 @@ extension Pipeline {
     adapter: any MailClientAdapter,
     mode: DispatchMode
   ) async -> Performance {
-    var record = claimed
+    var record = claimed, settlements: [MoveSettlement] = []
     record.outcome = .applied
     for (index, step) in steps.enumerated() {
       guard !Task.isCancelled else {
         record.outcome = .failed
         record.actionError = Self.notAttemptedDescription(CancellationError())
-        return index == 0 ? .notAttempted(record) : .attempted(record)
+        return index == 0 ? .notAttempted(record) : .attempted(record, settlements: settlements)
       }
       do {
         let receipt =
@@ -217,14 +218,15 @@ extension Pipeline {
           break
         }
         if let identity = receipt.updatedIdentity { record.identity = identity }
+        if let settlement = receipt.settlement { settlements.append(settlement) }
       } catch {
         record.outcome = .failed
         record.actionError = Self.actionFailureDescription(error)
         return index == 0 && error is ActionNotAttempted
-          ? .notAttempted(record) : .attempted(record)
+          ? .notAttempted(record) : .attempted(record, settlements: settlements)
       }
     }
-    return .attempted(record)
+    return .attempted(record, settlements: settlements)
   }
 
   /// A claim written for one dispatch, with the claim it replaced.
@@ -236,7 +238,8 @@ extension Pipeline {
   private enum Performance: Sendable {
     /// The adapter refused before any mail command was sent.
     case notAttempted(DecisionRecord)
-    /// At least one mail command may have been sent.
-    case attempted(DecisionRecord)
+    /// At least one mail command may have been sent; moves confirmed before they settled carry
+    /// their later checks.
+    case attempted(DecisionRecord, settlements: [MoveSettlement])
   }
 }

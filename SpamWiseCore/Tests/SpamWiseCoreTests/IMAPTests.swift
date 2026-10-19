@@ -131,6 +131,7 @@ struct `integrates bounded IMAP messages` {
     let raw = "From: sender@example.com\r\nSubject: maybe\r\n\r\nUncertain"
     var transcript = IMAPTranscript.authenticated()
       .select(validity: 33, permanentFlags: permanentFlags).body(raw, uid: 7)
+    if expected == "\\Flagged" { transcript = transcript.flags(uid: 7, "\\Seen") }
     if let expected {
       transcript = transcript.then(
         "UID STORE 7 +FLAGS (\(expected))",
@@ -151,7 +152,7 @@ struct `integrates bounded IMAP messages` {
   }
 
   @Test(arguments: [
-    ("\\Flagged \\*", "$SpamWiseReview"), ("\\Seen \\Flagged", "\\Flagged"), ("\\Seen", nil)
+    ("\\Flagged \\*", "$SpamWiseReview"), ("\\Seen \\Flagged", nil), ("\\Seen", nil)
   ])
   func `clears only the Review flag each mailbox permits`(
     permanentFlags: String,
@@ -170,6 +171,31 @@ struct `integrates bounded IMAP messages` {
     let adapter = await server.adapter(validations: try await Self.validatedStore())
     #expect(try await adapter.perform(.clearOrangeFlag, for: Self.identity(raw)).confirmed)
     #expect(await server.commands.contains { $0.hasPrefix("UID STORE") } == (expected != nil))
+  }
+
+  @Test
+  func `removes the Flagged fallback only where SpamWise set it`() async throws {
+    let raw = "From: sender@example.com\r\nSubject: maybe\r\n\r\nUncertain"
+    let fallback = IMAPTranscript.authenticated()
+      .select(validity: 33, permanentFlags: "\\Seen \\Flagged").body(raw, uid: 7)
+    let userFlagged = fallback.flags(uid: 7, "\\Seen \\Flagged")
+      .select(validity: 33, permanentFlags: "\\Seen \\Flagged").body(raw, uid: 7)
+    let store = try await Self.validatedStore()
+    let kept = IMAPTestServer(userFlagged)
+    let keeping = await kept.adapter(validations: store)
+    #expect(try await keeping.perform(.orangeFlag, for: Self.identity(raw)).confirmed)
+    #expect(try await keeping.perform(.clearOrangeFlag, for: Self.identity(raw)).confirmed)
+    #expect(await !kept.commands.contains { $0.hasPrefix("UID STORE") })
+
+    let owned = fallback.flags(uid: 7, "\\Seen")
+      .then("UID STORE 7 +FLAGS (\\Flagged)", "* 1 FETCH (UID 7 FLAGS (\\Seen \\Flagged))")
+      .select(validity: 33, permanentFlags: "\\Seen \\Flagged").body(raw, uid: 7)
+      .then("UID STORE 7 -FLAGS (\\Flagged)", "* 1 FETCH (UID 7 FLAGS (\\Seen))")
+    let cleared = IMAPTestServer(owned)
+    let clearing = await cleared.adapter(validations: store)
+    #expect(try await clearing.perform(.orangeFlag, for: Self.identity(raw)).confirmed)
+    #expect(try await clearing.perform(.clearOrangeFlag, for: Self.identity(raw)).confirmed)
+    #expect(await cleared.commands.filter { $0.hasPrefix("UID STORE") }.count == 2)
   }
 
   @Test
@@ -295,8 +321,11 @@ struct `integrates bounded IMAP messages` {
           + #"{"openAI":{"environment":"SPAMWISE_TEST_INTENTIONALLY_MISSING_PROVIDER_KEY"}}}"#).utf8
       )
     )
-    #expect(throws: IMAPError.authenticationFailed) {
-      _ = try configured.providerCredentials?["openAI"]?.resolvedSecret()
+    #expect(configured.providerCredentials?.keys.sorted { $0.rawValue < $1.rawValue } == [.openAI])
+    for backend in [ModelBackend.openAI, .gemini] {
+      #expect(throws: ClassificationError.missingCredential) {
+        _ = try configured.providerKey(for: backend)
+      }
     }
   }
 

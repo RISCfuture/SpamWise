@@ -61,6 +61,20 @@ func `leaves mail unclassified without acting when classification fails`() async
   #expect(await adapter.actions.isEmpty)
 }
 
+@Test
+func `sends mail whose context exceeds every prompt limit to Review`() async throws {
+  let store = try testStore(), adapter = RecordingAdapter()
+  try await enableActions(store)
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { _ in throw ClassificationError.contextExceeded })
+  )
+  let record = await pipeline.process(try envelope(), adapter: adapter)
+  #expect(record.decision.label == .review)
+  #expect(record.path == .model)
+  #expect(await adapter.actions == [.orangeFlag])
+}
+
 @Test(arguments: [(localOnly: true, lookups: false), (false, false), (true, true)])
 func `makes no evidence lookups in local-only mode or with lookups off`(
   localOnly: Bool,

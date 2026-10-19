@@ -63,10 +63,13 @@ public struct IMAPConfiguration: Codable, Sendable, Equatable {
 
 extension IMAPConfiguration {
   /// Hash of the account, case-insensitive host, port and username; keys validation evidence and sweep progress.
-  var endpointFingerprint: String {
-    stableHash(
-      Data([id, host.lowercased(), String(port), username].joined(separator: "\u{0}").utf8)
-    )
+  var endpointFingerprint: String { fingerprint(host: host.lowercased()) }
+  /// Hash of the account, host as written, port and username; sweep progress saved under it
+  /// is read when none is saved under ``endpointFingerprint``.
+  var legacyEndpointFingerprint: String { fingerprint(host: host) }
+
+  private func fingerprint(host: String) -> String {
+    stableHash(Data([id, host, String(port), username].joined(separator: "\u{0}").utf8))
   }
 }
 

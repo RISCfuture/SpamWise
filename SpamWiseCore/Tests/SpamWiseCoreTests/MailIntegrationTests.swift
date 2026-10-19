@@ -46,6 +46,43 @@ func `corrects a message wherever it has moved within its account`() async throw
 }
 
 @Test
+func `runs corrections and lookups interactively and automatic actions in the background`()
+  async throws
+{
+  let runner = StubAppleEvents([
+    .findMessages: [MailReply.found(MailReply.message())], .applyAction: [MailReply.applied]
+  ])
+  let adapter = AppleMailAdapter(runner: runner)
+  _ = try await adapter.perform(.orangeFlag, for: MailReply.identity())
+  #expect(Set(await runner.lanes) == [.background])
+  _ = try await adapter.lookup(MailReply.identity())
+  _ = try await adapter.performCorrection(.orangeFlag, for: MailReply.identity())
+  #expect(await runner.lanes.dropFirst(2).allSatisfy { $0 == .interactive })
+}
+
+@Test
+func `runs an interactive call while a background call is still running`() async throws {
+  let source = """
+    on slow()
+        delay 1
+        return 1
+    end slow
+    on quick()
+        return 2
+    end quick
+    """
+  let background = AppleScriptExecutor(lane: .background, source: source)
+  let interactive = AppleScriptExecutor(lane: .interactive, source: source)
+  _ = try await interactive.call("quick", [])
+  let slow = Task { try await background.call("slow", []) }
+  try await Task.sleep(for: .milliseconds(200))
+  let clock = ContinuousClock(), start = clock.now
+  #expect(try await interactive.call("quick", []) == .integer(2))
+  #expect(clock.now - start < .milliseconds(500))
+  #expect(try await slow.value == .integer(1))
+}
+
+@Test
 func `resolves duplicate Message-IDs by content and local ID`() throws {
   let identity = MailReply.identity(localID: 2)
   let other = try MailRow(MailReply.message(localID: 1, source: "From: a@example.org\n\nOther"))
@@ -138,19 +175,86 @@ func `refuses to probe a selected message that is not a probe`() async {
 func `moves the disposable probe to Junk and back after each move settles`() async throws {
   let inbox = MailReply.message(), junk = MailReply.message(mailbox: "Junk", localID: 2)
   let restored = MailReply.message(localID: 3)
-  let settled = StubAppleEvents([
-    .selectedRows: [MailReply.selection(inbox)],
-    .findMessages: [MailReply.found(inbox), MailReply.found(junk), MailReply.found(restored)],
-    .applyAction: [MailReply.applied],
-    .observeMessages: [
-      MailReply.found(inbox), MailReply.found(junk), MailReply.found(junk),
-      MailReply.found(restored)
+  let settled = StubAppleEvents(
+    [
+      .selectedRows: [MailReply.selection(inbox)],
+      .findMessages: [MailReply.found(inbox), MailReply.found(junk), MailReply.found(restored)],
+      .applyAction: [MailReply.applied]
+    ],
+    observations: [
+      .inbox: [MailReply.found(inbox), MailReply.found(restored)], .junk: [MailReply.found(junk)]
     ]
-  ])
-  let adapter = AppleMailAdapter(runner: settled, observationInterval: .zero)
+  )
+  let window = Duration.milliseconds(40)
+  let adapter = AppleMailAdapter(
+    runner: settled,
+    moveSettlingTime: window,
+    observationInterval: .milliseconds(5)
+  )
+  let clock = ContinuousClock(), start = clock.now
   #expect(try await adapter.testDisposableMessage() == "account")
+  #expect(clock.now - start >= window * 2)
   #expect(await settled.moves.map(\.mailbox) == ["Inbox", "Junk"])
   #expect(await settled.searchedMailboxes == ["Inbox", "Junk", "Inbox"])
+}
+
+@Test
+func `rejects a disposable probe whose move reverts before the settling window ends`()
+  async throws
+{
+  let inbox = MailReply.message(), junk = MailReply.message(mailbox: "Junk", localID: 2)
+  let reverting = StubAppleEvents(
+    [
+      .selectedRows: [MailReply.selection(inbox)],
+      .findMessages: [MailReply.found(inbox)],
+      .applyAction: [MailReply.applied]
+    ],
+    observations: [
+      .inbox: [MailReply.found(inbox)],
+      .junk: [MailReply.found(junk), MailReply.found(junk), MailReply.found()]
+    ]
+  )
+  let probe = AppleMailAdapter(
+    runner: reverting,
+    moveSettlingTime: .milliseconds(40),
+    observationInterval: .milliseconds(5)
+  )
+  await #expect(throws: IntegrationError.actionUnconfirmed) {
+    try await probe.testDisposableMessage()
+  }
+  #expect(await reverting.moves.count == 1)
+}
+
+@Test(arguments: [false, true])
+func `rechecks an automatic move once the settling window ends`(reverted: Bool) async throws {
+  let store = try testStore()
+  try await StateRepository.update(store) { state in
+    state.settings.dryRun = false
+    state.settings.validatedAccounts = ["account"]
+  }
+  let junk = MailReply.found(MailReply.message(mailbox: "Junk", localID: 2))
+  let runner = StubAppleEvents(
+    [.findMessages: [MailReply.found(MailReply.message())], .applyAction: [MailReply.applied]],
+    observations: [.junk: [junk, junk] + (reverted ? [MailReply.found()] : [])]
+  )
+  let window = Duration.seconds(1)
+  let adapter = AppleMailAdapter(
+    runner: runner,
+    moveSettlingTime: window,
+    observationInterval: .milliseconds(1)
+  )
+  let pipeline = Pipeline(store: store, classifier: junkClassifier)
+  let message = MailEnvelope(
+    identity: MailReply.identity(),
+    raw: Data(MailReply.probeSource.utf8)
+  )
+  let clock = ContinuousClock(), start = clock.now
+  let record = await pipeline.process(message, adapter: adapter)
+  #expect(clock.now - start < window)
+  #expect(record.outcome == .applied)
+  await pipeline.settleMoves()
+  let saved = try await StateRepository.load(store, StateSlices(records: .only([record.id])))
+  #expect(saved.records.first?.outcome == (reverted ? .requested : .applied))
 }
 
 @Test

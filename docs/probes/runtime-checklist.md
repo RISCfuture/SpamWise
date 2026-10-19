@@ -23,9 +23,9 @@ generated AppleScript compilation are not substitutes for these checks.
    copy with the same Message-ID makes resolution ambiguous. Run **Test selected
    message** under Settings → Advanced → Diagnostics. It verifies the initial
    Inbox location, moves the message to that account's Junk and back to Inbox, and
-   sets an orange flag. After each move SpamWise polls every two seconds and confirms
-   after two consecutive observations of the exact source in the intended mailbox,
-   giving up after 30 seconds; the next action requires a confirmed one. The flag is
+   sets an orange flag. After each move SpamWise polls every two seconds for 30 seconds
+   and confirms only if the exact source is then still the intended mailbox's one copy;
+   the next action requires a confirmed one. The flag is
    read back too. The test neither changes dry run nor validates the account; **Check
    Mail Connection** validates accounts from their Inbox and Junk roles. If the return
    fails, find the message in Junk and restore it manually. Repeat per account, and

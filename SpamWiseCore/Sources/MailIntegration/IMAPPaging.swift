@@ -37,7 +37,7 @@ extension IMAPAdapter {
     var total = 0, nextOffset = selected.count - first + 1
     for row in metadata {
       guard row.uid > boundary else { return (envelopes, 0) }
-      guard row.size <= IMAPPipeline.maximumBodyBytes else { continue }
+      guard row.size <= MIMEParser.maximumMessageBytes else { continue }
       guard row.size <= maximumPageBytes - total else {
         nextOffset = selected.count - row.sequence
         break
@@ -123,7 +123,7 @@ extension IMAPAdapter {
       guard result.envelopes.count < min(limit, maximumPageSize) * maximumArrivalPages else {
         return result
       }
-      if row.size <= IMAPPipeline.maximumBodyBytes {
+      if row.size <= MIMEParser.maximumMessageBytes {
         guard row.size <= maximumPageBytes - bytes else { return result }
         if let raw = try await fetch(uid: row.uid, session: session) {
           guard raw.count == row.size else { throw IMAPError.malformedResponse }

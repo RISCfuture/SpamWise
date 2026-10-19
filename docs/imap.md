@@ -153,8 +153,9 @@ claim. Any failure before a mail command is sent is reported as an action not
 attempted, so the message stays where it was and nothing is claimed as moved.
 
 Junk moves use `UID MOVE` to the server-designated Junk mailbox. Review is stored as
-the `$SpamWiseReview` keyword, or `\Flagged` where the mailbox admits no new keywords,
-and clearing Review removes the same flag. A message SpamWise moved to Junk that
+the `$SpamWiseReview` keyword, or `\Flagged` where the mailbox admits no new keywords.
+Clearing Review removes the keyword, but removes `\Flagged` only where SpamWise set it:
+a message the user had already flagged keeps its flag. A message SpamWise moved to Junk that
 later reappears in Inbox was rescued in another client: SpamWise records it as an
 implicit Good correction, which also marks the sender as wanted, and never junks it
 again.

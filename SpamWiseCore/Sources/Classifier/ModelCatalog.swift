@@ -2,7 +2,7 @@ import Foundation
 import ClaudeForFoundationModels
 
 /// Explicit classifier selection; unavailable backends never fall back to another provider.
-public enum ModelBackend: String, Codable, Sendable, CaseIterable {
+public enum ModelBackend: String, Codable, CodingKeyRepresentable, Sendable, CaseIterable {
   /// Uses the explicitly selected Claude model.
   case claude
   /// Uses Apple’s available on-device model.
@@ -22,6 +22,14 @@ public enum ModelBackend: String, Codable, Sendable, CaseIterable {
       case .privateCloudCompute: .applePrivateCloudCompute
       case .openAI: .gptMini
       case .gemini: .geminiFlash
+    }
+  }
+
+  /// Whether the provider needs the user's API key; Apple's models need none.
+  public var requiresAPIKey: Bool {
+    switch self {
+      case .claude, .openAI, .gemini: true
+      case .onDevice, .privateCloudCompute: false
     }
   }
 }

@@ -1,6 +1,7 @@
 import Foundation
 import NIOCore
 import NIOIMAP
+import SpamWiseCore
 
 /// The untagged data and completion text a server returned for one command.
 struct IMAPReply {
@@ -77,7 +78,7 @@ struct IMAPReply {
     }
     private mutating func beginBody(byteCount: Int) throws {
       guard fetch != nil, body == nil, fetch?.body == nil else { throw IMAPError.malformedResponse }
-      guard byteCount <= IMAPPipeline.maximumBodyBytes else { throw IMAPError.limitExceeded }
+      guard byteCount <= MIMEParser.maximumMessageBytes else { throw IMAPError.limitExceeded }
       body = Data(capacity: byteCount); expectedBodyBytes = byteCount
     }
     private mutating func appendBody(_ buffer: ByteBuffer) throws {

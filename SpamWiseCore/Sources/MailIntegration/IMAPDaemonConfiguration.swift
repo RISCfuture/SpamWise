@@ -102,15 +102,39 @@ public struct IMAPCredentialReference: Codable, Sendable {
 public struct IMAPDaemonConfiguration: Codable, Sendable {
   private static let maximumConfigurationBytes = 65_536
   private static let maximumStatePathBytes = 4096
+  private static let keyedBackendNames = Set(
+    ModelBackend.allCases.filter(\.requiresAPIKey).map(\.rawValue)
+  )
   /// Explicit account endpoint and identity.
   public var account: IMAPConfiguration
   /// IMAP password or OAuth secret reference.
   public var credential: IMAPCredentialReference
   /// Optional state path for an unsigned command-line installation; absent uses the signed App Group.
   public var statePath: String?
-  /// Explicit paid-provider references keyed by ModelBackend raw value; nil uses shared Keychain.
-  public var providerCredentials: [String: IMAPCredentialReference]?
+  /// Explicit paid-provider references, written under each backend's raw value; nil uses shared Keychain.
+  public var providerCredentials: [ModelBackend: IMAPCredentialReference]?
+
+  /// Decodes a configuration, skipping provider references under names that are not backends.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    account = try values.decode(IMAPConfiguration.self, forKey: .account)
+    credential = try values.decode(IMAPCredentialReference.self, forKey: .credential)
+    statePath = try values.decodeIfPresent(String.self, forKey: .statePath)
+    providerCredentials = try values.decodeIfPresent(
+      [String: IMAPCredentialReference].self,
+      forKey: .providerCredentials
+    ).map { references in
+      Dictionary(
+        uniqueKeysWithValues: references.compactMap { name, reference in
+          ModelBackend(rawValue: name).map { ($0, reference) }
+        }
+      )
+    }
+  }
+
   /// Decodes at most 64 KiB and rejects unknown fields, including accidentally embedded secrets.
+  ///
+  /// Provider references are accepted only under the raw value of a backend that needs an API key.
   public static func decode(_ data: Data) throws -> Self {
     guard data.count <= maximumConfigurationBytes,
       let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -126,7 +150,7 @@ public struct IMAPDaemonConfiguration: Codable, Sendable {
     }
     if let raw = object["providerCredentials"] {
       guard let providers = raw as? [String: Any],
-        Set(providers.keys).isSubset(of: ["claude", "openAI", "gemini"])
+        Set(providers.keys).isSubset(of: keyedBackendNames)
       else { throw IMAPError.invalidConfiguration }
       for rawReference in providers.values {
         guard let reference = rawReference as? [String: Any],
@@ -141,6 +165,27 @@ public struct IMAPDaemonConfiguration: Codable, Sendable {
       throw IMAPError.invalidConfiguration
     }
     return result
+  }
+
+  /**
+   Reads the referenced API key for `backend`, for an explicit `providerCredentials` map.
+
+   - Throws: ``ClassificationError/missingCredential`` when the map has no reference for
+     `backend` or its secret is unset or unreadable without interaction.
+   */
+  public func providerKey(for backend: ModelBackend) throws -> String {
+    guard let reference = providerCredentials?[backend] else {
+      throw ClassificationError.missingCredential
+    }
+    do {
+      return try reference.resolvedSecret()
+    } catch {
+      throw ClassificationError.missingCredential
+    }
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case account, credential, statePath, providerCredentials
   }
 }
 

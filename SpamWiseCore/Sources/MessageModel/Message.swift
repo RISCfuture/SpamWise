@@ -20,9 +20,11 @@ public struct ParsedMessage: Codable, Sendable, Equatable {
    Decoded body text with remote resources excluded.
 
    Differing `multipart/alternative` parts each appear whole, under an `[Alternative N]` marker.
+   Text an HTML part conceals from view follows that part's visible text, under a notice.
    */
   public var text: String
-  /// Distinct extracted URLs in order of first appearance, at most 40, never fetched.
+  /// Distinct extracted URLs, at most 40, never fetched: visible text and anchor links first,
+  /// then other attribute links, then links in hidden HTML, each in order of first appearance.
   public var urls: [String]
   /// SHA-256 digest of the original message bytes.
   public var hash: String

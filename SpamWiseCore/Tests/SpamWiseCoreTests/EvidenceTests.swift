@@ -88,6 +88,29 @@ func `bounds flooded sender, authentication and link evidence`() throws {
 }
 
 @Test
+func `bounds authentication domains and combining marks so evidence fits a prompt`() throws {
+  let marks = String(repeating: "\u{E0101}", count: 2_000)
+  let message = try MIMEParser().parse(
+    Data(
+      """
+      From: "a\(marks)" <sender@example.com>\r
+      Authentication-Results: mx.example; dkim=pass \
+      header.d=\(String(repeating: "<", count: 11_000))\r
+      Subject: Oversized evidence\r
+      \r
+      Body\r
+      """.utf8
+    )
+  )
+  var evidence = EvidenceBundle(message: message)
+  evidence.record(findings: ["b" + marks])
+  #expect(evidence.fromDisplayName.unicodeScalars.count <= 256)
+  #expect(evidence.auxiliaryFindings?.allSatisfy { $0.unicodeScalars.count <= 1024 } == true)
+  #expect(evidence.authResults.map(\.domain) == [nil])
+  #expect(try PromptBuilder.prompt(.init(message: message, evidence: evidence)).isEmpty == false)
+}
+
+@Test
 func `caps recorded findings, ignoring duplicates, and notes the omission`() throws {
   var evidence = EvidenceBundle(message: try MIMEParser().parse(fixture("filler-spam")))
   evidence.record(findings: (1...40).map { "Finding \($0)" } + ["Finding 1"])

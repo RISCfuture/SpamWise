@@ -14,9 +14,39 @@ public struct ActionReceipt: Sendable {
   public var confirmed: Bool
   /// Fresh account-scoped identity observed after a mailbox move, when the adapter can prove it.
   public var updatedIdentity: MessageIdentity?
-  /// Records whether the action's result was observed, and the identity a move produced when known.
-  public init(confirmed: Bool, updatedIdentity: MessageIdentity? = nil) {
+  /// A later check of a move confirmed before its mail provider's settling window ended.
+  public var settlement: MoveSettlement?
+  /**
+   Records whether the action's result was observed, and the identity a move produced when known.
+
+   - Parameters:
+     - confirmed: Whether the client showed the action's result.
+     - updatedIdentity: The identity a move produced, when known.
+     - settlement: The check that confirms an early-observed move once its provider settles.
+   */
+  public init(
+    confirmed: Bool,
+    updatedIdentity: MessageIdentity? = nil,
+    settlement: MoveSettlement? = nil
+  ) {
     self.confirmed = confirmed; self.updatedIdentity = updatedIdentity
+    self.settlement = settlement
+  }
+}
+/**
+ A deferred check that a move shown early by the mail client is still in place.
+
+ Some providers show a move at once and later revert or relocate it when their server syncs, so
+ the dispatcher repeats the check once the settling window has passed.
+ */
+public struct MoveSettlement: Sendable {
+  /// When the settling window ends and the check is due.
+  public let due: ContinuousClock.Instant
+  /// Returns whether the moved message is still the destination's one copy.
+  public let verify: @Sendable () async -> Bool
+  /// Creates a check that runs `verify` once `due` has passed.
+  public init(due: ContinuousClock.Instant, verify: @escaping @Sendable () async -> Bool) {
+    self.due = due; self.verify = verify
   }
 }
 /// Message discovery, history, and non-destructive Mail action operations.
