@@ -1,6 +1,6 @@
 # SpamWise code review — 2026-10-17
 
-> **Status, 2026-10-18:** all High findings and 13 related entries (§1.16, §2.20, §2.21, §2.29, §2.93, §2.141, §4.20, §5.28, §7.11, §9.8, §9.23, §9.39, §10.1) were fixed in commits `9cd385f` and `a9fcb38` and have been removed from this document, and the scorecard counts exclude them. The summary paragraph and scorecard headlines still describe the code as reviewed, and cross-references to removed entries point to fixed problems.
+> **Status, 2026-10-18:** all High findings and 13 related entries (§1.16, §2.20, §2.21, §2.29, §2.93, §2.141, §4.20, §5.28, §7.11, §9.8, §9.23, §9.39, §10.1) were fixed in commits `9cd385f` and `a9fcb38` and have been removed from this document, and the scorecard counts exclude them. The Medium findings were fixed in the commits after `95ab135`. Of the 209 Medium entries, 208 have been removed, together with 88 Low and Info entries (81 Low, 7 Info) that the same rework also fixed. §2.43 remains, rewritten to cover only its remaining scope. Eleven of the removed Medium entries were resolved by explicit owner decisions; their live or paid follow-ups, such as the five-fixture Claude run, live Mail and IMAP acceptance and the App Review exception, are tracked in TODO.md. The scorecard counts exclude every removed entry. The summary paragraph and the scorecard verdicts and headlines still describe the code as reviewed, and cross-references to removed entries point to fixed problems.
 
 SpamWise is not shippable through either the Developer ID or the Mac App Store channel. The core code is carefully bounded, and its main safety rules hold: there is no delete or Trash path, decisions are persisted before any action, dry run is on by default, and provider consent is checked before every paid request, retries included. The package tests pass and both app builds are warning-free. The trouble is that the agent's own acceptance and evaluation scaffolding became product behavior, and the logic that decides which mail gets classified fails silently. Three risks dominate. First, filtering stops for good: every production call draws on the developer's $150 lifetime evaluation ledger, so cloud classification ends after about 1,500 Haiku messages. Second, coverage: nothing scans automatically until the user passes a hand-built `[SpamWise Probe]` move test. Once scanning starts, sweeps walk the whole existing Inbox with no priority for new mail, and they dedupe against a 5,000-record display log, so large Inboxes are re-sent to the provider indefinitely. Third, trust: the allow gates trust the forgeable From header (one receipt-like message allow-lists all of gmail.com), and an `@` in a display name or a single bad byte leaves a message unclassified. The Mail extension also sends every account's mail to the cloud regardless of the account scope the user chose. These defects mostly leave spam in the Inbox rather than moving good mail to Junk. Around the code, the repository cannot be built from a fresh clone, has no CI, and ships no app icon. The 24 High entries below collapse to 15 distinct problems, because several sections reported the same root cause. Nothing was rated Critical.
 
@@ -8,23 +8,22 @@ SpamWise is not shippable through either the Developer ID or the Mac App Store c
 
 | Dimension | Verdict | Critical | High | Medium | Low | Headline |
 |---|---|---|---|---|---|---|
-| 1. Security and privacy | Needs work | 0 | 0 | 15 | 23 | Consent, credential storage and transports are sound. The allow gates trust the forgeable From header, attacker-triggered parse failures guarantee "unclassified", and the extension ignores account scope. |
-| 2. Correctness | Needs work | 0 | 0 | 62 | 92 | The safety rules hold, but filtering stops for good at the $150 ledger, and whole-message fail-open plus log-based dedupe leave much mail unclassified. |
-| 3. Progress through the TODO list | Overstated | 0 | 0 | 8 | 11 | Most checked items are real. Six SpamSieve parents (notably SS-04 and SS-15) are checked without meeting their own acceptance text, and no CI backs any "verified" claim. |
-| 4. Swift and SwiftUI conventions | Partial | 0 | 0 | 24 | 67 | Swift 6 setup, concurrency and test naming are right. The gaps are bare-string domain values, duplicated limits, reused error cases, drifted duplicate logic, and a weakened SwiftLint config with 429 hidden findings. |
-| 5. Comments and documentation | Partial | 0 | 0 | 20 | 85 | Public DocC is nearly complete, but much of it is templated or wrong. CLAUDE.md, docs/ and the Help book read as a contradictory agent diary. |
-| 6. Project configuration vs. SubTrack and Zephyr | Behind sisters | 0 | 0 | 8 | 15 | The package is well configured. An unpushed local library dependency breaks fresh clones, nothing runs in CI, the main scheme is unshared, and editions exist only as a script flag. |
-| 7. Distribution readiness | Not ready | 0 | 0 | 11 | 8 | Signing and notarization work. The $150 lifetime cap, the whole-Inbox sweep, the probe-gated start and the missing icon block both channels, and the release pipeline lacks versioning, a stapled container, updates and license notices. |
-| 8. Front-end design | Needs work | 0 | 0 | 37 | 26 | Native SwiftUI and AppKit parts are used throughout. A developer probe gates real filtering, decision reasons are unlocalized debug strings, and a shared busy flag, a single status string and uncoordinated sheets make the UI feel unreliable. |
-| 9. Temporary code and configuration | Needs cleanup | 0 | 0 | 12 | 20 | Test fixtures are fenced behind `#if DEBUG`. The evaluation ledger and the probe move test became product behavior, and ledger copy leaks into Settings and Help. |
-| 10. Architecture and simplicity | Needs simplification | 0 | 0 | 12 | 10 | The module graph is sound. All state is one JSON blob rebuilt about 10 times per message, infrastructure is duplicated, and speculative features run on the hot path. |
+| 1. Security and privacy | Needs work | 0 | 0 | 0 | 18 | Consent, credential storage and transports are sound. The allow gates trust the forgeable From header, attacker-triggered parse failures guarantee "unclassified", and the extension ignores account scope. |
+| 2. Correctness | Needs work | 0 | 0 | 1 | 71 | The safety rules hold, but filtering stops for good at the $150 ledger, and whole-message fail-open plus log-based dedupe leave much mail unclassified. |
+| 3. Progress through the TODO list | Overstated | 0 | 0 | 0 | 9 | Most checked items are real. Six SpamSieve parents (notably SS-04 and SS-15) are checked without meeting their own acceptance text, and no CI backs any "verified" claim. |
+| 4. Swift and SwiftUI conventions | Partial | 0 | 0 | 0 | 61 | Swift 6 setup, concurrency and test naming are right. The gaps are bare-string domain values, duplicated limits, reused error cases, drifted duplicate logic, and a weakened SwiftLint config with 429 hidden findings. |
+| 5. Comments and documentation | Partial | 0 | 0 | 0 | 58 | Public DocC is nearly complete, but much of it is templated or wrong. CLAUDE.md, docs/ and the Help book read as a contradictory agent diary. |
+| 6. Project configuration vs. SubTrack and Zephyr | Behind sisters | 0 | 0 | 0 | 9 | The package is well configured. An unpushed local library dependency breaks fresh clones, nothing runs in CI, the main scheme is unshared, and editions exist only as a script flag. |
+| 7. Distribution readiness | Not ready | 0 | 0 | 0 | 6 | Signing and notarization work. The $150 lifetime cap, the whole-Inbox sweep, the probe-gated start and the missing icon block both channels, and the release pipeline lacks versioning, a stapled container, updates and license notices. |
+| 8. Front-end design | Needs work | 0 | 0 | 0 | 21 | Native SwiftUI and AppKit parts are used throughout. A developer probe gates real filtering, decision reasons are unlocalized debug strings, and a shared busy flag, a single status string and uncoordinated sheets make the UI feel unreliable. |
+| 9. Temporary code and configuration | Needs cleanup | 0 | 0 | 0 | 16 | Test fixtures are fenced behind `#if DEBUG`. The evaluation ledger and the probe move test became product behavior, and ledger copy leaks into Settings and Help. |
+| 10. Architecture and simplicity | Needs simplification | 0 | 0 | 0 | 7 | The module graph is sound. All state is one JSON blob rebuilt about 10 times per message, infrastructure is duplicated, and speculative features run on the hot path. |
 
-Info entries are not shown: §1 has 12, §4 has 4, §2 and §5 have 3 each, §7, §8 and §9 have 2 each, and §6 and §10 have 1 each.
+Info entries are not shown: §1 has 8, §4 has 4, §2, §5, §8 and §9 have 2 each, and §6, §7 and §10 have 1 each.
 
 ## Top priorities
 
-1. **Medium.** Add CI modeled on Zephyr, with package tests, warning-free builds of both editions and the App Store variant, and lint. `.github/workflows/site.yml:3`. See §6.2, §3.2, §6.3.
-2. **Medium.** Define the App Store and download editions in the project, with their own targets or configurations and shared schemes, instead of a command-line `APP_STORE` override. `Scripts/app-store-check.sh:44`. See §6.5, §7.5, §9.5.
+No Critical, High or Medium priorities remain apart from §2.43. Runtime and acceptance work is tracked in TODO.md.
 
 ## What is solid
 
@@ -109,21 +108,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 
 | # | Severity | Location | Finding |
 |---|---|---|---|
-| 1.6 | Medium | `SpamWise/PrivacyInfo.xcprivacy:4` | Privacy manifest declares no collected data although mail goes to third-party AI providers |
-| 1.7 | Medium | `SpamWiseCore/Sources/Classifier/Types.swift:262` | Unbounded evidence fields let any spammer force `contextExceeded` |
-| 1.8 | Medium | `SpamWiseCore/Sources/Classifier/Types.swift:314` | Sender-triggered quoted-reply stripping hides the body from the model |
-| 1.9 | Medium | `SpamWiseCore/Sources/Learning/CampaignLearning.swift:52` | Campaign fingerprints send mail to Junk at confidence 100 using forgeable anchors |
-| 1.10 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:161` | Apple Mail actions ignore the source mailbox and can move mail the user filed elsewhere |
-| 1.11 | Medium | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:28` | Full-source envelope reads have no size guard; one large message stalls history and selection |
-| 1.12 | Medium | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:202` | Duplicate Message-ID makes every Apple Mail action fail permanently |
-| 1.13 | Medium | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:77` | Duplicate boundary/charset parameters are accepted silently (parser differential) |
-| 1.14 | Medium | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:97` | Inline text parts with a filename are dropped from classifier input |
-| 1.15 | Medium | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:136` | All-or-nothing parse errors give cheap ways to guarantee "unclassified" |
-| 1.17 | Medium | `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:178` | Attacker-ordered and encoded URLs hide malicious domains from Spamhaus and link evidence |
-| 1.18 | Medium | `SpamWiseCore/Sources/Signals/Gates.swift:97` | Allow gates and correction rules trust the unauthenticated From header; trusted-auth is never wired |
-| 1.19 | Medium | `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:62` | Every cloud request carries up to 40 other messages' senders, subjects and gists |
-| 1.20 | Medium | `SpamWiseCore/Sources/Store/Keychain.swift:25` | Stored provider, Spamhaus and IMAP credentials can never be removed |
-| 1.21 | Medium | `docs/app-store.md:206` | Two privacy-policy drafts and data inventories have diverged |
 | 1.22 | Low | `.build/.../ClaudeForFoundationModels/.../ClaudeExecutor.swift:149` | Claude refusals and `max_tokens` cut-offs are reported as configuration errors |
 | 1.23 | Low | `~/Repositories/Libraries/GitHubUpdateChecker/.../AppInstaller.swift:288` | Update installer (planned adoption) never checks code signature, Team ID or bundle ID |
 | 1.24 | Low | `CLAUDE.md:67` | Committed docs record credential-handling details and personal-mailbox operations |
@@ -133,152 +117,23 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 | 1.28 | Low | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:356` | Exported raw mail, reports and caches use default `umask` permissions |
 | 1.29 | Low | `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:52` | Daemon credential read can block on a login-Keychain prompt despite claiming to be non-interactive |
 | 1.30 | Low | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:130` | AppleScript "exact source" and Message-ID comparisons ignore case |
-| 1.31 | Low | `SpamWiseCore/Sources/MessageModel/DomainResolver.swift:11` | Public-suffix lookup ignores punycode, so IDN suffixes become registrable domains |
 | 1.32 | Low | `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:14` | Optional OCR decodes untrusted TIFF/GIF/HEIC in the privileged app process |
 | 1.33 | Low | `SpamWiseCore/Sources/Signals/Evidence.swift:91` | Authentication-Results parser matches tokens anywhere in the header |
-| 1.34 | Low | `SpamWiseCore/Sources/Signals/RDAP.swift:18` | RDAP uses `URLSession.shared`, buffers unbounded responses, and persists undisclosed domain caches |
 | 1.35 | Low | `SpamWiseCore/Sources/Signals/RspamdLoopbackHTTP.swift:29` | Loopback Rspamd sends full raw mail to whatever process holds port 11333 |
 | 1.36 | Low | `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:54` | Imported body snippets are kept, sent and backed up with content retention off |
-| 1.37 | Low | `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:59` | Model-generated reasons become "user correction" examples |
 | 1.38 | Low | `SpamWiseCore/Sources/SpamWiseCore/RuleManagement.swift:106` | Rule imports apply without preview and can flip Block rules to Allow |
 | 1.39 | Low | `SpamWiseCore/Sources/SpamWiseCore/StateBackup.swift:83` | Backup restore turns on "Retain reviewed text" without asking |
 | 1.40 | Low | `SpamWiseCore/Sources/SpamWiseCore/StateBackup.swift:104` | Backup restore leaves learning state and correction field lengths unvalidated |
-| 1.41 | Low | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:122` | Daemon `--model` silently changes the app and extension provider |
 | 1.42 | Low | `Tools/Corpus/prepare.py:74` | Crafted MIME header raises IndexError and aborts corpus preparation |
-| 1.43 | Low | `Tools/DocumentWorker/PDFExtraction.swift:17` | Document worker caps text in Characters but replies in JSON bytes, so the worker exits |
 | 1.44 | Low | `Tools/Preferences/run.py:155` | Probe timeout orphans the evaluator holding the API key |
 | 1.45 | Info | `.build/.../ClaudeForFoundationModels/.../ClaudeExecutor.swift:62` | Claude transport is less hardened than the OpenAI/Gemini transport |
 | 1.46 | Info | `~/Repositories/Libraries/GitHubUpdateChecker/.../ReleaseNotesView.swift:45` | Release-notes view would load remote images |
-| 1.47 | Info | `Scripts/export-store-match.py:103` | Temporary signing-keychain password on argv; signing borrows SubTrack's `MATCH_PASSWORD` |
-| 1.48 | Info | `SpamWise/AppModelCredentials.swift:13` | Claude key verification runs in local-only mode |
 | 1.49 | Info | `SpamWise/AppModelNavigation.swift:8` | `spamwise://check-inbox` triggers sweeps without the 60-second throttle |
-| 1.50 | Info | `SpamWise/SpamhausSettingsView.swift:64` | Key-presence check reads the secret on the main thread |
 | 1.51 | Info | `SpamWiseCore/Sources/Classifier/Types.swift:33` | Decoded `TokenUsage` skips clamping, so `estimatedCost` can overflow |
 | 1.52 | Info | `SpamWiseCore/Sources/Learning/LearningState.swift:193` | Injection-steerable model verdicts are admitted as Bayes training data |
-| 1.53 | Info | `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:47` | Daemon environment secrets are inherited by `dig`/`rspamc` children |
 | 1.54 | Info | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:157` | Hidden HTML text and control/bidi characters reach the classifier |
 | 1.55 | Info | `Tools/Corpus/screen.py:145` | "Pinned" model snapshot is verified only by directory name |
 | 1.56 | Info | `Tools/DocumentWorker/check.sh:88` | Diagnostic-symbol guard silently passes if `nm` or `rg` fails |
-
-#### 1.6 Privacy manifest declares no collected data although mail goes to third-party AI providers — Medium
-
-- **Where:** `SpamWise/PrivacyInfo.xcprivacy:4` (the extension bundle has no manifest)
-- **Problem:** The manifest declares only `NSPrivacyTracking = false` and the UserDefaults reason `CA92.1`; it has no `NSPrivacyCollectedDataTypes`. With consent, subjects, senders, body text and correction examples go to providers that retain them for up to 30 days, and domains go to Spamhaus and RDAP. docs/app-store.md already drafts "Emails or Text Messages", so the shipped manifest contradicts the project's own inventory. Whether a user's own-key provider relationship counts as developer "collection" is debatable.
-- **Scenario:** The App Privacy answers are filled in from Xcode's privacy report as "Data Not Collected", which contradicts privacy.md and creates a guideline 5.1.2 risk.
-- **Fix:** Make the decision explicitly. Add Emails or Text Messages and Other User Content (App Functionality, no tracking) to the app and extension manifests, with Zephyr-style comments, and keep the App Store Connect answers consistent.
-<!-- sources: distribution/product#12, distribution/packaging#13, security/app-logic#11 -->
-
-#### 1.7 Unbounded evidence fields let any spammer force `contextExceeded` — Medium
-
-- **Where:** `SpamWiseCore/Sources/Classifier/Types.swift:262` (also `Types.swift:297`, `Signals/Evidence.swift:60, 66`, `SpamWiseCore/ConfiguredClassifier.swift:55`)
-- **Problem:** PromptBuilder truncates the subject and body but JSON-encodes the whole EvidenceBundle. That includes the From display name (up to the 64 KB header limit), unbounded Authentication-Results claims and auxiliary findings, and `<`/`>` and control characters expand to six bytes each. Above 64 KiB the prompt throws `contextExceeded`, which is not retried and produces no Review flag. The prompt is built before the budget check, so the bypass costs the attacker nothing and works with every provider.
-- **Scenario:** A 60,000-character display name, or about 7,000 repeated `spf=pass` tokens, leaves the spam message "unclassified" in the Inbox under default settings.
-- **Fix:** Cap every evidence string and collection: display name around 256 characters, about 20 auth results, link-domain cap for findings. Fit the prompt by encoded byte length by trimming the body and examples rather than throwing. Treat an oversized message as a weak Junk signal so it at least reaches Review.
-<!-- sources: security/core-classifier-learning#1 -->
-
-#### 1.8 Sender-triggered quoted-reply stripping hides the body from the model — Medium
-
-- **Where:** `SpamWiseCore/Sources/Classifier/Types.swift:314` (also `Types.swift:315-316`)
-- **Problem:** `unquotedText` stops at the first "On … wrote:" or "-----Original Message-----" line and drops every `>` line, without checking that the message is a reply. The sender controls the body, so they can choose what the model sees, while Mail shows the user everything.
-- **Scenario:** A phish that begins with "On Monday, Support wrote:" reaches the model as an empty body and stays in the Inbox.
-- **Fix:** Strip quoted text only for real replies (In-Reply-To/References that match known history, or a marker that follows unquoted content). Keep a minimum share of the original text, and tell the model how much was removed.
-<!-- sources: security/core-classifier-learning#2 -->
-
-#### 1.9 Campaign fingerprints send mail to Junk at confidence 100 using forgeable anchors — Medium
-
-- **Where:** `SpamWiseCore/Sources/Learning/CampaignLearning.swift:52` (also `CampaignLearning.swift:56, 81`, `SpamWiseCore/PipelineClassification.swift:27-35`)
-- **Problem:** A Junk fingerprint matches any later message that shares one anchor and has at least 80% shingle overlap. Anchors are link domains and the unauthenticated From domain. The match skips the model and always clears the strength threshold, because the verdict is confidence 100.
-- **Scenario:** With fingerprints enabled (off by default), the user junks a phish that copies bank.com's template and links to bank.com/privacy. The bank's genuine alert that uses the same template then goes straight to Junk.
-- **Fix:** Build Junk anchors only from trusted, aligned DKIM/DMARC identity, and never let link domains be the only shared anchor. Send fingerprint matches to Review, or pass them to the model as evidence, instead of issuing a final verdict.
-<!-- sources: security/core-classifier-learning#3 -->
-
-#### 1.10 Apple Mail actions ignore the source mailbox and can move mail the user filed elsewhere — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:161` (also `MailScripts.swift:123-126, 202`, `Pipeline.swift:306`)
-- **Problem:** `lookup` compares only the account and content hash. `MailScripts.resolve` searches every mailbox in the account, Trash included, and moves the match without comparing it to `identity.mailbox`. The IMAP adapter does pin the source mailbox. Sequential classification, the 30-second settle after each move and the retry queue create windows of several minutes between read and action.
-- **Scenario:** A user files message #20 into "Receipts" while earlier Junk moves are settling. SpamWise then moves it from Receipts to Junk, or pulls a message the user trashed back into Junk or Inbox.
-- **Fix:** In the action script, compare the resolved message's mailbox and account against `identity.mailbox` and raise an error on a mismatch. Exempt only explicit selection-based corrections. Add a stub-runner test where the mailbox differs.
-<!-- sources: security/mail-integration#1 -->
-
-#### 1.11 Full-source envelope reads have no size guard; one large message stalls history and selection — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:28` (also `AppleMailAdapter.swift:126, 205-206, 225, 295`)
-- **Problem:** `recent`, `selected` and `selectedBatch` use the `envelope` handler, which copies each message's full source with no size check, up to 1,000 messages per call. Swift then throws `scriptFailed` for the whole result if any one source exceeds 2 MB. `nextPage` throws before advancing its cursor. The unreadable-entry handling added to `pageEnvelope` was never applied to these paths.
-- **Scenario:** One 5 MB Sent message stalls incremental history on that page indefinitely, so reply and receipt history stop updating. Batch Mark as Junk fails whenever that message is part of the selection.
-- **Fix:** Apply `pageEnvelope`-style size checks, skip oversized entries, advance the cursor by visited count, and cap the aggregate size per call (as IMAP does at 4 MB).
-<!-- sources: security/mail-integration#4 -->
-
-#### 1.12 Duplicate Message-ID makes every Apple Mail action fail permanently — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:202` (also `MailScripts.swift:14, 204`, `Pipeline.swift` failure path)
-- **Problem:** Lookup matches the Message-ID, which the sender chooses, across the whole account and raises -1701 "ambiguous" if the count is not 1. The pipeline records the action as failed and never retries it. This also blocks legitimate restores when an unrelated message reuses the ID.
-- **Scenario:** A spammer delivers two identical copies with the same Message-ID. Both are classified Junk, both moves fail, and both stay in the Inbox even with dry run off.
-- **Fix:** Search the expected source mailbox first, break ties by content hash and local ID, and fail only when the candidates have identical content.
-<!-- sources: security/mail-integration#3 -->
-
-#### 1.13 Duplicate boundary/charset parameters are accepted silently (parser differential) — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:77` (used at `:97, :277, :319`; compare `EmbeddedImages.swift:134`)
-- **Problem:** `parameter(_:in:)` collects every match but returns the first. That contradicts the contract that ambiguous critical headers fail, and it disagrees with EmbeddedImages, which rejects duplicates.
-- **Scenario:** `boundary="a"; boundary="b"`: SpamWise classifies the harmless parts split on "a", while a client that uses "b" shows the spam.
-- **Fix:** Return nil or throw `.malformed` when there is more than one hit for boundary, charset or filename/name. Share one strict parameter parser with EmbeddedImages, and add a duplicate-boundary fixture.
-<!-- sources: conventions/core-parsing-signals#1 -->
-
-#### 1.14 Inline text parts with a filename are dropped from classifier input — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:97` (also `MIMEParser.swift:271-273`, `AdvancedSettings.swift:57`)
-- **Problem:** A Content-Type `name=` or Disposition `filename=` parameter marks a part as an attachment even when it is `inline`. With default settings its text and URLs are discarded before rules, Bayes, DBL and the model see them. Mail still renders the part inline.
-- **Scenario:** A single-part `text/html; name="offer.html"` pitch with `Content-Disposition: inline` reaches the model as an empty body, and DBL gets no link domains.
-- **Fix:** Treat text parts as attachments only when the disposition is explicitly `attachment`. When a text part is skipped, emit a "body content omitted" finding.
-<!-- sources: security/core-parsing-signals#7 -->
-
-#### 1.15 All-or-nothing parse errors give cheap ways to guarantee "unclassified" — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:136` (also `:82, :103-105, :119, :229, :243, :252-255, :310`, `Pipeline.swift:72-77`)
-- **Problem:** Each of these throws for the whole message, and the pipeline then records "unclassified, no action": an invalid encoded-word, an unknown charset, one bad QP escape, a header-less part, a second Content-Type, an over-long `application/*` type, or stray base64 characters. Failing open is documented, but nothing addresses its adversarial use.
-- **Scenario:** Bulk spam adds `Subject: =?utf-8?B?***?= Cheap meds`, and every copy stays in the Inbox unflagged.
-- **Fix:** Degrade locally: keep undecodable words verbatim, blank undecodable parts with a finding, treat header-less parts as text/plain, and fall back to lossy decoding. Reserve message-level failure for identity-critical ambiguity, and send parse anomalies to Review.
-<!-- sources: security/core-parsing-signals#8 -->
-
-#### 1.17 Attacker-ordered and encoded URLs hide malicious domains from Spamhaus and link evidence — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:178` (also `MIMEParser.swift:222, 321`, `Evidence.swift:73-75`)
-- **Problem:** Every limit keeps the lexicographically first items: 5 DBL queries, 40 URLs, 20 domains. The From domain is dropped if five link domains sort before it. URLs are extracted from raw HTML, comments included, before entity decoding, so decoys cost nothing, and `https&#58;//`, `//host` and backslash forms are missed.
-- **Scenario:** Five `a.com`…`e.com` decoys in an HTML comment mean neither the DBL-listed link domain nor the From domain is ever queried.
-- **Fix:** Always query the From domain first. Rank link domains by significance (visible anchors first) rather than by sort order. Extract after entity decoding with normalization, and record a "truncated" finding when a limit is hit.
-<!-- sources: security/core-parsing-signals#6 -->
-
-#### 1.18 Allow gates and correction rules trust the unauthenticated From header; trusted-auth is never wired — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/Gates.swift:97` (also `Gates.swift:85-99`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:100-123, 135, 214-215`, `Signals/Evidence.swift:57`, `Learning/StatisticalLearning.swift:28`, `Learning/CorrectionLearning.swift:30`, `PipelineCorrections.swift:40-53`, `TODO.md:302`)
-- **Problem:** Address/domain Allow rules, the Contacts match, reply history and receipt history all return Inbox at confidence 100 from `message.fromAddress`, before the model runs. No production caller passes `trustedAuthServers`, so every `AuthResult.trusted` is false, and the "trusted fail" contradiction checks are dead code. A forged sender also gets the retrieval sender bonus, and a correction on a forged message writes an address Block rule against the real sender. TODO.md marks SS-15 done although its forged-contact evaluation was never implemented. The address > domain > contacts/history precedence comes from the brief, but the missing authentication check is a real defect.
-- **Scenario:** A phish from a forged `colleague@partner.example` (DMARC p=none) gets "gate: contact" and skips the model. Marking a forged `alice@friend.com` spam as Junk sends Alice's genuine mail to Junk afterwards.
-- **Fix:** Configure trusted authserv-ids per account. Require a trusted, aligned DMARC pass (or aligned DKIM) before relationship gates, Allow rules or the retrieval bonus apply; otherwise pass the relationship to the model as evidence. Warn before writing a Block rule for an unauthenticated sender. Wire up or delete the dead checks, and reopen SS-15 until forged-contact fixtures pass.
-<!-- sources: security/core-parsing-signals#5, security/core-classifier-learning#4, security/core-pipeline-store#1, security/app-logic#1, correctness/core-parsing-signals#5, correctness/core-pipeline-store#4 -->
-
-#### 1.19 Every cloud request carries up to 40 other messages' senders, subjects and gists — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:62` (also `State.swift:27`, `AdvancedSettings.swift:47`, `CorpusManagement.swift:50-55`, `OnboardingView.swift:72`)
-- **Problem:** `retrieveExamples` defaults to false, so every prompt includes the 40 most recent corrections from all accounts. Each carries a sender, domain, subject and gist, and imported examples carry 160 body characters. The onboarding copy says "relevant examples".
-- **Scenario:** Corrections on family or medical mail travel with every later newsletter classification from any account, about 40 times the exposure per request.
-- **Fix:** Default to similarity retrieval with a small limit (around 5), scope examples to the message's account, send domains instead of full addresses where possible, and state the count and fields in the consent copy.
-<!-- sources: privacy-dataflow#4 -->
-
-#### 1.20 Stored provider, Spamhaus and IMAP credentials can never be removed — Medium
-
-- **Where:** `SpamWiseCore/Sources/Store/Keychain.swift:25` (also `Keychain.swift:42, 54`, `SpamWise/IMAPSettingsView.swift:38`, `SpamWise/ProviderConsentView.swift:56-57`, `docs/lifecycle.md`)
-- **Problem:** `APIKeychain` has only `read()` and `save()`. `SecItemDelete` appears nowhere in the app, extension or core, and the UI has no "Remove key" control. Data-protection items are not normally visible in Keychain Access, so the manual removal that lifecycle.md documents may not be possible.
-- **Scenario:** A user stops using OpenAI, or rotates away from a leaked IMAP app password, and has no way to make SpamWise forget it. The secret stays readable by any build signed into the team access group.
-- **Fix:** Add `APIKeychain.delete()`, "Remove key" / "Forget connection" controls, and "Remove all SpamWise credentials" in the data-removal flow. Delete the superseded IMAP item, and correct the consent and lifecycle copy.
-<!-- sources: privacy-dataflow#6, security/app-logic#3 -->
-
-#### 1.21 Two privacy-policy drafts and data inventories have diverged — Medium
-
-- **Where:** `docs/app-store.md:206` (also `docs/app-store.md:213, 220-221, 236-242`, `docs/privacy.md:74-77`, `docs/privacy-audit.md:9-23`)
-- **Problem:** app-store.md carries its own policy draft and inventory. They omit the Spamhaus HTTPS key flow and the Gemini unpaid-terms caveat that privacy.md documents. Conversely, privacy.md omits the IMAP credentials that the app ships with, and the Contacts snapshot and RDAP cache (§1.34). privacy-audit.md's Spamhaus row predates the HTTPS transport.
-- **Scenario:** The app-store.md draft is pasted into App Store Connect and contradicts the published privacy.html.
-- **Fix:** Keep one policy (privacy.md) and one inventory (privacy-audit.md). Make them complete, covering IMAP, Spamhaus HTTPS, the Contacts snapshot and the domain caches, and link to them from app-store.md.
-<!-- sources: comments/repo-docs#8 -->
 
 #### 1.22 Claude refusals and `max_tokens` cut-offs are reported as configuration errors — Low
 
@@ -352,14 +207,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 - **Fix:** Wrap the comparisons in `considering case` (plus diacriticals, punctuation and white space), or compare a hash computed in Swift.
 <!-- sources: security/mail-integration#9 -->
 
-#### 1.31 Public-suffix lookup ignores punycode, so IDN suffixes become registrable domains — Low
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/DomainResolver.swift:11` (also `public_suffix_list.dat:1311`, `MIMEParser.swift:42-44`)
-- **Problem:** PSL rules are loaded in Unicode while hosts arrive as `xn--` labels, so no IDN rule ever matches. For example, `shop.xn--55qx5d.hk` resolves to the public suffix itself.
-- **Scenario:** An explicit domain Allow for `xn--55qx5d.hk` allows every registrant under 公司.hk, and history is merged across unrelated registrants.
-- **Fix:** Convert IDN rules to punycode at build time, keeping the exception and wildcard logic, and add `xn--` boundary tests.
-<!-- sources: security/core-parsing-signals#11 -->
-
 #### 1.32 Optional OCR decodes untrusted TIFF/GIF/HEIC in the privileged app process — Low
 
 - **Where:** `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:14` (also `EmbeddedImages.swift:30-34`, `EmbeddedImageOCR.swift:21`, `Pipeline.swift:50`)
@@ -376,14 +223,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 - **Fix:** Parse per RFC 8601, recording method, result and relevant property, and trust only the topmost header whose authserv-id matches the account's server. Wire this before using it in gates.
 <!-- sources: security/core-parsing-signals#10 -->
 
-#### 1.34 RDAP uses `URLSession.shared`, buffers unbounded responses, and persists undisclosed domain caches — Low
-
-- **Where:** `SpamWiseCore/Sources/Signals/RDAP.swift:18` (also `RDAP.swift:17-21, 96-98`, `SpamWise/AppModel.swift:99-101`, `State.swift:193`, `docs/privacy.md`)
-- **Problem:** Unlike the Spamhaus and Rspamd clients, RDAP follows redirects (the app sets no ATS exceptions, so HTTPS is still enforced) and uses the shared on-disk URLCache and cookies. It applies the 2 MB limit only after the full download, under an idle timeout. `rdap-cache.json` (up to 2,048 sender domains) and the full Contacts email snapshot are persisted, and privacy.md lists neither.
-- **Scenario:** A hostile bootstrap-listed RDAP server redirects the sender domain to a third party and streams hundreds of megabytes before the check runs. A user who relies on privacy.md does not know their address book and correspondent domains are stored.
-- **Fix:** Use an ephemeral session with no cache or cookies, reject redirects, stream with a byte cap and set a resource timeout. Document the Contacts snapshot and domain caches, and clear the snapshot when Contacts permission is lost.
-<!-- sources: security/core-parsing-signals#12, conventions/core-parsing-signals#20, privacy-dataflow#12 -->
-
 #### 1.35 Loopback Rspamd sends full raw mail to whatever process holds port 11333 — Low
 
 - **Where:** `SpamWiseCore/Sources/Signals/RspamdLoopbackHTTP.swift:29` (also `RspamdLoopbackHTTP.swift:29-34`, `Pipeline.swift:55-61`)
@@ -399,14 +238,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 - **Scenario:** A "content-free" backup that is shared contains 20 subjects, senders and body openings.
 - **Fix:** Without retention, build gists from non-content features, strip subject and gist from content-free backups, or disclose that they are included.
 <!-- sources: security/core-pipeline-store#8 -->
-
-#### 1.37 Model-generated reasons become "user correction" examples — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:59` (also `PipelineCorrections.swift:55-60`, `Classifier/Types.swift:259`)
-- **Problem:** A correction stores `decision.reason`, which a prompt injection can steer, as the example gist next to the attacker's subject, and replays it in the preferences block. The fixed instructions forbid following text in correction quotations, and the gist is bounded to 160 characters, so the impact is limited.
-- **Scenario:** An injected reason such as "bulk senders are always wanted" is quoted in up to 40 later prompts.
-- **Fix:** Use a fixed gist derived from the label and evidence instead of model output.
-<!-- sources: security/core-pipeline-store#9 -->
 
 #### 1.38 Rule imports apply without preview and can flip Block rules to Allow — Low
 
@@ -432,14 +263,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 - **Fix:** Validate LearningState bounds, add a custom `init(from:)` that truncates, and cap each section of the restored payload.
 <!-- sources: security/core-pipeline-store#10 -->
 
-#### 1.41 Daemon `--model` silently changes the app and extension provider — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:122` (also `main.swift:58`)
-- **Problem:** Without a `statePath`, `--model` rewrites the backend in the shared App Group settings. Consent is stored per provider, so an earlier cloud consent becomes active again.
-- **Scenario:** An IMAP test with `--model claude-haiku-5-5` makes the extension start sending Apple Mail to Anthropic, even though the user had chosen On-device.
-- **Fix:** Apply `--model` as an in-process override, or allow it only with an explicit `statePath`.
-<!-- sources: privacy-dataflow#7 -->
-
 #### 1.42 Crafted MIME header raises IndexError and aborts corpus preparation — Low
 
 - **Where:** `Tools/Corpus/prepare.py:74` (also `prepare.py:218, 415`, `audit.py:208`)
@@ -447,14 +270,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 - **Scenario:** One spam message in a new archive aborts the whole run and leaves a partial output directory.
 - **Fix:** Catch `Exception` per record (or add IndexError, AttributeError, TypeError and MessageError) and quarantine with the error's type name. Extend the MIME test, and apply the same handling to audit.py.
 <!-- sources: security/tools#3 -->
-
-#### 1.43 Document worker caps text in Characters but replies in JSON bytes, so the worker exits — Low
-
-- **Where:** `Tools/DocumentWorker/PDFExtraction.swift:17` (also `Protocol.swift:5, 7`, `Worker.swift:83`, `Client.swift:176-178`)
-- **Problem:** The 3,000-grapheme cap can exceed the 16,384-byte JSON reply once escaping and multi-scalar graphemes are counted, and the worker then calls `_exit(75)` instead of truncating. This is a harness only; production PDF extraction does not ship.
-- **Scenario:** Control-character or combining-mark padding reliably suppresses document text coverage. Each attempt also costs a throttled relaunch.
-- **Fix:** Budget by encoded bytes on scalar boundaries, or return raw UTF-8 data. Use the same unit on both sides, and add adversarial fixtures.
-<!-- sources: security/tools#1 -->
 
 #### 1.44 Probe timeout orphans the evaluator holding the API key — Low
 
@@ -480,22 +295,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 - **Fix:** If adopted, use an ImageProvider that blocks network loads, or render with AttributedString Markdown.
 <!-- sources: gap/dependency-trust-path#7 -->
 
-#### 1.47 Temporary signing-keychain password on argv; signing borrows SubTrack's `MATCH_PASSWORD` — Info
-
-- **Where:** `Scripts/export-store-match.py:103` (also `:105, :302-313`, `docs/app-store.md:83-85`)
-- **Problem:** `create-keychain`, `unlock-keychain` and `set-key-partition-list` receive the password as an argument. Only same-user or root processes can read it, and they can already read the decrypted mode-600 p12 files and `MATCH_PASSWORD`, so the extra exposure is marginal. Signing also depends on another project's fastlane `.env`, and the hand-rolled helper duplicates fastlane match/gym.
-- **Scenario:** Moving or rotating SubTrack's `.env` silently breaks SpamWise store packaging.
-- **Fix:** Pass passwords on stdin where `security` supports it, shorten the lock timeout, and consider fastlane lanes with SpamWise's own secret configuration, as SubTrack does.
-<!-- sources: tooling#10, distribution/packaging#17, security/eval-scripts#3 -->
-
-#### 1.48 Claude key verification runs in local-only mode — Info
-
-- **Where:** `SpamWise/AppModelCredentials.swift:13`
-- **Problem:** "Verify and save key" calls ClaudeClassifier directly without checking `localOnly`. The request is synthetic, user-initiated and disclosed beside the button, so no mail data is exposed.
-- **Scenario:** A user in local mode pastes a key for later use, and pressing Verify contacts Anthropic anyway.
-- **Fix:** Disable Verify while `localOnly` is on, or offer save-without-verify.
-<!-- sources: privacy-dataflow#8 -->
-
 #### 1.49 `spamwise://check-inbox` triggers sweeps without the 60-second throttle — Info
 
 - **Where:** `SpamWise/AppModelNavigation.swift:8` (also `SpamWise/Info.plist`, `Resources/SpamWiseRule.applescript`)
@@ -503,14 +302,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 - **Scenario:** A looping `open spamwise://check-inbox` drives continuous Apple Events history imports and sweeps.
 - **Fix:** Coalesce bursts: treat the URL as a hint that schedules the next sweep, without dropping rule-triggered scans. Optionally skip `maintainHistory()` for URL-triggered sweeps.
 <!-- sources: design/onboarding-consistency#28, privacy-dataflow#13, security/app-logic#6 -->
-
-#### 1.50 Key-presence check reads the secret on the main thread — Info
-
-- **Where:** `SpamWise/SpamhausSettingsView.swift:64` (also `Keychain.swift:43`)
-- **Problem:** `onAppear` calls `read()` with `kSecReturnData` just to show "saved" or "not saved". The item is in the app's own access group, so no prompt appears.
-- **Scenario:** The plaintext key is loaded into memory on every appearance for no reason.
-- **Fix:** Add an attributes-only `APIKeychain.exists()`.
-<!-- sources: security/app-logic#10 -->
 
 #### 1.51 Decoded `TokenUsage` skips clamping, so `estimatedCost` can overflow — Info
 
@@ -527,14 +318,6 @@ Separately, the HTML-to-text regexes are quadratic. A single 2 MB message can bl
 - **Scenario:** Repeated spam padded with the user's vocabulary nudges those tokens toward Junk.
 - **Fix:** Train only on predictions backed by an independent signal, or keep Bayes training on explicit corrections only.
 <!-- sources: security/core-classifier-learning#5 -->
-
-#### 1.53 Daemon environment secrets are inherited by `dig`/`rspamc` children — Info
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:47` (also `Signals/EvidenceProcess.swift:32-37`, `ExternalEvidence.swift:153`, `RspamdLookup.swift:72-78`)
-- **Problem:** `EvidenceProcess` never sets `process.environment`. A same-user process could already read the daemon's own environment, so the added exposure is small.
-- **Scenario:** A wrapper `rspamc` script logs its environment, including `SPAMWISE_IMAP_PASSWORD`.
-- **Fix:** Pass children a minimal explicit environment, and `unsetenv` secrets once they have been read.
-<!-- sources: security/mail-integration#8 -->
 
 #### 1.54 Hidden HTML text and control/bidi characters reach the classifier — Info
 
@@ -619,89 +402,20 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 
 | # | Severity | Location | Finding |
 |---|---|---|---|
-| 2.10 | Medium | `MailExtension/MessageActionHandler.swift:21` | MailKit route classifies with no account; history gates never apply |
-| 2.11 | Medium | `Scripts/check.sh:9` | No command runs the UnitTests target |
-| 2.12 | Medium | `SpamWise.xcodeproj/project.pbxproj:771` | UnitTests hosted by the production app |
-| 2.13 | Medium | `SpamWise/AppModel.swift:162` | Whole shared state decoded and republished every 3 seconds |
-| 2.14 | Medium | `SpamWise/AppModel.swift:219` | Background scans hold the global `busy` flag |
-| 2.15 | Medium | `SpamWise/AppModel.swift:292` | IMAP history refresh discards stored correspondence |
-| 2.16 | Medium | `SpamWise/AppModel.swift:294` | History maintenance reads 200 full messages every minute |
-| 2.17 | Medium | `SpamWise/AppModelFolders.swift:17` | Folder plans cannot be removed; errors say "Mail service unavailable" |
-| 2.18 | Medium | `SpamWise/AppModelFolders.swift:124` | One uncorrectable message stalls a training folder forever |
-| 2.19 | Medium | `SpamWise/AppModelScanning.swift:113` | Transient failures treated as seen and never revisited |
-| 2.22 | Medium | `SpamWise/AppModelScanning.swift:121` | Manual dry runs classify 20 per account and repeat on every click |
-| 2.23 | Medium | `SpamWise/ContentRuleEditorView.swift:125` | Content-rule sheet errors are never shown |
-| 2.24 | Medium | `SpamWise/ContentView.swift:129` | Eight sibling sheets collide |
-| 2.25 | Medium | `SpamWise/CorpusView.swift:82` | Corpus and undo actions throw misleading error types |
-| 2.26 | Medium | `SpamWise/EvidenceSettingsView.swift:71` | Some Evidence/Notification edits are lost unless a button is pressed |
-| 2.27 | Medium | `SpamWise/EvidenceSettingsView.swift:79` | Settings drafts can be seeded from defaults and saved over real config |
-| 2.28 | Medium | `SpamWise/GeneralSettingsView.swift:55` | Reopened setup sheet has no Cancel; Finish forces dry run on |
-| 2.30 | Medium | `SpamWise/LearningSettingsView.swift:47` | Label export re-encodes on every render; can export an empty file |
-| 2.31 | Medium | `SpamWise/MailReviewView.swift:32` | MIME parsing, statistics and file I/O on the main actor |
-| 2.32 | Medium | `SpamWise/MailReviewView.swift:50` | Review Junk sheet shows stale messages and pages incorrectly |
-| 2.33 | Medium | `SpamWise/MailReviewView.swift:88` | Corrections sheet cannot be dismissed for up to ~25 minutes |
-| 2.34 | Medium | `SpamWise/SpamhausSettingsView.swift:62` | Spamhaus key status reports every Keychain error as "not saved" |
-| 2.35 | Medium | `SpamWiseCore/Sources/Classifier/ClaudeClassifier.swift:90` | Anthropic 5xx errors are non-retryable |
-| 2.36 | Medium | `SpamWiseCore/Sources/Classifier/Types.swift:314` | Quote stripping lets a sender hide the body from the model |
-| 2.37 | Medium | `SpamWiseCore/Sources/Evaluation/CachedClassifier.swift:42` | Eval counts budget/lock refusals as provider calls, exits 0 |
-| 2.38 | Medium | `SpamWiseCore/Sources/Evaluation/Metrics.swift:119` | Calibration buckets too coarse to derive thresholds |
-| 2.39 | Medium | `SpamWiseCore/Sources/Evaluation/ReviewedCorpus.swift:57` | Exported reviewed labels rejected as duplicates |
-| 2.40 | Medium | `SpamWiseCore/Sources/Learning/LearningState.swift:171` | Later Junk correction never overrides a Good campaign fingerprint |
-| 2.41 | Medium | `SpamWiseCore/Sources/Learning/LearningState.swift:200` | Prediction and correction sample identities differ with OCR/attachments |
-| 2.42 | Medium | `SpamWiseCore/Sources/Learning/LearningState.swift:325` | Learning keeps only the alphabetically first 128 tokens |
-| 2.43 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:74` | AppleScript has no overall deadline and cannot be cancelled |
-| 2.44 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:82` | Overloaded AppleScript error numbers give wrong explanations |
-| 2.45 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:90` | Cancellation after a move records Failed |
-| 2.46 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:241` | Moves act on the message wherever it now is |
-| 2.47 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:253` | Each move holds the pipeline for 30 seconds |
-| 2.48 | Medium | `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:148` | Daemon probe/model flags rewrite the app's route and model |
-| 2.49 | Medium | `SpamWiseCore/Sources/MailIntegration/MailFolderScripts.swift:78` | Folder start date wrong under non-Gregorian calendars |
-| 2.50 | Medium | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:203` | Moves of mail without a Message-ID recorded as failed |
-| 2.51 | Medium | `SpamWiseCore/Sources/MessageModel/DomainResolver.swift:11` | PSL ignores punycode; IDN suffixes become registrable |
-| 2.52 | Medium | `SpamWiseCore/Sources/MessageModel/Identity.swift:18` | IMAP keys include UID; rescued mail is re-junked |
-| 2.53 | Medium | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:62` | Alternative interleaving splits phrases |
-| 2.54 | Medium | `SpamWiseCore/Sources/Signals/ContentRules.swift:104` | Content rules match raw, undecoded headers and filenames |
-| 2.55 | Medium | `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:178` | URL/domain/DBL caps keep alphabetically first entries |
-| 2.56 | Medium | `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:47` | Imported samples train on header-stripped evidence |
-| 2.57 | Medium | `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:61` | Inconsistent 500-label cap: silent eviction vs hard failure |
-| 2.58 | Medium | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:304` | Superseded claim never released |
-| 2.59 | Medium | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:306` | IMAP Review flag always dispatched and always fails |
-| 2.60 | Medium | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:321` | Post-move save failure adds a bogus unclassified record |
-| 2.61 | Medium | `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:78` | Optional training write failure discards a paid verdict |
-| 2.62 | Medium | `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:215` | Authentication results are never trusted |
-| 2.63 | Medium | `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:9` | Review/Good corrections leave mail in the wrong state |
-| 2.64 | Medium | `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:50` | Corrections overridden by other-scope rules |
-| 2.65 | Medium | `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:102` | `correct()` commits the rule, then can throw before dispatch |
-| 2.66 | Medium | `SpamWiseCore/Sources/SpamWiseCore/State.swift:191` | State grows without bound in one blob |
-| 2.67 | Medium | `SpamWiseCore/Sources/SpamWiseCore/State.swift:270` | Every settings edit bumps revision, drops retries and undo |
-| 2.68 | Medium | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:96` | Daemon poll mode exits on first transient error |
-| 2.69 | Medium | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:98` | Daemon dedupe treats dry-run/paused/unclassified as done |
-| 2.70 | Medium | `SpamWiseCore/Sources/Store/Store.swift:101` | Non-blocking flock with no retry loses work |
-| 2.71 | Medium | `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:176` | Scenario tests bundle unrelated behaviors |
-| 2.72 | Medium | `Tools/DocumentWorker/PDFExtraction.swift:17` | PDF worker caps characters, not bytes |
-| 2.73 | Medium | `UnitTests/UnitTests.swift:1` | App-target orchestration has no unit tests |
-| 2.74 | Medium | `eval/mock-responses.json:1` | Fixture acceptance met only by mock verdicts |
+| 2.43 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailRunner.swift:273` | In-process AppleScript calls cannot be interrupted, so a timed-out script keeps its lane busy |
 | 2.75 | Low | `.build/…/ClaudeForFoundationModels/RequestBuilder.swift:134` | Always-on prompt caching cost under-recorded |
 | 2.76 | Low | `…/GitHubUpdateChecker/…/SemanticVersion.swift:118` | SemanticVersion ordering contradicts `==` |
 | 2.77 | Low | `Scripts/evaluate-with-keychain.swift:97` | Timeouts orphan the paid evaluator |
 | 2.78 | Low | `Scripts/store-probe.swift:9` | store-probe reports argument errors as invalid path |
 | 2.79 | Low | `SpamWise/ActivityStatisticsView.swift:68` | Exported daily counts are an unlabeled flat array |
 | 2.80 | Low | `SpamWise/AppModelMailReview.swift:64` | Preview/Open/Export use Apple Mail adapter for IMAP records |
-| 2.81 | Low | `SpamWise/ContentRuleEditorView.swift:36` | Deleted content rule stays selected |
-| 2.82 | Low | `SpamWise/ContentView.swift:37` | Time column has no date |
-| 2.83 | Low | `SpamWise/ContentView.swift:77` | Filters show raw account IDs and path tokens |
 | 2.84 | Low | `SpamWise/ContentView.swift:168` | Monthly cost rounds to $0.00 |
-| 2.85 | Low | `SpamWise/CorpusView.swift:32` | Corpus can contain duplicate label ids |
 | 2.86 | Low | `SpamWise/DecisionDetailView.swift:61` | Undo dialog on every row with misleading counts |
 | 2.87 | Low | `SpamWise/DecisionDetailView.swift:193` | Uncalibrated confidence shown as a percentage |
 | 2.88 | Low | `SpamWise/IMAPConnectionModel.swift:21` | IMAP load failure mints a new account ID |
-| 2.89 | Low | `SpamWise/KeyEntryView.swift:9` | Stored API key status never shown |
 | 2.90 | Low | `SpamWise/LocalNotifications.swift:5` | Foreground notifications suppressed but claimed |
 | 2.91 | Low | `SpamWise/LocalNotifications.swift:40` | Post-claim settings re-check drops batches |
-| 2.92 | Low | `SpamWise/MailMenuView.swift:9` | Status text claims filtering that is not running |
-| 2.94 | Low | `SpamWise/NotificationSettingsView.swift:25` | Quiet-hours labels ignore locale |
 | 2.95 | Low | `SpamWise/PolicyView.swift:5` | Policy length limit defined three times |
-| 2.96 | Low | `SpamWise/PolicyView.swift:45` | Unchanged Save turns the default policy custom |
 | 2.97 | Low | `SpamWise/SpamhausSettingsView.swift:62` | UI-testing mode uses the production Keychain |
 | 2.98 | Low | `SpamWiseCore/Sources/Classifier/AppleClassifier.swift:57` | Apple path rejects long reasons |
 | 2.99 | Low | `SpamWiseCore/Sources/Classifier/ClaudeClassifier.swift:49` | New Claude executor and URLSession per message |
@@ -710,26 +424,19 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 | 2.102 | Low | `SpamWiseCore/Sources/Classifier/Types.swift:239` | Instructions don't explain newer evidence |
 | 2.103 | Low | `SpamWiseCore/Sources/Classifier/Types.swift:299` | Attachment and OCR text truncated out of the prompt |
 | 2.104 | Low | `SpamWiseCore/Sources/Classifier/Types.swift:314` | Reply attribution recognized only in English |
-| 2.105 | Low | `SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:173` | Manifest accepts missing labels, rejects fractional seconds |
-| 2.106 | Low | `SpamWiseCore/Sources/Evaluation/ThreatMetrics.swift:90` | Threat-report errors print comparison diagnostics |
 | 2.107 | Low | `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:71` | Learning models retrained per message |
 | 2.108 | Low | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:22` | ScriptValue decoding lenient and truncates Int64 |
 | 2.109 | Low | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:360` | Export combines `.atomic` with `.withoutOverwriting` |
-| 2.110 | Low | `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:92` | IMAP cursor saved before the page is processed |
 | 2.111 | Low | `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:337` | IMAP requires exact RFC822.SIZE match |
 | 2.112 | Low | `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:86` | OCR is all-or-nothing |
-| 2.113 | Low | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:147` | Mixed encoded-word headers decode to mojibake |
 | 2.114 | Low | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:167` | HTML-to-text splits words and decodes few entities |
 | 2.115 | Low | `SpamWiseCore/Sources/MessageModel/ResourceDeadline.swift:55` | Deadline helper starts work after cancellation |
 | 2.116 | Low | `SpamWiseCore/Sources/Signals/Evidence.swift:123` | Contacts enumeration blocks a cooperative thread |
-| 2.117 | Low | `SpamWiseCore/Sources/Signals/RDAP.swift:9` | RDAP size "limit" applied after full download |
 | 2.118 | Low | `SpamWiseCore/Sources/Signals/RDAP.swift:61` | RDAP duplicate fetches; cache evicts by name |
 | 2.119 | Low | `SpamWiseCore/Sources/Signals/RspamdLookup.swift:60` | Rspamd keeps alphabetical symbols, drops score |
 | 2.120 | Low | `SpamWiseCore/Sources/Signals/RspamdLoopbackHTTP.swift:25` | Loopback Rspamd HTTP bounds have no automated test |
 | 2.121 | Low | `SpamWiseCore/Sources/SpamWiseCore/AutomationRequest.swift:52` | Automation claims never pruned; fail at 10,000 |
-| 2.122 | Low | `SpamWiseCore/Sources/SpamWiseCore/CompletionOnce.swift:6` | CompletionOnce `@unchecked Sendable`; watchdog never cancelled |
 | 2.123 | Low | `SpamWiseCore/Sources/SpamWiseCore/NotificationPlanning.swift:49` | Notifications never fire in dry run, with no indication |
-| 2.124 | Low | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:72` | Every envelope failure labelled "parsing failed" |
 | 2.125 | Low | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:116` | Paid verdicts discarded after the deadline |
 | 2.126 | Low | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:192` | `RetryJob.dryRun` is always false |
 | 2.127 | Low | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:244` | Retries drop auxiliary findings |
@@ -737,23 +444,17 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 | 2.129 | Low | `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:77` | Previews mutate learning and rule statistics |
 | 2.130 | Low | `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:159` | Independent enrichments run sequentially |
 | 2.131 | Low | `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:177` | Spamhaus lookup not injectable for tests |
-| 2.132 | Low | `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:59` | Correction gist is boilerplate |
-| 2.133 | Low | `SpamWiseCore/Sources/SpamWiseCore/State.swift:163` | `schemaVersion` is never read |
 | 2.134 | Low | `SpamWiseCore/Sources/SpamWiseCore/State.swift:215` | Ledger keys depend on the current calendar |
 | 2.135 | Low | `SpamWiseCore/Sources/SpamWiseCore/TrainingFolders.swift:49` | Training observation cap blocks completion |
-| 2.136 | Low | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:42` | Daemon discards sanitized error category |
 | 2.137 | Low | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:62` | Daemon overrides config `allowsActions` |
 | 2.138 | Low | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:88` | Domain-age setting ignored outside the app |
 | 2.139 | Low | `SpamWiseCore/Sources/SpamWiseEval/Options.swift:66` | CLI guard and report logic untested |
-| 2.140 | Low | `SpamWiseCore/Sources/SpamWiseEval/RunReport.swift:60` | Price arguments validated after paid calls |
 | 2.142 | Low | `SpamWiseCore/Sources/SpamWiseEval/main.swift:149` | `--state` runs self-train on the test corpus |
-| 2.143 | Low | `SpamWiseCore/Sources/SpamWiseEval/main.swift:234` | Symlinked files reported as over 2 MB |
 | 2.144 | Low | `SpamWiseCore/Sources/Store/Store.swift:103` | Store blocks the cooperative pool; container per operation |
 | 2.145 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionFixtures.swift:32` | Temporary test stores never removed |
 | 2.146 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:319` | Retry test accepts losing an undispatched job |
 | 2.147 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:389` | Persist-before-act not effectively tested |
 | 2.148 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/ExternalEvidenceTests.swift:232` | `#expect` inside detached fixture closures |
-| 2.149 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/MailIntegrationTests.swift:30` | Fake runner crashes the test process |
 | 2.150 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/ParsingTests.swift:88` | Force unwraps and `any Error` expectations |
 | 2.151 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/RoadmapStateTests.swift:6` | Migration test has no frozen legacy fixture |
 | 2.152 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/RoadmapStateTests.swift:190` | Budget concurrency test assertions too loose |
@@ -774,641 +475,18 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 | 2.167 | Low | `UITests/UITests.swift:74` | UI assertions read state without waiting |
 | 2.168 | Low | `eval/mock-responses.json:2` | Mock keys are fragile raw-byte hashes |
 | 2.169 | Info | `SpamWise/ActivityStatisticsView.swift:68` | Export buttons do nothing on encode failure |
-| 2.170 | Info | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:199` | Latent cursor reentrancy in `nextPage` |
 | 2.171 | Info | `SpamWiseCore/Sources/SpamWiseEval/Options.swift:66` | Held-out evaluation always uses the default policy |
 
-#### 2.10 The MailKit route classifies with no account, so history gates never apply and paid dry runs are wasted — Medium
+#### 2.43 In-process AppleScript calls cannot be interrupted, so a timed-out script keeps its lane busy — Medium
 
-- **Where:** `MailExtension/MessageActionHandler.swift:21` (`MailExtension/MessageActionHandler.swift:30`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:206`, `SpamWise/AppModel.swift:201`)
-- **Problem:** Extension callbacks always use `MessageIdentity(accountID: nil)`, so the history lookup lands on the empty key and finds nothing. The extension classifies whenever the route is neither `.mailRule` nor `.imap`. Nothing ever sets `.mailKit`, so in practice this happens only during the `.unverified` window after onboarding, when the extension is the only classifier. Its records never match the account-scoped keys that later sweeps produce.
-- **Scenario:** A user has imported Sent history but not yet run the probe. A colleague they have replied to many times sends a message, and the extension makes a paid, model-path dry-run decision, possibly Review. After the route is validated, the same messages are classified and paid for again.
-- **Fix:** Have the extension record only heartbeat and body-availability timestamps unless `.mailKit` is explicitly selected, or have it evaluate history across all accounts' indexes. Label any MailKit dry-run rows as having no history available.
-<!-- sources: correctness/mail-integration#14, gap/brief-conformance#3 -->
-
-#### 2.11 No project command runs the UnitTests target — Medium
-
-- **Where:** `Scripts/check.sh:9` (`Scripts/ui-check.sh:7`, `SpamWise.xcodeproj/xcshareddata/xcschemes/SpamWiseDirect.xcscheme`, `UnitTests/DirectUpdateConfigurationTests.swift:5`)
+- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailRunner.swift:273` (`SpamWiseCore/Sources/MailIntegration/AppleMailRunner.swift:145`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:49`, `SpamWiseCore/Sources/MessageModel/ResourceDeadline.swift:50`)
 - **Problem:**
-  - `DirectUpdateConfigurationTests` is the only test of the direct-update owner/repository validation and the store-receipt check.
-  - `check.sh` only builds the app.
-  - `ui-check.sh` passes `-only-testing:UITests`.
-  - The SpamWiseDirect scheme has no test action.
-  - CI only builds the site.
-
-  The tests compile but never run, and nothing exercises the direct product.
-- **Scenario:** `DirectUpdateConfiguration` starts accepting `a%2Fb` or `../owner`, or loses the `_MASReceipt` check, and every documented check stays green.
-- **Fix:** Add an `xcodebuild … -only-testing:UnitTests test` step to `check.sh`, preferably hostless (see §2.12), or share a SpamWise scheme whose test plan includes UnitTests. Give the direct variant a test action.
-<!-- sources: tooling#2, config/swift-xcode#20, correctness/tests#7, comments/tests#10 -->
-
-#### 2.12 UnitTests run inside the production app, which touches the shared store, Mail and notifications — Medium
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:771` (`SpamWise.xcodeproj/project.pbxproj:790`, `SpamWise/AppModel.swift:63`, `SpamWise/AppModel.swift:83`, `SpamWise/AppModel.swift:91`)
-- **Problem:** `TEST_HOST` is SpamWise.app, and AppModel isolates itself only when launched with `--ui-testing`. It does not check `XCTestConfigurationFilePath`. A hosted unit-test run therefore:
-  - opens the App Group store;
-  - uses `SystemAppleEventRunner`;
-  - configures notifications;
-  - starts the monitor loop.
-- **Scenario:** A developer whose onboarding is complete and whose dry run is off presses ⌘U. Within seconds the test host can start a live Inbox sweep and move real mail, or raise Automation prompts during an unattended run.
-- **Fix:** Make UnitTests a hostless logic bundle by moving `DirectUpdateConfiguration` into a testable target. Alternatively, have AppModel treat `XCTestConfigurationFilePath` the same as `--ui-testing`.
-<!-- sources: correctness/tests#3 -->
-
-#### 2.13 The monitor decodes and republishes the whole shared state every 3 seconds — Medium
-
-- **Where:** `SpamWise/AppModel.swift:162` (`SpamWise/AppModel.swift:131`, `SpamWise/AppModel.swift:159`, `SpamWise/AppModelScanning.swift:126`, `SpamWise/AppModelScanning.swift:136`)
-- **Problem:** `refresh()` loads and decodes AppState and mail health, then assigns `state` unconditionally. That invalidates every view that observes it, including the 5,000-row Activity table, whether or not anything changed. `classify()` reloads state twice more for every message. Each load also takes the cross-process lock (§2.70).
-- **Scenario:** With retained content and a full log, state is several megabytes of JSON. The app sits idle in the menu bar and still parses several megabytes per second indefinitely, which drains battery, causes hitches in Activity and widens lock contention with the extension.
-- **Fix:**
-  - Refresh only when something changed, using a cheap revision or modification counter.
-  - Assign `state` only when the new value differs.
-  - Move large, rarely used fields into separate keys.
-  - Use the record the pipeline returns instead of reloading state for each message.
-<!-- sources: correctness/app-logic#12, conventions/app-logic#21 -->
-
-#### 2.14 Background scans hold the single `busy` flag, disabling and silently dropping user actions — Medium
-
-- **Where:** `SpamWise/AppModel.swift:219` (`SpamWise/AppModelScanning.swift:11`, `SpamWise/AppModelScanning.swift:77`, `SpamWise/MailMenuView.swift:24`, `SpamWise/DecisionDetailView.swift:156`, `SpamWise/ContentRuleEditorView.swift:50`, `SpamWise/AppModelNavigation.swift:8`, `SpamWise/ContentView.swift:159`)
-- **Problem:**
-  - Automatic sweeps go through `run()`, which sets the same `busy` flag that every interactive operation uses and silently returns when the flag is already set.
-  - A sweep can take minutes: history import, 20 messages per account at up to 15 s each, and a 30 s settle after each move.
-  - `lastScan` is set when a scan starts, so the next sweep begins as soon as the previous one finishes.
-  - The single Cancel button also aborts background work.
-- **Scenario:**
-  - A user spots a misfiled message and opens the menu bar, but Mark as Good is greyed out for most of the session.
-  - A click on "Block domain" or "Restore and pause filtering" that lands during a scan does nothing and shows nothing.
-  - The Content rules sheet's Done button stays disabled until the scan ends.
-- **Fix:**
-  - Run automatic scanning in its own task with its own progress state. Pipeline and the adapter are actors, so user work can safely interleave with a sweep.
-  - Queue or report refused operations instead of dropping them.
-  - Never disable a sheet's Done or Cancel because of `busy`.
-  - Measure the scan interval from completion, not from start.
-<!-- sources: concurrency#1, correctness/app-logic#8, correctness/app-views-settings#5 -->
-
-#### 2.15 IMAP history refresh replaces stored correspondence with the latest 100 Sent messages — Medium
-
-- **Where:** `SpamWise/AppModel.swift:292` (`SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:107`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:313`)
-- **Problem:** `IMAPAdapter.importHistory` builds a new `HistoryIndex` from only the latest 100 Sent messages, and on every automatic sweep the caller assigns it over `state.histories[account]`. The Apple Mail path merges instead. The reply-counting logic is duplicated across the two adapters, and the copies have diverged.
-- **Scenario:** An IMAP user replied to a sender 150 messages ago. On the next sweep that sender loses the prior-correspondence gate, and their mail goes to the model.
-- **Fix:** Have adapters return envelopes only, and move ingestion into a core `HistoryIndex.ingest(sent:inbox:eligible:)` that always merges into the previous index. Use it from both transports.
-<!-- sources: architecture#10 -->
-
-#### 2.16 Automatic history maintenance reads 200 full messages every minute — Medium
-
-- **Where:** `SpamWise/AppModel.swift:294` (`SpamWise/AppModelScanning.swift:79`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:312`)
-- **Problem:** Every 60-second sweep begins by pulling 100 Sent and 100 Inbox full sources over Apple Events. It cycles through the mailboxes forever, even when nothing has changed, and adds each identity to the unbounded `importedIDs` set (§2.66).
-- **Scenario:** On an account with 40,000 messages, SpamWise pulls tens of megabytes of raw source through AppleScript every minute, indefinitely, which keeps CPU and energy use high for both Mail and SpamWise.
-- **Fix:** Fetch only the headers history needs, give maintenance its own slower schedule, stop once a full pass finds nothing new, and store a bounded high-water mark instead of every ID.
-<!-- sources: correctness/app-logic#11 -->
-
-#### 2.17 Folder plans cannot be removed, and validation failures say "Mail service unavailable" — Medium
-
-- **Where:** `SpamWise/AppModelFolders.swift:17` (`SpamWise/AppModelFolders.swift:23`, `SpamWise/AppModelFolders.swift:31`, `SpamWise/FolderSettingsView.swift:17`)
-- **Problem:**
-  - Three different user errors throw `IntegrationError.unavailable`, which is shown as "The requested message or Mail service is unavailable": a wrong training-folder name, a training folder that is not empty, and the 20-plan limit.
-  - No code path removes a plan.
-  - The picker lists only folders discovered in the current session, so a plan for a renamed folder can be neither disabled nor deleted.
-  - Enabled orphaned plans fail on every sweep and still count toward the limit.
-- **Scenario:** A user renames "Orders" in Mail. Its filter plan fails on every sweep and cannot be reached from Settings. Saving a training plan for a folder that holds one message reports a Mail outage instead of "the folder must be empty".
-- **Fix:** List saved plans, including those whose folder is missing, with Disable and Remove actions. Throw specific, localized errors with recovery suggestions and show them next to Save.
-<!-- sources: correctness/app-logic#19, correctness/app-views-settings#8 -->
-
-#### 2.18 One message that cannot be corrected stalls a training folder forever — Medium
-
-- **Where:** `SpamWise/AppModelFolders.swift:124` (`SpamWise/AppModelFolders.swift:104`, `SpamWiseCore/Sources/SpamWiseCore/SelectedCorrections.swift:10`)
-- **Problem:** `trainFolderPage` rethrows the first correction error. The caller records a health failure but never calls `complete`, so `nextOffset` does not advance and every later sweep fails on the same message.
-- **Scenario:** Message 3 of 30 dragged into "SpamWise Train Junk" has an unparseable From header (§2.5). Messages 4 to 30 are never trained, and scan health shows a generic failure indefinitely.
-- **Fix:** Catch errors per envelope. Record each failure together with an outcome claim so it is not retried every sweep, and still complete the visited positions. Add a test with one bad message followed by valid ones.
-<!-- sources: correctness/app-logic#7 -->
-
-#### 2.19 Transient failures are treated as "seen" and never revisited — Medium
-
-- **Where:** `SpamWise/AppModelScanning.swift:113` (`SpamWise/AppModelScanning.swift:117`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:5`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:192`)
-- **Problem:**
-  - Any record at the current revision counts as seen, including unclassified failures.
-  - Retryable errors get three retries, at 30, 60 and 120 seconds.
-  - Dry run gets no retries at all, because of `guard !forceDryRun`.
-  - Cancellation and lock contention also get no retries.
-  - Once retries run out, the message is skipped until some unrelated edit bumps the revision, and Activity offers no way to retry it.
-- **Scenario:** During a 10-minute provider outage, or after a 429, every message swept in that window stays unclassified in the Inbox for good. Pressing Cancel partway through a page does the same to the message in flight.
-- **Fix:**
-  - Leave unclassified records with transient causes out of the seen-set, or give them a retry-after time.
-  - Back off over hours, bounded by message age, using a durable queue.
-  - Queue cancellation and lock-contention failures for retry as well.
-  - Add a "Retry unclassified" action to Activity.
-<!-- sources: distribution/product#7, correctness/app-logic#13 -->
-
-#### 2.22 Manual dry runs classify 20 messages per account and send them again on every click — Medium
-
-- **Where:** `SpamWise/AppModelScanning.swift:121` (`SpamWise/AppModelScanning.swift:93`, `SpamWise/OnboardingView.swift:97`, `SpamWise/ContentView.swift:63`)
-- **Problem:** Manual scans skip the seen filter and apply the limit to each account separately. Pipeline does not cache verdicts, so each click makes new paid calls and new ledger reservations and appends new Activity rows. Onboarding and Help promise "20 recent Inbox messages".
-- **Scenario:** A user with three accounts presses "Dry run recent mail" five times while tuning the policy. That makes 300 paid calls, reserves $30 of the $150 ledger, and shows each message five times in Activity.
-- **Fix:** Cap the merged batch at the advertised total, or change the text to "per account". Reuse an existing dry-run verdict when content, revision and policy are unchanged. Merge rows for the same identity and revision instead of appending.
-<!-- sources: correctness/app-logic#9, correctness/app-views-main#4 -->
-
-#### 2.23 Content-rule form and editor errors are never shown in the sheet — Medium
-
-- **Where:** `SpamWise/ContentRuleEditorView.swift:125` (`SpamWise/ContentRuleEditorView.swift:126`, `SpamWise/ContentRuleEditorView.swift:132`, `SpamWise/ContentRuleEditorView.swift:68`, `SpamWise/AppModel.swift:222`, `SpamWise/SettingsView.swift:30`)
-- **Problem:** Save, preview, import and remove all go through `model.run`, which writes errors to `model.status`. That status appears only in the Settings footer, behind two sheets. The form has no inline error, unlike RuleFormView, and `preview()` never clears `result`.
-- **Scenario:** Saving a 101st rule, or testing with nothing selected in Mail, appears to do nothing. Or the previous "This rule wins…" text stays on screen after a preview fails.
-- **Fix:** Use the completion-based pattern from RuleFormView, show errors in sheet-local state, dismiss only on success, and clear `result` at the start of each preview.
-<!-- sources: correctness/app-views-settings#10, conventions/app-views-settings#3 -->
-
-#### 2.24 Eight sibling sheets on one view collide, so Preview, results and Tools sheets fail to appear — Medium
-
-- **Where:** `SpamWise/ContentView.swift:129` (`SpamWise/ReviewDigestView.swift:37`, `SpamWise/DecisionDetailView.swift:68`, `SpamWise/AppModel.swift:136`, `SpamWise/AppModelMailReview.swift:11`, `SpamWise/MailMenuView.swift:24`)
-- **Problem:** Every model-level presentation flag is a sibling `.sheet` modifier on the ActivityView container, but a window can show only one sheet at a time. Raising a flag while another sheet is up fails, and the flag stays true. This happens with:
-  - Preview, opened from the digest's nested decision sheet;
-  - the automatic weekly digest;
-  - menu-bar correction results;
-  - the Tools sheets.
-
-  Menu-bar corrections are also enabled before onboarding finishes, when no ActivityView exists to show their results.
-- **Scenario:**
-  - Review digest → decision → Preview message shows nothing.
-  - With Statistics open, menu bar → Mark as Junk runs the corrections, but its results sheet never appears.
-  - During onboarding, a menu-bar correction's results sheet appears unexpectedly once setup is finished.
-- **Fix:** Use a single `enum ActivitySheet: Identifiable` with one `.sheet(item:)`. Present Preview inside the digest's own sheet hierarchy. Disable the menu-bar correction section until `onboardingComplete`.
-<!-- sources: correctness/app-views-main#2 -->
-
-#### 2.25 Corpus and undo actions throw unrelated error types, so users see misleading text — Medium
-
-- **Where:** `SpamWise/CorpusView.swift:82` (`SpamWise/CorpusView.swift:90`, `SpamWise/CorpusView.swift:102`, `SpamWise/CorpusView.swift:110`, `SpamWise/DecisionDetailView.swift:52`, `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:15`, `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:61`)
-- **Problem:**
-  - Four unrelated conditions all throw `ParseError.tooLarge` ("The message exceeds the supported content limits"): more than 20 files, an unavailable store, a "[SpamWise Probe]" subject, and the 500-label cap.
-  - Undo, Forget and Relabel touch only the store, yet their failures throw `IntegrationError.unavailable` ("The Mail action is unavailable").
-  - One unparseable file aborts the whole batch without naming it.
-  - The 20-file limit and the `2_000_001`-byte read size are unnamed magic numbers.
-- **Scenario:** A user picks 25 small .eml files, is told a message is too large, and keeps retrying with smaller messages. A store failure during Undo reports a problem with Mail.
-- **Fix:**
-  - Add an app-level error type with cases such as `tooManyFiles(selected:limit:)`, `unreadable(filename:)`, `labelCapacityReached` and `storeNotReady`, each with an interpolated `failureReason`.
-  - Report per-file failures by name.
-  - Name both limits, and route the read that goes one byte past the parser maximum through a helper.
-<!-- sources: correctness/app-views-main#10, conventions/app-views-main#1, comments/app-views-main#4 -->
-
-#### 2.26 Some Evidence and Notification controls save only on a button, so edits are lost — Medium
-
-- **Where:** `SpamWise/EvidenceSettingsView.swift:71` (`SpamWise/EvidenceSettingsView.swift:13`, `SpamWise/EvidenceSettingsView.swift:41`, `SpamWise/NotificationSettingsView.swift:13`, `SpamWise/GeneralSettingsView.swift:41`)
-- **Problem:** Within the same group, some toggles save immediately: domain age, OCR, attachments and the digest. Controls that look identical only edit `@State` until a Save button is pressed: Spamhaus enable, consent and resolver; Rspamd transport and path; and every notification option. Drafts are reseeded when the view appears, and nothing marks unsaved changes.
-- **Scenario:** The user turns on Spamhaus, ticks the terms toggle and closes Settings, and nothing is saved. Or they set Rspamd to Off and close the window, and the scanner keeps receiving message data.
-- **Fix:** Make every control save the same way, either through field-level `editSettings` calls (with consent enforced in the binding) or in a clearly separate form that shows unsaved changes and prompts on dismissal.
-<!-- sources: correctness/app-views-settings#6 -->
-
-#### 2.27 Settings drafts can be seeded from default AppState and then saved over the real configuration — Medium
-
-- **Where:** `SpamWise/EvidenceSettingsView.swift:79` (`SpamWise/NotificationSettingsView.swift:38`, `SpamWise/TrustExclusionsView.swift:30`, `SpamWise/AppModel.swift:126`)
-- **Problem:** Drafts copy the settings once, when the view appears. SettingsView does not wait for a successful load, and `refresh()` sets `hasLoadedState` even when the load fails (for example with `lockUnavailable`), leaving `AppState()` defaults in place. Save then writes the whole sub-structure back.
-- **Scenario:** Opening Settings right after launch, or while the extension holds the lock, shows an empty trust-exclusions list. Adding one alias and saving deletes every existing exclusion, and saving the evidence settings resets Spamhaus consent.
-- **Fix:** Show SettingsView only after a load succeeds, reseed drafts that have no edits when the persisted value changes, and save only the fields the user edited.
-<!-- sources: correctness/app-views-settings#7 -->
-
-#### 2.28 Setup reopened from Settings has no Cancel, and Finish silently turns dry run back on — Medium
-
-- **Where:** `SpamWise/GeneralSettingsView.swift:55` (`SpamWise/OnboardingView.swift:31`, `SpamWise/AppModel.swift:201`, `SpamWiseCore/Sources/SpamWiseCore/State.swift:249`)
-- **Problem:** The four-step setup sheet offers only Back, Continue and Finish setup, with no `.cancelAction`. Finish calls `finishSetup()`, which always writes `dryRun = true` through `editSettings`. That write also bumps the revision, clears retries and drops undo. When `storageReady` is false, Finish is disabled and the sheet cannot be dismissed at all.
-- **Scenario:** A user in live mode opens Show setup to reread the privacy text. Nothing else closes the sheet, so they click through to Finish, and automatic Junk moves stop without any notice.
-- **Fix:** Add a Cancel button with `.keyboardShortcut(.cancelAction)` that only dismisses the sheet. When onboarding is already complete, Finish should leave `dryRun` unchanged.
-<!-- sources: correctness/app-views-main#1, correctness/app-views-settings#1 -->
-
-#### 2.30 Reviewed-label export re-encodes every label on each render and can export an empty file — Medium
-
-- **Where:** `SpamWise/LearningSettingsView.swift:47` (`SpamWise/LearningSettingsView.swift:44`)
-- **Problem:** The `fileExporter` document is built inline in `body`. Every re-render, including the one from the 3-second state reassignment, pretty-encodes up to 500 labels, each with up to 16,000 characters of retained text. `try? … ?? Data()` turns an encoding failure into an empty export that reports success.
-- **Scenario:** With retained content, leaving Settings → Advanced open re-encodes megabytes of JSON on the main actor every 3 seconds. An encoding failure produces an empty SpamWise-reviewed-labels.json that is reported as a successful export.
-- **Fix:** Build the document in the Export action with do/catch, as `RuleEditorView.exportRules` does, keep it in `@State`, and report errors to the user.
-<!-- sources: correctness/app-views-settings#9, conventions/app-views-settings#5 -->
-
-#### 2.31 MIME parsing, statistics and corpus file I/O run on the main actor, often in view bodies — Medium
-
-- **Where:** `SpamWise/MailReviewView.swift:32` (`SpamWise/MailReviewView.swift:39`, `SpamWise/AppModelMailReview.swift:15`, `SpamWise/AppModelMailReview.swift:67`, `SpamWise/ActivityStatisticsView.swift:15`, `SpamWise/CorpusView.swift:81`, `SpamWise/ContentRuleEditorView.swift:135`)
-- **Problem:**
-  - Review Junk fully MIME-parses every row (up to 2 MB each, 20 per page), plus the selected message, inside `body`.
-  - `correctSelection` parses up to 50 messages on the main actor just to get their subjects.
-  - The computed `statistics` property is evaluated about 8 times per render, plus once per chart bar, over 5,000 records.
-  - Corpus import reads and parses up to 20 files of 2 MB each in a `@MainActor` closure.
-  - When parsing fails, the row shows "Unclassified message", which is misleading.
-- **Scenario:** A page of large newsletters stutters on every `busy` toggle and every selection change. The Statistics sheet recomputes about 40 times per render. A 20-file import freezes the window.
-- **Fix:**
-  - Parse each page once, off the main actor, when it loads, and store lightweight row models.
-  - Compute statistics once per `body` evaluation, or keep them in `@State`.
-  - Move corpus reading and parsing into a nonisolated helper.
-  - On failure, show a specific "Couldn't read message" label.
-<!-- sources: design/main-window#17, concurrency#7, correctness/app-views-main#5, conventions/app-views-main#2, comments/app-views-main#5 -->
-
-#### 2.32 The Review Junk sheet shows the previous session's messages and pages with stale state — Medium
-
-- **Where:** `SpamWise/MailReviewView.swift:50` (`SpamWise/MailReviewView.swift:7`, `SpamWise/MailReviewView.swift:47`, `SpamWise/MailReviewView.swift:53`, `SpamWise/MailReviewView.swift:63`, `SpamWise/AppModel.swift:27`)
-- **Problem:**
-  - `accountID` and `offset` reset each time the sheet opens, but `junkMessages` and `junkTotal` live on AppModel and survive dismissal.
-  - `onChange(of: accountID)` does not run on appear and does not reset `junkTotal`.
-  - Next page stays enabled with no account selected, or with another account's total.
-  - `offset` changes before `loadJunk` runs and is not rolled back if the load fails.
-- **Scenario:** Reopening the sheet shows account A's messages under "Choose account". Next page then sends an empty account ID, fails, and leaves `offset` at 20, so the next real load skips a page.
-- **Fix:** Clear `junkMessages` and `junkTotal` on appear and on account change, or make them view-owned. Disable paging while `accountID` is empty. Commit the new offset only after a successful load. Load automatically when an account is chosen.
-<!-- sources: design/main-window#16, correctness/app-views-main#9 -->
-
-#### 2.33 The selected-message corrections sheet cannot be dismissed or cancelled for up to ~25 minutes — Medium
-
-- **Where:** `SpamWise/MailReviewView.swift:88` (`SpamWise/AppModelMailReview.swift:9`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:224`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:252`)
-- **Problem:** `correctSelection` presents CorrectionResultsView and then corrects up to 50 messages one after another, with each live move waiting through a 30-second settle. Done is disabled while `busy`, the sheet has no Cancel, and the only Cancel button sits behind the modal sheet.
-- **Scenario:** Marking 40 selected messages as Junk locks the Activity window for about 20 minutes, with no way to stop the batch.
-- **Fix:** Add a Cancel button that calls `model.cancel()`. Keep Done enabled, since results persist in Activity, or show progress somewhere non-modal. Consider settling moves in batches rather than one at a time.
-<!-- sources: correctness/app-views-main#3 -->
-
-#### 2.34 Spamhaus key status reads the secret on the main thread and reports every Keychain error as "not saved" — Medium
-
-- **Where:** `SpamWise/SpamhausSettingsView.swift:62` (`SpamWise/SpamhausSettingsView.swift:59`, `SpamWise/SpamhausSettingsView.swift:73`, `SpamWiseCore/Sources/SpamWiseCore/Keychain.swift:47`)
-- **Problem:** `refreshKeyStatus` runs `SecItemCopyMatching` with `kSecReturnData` in `onAppear`, loading the secret into memory only to check that it exists. `try?` turns every `KeychainError.status` (a missing entitlement, interaction not allowed) into "No query key saved", and the save path discards `failureReason`.
-- **Scenario:** In a build with a misconfigured access group, an existing key shows as "No query key saved". Saving again fails with an opaque message, and lookups quietly return unknown.
-- **Fix:** Add an attributes-only existence check to APIKeychain and call it off the main actor through AppModel. Show "not saved" only for `.missing`, and show other errors through `AppModel.describe`.
-<!-- sources: correctness/app-views-settings#13, conventions/app-views-settings#7 -->
-
-#### 2.35 Anthropic 5xx responses become non-retryable configuration errors — Medium
-
-- **Where:** `SpamWiseCore/Sources/Classifier/ClaudeClassifier.swift:90` (`SpamWiseCore/Sources/Classifier/ClaudeClassifier.swift:93`, `SpamWiseCore/Sources/Classifier/Types.swift:200`)
-- **Problem:** The pinned provider maps HTTP 500, 502 and 503 to a package-scoped `APIError(.api)` that ClaudeClassifier cannot catch. The error falls through to the catch-all, which throws `.configuration`, and that case is not retryable. The OpenAI and Gemini paths map 5xx to `.network`, which is retried.
-- **Scenario:** During a brief Anthropic outage on the default provider, every message is recorded as "unclassified: configuration", none is retried, and all of them stay unfiltered.
-- **Fix:** Map provider errors by kind or HTTP status: 5xx to `.network`, permission errors to a credential error. Add a ProviderTests case with a stubbed 503.
-<!-- sources: correctness/core-classifier-learning#5 -->
-
-#### 2.36 Quote stripping lets a sender hide the whole body from the model — Medium
-
-- **Where:** `SpamWiseCore/Sources/Classifier/Types.swift:314`
-- **Problem:** `unquotedText` runs on untrusted text. It stops at the first "On … wrote:" or "-----Original Message-----" line and drops every ">"-prefixed line, with no minimum amount of content kept.
-- **Scenario:** A body that opens with "On Tue, Oct 13, 2026, Billing wrote:" followed by a phishing paragraph reaches the model with an empty text field.
-- **Fix:** Strip quoted text only after some unquoted content has been seen, cap the fraction of the body that can be removed, or send the quoted region as a separate, labelled and truncated field.
-<!-- sources: correctness/core-classifier-learning#6 -->
-
-#### 2.37 Evaluation counts budget and lock refusals as provider calls and exits 0 — Medium
-
-- **Where:** `SpamWiseCore/Sources/Evaluation/CachedClassifier.swift:42` (`SpamWiseCore/Sources/SpamWiseEval/RunReport.swift:57`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:144`)
-- **Problem:** `misses` is incremented before the underlying classifier runs. When a call is refused with `BudgetError` or `StoreError.lockUnavailable`:
-  - it is recorded as an unclassified observation;
-  - it is still reported under `providerCalls`;
-  - metrics are computed over a cohort that was only partly evaluated;
-  - the process exits 0.
-- **Scenario:** With $0.50 left in the ledger, a 100-message Haiku run reports 100 provider calls and about 5% junk recall, and 95 of its rows say "spending limit reached".
-- **Fix:** Count only calls that actually reach the provider, or keep separate attempted, refused and completed counters. Treat budget and store errors as fatal and exit nonzero. Retry lock acquisition with a bounded backoff.
-<!-- sources: correctness/eval-scripts#2 -->
-
-#### 2.38 Calibration buckets are too coarse to derive the strength thresholds — Medium
-
-- **Where:** `SpamWiseCore/Sources/Evaluation/Metrics.swift:119` (`SpamWiseCore/Sources/SpamWiseEval/RunReport.swift:32`)
-- **Problem:** Buckets are 10 points wide, and the top bucket, 90 to 100, contains all three thresholds (90, 95 and 99). RunReport only re-scores those fixed values. At any corpus size, the harness cannot produce the data-derived thresholds that the brief (§3.5, §9) requires.
-- **Scenario:** In a corpus where 90–94 has 97% precision and 95–100 has 99.9%, the two collapse into one bucket at about 99%, so nothing shows that Balanced should be 95.
-- **Fix:** Report cumulative precision per point, at least from 85 upward, and the false-positive upper bound at each candidate threshold. On the training split, pick the lowest threshold that meets each strength's target, then validate those picks on the held-out split.
-<!-- sources: gap/brief-conformance#6 -->
-
-#### 2.39 The evaluator rejects reviewed labels the app exports, as duplicate content — Medium
-
-- **Where:** `SpamWiseCore/Sources/Evaluation/ReviewedCorpus.swift:57` (`SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:134`, `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:32`, `SpamWise/LearningSettingsView.swift:47`)
-- **Problem:** A correction replaces an earlier label only when the raw-message hash matches, so identical content delivered twice produces two labels. The evaluator dedupes on normalized sample identity and throws on the first collision. The export writes the label array as-is.
-- **Scenario:** A user marks the same campaign message as Junk in both accounts. `spamwise-eval --reviewed labels.json` then fails with "duplicate content", and the only fix is to Forget samples one at a time.
-- **Fix:** Dedupe by `sampleID` in `recordReviewedLabel`, as imports already do. In ReviewedCorpus, collapse duplicates that carry the same label and reject only conflicting ones, naming them in the error.
-<!-- sources: correctness/eval-scripts#3 -->
-
-#### 2.40 A later Junk correction never overrides an earlier Good/Review campaign fingerprint — Medium
-
-- **Where:** `SpamWiseCore/Sources/Learning/LearningState.swift:171` (`SpamWiseCore/Sources/Learning/CampaignLearning.swift:72`)
-- **Problem:** A Good or Review correction removes near-duplicate Junk fingerprints, but a Junk correction removes only the fingerprint with its own content ID. `isSuppressed` then lets any non-Junk fingerprint with at least 0.8 overlap block the match. Review signatures also suppress matches, although the documentation says only Inbox signatures do.
-- **Scenario:** The user marks campaign issue A as Good, and later marks near-duplicate issue B as Junk. Issues C and D never trigger the fingerprint gate, and Junk predictions for the campaign are refused, so the Junk correction appears to have no effect.
-- **Fix:** When recording a Junk fingerprint, also remove overlapping non-Junk fingerprints. Decide explicitly whether Review should suppress. Add a test that corrects Good first and then Junk.
-<!-- sources: correctness/core-classifier-learning#2 -->
-
-#### 2.41 Prediction and correction samples get different identities when attachment text or OCR is enabled — Medium
-
-- **Where:** `SpamWiseCore/Sources/Learning/LearningState.swift:200` (`SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:39`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:115`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:130`)
-- **Problem:** At classification time the identity hash covers text that includes extracted attachment and OCR text. Corrections re-parse the message with the plain parser. The two IDs differ, so the wrong prediction sample is never replaced, and Forget and relabel miss it.
-- **Scenario:** An image-heavy receipt is predicted Junk at 100 and admitted to training. The user marks it Good, but the Junk sample stays and keeps pushing similar receipts toward Junk.
-- **Fix:** Derive the learning identity from one canonical parse in both places, or store the classification-time `sampleID` on the DecisionRecord.
-<!-- sources: correctness/core-classifier-learning#8 -->
-
-#### 2.42 Learning samples keep only the alphabetically first 128 tokens — Medium
-
-- **Where:** `SpamWiseCore/Sources/Learning/LearningState.swift:325`
-- **Problem:** `LearningSample.make` dedupes the tokens, sorts them lexicographically and keeps the first 128. For long messages that leaves numbers and words from the start of the alphabet. Inference then intersects the message's full token set with this skewed vocabulary.
-- **Scenario:** Thirty phishing corrections that all contain "verify" and "suspended" store neither word. A new "verify your suspended account" message gets no Bayes signal from either.
-- **Fix:** Choose tokens by a criterion that does not depend on spelling: the first 128 distinct tokens in document order, or the 128 with the smallest `stableHash`, as campaign shingles already do. Apply the same rule at inference.
-<!-- sources: correctness/core-classifier-learning#3 -->
-
-#### 2.43 AppleScript execution has no overall deadline and cannot be cancelled — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:74` (`SpamWiseCore/Sources/MailIntegration/MailScripts.swift:21`, `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:198`)
-- **Problem:**
-  - All scripts run synchronously on one serial queue.
-  - `with timeout of 8 seconds` bounds each Apple Event, not the script as a whole.
-  - The recursive resolve across every mailbox, and the page scripts that read 100 to 1,000 sources, can run far longer.
-  - Cancellation is checked only before and after a script.
-  - The Automation permission prompt blocks the same queue until the user answers.
-- **Scenario:** On an account with hundreds of mailboxes, a correction lookup takes about 40 seconds. Menu-bar corrections and Shortcuts requests queue up behind it, and pressing Cancel has no visible effect.
-- **Fix:** Bound the work each script does: resolve through Inbox and Junk first, and cap the number of mailboxes searched. Run scripts through a mechanism that can be interrupted and enforces a wall-clock limit, such as `NSUserAppleScriptTask` or a helper process that can be terminated. Record the outcome as unknown when the limit is hit.
+  - Each lane's `AppleScriptExecutor` runs one handler call at a time through `OSAScript.executeAppleEvent` on its own serial queue. Interactive calls (corrections, lookups, selections, account and destination reads, the probe) have a lane separate from background calls (sweeps, pages, automatic actions), so a correction no longer waits behind a page script.
+  - In-process OSA execution cannot be stopped. `invoke` races each call against a 30-second `withResourceDeadline`, but a timeout or cancellation only stops waiting: the script runs to completion, and its lane stays occupied until it does.
+  - A mutating call that times out reports an unconfirmed receipt, because Mail may still apply it.
+- **Scenario:** A background page script over a large or slow mailbox runs for minutes. The sweep gives up after 30 seconds, but the next sweep call queues behind the script that is still running. In the same way, an interactive lookup that walks hundreds of mailboxes times out, and the user's next correction waits behind it although Cancel appeared to work.
+- **Fix:** Run Mail handler calls in a terminable XPC helper, as TODO.md records under "Make Apple Mail handler calls interruptible". `NSUserAppleScriptTask` is not a fit: it runs only scripts the user installs in `~/Library/Application Scripts` and has no cancellation. The helper needs its own `automation.apple-events` entitlement and Mail temporary exception, a signed check that macOS attributes its Automation consent to the app rather than prompting for the helper, and a design for launchd's roughly ten-second restart spacing seen with the document worker. Killing the helper still would not stop an Apple Event that Mail has already received, so a terminated mutating call stays unconfirmed. This needs signed runtime work.
 <!-- sources: concurrency#5 -->
-
-#### 2.44 AppleScript error numbers are unnamed and overloaded, so users see wrong explanations — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:82` (`SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:83`, `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:69`, `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:114`, `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:120`, `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:204`, `SpamWiseCore/Sources/MailIntegration/MailFolderScripts.swift:10`, `SpamWiseCore/Sources/MailIntegration/MailFolderScripts.swift:17`, `SpamWiseCore/Sources/MailIntegration/MailFolderScripts.swift:27`)
-- **Problem:** The Swift side maps -1701 to "ambiguous" and -1702 to "stale message", but the scripts use each number for several unrelated conditions:
-  - -1701: zero matches, unresolved accounts and wrong selection counts.
-  - -1702: a retained flag or colour, and the folder count and nesting limits.
-
-  A genuine -1701 error from Mail looks the same as an intended "ambiguous".
-- **Scenario:**
-  - An empty selection reports "More than one message matches".
-  - A Review flag skipped because the user already set a red flag reports "The message no longer matches its recorded state".
-  - So does listing folders on an account with more than 1,000 mailboxes.
-- **Fix:** Define a named error enum and interpolate its values into every script. Give each condition its own private error number, and map each one to an accurate IntegrationError.
-<!-- sources: correctness/mail-integration#13, comments/mail-integration#4 -->
-
-#### 2.45 Cancellation after a move script has run records the move as Failed — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:90` (`SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:253`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:311`)
-- **Problem:** `run` checks for cancellation after `executeAndReturnError` returns, and `perform` then sleeps through a cancellable 30-second settle before verifying. A CancellationError that arrives after a successful move reaches dispatch, which sets `.failed` and skips mark-as-read. The model already has `.requested` for completion that was not confirmed, and that is the accurate state here.
-- **Scenario:** The user presses Cancel during the settle window. Activity shows Failed for a message that is now in Junk, so the user never looks for it there.
-- **Fix:** Once a mutating script has succeeded, do not treat cancellation as failure. Either shield the settle and verify steps from cancellation, or return `ActionReceipt(confirmed: false)` so the record becomes `.requested`.
-<!-- sources: concurrency#4 -->
-
-#### 2.46 Apple Mail actions move a message from wherever it now is — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:241` (`SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:245`, `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:202`)
-- **Problem:** `perform` and `lookup` check only the account and the content hash. `resolve` searches every mailbox in the account, and nothing compares the mailbox it finds with `identity.mailbox`. Decisions are dispatched seconds to minutes after the page was read, and retries up to 24 hours later. The IMAP adapter, by contrast, SELECTs the recorded mailbox.
-- **Scenario:** A message's classification times out and a retry is queued. The user files it into "Receipts/2026". Two minutes later the retry classifies it as Junk and moves it out of that folder.
-- **Fix:** For automatic actions, require the resolved mailbox and account to equal `identity.mailbox` inside the action script, and fail open when they differ. Keep the any-mailbox resolution only for explicit user corrections.
-<!-- sources: correctness/mail-integration#3 -->
-
-#### 2.47 Each Apple Mail move holds the sequential pipeline for 30 seconds — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:253` (`SpamWise/AppModelScanning.swift:121`, `SpamWise/AppModel.swift:82`)
-- **Problem:** `perform` sleeps for `moveSettlingTime` (30 s) after every Junk or Inbox move, and the batch is processed one message at a time, so N Junk verdicts take at least 30·N seconds. Meanwhile the remaining envelopes go stale, which widens the window in §2.46, and Pause takes effect only between messages.
-- **Scenario:** Twenty spam messages arrive overnight, and the next sweep takes more than 10 minutes to move them. Each is acted on minutes after it was read, and the UI spends most of that time waiting.
-- **Fix:** Record `.requested` and confirm the move in a separate verification pass, or poll at a short interval with an early exit, while the rest of the batch continues.
-<!-- sources: security/mail-integration#5 -->
-
-#### 2.48 Daemon `--probe` and `--model` silently change the shared app's route, transport and model — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:148` (`SpamWiseCore/Sources/SpamWiseDaemon/main.swift:58`, `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:71`, `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:122`, `SpamWise/AppModelIMAP.swift:25`)
-- **Problem:** Without `statePath`, the daemon uses the App Group store that the app and extension share.
-  - A successful `--probe` sets `route = .imap` and `transport = .imap`. That turns off the validated Mail-rule route, makes the extension skip its work, and points the app's sweeps at an IMAPAppConnection the GUI never saved.
-  - `--model` rewrites the shared backend and model.
-  - The CLI prints only "Dry run remains unchanged."
-- **Scenario:** A user who filters with Apple Mail runs `spamwise-daemon --probe 42` to try a second account over IMAP. The app's next scan throws "The IMAP configuration is invalid", and Apple Mail filtering stops.
-- **Fix:**
-  - Record IMAP validation under a daemon-scoped key without touching the GUI's route or transport. Alternatively, require `statePath`, or refuse to probe while the shared transport is Apple Mail.
-  - Keep `--model` scoped to the daemon's own store.
-  - Print every setting a command changes.
-<!-- sources: security/mail-integration#6, correctness/mail-integration#9 -->
-
-#### 2.49 Folder start dates use Calendar.current components inside a Gregorian AppleScript date — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailFolderScripts.swift:78` (`SpamWise/AppModelFolders.swift:69`)
-- **Problem:** The year, month and day come from the user's current calendar and are written into an AppleScript date, which is always Gregorian. Under the Buddhist calendar the year is 2569, under the Japanese calendar it is the era year 8, and the Hebrew and Islamic calendars number months differently.
-- **Scenario:** Under the Buddhist calendar, a filter plan starting today matches nothing. Under the Japanese calendar it covers the folder's whole history, and once dry run is off it can move years-old mail to Junk.
-- **Fix:** Build the components with `Calendar(identifier: .gregorian)` and the current time zone, or pass an epoch timestamp to the script.
-<!-- sources: correctness/mail-integration#5 -->
-
-#### 2.50 Moves of messages without a Message-ID are recorded as failed and "ambiguous" — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:203` (`SpamWiseCore/Sources/MailIntegration/MailScripts.swift:16`, `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:155`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:132`)
-- **Problem:** A message with no Message-ID is located by its local ID, and Mail assigns a new local ID after a move. Verification looks the message up with the pre-move identity, finds nothing, raises -1701, and throws "ambiguous" after the move has already happened.
-- **Scenario:** A spam message without a Message-ID, which is common for spam, is moved to Junk but recorded as Failed with "More than one message matches". Mark Good later cannot find it.
-- **Fix:** Refuse automatic moves when `messageID` is nil, failing open before acting. Alternatively, return the post-move local ID through `ActionReceipt.updatedIdentity` and verify against that.
-<!-- sources: correctness/mail-integration#4 -->
-
-#### 2.51 Public Suffix List matching ignores punycode, so IDN public suffixes become "registrable domains" — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/DomainResolver.swift:11` (`SpamWiseCore/Sources/MessageModel/DomainResolver.swift:17`, `SpamWiseCore/Sources/MessageModel/DomainResolver.swift:19`, `SpamWiseCore/Sources/SpamWiseCore/RuleManagement.swift:47`, `public_suffix_list.dat:820`)
-- **Problem:** The bundled PSL stores IDN rules only in Unicode and has no `xn--` rules. Sender hosts arrive as ASCII punycode, and neither side is ever converted to the other. If the PSL resource fails to load, the rule set is empty and every lookup quietly returns nil.
-- **Scenario:** A domain Block made from <promo@shop.xn--55qx5d.cn> is stored as the rule `xn--55qx5d.cn`, which blocks every company registered under 公司.cn. A rule typed as `bücher.de` passes validation but never matches `xn--bcher-kva.de`.
-- **Fix:** Normalize PSL rules and rule values to one IDNA form, either at load time or in the PSL refresh script. Treat a missing PSL as a `preconditionFailure`. Add IDN boundary tests.
-<!-- sources: correctness/core-parsing-signals#8, correctness/tests#4, conventions/core-parsing-signals#2, comments/core-parsing-signals#24 -->
-
-#### 2.52 IMAP identity keys include the UID, so mail rescued from Junk in another client is junked again — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/Identity.swift:18` (`SpamWiseCore/Sources/MailIntegration/IMAPPaging.swift:39`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:100`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:293`, `SpamWise/AppModelScanning.swift:113`)
-- **Problem:** For IMAP, the dedupe key, the seen-set and the at-most-once action claim all hash the mailbox, UIDVALIDITY and UID. Moving a message back to INBOX in another client gives it a new UID, so it gets a new key with no claim. A UIDVALIDITY reset makes the whole Inbox look new and re-classifies it.
-- **Scenario:** The user drags a wanted newsletter back to INBOX on their phone. Within a minute SpamWise pays to classify it again and moves it back to Junk, and this repeats every time they rescue it.
-- **Fix:** Key dedupe and claims on account plus Message-ID plus content hash, as the Apple Mail key does, and use UID and UIDVALIDITY only for addressing the message. Treat a message that reappears in INBOX after a SpamWise Junk move as an implicit Good correction. Add a test.
-<!-- sources: correctness/core-pipeline-store#5, correctness/app-logic#4 -->
-
-#### 2.53 Interleaving MIME alternatives in 128-character chunks breaks phrases — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:62` (`SpamWiseCore/Sources/MessageModel/MIMEParser.swift:51`)
-- **Problem:** When the plain and HTML alternatives differ, as they do for most HTML mail, `message.text` becomes alternating 128-character slices separated by "[Alternative N]" markers. Any phrase that crosses a slice boundary is split, which breaks body rules, the receipt heuristic and Bayes tokens, and the text roughly doubles in length.
-- **Scenario:** The body rule "claim your prize" misses text that came out as "claim yo\n[Alternative 2] …\n[Alternative 1] ur prize".
-- **Fix:** Keep each alternative contiguous and bounded. Interleave only in the prompt builder, if at all. Run content rules against each alternative separately.
-<!-- sources: correctness/core-parsing-signals#7 -->
-
-#### 2.54 Content-rule header and attachment fields match raw, undecoded values — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/ContentRules.swift:104` (`SpamWiseCore/Sources/MessageModel/MIMEParser.swift:97`)
-- **Problem:** The recipients, List-ID and Reply-To fields use raw Latin-1 header values with encoded words left undecoded. The filename regex requires `filename=`, so RFC 2231 forms (`filename*=`, `filename*0=`) yield no name unless a legacy `name=` is also present.
-- **Scenario:** An attachment rule `.html` → Block misses an attachment declared as `filename*=UTF-8''Invoice%20123.html`.
-- **Fix:** Decode header fields before matching, covering encoded words and 8-bit UTF-8. Parse RFC 2231 extended and continued parameters. Cover both in the content-rule test.
-<!-- sources: correctness/core-parsing-signals#9 -->
-
-#### 2.55 URL, link-domain and Spamhaus caps keep the alphabetically first entries — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:178` (`SpamWiseCore/Sources/MessageModel/MIMEParser.swift:222`, `SpamWiseCore/Sources/Signals/Evidence.swift:73`)
-- **Problem:** Each bounded list is sorted alphabetically before it is cut:
-  - The Spamhaus lookup turns its candidates into a Set, sorts them and queries five, discarding the sender-first order.
-  - MIMEParser sorts URLs before applying its 40-item cap.
-  - EvidenceBundle sorts link domains before taking 20.
-- **Scenario:** A phish from zz-login.xyz contains links to apple.com, amazon.com, bit.ly, cdn.example and facebook.com, plus the payload link secure-update.top. Neither the sender domain nor the payload domain is checked.
-- **Fix:** Bound in priority order: sender, Reply-To and Return-Path domains first, then link domains in order of first appearance, deduplicated with an ordered set. Apply the same rule to URLs and to `linkDomains`.
-<!-- sources: correctness/core-parsing-signals#6 -->
-
-#### 2.56 Imported corpus samples train logistic weights on header-stripped evidence — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:47` (`SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:24`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:149`)
-- **Problem:** `importMessages` clears headers before building the EvidenceBundle, so every imported sample has the same feature values: auth failure 0, Reply-To mismatch 0, List-Unsubscribe 0 and domain-age-unknown 1. Live corrections use the real evidence, so the model learns where a sample came from, not whether it is spam. Importing the SpamSieve Junk the user is accumulating would make this the main training source.
-- **Scenario:** The user imports 150 Junk samples, none with List-Unsubscribe, and marks 60 live newsletters as Good, all with it. The model learns that List-Unsubscribe means Inbox and pushes every spam message carrying that header toward Inbox.
-- **Fix:** Compute the evidence before stripping headers and store only the derived features. Alternatively, exclude imported samples from logistic training and mark their header-derived features as unknown.
-<!-- sources: correctness/core-classifier-learning#4 -->
-
-#### 2.57 The 500-label cap is inconsistent: corrections silently evict imported labels, while imports fail outright — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:61` (`SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:144`, `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:101`)
-- **Problem:** Corrections keep only the newest 500 labels, whatever their origin. That drops imported and held-out human labels without removing their learning contributions or examples, which Forget can then no longer reach. Imports, meanwhile, throw `ParseError.tooLarge` once the total would exceed 500, and the message does not mention the label limit.
-- **Scenario:** After 480 imports and 20 corrections, every import fails with "too large". A further 100 corrections remove 100 imported labels, quietly shrinking the held-out set, while those labels' Bayes contributions remain.
-- **Fix:** Apply one retention policy to both paths: never evict imported labels silently, or ask before doing so. Remove linked learning when a label is evicted. Use a dedicated "label limit reached" error. Show remaining capacity, and add a "rebuild learning from current labels" action.
-<!-- sources: todo/spamsieve-b#6, correctness/core-pipeline-store#12 -->
-
-#### 2.58 A revision change between claim and perform leaves the message claimed forever but never acted on — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:304` (`SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:293`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:100`)
-- **Problem:** The claim is written in the first transaction. If the recheck after claiming finds a new revision, Pause or dry run, the record is saved as `.superseded` but the claim is not released, so every later `process()` call returns that record immediately.
-- **Scenario:** A sweep claims a Junk move, and in that window the user toggles a notification preference. The spam stays in the Inbox permanently.
-- **Fix:** When the recheck aborts before `adapter.perform`, remove `claimedActions[key]` in the same transaction. Nothing was dispatched, so at-most-once still holds.
-<!-- sources: correctness/core-pipeline-store#8 -->
-
-#### 2.59 Every Review decision on IMAP dispatches a flag the IMAP adapter always rejects — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:306` (`SpamWiseCore/Sources/Decision/Decision.swift:88`, `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:141`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:316`)
-- **Problem:** Pipeline claims and dispatches the Review annotation without checking whether the adapter supports it. IMAPAdapter throws "unsupported" for anything other than a move, and the record becomes `.failed` with "delivery status unknown. Not retried."
-- **Scenario:** An IMAP user gets 20 Review messages a week. All of them appear as failed actions and dominate the digest and the statistics, even though nothing was attempted.
-- **Fix:** Add a supported-actions query to the adapter, or map Review to an IMAP flag or keyword such as `\Flagged` or `$SpamWiseReview`. When an action is unsupported, record `.noAction` without claiming. Give rejections that happen before any action their own message.
-<!-- sources: correctness/core-pipeline-store#6, correctness/mail-integration#12 -->
-
-#### 2.60 A save failure after a successful move adds an "unclassified" record and leaves the real one as requested — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:321` (`SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:139`)
-- **Problem:** `try await save(completed)` runs after `perform` and outside any catch. A lock or store error therefore reaches `process()`'s catch, which saves a second record for the same identity: "unclassified: persistence or integration unavailable". The original record stays `.requested`, and mark-as-read is skipped.
-- **Scenario:** A confirmed Junk move collides with the extension's write. The newest Activity row for the message says "unclassified", although the message sits in Junk because of a model verdict.
-- **Fix:** Handle post-action save failures inside dispatch with a bounded retry. Never create a second failure record once an action has been dispatched.
-<!-- sources: correctness/core-pipeline-store#7 -->
-
-#### 2.61 A failed write for optional Bayes training discards a successful, paid verdict — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:78` (`SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:110`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:136`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:193`)
-- **Problem:** `trainPrediction` and the content-rule hit counter use `try` on a `StateRepository.update` that throws `lockUnavailable` under contention. That error aborts classification as "persistence or integration unavailable", and no retry is scheduled, although the provider call has already been paid for.
-- **Scenario:** With Bayes enabled, a Junk-99 verdict is lost because the extension held the lock during the training write.
-- **Fix:** Make the training and hit-count writes best-effort, or fold them into the decision save after the record has been persisted.
-<!-- sources: correctness/core-classifier-learning#7 -->
-
-#### 2.62 Authentication results are never trusted, so DMARC/SPF/DKIM failures carry no weight — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:215` (`SpamWiseCore/Sources/Signals/Evidence.swift:57`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:135`, `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:28`, `SpamWiseCore/Sources/Classifier/Types.swift:244`)
-- **Problem:** No production caller passes `trustedAuthServers`, and no setting fills it, so every AuthResult is `trusted: false`. Consequences:
-  - The instructions weight only trusted failures, so a real failure counts for nothing.
-  - The Bayes contradiction guard can never fire.
-  - The learned auth-failure feature is always 0.
-  - The inspector shows `"trusted": false` even for the user's own provider.
-
-  `parse` also lowercases server names, but the trust set is not normalized. The brief treats an authentication failure as Strong evidence.
-- **Scenario:** A lure from a throwaway domain fails DMARC at mx.google.com, and the model is told the result is untrusted. That removes the strongest deterministic signal for the brief's main target class.
-- **Fix:** Determine each account's trusted authserv-id, either from the topmost Authentication-Results header added by its provider or by confirming it at setup. Lowercase it, pass it through `relationshipEvidence`, and add a pipeline test. Until then, say in the instructions and in Help that authentication results are not used.
-<!-- sources: conventions/core-parsing-signals#3, gap/brief-conformance#1 -->
-
-#### 2.63 Corrections leave mail in the wrong state — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:9` (`SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:13`, `SpamWiseCore/Sources/Decision/Decision.swift:26`, `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:111`)
-- **Problem:** Review is defined as "leave in Inbox with a flag", but the correction actions do not produce that state:
-  - A Review correction only adds the flag or background colour, wherever the message happens to be.
-  - A Good correction only moves the message to Inbox.
-  - The action vocabulary has no way to remove an annotation SpamWise added.
-- **Scenario:** A message junked at 96 and corrected to Review stays in Junk with an orange flag. A Review-flagged newsletter marked Good keeps its orange flag and still looks like Review.
-- **Fix:** Map a Review correction to a move to Inbox (when the message is elsewhere) followed by the annotation, as the probe already does. Add clear-annotation actions, and dispatch them for Good and Junk corrections of Review records. Cover both cases in tests.
-<!-- sources: correctness/core-pipeline-store#10, gap/brief-conformance#2 -->
-
-#### 2.64 A correction can be overridden by an existing rule at another scope — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:50` (`SpamWiseCore/Sources/Signals/Gates.swift:86`)
-- **Problem:** A correction replaces only the rule at its own scope. A domain-scope correction leaves the sender's address rule in place, and the address rule takes precedence. A Review correction removes only the address rule, so a domain Block still applies.
-- **Scenario:** An earlier `address:a@shop.com` block exists. The user corrects a message from that sender to Inbox with "All of shop.com", but the next message from <a@shop.com> goes straight back to Junk, while the audit says the correction was applied.
-- **Fix:** At domain scope, remove or replace conflicting address rules for the corrected sender. For Review, add an address-level exception to a matching domain rule, or warn the user in the correction UI.
-<!-- sources: correctness/core-pipeline-store#9 -->
-
-#### 2.65 `correct()` commits the rule, then can throw before dispatch — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:102` (`SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:28`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:110`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:124`)
-- **Problem:** The first transaction commits the rule, the example, a revision bump and a `.pending` record. `recordReviewedLabel` then performs loads and updates that can throw, and a throw skips the dispatch. Callers then report that no correction was saved.
-- **Scenario:** Mark Good saves an allow rule, then `recordReviewedLabel` hits `lockUnavailable`. The UI says the correction failed, the message stays in Junk, and the row stays pending forever.
-- **Fix:** Make label recording best-effort, or fold it into the first transaction. Always continue to dispatch, and report only dispatch problems, through the record's outcome.
-<!-- sources: correctness/core-pipeline-store#11 -->
-
-#### 2.66 Persistent state grows without bound inside one blob that every transaction decodes — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/State.swift:191` (`SpamWiseCore/Sources/SpamWiseCore/State.swift:144`, `SpamWiseCore/Sources/SpamWiseCore/State.swift:243`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:312`, `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:124`, `SpamWiseCore/Sources/SpamWiseCore/CorrectionUndo.swift:56`, `SpamWiseCore/Sources/Store/Store.swift:80`)
-- **Problem:**
-  - `claimedActions` and every `HistoryIndex.importedIDs` only ever grow.
-  - The undo snapshot duplicates the rules, corrections, learning state and labels.
-  - All of it lives under the single key `application-v1`, which is fully decoded and re-encoded about 10 to 14 times per message while the exclusive lock is held.
-- **Scenario:** After a year of heavy mail, tens of thousands of claims and imported IDs add several megabytes to every transaction. Every step slows down, extension callbacks approach their deadline, and the lock window widens.
-- **Fix:** Store the collections under separate keys or rows. Prune claims by age or by whether the message can still be resolved. Bound `importedIDs` with a rolling window or a high-water mark. Keep the undo snapshot under its own key.
-<!-- sources: security/core-pipeline-store#6, correctness/core-pipeline-store#3, correctness/mail-integration#11 -->
-
-#### 2.67 Every settings edit bumps the revision, drops all retries and undo, and logs a generic audit entry — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/State.swift:270` (`SpamWiseCore/Sources/SpamWiseCore/State.swift:255`, `SpamWise/AppModelSettings.swift:32`, `SpamWise/NotificationSettingsView.swift:58`, `SpamWise/GeneralSettingsView.swift:41`)
-- **Problem:** `StateRepository.editSettings` treats every change as a policy change, including the notification interval, the digest, mark-as-read and each Stepper click. Every edit:
-  - increments `revision`, which supersedes in-flight decisions;
-  - empties the retry queue;
-  - clears `correctionUndo`;
-  - writes the same generic audit entry.
-- **Scenario:** Toggling the weekly digest during a sweep supersedes the decisions in flight, which are sent to the provider again later. It also deletes up to 100 queued retries and removes Undo. The audit trail cannot show when the policy text itself changed.
-- **Fix:** Bump the revision, clear retries and invalidate undo only for fields that affect classification or actions. Save presentation preferences in a transaction that leaves those alone. Debounce steppers, and record which setting changed.
-<!-- sources: todo/spamsieve-b#11, correctness/app-logic#14, correctness/app-views-settings#3 -->
-
-#### 2.68 Daemon poll mode exits on the first transient error — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:96` (`SpamWiseCore/Sources/SpamWiseDaemon/main.swift:39`, `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:89`, `SpamWiseCore/Sources/MailIntegration/IMAPTransport.swift:75`)
-- **Problem:** The poll loop has no per-iteration catch. A network blip, a server BYE, Wi-Fi sleep, the 30-second session cutoff or lock contention all reach `main`'s catch, which calls `exit(1)`, and nothing restarts the process.
-- **Scenario:** After the Mac sleeps and wakes, the first connection fails. The daemon prints "Headless operation failed" and exits, and no more mail is filtered.
-- **Fix:** In poll mode, catch errors other than cancellation on each iteration, log a sanitized category, back off and continue. Exit only on configuration errors or repeated authentication failures.
-<!-- sources: correctness/mail-integration#8 -->
-
-#### 2.69 Daemon dedupe treats dry-run, paused and unclassified records as done — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:98` (`SpamWise/AppModelScanning.swift:113`)
-- **Problem:** The daemon skips any message that has any record. The app's predicate excludes paused, superseded, and stale dry-run or unclassified records.
-- **Scenario:** The user runs the daemon with `--actions` while dry run is still on, then turns dry run off. None of the spam already recorded during the dry run is ever moved.
-- **Fix:** Move a single seen predicate into SpamWiseCore, for example `StateRepository.processedKeys(dryRun:)`, and use it in both the app and the daemon.
-<!-- sources: correctness/mail-integration#7 -->
-
-#### 2.70 A non-blocking `flock` with no retry turns routine contention into lost work — Medium
-
-- **Where:** `SpamWiseCore/Sources/Store/Store.swift:101` (`SpamWiseCore/Sources/Store/Store.swift:103`, `MailExtension/MessageActionHandler.swift:25`, `SpamWise/AppModelScanning.swift:115`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:321`, `SpamWiseCore/Sources/SpamWiseCore/EvaluationBudget.swift:50`)
-- **Problem:**
-  - Every Store operation takes `LOCK_EX | LOCK_NB` and throws `lockUnavailable` immediately if the lock is held.
-  - flock locks belong to the open file description, and the extension creates a new Store for every callback, so concurrent callbacks conflict even within one process.
-  - The app, daemon and CLI also compete for the same lock.
-  - No caller retries, and StoreError is not a retryable classification error.
-- **Scenario:**
-  - During a burst of Mail callbacks, most fail open and leave no record or heartbeat.
-  - A sweep's save collides with the extension and leaves either an unclassified record or a pending record that already has a verdict. The seen filter then skips that message forever.
-  - A correction fails with "The shared storage lock could not be acquired."
-- **Fix:**
-  - Wait for the lock up to a bounded deadline, either by polling with `LOCK_NB` and backoff or by taking a blocking lock on a dedicated executor.
-  - Share one Store per process, using a static in the extension.
-  - Treat `lockUnavailable` as retryable, and retry saves that follow an action.
-<!-- sources: concurrency#2, security/core-pipeline-store#5, correctness/core-pipeline-store#2 -->
-
-#### 2.71 Scenario tests chain many unrelated behaviors under names that describe one — Medium
-
-- **Where:** `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:176` (`SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:39`, `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:83`, `SpamWiseCore/Tests/SpamWiseCoreTests/RoadmapStateTests.swift:5`, `SpamWiseCore/Tests/SpamWiseCoreTests/SignalsTests.swift:142`, `SpamWiseCore/Tests/SpamWiseCoreTests/SignalsTests.swift:159`, `SpamWiseCore/Tests/SpamWiseCoreTests/MailIntegrationTests.swift:191`, `UITests/UITests.swift:4`)
-- **Problem:**
-  - Tests of 50 to 80 lines run 5 to 15 behaviors on shared state. The retry-preview test, for example, also covers Review corrections, relabel, Forget, retention, Bayes and undo while paused.
-  - They sit just under SwiftLint's body-length limit.
-  - Their names don't say what they cover, and later checks inherit state left by earlier ones.
-- **Scenario:** A regression in CorrectionUndo shows up as a failure of "preserves pending retries…", and no test name points to the local-only privacy coverage.
-- **Fix:** Split each into tests named for the behavior they check. Share setup through fixtures or a suite `init`, and use `@Test(arguments:)` for table-style cases.
-<!-- sources: correctness/tests#12, conventions/tests#5 -->
-
-#### 2.72 The PDF worker caps characters, not bytes, so valid non-Latin text kills the worker — Medium
-
-- **Where:** `Tools/DocumentWorker/PDFExtraction.swift:17` (`Tools/DocumentWorker/Worker.swift:83`, `Tools/DocumentWorker/Protocol.swift:5`)
-- **Problem:** Text is truncated to 3,000 grapheme clusters, but the reply limit is 16,384 encoded bytes, and the worker calls `_exit(75)` when a reply exceeds it. Indic or Thai text, ZWJ emoji sequences or floods of combining marks can exceed the byte limit while staying under the character limit. The shipping plan reuses this extraction code.
-- **Scenario:** An ordinary Hindi PDF comes back as "unavailable" instead of truncated text, and the attempt is logged as a worker failure.
-- **Fix:** Truncate by encoded size, leaving headroom for JSON escaping, or return an explicit `outputLimit` status. Add Indic and combining-mark fixtures.
-<!-- sources: correctness/tools#2 -->
-
-#### 2.73 App-target orchestration has no unit tests, and UnitTests.swift is an import-only placeholder — Medium
-
-- **Where:** `UnitTests/UnitTests.swift:1` (`SpamWise/AppModelScanning.swift:37`, `SpamWise/AppModelScanning.swift:107`, `SpamWise/AppModelFolders.swift:54`, `SpamWise/AppModelMailReview.swift:6`, `SpamWise/AppModel.swift:181`, `SpamWise/IMAPConnectionModel.swift`)
-- **Problem:**
-  - None of this app-target logic has unit tests:
-    - the seen predicate;
-    - per-account failure isolation;
-    - cursor and classification ordering;
-    - folder training;
-    - batch corrections;
-    - history maintenance;
-    - the optimistic settings queue.
-  - It all lives in `@MainActor` code.
-  - UnitTests holds only DirectUpdateConfigurationTests and a file with two imports, and the target never runs (§2.11). CLAUDE.md suggests the placeholder may exist for AppIntents linkage.
-  - Simple multi-sweep tests would catch several defects in this section (§2.18, §2.20, §2.21).
-- **Scenario:** An edit to the seen predicate starts re-classifying already-handled messages on every sweep, or the catch in `scanMailAccounts` swallows CancellationError. No test fails, and SS-01 and SS-06 stay marked verified.
-- **Fix:**
-  - Move the sweep, folder-plan and selected-batch orchestration into SpamWiseCore behind MailClientAdapter, or extract pure helpers such as `ScanSelection.alreadyHandled`.
-  - Cover them with Swift Testing and stub adapters.
-  - Test `editSettings` ordering against `refresh()`.
-  - Remove the placeholder, or document why it exists.
-<!-- sources: todo/spamsieve-a#7, correctness/app-logic#21, conventions/app-logic#10, conventions/tests#4 -->
-
-#### 2.74 The brief's §8 fixture acceptance is met only by hand-written mock verdicts — Medium
-
-- **Where:** `eval/mock-responses.json:1` (`docs/evaluation.md:15`)
-- **Problem:** The fixture outcomes (two Inbox, two Junk, one Review) come from verdicts injected by message hash. The check therefore never exercises the instructions, the prompt or the evidence, and the eval state has no history that a gate could use. The only real-backend run, on-device, returned Review for every fixture. The live Haiku run never completed. The docs do label the mock run as a plumbing check, but the brief's criterion is not tracked anywhere as unmet.
-- **Scenario:** A regression in `PromptBuilder.instructions` or in evidence encoding, such as §2.62, leaves the fixture check passing.
-- **Fix:** Mark the criterion as unmet in TODO.md. Run the five fixtures once against Claude within the ledger and record the labels. Seed history for the order-confirmation sender. Keep the mock run labelled as a plumbing check.
-<!-- sources: gap/brief-conformance#7 -->
 
 #### 2.75 Always-on prompt caching pays the cache-write premium on every unique message, recorded at the base rate — Low
 
@@ -1458,30 +536,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Fix:** Route these lookups through the same adapter-selection helper that `correct()` uses, and hide Open in Mail for IMAP records.
 <!-- sources: correctness/app-logic#15 -->
 
-#### 2.81 The content rules table keeps a deleted rule selected — Low
-
-- **Where:** `SpamWise/ContentRuleEditorView.swift:36` (`SpamWise/ContentRuleEditorView.swift:79`)
-- **Problem:** `remove()` never clears `selection`, and Edit and Remove are disabled only when `selection == nil`, not when no matching rule exists. RuleEditorView avoids both problems.
-- **Scenario:** After a removal, Edit opens a blank new-rule form. Clicking Remove again bumps the revision, clears retries and writes another audit entry.
-- **Fix:** Derive a `selectedRule` from `rules`, base the button states on it, and clear `selection` after a successful remove.
-<!-- sources: correctness/app-views-settings#11, conventions/app-views-settings#4 -->
-
-#### 2.82 The Activity Time column shows only hour and minute — Low
-
-- **Where:** `SpamWise/ContentView.swift:37`
-- **Problem:** The log spans many days and has date-range filters, but rows show only `HH:mm`.
-- **Scenario:** A user filtering the last 7 days cannot tell which of several "10:42" rows is from yesterday.
-- **Fix:** Include the date for records not from today, for example `.dateTime.month(.abbreviated).day().hour().minute()`.
-<!-- sources: correctness/app-views-main#6 -->
-
-#### 2.83 Account and Path filters show raw account IDs and internal path tokens — Low
-
-- **Where:** `SpamWise/ContentView.swift:77` (`SpamWise/ActivityStatisticsView.swift:36`)
-- **Problem:** The Account pickers list Mail account UUIDs instead of the names in `model.accounts`. The Path picker shows unlocalized internal values such as "gate", "model" and "selection".
-- **Scenario:** A user with iCloud and Google accounts sees two 36-character UUIDs and cannot tell which is which. In Spanish, the path entries appear as English code identifiers.
-- **Fix:** Map account IDs to display names, falling back to the ID, and map paths to localized titles, as `ActionOutcome.localizedTitle` already does for outcomes.
-<!-- sources: correctness/app-views-main#7 -->
-
 #### 2.84 Monthly cost in the footer and statistics rounds sub-cent spend to $0.00 — Low
 
 - **Where:** `SpamWise/ContentView.swift:168` (`SpamWise/ActivityStatisticsView.swift:52`, `SpamWise/DecisionDetailView.swift:204`)
@@ -1489,14 +543,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** After 30 paid classifications (about $0.004), the footer still reads "Month: $0.00".
 - **Fix:** Use significant digits, for example `.precision(.significantDigits(2...4))`, or show "< $0.01".
 <!-- sources: correctness/app-views-main#12 -->
-
-#### 2.85 The reviewed corpus can hold two labels with the same identifier — Low
-
-- **Where:** `SpamWise/CorpusView.swift:32` (`SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:32`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:138`)
-- **Problem:** Corrections dedupe labels by content hash, while imports dedupe by semantic `sampleID`. A correction saved with retention and learning both off, followed by importing the same message's raw source, leaves two rows with the same `id`.
-- **Scenario:** Selecting one row selects both, counts are inflated, and Relabel or Forget acts on both at once.
-- **Fix:** Use the same dedupe key in both paths, or give each stored label a unique id.
-<!-- sources: correctness/app-views-main#11 -->
 
 #### 2.86 The undo dialog appears on every row and quotes snapshot totals — Low
 
@@ -1522,14 +568,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Fix:** Distinguish "no saved connection" from a load failure, show the error, and disable Save until a load succeeds.
 <!-- sources: correctness/app-logic#17 -->
 
-#### 2.89 Account settings never show whether an API key is stored — Low
-
-- **Where:** `SpamWise/KeyEntryView.swift:9` (`SpamWise/AppModel.swift:12`, `SpamWise/AppModelCredentials.swift:17`, `SpamWise/ModelSettingsView.swift:62`)
-- **Problem:** Key status exists only in memory after verification. The pane shows no masked indicator and has no Remove action, contrary to brief §6.
-- **Scenario:** After a relaunch, the user can't tell whether a key is saved and pastes it again, which triggers another paid verification. A user who wants to stop paid use cannot delete the key from the app.
-- **Fix:** Check Keychain for an existing item when the pane appears, show a masked suffix with Replace and Remove, and persist the last verification result.
-<!-- sources: gap/brief-conformance#5 -->
-
 #### 2.90 Notifications are suppressed while SpamWise is frontmost, yet their claims are consumed — Low
 
 - **Where:** `SpamWise/LocalNotifications.swift:5` (`SpamWise/LocalNotifications.swift:40`)
@@ -1546,22 +584,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Fix:** Remove the guard after the claim, or have `claim` return the options it evaluated.
 <!-- sources: conventions/app-logic#19 -->
 
-#### 2.92 Status texts claim activity that is not happening — Low
-
-- **Where:** `SpamWise/MailMenuView.swift:9` (`SpamWise/OnboardingView.swift:38`)
-- **Problem:** The menu bar says "SpamWise is running" before onboarding is complete, when no scans run. The setup account step always labels its button "Continue offline", even after the key was verified.
-- **Scenario:** A user who has not finished setup believes their mail is being filtered.
-- **Fix:** Use the same mode text as ActivityStatusView, plus a "Setup incomplete" state, and label the button "Continue" once a key is verified.
-<!-- sources: correctness/app-views-main#14 -->
-
-#### 2.94 Quiet-hours labels ignore locale and the 12/24-hour setting — Low
-
-- **Where:** `SpamWise/NotificationSettingsView.swift:25` (`SpamWise/NotificationSettingsView.swift:28`)
-- **Problem:** The labels are built as `$0.formatted() + ":00"`.
-- **Scenario:** A US user with a 12-hour clock sees "13:00 … 23:00".
-- **Fix:** Build a Date for each hour and format it with `.dateTime.hour()`.
-<!-- sources: correctness/app-views-settings#14 -->
-
 #### 2.95 The policy length limit is defined three times with conflicting values — Low
 
 - **Where:** `SpamWise/PolicyView.swift:5` (`SpamWiseCore/Sources/Classifier/ClassificationLimits.swift:10`, `SpamWiseCore/Sources/SpamWiseCore/StateBackup.swift:26`)
@@ -1569,14 +591,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** A restored 6,000-character policy disables Save in the editor, and the classifier silently drops the last 2,000 characters. Normal use is unlikely to produce one.
 - **Fix:** Expose a single public constant from SpamWiseCore and use it in all three places.
 <!-- sources: conventions/app-views-main#5 -->
-
-#### 2.96 Saving Preferences unchanged turns the default policy into a custom one — Low
-
-- **Where:** `SpamWise/PolicyView.swift:45` (`SpamWise/PolicyView.swift:39`)
-- **Problem:** The editor swaps the core default for its localized text, which differs even in English (curly versus straight apostrophes). Save stores that text as a custom policy and goes through `editSettings`, which bumps the revision and clears retries and undo. The editor text is seeded only in `onAppear`.
-- **Scenario:** A user presses ⌘S out of habit. The policy stops tracking the default, and pending retries and Undo disappear.
-- **Fix:** Disable Save while the text is unchanged, map the localized default back to `PromptBuilder.defaultPolicy`, and reseed the text once state loads.
-<!-- sources: correctness/app-views-main#15 -->
 
 #### 2.97 UI-testing mode reads, and can write, the production shared Keychain — Low
 
@@ -1642,22 +656,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Fix:** Use a small table of localized attribution patterns behind a named helper. Keep the abuse limits from §2.36.
 <!-- sources: comments/core-classifier-learning#17 -->
 
-#### 2.105 Comparison manifests accept a missing label as an abstention and reject fractional-second timestamps — Low
-
-- **Where:** `SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:173` (`SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:51`)
-- **Problem:** A synthesized optional `label` decodes a missing or misspelled key as nil. The default `ISO8601DateFormatter` rejects `…00.123Z`.
-- **Scenario:** A run whose label key is spelled `Label` is scored as all abstentions. A valid manifest gets the generic campaign-disjoint error.
-- **Fix:** Require the key to be present (it may still be null), and parse dates with fractional seconds allowed.
-<!-- sources: correctness/eval-scripts#9 -->
-
-#### 2.106 Threat-report errors reuse comparison and classification diagnostics — Low
-
-- **Where:** `SpamWiseCore/Sources/Evaluation/ThreatMetrics.swift:90` (`SpamWiseCore/Sources/Evaluation/ThreatMetrics.swift:92`, `SpamWiseCore/Sources/SpamWiseEval/main.swift:31`, `SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:186`)
-- **Problem:** Duplicate IDs, unknown objectives and oversized files all throw `ComparisonError.invalidManifest`, which prints advice about frozen campaign-disjoint runs. Invalid assessments print "Classification is unavailable. Mail was left unchanged."
-- **Scenario:** A user with two rows sharing one sample ID is told to fix campaign-disjoint paired results.
-- **Fix:** Add a dedicated `ThreatReportError` with case-specific failure reasons and update the test.
-<!-- sources: correctness/eval-scripts#6, comments/eval-scripts#1 -->
-
 #### 2.107 Learning models are retrained from scratch for every message — Low
 
 - **Where:** `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:71` (`SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:48`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:139`)
@@ -1682,14 +680,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Fix:** Create files with exclusive semantics (`O_CREAT|O_EXCL`), skip and count existing files, and test a double export.
 <!-- sources: correctness/eval-scripts#10 -->
 
-#### 2.110 The IMAP sweep cursor is saved before the page is processed — Low
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:92` (`SpamWiseCore/Sources/SpamWiseDaemon/main.swift:100`, `SpamWise/AppModelScanning.swift:86`)
-- **Problem:** The cursor advances before any message on the page is classified. The Apple Mail path commits only after classification.
-- **Scenario:** The user pauses after 3 of 20 messages, and messages 4 to 20 wait for the next full wrap of the Inbox.
-- **Fix:** Return the proposed cursor and commit it after the batch is processed.
-<!-- sources: correctness/mail-integration#10 -->
-
 #### 2.111 IMAP fetch requires the literal length to equal RFC822.SIZE exactly — Low
 
 - **Where:** `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:337` (`SpamWiseCore/Sources/MailIntegration/IMAPPaging.swift:37`, `SpamWiseCore/Sources/MailIntegration/IMAPProtocol.swift:56`, `SpamWiseCore/Sources/MailIntegration/IMAPProtocol.swift:199`)
@@ -1705,14 +695,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** Image-only spam adds four 1×1 GIF spacers, and the classifier sees an empty body.
 - **Fix:** Skip excess or invalid images, recording a coverage finding, and keep scanning.
 <!-- sources: correctness/core-parsing-signals#11 -->
-
-#### 2.113 Headers that mix encoded words with raw UTF-8 decode to mojibake — Low
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:147`
-- **Problem:** The value is reinterpreted as UTF-8 only when it contains no encoded words.
-- **Scenario:** `=?utf-8?q?Re:?= café` becomes "Re: cafÃ©", which shows mojibake in the UI and defeats subject rules.
-- **Fix:** Reinterpret the unencoded segments between encoded words as UTF-8, falling back to Latin-1, and add a mixed-header fixture.
-<!-- sources: comments/core-parsing-signals#4 -->
 
 #### 2.114 HTML-to-text conversion splits words at inline tags and decodes few entities — Low
 
@@ -1737,14 +719,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** On a 20,000-contact address book, one of the few cooperative threads is held for seconds.
 - **Fix:** Give the actor a dedicated serial executor, or bridge the call to a dispatch queue through a continuation.
 <!-- sources: concurrency#10 -->
-
-#### 2.117 The RDAP fetcher's "response size limit" is applied only after the full download — Low
-
-- **Where:** `SpamWiseCore/Sources/Signals/RDAP.swift:9` (`SpamWiseCore/Sources/Signals/RDAP.swift:18`, `SpamWiseCore/Sources/Signals/RDAP.swift:20`)
-- **Problem:** `URLSession.shared.data(for:)` buffers the whole body before the 2 MB check runs, and the shared session's cookies and cache are in effect. The Rspamd and Spamhaus transports stream with a byte cap.
-- **Scenario:** A misbehaving RDAP endpoint streams a large body, which is fully buffered and only then rejected.
-- **Fix:** Stream with `bytes(for:)` on an ephemeral session and stop at the cap, or reword the doc comment.
-<!-- sources: comments/core-parsing-signals#20 -->
 
 #### 2.118 RDAPLookup duplicates fetches across awaits and evicts its cache by name — Low
 
@@ -1778,14 +752,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Fix:** Timestamp claims, expire completed ones after a window such as 30 days, and use a dedicated capacity error.
 <!-- sources: todo/spamsieve-b#7, security/core-pipeline-store#11, security/app-logic#9, correctness/core-pipeline-store#18 -->
 
-#### 2.122 CompletionOnce uses `@unchecked Sendable`, and the MailKit watchdog is never cancelled — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/CompletionOnce.swift:6` (`MailExtension/MessageActionHandler.swift:47`, `SpamWiseCore/Sources/MessageModel/ResourceDeadline.swift:16`, `SpamWiseCore/Sources/MailIntegration/IMAPTransport.swift:130`)
-- **Problem:** The public generic stores a callback that is not `@Sendable` behind an NSLock, with an unconstrained `Value`, while the rest of the code uses `Mutex` for the same pattern (four separate once-latches exist). The watchdog Task always sleeps the full 9 s. The current implementation is correct.
-- **Scenario:** A future caller passes a non-Sendable value across threads without any diagnostic, and a burst of callbacks leaves one sleeping task per message.
-- **Fix:** Constrain `Value: Sendable` and store the callback in a `Mutex`, or merge the latches into one checked utility. Race the work against the watchdog in a task group and cancel the loser.
-<!-- sources: architecture#28, concurrency#8, conventions/core-pipeline-store#13, conventions/mail-integration#17 -->
-
 #### 2.123 Notifications can be enabled in dry run but never fire, with no indication — Low
 
 - **Where:** `SpamWiseCore/Sources/SpamWiseCore/NotificationPlanning.swift:49` (`SpamWiseCore/Sources/SpamWiseCore/NotificationPlanning.swift:58`, `SpamWise/NotificationSettingsView.swift:13`)
@@ -1793,14 +759,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** A new user waits all week for Review summaries during their dry-run trial, and none arrive.
 - **Fix:** Send count-only previews of dry-run Review decisions, or annotate the toggle while dry run is on.
 <!-- sources: todo/spamsieve-b#14 -->
-
-#### 2.124 The envelope entry point labels every failure as "message parsing failed" — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:72` (`SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:35`)
-- **Problem:** One catch block covers MIME parsing, the state load and document inspection, and it records sender "Unknown" with revision 0.
-- **Scenario:** Lock contention shows up as a parse failure on a valid message, and Mark as Junk on that row fails.
-- **Fix:** Separate the parse step from the state load, map errors the way the message-level `process` does, and carry the parsed sender forward.
-<!-- sources: correctness/core-pipeline-store#15 -->
 
 #### 2.125 Paid verdicts can be discarded after the call, uncosted, and paid for again on retry — Low
 
@@ -1858,22 +816,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Fix:** Inject a lookup factory, as `rdap` already is, and have the test supply a counting stub.
 <!-- sources: correctness/tests#11 -->
 
-#### 2.132 The correction "gist" is the prior decision's reason, often boilerplate — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:59`
-- **Problem:** Gate, content-rule, pause and unclassified reasons are stored as the "message summary" and quoted to the model as examples.
-- **Scenario:** A Junk example reaches the model with the gist "unclassified: timeout", using an example slot and adding noise.
-- **Fix:** Derive the gist from bounded message text, as corpus import does, or store nil.
-<!-- sources: correctness/core-classifier-learning#11 -->
-
-#### 2.133 Persisted `AppState.schemaVersion` is never read — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/State.swift:163`
-- **Problem:** The version is written but never compared on decode, so nothing can detect a format change. Periphery flags it as unused.
-- **Scenario:** A future incompatible change cannot be gated on the stored version.
-- **Fix:** Check the version after decoding, or remove the field and rely on optional fields deliberately.
-<!-- sources: tooling#6 -->
-
 #### 2.134 Cost-ledger month keys and digest week keys depend on the user's current calendar — Low
 
 - **Where:** `SpamWiseCore/Sources/SpamWiseCore/State.swift:215` (`SpamWiseCore/Sources/SpamWiseCore/AdvancedSettings.swift:150`)
@@ -1889,14 +831,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** A 6,000-message training folder reports an "unavailable" error on every sweep until it is emptied by hand.
 - **Fix:** Reset observations, or mark the traversal incomplete, when the cap is reached, and show a specific status.
 <!-- sources: correctness/core-pipeline-store#19 -->
-
-#### 2.136 Daemon failure output discards the sanitized error category — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:42` (`SpamWiseCore/Sources/SpamWiseDaemon/main.swift:39`)
-- **Problem:** Every failure prints the same "check settings and credentials" message, even though IMAPError and IntegrationError are designed to be safe to print.
-- **Scenario:** `--validate` fails because the server's Junk role is ambiguous, but the user is told to check credentials.
-- **Fix:** Print the `failureReason` for the module's own error types.
-<!-- sources: comments/mail-integration#18 -->
 
 #### 2.137 The daemon overwrites the configuration's `allowsActions` with the CLI flag — Low
 
@@ -1922,14 +856,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Fix:** Move the pure parts into the Evaluation library and extend EvaluationTests.
 <!-- sources: conventions/eval-scripts#5 -->
 
-#### 2.140 Invalid price arguments are rejected only after every paid call — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseEval/RunReport.swift:60` (`SpamWiseCore/Sources/SpamWiseEval/main.swift:174`)
-- **Problem:** Price values are parsed in `RunReport.init`, after classification has finished.
-- **Scenario:** `--input-price 2,0` spends money on every call and then writes no report.
-- **Fix:** Parse and validate all values in `Options.init`.
-<!-- sources: correctness/eval-scripts#5 -->
-
 #### 2.142 Corpus runs with `--state` train on the model's own predictions and can leak labels into prompts — Low
 
 - **Where:** `SpamWiseCore/Sources/SpamWiseEval/main.swift:149` (`SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:77`)
@@ -1937,14 +863,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** Renaming one fixture file changes the evidence sent for other messages, and with it their labels.
 - **Fix:** Freeze learning during evaluation, or reject snapshots with learning enabled. Strip corrections that match corpus messages.
 <!-- sources: correctness/eval-scripts#4 -->
-
-#### 2.143 Symlinked or non-regular corpus files are reported as exceeding 2 MB — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseEval/main.swift:234` (`SpamWiseCore/Sources/SpamWiseEval/Options.swift:110`)
-- **Problem:** Any file for which `isRegularFile` is false throws `oversizedFile`, and the run aborts.
-- **Scenario:** A corpus built from symlinks into a mail archive fails at once with "exceeds the 2 MB parser budget".
-- **Fix:** Resolve symlinks first, or use a distinct error that names the file.
-<!-- sources: correctness/eval-scripts#7 -->
 
 #### 2.144 Store runs container creation and full-state JSON round trips on the cooperative pool — Low
 
@@ -1985,14 +903,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** A regression in alias trust is reported apart from the test that caused it.
 - **Fix:** Record what the fixture receives in a `Mutex` or actor, and assert on it in the test body.
 <!-- sources: conventions/tests#8 -->
-
-#### 2.149 The fake Apple Events runner crashes the whole test process on an unexpected script — Low
-
-- **Where:** `SpamWiseCore/Tests/SpamWiseCoreTests/MailIntegrationTests.swift:30`
-- **Problem:** `responses.removeFirst()` traps when the queue is empty.
-- **Scenario:** One extra lookup kills `swift test`, and no results are reported for the remaining suites.
-- **Fix:** Record an Issue and throw instead.
-<!-- sources: correctness/tests#14 -->
 
 #### 2.150 Tests force-unwrap values and accept any error — Low
 
@@ -2153,14 +1063,6 @@ UI tests, signing, archiving, notarization and the runtime probe scripts were no
 - **Scenario:** If encoding ever fails, "Export statistics" does nothing, and the inspector's Evidence section disappears.
 - **Fix:** Use do/catch and set `model.status`.
 <!-- sources: conventions/app-views-main#16 -->
-
-#### 2.170 `AppleMailAdapter.nextPage` reads and writes its cursor across an await — Info
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:199`
-- **Problem:** Two concurrent callers using the same cursor would fetch the same page twice. Today the busy gate serializes all callers.
-- **Scenario:** If background scanning is separated from `busy` (§2.14), history pages could be imported twice.
-- **Fix:** Reserve the offset synchronously before the await, or serialize work per cursor.
-<!-- sources: concurrency#13 -->
 
 #### 2.171 Held-out evaluation always uses the default policy — Info
 
@@ -2335,97 +1237,15 @@ The list is also hard to read as a status document. It runs to 44 KB, about two-
 
 | # | Severity | Location | Finding |
 | --- | --- | --- | --- |
-| 3.2 | Medium | `.github/workflows/site.yml:1` | No Swift build/test CI, and none tracked |
-| 3.3 | Medium | `SpamWise/ActivityStatisticsView.swift:43` | SS-13 checked without per-account trends or uncertainty |
-| 3.4 | Medium | `SpamWise/AppModelMailReview.swift:52` | SS-07 Junk review lacks explanation, provenance and Block-rule guard |
-| 3.5 | Medium | `SpamWise/FolderSettingsView.swift:17` | SS-09 folder plans cannot be removed after a rename; generic cap error |
-| 3.6 | Medium | `SpamWise/IMAPSettingsView.swift:26` | Out-of-scope IMAP is fully user-selectable |
-| 3.7 | Medium | `SpamWise/MailHealthView.swift:34` | SS-01/SS-06 health and state work missing but tracked as runtime only |
-| 3.8 | Medium | `SpamWise/MailMenuView.swift:17` | SS-04 checked, but corrections pull the user into Activity |
-| 3.9 | Medium | `SpamWiseCore/Sources/Signals/Gates.swift:97` | SS-15 checked, but forged Contacts/history senders pass at confidence 100 |
-| 3.10 | Low | `SpamWise/ModelSettingsView.swift:37` | PCC selectable in builds where it can never succeed |
 | 3.11 | Low | `SpamWiseCore/Sources/SpamWiseCore/CorrectionUndo.swift:10` | Undo preview shows store totals, not the correction's changes |
 | 3.12 | Low | `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:115` | SS-10 explanation and preview fall short |
 | 3.13 | Low | `SpamWiseCore/Sources/SpamWiseCore/StateBackup.swift:83` | Backup omits trust exclusions; restore changes retention silently |
 | 3.14 | Low | `SpamWiseCore/Sources/SpamWiseCore/TrainingFolders.swift:57` | Dry-run training placements are never moved later |
 | 3.15 | Low | `TODO.md:1` | TODO structure mixes narrative, finished work and evidence |
 | 3.16 | Low | `TODO.md:24` | Stale counts, formats and status text in TODO and progress docs |
-| 3.17 | Low | `TODO.md:63` | L63 "notarized delivery" is a point-in-time event shown as current |
 | 3.18 | Low | `TODO.md:129` | Checked parents contradict the TODO's own completion rule |
 | 3.19 | Low | `TODO.md:253` | SS-09 "verified historical preview" never classified anything |
 | 3.20 | Low | `TODO.md:293` | Parent acceptance criteria with no tracking sub-item |
-
-#### 3.2 No Swift build/test CI, and none tracked — Medium
-
-- **Where:** `.github/workflows/site.yml:1`, `TODO.md:44`, `TODO.md:63`, `TODO.md:101`
-- **Problem:** The only workflow validates the static site. Nothing reruns `swift test`, the warning-free app and extension build, the APP_STORE variant or SwiftLint on push or PR. SubTrack and Zephyr both have `ci.yml` and `lint.yml`. Every "verified offline" checkbox and every test-count claim therefore rests on local agent runs, and no TODO or SS-20 item tracks adding CI, even though the repository is on GitHub with a draft PR.
-- **Scenario:** A later commit breaks a package test or the APP_STORE build and merges through the PR without any signal. The checked items keep claiming a state the tree may no longer satisfy.
-- **Fix:** Add an SS-20 sub-item, then a `ci.yml` modeled on SubTrack/Zephyr. It should run `swift test` for SpamWiseCore, a warning-free `xcodebuild` of SpamWise and SpamWiseDirect, and the APP_STORE compile, plus a lint workflow. Resolve the local-path package dependency first so CI can build.
-<!-- sources: todo/roadmap#3, todo/spamsieve-b#8 -->
-
-#### 3.3 SS-13 checked without per-account trends or uncertainty — Medium
-
-- **Where:** `SpamWise/ActivityStatisticsView.swift:43`, `SpamWiseCore/Sources/SpamWiseCore/ActivityQuery.swift:54`, `SpamWiseCore/Sources/Evaluation/Metrics.swift:56`, `TODO.md:285`
-- **Problem:** SS-13 requires per-account trends and reviewed sample counts with uncertainty, built on evaluator primitives. The view shows scalar counts and one chart of total decisions per day. The account filter lists raw account IDs. `accountCounts` reaches only the JSON export, and the Clopper-Pearson `BinomialBound` is unused in the app.
-- **Scenario:** A user comparing iCloud and Google cannot see per-account trends. "Reviewed disagreements: 1 of 3" appears with no bound, which invites the small-sample over-reading the item was meant to prevent.
-- **Fix:** Uncheck SS-13 or add sub-items. Add a per-account series labeled by account name, and show exact binomial bounds next to reviewed counts using `BinomialBound`.
-<!-- sources: todo/spamsieve-b#5 -->
-
-#### 3.4 SS-07 Junk review lacks explanation, provenance and Block-rule guard — Medium
-
-- **Where:** `SpamWise/AppModelMailReview.swift:52`, `SpamWise/MailReviewView.swift:30`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:53`, `TODO.md:230`
-- **Problem:** SS-07 asks for a review queue "with explanations" that preserves filter provenance and avoids rescuing user-blocked senders. The view shows only subject and body. It does not say whether the message is in Junk because of SpamWise, SpamSieve or the server, or whether an explicit Block rule matches. "Mark Good and restore" replaces a same-scope Block with an Allow without warning. Replacement on explicit correction is the documented contract, but the missing conflict notice is not. The only open sub-item covers coexistence runtime work.
-- **Scenario:** The user once blocked `billing@scam.example`. In Review Junk they restore a later message from that sender, and the Block silently becomes an Allow, so future mail from that sender passes the address gate.
-- **Fix:** Add SS-07 sub-items and implement them. Join each Junk envelope to its DecisionRecord or rule match for an explanation, label provenance as unknown/other when no record exists, and ask for confirmation before replacing an explicit Block rule.
-<!-- sources: todo/spamsieve-a#5 -->
-
-#### 3.5 SS-09 folder plans cannot be removed after a rename; generic cap error — Medium
-
-- **Where:** `SpamWise/FolderSettingsView.swift:17`, `SpamWise/FolderSettingsView.swift:55`, `SpamWise/AppModelFolders.swift:31`, `TODO.md:252`
-- **Problem:** The plan picker lists only discovered folders, and plans are keyed by account and path. After a rename, the stale enabled plan cannot be selected, disabled or deleted. No code removes plans. It fails closed on every sweep and keeps one of the 20 slots forever. The 21st plan fails with a generic `IntegrationError.unavailable`. Folder exclusion is absent; Inbox is always swept for selected accounts.
-- **Scenario:** The user renames "Receipts" to "Orders" in Mail. Every sweep records a failure for the old path, and the Folder sheet cannot remove it. After 20 such plans, any new plan fails with an unrelated message.
-- **Fix:** List saved plans independently of discovery, including unresolved ones, with Disable and Remove actions. Give the cap a specific localized error. Mark SS-09.1 partial, with plan lifecycle and exclusions as open engineering.
-<!-- sources: todo/spamsieve-a#6 -->
-
-#### 3.6 Out-of-scope IMAP is fully user-selectable — Medium
-
-- **Where:** `SpamWise/IMAPSettingsView.swift:26`, `SpamWise/IMAPSettingsView.swift:57`, `SpamWise/AccountSettingsView.swift:10`, `SpamWise/AppModel.swift:58`, `TODO.md:5`, `TODO.md:56`, `docs/imap.md:5`
-- **Problem:** TODO.md:5-8 places IMAP outside the roadmap, and L56 defers its live acceptance, yet Settings > Accounts always shows an IMAP connection picker. It takes a password or OAuth token and offers a "Test Junk and restore Inbox" probe that validates the account for actions, and `canScanAutomatically` includes `.imap`. No live TLS authentication or move has ever run. Changing transport forces dry run on, but the probe itself moves mail.
-- **Scenario:** A user picks IMAP, saves credentials and runs the probe on a UID. The account becomes action-validated, and once dry run is off, automatic sweeps move mail through a transport never accepted against a real server.
-- **Fix:** Hide the IMAP picker and daemon behind a DEBUG or explicit feature flag while out of scope, and mark L56 "retained, not shipped". Alternatively, add an open TODO item for live IMAP acceptance before exposing it.
-<!-- sources: todo/roadmap#2 -->
-
-#### 3.7 SS-01/SS-06 health and state work missing but tracked as runtime only — Medium
-
-- **Where:** `SpamWise/MailHealthView.swift:34`, `SpamWiseCore/Sources/SpamWiseCore/State.swift:199`, `MailExtension/MessageActionHandler.swift:27`, `SpamWise/MailMenuView.swift:9`, `SpamWise/MyApp.swift:14`, `TODO.md:156`, `TODO.md:216`
-- **Problem:** SS-01 asks for per-account backlog, actionable failures, and a split of unseen from reviewed, unclassified and classified mail. The health view shows only last page, observed total, next offset, the unreadable count and the failure text. The MailKit heartbeat timestamps are written but never read. SS-06 asks for visible paused/offline states, yet the menu says "SpamWise is running" whenever the app is not paused, whatever the onboarding, dry-run, permission or failure state. A page that times out every sweep never advances the cursor, which the probe doc acknowledges and TODO does not. Login launch always presents a window, and nothing addresses App Nap (low confidence). The open sub-items list only runtime observations.
-- **Scenario:** Mail permission is revoked. Every sweep fails, visible only deep in Settings → Accounts, while the menu keeps saying "running". Or several large messages make one page time out on every sweep, and later mail in that account is never reached, with no stalled indicator.
-- **Fix:** Add open engineering sub-items to SS-01 and SS-06, then implement them. They should cover backlog/coverage categories, a heartbeat display and a stalled-cursor fallback (shrink or skip after N timeouts). Also add an aggregate status state (setup incomplete, dry run, permission denied, failing, offline), background launch at login and an App Nap evaluation such as `ProcessInfo.beginActivity`.
-<!-- sources: todo/spamsieve-a#3 -->
-
-#### 3.8 SS-04 checked, but corrections pull the user into Activity — Medium
-
-- **Where:** `SpamWise/MailMenuView.swift:17` (also :13, :21), `SpamWise/AppModelMailReview.swift:18`, `SpamWise/AppModel.swift:219`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:225`, `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:253`
-- **Problem:** SS-04's goal is correcting selected mail "without leaving Mail" and "without switching to Activity first". Every menu command calls `openWindow(id: "activity")` and shows a results sheet. MenuBarExtra shortcuts fire only while the menu is open, so they do not work from Mail. Corrections use address scope only, despite the "explicit domain scope" criterion. Moves run serially with a 30-second settle each, which keeps the app busy and blocks monitoring. One message over 2 MB makes `rows.map(Self.envelope)` throw and aborts the whole selection. The menu section is disabled while busy, so requests are not dropped silently from the menu, but a documented live invocation during a sweep produced no correction. Live acceptance covered one message, Junk only.
-- **Scenario:** The user selects 30 spam messages and presses ⌥⌘J; the keystroke goes to Mail. From the menu, Activity comes forward and SpamWise stays busy for about 15 minutes.
-- **Fix:** Reopen SS-04 as partial. Report results through a menu status line or notification instead of opening Activity, and provide shortcuts that work inside Mail (Services or App Intent). Overlap or batch the settle verification, queue or explicitly reject busy requests, skip oversized messages individually, and offer a domain option.
-<!-- sources: todo/spamsieve-a#4 -->
-
-#### 3.9 SS-15 checked, but forged Contacts/history senders pass at confidence 100 — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/Gates.swift:97` (also :98-99), `SpamWiseCore/Sources/Signals/Evidence.swift:57`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:210`, `TODO.md:302`, `TODO.md:136`
-- **Problem:** Only the own-address half of SS-15 exists. The contact, reply and receipt gates allow mail without consulting authentication. `trustedAuthServers` is set only in `SignalsTests.swift:66`, so aligned SPF/DKIM/DMARC can never be used in production. The forwarding and list fixtures pass only because they first add the address to `trustExclusions` by hand. The failure keeps phishing in the Inbox, which is no worse than having no filter and matches SpamSieve's Contacts behavior. It never moves good mail.
-- **Scenario:** A phishing message sets `From: colleague@company.com`, a Contacts address, from unrelated infrastructure. `relationshipEvidence` returns `contact == true`, and the message gets an Inbox verdict at confidence 100 with no model classification. The same holds for any address ever replied to and any domain with a past receipt.
-- **Fix:** Reopen SS-15. Require trusted, aligned authentication from configured, per-account receiving-server identities before applying the contact/history allow gates. Otherwise fall through to the model with the relationship as weak evidence. Add a forged-contact fixture with no exclusion configured.
-<!-- sources: todo/spamsieve-b#1 -->
-
-#### 3.10 PCC selectable in builds where it can never succeed — Low
-
-- **Where:** `SpamWise/ModelSettingsView.swift:37`, `SpamWiseCore/Sources/SpamWiseCore/DistributionCapabilities.swift:12`, `SpamWiseCore/Sources/Classifier/AppleClassifier.swift:46`, `TODO.md:46`
-- **Problem:** `DistributionCapabilities.privateCloudCompute` is true for every non-APP_STORE build, and its own doc comment calls the option experimental. No entitlements file has the PCC key, and `AppleClassifier` throws `.configuration` when the model is unavailable. A caption notes the entitlement requirement, which softens the impact.
-- **Scenario:** A user selects Apple Private Cloud Compute and consents. Every message fails with a configuration error and is recorded as unclassified until they switch providers.
-- **Fix:** Show PCC only when the entitlement is present at runtime, or behind a DEBUG flag. Restate L46 as "PCC implemented, not reachable until L88 is granted".
-<!-- sources: todo/roadmap#5 -->
 
 #### 3.11 Undo preview shows store totals, not the correction's changes — Low
 
@@ -2484,14 +1304,6 @@ The list is also hard to read as a status document. It runs to 44 KB, about two-
 - **Scenario:** A reviewer believes only PNG/JPEG decoding is exposed and misjudges the attack surface, or a maintainer re-adds RDAP suppression that already exists.
 - **Fix:** Drop counts from checkboxes or keep them current, and list the actual OCR formats. Update SS-03's premise and cite a commit reachable from `main`, or none. Keep each gate in one place with cross-references. Mark both progress docs as dated history or reconcile them, and add a folder-plan/transfer UI inspection sub-item under SS-09/SS-16.
 <!-- sources: todo/roadmap#6, todo/spamsieve-a#10 -->
-
-#### 3.17 L63 "notarized delivery" is a point-in-time event shown as current — Low
-
-- **Where:** `TODO.md:63`, `TODO.md:101`, `CLAUDE.md:485`, `CLAUDE.md:584`
-- **Problem:** L63 is an undated, checked record of a review and notarization that predate the Rspamd HTTP, retry-cancellation and keyed Spamhaus HTTPS batches, none of which was notarized. TODO.md:101 still describes draft PR #1 and a branch layout that no longer matches the local squashed `main` (`a66805e`), which diverges from `origin/main` (`d1284e5`).
-- **Scenario:** A reader takes L63 to mean HEAD is reviewed and notarized and ships it, while the notarized artifact is several feature batches older.
-- **Fix:** Replace L63 with a commit-pinned record ("notarized at <sha>"), or turn it into a recurring release gate that stays unchecked until HEAD is re-verified. Update the TODO.md:101 row to the current branch topology.
-<!-- sources: todo/roadmap#4 -->
 
 #### 3.18 Checked parents contradict the TODO's own completion rule — Low
 
@@ -2566,30 +1378,6 @@ A few reported deviations need calibrating:
 
 | # | Severity | Location | Finding |
 |---|---|---|---|
-| 4.1 | Medium | `.swiftlint.yml:8` | Shared SwiftLint parent config dropped; 429 findings under the real baseline |
-| 4.2 | Medium | `SpamWise/AppModelErrors.swift:14` | Error presenter adds remediation and developer-only signing advice |
-| 4.3 | Medium | `SpamWise/AppModelFolders.swift:23` | App validation failures reported as "Mail action unavailable" |
-| 4.4 | Medium | `SpamWise/AutomationIntents.swift:130` | AutomationIntentError inverts description and reason, collapses all failures |
-| 4.5 | Medium | `SpamWise/BackupSettingsView.swift:75` | Security-scoped bounded import copied four times with copied core limits |
-| 4.6 | Medium | `SpamWise/ContentView.swift:158` | VoiceOver values replaced with raw enum tokens for UI tests |
-| 4.7 | Medium | `SpamWise/FolderSettingsView.swift:36` | App layer repeats page sizes, plan cap and core limits as literals |
-| 4.8 | Medium | `SpamWise/IMAPConnectionModel.swift:42` | IMAP setup swallows errors and bypasses the busy gate |
-| 4.9 | Medium | `SpamWise/ReviewDigestView.swift:12` | Hand-built sheet chrome; most Done buttons lack keyboard shortcuts |
-| 4.10 | Medium | `SpamWiseCore/Sources/Classifier/ClaudeClassifier.swift:5` | Claude and Apple classifiers duplicate guided types, verdict building and error mapping |
-| 4.11 | Medium | `SpamWiseCore/Sources/Classifier/ModelTokenPricing.swift:26` | Model and service identifiers are bare strings in several literal tables |
-| 4.12 | Medium | `SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:164` | Manifest and report fields with closed vocabularies are bare strings |
-| 4.13 | Medium | `SpamWiseCore/Sources/Evaluation/ThreatMetrics.swift:91` | One context-free ComparisonError serves unrelated commands |
-| 4.14 | Medium | `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:22` | Persisted learning features are an unversioned positional `[Double]` |
-| 4.15 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:83` | Overloaded AppleScript error numbers yield wrong user messages |
-| 4.16 | Medium | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:285` | Long mail methods; move/verify, history and hashing logic duplicated and drifted |
-| 4.17 | Medium | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:39` | Generated AppleScript hard-codes bounds duplicated in Swift |
-| 4.18 | Medium | `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:98` | MIME traversal reimplemented and drifted from MIMEParser |
-| 4.19 | Medium | `SpamWiseCore/Sources/Signals/RspamdLookup.swift:46` | Signals endpoints, timeouts, byte values and DBL codes are inline and duplicated |
-| 4.21 | Medium | `SpamWiseCore/Sources/SpamWiseCore/StateBackup.swift:24` | Retention bounds and bounding code duplicated; backup validation can drift |
-| 4.22 | Medium | `SpamWiseCore/Sources/SpamWiseCore/TrustExclusions.swift:13` | Core operations throw errors from unrelated categories |
-| 4.23 | Medium | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:39` | Hand-rolled CLI parsers; daemon hides every error behind one sentence |
-| 4.24 | Medium | `SpamWiseCore/Sources/SpamWiseEval/RunReport.swift:36` | Eval CLI reimplements threshold policy, cost formula and provider mapping |
-| 4.25 | Medium | `UITests/ActivityScreen.swift:35` | UI tests locate by English text and coordinates |
 | 4.26 | Low | `MailExtension/MailExtension.swift:1` | Unexplained AppIntents import exists only to force linkage |
 | 4.27 | Low | `Scripts/export-store-match.py:280` | Scripts Python has no `.python-version`; hyphenated modules force runpy |
 | 4.28 | Low | `Scripts/notarize-match.py:24` | Notarization helper runs credentialed commands with no timeout |
@@ -2606,8 +1394,6 @@ A few reported deviations need calibrating:
 | 4.39 | Low | `SpamWise/GeneralSettingsView.swift:29` | Hand-rolled `Binding(get:set:)` duplicates existing helpers |
 | 4.40 | Low | `SpamWise/HelpButton.swift:9` | AppKit help button reimplements HelpLink; placement inconsistent |
 | 4.41 | Low | `SpamWise/HelpButton.swift:10` | Help anchors, routes, categories and health keys are bare strings |
-| 4.42 | Low | `SpamWise/IMAPConnectionModel.swift:113` | IMAP settings validated by a JSON round trip |
-| 4.43 | Low | `SpamWise/IMAPSettingsView.swift:77` | IMAPConnectionModel constructed on every parent re-render |
 | 4.44 | Low | `SpamWise/LearningSettingsView.swift:47` | Misnamed RulesDocument; label export re-encodes per render and swallows errors |
 | 4.45 | Low | `SpamWise/MailHealthView.swift:19` | Persistence logic built inside view bodies |
 | 4.46 | Low | `SpamWise/MailHealthView.swift:53` | Previews miss major modes; "No accounts" preview shows an account |
@@ -2624,8 +1410,6 @@ A few reported deviations need calibrating:
 | 4.57 | Low | `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:48` | IMAPError reused for CLI, model and provider-key failures |
 | 4.58 | Low | `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:110` | Decoder copies CodingKeys into hand-written allow-lists |
 | 4.59 | Low | `SpamWiseCore/Sources/MailIntegration/IMAPTransport.swift:75` | `deadlineExceeded` never thrown; timeouts surface as unavailable |
-| 4.60 | Low | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:213` | Mailbox roles and cursors are bare strings with a silent Inbox fallback |
-| 4.61 | Low | `SpamWiseCore/Sources/MessageModel/DomainResolver.swift:8` | Missing bundled suffix list silently disables domain logic |
 | 4.62 | Low | `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:5` | Some package declarations are needlessly public |
 | 4.63 | Low | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:189` | NSRegularExpression with `try?`, force unwraps and recompilation |
 | 4.64 | Low | `SpamWiseCore/Sources/MessageModel/ResourceDeadline.swift:26` | Semicolon-joined statements and formatter-mangled one-liners |
@@ -2633,14 +1417,12 @@ A few reported deviations need calibrating:
 | 4.66 | Low | `SpamWiseCore/Sources/Signals/Evidence.swift:10` | Closed vocabularies and validated values stored as free Strings |
 | 4.67 | Low | `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:108` | Helpers reimplemented where the project or SDK provides them |
 | 4.68 | Low | `SpamWiseCore/Sources/Signals/SpamhausHTTPS.swift:18` | URLError reused for project errors; failure reasons lack context |
-| 4.69 | Low | `SpamWiseCore/Sources/Signals/SpamhausHTTPS.swift:83` | Hardened URLSession setup and bounded reads duplicated |
 | 4.70 | Low | `SpamWiseCore/Sources/SpamWiseCore/ActivityQuery.swift:27` | Force unwraps guarded only by distant logic |
 | 4.71 | Low | `SpamWiseCore/Sources/SpamWiseCore/Exports.swift:1` | Core modules re-exported with underscored `@_exported` |
 | 4.72 | Low | `SpamWiseCore/Sources/SpamWiseCore/MailPreferences.swift:52` | Never-negative counts, limits and offsets use signed Int |
 | 4.73 | Low | `SpamWiseCore/Sources/SpamWiseCore/NotificationPlanning.swift:39` | Time values: unit-less parameters, ambiguous `Min`, mixed clocks and types |
 | 4.74 | Low | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:81` | Long functions instead of orchestrators across modules |
 | 4.75 | Low | `SpamWiseCore/Sources/SpamWiseCore/ReviewPriority.swift:21` | Priority rank encoded as magic Ints |
-| 4.76 | Low | `SpamWiseCore/Sources/SpamWiseCore/RuleManagement.swift:68` | State invalidation open-coded at 13 sites |
 | 4.77 | Low | `SpamWiseCore/Sources/SpamWiseEval/main.swift:31` | Eval limits duplicated as literals and hard-coded into prose |
 | 4.78 | Low | `SpamWiseCore/Sources/Store/Keychain.swift:48` | Failure reasons lack context; Keychain decode failure reports status 0 |
 | 4.79 | Low | `SpamWiseCore/Sources/Store/Store.swift:92` | Unsafe C/ObjC calls where checked APIs exist |
@@ -2661,219 +1443,6 @@ A few reported deviations need calibrating:
 | 4.94 | Info | `SpamWiseCore/Sources/Classifier/Types.swift:156` | Modules share names with their primary types |
 | 4.95 | Info | `SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:5` | Report types expose Decodable that bypasses validation |
 | 4.96 | Info | `SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:10` | `ID` capitalized against the "id is not an acronym" rule |
-
-#### 4.1 Shared SwiftLint parent config dropped; 429 findings under the real baseline — Medium
-
-- **Where:** `.swiftlint.yml:8`
-- **Problem:** Unlike SubTrack and Zephyr, the config has no `parent_config:` pointing at the shared gist, so "strict SwiftLint passes" is measured against a much weaker rule set. The comment calls the disabled rules layout rules, but `optional_data_string_conversion` is a correctness rule that flags lossy `String(decoding:as:)`.
-- **Scenario:** Under the shared config, SwiftLint reports 429 findings, including errors at `UnreadableMailView.swift:7` and `IMAPPaging.swift:23` (`count > 0`). Invalid UTF-8 from IMAP or the Store at 13 `String(decoding:as:)` sites is silently replaced with U+FFFD.
-- **Fix:** Adopt the shared `parent_config`, keep only justified overrides with accurate comments, gitignore `.swiftlint/RemoteConfigCache`, and fix or explicitly except the findings.
-<!-- sources: config/swift-xcode#8 -->
-
-#### 4.2 Error presenter adds remediation and developer-only signing advice — Medium
-
-- **Where:** `SpamWise/AppModelErrors.swift:14` (also `SpamWise/AppModel.swift:118`)
-- **Problem:** `AppModel.describe` appends type-specific remediation after the LocalizedError fields instead of letting `recoverySuggestion` carry it. For `.permissionDenied`, the denial is stated twice. For KeychainError and store-initialization failures, end users are told to check signing entitlements and App Group access.
-- **Scenario:** A user who denies Automation reads the denial twice in one status line. A non-developer whose Keychain fails is told to inspect "the signed app’s shared Keychain entitlement". Intents and the daemon never get the remediation at all.
-- **Fix:** Move the Automation instructions into `IntegrationError.recoverySuggestion`, give KeychainError a user-actionable suggestion or none, send signing hints to a privacy-safe Logger, and make `describe` only join the three fields.
-<!-- sources: conventions/app-logic#2 -->
-
-#### 4.3 App validation failures reported as "Mail action unavailable" — Medium
-
-- **Where:** `SpamWise/AppModelFolders.swift:23` (also `:17-19`, `:31`, `:14`, `:55`, `:118`; `AppModelScanning.swift:128`; `AppModelCredentials.swift:19`; `AppModelRules.swift:14,31,38`; `AppModelMailReview.swift:65`; `AutomationIntents.swift:98,108,112`)
-- **Problem:** Several app-level conditions all throw `IntegrationError.unavailable`, whose text is "The Mail action is unavailable. The requested message or Mail service is unavailable.". These include a misnamed training folder, a non-empty folder, the 20-plan cap, an unpersisted record and a missing store.
-- **Scenario:** A user saves a "Train as Junk" plan on a non-empty folder, or adds a 21st plan. The status blames Mail, so they go troubleshoot Automation permissions. The plan cap is not explained anywhere.
-- **Fix:** Add an app-level `FolderPlanError` (`misnamed(expected:)`, `notEmpty(folder:count:)`, `limitReached(maximum:)`) and a storage-unavailable error. Give each its own interpolated `failureReason` and `recoverySuggestion`, and keep IntegrationError for real adapter failures.
-<!-- sources: conventions/app-logic#1, comments/app-logic#6 -->
-
-#### 4.4 AutomationIntentError inverts description and reason, collapses all failures — Medium
-
-- **Where:** `SpamWise/AutomationIntents.swift:130` (also `:100`, `:124-126`)
-- **Problem:** The error conforms to `MailIntegrationFailure`. Its `errorDescription` returns case-specific instructions, and it has no `failureReason`. `execute` and `diagnostics` map every underlying error to `.unavailable`: incomplete onboarding, non-Mail transport, selection count, permission denial and store failure.
-- **Scenario:** "Correct Selected Mail" with three messages selected, or with IMAP as the transport, shows only "Check setup and Activity in SpamWise. Select one Mail message." Nothing says which condition failed.
-- **Fix:** Add an `AutomationFailure` protocol with a shared description, per-case interpolated failure reasons and the UUID guidance in `recoverySuggestion`. Map known underlying errors to specific cases instead of collapsing them.
-<!-- sources: conventions/app-logic#3 -->
-
-#### 4.5 Security-scoped bounded import copied four times with copied core limits — Medium
-
-- **Where:** `SpamWise/BackupSettingsView.swift:75` (also `:79`; `ContentRuleEditorView.swift:71-75`; `CorpusView.swift:86-90`; `AppModelRules.swift:39-43`)
-- **Problem:** Four sites repeat the same start-access / FileHandle / read-up-to-limit+1 sequence. Three of them hard-code limits that mirror private core constants (`StateBackup.maximumBytes`, `ContentRuleManagement.maximumArchiveBytes`, MIME 2 MB), and the unexplained `+ 1` sentinel is copied each time.
-- **Scenario:** Raising `ContentRuleManagement.maximumArchiveBytes` to 2 MB leaves the view reading 1,000,001 bytes. Valid larger archives are truncated and then rejected as invalid JSON.
-- **Fix:** Add one `URL.readSecurityScoped(maximumBytes:)` helper that reads one byte past the limit and throws on oversize. Expose the core limits publicly, or let core import APIs take a URL. Call the helper from all four sites.
-<!-- sources: conventions/app-views-settings#9, comments/app-views-settings#4 -->
-
-#### 4.6 VoiceOver values replaced with raw enum tokens for UI tests — Medium
-
-- **Where:** `SpamWise/ContentView.swift:158` (also `:150-151`; `DecisionDetailView.swift:24-26`, `:159`; consumers `UITests/ActivityScreen.swift:6-7,75`, `UITests.swift:290`)
-- **Problem:** The mode footer, Outcome row and correction label set `accessibilityValue` to `"dryRun"`, `outcome.rawValue` and `correction.rawValue` so the UI tests can match them. VoiceOver speaks these untranslated code tokens, which breaks the rule that test hooks stay out of production and that identified controls keep real accessibility text.
-- **Scenario:** A French VoiceOver user selects the Outcome row and hears the localized title followed by "failed" or "moveToJunk".
-- **Fix:** Remove the raw-value overrides. Give tests per-state identifiers (for example `activity.mode.dryRun`) or match localized text. If a value is needed, use the localized title.
-<!-- sources: conventions/tests#2 -->
-
-#### 4.7 App layer repeats page sizes, plan cap and core limits as literals — Medium
-
-- **Where:** `SpamWise/FolderSettingsView.swift:36` (also `:34`, `:39`; `AppModelFolders.swift:31,43,56`; `MailReviewView.swift:47,51,53`; `AppModelMailReview.swift:41`; `OnboardingView.swift:93,97`; `CorpusView.swift:82,90`; `AdvancedSettingsView.swift:14,20`; `NotificationSettingsView.swift:20`; `LearningSettingsView.swift:35`; `EvidenceSettingsView.swift:63`; `SpamhausSettingsView.swift:34`; `DirectUpdateConfiguration.swift:9,11,22`; `HelpButton.swift:5`; `IMAPConnectionModel.swift:10`)
-- **Problem:** Each of these values is written in two or more places, and nothing ties the copies together:
-  - The folder preview and Junk review page size (20) appears in both the view offset math and the model's `limit:`.
-  - The folder-plan cap (20) appears at both save and scan.
-  - The dry-run size ignores `AppModel.defaultScanLimit`.
-  - Steppers, Settings copy and the Rspamd endpoint restate core constants: `correctionLimitRange`, `bodyTokenBudgetRange`, the notification interval range, `maximumReviewedLabels`, and the MIME byte cap.
-- **Scenario:** Raising the cap at `AppModelFolders.swift:31` to 30 leaves `.prefix(20)` at `:56`, so plans 21–30 save but are never swept. Changing the Junk `limit:` to 50 leaves the view paging by 20, which shows overlapping pages and disables Next too early.
-- **Fix:** Expose named constants from AppModel and core, for example `maximumFolderPlans`, `previewPageSize`, `correctionLimitRange`, `maximumReviewedLabels` and `RspamdLoopbackHTTP.endpoint`. Pass a page index rather than a computed offset. Interpolate the limits into copy with FormatStyle, and read the help book name from Info.plist.
-<!-- sources: conventions/app-logic#8, comments/app-logic#7, conventions/app-views-main#6, conventions/app-views-settings#10, comments/app-views-settings#5 -->
-
-#### 4.8 IMAP setup swallows errors and bypasses the busy gate — Medium
-
-- **Where:** `SpamWise/IMAPConnectionModel.swift:42` (also `:21`, `:66-70`, `:75`, `:89-94`, unstructured Tasks at `:34`, `:51`, `:77`; `AppModel.swift:356`)
-- **Problem:**
-  - Every IMAP failure becomes fixed text, so `failureReason` is lost.
-  - `load()` uses `try?`, so a decode error looks the same as having no saved connection.
-  - An invalid probe UID returns silently.
-  - The three Tasks skip `model.run`/`model.busy`, so a mail-moving probe can overlap a scan.
-  - `AppModel.correct` discards the IMAP adapter error with `try?` and corrects with a nil adapter.
-- **Scenario:** A host with an underscore fails validation, but the status still says "Check the endpoint and Keychain access". The user enters UID "abc" and nothing happens. A correction made while the Keychain item is missing reports "Integration unavailable" and gives no cause.
-- **Fix:** Route these operations through `model.run` or a tracked helper that sets `busy`, show `AppModel.describe(error)` or a typed IMAPSetupError, give feedback for invalid input, let `load()` surface decode failures, and stop discarding the adapter error in `correct`.
-<!-- sources: conventions/app-logic#4 -->
-
-#### 4.9 Hand-built sheet chrome; most Done buttons lack keyboard shortcuts — Medium
-
-- **Where:** `SpamWise/ReviewDigestView.swift:12` (also `PolicyView.swift:22`; `CorpusView.swift:20,59`; `MailReviewView.swift:16,59,75,88,103`; `ActivityStatisticsView.swift:78`; `AuditTrailView.swift:17,24`; `ReviewDigestView.swift:42`)
-- **Problem:** Each sheet builds its own title `Text` and `HStack { Spacer; Done }` instead of using `navigationTitle` and toolbar placements. Titles use `.headline` in two places and `.title2` in three. Only `ReviewDigestView.swift:34` gives Done a keyboard shortcut. The Audit sheet uses its own search field, while Activity uses `.searchable`.
-- **Scenario:** With Statistics, Configuration history, Reviewed corpus, Review Junk, Corrections or Message preview open, neither Escape nor Return closes the sheet, so keyboard users must click Done.
-- **Fix:** Give sheets `.navigationTitle` with Done in `ToolbarItem(placement: .confirmationAction)` or `.cancellationAction`, use `.searchable` in AuditTrailView, and keep one heading style if inline titles stay.
-<!-- sources: conventions/app-views-main#9 -->
-
-#### 4.10 Claude and Apple classifiers duplicate guided types, verdict building and error mapping — Medium
-
-- **Where:** `SpamWiseCore/Sources/Classifier/ClaudeClassifier.swift:5` (also `:65-78`, `:80-95`; `AppleClassifier.swift:61-74`, `:93-109`, `:114-121`; `RemoteVerdict.swift:79-89`)
-- **Problem:** Each FoundationModels classifier declares its own `@Generable` label and verdict pair, with different guide text, and builds `Verdict` and `TokenUsage` from `session.usage` the same way. The cancellation / ClassificationError / LanguageModelError catch chain is written three times. The copies have already drifted: only Apple validates reason length, and Claude maps labels with a switch while Apple uses `rawValue`.
-- **Scenario:** A new label, a new confidence guide, or a new LanguageModelError mapping lands in one classifier only. Claude and Apple then validate and retry differently.
-- **Fix:** Define one internal `@Generable` verdict with a String-backed label that matches `MailLabel`, a shared `Verdict(guided:session:modelID:)` factory, and one `ClassificationError(mapping:)` initializer used at all three catch sites.
-<!-- sources: conventions/core-classifier-learning#6 -->
-
-#### 4.11 Model and service identifiers are bare strings in several literal tables — Medium
-
-- **Where:** `SpamWiseCore/Sources/Classifier/ModelTokenPricing.swift:26` (also `ClaudeClassifier.swift:21-27`; `GeminiClassifier.swift:6,13,17`; `OpenAIClassifier.swift:6,13,17`; `AppleClassifier.swift:12-17`; `AdvancedSettings.swift:18-22`; `SpamWiseDaemon/main.swift:129-137`; `SpamWiseEval/main.swift:106-107,129`; `ConfiguredClassifier.swift:22,59`; `IMAPDaemonConfiguration.swift:106,123`; `Store.swift:52`; `Keychain.swift:35,40`)
-- **Problem:** The supported model set is closed and known at compile time. Even so, it is a `String` checked by separate literal switches in pricing, Claude initialization, the OpenAI and Gemini single-value guards, AdvancedSettings, the daemon, the eval CLI and the budget reservation. The Keychain service, the account name and the App Group are also inline duplicates.
-- **Scenario:** Adding a Claude model to `ClaudeClassifier` without updating the pricing table makes `.rates(for:)` throw after the paid call has returned. The verdict is discarded and the spend is still incurred. The daemon still rejects `--model <new>`. Changing `ModelBackend.claude.defaultModelID` silently moves every call to the $1.00 reservation.
-- **Fix:** Add a String-backed `ModelIdentifier` enum with `backend`, `pricing(at:)` and `claudeModel` properties. Make `rates(for:)` non-throwing over it, and parse strings only at the persistence and CLI boundary. Key provider credentials by `ModelBackend`, and hoist the service and App Group identifiers into named constants.
-<!-- sources: conventions/core-classifier-learning#1, conventions/mail-integration#7, conventions/core-pipeline-store#15 -->
-
-#### 4.12 Manifest and report fields with closed vocabularies are bare strings — Medium
-
-- **Where:** `SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:164` (also `:37`, `:51`, `:98`, `:101`, `:147`, `:169`; `Metrics.swift:20,92,122`; `ThreatMetrics.swift:8,10,89`; `SpamWiseEval/main.swift:67-72,111-123`)
-- **Problem:** The fields `priorExposure`, `costBasis`, `frozenAt`, decision `path`, threat `truth` keys, export role and the provider choice are strings checked by hand against literal arrays or prefixes. The calibration filter `$0.path == "model"` depends on the literal at `PipelineClassification.swift:38`.
-- **Scenario:** Renaming the pipeline's `"model"` path still compiles but silently empties every CalibrationBucket. Writing `"priorExposure": "None"` gives the generic invalidManifest error instead of a decoding error at the key.
-- **Fix:** Add Codable enums (PriorExposure, CostBasis, a shared DecisionPath, MailboxRole). Decode `frozenAt` as Date, key `truth` by `ThreatKind`, and map `--model` through ModelBackend.
-<!-- sources: conventions/eval-scripts#2 -->
-
-#### 4.13 One context-free ComparisonError serves unrelated commands — Medium
-
-- **Where:** `SpamWiseCore/Sources/Evaluation/ThreatMetrics.swift:91` (also `SpamWiseEval/main.swift:31,47`; `ComparisonReport.swift:48-61,186-192`; `ReviewedCorpus.swift:81-85`; `SpamWiseEval/Options.swift:94-111`)
-- **Problem:** `ComparisonError.invalidManifest` has a single fixed reason about frozen-run comparison. It is used for about 12 manifest checks, threat-report validation and two oversized-file checks. ReviewedCorpus reports a non-regular path as `.oversized`. EvaluationError reasons name no flag, file, hash or variable.
-- **Scenario:** `--threat-report` with a duplicate sampleID prints advice about human-reviewed, campaign-disjoint comparison runs. `--reviewed somedir/` reports that the export is too large.
-- **Fix:** Split the errors into ComparisonManifestError, ThreatReportError and ReviewedCorpusError, with cases that carry context (`.duplicateSample(id)`, `.fileTooLarge(path, limit)`, `.notRegularFile(url)`). Break `validate` into named checks, and move actionable text to `recoverySuggestion`.
-<!-- sources: conventions/eval-scripts#1 -->
-
-#### 4.14 Persisted learning features are an unversioned positional `[Double]` — Medium
-
-- **Where:** `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:22` (also `:7`; `LearningState.swift:40`, `:139`)
-- **Problem:** Each feature's meaning is defined only by its array position, `featureCount = 8` must match the literal by hand, and `LearningSample` has no schema version. The decoder silently drops any sample whose feature count differs.
-- **Scenario:** A developer adds a ninth feature and bumps `featureCount`. On the next launch every persisted sample is filtered out, which erases the user's correction training set without an error.
-- **Fix:** Model the features as a `LearningFeatures` struct with named properties, a schema version and a `vector` accessor. Migrate or zero-fill older versions in `init(from:)`. At minimum, add a test that the feature count matches.
-<!-- sources: conventions/core-classifier-learning#7 -->
-
-#### 4.15 Overloaded AppleScript error numbers yield wrong user messages — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:83` (also `:224`, `:342`; `MailScripts.swift:57-58,69-70,113-120,172,201,249`; `MailFolderScripts.swift:10,17,27`; `MailDestinations.swift:38`)
-- **Problem:** The executor maps every -1701 to `.ambiguous` and every -1702 to `.staleMessage`. The scripts reuse those real OSStatus values for selection count, account and mailbox resolution, existing annotations and folder limits, so Mail's own errors with those numbers get the same mapping. A non-probe subject throws `.unavailable`.
-- **Scenario:** Correct Selection with 0 or 60 messages selected says "More than one message matches the requested identity." A message that already has a red flag fails with "no longer matches its recorded state."
-- **Fix:** Use script-specific error numbers outside the OSStatus range, interpolated from a private enum. Map them to dedicated cases such as `selectionCount(expected:)`, `accountUnresolved`, `existingAnnotation` and `notProbeMessage`, each with an interpolated reason and an actionable suggestion.
-<!-- sources: conventions/mail-integration#1 -->
-
-#### 4.16 Long mail methods; move/verify, history and hashing logic duplicated and drifted — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:285` (also `:236`, `:314-319`, `:324-331`; `IMAPAdapter.swift:32,63-71,122-129,143-175,183,237-265`; `IMAPDaemonConfiguration.swift:166-175`; `MailScripts.swift:130,158,182-183,220-227,253-260`; `SpamWiseDaemon/main.swift:51-112`)
-- **Problem:** `importHistory` and `SpamWiseDaemon.run` do their detailed work inline instead of delegating to helpers. Safety logic is copied rather than composed: IMAP `perform` versus `probeMove`, replied-address extraction, the MOVE capability check and the AppleScript source guard. The copies have already drifted: the sweep key hashes the host without lowercasing it, while the validation fingerprint lowercases it.
-- **Scenario:** A move-verification fix lands in `perform` but not in `probeMove`, so the probe validates accounts under different rules from live actions. A host that changes only in case keeps its validation but restarts its sweep cursor.
-- **Fix:** Extract `repliedAddresses(in:)`, `isLikelyReceipt(_:)`, a shared `moveAndVerify(_:to:session:)`, `MailScripts.sourceGuard(_:)`, `supportsMove(_:)`, one `endpointFingerprint`, and one script page-loop builder. Then split the daemon's `run` into named steps.
-<!-- sources: conventions/mail-integration#6 -->
-
-#### 4.17 Generated AppleScript hard-codes bounds duplicated in Swift — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:39` (also `:41`, `:6`, `:54`, `:66`, `:69`, `:81`, `:198`, `:215`, `:242`; `MailFolderScripts.swift:5,10,17,22,27,45,64`; `AppleMailAdapter.swift:111,113,223`; `AppleMailFolders.swift:7,11`; `MailDestinations.swift:35`; `IMAPAdapter.swift:6`; `IMAPPaging.swift:6`; `SpamWiseDaemon/main.swift:9`)
-- **Problem:** Each bound is written as a literal in the script text and again as one or more Swift constants. That covers the 2,000,000-byte message size, folder depth 16, page size 1,000, the 50-message selection and the "8 seconds" timeout. `maximumPageSize` is defined in both MailScripts and AppleMailAdapter, and the IMAP size limit is defined twice on one type.
-- **Scenario:** Raising `AppleMailAdapter.maximumMessageBytes` to 4 MB leaves `pageEnvelope` rejecting messages over 2 MB, so they are counted as unavailable on every sweep and never classified. If the two `maximumPageSize` constants diverge, every page throws.
-- **Fix:** Interpolate the Swift constants into the script templates (`\(maximumMessageBytes)`, `\(scriptTimeoutSeconds)`, `\(maximumSelectionCount)`) and keep one owner per bound.
-<!-- sources: conventions/mail-integration#5, comments/mail-integration#5 -->
-
-#### 4.18 MIME traversal reimplemented and drifted from MIMEParser — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:98` (also `:6-13`, `:47`, `:65-79`, `:100`, `:125-142`; `MIMEParser.swift:6-12,71-79,202,228-257,280-291`)
-- **Problem:** EmbeddedImages copies header splitting, boundary parsing, multipart iteration and the resource limits from MIMEParser, and the copies disagree:
-  - Header limit: `<=` versus `<`.
-  - Boundary matching: exactly one match versus first match.
-  - Close delimiter: an exact match versus `hasSuffix("--")`.
-  - Source decoding: lossy UTF-8 versus byte-preserving.
-
-  Because MIMEParser closes on any `hasSuffix("--")`, a legal boundary such as `abc--` closes at its opening delimiter.
-- **Scenario:** A message with a 65,536-byte header block, or with boundary `abc--`, is accepted by one parser and rejected by the other. OCR text and body text then describe different MIME trees.
-- **Fix:** Extract one internal MIME walker in MessageModel that both parsers use, and detect the close delimiter as `trimmed == "--" + boundary + "--"`.
-<!-- sources: conventions/core-parsing-signals#8 -->
-
-#### 4.19 Signals endpoints, timeouts, byte values and DBL codes are inline and duplicated — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/RspamdLookup.swift:46` (also `:47`, `:55`, `:76`, `:36`; `RspamdLoopbackHTTP.swift:29`; `ExternalEvidence.swift:112,120,134-137,156,174`; `SpamhausHTTPS.swift:8-12,16-17,31-32,61`; `RDAP.swift:64`; `MIMEParser.swift:112-113`)
-- **Problem:** The Rspamd 3-second cap is written three times next to an existing constant. The port, endpoint and `--timeout=2` are literals. Raw ASCII byte values hide their meaning. The DNS `validCodes` set copies `SpamhausHTTPS.codes`.
-- **Scenario:** Someone changes the Rspamd port or time limit in one place and misses the CLI argument or the HTTP endpoint. A new DBL code added to `SpamhausHTTPS.codes` but not to `validCodes` causes HTTPS listings to be mapped and then discarded as unknown.
-- **Fix:** Hoist endpoints (as `URL`), ports, timeouts (as `Duration`) and one shared DBL code table into `private static let` constants, and derive the DNS set from the table. Use `UInt8(ascii:)` for byte classes and an enum for evidence source names.
-<!-- sources: conventions/core-parsing-signals#6 -->
-
-#### 4.21 Retention bounds and bounding code duplicated; backup validation can drift — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/StateBackup.swift:24` (also `:23`, `:25`, `:27`, `:116`; `PipelineCorrections.swift:4-8,116-121`; `CorpusManagement.swift:6-10,18-26`; `Pipeline.swift:6`; `RuleManagement.swift:33`; `ContentRuleManagement.swift:5`)
-- **Problem:** The 200-correction, 500-label, 16,000-character, 40-URL and 10,000-rule limits are declared separately in three or four files, and backup validation uses a literal `<= 100` for content rules. The message-bounding code is copied. The limits are also applied inconsistently: corrections truncate labels with `suffix(500)`, while corpus import throws at 501.
-- **Scenario:** Raising `PipelineCorrections.maximumCorrections` to 300 makes every later backup fail to restore with "backup could not be opened", because StateBackup still validates against 200.
-- **Fix:** Define the limits once, for example `enum RetentionLimits` or static members on AppState. Add a single `ParsedMessage.boundedForRetention()` used by corrections, corpus import, retries and backup validation.
-<!-- sources: conventions/core-pipeline-store#8, comments/core-pipeline-store#17 -->
-
-#### 4.22 Core operations throw errors from unrelated categories — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/TrustExclusions.swift:13` (also `:9`; `PipelineCorrections.swift:27,30,41,44`; `CorpusManagement.swift:17,61,77,104`; `PipelineReadStatus.swift:45`; `Pipeline.swift:273`; `NotificationPlanning.swift:68`; `TrainingFolders.swift:33,35,49`; `AutomationRequest.swift:38,48,52,73`; `CorrectionUndo.swift:31`)
-- **Problem:** Core code borrows the nearest existing error case, so the user sees a description of a different failure. Examples: `RuleManagementError.tooManyRules` for trust exclusions, `ClassificationError.invalidOutput` for Review with domain scope, `ParseError.tooLarge` for batch size, and `IntegrationError.unavailable` or `.staleMessage` for missing records, request replay and unavailable undo.
-- **Scenario:** Pasting 101 trust-exclusion addresses reports that the 10,000 sender-rule maximum was reached. Importing 21 reviewed messages reports that the message exceeds content limits.
-- **Fix:** Add focused error types, each with a category protocol and LocalizedError: `CorrectionError`, `TrustExclusionError(tooManyAddresses(limit:))`, `CorpusError`, `AutomationError` and `UndoError`.
-<!-- sources: conventions/core-pipeline-store#4 -->
-
-#### 4.23 Hand-rolled CLI parsers; daemon hides every error behind one sentence — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:39` (also `:136`, `:151-191`; `SpamWiseEval/Options.swift:28,47,54`; `SpamWiseEval/main.swift:10,13-20`)
-- **Problem:** Both executables parse arguments by hand even though swift-argument-parser is the established choice and Zephyr already resolves it. The daemon reports usage errors as `IMAPError.invalidConfiguration`, and `main` then replaces every non-cancellation error with "Headless operation failed. Check settings and credentials." The eval parser accepts only `--flag value` pairs and does not reject conflicting modes.
-- **Scenario:** A bad `--limit`, an unknown `--model`, a missing config file and a JSON typo all print the same sentence and exit 1. `spamwise-eval --export … --input c --model …` runs an export and ignores the other flags. `--input c --help` fails with "Invalid arguments".
-- **Fix:** Adopt `AsyncParsableCommand` with typed `@Option`s, subcommands and `validate()`. Print `localizedDescription` and `failureReason`, which carry no secrets, and give usage errors their own type.
-<!-- sources: conventions/mail-integration#2, conventions/eval-scripts#4 -->
-
-#### 4.24 Eval CLI reimplements threshold policy, cost formula and provider mapping — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseEval/RunReport.swift:36` (also `:66-69`; `Classifier/Types.swift:30-35`; `Decision.swift:82-84`; `SpamWiseEval/main.swift:111-114`; `Scripts/evaluate-with-keychain.swift:31-35,59-67`; `Scripts/store-provider-key.swift:35`)
-- **Problem:** `thresholdCandidates` rebuilds Decision's Junk-to-Review demotion rule instead of calling `Decision.evaluate`. The cost estimate copies `TokenUsage.estimatedCost` and keeps its own per-million constant. Provider selection uses model-ID prefixes even though `ModelBackend` exists. The standalone `Scripts/*.swift` programs cannot import SpamWiseCore, so their copied constants are largely unavoidable.
-- **Scenario:** A change to Decision policy, or adding a cache-write rate to `estimatedCost`, makes the report's threshold candidates and costs describe behavior the product does not have. Production thresholds are chosen from those numbers.
-- **Fix:** Compute candidates with `Decision.evaluate(verdict, strength:)`. Build a `ModelTokenPricing` from the override flags, which requires making its initializer public, and report `estimatedCost`. Resolve providers through `ModelBackend` and generate the usage list from it.
-<!-- sources: conventions/eval-scripts#3, correctness/eval-scripts#14 -->
-
-#### 4.25 UI tests locate by English text and coordinates — Medium
-
-- **Where:** `UITests/ActivityScreen.swift:35` (also `:12`, `:47`; `UITests.swift:40,60,68-69,75,80,84-85,91-92,100,139,222,234`; `EvidenceScreen.swift:17`; `RuleEditorView.swift:26`)
-- **Problem:** The rule is to query by `.accessibilityIdentifier`, never by localized label or index. The suite violates it in four ways:
-  - It finds Settings tabs by their English titles.
-  - It asserts rule actions, threat status and correction status by comparing English copy.
-  - It opens a disclosure by clicking a normalized coordinate.
-  - It forces every launch into English.
-
-  The Settings tabs are a real framework limit; the rest are not.
-- **Scenario:** Rewording "Not assessed" or "Correction saved. Mail action: failed." fails the corrections test with no behavior change. Running the suite in Spanish or French fails at the tab lookup.
-- **Fix:** Add state-specific identifiers such as `threats.status.unassessed` and assert that they exist. Look up native tab titles through the String Catalog, and click the disclosure element instead of a coordinate.
-<!-- sources: conventions/tests#3 -->
 
 #### 4.26 Unexplained AppIntents import exists only to force linkage — Low
 
@@ -3017,22 +1586,6 @@ A few reported deviations need calibrating:
 - **Fix:** Add `HelpPage`, `AppRoute`/`NotificationCategory`, `AppWindow` and `ScanCursor` enums. Use typed `URL` constants, `TextField(value:format:)` bound to `UInt16`/`UInt32`, and an optional account selection.
 <!-- sources: conventions/app-logic#7, conventions/app-views-main#10, comments/app-views-main#9, conventions/app-views-settings#16, comments/app-logic#13 -->
 
-#### 4.42 IMAP settings validated by a JSON round trip — Low
-
-- **Where:** `SpamWise/IMAPConnectionModel.swift:113` (also `:10`; `MailIntegration/IMAPConfiguration.swift:16-25`)
-- **Problem:** The public initializer does not validate, and `validate()` is internal, so the app encodes and re-decodes the configuration just to trigger validation. The default port `"993"` copies the core default. The transport does validate before connecting, so the cost is readability and API strictness.
-- **Scenario:** A future caller builds an invalid configuration directly, and nothing fails until connection time.
-- **Fix:** Make the initializer throwing, or add a public `validated(...)`, and expose `IMAPConfiguration.defaultPort`.
-<!-- sources: conventions/app-logic#5 -->
-
-#### 4.43 IMAPConnectionModel constructed on every parent re-render — Low
-
-- **Where:** `SpamWise/IMAPSettingsView.swift:77` (also `IMAPConnectionModel.swift:14`)
-- **Problem:** `State(initialValue:)` keeps only the first instance, but the init allocates a new model with a fresh UUID on every parent `body` evaluation.
-- **Scenario:** There is no visible failure today. Any side effect later added to the init would repeat on every re-render.
-- **Fix:** Have AppModel own the model and pass it in, or create it once in `.task`.
-<!-- sources: conventions/app-views-settings#25 -->
-
 #### 4.44 Misnamed RulesDocument; label export re-encodes per render and swallows errors — Low
 
 - **Where:** `SpamWise/LearningSettingsView.swift:47` (also `BackupSettingsView.swift:13`; `RulesDocument.swift:6`)
@@ -3170,22 +1723,6 @@ A few reported deviations need calibrating:
 - **Fix:** Record that the cancellation came from the deadline and throw `.deadlineExceeded`, or remove the case and its catalog entry.
 <!-- sources: conventions/mail-integration#10 -->
 
-#### 4.60 Mailbox roles and cursors are bare strings with a silent Inbox fallback — Low
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:213` (also `:240`; `AppleMailAdapter.swift:116,174,181,184,210-211,294,299,354`; `SpamWise/AppModelMailReview.swift:42`; `SpamWiseEval/main.swift:67-70`)
-- **Problem:** The role allow-list is repeated four times, and the public MailScripts builders silently replace an unknown role with "inbox". Production callers go through the adapter, which rejects unknown roles with an unrelated error.
-- **Scenario:** Calling `MailScripts.accountPage(..., role: "junk")` directly reads the Inbox without error.
-- **Fix:** Add `enum MailboxRole { case inbox, junk, sent }` with a script reference and `enum PageCursor`, and remove the fallback.
-<!-- sources: conventions/mail-integration#4 -->
-
-#### 4.61 Missing bundled suffix list silently disables domain logic — Low
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/DomainResolver.swift:8` (also `:29`)
-- **Problem:** The resource is a build-time invariant, yet a load failure yields an empty rule set, so `registrableDomain` returns nil everywhere without any diagnostic. SwiftPM and the tests make this unlikely in practice.
-- **Scenario:** A packaging change drops the file, and domain allow/block rules stop matching silently.
-- **Fix:** Use `preconditionFailure`, or `assertionFailure` with a logged health status. Keep nil results for invalid hosts only.
-<!-- sources: conventions/core-parsing-signals#22 -->
-
 #### 4.62 Some package declarations are needlessly public — Low
 
 - **Where:** `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:5` (also `:19-45`; Periphery lists 46 candidates in `IMAPTransport.swift`, `CachedThreatDetector.swift`, `ReviewedCorpus.swift`, `Metrics.swift`, `Store.swift`, `EvidenceProcess.swift`)
@@ -3252,14 +1789,6 @@ A few reported deviations need calibrating:
 - **Fix:** Add an `ExternalEvidenceError` that conforms to the local protocols. Give `ParseError` and `ContentRuleError` associated values with interpolated reasons, move advice to `recoverySuggestion`, and throw `.invalidEncoding` for type mismatches.
 <!-- sources: conventions/core-parsing-signals#5, comments/core-parsing-signals#23 -->
 
-#### 4.69 Hardened URLSession setup and bounded reads duplicated — Low
-
-- **Where:** `SpamWiseCore/Sources/Signals/SpamhausHTTPS.swift:83` (also `:42-54`, `:65-70`; `RspamdLoopbackHTTP.swift:9-22,47,54-59,67-85`; `EvidenceProcess.swift:55-58`)
-- **Problem:** The code has two redirect-refusing delegates, two hardened configurations and three bounded byte loops. Their differences (server trust, proxies) are justified, but nothing names them. SpamhausHTTPS mutates a caller-supplied configuration.
-- **Scenario:** A future hardening fix lands in one transport only.
-- **Fix:** Use one internal `BoundedHTTPClient` with explicit parameters and a shared `readBounded(_:limit:)`. Copy the configuration before mutating it.
-<!-- sources: conventions/core-parsing-signals#12 -->
-
 #### 4.70 Force unwraps guarded only by distant logic — Low
 
 - **Where:** `SpamWiseCore/Sources/SpamWiseCore/ActivityQuery.swift:27` (also `:28`; `PipelineCorrections.swift:47`; `StateBackup.swift:58`)
@@ -3320,14 +1849,6 @@ A few reported deviations need calibrating:
 - **Scenario:** A new tier that misses one of the two edits gives the wrong digest reason, with no compiler help.
 - **Fix:** Use a `private enum Rank: Int, Comparable` with a localized `reason`.
 <!-- sources: conventions/core-pipeline-store#16 -->
-
-#### 4.76 State invalidation open-coded at 13 sites — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/RuleManagement.swift:68` (also `:79,109`; `CorpusManagement.swift:63,66,92,93,110,111`; `ContentRuleManagement.swift:25,49,60`; `CorrectionUndo.swift:44`; `StateBackup.swift:75,90-91`; `State.swift:255,270-271`; `PipelineCorrections.swift:67-68`)
-- **Problem:** The revision bump and retry clearing are written two different ways, and only some sites also clear `correctionUndo`.
-- **Scenario:** A new mutation forgets `retries.removeAll()`, and reviewers can't tell which sites are meant to clear undo.
-- **Fix:** Add `AppState.invalidatePendingWork(clearingUndo:)` and call it at every site.
-<!-- sources: conventions/core-pipeline-store#9 -->
 
 #### 4.77 Eval limits duplicated as literals and hard-coded into prose — Low
 
@@ -3508,73 +2029,34 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 
 | # | Severity | Location | Finding |
 |---|---|---|---|
-| 5.1 | Medium | `CLAUDE.md:5` | Standing instructions in CLAUDE.md are stale or contradict the code |
-| 5.2 | Medium | `CLAUDE.md:27` | CLAUDE.md is a 68 KB session ledger, not agent instructions |
-| 5.3 | Medium | `README.md:3` | README lacks architecture, editions, testing and license sections |
-| 5.4 | Medium | `SpamWise/AppModelScanning.swift:113` | Seen-record predicate and persistence check are opaque |
-| 5.5 | Medium | `SpamWise/IMAPConnectionModel.swift:113` | JSON round trip used as an undocumented validator |
-| 5.6 | Medium | `SpamWise/OnboardingView.swift:97` | Magic numbers in UI copy and logic duplicate core constants |
-| 5.7 | Medium | `SpamWise/SpamWise.help/Contents/Resources/en.lproj/troubleshooting-mail-integration.html:5` | Help pages narrate development status and the $150 budget |
-| 5.8 | Medium | `SpamWiseCore/Sources/Classifier/Types.swift:90` | `CorrectionExample.gist`/`.reason` docs do not match what is stored |
-| 5.9 | Medium | `SpamWiseCore/Sources/Classifier/Types.swift:129` | Templated "with the supplied configuration" init docs hide clamping |
-| 5.10 | Medium | `SpamWiseCore/Sources/Learning/LearningState.swift:124` | Decoder doc says "clamps" but discards invalid records |
-| 5.11 | Medium | `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:22` | Persisted feature vector uses unnamed positional indices |
-| 5.12 | Medium | `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:144` | `IMAPAccountValidation.record` silently switches the shared route to IMAP |
-| 5.13 | Medium | `SpamWiseCore/Sources/MessageModel/Identity.swift:12` | `MessageIdentity` docs are Apple Mail-only and call `mailbox` display-only |
-| 5.14 | Medium | `SpamWiseCore/Sources/MessageModel/Message.swift:5` | `ParsedMessage.headers` doesn't say values are undecoded bytes |
-| 5.15 | Medium | `SpamWiseCore/Sources/Store/Store.swift:57` | Doc comments that are wrong for the symbol they describe |
-| 5.16 | Medium | `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:39` | Persist-before-acting test never checks the ordering |
-| 5.17 | Medium | `SpamWiseCore/Tests/SpamWiseCoreTests/MailIntegrationTests.swift:75` | Positional Apple Event and IMAP transcript stubs are opaque |
-| 5.18 | Medium | `docs/automation.md:86` | Reference docs narrate dated session events |
-| 5.19 | Medium | `docs/evidence.md:8` | evidence.md omits the keyed Spamhaus HTTPS transport |
-| 5.20 | Medium | `docs/spamsieve-parity-progress.md:150` | Docs contradict each other and the code on current status |
 | 5.21 | Low | `MailExtension/MailExtension.swift:1` | Unused `import AppIntents` has no explanation |
-| 5.22 | Low | `Scripts/app-store-check.sh:25` | Script output hard-codes project status |
-| 5.23 | Low | `Scripts/notarize-match.py:2` | Python helpers' docstrings and `--help` omit modes and arguments |
 | 5.24 | Low | `Scripts/rspamd-runtime-check.sh:1` | Scripts have no purpose/usage header |
 | 5.25 | Low | `Scripts/rspamd-runtime-check.sh:73` | Unexplained values in runtime harnesses |
-| 5.26 | Low | `SpamWise.xcodeproj/project.pbxproj:446` | No DocC strictness or documentation build |
 | 5.27 | Low | `SpamWise/ActivityDateFilterView.swift:30` | Duplicated end-of-day math with unexplained `-0.001` |
-| 5.29 | Low | `SpamWise/AppModel.swift:130` | Optimistic settings queue and refresh override are unexplained |
 | 5.30 | Low | `SpamWise/AppModel.swift:285` | History-eligible set encodes a receipt-gate rule without a name |
-| 5.31 | Low | `SpamWise/AppModel.swift:355` | IMAP-record discriminator and swallowed adapter error are implicit |
 | 5.32 | Low | `SpamWise/AppModelFolders.swift:87` | Sweep-completion and claim-release expressions need names |
-| 5.33 | Low | `SpamWise/AppModelRules.swift:43` | Rule-import byte limit duplicated with an unexplained `+1` |
 | 5.34 | Low | `SpamWise/AutomationIntents.swift:8` | `AutomationLabel` raw values are persisted Shortcuts identities |
-| 5.35 | Low | `SpamWise/DecisionDetailView.swift:156` | Stringly-typed `"verification"` path check |
 | 5.36 | Low | `SpamWise/DirectUpdateConfiguration.swift:9` | Guards encode unstated GitHub naming rules and MAS detection |
-| 5.37 | Low | `SpamWise/IMAPConnectionModel.swift:132` | Credential-existence check via discarded Keychain read |
 | 5.38 | Low | `SpamWise/IMAPSettingsView.swift:11` | Safety side effects buried in inline `Binding` setters |
 | 5.39 | Low | `SpamWise/IMAPSettingsView.swift:67` | Opaque inline expressions in Settings view bodies |
 | 5.40 | Low | `SpamWise/MailHealthView.swift:22` | Account-inclusion binding hides the snapshot-on-first-toggle rule |
-| 5.41 | Low | `SpamWise/SpamWise.help/Contents/Resources/en.lproj/correcting-mistakes.html:5` | Help names controls and tabs that differ from the UI |
 | 5.42 | Low | `SpamWiseCore/Sources/Classifier/AppleClassifier.swift:22` | `Generate` signature has unlabeled, swappable parameters |
-| 5.43 | Low | `SpamWiseCore/Sources/Classifier/ClaudeClassifier.swift:20` | Init doc says "for evaluation" but production uses it |
 | 5.44 | Low | `SpamWiseCore/Sources/Classifier/ModelTokenPricing.swift:5` | Gemini 2x pricing epoch is unexplained |
 | 5.45 | Low | `SpamWiseCore/Sources/Classifier/ThreatAssessment.swift:90` | `ThreatInput.init` silently strips learned scores |
 | 5.46 | Low | `SpamWiseCore/Sources/Classifier/Types.swift:29` | `TokenUsage` fallback condition misstated |
 | 5.47 | Low | `SpamWiseCore/Sources/Decision/Decision.swift:4` | `FilteringStrength` case docs duplicate the thresholds |
 | 5.48 | Low | `SpamWiseCore/Sources/Evaluation/ComparisonReport.swift:76` | `latencyP50Sec` doc describes the 95th percentile |
 | 5.49 | Low | `SpamWiseCore/Sources/Evaluation/Metrics.swift:19` | `EvaluationObservation.file`/`.path` docs are narrower than stored values |
-| 5.50 | Low | `SpamWiseCore/Sources/Learning/CampaignLearning.swift:68` | Candidate fingerprints use placeholder label and date |
-| 5.51 | Low | `SpamWiseCore/Sources/Learning/LearningState.swift:67` | `CampaignMatch` doc denies the Junk gate it drives |
 | 5.52 | Low | `SpamWiseCore/Sources/Learning/LearningState.swift:253` | Partial or inaccurate member docs in LearningState |
-| 5.53 | Low | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:285` | `importHistory` is a long block that needs named helpers |
 | 5.54 | Low | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:290` | Docs phrased as reviewer-directed disclaimers |
 | 5.55 | Low | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:337` | `testDisposableMessage` docs omit that it moves and flags mail |
 | 5.56 | Low | `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:134` | Multi-line doc comments use `///` instead of `/** */` |
 | 5.57 | Low | `SpamWiseCore/Sources/MailIntegration/IMAPProtocol.swift:49` | Wire parsing uses raw ASCII byte values |
 | 5.58 | Low | `SpamWiseCore/Sources/MailIntegration/MailPage.swift:25` | Paging and sentinel contracts lack names |
-| 5.59 | Low | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:100` | `MailScripts.lookup` documented as a read but builds mutating scripts |
-| 5.60 | Low | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:233` | `accountPage` docs omit the role parameter and Inbox fallback |
-| 5.61 | Low | `SpamWiseCore/Sources/MessageModel/DocumentInspection.swift:16` | Status is all-or-nothing but documented per attachment |
-| 5.62 | Low | `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:44` | `extract` says unsupported MIME fails; it is skipped |
 | 5.63 | Low | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:4` | Docs describe downstream policy instead of their own contract |
-| 5.64 | Low | `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:146` | Stale "byte-preserved above" comment |
 | 5.65 | Low | `SpamWiseCore/Sources/MessageModel/Message.swift:32` | `AttachmentMetadata.init` doc names one consumer, not its behavior |
 | 5.66 | Low | `SpamWiseCore/Sources/MessageModel/ResourceDeadline.swift:14` | Non-obvious mechanisms have no explanation |
 | 5.67 | Low | `SpamWiseCore/Sources/MessageModel/ResourceDeadline.swift:46` | Deadline helpers say "returns" but throw |
-| 5.68 | Low | `SpamWiseCore/Sources/Signals/ContentRules.swift:74` | `ContentRules.matches` documented "for previews" but gates live mail |
 | 5.69 | Low | `SpamWiseCore/Sources/Signals/Evidence.swift:33` | `tldIsAbuseHeavy` doc says weak; brief and prompt say strong |
 | 5.70 | Low | `SpamWiseCore/Sources/Signals/Evidence.swift:111` | `ContactsLookup` doc omits the permission prompt and throws |
 | 5.71 | Low | `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:6` | Public enum cases lack DocC across modules |
@@ -3582,7 +2064,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 | 5.73 | Low | `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:213` | `DNSAnswer` documented as DNS-only; HTTPS returns it too |
 | 5.74 | Low | `SpamWiseCore/Sources/Signals/RspamdLookup.swift:35` | Docs and literals restate named constants |
 | 5.75 | Low | `SpamWiseCore/Sources/Signals/SpamhausHTTPS.swift:8` | DBL listing-code tables duplicated with no source |
-| 5.76 | Low | `SpamWiseCore/Sources/SpamWiseCore/ConfiguredClassifier.swift:55` | Discarded `PromptBuilder.prompt` result is unexplained |
 | 5.77 | Low | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:26` | Public API DocC is summary-only; overloads indistinguishable |
 | 5.78 | Low | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:276` | Dense inline decision logic needs named helpers |
 | 5.79 | Low | `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:100` | Gate precedence encoded by calling `Gates.evaluate` twice |
@@ -3590,13 +2071,10 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 | 5.81 | Low | `SpamWiseCore/Sources/SpamWiseCore/State.swift:248` | DocC omits side effects of settings edits, restore and corrections |
 | 5.82 | Low | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:16` | Daemon help text is ragged and incomplete |
 | 5.83 | Low | `SpamWiseCore/Sources/SpamWiseEval/Options.swift:26` | `spamwise-eval` usage incomplete and states unenforced policy |
-| 5.84 | Low | `SpamWiseCore/Sources/SpamWiseEval/main.swift:149` | Seed-state isolation inlined instead of a named helper |
 | 5.85 | Low | `SpamWiseCore/Sources/Store/Store.swift:32` | Store actor DocC lacks a summary and the lock behavior |
-| 5.86 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:176` | Test names cover a fraction of multi-behavior tests |
 | 5.87 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:390` | Persistence failure forced by an unexplained directory-as-store trick |
 | 5.88 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/EmbeddedImageTests.swift:65` | Boundary tests hard-code production limits |
 | 5.89 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/ProviderTests.swift:162` | Unnamed literal fixtures in tests |
-| 5.90 | Low | `SpamWiseCore/Tests/SpamWiseCoreTests/RoadmapStateTests.swift:1` | Test file named after a project phase |
 | 5.91 | Low | `TODO.md:120` | Docs cite evidence that does not exist in the repository |
 | 5.92 | Low | `Tools/Corpus/README.md:88` | Corpus README omits the OpenTextShield candidate and `--synthetic` |
 | 5.93 | Low | `Tools/Corpus/README.md:159` | Corpus README uses the obsolete strict-memory-safety flag |
@@ -3606,176 +2084,11 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 | 5.97 | Low | `Tools/DocumentWorker/ProbeHost.swift:55` | Harness uses unnamed limits and errno literals |
 | 5.98 | Low | `Tools/DocumentWorker/Worker.swift:70` | Worker exit codes 71–76 are undocumented |
 | 5.99 | Low | `Tools/Preferences/run.py:34` | Unexplained reference-date timestamp |
-| 5.100 | Low | `UITests/ActivityScreen.swift:34` | Duplicated UI lookup workarounds with one comment |
-| 5.101 | Low | `UITests/EvidenceScreen.swift:17` | Disclosure expanded by an unexplained coordinate click |
 | 5.102 | Low | `docs/automation.md:5` | automation.md omits the Apple Mail transport requirement |
-| 5.103 | Low | `docs/conventions-and-design-review.md:96` | Conventions ledger claims an exhaustive review it no longer covers |
-| 5.104 | Low | `docs/packaging.md:11` | packaging.md misdescribes the Help index and notarization input |
 | 5.105 | Low | `docs/privacy-audit.md:19` | Privacy docs and onboarding copy are stale about data flows |
 | 5.106 | Low | `eval/mock-responses.json:2` | Mock-response keys are undocumented SHA-256 hashes |
-| 5.107 | Info | `SpamWise/` (18 Settings view files) | No comments or DocC in Settings views; none required |
 | 5.108 | Info | `SpamWiseCore/Sources/MailIntegration/IMAPProtocol.swift:4` | Protocol parsing lacks RFC references |
 | 5.109 | Info | `SpamWiseCore/Sources/SpamWiseCore/State.swift:36` | Calibration notes embedded in DocC |
-
-#### 5.1 Standing instructions in CLAUDE.md are stale or contradict the code — Medium
-
-- **Where:** `CLAUDE.md:5`, `CLAUDE.md:7`, `CLAUDE.md:12`, `CLAUDE.md:77`, `CLAUDE.md:153-155`
-- **Problem:** The few lines meant as standing instructions are stale. L5 points to a session-only implementation plan and says "work proceeds on `codex/phase-one`". L7's module list omits Learning, MailIntegration, Evaluation and the daemon (Package.swift:38,44,45,50). L77 says fingerprints and URI/DNS blocklists "remain deferred", though TODO.md:51-53 marks them implemented. L12 still says "pending integration".
-- **Scenario:** An agent declines to extend `SpamhausHTTPS.swift` or the campaign fingerprints because L77 calls them deferred. Another puts Apple Events code outside MailIntegration because the module isn't in the documented DAG.
-- **Fix:** Rewrite the Contract and architecture section from the current Package.swift, with each target and its dependency edges. State the current branch policy, replace the session-plan reference with explicit precedence rules, and delete superseded rulings (L12, L59, L77).
-<!-- sources: comments/repo-docs#2 -->
-
-#### 5.2 CLAUDE.md is a 68 KB session ledger, not agent instructions — Medium
-
-- **Where:** `CLAUDE.md:27` (whole file, 654 lines / 68,501 bytes), `CLAUDE.md:57`
-- **Problem:** Only L1–25 work as durable instructions. Everything after the "Milestone ledger" heading is dated narrative: submission IDs, worker tokens, test durations, test counts at nine points, and 25 `.build/<uuid>` paths. The file is loaded into every session at about 17k tokens. Superseded rulings sit unmarked next to their replacements: L59 says the UI runner is blocked, and L81–89 resolve it. At least one load-bearing claim is false: L57 says strict memory safety is enabled, but it is not on for the Xcode targets. Neither SubTrack nor Zephyr tracks a file like this; both keep history in CHANGELOG.md.
-- **Scenario:** An agent reads L59 or L75 ("Full onboarding/corrections interaction remains unverified") and stops trying to run UI tests, or trusts "strict memory safety is enabled" and skips that work.
-- **Fix:** Cut it to about 60–100 lines of durable content. Keep the invariants, the module DAG, identifiers, commands and locks, signing and tool-sandbox caveats, probe-mail hygiene, the $150 ceiling and the opt-in live-test rule. Move design decisions to docs/architecture.md or ADRs and release evidence to CHANGELOG.md or PR descriptions. Fix the false claims.
-<!-- sources: config/swift-xcode#12, comments/repo-docs#1 -->
-
-#### 5.3 README lacks architecture, editions, testing and license sections — Medium
-
-- **Where:** `README.md:3`, `README.md:41`
-- **Problem:** The README is 41 lines. It has no architecture or layout map, no target/scheme or editions table (SpamWise vs SpamWiseDirect), no testing section and no license statement. L3 describes only "guided Claude classification", though OpenAI, Gemini, Apple on-device and PCC providers exist. For implementation decisions it sends readers to CLAUDE.md.
-- **Scenario:** A new developer can't tell which scheme ships to the App Store, what SpamWiseDirect is for, or that installing both channels breaks the shared bundle identity (stated only in distribution-differences.md:36-39).
-- **Fix:** Restructure after SubTrack's and Zephyr's READMEs: description, editions, architecture and layout, prerequisites, building, testing (check.sh, ui-check.sh, store-check.sh, opt-in live and intent tests), running, releasing, privacy, license (or "none selected"). Link a docs index instead of CLAUDE.md.
-<!-- sources: comments/repo-docs#4 -->
-
-#### 5.4 Seen-record predicate and persistence check are opaque — Medium
-
-- **Where:** `SpamWise/AppModelScanning.swift:113` (predicate at 115-117, guard at 125-130)
-- **Problem:** Which existing records stop an automatic scan from reprocessing a message is decided by an unnamed four-clause predicate. Paused and superseded records don't count, dry-run records count only during dry runs, and unclassified records count only within the current revision. The reload-and-guard that follows also catches the duplicate and failed-save paths of `Pipeline.process`, but nothing explains it, so it looks like redundant work.
-- **Scenario:** A new `ActionOutcome` case is added without knowing whether it should count as seen. Sweeps then re-act on mail or permanently skip unclassified mail. Or someone deletes the guard as redundant.
-- **Fix:** Extract `alreadyProcessedKeys(dryRun:)` with one named predicate per clause, and `requirePersisted(_:)`, each with a one-line `///`.
-<!-- sources: comments/app-logic#2 -->
-
-#### 5.5 JSON round trip used as an undocumented validator — Medium
-
-- **Where:** `SpamWise/IMAPConnectionModel.swift:113-116`, `SpamWiseCore/Sources/MailIntegration/IMAPConfiguration.swift:34-36`
-- **Problem:** `_ = try JSONDecoder().decode(IMAPConfiguration.self, from: JSONEncoder().encode(connection.account))` exists only to trigger the internal `validate()`, which runs from `init(from:)`. It looks like dead code and is a roundabout way to call an existing function.
-- **Scenario:** Someone removes the apparent no-op. An invalid host or identifier is then saved to the store and Keychain and fails only at connection or scan time.
-- **Fix:** Make `IMAPConfiguration.validate()` public with DocC and call `try connection.account.validate()`, or give the type a validating public initializer.
-<!-- sources: comments/app-logic#4 -->
-
-#### 5.6 Magic numbers in UI copy and logic duplicate core constants — Medium
-
-- **Where:** `SpamWise/OnboardingView.swift:93,97`, `SpamWise/MailReviewView.swift:47,51,53`, `SpamWise/MailConnectionView.swift:57`, `SpamWise/ReviewDigestView.swift:17`, `SpamWise/KeyEntryView.swift:22`, `SpamWise/PolicyView.swift:5`
-- **Problem:** Views hard-code 20, 30 seconds, seven days, 4000 and "Haiku 5.5", both in logic and in user-facing strings. Each value is defined authoritatively elsewhere: `AppModel.defaultScanLimit`, `limit: 20` in AppModelMailReview, `moveSettlingTime`, `lookbackDays`, `maximumPolicyCharacters`. The Junk review pager has three bare `20`s that must match a fourth.
-- **Scenario:** The Junk page size changes to 50, and the pager skips or repeats messages because it still advances by 20. Or the settling time changes and the UI keeps promising 30 seconds.
-- **Fix:** Use `AppModel.defaultScanLimit` and add `AppModel.junkPageSize`. Expose the other values as package constants and interpolate them into localized strings with FormatStyle.
-<!-- sources: comments/app-views-main#3 -->
-
-#### 5.7 Help pages narrate development status and the $150 budget — Medium
-
-- **Where:** `SpamWise/SpamWise.help/Contents/Resources/en.lproj/troubleshooting-mail-integration.html:5` (also :7, :9, :11), `en.lproj/getting-started.html:5`, `en.lproj/filtering-strength.html:9`, `en.lproj/what-data-is-sent.html:11`, the es.lproj and fr.lproj equivalents. Reached from `SpamWise/MailConnectionView.swift:72`, `SpamWise/GeneralSettingsView.swift:51`, `SpamWise/ModelSettingsView.swift:103` and `SpamWise/AdvancedSettingsView.swift:45`.
-- **Problem:** End-user Help contains the implementing agent's status notes: "A successful build or notarization does not prove live Mail callbacks…", "Keep pending runtime checks visible", "No live IMAP acceptance is implied by offline protocol tests", "MailKit remains dry-run-only until…", synthetic-fixture caveats, and "The configured paid-call ceiling starts at $150." This fails the comment test applied to documentation, and the text goes stale as soon as any gate passes.
-- **Scenario:** A user opens Help next to "Usage and spending" and learns about a $150 ceiling they can't change. App Review reads the troubleshooting page as unfinished-product disclaimers.
-- **Fix:** Rewrite these pages, in all three languages, as user tasks only: Automation denied, why no action happened, how to restore a message. Move build, notarization, test and calibration caveats to TODO.md or docs/, and rebuild the Help indexes.
-<!-- sources: comments/app-views-main#1, comments/app-views-settings#3 -->
-
-#### 5.8 `CorrectionExample.gist`/`.reason` docs do not match what is stored — Medium
-
-- **Where:** `SpamWiseCore/Sources/Classifier/Types.swift:90`, `Types.swift:94`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:59`, `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:54`, `SpamWiseCore/Sources/Learning/CorrectionLearning.swift:18`
-- **Problem:** The doc calls `gist` a "bounded message summary". The main correction path stores the previous decision's model-written reason in it, and corpus import stores a body prefix. Retrieval scores similarity on subject + gist, so one field holds two kinds of data and nothing says so. `reason` copies `Verdict.reason`'s doc and no production call site sets it.
-- **Scenario:** A maintainer tunes lexical retrieval on the assumption that gist is message content. For every UI correction, it is actually matching the model's earlier explanation.
-- **Fix:** Decide what `gist` holds: store a bounded text excerpt everywhere, or rename and redocument it as the prior explanation. Document `reason` for its real meaning, or delete it.
-<!-- sources: comments/core-classifier-learning#1 -->
-
-#### 5.9 Templated "with the supplied configuration" init docs hide clamping — Medium
-
-- **Where:** `SpamWiseCore/Sources/Classifier/Types.swift:129` (also Types.swift:36, :60, :98, :163, :165; `Classifier/ClaudeClassifier.swift:31`; `Decision/Decision.swift:71`; `MessageModel/DomainResolver.swift:15`; `MessageModel/Identity.swift:34`; `Signals/RDAP.swift:13`, :36; `Signals/Evidence.swift:51`, :113; `Signals/Gates.swift:20,53,70`; `SpamWiseCore/Pipeline.swift:16`; `SpamWiseCore/State.swift:52,93,147,210`; `SpamWiseCore/MailClientAdapter.swift:8,17`; `SpamWiseCore/CompletionOnce.swift:9`; `Store/Store.swift:39`; `Store/Keychain.swift:39`; `MailIntegration/AppleMailAdapter.swift:117`; `MailIntegration/IMAPDaemonConfiguration.swift:18`). All paths are under `SpamWiseCore/Sources/`.
-- **Problem:** The template appears 28 times repo-wide, including on parameterless inits that take no configuration, and it hides the behavior callers need. `Verdict` truncates `reason` to 240 characters, `TokenUsage` clamps its counts, `ClassificationInput` clamps timeout to 0.01–15 s, correctionLimit to 0–100 and bodyTokenBudget to 100–4000, `RDAPLookup` reads its cache file synchronously, `SenderRule` lowercases `value`, `Store.init` creates a 0700 parent directory, and `AppleMailAdapter` waits 30 s per move by default. The two `MockClassifier` inits share one doc. A related case: `IMAPCredentialReference.init` claims "exactly one source" but never validates.
-- **Scenario:** A caller passes `timeout: 30` and silently gets 15 s, with nothing in Quick Help to warn them. Readers also see "Creates a DomainResolver with the supplied configuration" on `init()`.
-- **Fix:** Replace each with a sentence about what the initializer establishes ("Clamps limits to the supported ranges…", "Normalizes `value` to lowercase", "Waits `moveSettlingTime` after each move"). Give the two `MockClassifier` inits distinct docs. Make `IMAPCredentialReference.init` validate, or reword its doc.
-<!-- sources: conventions/core-parsing-signals#17, conventions/core-classifier-learning#12, comments/core-parsing-signals#7, comments/core-classifier-learning#3, comments/core-pipeline-store#8, comments/mail-integration#13 -->
-
-#### 5.10 Decoder doc says "clamps" but discards invalid records — Medium
-
-- **Where:** `SpamWiseCore/Sources/Learning/LearningState.swift:124` (filter at 136-150)
-- **Problem:** "Decodes older empty state and clamps persisted retention and feature bounds" is inaccurate. Only the retention limits are clamped. Samples and fingerprints that fail hash-length, token, feature-count, range, partition or date checks are dropped whole.
-- **Scenario:** A change to `featureCount` or the partition function makes every persisted sample fail validation. All the user's training corrections vanish on the next load, and the doc led the maintainer to expect clamping.
-- **Fix:** Document it as "Decodes persisted state, defaulting missing collections to empty, clamping retention limits and discarding samples or fingerprints that violate current bounds." Extract `isValid` predicates on `LearningSample` and `CampaignFingerprint`.
-<!-- sources: comments/core-classifier-learning#6 -->
-
-#### 5.11 Persisted feature vector uses unnamed positional indices — Medium
-
-- **Where:** `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:22` (7, 23-34, 85), `SpamWiseCore/Sources/Learning/LearningState.swift:39`
-- **Problem:** The order of `LearningSample.features` is a persisted contract defined only by an eight-element array literal. Index 0 is a bias term, implied only by `index == 0 ? 0` in regularization. `featureCount = 8` is kept in step by hand. The public doc refers to a "version-one" order, but no version field exists.
-- **Scenario:** Someone inserts a feature mid-array. Persisted samples fail the decoder's count check and are dropped, or, if the count is unchanged, they are silently misaligned against the new weights.
-- **Fix:** Add a `LearningFeature: Int, CaseIterable` enum (bias, abuseHeavyTLD, …), derive `featureCount` from `allCases.count`, name the bias check, and document the persistence contract. Add a version field if versioning is intended.
-<!-- sources: comments/core-classifier-learning#7 -->
-
-#### 5.12 `IMAPAccountValidation.record` silently switches the shared route to IMAP — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/IMAPDaemonConfiguration.swift:144` (148-153), `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:20-21,57-74`, `MailExtension/MessageActionHandler.swift:26-31`
-- **Problem:** The doc states a caller precondition, but the function also sets `settings.route = .imap` and `advanced.transport = .imap`. Without `statePath`, the daemon writes to the shared App Group store and prints only "endpoint validation recorded. Dry run remains unchanged." The switch is consistent with how the Apple Mail probe sets its route, but it is undocumented.
-- **Scenario:** A user who runs the AppleScript/MailKit route tries `spamwise-daemon --probe`. The GUI app's route silently becomes IMAP, and the extension keeps recording callbacks but stops classifying.
-- **Fix:** Document the side effect in DocC and in the daemon's help and success output, or split this into `recordProbe` and an explicit `activateIMAPRoute`.
-<!-- sources: comments/mail-integration#1, conventions/mail-integration#16 -->
-
-#### 5.13 `MessageIdentity` docs are Apple Mail-only and call `mailbox` display-only — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/Identity.swift:12` (4-13), `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:194-212`, `SpamWiseCore/Sources/MailIntegration/IMAPPaging.swift:39-45`
-- **Problem:** For IMAP identities, `localID` holds the UID and `accountID` the configuration ID. `mailbox`, documented as "for display and diagnostics", is required by `validateIdentity` and folded into `key`. The `key` getter switches between two hashing schemes, only one of which includes `localID`, with no explanation.
-- **Scenario:** A maintainer localizes or drops `mailbox`. IMAP actions then fail validation and storage keys change, so existing records and claims stop deduplicating.
-- **Fix:** Document both identity forms and that `mailboxValidity` is UIDVALIDITY. Split `key` into `imapKey` and `mailKey`, with one sentence on why the Mail key omits the local ID (it changes when a message moves).
-<!-- sources: comments/core-parsing-signals#1 -->
-
-#### 5.14 `ParsedMessage.headers` doesn't say values are undecoded bytes — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/Message.swift:5`, `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:202,248-250`
-- **Problem:** Every header value except Subject and the From display name is a Latin-1 view of the raw bytes, so RFC 2047 words stay encoded and raw UTF-8 becomes mojibake. ContentRules (`.recipients`, `.replyTo`, `.listID`, `.contentType`) and the authentication checks match against these strings. Neither `headers` nor `header(_:)` says so.
-- **Scenario:** A rule "recipients contains José" never matches, because the stored value is `=?utf-8?q?Jos=C3=A9?=` or `JosÃ©`.
-- **Fix:** State in both docs that values are undecoded, byte-preserved strings, or decode the headers ContentRules consumes and document that instead.
-<!-- sources: comments/core-parsing-signals#2 -->
-
-#### 5.15 Doc comments that are wrong for the symbol they describe — Medium
-
-- **Where:** `SpamWiseCore/Sources/Store/Store.swift:57`, `SpamWiseCore/Sources/Store/Keychain.swift:24,41`, `SpamWiseCore/Sources/SpamWiseCore/ConfiguredClassifier.swift:9`, `SpamWiseCore/Sources/SpamWiseCore/State.swift:116,120,130,149,242`, `SpamWiseCore/Sources/SpamWiseCore/MailPreferences.swift:19`
-- **Problem:** Copied or intent-based docs mislead. `Store.read` and `APIKeychain.read` share "Reads durable state or credentials", and Store holds no credentials. `APIKeychain` says "the user's API key", though it stores the Spamhaus, IMAP and other provider keys. `HistoryIndex.summary` returns counts, not "human-readable history". `RetryJob`'s property docs are copied from `DecisionRecord`. An initializer "without changing existing account scope". `isQuiet` returns true for out-of-range hours without saying so.
-- **Scenario:** A reader trusts `Store.read` as a credential accessor, or expects `isQuiet` to be false for a corrupt hour of 24, when it actually suppresses every notification.
-- **Fix:** Rewrite each to state actual behavior. For example, `Store.read`: "Decodes the value stored under `key`, or returns `fallback`". `isQuiet`: "invalid hours are treated as always quiet".
-<!-- sources: comments/core-pipeline-store#5, conventions/core-pipeline-store#19 -->
-
-#### 5.16 Persist-before-acting test never checks the ordering — Medium
-
-- **Where:** `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:39`, `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionFixtures.swift:25-28`, `DecisionTests.swift:389`
-- **Problem:** The test is named `persists before acting and prevents duplicate actions`, but it checks dedupe, cost, read status and previews. `RecordingAdapter.perform` never reads the store. The nearby `prevents actions after persistence fails` test most likely fails at load, before dispatch is reached. Nothing pins the order of save and dispatch, yet the name tells readers the invariant is covered (and docs/conventions-and-design-review.md:227 repeats the claim).
-- **Scenario:** Pipeline is reordered to dispatch before `StateRepository.update`, and every test still passes.
-- **Fix:** Give `RecordingAdapter` the Store and assert inside `perform` that the record and claim already exist. Or rename the test for what it checks and add a separate ordering test.
-<!-- sources: comments/tests#1 -->
-
-#### 5.17 Positional Apple Event and IMAP transcript stubs are opaque — Medium
-
-- **Where:** `SpamWiseCore/Tests/SpamWiseCoreTests/MailIntegrationTests.swift:75-78` (also :48, :61-63), `SpamWiseCore/Tests/SpamWiseCoreTests/IMAPTests.swift:143-147,359-366`
-- **Problem:** `StubAppleEvents` hands out responses in order, whichever script asks. The IMAP fixtures use hand-numbered tags. On the safety-critical move and probe paths, nothing says which lookup, move, verify or settle step each `.boolean(true)` or `S14` answers.
-- **Scenario:** The adapter gains one verification script, and every later response shifts by one. The test fails with a confusing decode error, or still passes for the wrong reason.
-- **Fix:** Add named builders (`.lookup(selected)`, `.move(succeeded:)`, `.verify(in:)`) and an IMAP transcript builder that assigns tags automatically. Better still, match stub responses to the script kind.
-<!-- sources: comments/tests#4 -->
-
-#### 5.18 Reference docs narrate dated session events — Medium
-
-- **Where:** `docs/automation.md:86` (also :131), `docs/evaluation.md:43-64,99-100`, `docs/repository-approval.md:13`, `docs/roadmap-progress.md:6`, `docs/updating.md:121`, `docs/probes/local-model-screening.md:15`, `docs/probes/unreadable-mail-pages.md:3,42`, `Tools/DocumentWorker/README.md:110-160,210-230`, `Tools/Corpus/README.md:171`
-- **Problem:** Reference docs mix behavior with diary entries: "At 22:10 PDT…", "On 2026-10-16, this path admitted one synthetic OpenAI request… HTTP 429", "The user's iCloud and Google accounts… over the coming weeks", first-person "I independently checked", "before the change" narratives, and worker-specific `.build/<uuid>` evidence paths. The DocumentWorker README's dated check counts (24, then 28) were each accurate for their own run but read as a contradiction. roadmap-progress.md and spamsieve-parity-progress.md duplicate TODO.md. This fails the comment test applied to documentation.
-- **Scenario:** A reader works through 70 lines of a troubleshooting narrative to find the one durable fact (a saved shortcut needs Stop and Output), and can't tell whether the 429 paragraph describes current behavior.
-- **Fix:** Rewrite in the present tense: behavior, limits, commands and platform quirks. Move dated results to CHANGELOG.md, PRs or probe logs without PIDs or local times. Fold the progress ledgers into TODO.md and delete them.
-<!-- sources: comments/repo-docs#5, comments/eval-scripts#9, comments/tools#1 -->
-
-#### 5.19 evidence.md omits the keyed Spamhaus HTTPS transport — Medium
-
-- **Where:** `docs/evidence.md:8` (11-12, 22-25), `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:63`, `docs/spamhaus.md:46-49`
-- **Problem:** The optional-evidence reference describes Spamhaus as public-DNS only and says no key is configured. Its description of `SpamhausConfiguration` omits the `transport` field. The HTTPS transport sends domains directly to `apibl.spamhaus.net` with a Keychain-stored key, which is a different data flow.
-- **Scenario:** A reviewer concludes that domains reach only the user's resolver and that no credential is stored.
-- **Fix:** Cover both transports, their data flows and the stored key, or keep transport details only in spamhaus.md and link to it.
-<!-- sources: comments/repo-docs#7 -->
-
-#### 5.20 Docs contradict each other and the code on current status — Medium
-
-- **Where:** `docs/spamsieve-parity-progress.md:150-151` (also :123, :190, :237-238), `docs/automation.md:49-50`, `docs/app-store-feasibility.md:23,72`, `docs/repository-approval.md:13-14`, `docs/distribution-differences.md:13`, `docs/detection-design.md:52-53`, `docs/probes/runtime-checklist.md:3`, `TODO.md:171`
-- **Problem:** Rolling progress notes were never updated when later work superseded them. The docs give opposite answers on whether native automation passed, whether an external updater exists (SpamWiseDirect links one), whether a git remote exists, the branch baseline (7cf6c55 vs d1284e5), trusted-path threat coverage, MailKit callback status, and the RDAP default. The code makes RDAP opt-in (`PipelineClassification.swift:159`).
-- **Scenario:** Someone drafting App Review notes from app-store-feasibility.md claims there is no updater and no native automation, or a privacy reviewer believes RDAP runs by default.
-- **Fix:** Make TODO.md the single status source and keep feature docs to behavior only. Correct each listed statement against the code, and replace runtime-checklist.md:3 with a pointer to TODO.md.
-<!-- sources: comments/repo-docs#6 -->
 
 #### 5.21 Unused `import AppIntents` has no explanation — Low
 
@@ -3784,22 +2097,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** A cleanup pass removes the dead-looking import, and the warnings-as-errors build may fail for no visible reason.
 - **Fix:** Express the dependency in build settings (link AppIntents.framework or disable metadata extraction), or add a one-line comment.
 <!-- sources: comments/mail-integration#14 -->
-
-#### 5.22 Script output hard-codes project status — Low
-
-- **Where:** `Scripts/app-store-check.sh:25` (also :32, :49)
-- **Problem:** The script prints "App Review justification and approval remain pending" whenever the temporary-exception key is present. It can't know App Review status.
-- **Scenario:** After approval, every run still reports the exception as pending.
-- **Fix:** Report only what was checked ("Temporary Apple Events exception present; requires App Review justification") and track status in TODO.md.
-<!-- sources: comments/eval-scripts#15 -->
-
-#### 5.23 Python helpers' docstrings and `--help` omit modes and arguments — Low
-
-- **Where:** `Scripts/notarize-match.py:2` (40, 96-97), `Scripts/export-store-match.py:120,271-276`
-- **Problem:** With no action flag, notarize-match.py runs `notarytool history`, and the docstring doesn't mention this mode. `--archive` actually needs a ZIP, pkg or dmg. No argparse option in either script has `help=`. "reviewed" in the certificate error has no meaning in that context.
-- **Scenario:** A user passes an .xcarchive to `--archive` and notarization fails.
-- **Fix:** Describe all three modes in the docstring. Rename `--archive` to `--submit` or document the accepted types, add `help=` to every argument, and drop "reviewed".
-<!-- sources: comments/eval-scripts#13 -->
 
 #### 5.24 Scripts have no purpose/usage header — Low
 
@@ -3817,14 +2114,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** Name the values (`responseLimitPlusOne = 64 * 1024 + 1`), add a short reason comment where a name isn't enough, and rename `DECRYPT` to `MATCH_DECRYPT_RUBY` with a note.
 <!-- sources: comments/eval-scripts#6 -->
 
-#### 5.26 No DocC strictness or documentation build — Low
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:446`
-- **Problem:** SpamWise sets no `OTHER_DOCC_FLAGS`, and no CI job runs `docbuild`. SubTrack sets `--warnings-as-errors` on 8 configurations, and both SubTrack (ci.yml:141) and Zephyr (ci.yml:267) run `xcodebuild docbuild`.
-- **Scenario:** A renamed parameter or broken symbol link in SpamWiseCore DocC goes unnoticed.
-- **Fix:** Add `OTHER_DOCC_FLAGS = --warnings-as-errors` (or equivalent package strictness) and port Zephyr's `docs` CI job.
-<!-- sources: config/ci-automation#26 -->
-
 #### 5.27 Duplicated end-of-day math with unexplained `-0.001` — Low
 
 - **Where:** `SpamWise/ActivityDateFilterView.swift:29-30`, `SpamWise/ActivityStatisticsView.swift:17-23`
@@ -3832,14 +2121,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** One copy moves to a half-open range and the other doesn't, so Statistics and the Activity filter disagree.
 - **Fix:** Add one tested helper on `ActivityQuery` that takes start and through days, and use a half-open comparison.
 <!-- sources: comments/app-views-main#7 -->
-
-#### 5.29 Optimistic settings queue and refresh override are unexplained — Low
-
-- **Where:** `SpamWise/AppModel.swift:130`, `AppModel.swift:175-191`
-- **Problem:** Edits apply locally, persist through a serial `await previous?.value` chain, and `refresh()` ignores stored settings while `pendingSettings > 0`. Nothing names or documents this.
-- **Scenario:** Someone deletes line 130 or the chaining, and the Pause/dry-run toggle flicker comes back, the same bug the ledger says was fixed before.
-- **Fix:** Extract `preservingPendingEdits(_:)` and `hasPendingSettingEdits`, and add a short `///` on `editSettings`.
-<!-- sources: comments/app-logic#1 -->
 
 #### 5.30 History-eligible set encodes a receipt-gate rule without a name — Low
 
@@ -3849,14 +2130,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** Extract `historyEligibleInboxKeys(in:)` with a one-line `///`.
 <!-- sources: comments/app-logic#8 -->
 
-#### 5.31 IMAP-record discriminator and swallowed adapter error are implicit — Low
-
-- **Where:** `SpamWise/AppModel.swift:355-359`, `SpamWise/AppModelIMAP.swift:33-38`
-- **Problem:** IMAP origin is inferred from `mailboxValidity != nil`, and `try?` silently turns an adapter setup failure into "no action". Fail-open is intended, but nothing says so. A missing Keychain item actually surfaces later, as an action error.
-- **Scenario:** A maintainer turns `try?` into `try`, and corrections can no longer be saved when the IMAP store fails to load.
-- **Fix:** Add `MessageIdentity.isIMAPRecord` or `correctionAdapter(for:)`, document the fail-open choice, and consider surfacing the configuration error in `status`.
-<!-- sources: comments/app-logic#10 -->
-
 #### 5.32 Sweep-completion and claim-release expressions need names — Low
 
 - **Where:** `SpamWise/AppModelFolders.swift:87-88`
@@ -3864,14 +2137,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** The clause is "fixed" as an apparent off-by-one, and sweeps never finish on emptied folders, or claims are released while unreadable messages remain.
 - **Fix:** Extract `isSweepComplete(offset:page:)` and `canReleaseClaims(page:health:)`, each with a one-line reason.
 <!-- sources: comments/app-logic#3 -->
-
-#### 5.33 Rule-import byte limit duplicated with an unexplained `+1` — Low
-
-- **Where:** `SpamWise/AppModelRules.swift:5,43`, `SpamWiseCore/Sources/SpamWiseCore/RuleManagement.swift:34,91`
-- **Problem:** The app copies core's private 2,000,000-byte limit and reads one extra byte, so that core's `<=` check rejects oversized files. Neither the copy nor the sentinel is explained.
-- **Scenario:** Core lowers the limit and the app's copy stays at the old value.
-- **Fix:** Expose the limit from core and wrap the read in `readBounded(_:limit:)`, with a doc explaining the extra byte.
-<!-- sources: comments/app-logic#12 -->
 
 #### 5.34 `AutomationLabel` raw values are persisted Shortcuts identities — Low
 
@@ -3881,14 +2146,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** Add a one-line `///`: the raw values are persisted by Shortcuts and must not change.
 <!-- sources: comments/app-logic#14 -->
 
-#### 5.35 Stringly-typed `"verification"` path check — Low
-
-- **Where:** `SpamWise/DecisionDetailView.swift:156,168`, `SpamWise/AppModelCredentials.swift:61`, `SpamWiseCore/Sources/SpamWiseCore/NotificationPlanning.swift:57`
-- **Problem:** The view's `.disabled` check is the only thing stopping corrections to the synthetic API-key verification record, and it compares a magic string used in four places across two modules.
-- **Scenario:** The path is renamed in one place, and correcting the fake record creates a sender rule.
-- **Fix:** Add `DecisionRecord.isSyntheticVerification`, or make `path` an enum, and use it everywhere.
-<!-- sources: comments/app-views-main#6 -->
-
 #### 5.36 Guards encode unstated GitHub naming rules and MAS detection — Low
 
 - **Where:** `SpamWise/DirectUpdateConfiguration.swift:9-11,26-27`
@@ -3896,14 +2153,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** Someone deletes the receipt check, and a store-installed copy of the direct variant offers GitHub updates.
 - **Fix:** Extract `isValidGitHubOwner`, `isValidGitHubRepository` and `isMacAppStoreInstall`, with a `///` citing GitHub's rules.
 <!-- sources: comments/app-logic#11 -->
-
-#### 5.37 Credential-existence check via discarded Keychain read — Low
-
-- **Where:** `SpamWise/IMAPConnectionModel.swift:132-136`
-- **Problem:** `_ = try keychain.read()` exists only to make the save fail when no credential exists, and nothing says so.
-- **Scenario:** A refactor changes it to `try?`, and connections are saved without credentials.
-- **Fix:** Use a named `requireSavedCredential(in:)` or `APIKeychain.requireExisting()`.
-<!-- sources: comments/app-logic#9 -->
 
 #### 5.38 Safety side effects buried in inline `Binding` setters — Low
 
@@ -3929,14 +2178,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** Add `MailOptions.includes(_:)` and `setIncluded(_:_:knownAccounts:)` with DocC on new-account treatment and a core unit test.
 <!-- sources: comments/app-views-main#8 -->
 
-#### 5.41 Help names controls and tabs that differ from the UI — Low
-
-- **Where:** `SpamWise/SpamWise.help/Contents/Resources/en.lproj/correcting-mistakes.html:5`, `en.lproj/what-data-is-sent.html`, `SpamWise/DecisionDetailView.swift:150,152`, `SpamWise/SettingsView.swift:14`
-- **Problem:** The Help says "Mark as Good / Mark as Junk", but the inspector buttons read "Good" and "Junk" (the longer titles appear only in the menu bar and accessibility labels). It says "Account settings" for the "Accounts" tab and doesn't mention Undo.
-- **Scenario:** A user looks for a "Mark as Good" button in the inspector.
-- **Fix:** Match the visible UI, mention Undo latest correction, and update es/fr.
-<!-- sources: comments/app-views-main#10 -->
-
 #### 5.42 `Generate` signature has unlabeled, swappable parameters — Low
 
 - **Where:** `SpamWiseCore/Sources/Classifier/AppleClassifier.swift:22-24` (also :76)
@@ -3944,14 +2185,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** An alternative backend swaps the two Strings, and untrusted message text becomes the system instructions.
 - **Fix:** Document each parameter in a `/** */` block, or pass a small labeled struct.
 <!-- sources: comments/core-classifier-learning#12 -->
-
-#### 5.43 Init doc says "for evaluation" but production uses it — Low
-
-- **Where:** `SpamWiseCore/Sources/Classifier/ClaudeClassifier.swift:20` (also :31), `SpamWiseCore/Sources/SpamWiseCore/ConfiguredClassifier.swift:50`
-- **Problem:** `init(modelID:key:)` is documented for evaluation, but ConfiguredClassifier builds the live classifier with it. `init(key:)` never says it selects Haiku 5.5. Neither doc mentions the `.configuration` throw.
-- **Scenario:** Someone treats `init(modelID:)` as evaluation-only, changes its validation, and breaks Settings model selection.
-- **Fix:** Document `init(modelID:key:)` as selecting a supported model and throwing otherwise, and `init(key:)` as "Uses Claude Haiku 5.5".
-<!-- sources: comments/core-classifier-learning#2 -->
 
 #### 5.44 Gemini 2x pricing epoch is unexplained — Low
 
@@ -4001,22 +2234,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** Document `file` as an opaque sample identifier, and replace `path` with a shared enum.
 <!-- sources: comments/eval-scripts#11 -->
 
-#### 5.50 Candidate fingerprints use placeholder label and date — Low
-
-- **Where:** `SpamWiseCore/Sources/Learning/CampaignLearning.swift:68,77`
-- **Problem:** The matchers build full fingerprints with arbitrary `.inbox`/`.junk` labels and `.distantPast` dates only to get shingles and anchors. The differing labels look meaningful but are ignored.
-- **Scenario:** Label-dependent logic is later added to `fingerprint()`, and matching changes without anyone noticing.
-- **Fix:** Extract a `candidateSignature(for:)` helper that returns anchors and shingles.
-<!-- sources: comments/core-classifier-learning#15 -->
-
-#### 5.51 `CampaignMatch` doc denies the Junk gate it drives — Low
-
-- **Where:** `SpamWiseCore/Sources/Learning/LearningState.swift:67`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:27-36`
-- **Problem:** The doc says a match is "never a standalone action instruction", yet with fingerprints enabled a match skips the model and produces Junk at confidence 100, which is the decisive gate in the brief.
-- **Scenario:** A maintainer changes the anchor logic believing matches are advisory, and that directly changes Junk moves.
-- **Fix:** Document the gate behavior, and note in TODO.md (L51) that the match is decisive.
-<!-- sources: todo/roadmap#9 -->
-
 #### 5.52 Partial or inaccurate member docs in LearningState — Low
 
 - **Where:** `SpamWiseCore/Sources/Learning/LearningState.swift:253` (also :59, :154, :172-186)
@@ -4024,14 +2241,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** A Good correction unexpectedly deletes other admitted predictions.
 - **Fix:** Fix both docs and extract `withdrawJunkEvidence(overlapping:)`.
 <!-- sources: comments/core-classifier-learning#11 -->
-
-#### 5.53 `importHistory` is a long block that needs named helpers — Low
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:285-336`, `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:125-129`
-- **Problem:** One function pages, filters, dedupes, counts replies and applies an English-only receipt heuristic. `eligibleInbox` and `incremental` are undocumented, and IMAPAdapter duplicates the reply counter.
-- **Scenario:** The two reply-counting copies drift apart.
-- **Fix:** Extract `looksLikeReceipt(_:)` and a shared reply counter, and document both parameters.
-<!-- sources: comments/mail-integration#8 -->
 
 #### 5.54 Docs phrased as reviewer-directed disclaimers — Low
 
@@ -4073,38 +2282,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** Extract `expectedRowCount`, name the sentinel, document `IMAPSweepCursor.offset`, derive the watchdog from the deadline plus a margin, and guard empty lists explicitly.
 <!-- sources: comments/mail-integration#9 -->
 
-#### 5.59 `MailScripts.lookup` documented as a read but builds mutating scripts — Low
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:100` (111-127), `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:250`
-- **Problem:** With a non-`.none` action, the script flags, colors or moves mail. The doc mentions neither `action` nor that `expectedSource` is then required.
-- **Scenario:** The function is reused for a preview with an action argument, and the message moves to Junk.
-- **Fix:** Split it into `lookup(_:)` and `action(_:for:expectedSource:)`, or document both parameters and the mutation.
-<!-- sources: comments/mail-integration#2 -->
-
-#### 5.60 `accountPage` docs omit the role parameter and Inbox fallback — Low
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:233` (211-213, 249), `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:180`
-- **Problem:** The doc says "Inbox", but the function accepts the Junk and Sent roles, silently falls back to Inbox for unknown strings, and always reports "Account Inbox unresolved". `recent` has the same fallback.
-- **Scenario:** A direct call with `"junk"` reads the Inbox, and the results are labeled as Junk data.
-- **Fix:** Replace the role string with an enum, or document the accepted values and the fallback and put the role in the error text.
-<!-- sources: comments/mail-integration#6 -->
-
-#### 5.61 Status is all-or-nothing but documented per attachment — Low
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/DocumentInspection.swift:16` (28, 31, 37), `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:274`
-- **Problem:** One oversized text attachment makes the whole re-parse throw, so every text attachment is marked unavailable. "Its content" implies a per-attachment status, and "existing parser" is change-relative wording.
-- **Scenario:** A 10 KB attachment beside a 100 KB one is discarded too.
-- **Fix:** Document the whole-message status or skip oversized parts one at a time, and drop "existing".
-<!-- sources: comments/core-parsing-signals#21 -->
-
-#### 5.62 `extract` says unsupported MIME fails; it is skipped — Low
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:44` (82)
-- **Problem:** Unsupported image types such as WebP are skipped silently. Only malformed or over-limit parts throw.
-- **Scenario:** A caller reads an empty result as "no images".
-- **Fix:** "Returns validated PNG/JPEG/GIF/TIFF/HEIC parts; other types are skipped; malformed or over-limit parts throw."
-<!-- sources: comments/core-parsing-signals#11 -->
-
 #### 5.63 Docs describe downstream policy instead of their own contract — Low
 
 - **Where:** `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:4`, `SpamWiseCore/Sources/MessageModel/DocumentInspection.swift:25`, `SpamWiseCore/Sources/Signals/ContentRules.swift:51`
@@ -4112,14 +2289,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** The pipeline stops failing open on a rule timeout, and "Mail remains unchanged" becomes false.
 - **Fix:** Describe this code's own contract, and put the fail-open guarantee where it is enforced.
 <!-- sources: comments/core-parsing-signals#22 -->
-
-#### 5.64 Stale "byte-preserved above" comment — Low
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/MIMEParser.swift:146` (conversion now at 201-202)
-- **Problem:** Declaration reordering moved `parse` below `decodeWords`, so "above" now points the wrong way. The original placement in cce7b3a was correct.
-- **Scenario:** A reader looks above for the byte preservation and misreads the branch.
-- **Fix:** Extract `utf8Reinterpreted(_:)` and delete the comment.
-<!-- sources: comments/core-parsing-signals#3 -->
 
 #### 5.65 `AttachmentMetadata.init` doc names one consumer, not its behavior — Low
 
@@ -4144,14 +2313,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** A caller passes `.infinity` to mean "no deadline" and everything times out after 1 ms.
 - **Fix:** Use `/** */` DocC with `- Parameter seconds:` (or reject non-finite values) and `- Throws:`, and say "operation" instead of "provider".
 <!-- sources: comments/core-parsing-signals#15, comments/core-classifier-learning#14 -->
-
-#### 5.68 `ContentRules.matches` documented "for previews" but gates live mail — Low
-
-- **Where:** `SpamWiseCore/Sources/Signals/ContentRules.swift:74`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:109`
-- **Problem:** Live classification uses `.first` of this function's result.
-- **Scenario:** Someone relaxes the timeout or ordering as "preview-only" and changes live gating.
-- **Fix:** "Enabled matching rules, newest first; the first element wins during classification."
-<!-- sources: comments/core-parsing-signals#14 -->
 
 #### 5.69 `tldIsAbuseHeavy` doc says weak; brief and prompt say strong — Low
 
@@ -4209,14 +2370,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** A single `DBLListing` enum with both representations and a doc that links Spamhaus's return-code page.
 <!-- sources: comments/core-parsing-signals#10 -->
 
-#### 5.76 Discarded `PromptBuilder.prompt` result is unexplained — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/ConfiguredClassifier.swift:55`
-- **Problem:** The prompt is built and thrown away, evidently to validate the input before a non-refundable budget reservation.
-- **Scenario:** The line is removed as dead code, and invalid inputs consume reservations.
-- **Fix:** `try PromptBuilder.validate(input)`, or a named helper.
-<!-- sources: comments/core-pipeline-store#13 -->
-
 #### 5.77 Public API DocC is summary-only; overloads indistinguishable — Low
 
 - **Where:** `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:26,80`, `SpamWiseCore/Sources/SpamWiseCore/PipelineCorrections.swift:20`, `SpamWiseCore/Sources/SpamWiseCore/TrainingFolders.swift:39-43`, `SpamWiseCore/Sources/Store/Store.swift:68`, `SpamWiseCore/Sources/SpamWiseCore/EvaluationBudget.swift:48`
@@ -4273,14 +2426,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** List the common options once, describe `--budget-store` by its behavior, and state the limit range.
 <!-- sources: comments/eval-scripts#8 -->
 
-#### 5.84 Seed-state isolation inlined instead of a named helper — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseEval/main.swift:149-160`
-- **Problem:** The offline-isolation invariant documented in docs/evaluation.md:66 is eight unexplained assignments inside an orchestrator of about 55 lines.
-- **Scenario:** A new network evidence option isn't disabled, and evaluation starts making lookups.
-- **Fix:** Extract `isolatedState(_:strength:)` with a one-line doc.
-<!-- sources: comments/eval-scripts#17 -->
-
 #### 5.85 Store actor DocC lacks a summary and the lock behavior — Low
 
 - **Where:** `SpamWiseCore/Sources/Store/Store.swift:32-35` (100)
@@ -4288,14 +2433,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** Callers don't learn that concurrent writers fail immediately instead of waiting.
 - **Fix:** Lead with a type summary and move the transaction and lock details into a Discussion.
 <!-- sources: comments/core-pipeline-store#16 -->
-
-#### 5.86 Test names cover a fraction of multi-behavior tests — Low
-
-- **Where:** `SpamWiseCore/Tests/SpamWiseCoreTests/DecisionTests.swift:176` (also :83), `SpamWiseCore/Tests/SpamWiseCoreTests/RoadmapStateTests.swift:5,89`, `SpamWiseCore/Tests/SpamWiseCoreTests/ClassifierTests.swift:4`, `SpamWiseCore/Tests/SpamWiseCoreTests/SignalsTests.swift:159`
-- **Problem:** Tests chain five to ten behaviors behind narrow names, and names are their only documentation. The user's "extend the existing test" rule partly explains the chaining.
-- **Scenario:** An undo assertion fails under a "pending retries" name, and someone writes a duplicate undo test.
-- **Fix:** Split them into focused tests with shared fixtures, or rename the combined ones to describe the whole flow.
-<!-- sources: comments/tests#2 -->
 
 #### 5.87 Persistence failure forced by an unexplained directory-as-store trick — Low
 
@@ -4320,14 +2457,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** The pricing cutoff moves, and nobody can tell the test meant "one second before".
 - **Fix:** `introductoryRateEnd` from ISO 8601, `png(width:height:)`, `pastFirstRetry` and `inboxCount`.
 <!-- sources: comments/tests#5 -->
-
-#### 5.90 Test file named after a project phase — Low
-
-- **Where:** `SpamWiseCore/Tests/SpamWiseCoreTests/RoadmapStateTests.swift:1`
-- **Problem:** "Roadmap" names a milestone. The file's seven tests cover migration, backup, rule import, corpus, budget, notifications and automation.
-- **Scenario:** Someone looking for backup tests misses this file and adds parallel ones.
-- **Fix:** Split the file by behavior, or rename it.
-<!-- sources: comments/tests#12 -->
 
 #### 5.91 Docs cite evidence that does not exist in the repository — Low
 
@@ -4401,22 +2530,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Fix:** Name it (`REFERENCE_DATE_SECONDS`) and derive it from datetimes, or add a one-line comment.
 <!-- sources: comments/tools#12 -->
 
-#### 5.100 Duplicated UI lookup workarounds with one comment — Low
-
-- **Where:** `UITests/ActivityScreen.swift:34` (also :47), `UITests/UITests.swift:222,228-236,346-349`
-- **Problem:** The toolbar-title lookup and the nested-static-text fallback are duplicated, and only one copy is explained. `threatsAreUnassessed` compares English text, which contradicts the ledger's claim that localized queries were replaced.
-- **Scenario:** A new screen copies the uncommented copy and swaps in an identifier, and the test times out.
-- **Fix:** Add `openSettingsPane(_:)` and `displayedText(of:)` helpers with a single comment each, and use semantic values.
-<!-- sources: comments/tests#7 -->
-
-#### 5.101 Disclosure expanded by an unexplained coordinate click — Low
-
-- **Where:** `UITests/EvidenceScreen.swift:17`
-- **Problem:** The test clicks at 20% across the disclosure, presumably because the identifier sits on the label (CLAUDE.md), but the code doesn't say so.
-- **Scenario:** A wider localized label moves the hit point, and the Spamhaus test times out.
-- **Fix:** An `expandDisclosure(_:)` helper with a one-line reason, or click the disclosure triangle if it is exposed.
-<!-- sources: comments/tests#8 -->
-
 #### 5.102 automation.md omits the Apple Mail transport requirement — Low
 
 - **Where:** `docs/automation.md:5-7` (also :46-59, :86-120), `SpamWise/AutomationIntents.swift:111-113`
@@ -4424,22 +2537,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** An IMAP user gets "Select one Mail message" with no explanation.
 - **Fix:** Add the prerequisite, and reduce the verification sections to current reproduction steps.
 <!-- sources: comments/app-logic#18 -->
-
-#### 5.103 Conventions ledger claims an exhaustive review it no longer covers — Low
-
-- **Where:** `docs/conventions-and-design-review.md:96` (also :3, :8, :58, :115-121, :226-239), `CLAUDE.md:153-155`
-- **Problem:** The ledger is dated against baseline 6d813c1 and "140 files". Some 74–76 later Swift files are absent, including nine app-logic files, seven test files, the Spamhaus HTTPS code and the automation code. Rows narrate session edits ("Added…", "Removed generated file header"). Two rows (DecisionTests "aligned with asserted behavior" and UITests "localized status queries replaced") are inaccurate. CLAUDE.md repeats the "every file" claim without caveat.
-- **Scenario:** A reviewer treats AutomationIntents.swift or the UI screen objects as already reviewed.
-- **Fix:** Delete the per-file ledger, keeping the durable compatibility decisions (L41–54) in an architecture doc, and remove the "exhaustive" claim from CLAUDE.md.
-<!-- sources: comments/app-logic#17, comments/tests#14, comments/repo-docs#10 -->
-
-#### 5.104 packaging.md misdescribes the Help index and notarization input — Low
-
-- **Where:** `docs/packaging.md:11` (also :5, :32), `Scripts/help-index.sh:3-6`, `Scripts/archive.sh:39-40`
-- **Problem:** The doc says "six English pages" and a single `-s en` index, but there are three localized books, each indexed. It says the script uploads the "archive", but the script submits a ZIP of the exported app.
-- **Scenario:** Someone rebuilds only the English index, and Spanish and French search goes stale.
-- **Fix:** Describe three localized books indexed by help-index.sh, and the ZIP submission.
-<!-- sources: comments/eval-scripts#10 -->
 
 #### 5.105 Privacy docs and onboarding copy are stale about data flows — Low
 
@@ -4456,14 +2553,6 @@ The diary style also reaches user-facing text. Help pages opened from setup and 
 - **Scenario:** A typo fix in a fixture causes `missingMock`, and there is no documented way to recover.
 - **Fix:** Document the key scheme and the `shasum -a 256 eval/fixtures/*/*.eml` command. Optionally add a fixture-path field to each entry.
 <!-- sources: comments/tools#13 -->
-
-#### 5.107 No comments or DocC in Settings views; none required — Info
-
-- **Where:** `SpamWise/` (the 18 Settings view files)
-- **Problem:** Not a defect. All types are internal, so swift-conventions requires no DocC, and nothing fails the comment test. The real gaps are the non-self-documenting expressions in 5.38 and 5.39.
-- **Scenario:** None.
-- **Fix:** None beyond 5.38 and 5.39.
-<!-- sources: comments/app-views-settings#11 -->
 
 #### 5.108 Protocol parsing lacks RFC references — Info
 
@@ -4529,100 +2618,16 @@ None of this affects runtime correctness today on the author's Mac. It does mean
 
 | # | Severity | Location | Finding |
 | --- | --- | --- | --- |
-| 6.2 | Medium | `.github/workflows/site.yml:3` | No CI builds or tests the package, app, extension or UI |
-| 6.3 | Medium | `.swiftlint.yml:1` | SwiftLint config drops the house parent config; no lint CI |
-| 6.4 | Medium | `CLAUDE.md:195` | Tracked CLAUDE.md is a 68 KB work ledger with operational details and a standing Trash-cleanup instruction |
-| 6.5 | Medium | `Scripts/app-store-check.sh:44` | App Store variant exists only as a command-line flag; Developer ID ships the target without an updater |
-| 6.6 | Medium | `Scripts/ui-check.sh:7` | Build, test and release entry points require agent-only tooling |
-| 6.7 | Medium | `SpamWise.xcodeproj/project.pbxproj:513` | No Xcode target enables strict memory safety, contrary to CLAUDE.md |
-| 6.8 | Medium | `SpamWise.xcodeproj/project.pbxproj:872` | Direct build's product name is SpamWiseDirect |
-| 6.9 | Medium | `SpamWise.xcodeproj/xcshareddata/xcschemes/SpamWiseDirect.xcscheme:1` | Main SpamWise scheme is unshared; stale xcuserdata plist tracked; no test plans |
 | 6.10 | Low | `.claude/settings.local.json` (absent) | Claude configuration lacks the Apple skill overrides the sisters enable |
 | 6.11 | Low | `.gitignore:1` | `.gitignore` lacks the house entries for credentials and release outputs |
 | 6.12 | Low | `.swiftlint.yml:1` | No Periphery; `.swift-format` not tracked; lint scope omits Tools/ and Scripts/ |
 | 6.13 | Low | `Resources/SpamWiseRule.applescript:1` | Mail rule script is kept as both source and committed compiled binary |
 | 6.14 | Low | `Scripts/app-store-check.sh:17` | Scripts abort under `set -e` before printing their diagnostics |
-| 6.15 | Low | `Scripts/archive.sh:6` | Scripts lack headers, assume the repo root as cwd, and validate the worker token inconsistently |
 | 6.16 | Low | `Scripts/help-index.sh:6` | Help index is committed and rebuilt by hand; no build phase or anchor validation |
-| 6.17 | Low | `Scripts/notarize-match.py:38` | Release tooling reimplements fastlane match in Python |
-| 6.18 | Low | `SpamWise.xcodeproj/project.pbxproj:11` | Hand-written pbxproj contains dangling `(null) in Frameworks` build files |
 | 6.19 | Low | `SpamWise.xcodeproj/project.pbxproj:611` | Build settings and entitlements disagree; both read-only and read-write file access are signed |
 | 6.20 | Low | `SpamWise.xcodeproj/project.pbxproj:617` | iOS template settings leak into the macOS bundle; metadata inconsistent |
-| 6.21 | Low | `SpamWiseCore/Sources/SpamWiseEval/main.swift:6` | `@main` in `main.swift` breaks SwiftPM's native build system |
-| 6.22 | Low | `Tools/DocumentWorker/check.sh:88` | Production-symbol gate passes silently when ripgrep is missing |
 | 6.23 | Low | `Tools/Site/build.py:16` | Public site pages link into the private repository; site deps not hash-checked |
-| 6.24 | Low | `docs/app-store.md:83` | Release Python helpers run in the corpus ML virtualenv |
 | 6.25 | Info | `SpamWise/MyApp.swift:27` | No crash reporting, structured logging or preview guard in the bootstrap |
-
-#### 6.2 No CI builds or tests the package, app, extension or UI — Medium
-
-- **Where:** `.github/workflows/site.yml:3` (`.github/workflows/` contains only this file)
-- **Problem:** The only workflow runs Python site checks, on PRs that touch `docs/**` or `Tools/Site/**` and on manual dispatch. Nothing runs `swift test` for SpamWiseCore, builds the app and extension targets or the `APP_STORE` configuration, runs UnitTests or UITests, or checks DocC. Every "tests pass" claim in CLAUDE.md is a local, unautomated run. The sisters each have `ci.yml`, `lint.yml`, `periphery.yml` and `release.yml`.
-- **Scenario:** A PR that breaks package tests, the Mail extension build or the strict-concurrency build merges green, because no check runs on it. PR #1 has been validated only for the static site.
-- **Fix:** After fixing 6.1, adapt `Zephyr/.github/workflows/ci.yml`: setup-xcode 27, `IDESkipMacroFingerprintValidation`, SPM and DerivedData caches, xcbeautify, xcresult upload, concurrency cancel. Add jobs for `swift test --package-path SpamWiseCore -Xswiftc -warnings-as-errors`, unsigned builds of both editions and of `APP_STORE`, and DocC. Add a UI job using the `SIGNING` env, overriding `PROVISIONING_PROFILE_REQUIRED=NO` (the UITests target sets YES at `project.pbxproj:804/823`). Add `.github/actionlint.yaml` with the `xcode-27` label. Keep SpamWise's SHA pinning rather than the sisters' floating tags.
-<!-- sources: config/ci-automation#2, config/swift-xcode#9 -->
-
-#### 6.3 SwiftLint config drops the house parent config; no lint CI — Medium
-
-- **Where:** `.swiftlint.yml:1` (also `:13`)
-- **Problem:** The sister configs start with `parent_config:` pointing at the RISCfuture gist and add only excludes and `prefer_nimble`. SpamWise's config is standalone. It omits the house opt-in rules (attributes, missing_docs, async_without_await, unused_parameter, raw_value_for_camel_cased_codable_enum, and the analyzer rules), and it disables `optional_data_string_conversion`. The project's "0 violations" baseline therefore measures a weaker standard. There is also no `lint.yml`.
-- **Scenario:** Run against the house parent config, the code reports about 428 violations. That includes 43 Codable enums without explicit raw values, which can silently break persisted data when a case is renamed. Two violations are errors: `empty_count` at `SpamWise/UnreadableMailView.swift:7` and at `SpamWiseCore/Sources/MailIntegration/IMAPPaging.swift:23`.
-- **Fix:** Replace the file with the sister form: the gist `parent_config`, `excluded: [.build, .superpowers, Tools/Corpus]` and `disabled_rules: [prefer_nimble]`. Keep only the local overrides that are genuinely needed, each with a comment. Copy `Zephyr/.github/workflows/lint.yml` with SpamWise's source roots, then fix or justify each finding.
-<!-- sources: config/ci-automation#9 -->
-
-#### 6.4 Tracked CLAUDE.md is a 68 KB work ledger with operational details and a standing Trash-cleanup instruction — Medium
-
-- **Where:** `CLAUDE.md:195` (also `:67`, `:94`, and roughly 600 lines of dated milestone and probe narrative)
-- **Problem:** Neither sister tracks a CLAUDE.md or AGENTS.md. SpamWise's is mostly a chronological record of what an agent did and claimed passed. The user's comment rules put that kind of history in commit messages, and loading it costs context in every session. The file includes a durable instruction to move generated probe mail to Trash. It also records operational details: reuse of SubTrack's `MATCH_PASSWORD`, Keychain service names, personal addresses and notarization IDs. All of that becomes public if the repo is published as planned.
-- **Scenario:** Future sessions load the whole ledger as project instructions, including the Trash-cleanup directive. That directive is narrowly scoped (documented generated probes only, never emptying Trash) but sits uneasily beside the product's no-Trash invariant. Making the repo public exposes the credential-reuse and account details.
-- **Fix:** Cut CLAUDE.md down to a few dozen lines of durable instructions: architecture invariants, commands and conventions. Move the ledger to commit history or a dated `docs/history` file if it must be kept. Keep the probe-cleanup rule only if the user wants it standing. Review the file for personal and operational details before any visibility change.
-<!-- sources: config/ci-automation#16 -->
-
-#### 6.5 App Store variant exists only as a command-line flag; Developer ID ships the target without an updater — Medium
-
-- **Where:** `Scripts/app-store-check.sh:44` (also `SpamWiseCore/Sources/SpamWiseCore/DistributionCapabilities.swift:5`, `:13`; `Scripts/archive.sh:17`; `project.pbxproj:595`, `:613`, `:835`, `:853`; `docs/app-store.md`)
-- **Problem:** `APP_STORE` is supplied only by `SWIFT_ACTIVE_COMPILATION_CONDITIONS=APP_STORE` on one script's xcodebuild line. That override replaces the configured conditions, and no target, configuration or scheme encodes the store build. `DistributionCapabilities` enables external programs (dig, rspamc) and PCC whenever `APP_STORE` is absent. Meanwhile `archive.sh` notarizes the plain `SpamWise` target, whose update settings say "Update checks are unavailable in this build". `SpamWiseDirect` is never archived. The sisters use explicit `-MAS` and `-download` targets, each with its own App struct, entitlements, Info.plist and injected `FeatureFlags(isAppStoreBuild:)`.
-- **Scenario:** An archive made from Xcode's Product > Archive, or from a future CI or fastlane lane that omits the flag, is a store-signed build with the executable-evidence paths compiled in. The project's own App Review notes say those paths must be excluded. Separately, users of the notarized download can never learn about updates.
-- **Fix:** Adopt the sister layout: `SpamWise-MAS` and `SpamWise-download` targets, each with its own App struct, entitlements and Info.plist, and shared code in a common framework. Archive and notarize the download target for Developer ID. The `#if APP_STORE` checks live in the SPM package, and target-level settings do not reach package targets. So either inject the capability from the per-variant App struct (as the sisters do) or set the condition through a configuration or xcconfig that also covers the package. Then remove the command-line override from scripts and docs.
-<!-- sources: config/swift-xcode#4, conventions/eval-scripts#16, architecture#23 -->
-
-#### 6.6 Build, test and release entry points require agent-only tooling — Medium
-
-- **Where:** `Scripts/ui-check.sh:7` (also `Scripts/check.sh:3`, `:10`; `Scripts/archive.sh:21`; `Scripts/app-store-check.sh:46`; `README.md:17`)
-- **Problem:** README's "Build and verify" section and every script start from an `agent-lock worker` token. That is an agent-coordination tool from the user's Codex setup. `ui-check.sh` hard-requires `agent-lock run ui`, and the warning gates depend on `rg`. No sister script, Fastfile or workflow references agent-lock. The `.build/<token>/` layout exists to serve parallel agent sessions.
-- **Scenario:** A developer following README on a clean Mac fails at `agent-lock: command not found` or has to invent a token. A GitHub runner without ripgrep makes the `rg` warning gates misbehave (see 6.22).
-- **Fix:** Make the plain path the default, as the sisters do: xcodebuild or fastlane lanes and CI jobs with no tokens. Keep worker isolation as an optional wrapper documented in the user's ios-dev-isolation skill rather than in README. Replace `rg` with `grep -E` in shipped scripts.
-<!-- sources: config/ci-automation#14 -->
-
-#### 6.7 No Xcode target enables strict memory safety, contrary to CLAUDE.md — Medium
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:513` (also `:507`, `:577-585`; `CLAUDE.md:57`; `SpamWiseCore/Package.swift:10`)
-- **Problem:** swift-conventions requires strict memory safety on every target, and the sisters set `SWIFT_STRICT_MEMORY_SAFETY = YES`. SpamWise sets it only in the package. The SpamWise, SpamWiseDirect, MailExtension, UnitTests and UITests targets compile without it. `git log -S` shows the setting was never added, so the CLAUDE.md claim has never been true for the Xcode targets. The unsafe-heavy code is in the package, which is checked, so this is a convention gap and a false claim, not demonstrated unchecked unsafe code.
-- **Scenario:** Unsafe pointer or C interop added to the app or extension (NSAppleScript bridges, Security framework, MailKit callbacks) compiles with no `unsafe` marker or diagnostic.
-- **Fix:** Add `SWIFT_STRICT_MEMORY_SAFETY = YES;` to both project-level configurations. Build with warnings as errors and clear any diagnostics with checked APIs or narrow `unsafe` expressions. Correct CLAUDE.md.
-<!-- sources: config/swift-xcode#2, conventions/app-logic#15 -->
-
-#### 6.8 Direct build's product name is SpamWiseDirect — Medium
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:872` (also `:926`; `docs/distribution-differences.md:60`)
-- **Problem:** `PRODUCT_NAME = SpamWiseDirect`, with no `CFBundleDisplayName` or `PRODUCT_MODULE_NAME` override. So the bundle, the executable and `CFBundleName` all read "SpamWiseDirect". The docs say this keeps build products distinct, but the name is visible to users. The sisters set `PRODUCT_NAME` to the product name and use a distinct module name (for example `SubTrackDownload`).
-- **Scenario:** A direct-build user sees "About SpamWiseDirect", "Quit SpamWiseDirect" and `SpamWiseDirect.app` in the menu bar, Dock, Finder, Force Quit and Mail Automation prompts. That does not match the Help book or the extension's display name.
-- **Fix:** Set `PRODUCT_NAME = SpamWise` and `INFOPLIST_KEY_CFBundleDisplayName = SpamWise`, plus a distinct `PRODUCT_MODULE_NAME` such as `SpamWiseDownload`. Keep outputs apart with separate schemes or build directories.
-<!-- sources: config/swift-xcode#5 -->
-
-#### 6.9 Main SpamWise scheme is unshared; stale xcuserdata plist tracked; no test plans — Medium
-
-- **Where:** `SpamWise.xcodeproj/xcshareddata/xcschemes/SpamWiseDirect.xcscheme:1` (also `SpamWise.xcodeproj/xcuserdata/tmorgan.xcuserdatad/xcschemes/xcschememanagement.plist:7`, `:13`; `Scripts/check.sh:9`; `Scripts/ui-check.sh:7`; `Scripts/archive.sh:17`; `Scripts/app-store-check.sh:40`)
-- **Problems:**
-  - Every script drives `-scheme SpamWise`, which exists only because Xcode autocreates it. Its test membership, launch arguments and Archive configuration are not versioned.
-  - The one shared scheme, `SpamWiseDirect`, has no TestAction, so the `#if SPAMWISE_DIRECT_UPDATES` code never builds under test.
-  - None of the documented commands runs UnitTests, and `UnitTests/UnitTests.swift` is an import-only stub.
-  - A per-user `xcschememanagement.plist` is committed despite `xcuserdata/` in `.gitignore`. It names scaffold schemes that no longer exist (MyApp, SpamWiseKit).
-  - Empty untracked `SpamWiseKit/` and `SpamWiseKitTests/` directories remain in the checkout.
-  - The sisters share every scheme (7 and 10) and use `.xctestplan` files.
-- **Scenario:** On a runner or Mac with "Autocreate schemes" off, the scripts fail with "scheme SpamWise not found". Elsewhere the generated scheme may omit UITests or use a different archive configuration. Every scheme reorder dirties a tracked file.
-- **Fix:** Share explicit schemes for each app variant, the extension and the tests. Add a test plan covering UnitTests and UITests, with Archive set to Release. Run `git rm --cached -r SpamWise.xcodeproj/xcuserdata` and delete the empty SpamWiseKit directories.
-<!-- sources: tooling#3, config/ci-automation#13, config/swift-xcode#7, distribution/packaging#11, tooling#9 -->
 
 #### 6.10 Claude configuration lacks the Apple skill overrides the sisters enable — Low
 
@@ -4669,14 +2674,6 @@ None of this affects runtime correctness today on the author's Mac. It does mean
 - **Fix:** Use `sandbox=$(PlistBuddy ... 2>/dev/null || echo missing)`, and wrap the evidence build in `|| { tail -65 "$build_root/evidence-build.log"; exit 1; }`, as `check.sh` does.
 <!-- sources: correctness/eval-scripts#12 -->
 
-#### 6.15 Scripts lack headers, assume the repo root as cwd, and validate the worker token inconsistently — Low
-
-- **Where:** `Scripts/archive.sh:6` (also `Scripts/check.sh:3-7`, `Scripts/store-check.sh:3-8`, `Scripts/ui-check.sh:3-7`, `Scripts/help-index.sh:3`, `Scripts/evidence-runtime-check.sh:3-6`, `Scripts/rspamd-runtime-check.sh:3-9`; compare `Scripts/app-store-check.sh:5-7`)
-- **Problem:** Only `app-store-check.sh` restricts the token to `[a-zA-Z0-9-]`. The others put any value into `.build/$worker`. None `cd`s to the repo root, and none has a usage header, unlike `SubTrack/Scripts/make-dmg.sh:1-13`. `archive.sh` also generates its Developer ID ExportOptions inline, while the App Store options are a checked-in plist. The token comes from the operator, so no trust boundary is crossed.
-- **Scenario:** `bash Scripts/archive.sh ../../tmp` writes archives outside `.build/`. A token like `../Shared` makes `evidence-runtime-check.sh` write and Developer-ID-sign a probe app next to the repo. Running `check.sh` from another directory fails with "SpamWiseCore not found".
-- **Fix:** Factor the existing `case` validation into a sourced helper, and start each script with `cd "$(dirname "$0")/.."` and a short usage header. Check in a `DeveloperIDExportOptions.plist`.
-<!-- sources: conventions/eval-scripts#18, security/eval-scripts#6 -->
-
 #### 6.16 Help index is committed and rebuilt by hand; no build phase or anchor validation — Low
 
 - **Where:** `Scripts/help-index.sh:6` (also `SpamWise/SpamWise.help/Contents/Resources/{en,es,fr}.lproj/search.cshelpindex`; `Scripts/archive.sh:16`)
@@ -4684,22 +2681,6 @@ None of this affects runtime correctness today on the author's Mac. It does mean
 - **Scenario:** After a Help page edit or an anchor rename, Xcode builds ship a stale index or a broken anchor, and Help Viewer silently opens the first page. Each release archive leaves regenerated binaries dirty in the working tree.
 - **Fix:** Copy `SubTrack/Scripts/build-help-book.sh` and `purge-help-cache.sh` (prefix `codes.tim.SpamWise`), add a "Build Help Book" phase to each app target, move the book to a root `Help/`, gitignore `**/*.cshelpindex` and delete `help-index.sh`.
 <!-- sources: config/ci-automation#11, config/swift-xcode#18 -->
-
-#### 6.17 Release tooling reimplements fastlane match in Python — Low
-
-- **Where:** `Scripts/notarize-match.py:38` (also `:45`; `Scripts/export-store-match.py`; `docs/packaging.md:45-46`; `CLAUDE.md:94`)
-- **Problem:** About 466 lines of Python decrypt the shared Match repository into a temporary keychain and drive notarization and store export, reading `MATCH_PASSWORD` from a fastlane `.env`. In practice that has been SubTrack's `.env`. The sisters do this through fastlane (Appfile, Matchfile, Fastfile, `.env.example`, metadata). The env file is an argument rather than a hard-coded path, and the script is an optional alternative to a notarytool profile, so the coupling is softer than it first appears.
-- **Scenario:** Maintaining SpamWise signing requires understanding bespoke keychain and search-list handling that fastlane match already handles in the user's other apps. Releases depend on another project's `.env` being present.
-- **Fix:** Add a fastlane setup mirroring Zephyr's, with SpamWise's own `.env`, notarize lanes and App Store lanes, then delete the Python Match helpers.
-<!-- sources: config/swift-xcode#10 -->
-
-#### 6.18 Hand-written pbxproj contains dangling `(null) in Frameworks` build files — Low
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:11` (also `:12`, `:134`, `:136`)
-- **Problem:** Two `PBXBuildFile` entries have neither a `fileRef` nor a `productRef`. Sequential object IDs (`AA00…`, `CC00…`) show the file was written by hand rather than by Xcode. Two targets share one product dependency, and the two Embed phases reference MailExtension through different build files.
-- **Scenario:** The next Xcode save or merge rewrites these entries unpredictably and produces noisy diffs. "Missing package product" or duplicate-product warnings are possible.
-- **Fix:** Remove the null entries and their phase references. Re-add package products through Xcode so each target has its own dependency, and normalize the Embed phases.
-<!-- sources: config/swift-xcode#15 -->
 
 #### 6.19 Build settings and entitlements disagree; both read-only and read-write file access are signed — Low
 
@@ -4722,22 +2703,6 @@ None of this affects runtime correctness today on the author's Mac. It does mean
 - **Fix:** Delete the `INFOPLIST_KEY_UI*` settings and the non-macOS deployment targets. Set `SDKROOT = macosx` and `LD_RUNPATH_SEARCH_PATHS = @executable_path/../Frameworks`. Set `NSHumanReadableCopyright` for the app and extension, choose one category for both the plist and the metadata, and rename `MyApp.swift` to `SpamWiseApp.swift`.
 <!-- sources: config/swift-xcode#13, distribution/packaging#14, temp/app#13 -->
 
-#### 6.21 `@main` in `main.swift` breaks SwiftPM's native build system — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseEval/main.swift:6` (also `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:7`)
-- **Problem:** A file named `main.swift` is compiled as top-level code, which conflicts with `@main` unless `-parse-as-library` is passed. The default swiftbuild system tolerates this, but the native build system rejects it. Periphery's SwiftPM indexing needed a workaround because of it.
-- **Scenario:** `swift build --build-tests --build-system native`, and tools that use that path, fail with "'main' attribute cannot be used in a module that contains top-level code", which blocks analysis of the whole package.
-- **Fix:** Rename the files to `SpamWiseEval.swift` and `SpamWiseDaemon.swift`.
-<!-- sources: tooling#8 -->
-
-#### 6.22 Production-symbol gate passes silently when ripgrep is missing — Low
-
-- **Where:** `Tools/DocumentWorker/check.sh:88` (same pattern at `Scripts/check.sh:10`, `Scripts/archive.sh:21`, `Scripts/app-store-check.sh:46`)
-- **Problem:** `if nm … | rg 'WorkerProbes|exercise'` treats `rg: command not found` (status 127) as "no match", and `set -e` does not fire inside an `if` condition. The script then exits 0. The Scripts/ warning gates share the shape but are backed by `SWIFT_TREAT_WARNINGS_AS_ERRORS` and a loud `xcbeautify` dependency. The worker harness runs only on the owner's provisioned machine.
-- **Scenario:** On a Mac without Homebrew ripgrep, a production worker accidentally built with the probe sources still passes, and the harness reports success.
-- **Fix:** Use `grep -Eq` (ships with macOS) everywhere, or capture the output and fail explicitly on a search-tool status other than 0 or 1.
-<!-- sources: conventions/tools#1, comments/tools#3 -->
-
 #### 6.23 Public site pages link into the private repository; site deps not hash-checked — Low
 
 - **Where:** `Tools/Site/build.py:16` (also `docs/lifecycle.html:43`, `:45`; `docs/mail-compatibility.html:34`; `.github/workflows/site.yml:34`, `:36`)
@@ -4745,14 +2710,6 @@ None of this affects runtime correctness today on the author's Mac. It does mean
 - **Scenario:** After Pages publication, the "details" links on the lifecycle and compatibility pages return 404 for every visitor while the repo stays private.
 - **Fix:** Link only to published pages, or inline the content, until the repo is public. Consider moving internal docs out of `docs/`, installing with `--require-hashes`, and pinning `python-version` to 3.14.8.
 <!-- sources: config/ci-automation#23 -->
-
-#### 6.24 Release Python helpers run in the corpus ML virtualenv — Low
-
-- **Where:** `docs/app-store.md:83` (also `Scripts/notarize-match.py`, `Scripts/export-store-match.py`, `Scripts/test_export_store_match.py`)
-- **Problem:** python-conventions requires a per-project `.python-version`. `Scripts/` has none, and the signing helpers are documented to run with `PYENV_VERSION=spamwise-corpus`, the scikit-learn and torch environment. The helpers' unittest runs in no CI job.
-- **Scenario:** Rebuilding or deleting the corpus environment breaks the release procedure, and signing code runs with an unrelated, heavy dependency set on its import path.
-- **Fix:** Retire the helpers in favor of fastlane (6.17). Until then, give `Scripts/` its own virtualenv (for example `spamwise-release`) and run its tests in CI.
-<!-- sources: config/ci-automation#21 -->
 
 #### 6.25 No crash reporting, structured logging or preview guard in the bootstrap — Info
 
@@ -4831,19 +2788,6 @@ The Mac App Store path also carries a strategic risk the docs already acknowledg
 
 | # | Severity | Location | Finding |
 |---|---|---|---|
-| 7.5 | Medium | `Scripts/app-store-check.sh:44` | App Store edition exists only as a command-line override |
-| 7.6 | Medium | `Scripts/archive.sh:17` | Developer ID artifact has no update path; direct edition never packaged or configured |
-| 7.7 | Medium | `Scripts/archive.sh:39` | Script zips before stapling and leaves no stapled distributable |
-| 7.8 | Medium | `Scripts/export-store-match.py:20` | Release tooling re-implements fastlane match and borrows another repo's password |
-| 7.9 | Medium | `SpamWise.xcodeproj/project.pbxproj:615` | Automation usage string understates what SpamWise does to Mail |
-| 7.10 | Medium | `SpamWise.xcodeproj/project.pbxproj:629` | Version 1.0 (1) hard-coded; no CI, release workflow or changelog |
-| 7.12 | Medium | `SpamWise/AppModel.swift:159` | Whole-state JSON reloaded every 3 seconds; state grows without bound |
-| 7.13 | Medium | `SpamWise/SpamWise.entitlements:19` | Store build depends on a discretionary Apple Events temporary exception |
-| 7.14 | Medium | `SpamWiseCore/Package.swift:23` | No third-party notices for bundled Apache-2.0 and MPL-2.0 code |
-| 7.15 | Medium | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:139` | Missing API key reported as a storage or entitlement failure |
-| 7.16 | Medium | `SpamWiseCore/Sources/SpamWiseCore/State.swift:163` | No migration framework; one undecodable value locks all state |
-| 7.17 | Low | `SpamWise.xcodeproj/project.pbxproj:872` | Direct edition would show as "SpamWiseDirect" and shares the store identity |
-| 7.18 | Low | `Scripts/archive.sh:39` | Bare ZIP instead of a notarized DMG or pkg |
 | 7.19 | Low | `SpamWise.xcodeproj/project.pbxproj:614` | No copyright string; category disagrees with store metadata |
 | 7.20 | Low | `Scripts/archive.sh:32` | No crash-reporting decision; dSYMs not retained per release |
 | 7.21 | Low | `SpamWise/SpamWise.entitlements:15` | Contradictory file entitlements; extension gets unused file access |
@@ -4851,111 +2795,6 @@ The Mac App Store path also carries a strategic risk the docs already acknowledg
 | 7.23 | Low | `docs/mail-compatibility.md:12` | Public compatibility page shows internal ledger references |
 | 7.24 | Low | `docs/repository-approval.md:11` | No project LICENSE (acknowledged as pending) |
 | 7.25 | Info | `SpamWiseCore/Sources/SpamWiseCore/AdvancedSettings.swift:16` | Provider model IDs and prices hard-coded with no update channel |
-| 7.26 | Info | `SpamWise/PrivacyInfo.xcprivacy:5` | Privacy manifest declares no collected data types |
-
-#### 7.5 App Store edition exists only as a command-line override — Medium
-
-- **Where:** `Scripts/app-store-check.sh:44`, `SpamWiseCore/Sources/SpamWiseCore/DistributionCapabilities.swift:5`, `docs/app-store.md:57`, `Scripts/export-store-match.py:220-246`, `SpamWise.xcodeproj/project.pbxproj:510`
-- **Problem:** Hiding PCC and the rspamc executable transport, and showing the store update text, depend on `#if APP_STORE`. No target, configuration, scheme, xcconfig or `Package.swift` defines it. The only definition is a `SWIFT_ACTIVE_COMPILATION_CONDITIONS=APP_STORE` override in one script, which also replaces `$(inherited)` for every target, package targets included. `export-store-match.py` signs whatever archive it is given. The `TODO.md:363` item claiming store-specific restrictions is checked anyway. The sisters use dedicated `(MAS)` and `(download)` targets and shared schemes. Verifiers note that the sandbox makes the executable transport fail safely and that PCC still needs an ungranted entitlement, so the consequence is review risk, not code execution.
-- **Scenario:** The owner uses Product ▸ Archive ▸ Distribute App ▸ App Store Connect, or Xcode Cloud or a future fastlane lane names the SpamWise scheme. The uploaded build offers "Command-line client" under Rspamd and "Private Cloud Compute" under Provider, contrary to `docs/distribution-differences.md` and the reviewer notes.
-- **Fix:** Create explicit editions, as the sisters do. Add a `SpamWise (MAS)` target or configuration with `SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) APP_STORE`, and a download edition (today's SpamWiseDirect), each with a shared scheme. Carry the condition into SpamWiseCore through a package trait or a separate product, or move `DistributionCapabilities` into the app target. Then drop the CLI override, and make the export step reject an archive that still contains executable-transport symbols or the dig path.
-<!-- sources: todo/spamsieve-b#4, config/ci-automation#3, distribution/packaging#2, distribution/product#5, security/core-pipeline-store#7 -->
-
-#### 7.6 Developer ID artifact has no update path; direct edition never packaged or configured — Medium
-
-- **Where:** `Scripts/archive.sh:17`, `SpamWise/UpdateSettingsView.swift:31-32`, `SpamWise.xcodeproj/project.pbxproj:876-877`, `SpamWise.xcodeproj/project.pbxproj:930-931`, `SpamWise/Info.plist:8-10`, `SpamWise/DirectUpdateConfiguration.swift:11`
-- **Problem:** The only notarization pipeline archives `-scheme SpamWise`, which defines neither `APP_STORE` nor `SPAMWISE_DIRECT_UPDATES`. Every notarized ZIP so far is a third edition: direct-only features, but "Update checks are unavailable in this build." No script builds SpamWiseDirect. Its `SPAMWISE_UPDATE_OWNER` and `SPAMWISE_UPDATE_REPOSITORY` are empty raw pbxproj settings, so `DirectUpdateConfiguration(bundle:)` returns nil. The repository is private, so the GitHub releases API would return 404 anyway, and discovery is manual click-to-check only. The empty values are a documented placeholder and no direct release has shipped, so this is a readiness gap rather than a user-facing defect today.
-- **Scenario:** A user installs today's Developer ID build. When 1.0.1 fixes a mis-filing bug, nothing in the app tells them, and they keep running a build with known mail-handling defects.
-- **Fix:** Have `archive.sh` sign and notarize the download edition, following Zephyr's EDITIONS map. Move `SPAMWISE_DISTRIBUTION`, the update owner and repository, and the version into a tracked `Config/SpamWise.xcconfig`, and set them to `RISCfuture/SpamWise` once releases are public. Fail release automation if they are empty. Use GitHubUpdateChecker's scheduled checks as SubTrack does, or at least check on launch with a cadence preference.
-<!-- sources: distribution/packaging#3, config/swift-xcode#6, config/ci-automation#5 -->
-
-#### 7.7 Script zips before stapling and leaves no stapled distributable — Medium
-
-- **Where:** `Scripts/archive.sh:39`, `Scripts/archive.sh:40-42`
-- **Problem:** `archive.sh` creates `SpamWise.zip`, submits it, staples only the exported `.app`, and never rebuilds the ZIP. The `SpamWise-notarized.zip` files cited in `CLAUDE.md` were therefore made by hand, so the release artifact cannot be reproduced from the repository. The script does not parse the notarytool status; a rejected submission is caught only indirectly, because `stapler` fails under `set -e`. Unlike `app-store-check.sh`, it also does not validate the worker token, so a `../x` token writes outside `.build`.
-- **Scenario:** The obvious artifact, `.build/<token>/SpamWise.zip`, gets published. A recipient who opens it offline is blocked by Gatekeeper, because the ticket is not stapled inside the archive.
-- **Fix:** After `stapler staple` and `stapler validate`, rebuild the distributable from the stapled app and remove or rename the pre-staple ZIP. Better, build a container as described in §7.18. Parse the notarytool JSON and fail unless the status is Accepted. Validate the worker token with the same `case` pattern as `app-store-check.sh`.
-<!-- sources: distribution/packaging#10, correctness/eval-scripts#11 -->
-
-#### 7.8 Release tooling re-implements fastlane match and borrows another repo's password — Medium
-
-- **Where:** `Scripts/export-store-match.py:20`, `Scripts/notarize-match.py:45`, `docs/packaging.md:46`
-- **Problem:** About 470 lines of Python stand in for fastlane match, gym, notarize and deliver. The code loads fastlane's private `match/encryption` internals through `ruby -e`, hand-builds a keychain, re-signs with `codesign`, runs `productbuild`, and takes profile paths as arguments. There is no Gemfile, `.ruby-version`, Appfile, Matchfile or `fastlane/.env.example`, so the fastlane dependency is undeclared, and `MATCH_PASSWORD` is read from another project's `fastlane/.env` (SubTrack's). The shared password is probably common to the single Match repository, so the borrowing matters less than the reinvented, undeclared tooling. It runs against the user's "don't reinvent the wheel" rule.
-- **Scenario:** A fastlane update that moves `match/encryption`, a Ruby or gemset change, or SubTrack rotating its `.env` breaks SpamWise packaging. A new App ID capability needs edits to `validate_profile`. None of this can run in CI, where secrets arrive for fastlane lanes.
-- **Fix:** Copy Zephyr's `fastlane/{Appfile,Matchfile,Fastfile,.env.example,.gitignore}`, `Gemfile`/`Gemfile.lock`, `.ruby-version` and `.ruby-gemset` (gemset `spamwise`). List `codes.tim.SpamWise` and `codes.tim.SpamWise.MailExtension` in the Matchfile and model mas/download editions in the Fastfile. Then delete `notarize-match.py`, `export-store-match.py` with its test, and `AppStoreExportOptions.plist`.
-<!-- sources: config/ci-automation#4 -->
-
-#### 7.9 Automation usage string understates what SpamWise does to Mail — Medium
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:615` (also `:665`, `:855`, `:909`; es/fr `InfoPlist.strings`)
-- **Problem:** `NSAppleEventsUsageDescription` reads "SpamWise reads mail history and applies your corrections in Apple Mail." The TCC prompt is the user's main consent point. The string leaves out automatic Junk moves, Review flags, read-status changes and mailbox sweeps, all of which the adapter performs once dry run is off. Guideline 5.1.1 expects complete purpose strings.
-- **Scenario:** A user grants Automation believing SpamWise only applies their own corrections, then finds unread mail moved to Junk automatically. App Review may also flag the string as incomplete.
-- **Fix:** Rewrite it, for example: "SpamWise reads messages in Apple Mail to classify them and, when you allow it, moves unwanted mail to Junk, marks messages for review, and restores mail you correct." Update the Spanish and French strings to match.
-<!-- sources: distribution/packaging#7 -->
-
-#### 7.10 Version 1.0 (1) hard-coded; no CI, release workflow or changelog — Medium
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:629` (also `:597`, `:647`, `:679`, `:698`, `:712`, `:837`, `:869`, `:891`, `:923`), `Scripts/AppStoreExportOptions.plist:13-16`, `.github/workflows/site.yml`
-- **Problem:** Every configuration hard-codes `MARKETING_VERSION = 1.0` and `CURRENT_PROJECT_VERSION = 1`. All notarized submissions so far (for example 4dca30b7, fb685339 and 3c687cd4) are 1.0 (1). There is no `CHANGELOG.md` or `release-notes.sh`. `manageAppVersionAndBuildNumber` and `uploadSymbols` are false, and the only workflow is `site.yml`, so every build and test claim rests on one local machine. The sisters stamp versions from the tag and build numbers from `commit_count` (Zephyr `Fastfile:367`), and they have ci, lint, periphery and tag-driven release workflows.
-- **Scenario:** A second App Store upload is rejected for reusing build 1. The direct updater compares `CFBundleShortVersionString` and never sees a newer release unless someone edits ten configuration entries by hand. GitHub release notes and "What's New" have no source.
-- **Fix:** Move the version to a single xcconfig or project-level setting and stamp it from the tag and commit count in the archive lane (Zephyr `Fastfile:986-997`). Copy SubTrack's `release-notes.sh` (revision 5) and a `CHANGELOG.md` with the Zephyr header. Add `ci.yml` running package tests and an unsigned app build, plus a tag-driven `release.yml`.
-<!-- sources: config/ci-automation#8, distribution/packaging#8 -->
-
-#### 7.12 Whole-state JSON reloaded every 3 seconds; state grows without bound — Medium
-
-- **Where:** `SpamWise/AppModel.swift:159`, `SpamWise/AppModel.swift:6`, `SpamWiseCore/Sources/SpamWiseCore/Store.swift:101-108`, `SpamWise/AppModelScanning.swift:126,136`, `SpamWiseCore/Sources/SpamWiseCore/State.swift:144,191`, `SpamWise/AppleMailAdapter.swift:312`
-- **Problem:** All state is one JSON blob: up to 5,000 decision records, retries holding up to 16 KB each, learning data, and the never-pruned `claimedActions` and `importedIDs`. The idle app decodes it every 3 seconds and several times per processed message, re-encodes it on every update, and builds a new `ModelContainer` on each access. Reassigning the observed model re-renders the Activity table. The cross-process `flock(... LOCK_NB)` makes a competing process fail immediately. Verifiers confirmed the design facts; the performance magnitudes are estimates.
-- **Scenario:** After months of use the blob reaches several megabytes. The menu-bar app keeps using CPU and energy while idle, scans take seconds per message, and the MailKit extension's 8-second callback loses `lockUnavailable` races and drops dry-run records.
-- **Fix:** Split state into separately keyed records (settings, rules, paginated activity, claims, histories) or real SwiftData models, and load Activity on demand. Replace the 3-second poll with a cheap change token. Age-prune claims and imported IDs. Retry the lock with a short bounded wait.
-<!-- sources: distribution/product#11 -->
-
-#### 7.13 Store build depends on a discretionary Apple Events temporary exception — Medium
-
-- **Where:** `SpamWise/SpamWise.entitlements:19`, `MailExtension/MessageActionHandler.swift:39-45`, `docs/app-store-feasibility.md:25-28`
-- **Problem:** History import, lookup, Junk and Inbox moves, flags and read status all go through Apple Events to Mail under `com.apple.security.temporary-exception.apple-events`, which every SpamWise configuration uses. Guideline 2.4.5(i) limits modifying other apps' data, temporary exceptions are granted case by case, and Mail offers no scripting-targets group that would replace this one. The MailKit extension always passes `forceDryRun: true` and calls `finish(nil)`, so a store build without the exception has no action path. The docs and `TODO.md:89` already track this as an open risk, yet the plan still says "pursue the Mac App Store first", and no App Store Connect record exists (error 19).
-- **Scenario:** App Review refuses or limits the exception. The store build then cannot move any mail, and the extension alone does nothing visible, which also invites a 4.2 minimum-functionality rejection.
-- **Fix:** Make Developer ID the primary channel, as SpamSieve does. Get an early exception decision from App Review using the drafted justification before investing further in store polish. Plan for an IMAP-only store build or no store edition if the exception is refused.
-<!-- sources: distribution/packaging#5, security/app-logic#2 -->
-
-#### 7.14 No third-party notices for bundled Apache-2.0 and MPL-2.0 code — Medium
-
-- **Where:** `SpamWiseCore/Package.swift:23` (also `:22`), `MessageModel/Resources/public_suffix_list.dat`
-- **Problem:** The app and extension statically link ClaudeForFoundationModels (Apache-2.0, pinned `0262e1a`). The unshipped direct edition also links swift-log (Apache-2.0, with `NOTICE.txt`). Apache-2.0 §4(a) and (d) require binary redistributions to include the license text and any NOTICE. The repository has no CREDITS, NOTICE or acknowledgements, and neither do the app, its About panel or the Help pages. The bundled Public Suffix List keeps its MPL-2.0 header in both bundles, which verifiers judged sufficient for MPL notice retention. GitHubReleaseDiscovery uses only swift-log, not markdown-ui or cmark. Nothing has been publicly distributed yet. Zephyr's `CREDITS.md` has an "Apache-2.0 notices" section for exactly this.
-- **Scenario:** A notarized ZIP or App Store build distributed as-is redistributes ClaudeForFoundationModels without its required license text, a compliance defect from the first public release.
-- **Fix:** Add a `CREDITS.md` modeled on Zephyr's, with Apache-2.0 notices for ClaudeForFoundationModels at `0262e1a` and for swift-log including its NOTICE, the MPL-2.0 Public Suffix List with source URL and version, and an Anthropic trademark/non-affiliation disclaimer. Surface the same text in the app, through About panel credits or a Help page, as SubTrack does.
-<!-- sources: config/ci-automation#6, config/swift-xcode#11, distribution/packaging#9 -->
-
-#### 7.15 Missing API key reported as a storage or entitlement failure — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:139` (through `:150`), `SpamWiseCore/Sources/SpamWiseCore/ConfiguredClassifier.swift:46`, `SpamWise/AppModelErrors.swift:21-26`
-- **Problem:** `credential(settings.backend)` throws `KeychainError.missing` without mapping it. `Pipeline.process` turns every error that is not a classification, content-rule, budget or cancellation error into "persistence or integration unavailable". `AppModel.describe` adds "Check the signed app's shared Keychain entitlement" for every `KeychainError`, including `.missing`. Onboarding's "Continue offline" path saves no key while Claude stays the default backend. `support.md` promises that a missing key is reported, but the app never names it.
-- **Scenario:** A user switches to Gemini, grants consent, and forgets "Save provider key". Activity fills with "persistence or integration unavailable", and the user troubleshoots signing and storage instead of entering the key.
-- **Fix:** Map `KeychainError.missing` to `ClassificationError.missingCredential` in `ConfiguredClassifier`, and keep the entitlement wording for real `KeychainError.status` failures. Show a persistent "No API key for <provider>" banner while the selected provider has no stored key.
-<!-- sources: distribution/product#8 -->
-
-#### 7.16 No migration framework; one undecodable value locks all state — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/State.swift:163`, `SpamWiseCore/Sources/SpamWiseCore/Store.swift:64`, `SpamWise/AppModel.swift:140-142`
-- **Problem:** `schemaVersion = 1` is declared and never read. `Store.read` and `Store.update` decode the whole payload with synthesized `Codable`, so a new enum case, renamed key or non-optional field breaks decoding. When decoding fails, the app shows a generic storage-unavailable status and keeps the default `AppState()`, so onboarding reappears and every write fails. There is no quarantine, export or recovery screen. Mixed-version windows are realistic: the ledger records Mail running a stale extension generation, and a direct-to-store downgrade would hit the same failure.
-- **Scenario:** Version 1.1 writes an `ActionOutcome.deferred` record. The still-running 1.0 extension, or a reinstalled 1.0 app, cannot decode the state. The user sees onboarding again, "Finish setup" fails to save, and filtering stops until the container is deleted by hand.
-- **Fix:** Check `schemaVersion` on load and run explicit migrations. Decode collections leniently, skipping unknown elements and mapping unknown enum values to a fallback. Before any reset, quarantine the undecodable payload, and offer a recovery screen with restore from backup or reset.
-<!-- sources: distribution/product#10 -->
-
-#### 7.17 Direct edition would show as "SpamWiseDirect" and shares the store identity — Low
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:872` (also `:871`, `:925-926`)
-- **Problem:** SpamWiseDirect sets `PRODUCT_NAME = SpamWiseDirect` with a generated Info.plist and no `CFBundleName` or `CFBundleDisplayName` override, so the menu bar, Finder, Login Items and TCC prompts would read "SpamWiseDirect". Both editions share `codes.tim.SpamWise`, the App Group, the Keychain group and the extension ID. That sharing is a deliberate, documented contract decision ("install one at a time"), unlike SubTrack's per-edition IDs. Because no script packages this target, only the naming is a defect.
-- **Scenario:** A user moves from the store build to a GitHub build. The app shows the odd name "SpamWiseDirect", and both copies register the same extension and share one store, so whichever copy LaunchServices picks is the one that runs.
-- **Fix:** Set `PRODUCT_NAME = SpamWise` and separate editions by scheme and build directory, or at least set `CFBundleName` and `CFBundleDisplayName` to SpamWise. Record a deliberate decision between per-edition bundle IDs and the shared identity, with a migration plan for the latter.
-<!-- sources: distribution/packaging#12 -->
-
-#### 7.18 Bare ZIP instead of a notarized DMG or pkg — Low
-
-- **Where:** `Scripts/archive.sh:39`
-- **Problem:** The Developer ID output is a ZIP of the app. SubTrack ships a notarized DMG (`make-dmg.sh`), and Zephyr ships a signed, notarized pkg because a quarantined, translocated app cannot host its system extension. A notarized ZIP is an accepted format, and the effect of translocation on Mail extension registration is unverified inference, so this is packaging polish.
-- **Scenario:** A user unzips SpamWise in `~/Downloads` and launches it there. The Mail extension may register from a translocated path or fail to appear or update in Mail Settings, and the Mail-rule script points at a location that moves.
-- **Fix:** Adopt Zephyr's `make-pkg.sh` with productsign and notarization, which installs to `/Applications` without translocation. At minimum, use SubTrack's `make-dmg.sh` with an `/Applications` symlink, notarized and stapled, and publish it through a `release.yml` like Zephyr's `publish` job.
-<!-- sources: config/ci-automation#12 -->
 
 #### 7.19 No copyright string; category disagrees with store metadata — Low
 
@@ -5013,13 +2852,6 @@ The Mac App Store path also carries a strategic risk the docs already acknowledg
 - **Fix:** Establish the update channel and a model-lifecycle check before release, and show a specific "model retired" error rather than a generic configuration failure.
 <!-- sources: distribution/product#18 -->
 
-#### 7.26 Privacy manifest declares no collected data types — Info
-
-- **Where:** `SpamWise/PrivacyInfo.xcprivacy:5`
-- **Problem:** The manifest declares only `NSPrivacyTracking` false and a UserDefaults `CA92.1` reason. Message content and email addresses go to Anthropic, OpenAI or Gemini, which retain them for up to 30 days. `docs/app-store.md:246` and `app-store-feasibility.md:43` already say "data not collected" would be wrong. The extension, which also sends content, has no manifest of its own.
-- **Scenario:** Xcode's privacy report for the archive shows no collected data, which conflicts with the App Store Connect answers and can draw App Review questions.
-- **Fix:** Once the App Store Connect answers are settled, add matching `NSPrivacyCollectedDataTypes` entries (emails or text messages, email address, other user content; purpose App Functionality; not linked; not tracking).
-<!-- sources: privacy-dataflow#15 -->
 ## 8. Front-end design
 
 The app is built from native macOS parts. It has a single `Window` with a `Table`, `.inspector` and `.searchable`; a real `Settings` scene with a toolbar `TabView` and `.formStyle(.grouped)`; a `MenuBarExtra`; `CommandMenu`; and `ContentUnavailableView` for the main empty states. It also uses `LabeledContent`, `ControlGroup`, `confirmationDialog` with destructive roles, `fileImporter`/`fileExporter`, Swift Charts, `SMAppService` login items and the native AppKit help bezel. Color is restrained: only `.secondary` appears, and no status depends on color alone. Symbols are used sparingly, as the swiftui-conventions skill asks. All 12 symbol uses resolve to current macOS 27 names, and none implies deletion (there is no `trash`). Every view has a preview. Expert controls are mostly collapsed inside Advanced. The weaknesses are not in the components. They are in structure, flow, feedback and copy.
@@ -5098,377 +2930,29 @@ Limits of this review: reviewers did not run the app. Runtime behaviors are infe
 
 | # | Severity | Location | Finding |
 |---|---|---|---|
-| 8.3 | Medium | `SpamWise.xcodeproj/project.pbxproj:615` | Apple Events purpose string understates Automation use |
-| 8.4 | Medium | `SpamWise/AccountSettingsView.swift:9` | Accounts tab holds the classifier; "Preferences" tab inside Settings; weak tab symbols |
-| 8.5 | Medium | `SpamWise/AdvancedSettingsView.swift:10` | Collapsed and nested disclosures used as hierarchy; centered and misaligned rows |
-| 8.6 | Medium | `SpamWise/AdvancedSettingsView.swift:41` | Developer jargon and evaluator caveats in primary copy |
-| 8.7 | Medium | `SpamWise/AppModel.swift:219` | Background sweeps share the global busy flag and disable foreground actions |
-| 8.8 | Medium | `SpamWise/AppModel.swift:240` | No plural variations anywhere ("1 accounts", "1 rules") |
-| 8.9 | Medium | `SpamWise/AppModelErrors.swift:21` | Error messages duplicate or misstate the cause |
-| 8.10 | Medium | `SpamWise/AuditTrailView.swift:24` | Sheets differ in titles and buttons; most ignore Escape and Return |
-| 8.11 | Medium | `SpamWise/BackupSettingsView.swift:21` | Generated recovery key is hidden, overwritten without warning; any file accepted |
-| 8.12 | Medium | `SpamWise/ContentView.swift:35` | Activity table lacks confidence/reason columns; verdict text only; counts in a tooltip |
-| 8.13 | Medium | `SpamWise/ContentView.swift:37` | Time column shows no date across 5,000 retained records; no sorting |
-| 8.14 | Medium | `SpamWise/ContentView.swift:58` | Text-only toolbar overflows at minimum width in Spanish and French |
-| 8.15 | Medium | `SpamWise/ContentView.swift:75` | Filters, statistics and inspector show raw account IDs and internal path codes |
-| 8.16 | Medium | `SpamWise/ContentView.swift:129` | Eight independent sheets; requests dropped, late or stacked |
-| 8.17 | Medium | `SpamWise/ContentView.swift:158` | `accessibilityValue` carries UI-test tokens that VoiceOver speaks |
-| 8.18 | Medium | `SpamWise/ContentView.swift:171` | All feedback goes through one gray, never-cleared global status string |
-| 8.19 | Medium | `SpamWise/CorpusView.swift:49` | Corpus Forget deletes permanently with no confirmation |
-| 8.20 | Medium | `SpamWise/EvidenceSettingsView.swift:41` | Settings mix apply-on-change and Save buttons; drafts silently discarded |
-| 8.21 | Medium | `SpamWise/IMAPSettingsView.swift:16` | Touching the Connection picker silently unverifies the route and stops filtering |
-| 8.22 | Medium | `SpamWise/KeyEntryView.swift:9` | Text and secure fields without prompts render as label-only rows |
-| 8.23 | Medium | `SpamWise/LocalizedLabels.swift:38` | Good vs Inbox, and three names for the Review action |
-| 8.24 | Medium | `SpamWise/MailConnectionView.swift:12` | Permission-denied state has no Open Automation Settings button |
-| 8.25 | Medium | `SpamWise/MailHealthView.swift:18` | Account inclusion toggles buried in a flat diagnostics list |
-| 8.26 | Medium | `SpamWise/MailMenuView.swift:15` | Menu-bar ⌥⌘G/J/R shortcuts only fire while the menu is open |
-| 8.27 | Medium | `SpamWise/MailMenuView.swift:24` | Menu-bar corrections enabled during onboarding; results never shown |
-| 8.28 | Medium | `SpamWise/MailReviewView.swift:88` | Correction results sheet has no progress or cancel through 30-second settles |
-| 8.29 | Medium | `SpamWise/ModelSettingsView.swift:48` | Local-only mode leaves blocked providers and network evidence enabled |
-| 8.30 | Medium | `SpamWise/OnboardingView.swift:21` | Setup is Anthropic-only and always says "Continue offline" |
-| 8.31 | Medium | `SpamWise/OnboardingView.swift:39` | Return in the API-key field advances setup and loses the key |
-| 8.32 | Medium | `SpamWise/OnboardingView.swift:42` | Reopened setup cannot be cancelled; Finish silently turns dry run on |
-| 8.33 | Medium | `SpamWise/OnboardingView.swift:90` | Onboarding dry-run step never shows the decisions it previews |
-| 8.34 | Medium | `SpamWise/RuleEditorView.swift:48` | Rule tables lack standard table affordances; removal has no confirmation or undo |
-| 8.35 | Medium | `SpamWise/SpamWise.help/.../how-decisions-are-made.html:6` | Help out of step with the UI; major features undocumented |
-| 8.36 | Medium | `SpamWise/SpamWise.help/.../troubleshooting-mail-integration.html:11` | Help pages carry developer QA notes and an unshipped CLI |
-| 8.37 | Medium | `SpamWise/ToolsCommands.swift:9` | Toolbar actions have no menu commands or keyboard shortcuts |
-| 8.38 | Medium | `SpamWiseCore/Package.swift:12` | Package strings depend on hand-copied stale entries in the app catalog |
-| 8.39 | Medium | `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:69` | Configuration history shows raw rule IDs, UUIDs and rawValues |
 | 8.40 | Low | `SpamWise/ActivityStatisticsView.swift:32` | Statistics accepts an inverted date range without feedback |
 | 8.41 | Low | `SpamWise/AppModelCredentials.swift:50` | Key verification adds a fake "SpamWise setup" row to Activity |
 | 8.42 | Low | `SpamWise/AppShortcuts.xcstrings:4` | App Shortcut phrase translations still `needs_review` |
 | 8.43 | Low | `SpamWise/AuditTrailView.swift:17` | Configuration history: plain TextField search, no title, no empty state |
-| 8.44 | Low | `SpamWise/AutomationIntents.swift:29` | Shortcuts intents require a typed Request UUID |
 | 8.45 | Low | `SpamWise/ContentView.swift:35` | Activity table: no context menu, double-click, sorting or filtered empty state |
 | 8.46 | Low | `SpamWise/ContentView.swift:43` | A correction adds a second row; the original keeps its old verdict |
-| 8.47 | Low | `SpamWise/ContentView.swift:114` | Inspector toggle has a fixed "Show details" title and no tooltip |
 | 8.48 | Low | `SpamWise/ContentView.swift:119` | Status footer spans beneath the inspector column |
 | 8.49 | Low | `SpamWise/CorpusView.swift:65` | Corpus import accepts any file; more than 20 files reported as oversize |
 | 8.50 | Low | `SpamWise/DecisionDetailView.swift:33` | Error and status rows use the warning glyph inconsistently |
-| 8.51 | Low | `SpamWise/DecisionDetailView.swift:35` | Every inspector shows "Threat assessment: Not assessed" |
 | 8.52 | Low | `SpamWise/DecisionDetailView.swift:225` | Good/Junk/Review have no shared symbol; verdict has no visual weight |
 | 8.53 | Low | `SpamWise/Localizable.xcstrings:174` | French uses breakable spaces before `:` and `;` |
 | 8.54 | Low | `SpamWise/Localizable.xcstrings:3391` | Spanish/French glossary inconsistencies and mixed register |
 | 8.55 | Low | `SpamWise/MailMenuView.swift:9` | Menu-bar extra cannot be hidden; its status ignores dry run |
 | 8.56 | Low | `SpamWise/MailMenuView.swift:25` | Mixed title/sentence case in menus and buttons; jargon in typical-path labels |
-| 8.57 | Low | `SpamWise/MailReviewView.swift:30` | Review Junk list shows only subjects, with no page position |
 | 8.58 | Low | `SpamWise/ModelSettingsView.swift:49` | Setting, provider and app names are inconsistent |
 | 8.59 | Low | `SpamWise/ModelSettingsView.swift:62` | Credential entry implemented three ways with different feedback |
 | 8.60 | Low | `SpamWise/MyApp.swift:17` | Help menu replacement drops ⌘?; Tools items in sentence case; ⌥⌘C conflict |
 | 8.61 | Low | `SpamWise/MyApp.swift:23` | Menu-bar icon never reflects paused, dry-run or broken state |
 | 8.62 | Low | `SpamWise/NotificationSettingsView.swift:17` | Steppers used for very large ranges |
-| 8.63 | Low | `SpamWise/NotificationSettingsView.swift:25` | Quiet-hours labels concatenated as 24-hour "13:00" |
 | 8.64 | Low | `SpamWiseCore/Sources/Classifier/Types.swift:314` | Quoted-reply stripping recognizes only English reply headers |
 | 8.65 | Low | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:106` | Daemon and evaluation CLI output unlocalized and unpluralized |
 | 8.66 | Info | `SpamWise/FolderSettingsView.swift:78` | Required training-folder name rendered without quotes |
 | 8.67 | Info | `SpamWise/IMAPSettingsView.swift:42` | IMAP TLS port is a free-text String field |
-
-#### 8.3 Apple Events purpose string understates Automation use — Medium
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:615` (:665, :855, :909; es/fr InfoPlist.strings)
-- **Problem:** The purpose string reads "SpamWise reads mail history and applies your corrections in Apple Mail." Automation is actually used to read incoming messages for classification, move mail to Junk and back, set flags and colors, and read account and folder lists. Guideline 5.1.1 requires a purpose string to describe the actual use.
-- **Scenario:** A reviewer grants Automation and then watches SpamWise move incoming mail to Junk, which the prompt never mentioned. That risks rejection, and users likewise approve without knowing what they are allowing.
-- **Fix:** Use wording like "SpamWise reads messages in Mail to classify them and, when you allow it, moves junk to the Junk mailbox or flags messages for review.", and update the es/fr strings.
-<!-- sources: content#18 -->
-
-#### 8.4 Accounts tab holds the classifier; "Preferences" tab inside Settings; weak tab symbols — Medium
-
-- **Where:** `SpamWise/AccountSettingsView.swift:9` (SettingsView.swift:12-26, ModelSettingsView.swift:26 and :81)
-- **Problem:** The Accounts tab (`person.crop.circle`) opens with provider, local-only, model, consent, API key and spending. The mail accounts sit below the fold under collapsed disclosures, which makes this the tallest pane. A tab named "Preferences" inside a window macOS calls Settings holds only the natural-language policy, under the text-formatting glyph `text.alignleft`. Advanced uses `slider.horizontal.3`, while Apple uses `gearshape.2`.
-- **Scenario:** A user looking for the account toggles must scroll and expand disclosures. A user looking to change the AI provider tries General and Advanced first. "Preferencias" and "Préférences" carry the same ambiguity.
-- **Fix:** Split out a Classifier tab (`sparkles` or `cpu`) for provider, local-only, consent, key and usage. Keep Accounts for Mail and IMAP, with the `at` symbol. Rename Preferences to "Policy" (`text.bubble` or `text.quote`), and use `gearshape.2` for Advanced.
-<!-- sources: design/settings#6, design/onboarding-consistency#15, design/settings#16 -->
-
-#### 8.5 Collapsed and nested disclosures used as hierarchy; centered and misaligned rows — Medium
-
-- **Where:** `SpamWise/AdvancedSettingsView.swift:10` (AdvancedSettingsView.swift:36, ProviderConsentView.swift:35-60, SpamhausSettingsView.swift:30-47, BackupSettingsView.swift:16-36, IMAPSettingsView.swift:56-72, MailConnectionView.swift:21 → TrustExclusionsView.swift:9, MailHealthView.swift:33 → MailDestinationView.swift:11, LearningSettingsView.swift:10-24 and :68, EvidenceSettingsView.swift:11, :29, :70, :74, ModelSettingsView.swift:80, MailConnectionView.swift:24 and :36, RuleEditorView.swift:58, PolicyView.swift:43)
-- **Problem:** Advanced opens as six identical, headerless collapsed bars, and nesting reaches three levels. In a grouped Form, bare Text, Link and Button children of a DisclosureGroup lose leading alignment. The screenshots show centered links, buttons and captions in Backup, Spamhaus, provider consent and IMAP (backup-en.png, spamhaus-es/fr.jpg, disclosure-fr.png, en-imap-actions.jpg). Only some rows were fixed, with ad hoc `.frame(maxWidth: .infinity, alignment: .leading)`. Explanations are standalone secondary rows rather than Section footers, and Rules and Preferences are padded VStacks instead of Forms.
-- **Scenario:** In French, the Spamhaus block shows its terms link, explanation and Save button centered under left-aligned toggles. No Advanced setting is visible until its bar is expanded, and trust exclusions need three expansions.
-- **Fix:** Use `Section("Title") { … } footer: { Text(…) }` for primary grouping. Keep a disclosure only for rare diagnostics, and never nest one. Remove the frame workarounds, use grouped Forms for Rules and Preferences, and split Optional evidence into Local analysis and Network lookups sections.
-<!-- sources: design/settings#7, design/onboarding-consistency#5, conventions/app-views-settings#27 -->
-
-#### 8.6 Developer jargon and evaluator caveats in primary copy — Medium
-
-- **Where:** `SpamWise/AdvancedSettingsView.swift:41` (AdvancedSettingsView.swift:37, MailHealthView.swift:36-38 and :47, MailDestinationView.swift:29, MailReviewView.swift:18, ActivityStatisticsView.swift:54, DecisionDetailView.swift:103 and :126, CorpusView.swift:20-37, LearningSettingsView.swift:14-15, EvidenceSettingsView.swift:42, :58, :63, ModelSettingsView.swift:31, :87, :91, ContentView.swift:146, MailConnectionView.swift:9, AppModel.swift:118)
-- **Problem:** The copy restates the engineering ledger instead of telling users what happens or what to do. It covers page offsets, calibration, label provenance, MailKit dry-run status, signing advice, reservation ceilings, "sidecars", Bayes, and a SpamSieve mention. This appears in General, Accounts and Activity, not just Advanced, and setup asks users to enable a Mail extension that does nothing for them yet. Much of it is hard to translate.
-- **Scenario:** In Accounts and scan health, a user reads "Next page offset 40" and "Mailbox changes can shift pages… counts do not guarantee delivery", with nothing to act on. Statistics and Review Junk open with notes on calibration and confirmed labels.
-- **Fix:** Rewrite around outcomes and tasks, for example Review Junk: "Restore anything that isn't junk. Nothing moves unless you choose Mark Good." Move methodology caveats to Help or a Diagnostics disclosure. Remove the MailKit status and the extension instruction until that route works. Drop the third-party product name; verifiers judged the trademark risk overstated, but the copy is still unhelpful.
-<!-- sources: content#8, design/main-window#15, comments/app-views-main#11 -->
-
-#### 8.7 Background sweeps share the global busy flag and disable foreground actions — Medium
-
-- **Where:** `SpamWise/AppModel.swift:219` (AppModel.swift:172-173, AppModelScanning.swift:11, DecisionDetailView.swift:68-77 and :156, MailMenuView.swift:24, ContentView.swift:64 and :71, CorpusView.swift:51, MailHealthView.swift:13, ContentRuleEditorView.swift:50-51, FolderSettingsView.swift:48, LearningSettingsView.swift:71)
-- **Problem:** The 60-second automatic scan goes through the same exclusive `run`/`busy` gate as user actions, and runs longer when live moves add 30-second settles. While it runs, these controls are disabled: inspector corrections, Preview, Open in Mail, Export, Review Junk, menu-bar corrections, corpus edits and folder setup. Clicks that reach `run` are dropped silently. The Content rules sheet's Done button is inside the disabled HStack and has no Escape shortcut. The Folder sheet's "Cancel" cancels the global work task, including the sweep.
-- **Scenario:** A user reaches for Good on a misfiled message, and it greys out for tens of seconds, every minute. Content rules can't be dismissed for at least 90 seconds during a three-move sweep. Clicking Folder "Cancel" to close the sheet aborts the Inbox sweep.
-- **Fix:** Give background sweeps their own task and indicator. Queue or preempt them through the pipeline's own serialization. Never disable a sheet's dismiss button. Rename the folder button "Stop Preview" and scope it to that task. Show "Checking mail…" next to any temporarily disabled control.
-<!-- sources: design/main-window#8, design/settings#4 -->
-
-#### 8.8 No plural variations anywhere — Medium
-
-- **Where:** `SpamWise/AppModel.swift:240` (AppModelScanning.swift:134, DecisionDetailView.swift:62, CorpusView.swift:27 and :30, LocalNotifications.swift:49, RuleManagement.swift:110, ContentRuleManagement.swift:28, AppModel.swift:366-368)
-- **Problem:** None of the 705 catalog entries has plural variations or substitutions, although 23 keys carry counts. Interpolating with `format: .number` emits `%@` keys, which Xcode can't vary by plural. Some Ints have no FormatStyle at all. One status concatenates a localized sentence with a raw `actionError`.
-- **Scenario:** Users see "Connected — 1 accounts readable", "Restores 1 rules and 1 examples" and "Classified 1 of 1 messages", with the same errors in Spanish and French.
-- **Fix:** Interpolate the Int directly so the key carries `%lld`, or use a substitution. Then add one/other variations in en, es and fr, or use `^[\(count) rule](inflect: true)`, or rephrase as label–value pairs. Fold `actionError` into a single format string.
-<!-- sources: design/onboarding-consistency#18, content#5, conventions/app-logic#12, conventions/app-views-main#12 -->
-
-#### 8.9 Error messages duplicate or misstate the cause — Medium
-
-- **Where:** `SpamWise/AppModelErrors.swift:21` (AppModelErrors.swift:14-19, AppModelFolders.swift:17-31, CorpusView.swift:82, SpamWiseCore/Sources/SpamWiseCore/RuleManagement.swift:25, TrustExclusions.swift:9 and :13)
-- **Problem:** `describe()` joins description, reason and suggestion, then appends more text. A permission denial therefore reads as three overlapping sentences beginning "The Mail action is unavailable", even from Check Mail connection, where no action ran. Every KeychainError ends with entitlement advice the user can't follow. Validation also reuses unrelated cases:
-  - `IntegrationError.unavailable` for a misnamed or non-empty training folder, and for the 20-plan limit.
-  - `ParseError.tooLarge` for more than 20 files or a missing store.
-  - `tooManyRules` ("maximum of 10,000 sender rules") for 101 trust-exclusion addresses or more than 30,000 characters.
-- **Scenario:** A user who pastes 101 trust exclusions is told the 10,000 sender-rule maximum has been reached. A user who saves a plan for a non-empty folder reads "The Mail action is unavailable."
-- **Fix:** Give `permissionDenied` a recoverySuggestion and drop the appended duplicate. Make IntegrationError's description general ("Couldn’t communicate with Mail."), and replace the entitlement advice with something the user can do. Add specific cases with accurate reasons: `folderNotEmpty`, `folderNameMismatch`, `tooManyFolderPlans`, `tooManyFiles`, and a trust-exclusion limit whose value is interpolated with `format: .number`.
-<!-- sources: content#9, comments/core-pipeline-store#3 -->
-
-#### 8.10 Sheets differ in titles and buttons; most ignore Escape and Return — Medium
-
-- **Where:** `SpamWise/AuditTrailView.swift:24` (CorpusView.swift:20 and :59, MailReviewView.swift:16, :59, :75, :88, :103, ActivityStatisticsView.swift:31 and :78, ReviewDigestView.swift:12 and :42, FolderSettingsView.swift:50, ContentRuleEditorView.swift:21, :24-30, :50, :94-123, RuleFormView.swift:15 and :30-32, ActivityDateFilterView.swift:15-18)
-- **Problem:** On macOS, Escape closes a sheet only through a cancel-action button, and Return only through a default button. Most sheets have a lone Done with neither; only the digest's own Done and the date filter have shortcuts. Titles use title2, headline, a Form section header or nothing. Form styles and button rows vary, and Cancel sits at the leading edge before a Spacer instead of beside the default button. One sheet says "Save" and another "Save rule". ContentRuleFormView has no title, and the content-rule table has no empty state, unlike the sender-rule table.
-- **Scenario:** Escape does nothing in Statistics, Corpus, Review Junk, Configuration history, Folders, Content rules or Message preview. An empty Content rules sheet shows a blank grid.
-- **Fix:** Use one pattern for all sheets: a NavigationStack with `.navigationTitle` plus `ToolbarItem(placement: .cancellationAction)` and `ToolbarItem(placement: .confirmationAction)`. Alternatively, use a shared `Spacer(); Cancel; Primary` footer. Map Done to `.defaultAction`, and to `.cancelAction` where it is the only button. Add a ContentUnavailableView for content rules and an "Add/Edit content rule" title.
-<!-- sources: design/main-window#19, design/settings#15, design/onboarding-consistency#16, conventions/app-views-settings#22 -->
-
-#### 8.11 Generated recovery key is hidden, overwritten without warning; any file accepted — Medium
-
-- **Where:** `SpamWise/BackupSettingsView.swift:21` (:22-26, :40, :45, :51-56)
-- **Problem:** The app generates an unrecoverable key and puts it straight into a SecureField. The key is never visible, and the empty field renders as a bare label. Generate replaces a typed key without confirmation, Copy gives no feedback, and Export is enabled with no "I saved this" step. Exporter and importer both use `.data`, so Restore offers every file. The destructive confirmation has no message.
-- **Scenario:** A user clicks Generate, then Export, without copying the key, and is left with an unrecoverable backup. Or they type a restore key, click Generate by mistake, and lose it.
-- **Fix:** Show the generated key in selectable monospaced text with Copy and Save to File. Require confirmation before Export, and before regenerating over a non-empty key. Keep a SecureField only for entering a key at restore. Declare an exported UTType for `.spamwisebackup`, add a `message:`, and consider File › Export/Import menu items.
-<!-- sources: design/settings#13, design/onboarding-consistency#19 -->
-
-#### 8.12 Activity table lacks confidence/reason columns; verdict text only; counts in a tooltip — Medium
-
-- **Where:** `SpamWise/ContentView.swift:35` (ContentView.swift:36-45 and :164-166, DecisionDetailView.swift:225)
-- **Problem:** Brief §6 asks for a table of time, sender, subject, verdict (icon plus label), confidence and reason, and a footer with today's counts. The table has only the first four columns, so every explanation is hidden until the inspector opens. VerdictBadge is plain text, and the Junk/Review breakdown exists only in `.help`.
-- **Scenario:** Judging 200 dry-run decisions means opening each row's inspector one at a time. VoiceOver users never hear the day's Junk and Review counts.
-- **Fix:** Add Confidence and Reason columns, with the reason on one line and the full text in `.help`. Give the verdict a symbol Label (§8.52), and show the Junk/Review counts as visible footer text.
-<!-- sources: gap/brief-conformance#4 -->
-
-#### 8.13 Time column shows no date across 5,000 retained records; no sorting — Medium
-
-- **Where:** `SpamWise/ContentView.swift:37` (SpamWiseCore/Sources/SpamWiseCore/State.swift:161)
-- **Problem:** The column uses `.dateTime.hour().minute()`, but the log keeps up to 5,000 records spanning days. The inspector shows no date either, and the Table has no `sortOrder`.
-- **Scenario:** Two rows read "10:42" and "10:40". One is from today, one from five days ago, and nothing distinguishes them.
-- **Fix:** Use a today-aware format like Mail's: the time for today, otherwise a short date plus time. Rename the column "Date", add a Date row to the inspector, and support `sortOrder` with `KeyPathComparator`.
-<!-- sources: design/main-window#9, design/onboarding-consistency#10 -->
-
-#### 8.14 Text-only toolbar overflows at minimum width in Spanish and French — Medium
-
-- **Where:** `SpamWise/ContentView.swift:58` (:60-117, :128)
-- **Problem:** Six long text-only buttons plus one icon button share a 720 pt minimum width. es-toolbar-overflow.jpg shows only two items before the » chevron. en-inspector-failed.jpg shows Review Junk, Filter and Statistics not fitting. Pause, a safety control, has no state glyph. The toolbar has no tooltips, no customization and no explicit placements.
-- **Scenario:** A Spanish or French user can't see Filter, Statistics, Review Junk or the inspector toggle without discovering the overflow menu.
-- **Fix:** Use `Label` items with symbols (see the inventory) and `.help`, which the "sparing icons" rule allows as label shorthand. Add `.toolbar(id:)` customization so low-priority items can be removed, and put the inspector toggle at `.primaryAction`.
-<!-- sources: design/main-window#3, design/onboarding-consistency#9 -->
-
-#### 8.15 Filters, statistics and inspector show raw account IDs and internal path codes — Medium
-
-- **Where:** `SpamWise/ContentView.swift:75` (ContentView.swift:77-89, ActivityStatisticsView.swift:34-41, DecisionDetailView.swift:186-188)
-- **Problem:** Filter → Account and the Statistics picker list `identity.accountID`, which is Mail's opaque scripting ID or `imap:<UUID>`. `model.accounts` already holds the names, and the expression is duplicated in both places. The Path filter and the detail row show untranslated tokens: gate, model, fingerprint, correction, selection, verification. The catalog translates "Path" as Ruta/Circuit but "All paths" as Todos los métodos/Toutes les méthodes. "Today" is a one-shot button, and nothing shows that a filter is active.
-- **Scenario:** A Spanish user opens Filtrar → Cuenta, sees two UUIDs, then sees "fingerprint" and "gate" under Ruta.
-- **Fix:**
-  - Add an `accountName(for:)` helper with a localized "Unknown account" fallback, plus a shared `recordAccountIDs`.
-  - Replace path strings with a typed "Decided by" enum with localized titles, or move the filter to diagnostics.
-  - Use one translation for Path and All paths.
-  - Show active filters with a `.fill` symbol, a search token or a Clear filters banner.
-<!-- sources: design/main-window#10, design/onboarding-consistency#11, content#10, conventions/app-views-main#4 -->
-
-#### 8.16 Eight independent sheets; requests dropped, late or stacked — Medium
-
-- **Where:** `SpamWise/ContentView.swift:129` (:129-136; ReviewDigestView.swift:37; DecisionDetailView.swift:68; AppModelMailReview.swift:11 and :68; AppModel.swift:136)
-- **Problem:** Sheets are triggered from the toolbar, the Tools menu, the menu bar, the 3-second refresh loop and other sheets, but all hang off ActivityView. SwiftUI presents one sheet per presenter, so a request made while another sheet is up is ignored and appears later. The digest stacks DecisionDetailView as a sheet on a sheet, against the HIG's one-sheet-at-a-time guidance.
-- **Scenario:**
-  - In the digest, Preview message shows nothing, then opens unexpectedly once the digest closes.
-  - Menu-bar Mark as Junk shows no results while Statistics is open.
-  - On a new week's first refresh, the digest pops up unprompted.
-- **Fix:** Route every Activity modal through one `enum ActivitySheet: Identifiable` and `.sheet(item:)`. Show the digest's decision detail by pushing inside the digest or by selecting the row in the main inspector. Announce the weekly digest with a notification or a badge instead of a modal.
-<!-- sources: design/main-window#2 -->
-
-#### 8.17 `accessibilityValue` carries UI-test tokens that VoiceOver speaks — Medium
-
-- **Where:** `SpamWise/ContentView.swift:158` (ContentView.swift:149-152, DecisionDetailView.swift:26 and :159, UITests/ActivityScreen.swift:6)
-- **Problem:** Raw tokens exist for XCTest assertions: paused/dryRun/active, the outcome rawValue and the correction rawValue. VoiceOver speaks them in place of, or alongside, the localized value, in every locale. This contradicts the swiftui-conventions rule to locate elements by identifier and keep labels and values for VoiceOver.
-- **Scenario:** VoiceOver reads "Outcome, dryRun", or "integrationUnavailable" in a French UI.
-- **Fix:** Remove the overrides. Have tests assert on the identifier plus the localized value (locale is already pinned), or on a test-only identifier suffix such as `activity.mode.dryRun`.
-<!-- sources: design/main-window#11, comments/app-views-main#2 -->
-
-#### 8.18 All feedback goes through one gray, never-cleared global status string — Medium
-
-- **Where:** `SpamWise/ContentView.swift:171` (AppModel.swift:218-225, SettingsView.swift:30-34 and :51-58, CorpusView.swift:61, MailReviewView.swift:61, FolderSettingsView.swift:31 and :45, ContentRuleEditorView.swift:125-157, StartupSettingsView.swift:28, SpamhausSettingsView.swift:45 and :75, RuleFormView.swift:28, MailHealthView.swift:43, MailDestinationView.swift:27, IMAPSettingsView.swift:53)
-- **Problem:** `run` catches every error into `AppModel.status`. That string is rendered as `.callout .secondary` text limited to two lines, and it appears in the Activity footer, under every Settings tab and inside several sheets. It is overwritten by the next operation, including the automatic scan, and never cleared. Errors look the same as help captions. ContentRuleFormView shows no status, so a failed Save or Test leaves the sheet silent while the error lands behind the sheet's dimming. Settings tab titles are also written twice, in the Labels and in `SettingsPane.title`.
-- **Scenario:** After Automation is revoked, every sweep fails. The only sign is a truncated gray line that looks like "Mail check finished". local-mode.png shows an Automation-denied error pinned under Accounts while the user edits the classifier.
-- **Fix:** Separate neutral status from errors, and scope results to each operation. Show errors inline as `Label(…, systemImage: "exclamationmark.triangle.fill")` with a tint and a recovery button, or as an `.alert(isPresented:error:)`. Clear status on success, and drop the Settings footer. Build the tabs from a CaseIterable `SettingsPane` that has `title` and `systemImage`.
-<!-- sources: design/main-window#7, design/settings#8, design/onboarding-consistency#13, conventions/app-views-settings#23 -->
-
-#### 8.19 Corpus Forget deletes permanently with no confirmation — Medium
-
-- **Where:** `SpamWise/CorpusView.swift:49` (:99-104)
-- **Problem:** Forget immediately removes a reviewed label with its linked correction examples and learning. `CorpusManagement.forget` clears the undo state, so the action can't be reversed, and the destructive role alone is not a confirmation.
-- **Scenario:** A user selects the wrong row, clicks Forget, and the example and its learning are gone.
-- **Fix:** Wrap it in `.confirmationDialog("Forget this reviewed message?", …)` with a destructive confirm button and a message saying sender rules remain. Consider multi-select for bulk relabel and forget.
-<!-- sources: design/main-window#20 -->
-
-#### 8.20 Settings mix apply-on-change and Save buttons; drafts silently discarded — Medium
-
-- **Where:** `SpamWise/EvidenceSettingsView.swift:41` (EvidenceSettingsView.swift:13-36, :71, :78, NotificationSettingsView.swift:13 and :36, TrustExclusionsView.swift:21, PolicyView.swift:39 and :44-48, IMAPSettingsView.swift:48, FolderSettingsView.swift:25, SpamhausSettingsView.swift:41 and :68-72, GeneralSettingsView.swift:41)
-- **Problem:** macOS settings apply immediately. Inside Optional evidence, the domain-age, OCR and attachment toggles save through `editSettings`. The Spamhaus toggle and Rspamd picker beside them sit in local `@State` that only "Save evidence settings" persists, while the Spamhaus key goes to Keychain at once. Notifications, trust exclusions, policy, IMAP and folder plans each have their own Save button. Nothing marks unsaved edits, and `onAppear`/`.task` reloads stored values over the draft whenever the tab is shown again.
-- **Scenario:** A user turns on Spamhaus DBL, saves the key, accepts the terms and closes Settings. The blocklist stays off. Another user edits the policy, glances at Rules, and returns to find the edits gone.
-- **Fix:** Apply toggles and pickers on change through field-level `editSettings`, and gate Spamhaus on consent rather than a Save button. Commit text fields on submit or focus loss, or debounce them. Keep explicit commit only for credentials and destructive operations. Where a draft is unavoidable, keep it in the model, show its unsaved state and confirm before discarding, or move it into a sheet with Cancel/Save.
-<!-- sources: design/settings#3, design/onboarding-consistency#12, conventions/app-views-settings#11 -->
-
-#### 8.21 Touching the Connection picker silently unverifies the route and stops filtering — Medium
-
-- **Where:** `SpamWise/IMAPSettingsView.swift:16` (IMAPSettingsView.swift:11-18, AppModel.swift:57 and :338, GeneralSettingsView.swift:25)
-- **Problem:** The transport binding's setter sets `dryRun = true` and `route = .unverified` on any change, even a switch back to the already-validated transport. Only a new probe restores the route. `validatedAccounts` is kept, so the General Dry run toggle stays enabled, but `canScanAutomatically` requires a verified route. The only explanation is "Incoming route: Not verified" under Advanced › Integration details.
-- **Scenario:** A user picks IMAP to look, then switches back to Apple Mail. Automatic filtering stops with no visible reason.
-- **Fix:** Confirm before switching transports. Don't reset the route when the selection returns to the validated transport. Show "Filtering inactive: action test required" in General and the menu bar whenever the route is unverified.
-<!-- sources: design/settings#2 -->
-
-#### 8.22 Text and secure fields without prompts render as label-only rows — Medium
-
-- **Where:** `SpamWise/KeyEntryView.swift:9` (ModelSettingsView.swift:62, SpamhausSettingsView.swift:39, BackupSettingsView.swift:21, IMAPSettingsView.swift:34-36 and :61, ContentRuleEditorView.swift:103 and :109)
-- **Problem:** In `.grouped` forms the label sits on the left and the field is borderless on the right. With no `prompt:` and an empty value, nothing marks where to type. Screenshots in all three languages confirm rows that look like static labels.
-- **Scenario:** In onboarding step 2, a user reads "Anthropic API key" but sees no input box, and Verify stays disabled.
-- **Fix:** Add prompts, for example `SecureField("API key", text: $key, prompt: Text("sk-ant-…"))` or `prompt: Text("imap.example.com")`, or use `.roundedBorder` consistently. Alternatively, show a "Saved"/"Not set" state with LabeledContent. Recheck en, es and fr.
-<!-- sources: design/settings#20, design/onboarding-consistency#4 -->
-
-#### 8.23 Good vs Inbox, and three names for the Review action — Medium
-
-- **Where:** `SpamWise/LocalizedLabels.swift:38` (DecisionDetailView.swift:150-158, MailMenuView.swift:12 and :20, MailReviewView.swift:55, CorpusView.swift:27, FolderSettingsView.swift:72, LocalNotifications.swift:49, AutomationIntents.swift:11)
-- **Problem:** `MailLabel.inbox` displays as "Inbox" in the Verdict column, filters, statistics, corpus counts and "User corrected to %@". Every action calls the same label Good (Deseado/Légitime). Review is "Mark for Review" in the menu but "Mark as Review" in accessibility labels and Help.
-- **Scenario:** A user clicks Good, and the inspector confirms "User corrected to Inbox", which makes it unclear what happened.
-- **Fix:** Use one user-facing noun per label (Good/Review/Junk) everywhere, including `localizedTitle`. Reserve "Inbox" for the mailbox, write "You marked this Good", and pick one Review phrase.
-<!-- sources: design/main-window#25, content#11 -->
-
-#### 8.24 Permission-denied state has no Open Automation Settings button — Medium
-
-- **Where:** `SpamWise/MailConnectionView.swift:12` (AppModelErrors.swift:15-19)
-- **Problem:** When Automation is denied, the screen shows only a paragraph telling the user where to go in System Settings. The HIG recommends a direct link, and StartupSettingsView already uses `SMAppService.openSystemSettingsLoginItems()` for its pane.
-- **Scenario:** A user who clicked Don't Allow must navigate System Settings by hand, in Accounts and in onboarding alike.
-- **Fix:** When `mailPermissionDenied` is true, show `Button("Open Automation Settings")` opening `x-apple.systempreferences:com.apple.preference.security?Privacy_Automation`, beside an `exclamationmark.triangle` label.
-<!-- sources: design/onboarding-consistency#14 -->
-
-#### 8.25 Account inclusion toggles buried in a flat diagnostics list — Medium
-
-- **Where:** `SpamWise/MailHealthView.swift:18` (MailHealthView.swift:10, :19-38, :43, :47, MailConnectionView.swift:18)
-- **Problem:** Which accounts SpamWise filters is a core setting, yet it lives inside the collapsed "Accounts and scan health" disclosure. Each Toggle is labeled only with the account name, so neither the screen nor VoiceOver says what it controls. The rows are interleaved with a mailbox-destinations disclosure and the Last successful page, Observed Inbox messages and Next page offset rows, with no per-account grouping. Failures are plain text, and the only preview is "No accounts".
-- **Scenario:** With iCloud and Gmail configured, identical rows run together, VoiceOver announces "iCloud, switch", and switching one off silently excludes that account.
-- **Fix:** Promote accounts to a visible Section per account, headed by its name, with a "Filter this account" Toggle and one health summary such as "Last checked 2 min ago". Move paging diagnostics to an Advanced disclosure, style failures as warning Labels, and add previews with accounts and failures.
-<!-- sources: design/main-window#26, design/settings#12 -->
-
-#### 8.26 Menu-bar ⌥⌘G/J/R shortcuts only fire while the menu is open — Medium
-
-- **Where:** `SpamWise/MailMenuView.swift:15` (:19, :23; MyApp.swift:23)
-- **Problem:** These commands act on Mail's selection, so they are meant to be pressed while Mail is frontmost. MenuBarExtra key equivalents match only while that status-item menu is open, so the displayed shortcuts advertise something that doesn't exist.
-- **Scenario:** A user selects spam in Mail and presses ⌥⌘J. Nothing happens in SpamWise; the keystroke goes to Mail.
-- **Fix:** Remove the shortcuts, or document binding the existing Shortcuts intents to global keys in the Correcting mistakes Help page.
-<!-- sources: design/main-window#5 -->
-
-#### 8.27 Menu-bar corrections enabled during onboarding; results never shown — Medium
-
-- **Where:** `SpamWise/MailMenuView.swift:24` (ContentView.swift:12-16 and :130)
-- **Problem:** The Selected messages section is disabled only on `busy || !storageReady`. Corrections run during setup, writing rules and requesting moves, but the results sheet is attached to ActivityView, which doesn't exist until onboarding completes. ToolsCommands already gates on `onboardingComplete`.
-- **Scenario:** During setup, a user chooses Mark as Junk. Rules are saved and moves are dispatched with no feedback, and a stale results sheet pops up after setup finishes.
-- **Fix:** Disable the section and Pause until `onboardingComplete`, or present results from a scene-level Window.
-<!-- sources: design/main-window#6 -->
-
-#### 8.28 Correction results sheet has no progress or cancel through 30-second settles — Medium
-
-- **Where:** `SpamWise/MailReviewView.swift:88` (AppModelMailReview.swift:10-11; SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:118; ContentView.swift:161)
-- **Problem:** Menu-bar Mark as Good/Junk/Review opens CorrectionResultsView immediately, then corrects messages one at a time, each move followed by a 30-second verification. The sheet's only button, Done, is disabled while busy. There is no ProgressView or count, and the only Cancel sits in the window footer behind the modal sheet.
-- **Scenario:** Marking six messages leaves a mostly empty sheet with a disabled Done for about three minutes, with rows appearing every 30 seconds or more. The app looks hung.
-- **Fix:** Show determinate progress ("Correcting 2 of 6…" with `ProgressView(value:total:)`) and a Cancel bound to `model.cancel()` with `.cancelAction`. Keep Done available, or present results only when the work finishes or as a notification.
-<!-- sources: design/main-window#1 -->
-
-#### 8.29 Local-only mode leaves blocked providers and network evidence enabled — Medium
-
-- **Where:** `SpamWise/ModelSettingsView.swift:48` (ModelSettingsView.swift:35-50, EvidenceSettingsView.swift:13-21 and :41-49)
-- **Problem:** "Keep filtering on this Mac" only sets a flag. The Provider picker still lists every backend, and a conflicting selection produces only a plain-text notice. RDAP, Spamhaus and Rspamd controls stay interactive, with a caption that says they are disabled.
-- **Scenario:** A user turns on local-only mode while Claude is selected. Every message fails classification until they notice the notice and change the picker. They can also enable Spamhaus lookups that will never run.
-- **Fix:** On enabling local-only, switch to on-device or ask the user. Disable non-local picker options and the network evidence controls with an explanatory footer. Show any remaining conflict as a warning Label.
-<!-- sources: design/settings#11 -->
-
-#### 8.30 Setup is Anthropic-only and always says "Continue offline" — Medium
-
-- **Where:** `SpamWise/OnboardingView.swift:21` (OnboardingView.swift:38, :66-93, KeyEntryView.swift:19-22)
-- **Problem:** The account step hard-codes "Connect your Anthropic account", KeyEntryView and `ProviderConsentView(backend: .claude)`. There is no on-device, local-only, OpenAI or Gemini choice, which is exactly when privacy-minded users decide whether to trust the app. Because consent is fixed to `.claude`, reopening setup with Gemini selected grants consent to the wrong provider. The copy mentions "your selected provider" before any is chosen and names "Haiku 5.5". The button reads "Continue offline" even after a key is verified.
-- **Scenario:** A user who doesn't want cloud processing clicks "Continue offline". The backend stays Claude without consent, so every message stays unclassified. A user who verified a key sees "Continue offline" and assumes it wasn't kept.
-- **Fix:** Make step 2 "Choose how SpamWise classifies mail": a provider picker (on-device, Claude, OpenAI, Gemini) followed by that provider's key and consent view. Label the button "Continue" once a usable provider is configured and "Skip for now" otherwise. Interpolate the model's display name, and update the getting-started Help.
-<!-- sources: design/onboarding-consistency#7, distribution/product#15, content#17, conventions/app-views-main#21 -->
-
-#### 8.31 Return in the API-key field advances setup and loses the key — Medium
-
-- **Where:** `SpamWise/OnboardingView.swift:39` (KeyEntryView.swift:6 and :9)
-- **Problem:** Continue carries `.keyboardShortcut(.defaultAction)`, and the SecureField has no `.onSubmit`. On macOS, Return in a text field fires the default button. That advances the step and destroys KeyEntryView along with its unsaved `@State key`. This behavior is inferred and was not observed.
-- **Scenario:** A user pastes a key and presses Return. Setup jumps to step 3, and going Back shows an empty field with nothing stored.
-- **Fix:** Add `.onSubmit { model.verifyKey(key) }`. While an unsaved key is present, make "Verify and save key" the default button.
-<!-- sources: design/onboarding-consistency#8 -->
-
-#### 8.32 Reopened setup cannot be cancelled; Finish silently turns dry run on — Medium
-
-- **Where:** `SpamWise/OnboardingView.swift:42` (AppModel.swift:201-205; GeneralSettingsView.swift:55-57)
-- **Problem:** General → Show setup presents onboarding as a sheet with no Cancel, Close or Escape binding. The only exit is walking all four steps to Finish setup, and `finishSetup()` always writes `dryRun = true`.
-- **Scenario:** A user with live filtering reopens setup to reread the privacy note, presses Escape (which does nothing), and clicks through to Finish. Junk moves stop with no explanation.
-- **Fix:** In sheet mode, add Cancel with `.cancelAction` and a Done that only dismisses. Force dry run only on the first completion (`if !onboardingComplete`).
-<!-- sources: design/onboarding-consistency#2 -->
-
-#### 8.33 Onboarding dry-run step never shows the decisions it previews — Medium
-
-- **Where:** `SpamWise/OnboardingView.swift:90` (:66, :90-99)
-- **Problem:** Step 4 promises to "Preview decisions before changing your mail", but its only feedback is the global status string. The resulting records appear only in Activity, which doesn't show until onboarding ends.
-- **Scenario:** A user runs "Dry run 20 recent messages", sees "Classified 20 of 20 messages", and has no idea what would have gone to Junk.
-- **Fix:** Show a compact result list (subject, sender, verdict) with Junk and Review counts, or a summary with "Show in Activity". Include explicit empty and error states, for example when consent is off.
-<!-- sources: design/onboarding-consistency#6 -->
-
-#### 8.34 Rule tables lack standard table affordances; removal has no confirmation or undo — Medium
-
-- **Where:** `SpamWise/RuleEditorView.swift:48` (RuleEditorView.swift:40-57, ContentRuleEditorView.swift:24-30, :28, :39)
-- **Problem:** Neither table supports double-click editing, a context menu, the Delete key or +/− controls. Remove deletes immediately with no confirmation or UndoManager. The content-rule table shows Enabled/Disabled as text rather than as an inline Toggle. Content rules, a peer of sender rules, are reachable only through a loose button.
-- **Scenario:** Delete and double-click do nothing, and a mis-clicked Remove loses a rule permanently.
-- **Fix:** Add `.contextMenu(forSelectionType:menu:primaryAction:)` with Edit/Remove, `.onDeleteCommand`, and Undo or a confirmation. Use an inline Enabled Toggle, and present sender and content rules as two sections or a segmented control in the Rules tab.
-<!-- sources: design/settings#14 -->
-
-#### 8.35 Help out of step with the UI; major features undocumented — Medium
-
-- **Where:** `SpamWise/SpamWise.help/Contents/Resources/en.lproj/how-decisions-are-made.html:6` (correcting-mistakes.html:6-7, what-data-is-sent.html:7, SpamWiseCore/Sources/Classifier/Types.swift:212, ContentRuleEditorView.swift:22, SettingsView.swift:14)
-- **Problem:** The precedence page omits content rules, which rank between domain rules and trusted relationships. "Mark as Review" contradicts the menu's "Mark for Review". Help and the consent error say "Account settings", but the tab is "Accounts". No page covers content rules, folders, Review Junk, notifications, backup, the corpus, statistics or Shortcuts. The Help buttons are the only in-app documentation for these features.
-- **Scenario:** A user wonders why a message from a Contact was blocked. Help says explicit rules beat Contacts, but describes only sender rules.
-- **Fix:** Add content rules to the precedence list. Name controls exactly as the UI does, and change the consent error to "Settings > Accounts". Add short anchored pages for rules, folders, Review Junk, backup and notifications, and keep es/fr in step.
-<!-- sources: content#4, comments/core-classifier-learning#18 -->
-
-#### 8.36 Help pages carry developer QA notes and an unshipped CLI — Medium
-
-- **Where:** `SpamWise/SpamWise.help/Contents/Resources/en.lproj/troubleshooting-mail-integration.html:11` (troubleshooting-mail-integration.html:7 and :9, filtering-strength.html:9, correcting-mistakes.html:11, getting-started.html:10; matching es.lproj and fr.lproj pages)
-- **Problem:** End-user Help repeats the implementation ledger: notarization and acceptance-test caveats, "keep pending runtime checks visible", rule-of-three statistics, MailKit route status, and an evaluation CLI that no Xcode target ships.
-- **Scenario:** A user opens Troubleshooting Mail integration and learns that notarization doesn't prove Mac App Store acceptance, but not what to do. An App Reviewer sees the product describe itself as unverified.
-- **Fix:** Rewrite the six pages as task-oriented steps that use current UI labels. Move QA, calibration and CLI material to `docs/`, and regenerate the help indexes for all three languages.
-<!-- sources: content#3 -->
-
-#### 8.37 Toolbar actions have no menu commands or keyboard shortcuts — Medium
-
-- **Where:** `SpamWise/ToolsCommands.swift:9` (ToolsCommands.swift:9-18, ContentView.swift:60-117, DecisionDetailView.swift:150-154)
-- **Problem:** The HIG says every toolbar item should also be a menu command, because toolbars can be hidden, customized or overflowed. Pause/Resume, Dry run, Review digest, Review Junk, Statistics and the inspector toggle have neither a menu command nor a shortcut. View → Show Inspector is missing, and corrections can't be driven from the keyboard.
-- **Scenario:** A user whose localized toolbar overflows has no menu path to Pause. A power user triaging 50 rows must mouse to the inspector for each one.
-- **Fix:** Add a `CommandMenu("Filtering")` for Pause/Resume, Dry Run Recent Mail, Review Digest and Review Junk. Add `CommandGroup(after: .sidebar)` for Show/Hide Inspector (⌥⌘I) and Statistics. Bind the selected-row corrections through `.focusedSceneValue`, for example ⌘⇧G and ⌘⇧J.
-<!-- sources: design/main-window#4 -->
-
-#### 8.38 Package strings depend on hand-copied stale entries in the app catalog — Medium
-
-- **Where:** `SpamWiseCore/Package.swift:12` (SpamWise/Localizable.xcstrings:6906, :8962, :8979; Signals/EvidenceProcess.swift:12; StateBackup.swift:12; RuleManagement.swift:22; ReviewPriority.swift:8; TODO.md:62)
-- **Problem:** The package declares no `defaultLocalization` and has no catalog. Its roughly 82 `String(localized:)` calls lack `bundle:` and resolve against Bundle.main. Their translations exist only because they were hand-copied into the app catalog as `manual` or `stale` entries. The Mail extension has no catalog, so package text shown there is always English, and new package strings ship English-only. The catalog has 705 entries (491 auto, 107 manual, 107 stale). Roughly 60–67 stale entries are dead, such as "%lld/4,000 characters", "Step %lld of 4" and "Recent corrections: %lld". Another 33–40 stale entries are live Core strings, and one active key is unused. Xcode's Remove Stale Items would delete the Core es/fr translations without warning. TODO.md:62 marks es/fr verification complete despite this (see also §8.42). The one missing package key belongs to the Evaluation module, which the app does not import.
-- **Scenario:** A maintainer prunes stale items, and a French user then sees an English rule-validation error. A translator fixes a dead `%lld` entry, and the fix never ships.
-- **Fix:** Add `defaultLocalization: "en"` and per-target catalogs, and pass `bundle: .module` (or use `LocalizedStringResource`). Then prune the dead stale keys, rebuild so extraction states are accurate, and keep TODO.md:62 open until both are done.
-<!-- sources: content#6, config/swift-xcode#21, conventions/core-pipeline-store#6, todo/roadmap#7, conventions/app-views-main#13, conventions/app-views-settings#26 -->
-
-#### 8.39 Configuration history shows raw rule IDs, UUIDs and rawValues — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:69` (CorpusManagement.swift:96 and :114, RuleManagement.swift:71 and :80, ContentRuleManagement.swift:52 and :61, PipelineCorrections.swift:93-94, AuditTrailView.swift:12 and :21)
-- **Problem:** Audit details are written at event time with internal identifiers: `address:`-prefixed rule IDs, content-rule UUIDs, and junk/allow/block rawValues. They are frozen in the language active when the event was recorded, and one import entry isn't localized at all. Search matches English `kind.rawValue`, a value the window never displays.
-- **Scenario:** A Spanish user saves a block rule and sees "Saved domain:shop.example: block".
-- **Fix:** Persist typed audit events (kind plus payload) and format them at display time with localized titles, such as "Blocked domain shop.example". Show a content rule's field and pattern instead of its UUID, and search the localized text.
-<!-- sources: content#7 -->
 
 #### 8.40 Statistics accepts an inverted date range without feedback — Low
 
@@ -5502,14 +2986,6 @@ Limits of this review: reviewers did not run the app. Runtime behaviors are infe
 - **Fix:** Use a NavigationStack with `.navigationTitle("Configuration History")` and `.searchable`. Add ContentUnavailableView for no events and for no results, a localized Kind column, and `sortOrder`.
 <!-- sources: design/main-window#22 -->
 
-#### 8.44 Shortcuts intents require a typed Request UUID — Low
-
-- **Where:** `SpamWise/AutomationIntents.swift:29` (:33, :56, :137)
-- **Problem:** Replay protection is exposed as a required free-text "Request UUID" parameter with developer error copy. Ordinary users would need a separate Generate UUID step. Per verifiers, a reused UUID with a different selected message throws `staleMessage` rather than replaying the earlier reply.
-- **Scenario:** A user adds Correct Selected Mail, enters "1" or nothing, and gets "Use a generated UUID for each new operation…".
-- **Fix:** Make the parameter optional, generate a UUID when it's omitted, and leave it out of the ParameterSummary. Keep explicit IDs for scripted retries.
-<!-- sources: distribution/product#16, design/onboarding-consistency#22 -->
-
 #### 8.45 Activity table: no context menu, double-click, sorting or filtered empty state — Low
 
 - **Where:** `SpamWise/ContentView.swift:35` (:48)
@@ -5525,14 +3001,6 @@ Limits of this review: reviewers did not run the app. Runtime behaviors are infe
 - **Scenario:** After marking a Review row as Junk, the same subject appears twice, once as Review and once as Junk.
 - **Fix:** Show `correctedLabel ?? decision.label` with a Corrected indicator (`arrow.uturn.backward` plus `.help`). Group or hide standalone correction rows, and move selection to the updated record.
 <!-- sources: design/main-window#13 -->
-
-#### 8.47 Inspector toggle has a fixed "Show details" title and no tooltip — Low
-
-- **Where:** `SpamWise/ContentView.swift:114` (:125)
-- **Problem:** Selecting a row already opens the inspector, so the toggle usually hides details while VoiceOver still says "Show details". The icon-only item has no `.help`. `sidebar.trailing` is the semantic variant Apple uses, although none of the shipped languages is right-to-left.
-- **Scenario:** With the inspector open, VoiceOver announces "Show details, button", and activating it hides them.
-- **Fix:** Use `Button(showsInspector ? "Hide details" : "Show details", systemImage: "sidebar.trailing")` with a matching `.help`.
-<!-- sources: gap/sf-symbols-visual-system#5 -->
 
 #### 8.48 Status footer spans beneath the inspector column — Low
 
@@ -5557,14 +3025,6 @@ Limits of this review: reviewers did not run the app. Runtime behaviors are infe
 - **Scenario:** A failed mark-as-read reads like explanatory copy and is missed. "Not authorized to send Apple events to Mail" looks like a success message.
 - **Fix:** Use the warning Label for `readStatusError` and `health.failure`. Render Mail status as `exclamationmark.triangle` or `checkmark.circle` depending on `mailPermissionDenied`. Consider a shared `StatusLabel` view.
 <!-- sources: gap/sf-symbols-visual-system#4 -->
-
-#### 8.51 Every inspector shows "Threat assessment: Not assessed" — Low
-
-- **Where:** `SpamWise/DecisionDetailView.swift:35` (:101-103; SpamWiseCore/Sources/SpamWiseCore/PipelineThreatAssessment.swift:16)
-- **Problem:** No detector ships, so every record shows a top-level "Not assessed" section and a safety caveat above the correction controls. The distinction is deliberate, but for typical users it is clutter.
-- **Scenario:** Every inspected row pushes "Correct this decision" further down the narrow inspector.
-- **Fix:** Render the section only when a finding is not unknown, and move the coverage note into Decision details. Show any real finding near the verdict with `exclamationmark.shield`.
-<!-- sources: design/main-window#14 -->
 
 #### 8.52 Good/Junk/Review have no shared symbol; verdict has no visual weight — Low
 
@@ -5610,14 +3070,6 @@ Limits of this review: reviewers did not run the app. Runtime behaviors are infe
 - **Fix:** Use title case for menu items, toolbar items and buttons, and sentence case for toggles and descriptive text. Consider "Preview only (don't move mail)" in place of "Dry run", and update the es/fr keys.
 <!-- sources: content#16, design/onboarding-consistency#27 -->
 
-#### 8.57 Review Junk list shows only subjects, with no page position — Low
-
-- **Where:** `SpamWise/MailReviewView.swift:30` (:30-36, :46-53; AppModelMailReview.swift:16)
-- **Problem:** Triage depends on the sender, but rows show only the subject. The subject-less fallback is "Unclassified message", which collides with the app's classification vocabulary. The paging buttons show no position, although `junkTotal` is available.
-- **Scenario:** A user can't tell which "Re: invoice" is from their accountant without clicking each one.
-- **Fix:** Use a Table or two-line rows with Sender, Subject and Date, a "(No subject)" fallback, and a "Messages 21–40 of 63" label.
-<!-- sources: design/main-window#18 -->
-
 #### 8.58 Setting, provider and app names are inconsistent — Low
 
 - **Where:** `SpamWise/ModelSettingsView.swift:49` (LocalizedLabels.swift:8, SettingsView.swift:22, BackupSettingsView.swift:18 and :52, PolicyView.swift:28, DecisionDetailView.swift:187, FolderSettingsView.swift:15)
@@ -5657,14 +3109,6 @@ Limits of this review: reviewers did not run the app. Runtime behaviors are infe
 - **Scenario:** Changing the interval from 5 minutes to daily takes 287 clicks.
 - **Fix:** Use presets for the interval (15 min, 1 h, 4 h, Daily), a labeled Slider for the budget, and a numeric field or paging buttons for the page.
 <!-- sources: design/settings#19 -->
-
-#### 8.63 Quiet-hours labels concatenated as 24-hour "13:00" — Low
-
-- **Where:** `SpamWise/NotificationSettingsView.swift:25` (:23-30)
-- **Problem:** `Text($0.formatted() + ":00")` is a verbatim concatenation. It ignores the locale and the 12/24-hour preference, which goes against the FormatStyle convention. The hour is a bare Int, and both pickers share one HStack row.
-- **Scenario:** An en-US user on a 12-hour clock sees "13:00" instead of "1 PM", and the French labels are squeezed into one row.
-- **Fix:** Use `DatePicker(displayedComponents: .hourAndMinute)`, or format a Date with `.dateTime.hour()`, with each picker on its own row. Consider a validated `Hour` type or `DateComponents`.
-<!-- sources: design/settings#18, content#15, conventions/app-views-settings#15, design/onboarding-consistency#20 -->
 
 #### 8.64 Quoted-reply stripping recognizes only English reply headers — Low
 
@@ -5767,28 +3211,12 @@ None of this is dangerous, but together it makes it hard to tell what is product
 
 | # | Severity | Location | Finding |
 |---|---|---|---|
-| 9.3 | Medium | `CLAUDE.md:30` | Repo CLAUDE.md is a 68 KB probe ledger rather than project instructions |
-| 9.4 | Medium | `MailExtension/MessageActionHandler.swift:21` | Mail extension is a dry-run heartbeat probe; `.mailKit` route is dead |
-| 9.5 | Medium | `Scripts/app-store-check.sh:44` | App Store variant exists only as a command-line compilation override |
-| 9.6 | Medium | `SpamWise/SpamWise.help/Contents/Resources/en.lproj/troubleshooting-mail-integration.html:11` | Help book ships development and acceptance notes |
-| 9.7 | Medium | `SpamWise.xcodeproj/project.pbxproj:876` | Direct-update feature is inert scaffolding; standard build shows a dead "App updates" section |
-| 9.9 | Medium | `SpamWise/AdvancedSettingsView.swift:41` | Development-status, probe and troubleshooting copy shown throughout the UI |
-| 9.10 | Medium | `SpamWise/AutomationIntents.swift:29` | Shortcuts intents require a user-typed "Request UUID" |
-| 9.11 | Medium | `SpamWiseCore/Sources/Learning/LearningState.swift:333` | Evaluation hold-out silently withholds about 20% of corrections from learning |
-| 9.12 | Medium | `SpamWiseCore/Sources/Signals/Evidence.swift:57` | Trusted authentication-server set has no production input |
-| 9.13 | Medium | `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:16` | Probe naming and evaluation tooling embedded in product modules |
-| 9.14 | Medium | `SpamWiseCore/Sources/SpamWiseCore/DistributionCapabilities.swift:11` | Experimental options that cannot work are offered in Developer ID Settings |
-| 9.15 | Medium | `SpamWiseCore/Sources/SpamWiseCore/PipelineThreatAssessment.swift:15` | Threat-assessment scaffold runs on every message with no detector |
 | 9.16 | Low | `Resources/SpamWiseRule.applescript:1` | Compiled `.scpt` and help indexes are hand-synced build outputs |
-| 9.17 | Low | `Scripts/check.sh:3` | Documented build scripts are written around agent-only `agent-lock` tooling |
 | 9.18 | Low | `Scripts/swiftdata-probe.swift:1` | One-off probe harnesses mixed into `Scripts/` |
 | 9.19 | Low | `SpamWise.xcodeproj/project.pbxproj:11` | Xcode multiplatform "MyApp" template residue, partly shipped in Info.plist |
-| 9.20 | Low | `SpamWise.xcodeproj/xcuserdata/tmorgan.xcuserdatad/xcschemes/xcschememanagement.plist:12` | Tracked xcuserdata with phantom schemes; main scheme not shared |
 | 9.21 | Low | `SpamWise/AppModel.swift:63` | `--ui-testing` launch argument is honored in Release builds |
 | 9.22 | Low | `SpamWise/AppModelCredentials.swift:50` | Key verification writes a synthetic Activity record and hard-codes "Haiku 5.5" |
-| 9.24 | Low | `SpamWise/ContentView.swift:84` | Raw path identifiers, account IDs and paging internals shown to users |
 | 9.25 | Low | `SpamWise/CorpusView.swift:21` | Evaluation-corpus concepts exposed in Tools menu and Learning settings |
-| 9.26 | Low | `SpamWise/Localizable.xcstrings:1` | About 65 stale catalog entries for removed copy |
 | 9.27 | Low | `SpamWise/NotificationSettingsView.swift:53` | View branches on the UI-test flag instead of an injected service |
 | 9.28 | Low | `SpamWiseCore/Sources/Classifier/ModelTokenPricing.swift:5` | Undocumented scheduled Gemini price doubling in the compiled price table |
 | 9.29 | Low | `SpamWiseCore/Sources/MailIntegration/AppleMailAdapter.swift:87` | Probe-era info-level logging on every AppleScript run |
@@ -5802,102 +3230,6 @@ None of this is dangerous, but together it makes it hard to tell what is product
 | 9.37 | Info | `.gitignore:1` | Untracked template leftovers; ignore rules rely on the global gitignore |
 | 9.38 | Info | `SpamWise/PreviewHelper.swift:4` | Preview fixtures compiled into Release |
 
-#### 9.3 Repo CLAUDE.md is a 68 KB probe ledger rather than project instructions — Medium
-
-- **Where:** `CLAUDE.md:30` (whole file; e.g. `:105`, `:123`, `:149`)
-- **Problem:** Every agent session loads this file as authoritative instructions, but most of its 68,501 bytes are dated narrative. It records mailbox local IDs, PIDs, notarization submission IDs and test counts, plus 25 references to gitignored `.build/<uuid>` artifacts. The durable rules (contract, module DAG, invariants, commands) are buried in it. The user's own standard is that history belongs in commit messages, and neither SubTrack nor Zephyr has a CLAUDE.md like this.
-- **Scenario:** Future agents spend context on stale probe logs, take claims like "33 package tests pass" or "no Important issues" as current, and cite evidence paths that exist on no other checkout.
-- **Fix:** Cut it down to the contract, module DAG, invariants and commands. Move the milestone and probe ledger to commit history or an archived doc that is not loaded as instructions.
-<!-- sources: temp/repo#9 -->
-
-#### 9.4 Mail extension is a dry-run heartbeat probe; `.mailKit` route is dead — Medium
-
-- **Where:** `MailExtension/MessageActionHandler.swift:21` (also `:30-43`, `SpamWiseCore/Sources/SpamWiseCore/State.swift:8`, `:36-37`, `:198-201`, `SpamWise/AppModel.swift:58`, `SpamWise/LocalizedLabels.swift:97`)
-- **Problem:** On every callback, before checking settings, the extension writes `lastExtensionCallback`/`lastBodyCallback`, which the app never reads. With the default `.unverified` route it then runs the full pipeline, including `ConfiguredClassifier`, with `accountID: nil` and `forceDryRun: true`, so the result can never be acted on or deduplicated against the app's records. `IncomingRoute.mailKit` is never assigned, and `Settings.callbackDeadline` has no editor.
-- **Scenario:** After onboarding with Claude consent, every incoming message triggers a paid classification that produces an uncorrectable, account-less Activity row and reserves budget (§9.2). Because the store lock is `LOCK_NB`, callbacks during an app sweep can make the app's own transactions fail with `lockUnavailable` and fail open.
-- **Fix:** Productize a MailKit route, or make the extension a no-op until there is a trustworthy account bridge: no classification and no per-callback writes. Delete `.mailKit`, `callbackDeadline` and the heartbeat fields, or move the heartbeat into a DEBUG-only diagnostic. If a preview is wanted, gate it behind a setting and skip paid backends.
-<!-- sources: temp/core#2, temp/app#15, temp/repo#16 -->
-
-#### 9.5 App Store variant exists only as a command-line compilation override — Medium
-
-- **Where:** `Scripts/app-store-check.sh:44` (also `docs/app-store.md:57`, `SpamWiseCore/Sources/SpamWiseCore/DistributionCapabilities.swift:5,13`, `SpamWise/DirectUpdateModel.swift:1`, `SpamWise/UpdateSettingsView.swift:10`)
-- **Problem:** `APP_STORE` is defined only by `SWIFT_ACTIVE_COMPILATION_CONDITIONS=APP_STORE` in one script. That override also drops `$(inherited)`. The project has only Debug and Release, and SpamWiseDirect is the only shared scheme. SubTrack and Zephyr define MAS and download schemes and targets.
-- **Scenario:** An App Store build made with Product > Archive or `archive.sh` silently includes the PCC provider, the executable Rspamd option and public-DNS Spamhaus that the store build is supposed to exclude, which creates App Review rejection risk with no warning.
-- **Fix:** Define the distributions in the project, for example a `Release-MAS` configuration with `$(inherited) APP_STORE`, or separate targets, plus a shared scheme for each, following SubTrack. Then delete the command-line override.
-<!-- sources: temp/repo#7 -->
-
-#### 9.6 Help book ships development and acceptance notes — Medium
-
-- **Where:** `SpamWise/SpamWise.help/Contents/Resources/en.lproj/troubleshooting-mail-integration.html:11` (also `:7`, `filtering-strength.html:3,9`, `what-data-is-sent.html:11`, `correcting-mistakes.html:11`, `getting-started.html:9`, and the es/fr equivalents)
-- **Problem:** The user Help, in all three languages, contains the developer's release-readiness ledger. Examples: "A successful build or notarization does not prove live Mail callbacks… Keep pending runtime checks visible and use disposable messages for acceptance tests", "MailKit remains dry-run-only", the evaluation CLI and candidate thresholds, "paid-call ceiling starts at $150", and labeled-calibration-corpus export.
-- **Scenario:** A user opens Help › Troubleshooting and reads that notarization does not prove Mac App Store acceptance. That is irrelevant to them, makes the product look unfinished, and App Review may read it the same way.
-- **Fix:** Rewrite the Help for end users. Move the build, notarization, evaluation-CLI and calibration material to `docs/`, and update the ES and FR pages to match.
-<!-- sources: temp/app#11 -->
-
-#### 9.7 Direct-update feature is inert scaffolding; standard build shows a dead "App updates" section — Medium
-
-- **Where:** `SpamWise.xcodeproj/project.pbxproj:876` (also `:871-872`, `:925-931`, `SpamWise/Info.plist:5-10`, `SpamWise/UpdateSettingsView.swift:9-33`, `SpamWiseCore/.../DirectUpdateConfiguration.swift:9`)
-- **Problem:** SpamWiseDirect sets `SPAMWISE_UPDATE_OWNER`/`REPOSITORY` to empty strings, so `DirectUpdateConfiguration` is always nil, and its product name shows as "SpamWiseDirect". The notarized artifact is the standard target, which has no updater at all. Even so, General always renders an "App updates" section that says only "Update checks are unavailable in this build." The App Store branch adds an informational section with no control. The shared Info.plist writes empty `SpamWiseDistribution`/`SpamWiseUpdate*` keys into every build, the store archive included. Sharing the store bundle ID is allowed by the contract, but it conflicts if both copies are installed.
-- **Scenario:** Every Developer ID user sees, near the top of General, that they cannot get updates, and has no way to learn about new releases.
-- **Fix:** Either finish the feature (configure owner and repository, give the variant its own Info.plist and display name, and make it the notarized build) or delete SpamWiseDirect and the `DirectUpdate*` code. Render the section only when `SPAMWISE_DIRECT_UPDATES` is set and configured, and move the update keys out of the shared Info.plist.
-<!-- sources: design/settings#10, design/onboarding-consistency#23, temp/app#12, temp/repo#8 -->
-
-#### 9.9 Development-status, probe and troubleshooting copy shown throughout the UI — Medium
-
-- **Where:** `SpamWise/AdvancedSettingsView.swift:41` (also `:35-48`, `SpamWise/GeneralSettingsView.swift:18`, `SpamWise/ModelSettingsView.swift:31`, `:46`, `:75`, `:86-93`, `SpamWise/KeyEntryView.swift:22`, `SpamWise/MailHealthView.swift:36-47`, `SpamWise/MailDestinationView.swift:29`, `SpamWise/MailConnectionView.swift:70`, `SpamWise/RuleFormView.swift:21`, `SpamWise/CorpusView.swift:22`, `SpamWise/DecisionDetailView.swift:35-37`, `:100-103`, `:126`, `SpamWise/AppModel.swift:118`, `:240`, `SpamWise/AppModelErrors.swift:24`, `SpamWise/ActivityStatisticsView.swift:54`, `SpamWise/UpdateSettingsView.swift:28`, `:32`)
-- **Problem:** Many captions are the agent's ledger caveats, not user guidance. Examples: "MailKit remains dry-run-only pending signed timing and account identity validation", "Confidence thresholds are provisional until calibrated" (directly under Filtering strength in General), "sidecars", "Authorized ceiling/Conservative commitments", "Next page offset", "Check signing and App Group access", "Check the signed app's shared Keychain entitlement". The inspector also shows a "Threat assessment: Not assessed" section on every row. A few disclaimers, such as "Scores are not calibrated probabilities", are defensible, but most describe internal state the user cannot act on, and many appear in default-visible places.
-- **Scenario:** A typical Mail user reads that their thresholds are "provisional" and sees "Next page offset: 40" under their iCloud account. When the App Group fails to open, they are told to check code signing.
-- **Fix:** Rewrite captions as user outcomes and errors as user-actionable messages. Remove the calibration, MailKit and validation caveats, and track them in `TODO.md`. Move paging, route, retry and destination diagnostics into one Advanced "Diagnostics" disclosure or the redacted export. Hide the threat section until a detector ships (§9.15), and derive model names from configuration instead of hard-coding them.
-<!-- sources: design/settings#9, design/onboarding-consistency#17, comments/app-views-settings#2, temp/app#7, temp/repo#5 -->
-
-#### 9.10 Shortcuts intents require a user-typed "Request UUID" — Medium
-
-- **Where:** `SpamWise/AutomationIntents.swift:29` (also `:56`, `:137`)
-- **Problem:** "Preview Selected Mail" and "Correct Selected Mail" declare a required `@Parameter(title: "Request UUID") var requestID: String` so the acceptance harness can test durable replay. `perform()` throws unless the value parses as a UUID.
-- **Scenario:** A user adds "Correct Selected Mail" to a shortcut, leaves the UUID empty or types text, and every run fails with "Use a generated UUID for each new operation".
-- **Fix:** Generate the request ID inside `perform()` by default. If replay protection must stay, make the parameter optional and label it as advanced, with the explanation in its description.
-<!-- sources: temp/app#9 -->
-
-#### 9.11 Evaluation hold-out silently withholds about 20% of corrections from learning — Medium
-
-- **Where:** `SpamWiseCore/Sources/Learning/LearningState.swift:333` (also `:26`, `:112-116`, `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:44-59`, `:83-86`)
-- **Problem:** An offline-evaluation hold-out (content-hash prefix divisible by 5, so 52 of 256 prefixes, about 20.3%) is built into the shipping learner. Held-out user corrections never train Bayes or the regularized weights. Held-out corpus imports are left out of both learning and prompt examples, and relabeling one forgets it. `CorpusView` does show a "Held out" count and a Partition column, but the split is on by default and cannot be turned off.
-- **Scenario:** A user imports 20 reviewed Junk examples. About four of them contribute nothing, the learner reaches its 20-per-class minimum later than expected, and some corrections seem to have no effect.
-- **Fix:** Apply the partition only when spamwise-eval exports or evaluates, or make it an explicit opt-in such as "Reserve 20% of labels for quality measurement", off by default.
-<!-- sources: temp/core#4 -->
-
-#### 9.12 Trusted authentication-server set has no production input — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/Evidence.swift:57` (also `:66-69`, `:105`, `SpamWiseCore/Sources/SpamWiseCore/PipelineClassification.swift:134-135`, `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:28`, `SpamWiseCore/Sources/Classifier/Types.swift:244`)
-- **Problem:** `trustedAuthServers` defaults to `[]`, and the only caller that passes anything else is `SignalsTests.swift:66`. No setting, adapter or state value supplies trusted authserv-ids, so `AuthResult.trusted` is always false in production. That makes the learning contradiction gate, logistic feature index 4 and the prompt's "trusted failure" guidance inert, even though the tests suggest the behavior ships.
-- **Scenario:** A provider-stamped `dmarc=fail` is weighted the same as a forged header, and the Bayes gate admits an Inbox verdict the code meant to reject as contradictory.
-- **Fix:** Finish the feature by deriving each account's trusted authserv-id from Mail or IMAP configuration, or from a per-account setting. Otherwise remove the flag, its consumers and the prompt sentence.
-<!-- sources: temp/core#7 -->
-
-#### 9.13 Probe naming and evaluation tooling embedded in product modules — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/CorpusManagement.swift:16` (also `SpamWise/CorpusView.swift:93`, `Tools/Corpus/`, `Tools/Preferences/`, `Tools/DocumentWorker/`)
-- **Problem:** `importMessages` rejects an entire batch if any subject starts with `[SpamWise Probe]`. That is an inline magic string, the import's DocC never mentions it, and the rejection is reported as `ParseError.tooLarge`. Keeping setup probes out of training may be intended, but the exclusion lives on a user-facing path with a misleading error. The same history fills the product repository with research harnesses (`Tools/Corpus` and its reports, `Tools/Preferences`, the `Tools/DocumentWorker` XPC harness). The public raw-mail `export(role:to:)` is covered in §9.31.
-- **Scenario:** A user imports reviewed Junk that includes one message with that subject, perhaps a leftover setup probe. The whole import fails with "The message exceeds the supported content limits."
-- **Fix:** Remove the check from product import, or extract a shared `isSetupProbe` predicate, throw a dedicated error case with an accurate reason, and document the exclusion. Move the research harnesses into a separate research package or repository.
-<!-- sources: architecture#16, conventions/core-pipeline-store#18, comments/core-pipeline-store#2 -->
-
-#### 9.14 Experimental options that cannot work are offered in Developer ID Settings — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/DistributionCapabilities.swift:11` (also `:3-18`, `SpamWise/ModelSettingsView.swift:36-40`, `:75`, `SpamWise/EvidenceSettingsView.swift:52-58`, `SpamWise/AccountSettingsView.swift:10`, `SpamWise/IMAPSettingsView.swift:26-28`, `:43`, `SpamWiseCore/Sources/SpamWiseCore/ConfiguredClassifier.swift:40-44`, `SpamWiseCore/Sources/Signals/RspamdLookup.swift:70-78`, `SpamWiseCore/Sources/Signals/ExternalEvidence.swift:153-158`)
-- **Problem:** The capability flags check the distribution channel instead of what actually works. That is backwards for PCC: the doc comment calls it "ungranted… experimental", the entitlements lack it, and `docs/app-store.md:146-150` says only the App Store can ever be eligible, yet only App Store builds hide it. The sandboxed Developer ID app also offers a "Command-line client" Rspamd transport with a free-form `rspamc` path, which the project's own probe shows cannot run. Settings also exposes the IMAP transport with a pasted, non-refreshing OAuth token. The roadmap puts IMAP out of scope, it has never been live-tested, and the privacy and support pages do not mention it. All of these fail open, with no wrong mail action.
-- **Scenario:** A Developer ID user picks Private Cloud Compute or the command-line client, and every classification or lookup becomes "unclassified" or unknown, explained only by an entitlement note. A user who switches Connection to IMAP has their validated Apple Mail route reset. Their pasted Gmail token expires within an hour, and IMAP filtering silently stops.
-- **Fix:** Hide PCC in all builds until the entitlement is granted, then gate it on a runtime capability check. Keep the executable Rspamd transport out of the sandboxed app, for the CLI/daemon only or behind `#if DEBUG`. Put the IMAP UI behind an explicit experimental flag, or document it in the privacy and support pages if it stays.
-<!-- sources: distribution/packaging#15, distribution/product#6, temp/core#5, temp/app#8, temp/repo#6 -->
-
-#### 9.15 Threat-assessment scaffold runs on every message with no detector — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineThreatAssessment.swift:15` (also `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:21`, `SpamWiseCore/Sources/Evaluation/CachedThreatDetector.swift:5`, `ThreatMetrics.swift`, `SpamWiseEval/main.swift:13-43`, `SpamWise/DecisionDetailView.swift:35-37`)
-- **Problem:** No production type conforms to `ThreatDetector`, and `TODO.md:38` still lists "Connect a quality-validated production detector". Even so, every successful classification JSON-encodes and hashes the parsed message (up to 100K characters plus headers) into a `ThreatInput` and saves five "unknown" findings in `DecisionRecord.threats`.
-- **Scenario:** With 5,000 retained records, the single state blob carries about 25,000 boilerplate findings that are re-encoded on every save. Every inspector shows a threat panel that can never say anything but "Not assessed".
-- **Fix:** Store `threats = nil` when no detector is configured. Move `ThreatDetector`, `CachedThreatDetector`, `ThreatMetrics` and `--threat-report` into the Evaluation/tooling target, and hide the inspector section when no detector ran.
-<!-- sources: temp/core#3 -->
-
 #### 9.16 Compiled `.scpt` and help indexes are hand-synced build outputs — Low
 
 - **Where:** `Resources/SpamWiseRule.applescript:1` (also `SpamWise/SpamWiseRule.scpt`, `SpamWise/AppModelNavigation.swift:15`, `SpamWise/SpamWise.help/Contents/Resources/{en,es,fr}.lproj/search.cshelpindex`, `Scripts/help-index.sh:6`, `Scripts/archive.sh:16`)
@@ -5905,14 +3237,6 @@ None of this is dangerous, but together it makes it hard to tell what is product
 - **Scenario:** Someone edits the `.applescript`, and the Mail rule keeps running the old compiled script. Every `archive.sh` run leaves modified index files in the working tree.
 - **Fix:** Compile the script in a Run Script phase (`osacompile -o "$TARGET_BUILD_DIR/…"`) and untrack the `.scpt`, keeping the source next to the app target. Generate help indexes into the product or gitignore them.
 <!-- sources: temp/core#11, temp/repo#17 -->
-
-#### 9.17 Documented build scripts are written around agent-only `agent-lock` tooling — Low
-
-- **Where:** `Scripts/check.sh:3` (also `Scripts/ui-check.sh:3-7`, `Scripts/archive.sh:3-5`, `Scripts/store-check.sh:3-4`, `Scripts/app-store-check.sh:3`, `Scripts/evidence-runtime-check.sh:3`, `Tools/DocumentWorker/check.sh:3`, `README.md:17`)
-- **Problem:** Every script requires a worker token, with the error "Pass a token from agent-lock worker", and the README's build section leads with `agent-lock worker`. Most scripts accept any string, but `ui-check.sh` calls `agent-lock run ui` directly.
-- **Scenario:** A contributor or CI job running `bash Scripts/ui-check.sh` fails with `agent-lock: command not found`, and the documented checks are confusing to anyone who has never used the tool.
-- **Fix:** Default the token (`worker="${1:-local}"`), call `agent-lock` only when it is installed, and move the agent workflow into agent-specific notes.
-<!-- sources: temp/repo#12 -->
 
 #### 9.18 One-off probe harnesses mixed into `Scripts/` — Low
 
@@ -5940,14 +3264,6 @@ None of this is dangerous, but together it makes it hard to tell what is product
 - **Fix:** Delete the iOS keys and non-macOS deployment targets, set `productName = SpamWise` and rename the file to `SpamWiseApp.swift`, and remove the `(null)` entries through Xcode. Set a real copyright or remove the key, align `ENABLE_USER_SELECTED_FILES` with the entitlements, and delete the SpamWiseKit folders.
 <!-- sources: config/ci-automation#17, config/swift-xcode#17, temp/repo#13 -->
 
-#### 9.20 Tracked xcuserdata with phantom schemes; main scheme not shared — Low
-
-- **Where:** `SpamWise.xcodeproj/xcuserdata/tmorgan.xcuserdatad/xcschemes/xcschememanagement.plist:12` (also `:27`, `Scripts/check.sh:9`, `Scripts/ui-check.sh:7`, `Scripts/archive.sh:17`, `Scripts/app-store-check.sh:40`)
-- **Problem:** Per-user scheme state that names the nonexistent `MyApp` and `SpamWiseKit` schemes is tracked, even though `.gitignore` lists `xcuserdata/`. Meanwhile the `SpamWise` scheme every script uses is Xcode's autogenerated, unshared one, and there is no test plan. The sister repos commit shared schemes.
-- **Scenario:** On another machine, or once autocreation stops, `-scheme SpamWise` resolves to a different scheme or none, and which tests it runs is undefined.
-- **Fix:** Run `git rm --cached` on the xcuserdata directory, and commit shared schemes (with a test plan) for SpamWise and each distribution variant.
-<!-- sources: temp/repo#14 -->
-
 #### 9.21 `--ui-testing` launch argument is honored in Release builds — Low
 
 - **Where:** `SpamWise/AppModel.swift:63` (also `:52`, `:64-72`, `:86-94`, `:233`, `SpamWise/AppModelScanning.swift:78`, `SpamWise/NotificationSettingsView.swift:42`, `:53`)
@@ -5970,14 +3286,6 @@ None of this is dangerous, but together it makes it hard to tell what is product
 - **Fix:** Record verification in key status or the audit trail instead of as a decision. Derive the displayed name from `backend.defaultModelID`, and key pricing on the model catalog.
 <!-- sources: temp/app#10 -->
 
-#### 9.24 Raw path identifiers, account IDs and paging internals shown to users — Low
-
-- **Where:** `SpamWise/ContentView.swift:84` (also `:75-82`, `SpamWise/ActivityStatisticsView.swift:34-41`, `SpamWise/MailHealthView.swift:38`)
-- **Problem:** The Activity Path filter lists raw, unlocalized pipeline identifiers (`model`, `correction`, `selection`, `verification`). Account pickers show opaque Mail account IDs instead of names, and scan health shows the internal "Next page offset". The brief calls for the evidence detail pane and the context-limit settings, so those stay.
-- **Scenario:** A Spanish user opens Filter › Path and sees untranslated English identifiers, and Filter › Account shows a UUID instead of "iCloud".
-- **Fix:** Map paths to localized reasons or drop the filter, show account names, and move the paging offset into diagnostics.
-<!-- sources: temp/app#6 -->
-
 #### 9.25 Evaluation-corpus concepts exposed in Tools menu and Learning settings — Low
 
 - **Where:** `SpamWise/CorpusView.swift:21` (also `:22`, `:30`, `:37`, `:53`, `SpamWise/LearningSettingsView.swift:24-42`, `SpamWise/ToolsCommands.swift:10-14`)
@@ -5985,14 +3293,6 @@ None of this is dangerous, but together it makes it hard to tell what is product
 - **Scenario:** A user opens Tools › Reviewed corpus (⌥⌘C) and sees partitions and competitor caveats with no idea what they mean. Or they enable retention, and up to 500 messages are kept only to serve an export.
 - **Fix:** Keep import, undo and forget in plain language. Move partition details, retention and labeled export to spamwise-eval or a hidden developer preference, and drop the SpamSieve mention.
 <!-- sources: temp/app#5, temp/repo#19 -->
-
-#### 9.26 About 65 stale catalog entries for removed copy — Low
-
-- **Where:** `SpamWise/Localizable.xcstrings:1`
-- **Problem:** The catalog has 107 entries marked `stale`, and about 65 of them match no source text: old probe copy, "Model: Claude Haiku 5.5…", "Step %lld of 4", and old threshold text. Some stale-marked keys are still used from SpamWiseCore through `Bundle.main`, so the flag cannot be trusted for cleanup.
-- **Scenario:** Translators keep maintaining ES and FR text for removed screens, and real missing translations are hard to spot.
-- **Fix:** Delete entries that appear in no source. Give SpamWiseCore its own catalog with `bundle: .module`, so extraction marks those strings correctly.
-<!-- sources: temp/app#14 -->
 
 #### 9.27 View branches on the UI-test flag instead of an injected service — Low
 
@@ -6128,125 +3428,14 @@ The architecture reviewer also flagged that the agent's own evaluation budget le
 
 | # | Severity | Location | Finding |
 |---|---|---|---|
-| 10.2 | Medium | `SpamWise/AppModel.swift:10` | AppModel is a god object, and views call persistence directly |
-| 10.3 | Medium | `SpamWise/AppModel.swift:159` | Full-store polling every 3 seconds and per-message reloads invalidate every view |
-| 10.4 | Medium | `SpamWise/AppModelScanning.swift:107` | Sweep orchestration lives in the app and is reimplemented, divergently, by the daemon |
-| 10.5 | Medium | `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:150` | Hand-written IMAP client with duplicated move logic and a forwarding wrapper |
-| 10.6 | Medium | `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:130` | AppleScript built by interpolation, recompiled per call, embedding full message source |
-| 10.7 | Medium | `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:53` | Two divergent MIME walkers; each message parsed three or four times |
-| 10.8 | Medium | `SpamWiseCore/Sources/Signals/RDAP.swift:16` | Four hand-rolled bounded HTTP clients; RDAP fetch unhardened |
-| 10.9 | Medium | `SpamWiseCore/Sources/Signals/RspamdLookup.swift:76` | Redundant Rspamd executable transport; DNS lookups scrape `dig` output |
-| 10.10 | Medium | `SpamWiseCore/Sources/SpamWiseCore/RuleManagement.swift:68` | Revision invalidation hand-copied at 14 sites and applied inconsistently |
-| 10.11 | Medium | `SpamWiseCore/Sources/SpamWiseCore/State.swift:163` | Optional-as-migration fields, unused `schemaVersion`, history-style comments |
-| 10.12 | Medium | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:129` | Supported-model knowledge duplicated in five places |
-| 10.13 | Medium | `SpamWiseCore/Sources/Store/Store.swift:90` | All shared state is one JSON blob in one SwiftData row, rebuilt about 10 times per message |
 | 10.14 | Low | `SpamWise/ContentRuleEditorView.swift:136` | Content-rule preview re-implements rule precedence in the view |
-| 10.15 | Low | `SpamWise/MailReviewView.swift:30` | Junk review parses raw MIME per row on every render |
 | 10.16 | Low | `SpamWiseCore/Package.swift:39` | Store declares unused dependencies; `@_exported` undoes import visibility |
 | 10.17 | Low | `SpamWiseCore/Sources/Learning/StatisticalLearning.swift:77` | Learning refits from scratch twice per message; tokenizer reinvents NaturalLanguage |
 | 10.18 | Low | `SpamWiseCore/Sources/SpamWiseCore/MailClientAdapter.swift:23` | MailClientAdapter protocol wider than its only generic consumer needs |
 | 10.19 | Low | `SpamWiseCore/Sources/SpamWiseCore/NotificationPlanning.swift:53` | "Latest record per message" reduction implemented three times |
 | 10.20 | Low | `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:53` | Evidence collection split across two stages; Rspamd runs even when a sender rule decides |
-| 10.21 | Low | `SpamWiseCore/Sources/SpamWiseCore/PipelineThreatAssessment.swift:15` | Placeholder threat assessment computed and stored for every message |
 | 10.22 | Low | `SpamWiseCore/Sources/SpamWiseCore/State.swift:240` | Resource limits and clamping duplicated across modules and UI |
-| 10.23 | Low | `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:151` | Both executables hand-roll argument parsing |
 | 10.24 | Info | `SpamWiseCore/Sources/Evaluation/CachedThreatDetector.swift:5` | CachedThreatDetector has no production or CLI caller |
-
-#### 10.2 AppModel is a god object, and views call persistence directly — Medium
-
-- **Where:** `SpamWise/AppModel.swift:10` (`SpamWise/ContentRuleEditorView.swift:68-85`, `:126-157`, `SpamWise/CorpusView.swift:82-111`, `SpamWise/BackupSettingsView.swift:70-86`, `SpamWise/NotificationSettingsView.swift:46-62`, `SpamWise/TrustExclusionsView.swift:21-27`, `SpamWise/SpamhausSettingsView.swift:62-77`)
-- **Problem:** One `@MainActor` object with about 30 stored properties across 10 files (about 990 lines) owns the store, pipeline, adapter, scanning, contact refresh, history import, credential checks, IMAP construction, every sheet flag and every status string, and 40+ views take the whole model. The facade is applied unevenly: sender rules, provider keys and folders go through AppModel extensions, while content rules, corpus, backup restore, notifications, trust exclusions and the Spamhaus Keychain key are called from view bodies. This conflicts with swiftui-conventions ("keep logic in view models covered by Swift Testing unit tests").
-- **Scenario:** A change to one feature touches a type every view observes. Store and Keychain behavior in the bypassing views can only be checked by UI tests. Previews must build the entire model, with store and pipeline, to show one form.
-- **Fix:** Split by feature: a sheet/navigation router, a mail-connection model, a scan coordinator, a corrections model and a settings model, each given only its dependencies. Route every persistence and credential mutation through those models, and pass each view the narrow model it needs.
-<!-- sources: architecture#4, conventions/app-views-settings#6 -->
-
-#### 10.3 Full-store polling every 3 seconds and per-message reloads invalidate every view — Medium
-
-- **Where:** `SpamWise/AppModel.swift:159` (`SpamWise/AppModel.swift:6`, `:129-132`, `SpamWise/AppModelScanning.swift:126`, `:136`, `SpamWise/AppModelFolders.swift:121`, `SpamWiseCore/Sources/SpamWiseCore/State.swift:160`)
-- **Problem:** `monitor()` calls `refresh()` every 3 seconds, which decodes the whole `AppState`, assigns it unconditionally and loads `MailHealthRepository`. `AppState` is not Equatable, so Observation re-runs every visible body, including the Activity table's filter over up to 5,000 records. During a sweep, `classify` also reloads the full state to confirm a record the pipeline already persisted, then calls `refresh()` again, and folder training reloads per envelope.
-- **Scenario:** With a full activity log, the idle app does a full-store decode and table re-filter every 3 seconds. A 20-message page costs more than 40 full decodes under the cross-process lock, slowing sweeps, adding contention with the extension, and making the Activity table stutter while nothing has changed.
-- **Fix:** Post a Darwin notification (or bump a small change-counter key) after each commit and reload only when it changes. Make the state Equatable and assign only on a difference. Drop the per-message verify load, and refresh once per page instead of once per message.
-<!-- sources: architecture#3, comments/app-logic#16 -->
-
-#### 10.4 Mail sweep orchestration lives in the app target and is reimplemented by the daemon — Medium
-
-- **Where:** `SpamWise/AppModelScanning.swift:107` (`SpamWise/AppModelScanning.swift:37-75`, `:113-124`, `SpamWise/AppModelFolders.swift:54-114`, `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:96-105`)
-- **Problem:** The business logic for automatic filtering (seen-message predicate, cursor advancement, health accounting, retry scheduling, training-folder observation) sits in a SwiftUI `@MainActor` model, so the headless daemon has its own simpler loop. The two "seen" predicates already differ: the app reprocesses paused, superseded and dry-run records, while the daemon treats any record as seen.
-- **Scenario:** A message first recorded as `.paused` is reprocessed by the app after Resume, but the daemon skips it forever. Fixes to sweep semantics, such as the unreadable-page handling, must be made twice.
-- **Fix:** Move the sweep into core (for example a `MailSweeper` actor taking adapter, store, pipeline and scope, emitting progress and health events). Have AppModel and the daemon both call it, with one `AppState.isAlreadyHandled(_:)` predicate.
-<!-- sources: architecture#5 -->
-
-#### 10.5 Hand-written IMAP client and TLS transport, with internal duplication and a forwarding wrapper — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/IMAPAdapter.swift:150` (`IMAPAdapter.swift:12`, `:32`, `:140`, `:144`, `:183`, `:213-233`, `:247-264`, `IMAPProtocol.swift:19-254`, `IMAPTransport.swift:46-140`, `SpamWise/AppModelIMAP.swift:43-57`)
-- **Problem:** The project implements an IMAP4 wire parser, literal reader and NWConnection continuation transport from scratch for a feature that is off by default and, per TODO.md, still unvalidated. Within the adapter, `perform` and `probeMove` repeat the select, lookup, `UID MOVE`, COPYUID mapping and re-verify sequence, and the MOVE/IMAP4REV2 capability check appears three times. An actor-local `validated` flag forces `IMAPCorrectionAdapter` to forward four protocol methods just to call `validateReadOnly()` first, and `withSession` opens a new TLS session per call.
-- **Scenario:** A fix to COPYUID handling or post-move verification lands in `perform` but not `probeMove`, so the account probe validates behavior production moves no longer have. Each correction on an IMAP account opens two or more TLS connections with LOGIN and CAPABILITY round trips.
-- **Fix:** Decide whether IMAP belongs in the product before it is validated. If it stays, adopt swift-nio-imap for parsing, share one `moveAndVerify` helper between `perform` and `probeMove`, use the persisted `IMAPAccountValidation` instead of the in-memory flag, and delete `IMAPCorrectionAdapter`.
-<!-- sources: architecture#9 -->
-
-#### 10.6 AppleScript built by string interpolation and recompiled per call, embedding the full message source as a literal — Medium
-
-- **Where:** `SpamWiseCore/Sources/MailIntegration/MailScripts.swift:130` (`MailScripts.swift:158`, `:182`, `:212-265`, `MailFolderScripts.swift:34-76`, `AppleMailAdapter.swift:76`, `:236`, `:245-276`)
-- **Problem:** Every Mail operation concatenates the shared helper text with interpolated values and compiles a new `NSAppleScript`. Exact-content checks embed the whole message source, up to 2 MB, into the action, verification and mark-read scripts. The page loop is copied across three scripts, and `folderPage` hard-codes `min(1000, limit)` and `depth > 16` rather than the Swift constants. `literal()` does escape backslash, quote, CR, LF and tab, so injection is not demonstrated; the cost is compile time and fragility.
-- **Scenario:** Moving a 1.5 MB newsletter to Junk and marking it read compiles three scripts of about 1.5 MB each under an 8-second timeout. On a busy Mail this plausibly exceeds the deadline (not measured), recording a failure after Mail may already have moved the message.
-- **Fix:** Compile one handler library once and invoke handlers with `executeAppleEvent(_:error:)`, passing account, IDs and expectations as `NSAppleEventDescriptor` parameters. Compare content in Swift (have the handler return the source or its size and compare `stableHash` locally), and factor the page loop into one handler.
-<!-- sources: architecture#11 -->
-
-#### 10.7 The MIME traversal is implemented twice, and each message is parsed three or four times — Medium
-
-- **Where:** `SpamWiseCore/Sources/MessageModel/EmbeddedImages.swift:53` (`EmbeddedImages.swift:6-13`, `:47`, `:98-142`, `MIMEParser.swift:6-13`, `:202`, `:228-257`, `DocumentInspection.swift:30-31`, `SpamWiseCore/Sources/SpamWiseCore/Pipeline.swift:35-50`)
-- **Problem:** EmbeddedImages redeclares MIMEParser's message, header, nesting, part and boundary limits and runs its own header split and multipart walk. The two already diverge: the header limit is `<=` in one and `<` in the other, the close delimiter is matched exactly versus by `hasSuffix("--")`, only MIMEParser rejects control bytes in header names, and EmbeddedImages decodes as UTF-8 where MIMEParser preserves bytes. On the hot path, Pipeline parses once, DocumentInspection parses twice more, and OCR re-walks the raw bytes.
-- **Scenario:** A parsing hardening fix or a raised `maximumParts` lands in MIMEParser only, so OCR accepts adversarial structures text extraction rejects, or rejects messages text extraction accepts. A 2 MB message with attachments and OCR enabled is tokenized four times before classification starts.
-- **Fix:** Have MIMEParser produce a bounded part tree once (headers plus decoded bytes per leaf) and derive body text, attachment text and image payloads from it in a single walk. Keep only ImageIO validation in EmbeddedImages and remove DocumentInspection's double parse.
-<!-- sources: architecture#6, comments/core-parsing-signals#25 -->
-
-#### 10.8 Four hand-rolled bounded HTTP clients, three identical redirect delegates, and an unhardened RDAP fetch — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/RDAP.swift:16` (`RDAP.swift:18-21`, `Classifier/ModelHTTPClient.swift:8-33`, `:68-75`, `Signals/RspamdLoopbackHTTP.swift:8-85`, `Signals/SpamhausHTTPS.swift:38-105`)
-- **Problem:** The model-provider, Rspamd and Spamhaus clients each repeat the ephemeral configuration, cookie/cache/credential nil-ing, a redirect-refusing delegate and a streamed byte cap. They already differ without documentation: only the loopback client disables proxies, and the intended auth-challenge differences carry no comment. The fourth client, RDAP, uses `URLSession.shared`, follows redirects, uses shared cookie and cache storage, and checks its 2 MB limit only after buffering the whole response. RDAP is opt-in, which limits exposure.
-- **Scenario:** An IANA-listed RDAP server redirects to an arbitrary host or streams 200 MB; URLSession follows the redirect and buffers everything before the size check rejects it. A future redirect or proxy hardening fix reaches only some copies.
-- **Fix:** Add one internal `BoundedHTTPClient` configured by maximum bytes, timeout, accepted status codes, proxy and auth-challenge policy, owning a single delegate, with the intended differences documented there. Use it for model providers, Spamhaus, Rspamd and RDAP, and delete the three delegates and `URLSessionFetcher`.
-<!-- sources: architecture#7, comments/core-parsing-signals#26 -->
-
-#### 10.9 The Rspamd executable transport duplicates the HTTP transport, and DNS lookups spawn and parse `dig` — Medium
-
-- **Where:** `SpamWiseCore/Sources/Signals/RspamdLookup.swift:76` (`Signals/RspamdLoopbackHTTP.swift:29`, `Signals/EvidenceProcess.swift:31-66`, `Signals/ExternalEvidence.swift:153-171`, `SpamWiseCore/AdvancedSettings.swift:79-85`, `SpamWiseCore/Pipeline.swift:56`, `SpamWiseCore/PipelineClassification.swift:170`)
-- **Problem:** `rspamc --connect=127.0.0.1:11333` reaches the same daemon the in-process HTTP transport reaches at `127.0.0.1:11333/checkv2`, so the executable path adds process spawning, a settings field, a legacy shim (`selectedRspamdTransport`) and a compile-time distribution split with no capability gain. The public-DNS Spamhaus path shells out to `/usr/bin/dig` and scrapes human-readable text such as `status: NXDOMAIN,`. Both fail safe to unknown.
-- **Scenario:** A user configures `rspamcPath` on the Developer ID build; it works there but silently does nothing in the App Store build. A future `dig` output change makes every DBL lookup report unknown.
-- **Fix:** Delete `RspamdTransport.executable`, `rspamcPath`, `selectedRspamdTransport` and `EvidenceProcess`, keeping only the HTTP transport. For DNS, drop the public-DNS transport in favor of HTTPS, or query in-process with libresolv `res_nquery`.
-<!-- sources: architecture#8 -->
-
-#### 10.10 The revision-invalidation protocol is hand-copied at 14 sites and applied inconsistently — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/RuleManagement.swift:68` (`RuleManagement.swift:79`, `:109`, `ContentRuleManagement.swift:25`, `:49`, `:60`, `CorpusManagement.swift:66`, `:93`, `:111`, `CorrectionUndo.swift:44`, `StateBackup.swift:90-92`, `State.swift:249-273`, `PipelineCorrections.swift:67-68`, `SpamWise/AppModel.swift:337-340`)
-- **Problem:** "Stale classification work must never act" is a core invariant, but each mutation re-implements `revision += 1`, retry clearing and auditing by hand. The account-probe site bumps the revision without clearing retries or auditing. Conversely, `editSettings` clears all retries and the correction-undo snapshot on every edit, including cosmetic ones such as the weekly-digest and notification toggles.
-- **Scenario:** After an account probe, old-revision retries linger (discarded only lazily) with no audit record. Toggling "Weekly digest" silently drops pending retries and the Undo snapshot, so the Undo button disappears after an unrelated change.
-- **Fix:** Add `mutating func invalidatePendingWork(_:detail:)` on `AppState` that bumps the revision, clears retries and undo, and audits. Call it from every policy mutation, and from `editSettings` only when a policy-relevant field changes (strength, policy, limits, backend, consent, scope).
-<!-- sources: architecture#12 -->
-
-#### 10.11 Optional-as-migration fields, an unused `schemaVersion`, and history-style comments make state evolution fragile — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/State.swift:163` (`State.swift:38-51`, `:171-209`, `AdvancedSettings.swift:39-133`, `MailPreferences.swift:16-18`, `LearningState.swift:124`, `Types.swift:25-31`, `ModelTokenPricing.swift:7`, `Pipeline.swift:39`, `PipelineClassification.swift:112`, `PipelineCorrections.swift:97`, `TrainingFolders.swift:50`)
-- **Problem:** Synthesized Codable throws `keyNotFound` for any missing non-optional key, so each new field is declared Optional purely to decode older stores. This produces tri-state Bools (`textAttachments`, `domainRegistrationLookup`, `markJunkRead`) and about 57 `== true` / `?? false` / `?? []` compensations. `schemaVersion` is never read. Comments such as "absent in Phase 1 stores" and "legacy labels came from corrections" describe history, which the global CLAUDE.md comment test forbids. The owner's installed app has persisted state, so the store does need a real migration path.
-- **Scenario:** A contributor adds a plain `var foo = false` to Settings. Every existing store then fails to decode in `Store.read`, every callback fails open as "persistence or integration unavailable", and the app cannot load state until the store is deleted.
-- **Fix:** Give `AppState`, `Settings`, `AdvancedSettings` and `MailPreferences` custom `init(from:)` using `decodeIfPresent(...) ?? default` (or a small default-value property wrapper), and make the fields non-optional. Either use `schemaVersion` for explicit migrations or remove it. Rewrite the comments to describe current behavior.
-<!-- sources: conventions/core-pipeline-store#12, architecture#22 -->
-
-#### 10.12 Supported-model knowledge is duplicated in five places — Medium
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:129` (`SpamWiseCore/AdvancedSettings.swift:16-24`, `Classifier/ClaudeClassifier.swift:22-26`, `Classifier/ModelTokenPricing.swift:28-60`, `SpamWiseEval/main.swift:116-132`, `SpamWiseEval/Options.swift:17-18`, `SpamWiseCore/ConfiguredClassifier.swift:5-6`, `:45-61`)
-- **Problem:** Model IDs, backends and pricing are hard-coded in `ModelBackend.defaultModelID`, the Claude initializer switch, `ModelTokenPricing.rates`, the daemon's `backend(for:)`, and the evaluator's prefix mapping and usage text. The classifier factory is written twice, and the evaluator repeats the 0.10/1.0 reservation literals that `ConfiguredClassifier` keeps as constants.
-- **Scenario:** Adding `claude-haiku-5-6` to the classifier and pricing but not the daemon makes `spamwise-daemon --model claude-haiku-5-6` throw `invalidConfiguration`. Changing the Haiku reservation leaves the evaluator reserving the old amount.
-- **Fix:** Introduce one `ModelCatalog` table (id, backend, display name, pricing, provider constructor) in Classifier, derive every lookup and the usage text from it, and expose one `ClassifierFactory.make(modelID:credential:)` used by both the app and spamwise-eval.
-<!-- sources: architecture#13 -->
-
-#### 10.13 All shared state is one JSON blob in a single SwiftData row, rebuilt about 10 times per message — Medium
-
-- **Where:** `SpamWiseCore/Sources/Store/Store.swift:90` (`Store.swift:5-9`, `:101-109`, `SpamWiseCore/State.swift:243`, `SpamWiseCore/Pipeline.swift:36`, `:99`, `:136`, `:271`, `:293`, `:303`, `:321`, `SpamWiseCore/PipelineReadStatus.swift:10-43`, `SpamWiseCore/ConfiguredClassifier.swift:26`, `SpamWiseCore/EvaluationBudget.swift:50`, `MailIntegration/AppleMailAdapter.swift:312`)
-- **Problem:** SwiftData stores one `StoredValue` row holding the whole `AppState` under `application-v1`: up to 5,000 decision records, 100 retries with full parsed messages, up to 10,000 learning samples, 500 reviewed labels, and the never-pruned `claimedActions` and `importedIDs`. Every read and read-modify-write builds a fresh `ModelContainer` and re-encodes everything under a `LOCK_NB` flock, about 10 to 12 times per message. The design pays for SwiftData without using queries and for a hand-rolled lock without the simplicity of a plain file.
-- **Scenario:** After a few weeks the blob reaches several MB, and each message costs about 12 multi-MB encode/decode cycles. Contention with the extension heartbeat and the app's polling increasingly yields `lockUnavailable`. That fails open, so messages are delayed and reprocessed on the next sweep and the UI shows "Shared storage unavailable"; mail is not lost.
-- **Fix:** Pick one model and use it fully: real SwiftData entities queried with predicates and paged fetches, or small atomic JSON documents (settings, rules, records, learning, histories) under flock without SwiftData, so hot paths never decode the activity log or learning state. Bound `claimedActions` and `importedIDs` by age, and keep one container or file handle per process.
-<!-- sources: architecture#2 -->
 
 #### 10.14 Content-rule preview re-implements rule precedence in the view — Low
 
@@ -6255,14 +3444,6 @@ The architecture reviewer also flagged that the agent's own evaluation budget le
 - **Scenario:** If core switches content-rule ordering to an explicit priority, the pipeline changes but the preview keeps reporting "This rule wins for the selected message" for rules that no longer win.
 - **Fix:** Add a core `ContentRules.previewOutcome(of:among:senderRules:message:)` that reuses the pipeline's gate ordering, cover it with Swift Testing, and have the view only map its result to text.
 <!-- sources: comments/app-views-settings#8 -->
-
-#### 10.15 Junk review parses up to 2 MB of raw MIME per row on every render — Low
-
-- **Where:** `SpamWise/MailReviewView.swift:30` (`MailReviewView.swift:30-40`)
-- **Problem:** The `List` row closure calls `MIMEParser().parse(envelope.raw)` for every row on each body evaluation, and the detail pane parses the selected message again, so selection and status changes re-parse all 20 messages. The pane also lacks `ContentUnavailableView` states and a page indicator.
-- **Scenario:** Selecting messages in a page of large HTML newsletters can make the sheet stutter (not measured). An empty Junk folder shows a blank list beside "Select a message".
-- **Fix:** Parse once in `loadJunk` into a lightweight row model (subject, sender, text). Add `ContentUnavailableView` states and a "Page n of m" label.
-<!-- sources: design/onboarding-consistency#26 -->
 
 #### 10.16 Package manifest declares unused Store dependencies, and `@_exported` re-exports defeat import visibility — Low
 
@@ -6304,14 +3485,6 @@ The architecture reviewer also flagged that the agent's own evaluation budget le
 - **Fix:** Order `process` as parse, attachment/OCR extraction, `senderRuleGate`, `contentRuleGate`, `relationshipGate`, then one evidence collector (Rspamd, RDAP, Spamhaus) before classification. Split `Gates.evaluate` into named `senderRule` and `relationship` helpers.
 <!-- sources: architecture#25 -->
 
-#### 10.21 ThreatDetector has no production implementation, yet every message computes and stores five "unknown" findings — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseCore/PipelineThreatAssessment.swift:15` (`Classifier/ThreatAssessment.swift:98-102`, `:132`, `:151-153`, `SpamWiseCore/State.swift:72`, `SpamWise/AppModel.swift:96-102`)
-- **Problem:** The app never passes `threatDetector:`, so every message gets `ThreatAssessment.unavailable`, which JSON-encodes and SHA-256-hashes the full threat input and persists five unknown findings in the record. The only conformers are test fixtures and the evaluation cache. The abstraction is intentional groundwork for a TODO item, and the per-record overhead is a few hundred bytes.
-- **Scenario:** Every classified message pays for serializing and hashing its whole parsed message, and the shared blob that every transaction re-encodes (10.13) carries placeholder findings across up to 5,000 records.
-- **Fix:** Store `threats = nil` when no detector is configured instead of computing a fingerprinted "unavailable" assessment, or keep the protocol and metrics in Evaluation until a real detector exists.
-<!-- sources: architecture#14 -->
-
 #### 10.22 Resource limits and clamping are duplicated across modules and the UI — Low
 
 - **Where:** `SpamWiseCore/Sources/SpamWiseCore/State.swift:240` (`State.swift:241`, `:256-263`, `Classifier/ClassificationLimits.swift:8-9`, `SpamWise/AdvancedSettingsView.swift:14`, `:20`, `Types.swift:141-152`, `:278-281`, `:301-304`, `AppleClassifier.swift:81-84`, `RemoteVerdict.swift:45-50`, `PipelineCorrections.swift:4-8`, `:116-121`, `CorpusManagement.swift:6-10`, `StateBackup.swift:24-27`, `:116`, `Pipeline.swift:6`, `ContentRules.swift:58`, `ContentRuleManagement.swift:5`)
@@ -6319,14 +3492,6 @@ The architecture reviewer also flagged that the agent's own evaluation budget le
 - **Scenario:** Raising the stored-correction cap to 300 in PipelineCorrections leaves `StateBackup.validate` rejecting every backup with more than 200 corrections, so users cannot restore their own backups.
 - **Fix:** Define shared retention limits once (a `RetentionLimits` enum next to `AppState`) and reference them from the pipeline, corpus, backup and Settings steppers. Add `Comparable.clamped(to:)`, clamp only at the input boundary, and share one `ParsedMessage.boundedForRetention()` between correction and corpus import.
 <!-- sources: architecture#17 -->
-
-#### 10.23 Both executables hand-roll argument parsing instead of using swift-argument-parser — Low
-
-- **Where:** `SpamWiseCore/Sources/SpamWiseDaemon/main.swift:151` (`SpamWiseDaemon/main.swift:10-26`, `:151-191`, `SpamWiseEval/Options.swift:6-27`, `:47-76`)
-- **Problem:** The daemon uses a manual flag loop that throws one `invalidConfiguration` for every mistake; the evaluator uses a stride-by-2 parser with string lookups and one `EvaluationError.arguments`. Usage text is maintained by hand. The global CLAUDE.md asks not to reinvent established dependencies.
-- **Scenario:** `spamwise-eval --cache` with no value fails with "Invalid arguments. Use --help for usage." without naming the problem, and each new option needs coordinated edits to the allow-list, parser, conflict checks and usage text.
-- **Fix:** Add swift-argument-parser; model spamwise-eval as subcommands (corpus, reviewed, export, compare, threat-report) and spamwise-daemon as an `AsyncParsableCommand` with `@Option`, `@Flag` and `validate()`.
-<!-- sources: architecture#21 -->
 
 #### 10.24 CachedThreatDetector is public API with no production or CLI caller — Info
 
