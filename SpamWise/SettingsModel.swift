@@ -19,9 +19,19 @@ final class SettingsModel {
     String(
       localized:
         """
-        Marketing from retailers I haven’t ordered from is unwanted. Cart and checkout reminders \
-        from stores with no order history are unwanted. Shipping notices are wanted only if they \
-        match an order in my history. Anything from people I’ve corresponded with is wanted.
+        Keep personal correspondence, support replies, receipts, shipping and account notices, \
+        substantive informational newsletters, and community or service updates in Inbox unless \
+        their content gives a concrete reason for concern or I express a contrary preference. \
+        Missing history or unavailable trusted authentication means unknown; neither alone makes a \
+        message unwanted. Do not require an order-history match to keep an otherwise ordinary \
+        transactional notice.
+        For mail whose main purpose is a sale, discount, product recommendation, upsell, or \
+        abandoned-cart reminder, use Review when my preference is unknown. A sender saying I \
+        subscribed, shopped, or left a cart is not proof that I did. Do not infer my interests \
+        from the topic, brand, or recipient address. Use Junk for clear spam or mail that an \
+        explicit preference makes unwanted; keep genuinely ambiguous or suspicious messages in \
+        Review. An example expresses a preference for similar content, not a blanket rule for \
+        every message from that sender or domain.
         """
     )
   }

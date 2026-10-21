@@ -140,7 +140,7 @@ extension AppleMailAdapter {
     for message in messages {
       try message.raw.write(
         to: directory.appending(path: message.identity.key + ".eml"),
-        options: [.atomic, .withoutOverwriting]
+        options: .withoutOverwriting
       )
     }
     return messages.count

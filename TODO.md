@@ -44,6 +44,8 @@ handling. See [detection design](docs/detection-design.md) and
 - [ ] Evaluate targeted impersonation, payment diversion and other fraud using account-scoped context; preserve unknown history.
 - [ ] Evaluate zero-shot graymail preferences and incremental private personalization; distinguish example retrieval from actual model fine-tuning.
   - [x] Run a reproducible 12-context EN/ES/FR synthetic policy-only/two-example comparison; record labels, effective actions, usage and limitations in [preference results](docs/probes/graymail-preferences.md). Examples showed no categorical improvement; this is not fine tuning or independent real-mail quality.
+  - [x] Screen the default against 16 private Junk candidates, four real wanted controls and eight synthetic wanted controls, with a sender-disjoint reserved set; tune unknown promotions to Review and preserve ordinary wanted mail. Compare one simulated correction and four deceptive challenges in [first-run results](docs/probes/graymail-oobe.md). One-shot benefit and broad quality remain unproven.
+  - [ ] Validate a clean signed-app setup and provider request, independent owners and campaigns, owner-adjudicated labels, multilingual mail and repeated runs before claiming general zero-shot or one-shot quality.
 - [ ] Establish dedicated attachment/malware coverage without treating text-model predictions as antivirus results.
 
 ## Implemented and verified offline
