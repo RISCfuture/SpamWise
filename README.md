@@ -116,7 +116,7 @@ they need and never write to the store or Keychain directly.
 
 - macOS 27 and Xcode 27 with Swift 6.4, on Apple silicon (Intel is untested).
 - `swiftlint`, `xcbeautify` and `python3` for `Scripts/check.sh`.
-- For releases: Ruby 4.0.7 with the `spamwise` gemset (`.ruby-version`,
+- For releases: Ruby 4.0.9 with the `spamwise` gemset (`.ruby-version`,
   `.ruby-gemset`) and the gems in `Gemfile`, plus access to the team's match
   certificates repository.
 - For the corpus and site tools under `Tools/`: pyenv with a Python 3 virtualenv, as

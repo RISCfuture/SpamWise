@@ -32,7 +32,7 @@ jobs:
     with:
       # GitHub names its macOS images after the major Xcode version they carry.
       runner: xcode-27
-      ruby-version: "4.0.7"
+      ruby-version: "4.0.9"
       # Not a platform in the Apple sense: the reusable workflow runs the release lane once per
       # entry, and `ci_release` reads each one as an edition name.
       platforms: '["mas", "download"]'
