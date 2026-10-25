@@ -72,19 +72,16 @@ final class CredentialsModel {
     for credential in removed { try credentials.delete(credential) }
   }
 
-  private static func recordVerification(
-    _ verdict: Verdict,
-    message: ParsedMessage,
-    store: Store
-  ) async throws {
-    let record = DecisionRecord(
+  private static func verificationRecord(_ verdict: Verdict, message: ParsedMessage)
+    -> DecisionRecord
+  {
+    DecisionRecord(
       identity: .init(accountID: nil, contentHash: message.hash),
       verdict: verdict,
       decision: .init(label: .inbox, action: .none, reason: .connectionVerified),
       outcome: .noAction,
       path: .verification
     )
-    try await StateRepository.update(store, loading: StateSlices()) { $0.record(record) }
   }
 
   /// Checks which providers have API keys saved in Keychain.
@@ -95,8 +92,9 @@ final class CredentialsModel {
   /**
    Sends one synthetic message to the Claude `model` with `key`, then saves the key if it works.
 
-   Nothing is sent while Keep filtering on this Mac is on; the check fails with the reason. Mail
-   left unclassified for want of a working key is classified again once the key is saved.
+   Nothing is sent while Keep filtering on this Mac is on; the check fails with the reason. When
+   Claude is the selected provider, mail left unclassified for want of a working key is classified
+   again once the key is saved.
    */
   @discardableResult
   func verifyClaudeKey(_ key: String, model: ModelIdentifier = .claudeHaiku)
@@ -117,8 +115,11 @@ final class CredentialsModel {
       ).classify(.init(message: message, evidence: .init(message: message)))
       try await Self.save(credential, as: .provider(.claude), in: services.credentials)
       recordSaved(.provider(.claude))
-      try await CredentialChanges.recordKeySaved(store)
-      try await Self.recordVerification(verdict, message: message, store: store)
+      try await CredentialChanges.recordKeySaved(
+        for: .claude,
+        in: store,
+        recording: Self.verificationRecord(verdict, message: message)
+      )
       return String(localized: "Verified — stored in Keychain")
     }
   }
@@ -126,7 +127,9 @@ final class CredentialsModel {
   /**
    Saves `key` for `backend` without making a request.
 
-   Mail left unclassified for want of a working key is classified again once the key is saved.
+   When `backend` is the selected provider, mail left unclassified for want of a working key is
+   classified again once the key is saved, unless shared storage is unavailable or busy; the key
+   is saved either way.
    */
   @discardableResult
   func saveProviderKey(_ key: String, for backend: ModelBackend)
@@ -137,7 +140,9 @@ final class CredentialsModel {
       guard !credential.isEmpty else { throw ClassificationError.missingCredential }
       try await Self.save(credential, as: .provider(backend), in: services.credentials)
       recordSaved(.provider(backend))
-      if let store = services.store { try await CredentialChanges.recordKeySaved(store) }
+      if let store = services.store {
+        try? await CredentialChanges.recordKeySaved(for: backend, in: store)
+      }
       return String(localized: "Provider key saved in Keychain. Use a dry run to verify.")
     }
   }
