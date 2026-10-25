@@ -321,32 +321,23 @@ extension CorrectionsModel {
   }
 
   /**
-   Corrects the batch so that each message's wait for Mail to show it moved overlaps the next
-   messages' corrections, with up to ``maximumOverlappingCorrections`` in progress.
+   Corrects the batch with up to ``maximumOverlappingCorrections`` in progress, so that each
+   message's wait for Mail to show it moved overlaps the next messages' corrections.
 
-   A message starts only once the previous one has been saved and its first command sent to
-   Mail, because a correction saved before then would supersede it. Results are published in
-   Mail's order as they finish. Once cancelled, no further message starts.
+   Results are published in Mail's order as they finish. Once cancelled, no further message
+   starts.
    */
   private func correctOverlapping(_ batch: SelectionBatch, pipeline: Pipeline) async {
     finishedSelection = [:]
     let mail = services.appleMail
     await withTaskGroup(of: Void.self) { group in
-      var running = 0
       for (index, message) in batch.messages.enumerated() {
-        if running == Self.maximumOverlappingCorrections, await group.next() != nil {
-          running -= 1
-        }
+        if index >= Self.maximumOverlappingCorrections { _ = await group.next() }
         guard !Task.isCancelled else { break }
-        let (sent, signal) = AsyncStream<Void>.makeStream()
         group.addTask { [self] in
-          let adapter = CommandReportingMail(mail: mail) { signal.finish() }
-          let result = await correct(message, in: batch, pipeline: pipeline, adapter: adapter)
-          signal.finish()
+          let result = await correct(message, in: batch, pipeline: pipeline, adapter: mail)
           await publish(result, at: index)
         }
-        running += 1
-        for await _ in sent {}
       }
     }
   }

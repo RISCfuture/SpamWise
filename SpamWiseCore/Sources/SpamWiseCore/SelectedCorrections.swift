@@ -1,5 +1,11 @@
 extension Pipeline {
-  /// Corrects an explicitly selected message without first invoking a classifier.
+  /**
+   Corrects an explicitly selected message without first invoking a classifier.
+
+   The message's record is saved with the correction, so a correction that fails leaves no
+   record. A Review annotation that SpamWise left on the message is removed like one on a
+   corrected Activity record.
+   */
   public func correct(
     envelope: MailEnvelope,
     label: MailLabel,
@@ -8,9 +14,10 @@ extension Pipeline {
     trainingPlanID: String? = nil
   ) async throws -> DecisionRecord {
     let message = try MIMEParser().parse(envelope.raw)
-    let seed = try await StateRepository.update(store, loading: StateSlices()) {
-      state -> DecisionRecord in
-      var record = DecisionRecord(
+    let selection = try await StateRepository.transaction(store) { transaction in
+      try transaction.loadClaim(for: envelope.identity)
+      let state = transaction.state
+      var seed = DecisionRecord(
         identity: envelope.identity,
         sender: message.fromAddress,
         subject: message.subject,
@@ -25,35 +32,20 @@ extension Pipeline {
         path: .selection,
         revision: state.revision
       )
-      record.sampleID = LearningSample.identity(for: message)
-      state.record(record)
-      return record
+      seed.sampleID = LearningSample.identity(for: message)
+      let claimed = state.claimedActions[envelope.identity.key].flatMap { id in
+        state.records.first { $0.id == id }
+      }
+      return (seed: seed, annotation: claimed?.reviewAnnotation)
     }
-    return try await correct(
-      CorrectionRequest(
-        recordID: seed.id,
-        label: label,
-        scope: scope,
-        trainingPlanID: trainingPlanID
-      ),
-      adapter: adapter,
-      message: message
+    var request = CorrectionRequest(
+      recordID: selection.seed.id,
+      label: label,
+      scope: scope,
+      trainingPlanID: trainingPlanID
     )
-  }
-}
-
-/// Per-message correction status for a bounded selected-message operation.
-public struct MailCorrectionResult: Identifiable, Sendable {
-  /// Original account-scoped identity.
-  public let id: String
-  /// Subject of the selected message.
-  public let subject: String
-  /// Persisted correction and independent mail outcome, absent if saving failed.
-  public let record: DecisionRecord?
-  /// Sanitized error when no correction could be saved.
-  public let error: String?
-  /// Creates one user-visible result without combining storage and move success.
-  public init(id: String, subject: String, record: DecisionRecord?, error: String? = nil) {
-    self.id = id; self.subject = subject; self.record = record; self.error = error
+    request.seed = selection.seed
+    request.reviewAnnotation = selection.annotation
+    return try await correct(request, adapter: adapter, message: message)
   }
 }
