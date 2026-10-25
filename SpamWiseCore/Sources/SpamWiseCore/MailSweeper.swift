@@ -202,7 +202,8 @@ public actor MailSweeper {
     }
     coverage = SweepCoverage()
     let traversal = try await source.sweepInbox(of: account, request) { page in
-      try await self.process(page, accountID: account.id, dryRun: dryRun, onEvent: onEvent)
+      if !dryRun { await self.correctMailReturnedFromJunk(on: page) }
+      return try await self.process(page, accountID: account.id, dryRun: dryRun, onEvent: onEvent)
     }
     try Task.checkCancellation()
     guard !traversal.interrupted else { return }
@@ -221,11 +222,12 @@ public actor MailSweeper {
     }
   }
 
-  /**
-   Processes a discovered page, counts its coverage and ingests its eligible Inbox history.
+  /// Corrects the Inbox page's mail that the user returned from a confirmed SpamWise Junk move.
+  private func correctMailReturnedFromJunk(on page: MailPage) async {
+    _ = await pipeline.correctMailReturnedFromJunk(page.messages, adapter: source)
+  }
 
-   Mail returned from Junk is corrected first on live passes.
-   */
+  /// Processes a discovered page, counts its coverage and ingests its eligible Inbox history.
   func process(
     _ page: MailPage,
     accountID: String,
@@ -233,7 +235,6 @@ public actor MailSweeper {
     ingestsHistory: Bool = true,
     onEvent: @escaping EventHandler
   ) async throws -> ProcessedPage {
-    if !dryRun { _ = await pipeline.correctMailReturnedFromJunk(page.messages, adapter: source) }
     let completion = CompletionFlag(), total = page.messages.count
     let records = try await pipeline.processBatch(
       page.messages,
