@@ -255,6 +255,27 @@ struct `Correction of selected mail` {
     #expect(ruled.path == .gate)
     #expect(ruled.decision.label == .inbox)
   }
+
+  @Test
+  func `undoes a batch together, except corrections saved before another change`() async throws {
+    let batch = CorrectionBatch()
+    let retained = try await pipeline.correct(envelope: selected, label: .junk, batch: batch)
+    try await StateRepository.editSettings(store) { $0.strength = .conservative }
+    let before = try await StateRepository.load(store)
+    var undone: [DecisionRecord] = []
+    for name in ["filler-spam", "stranger-cart"] {
+      undone.append(
+        try await pipeline.correct(envelope: envelope(name), label: .junk, batch: batch)
+      )
+    }
+    let undo = try await CorrectionUndo.apply(store: store)
+    #expect(undo.correctionCount == 2 && undo.retainedCount == 1)
+    let after = try await StateRepository.load(store)
+    #expect(after.rules == before.rules && after.rules.count == 1)
+    let records = Dictionary(uniqueKeysWithValues: after.records.map { ($0.id, $0) })
+    #expect(undone.allSatisfy { records[$0.id]?.correctionUndone == true })
+    #expect(records[retained.id]?.correctionUndone == false)
+  }
 }
 
 @Test

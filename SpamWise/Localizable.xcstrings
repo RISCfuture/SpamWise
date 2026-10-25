@@ -18558,6 +18558,124 @@
           }
         }
       }
+    },
+    "Undid %lld corrections of the selected messages. Use a separate correction to request a Mail action.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se deshicieron %lld correcciones de los mensajes seleccionados. Usa otra corrección para solicitar una acción en Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld corrections des messages sélectionnés annulées. Effectuez une autre correction pour demander une action dans Mail."
+          }
+        }
+      }
+    },
+    "%lld earlier corrections of the same selection stay, because another change was saved while it was being corrected.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld earlier correction of the same selection stays, because another change was saved while it was being corrected."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld earlier corrections of the same selection stay, because another change was saved while it was being corrected."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se mantienen %lld correcciones anteriores de la misma selección, porque se guardó otro cambio mientras se corregía."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se mantiene %lld corrección anterior de la misma selección, porque se guardó otro cambio mientras se corregía."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se mantienen %lld correcciones anteriores de la misma selección, porque se guardó otro cambio mientras se corregía."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld corrections précédentes de la même sélection sont conservées, car une autre modification a été enregistrée pendant sa correction."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld correction précédente de la même sélection est conservée, car une autre modification a été enregistrée pendant sa correction."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld corrections précédentes de la même sélection sont conservées, car une autre modification a été enregistrée pendant sa correction."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Undo marking %lld selected messages as %@?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Deshacer la marca de %1$lld mensajes seleccionados como %2$@?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler le marquage de %1$lld messages sélectionnés comme %2$@ ?"
+          }
+        }
+      }
+    },
+    "Rules and examples go back to how they were before those corrections. Mail doesn’t move.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las reglas y los ejemplos vuelven a como estaban antes de esas correcciones. El correo no se mueve."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les règles et les exemples reviennent à leur état d’avant ces corrections. Les messages ne sont pas déplacés."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
