@@ -79,13 +79,26 @@ extension AppleMailAdapter {
       }
     }
   }
-  /// Acts only while the message remains in its recorded mailbox, then observes the result.
+  /**
+   Acts only while the message remains in its recorded mailbox, then observes the result.
+
+   An orange flag or background already on the message is reported as applied without change,
+   and clearing Review removes only one that SpamWise set.
+
+   - Throws: ``ActionNotAttempted`` when the message can't be resolved, or Mail refuses before
+     changing it, as when it has left its mailbox or another flag or color is already set.
+   */
   public func perform(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
   {
     try await perform(action, for: identity, scope: .recordedMailbox)
   }
-  /// Acts on a user-corrected message wherever it now is in its account, then observes the result.
+  /**
+   Acts on a user-corrected message wherever it now is in its account, then observes the result.
+
+   - Throws: ``ActionNotAttempted`` when the message can't be resolved, or Mail refuses before
+     changing it.
+   */
   public func performCorrection(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
   {
@@ -101,6 +114,8 @@ extension AppleMailAdapter {
        message to appear in its destination, so the caller can start other work meanwhile. It
        isn't called when no command applies, the message can't be found or Mail reports an
        error.
+   - Throws: ``ActionNotAttempted`` when the message can't be resolved, or Mail refuses before
+     changing it.
    */
   public func performCorrection(
     _ action: MailAction,
@@ -115,7 +130,7 @@ extension AppleMailAdapter {
   public func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
     let target = try await resolve(identity, scope: .recordedMailbox)
     try Task.checkCancellation()
-    return .init(confirmed: try await applyChange(.markRead, to: target.location))
+    return .init(confirmed: try await applyChange(.markRead, to: target.location) == .applied)
   }
   /// Marks a corrected message read in Junk without waiting behind sweeps and automatic actions.
   public func markCorrectionReadInJunk(_ identity: MessageIdentity) async throws
@@ -197,28 +212,67 @@ extension AppleMailAdapter {
     commandSent: @Sendable () async -> Void = {}
   ) async throws -> ActionReceipt {
     guard let command = MailCommand(action) else { return .init(confirmed: true) }
-    if command.destination != nil, identity.messageID == nil, scope == .recordedMailbox {
-      throw IntegrationError.missingMessageID
+    if command.removesReview, !(await setReview(removedBy: command, on: identity)) {
+      return .init(confirmed: true)
     }
-    let target = try await resolve(identity, scope: scope)
+    let target = try await notAttempted {
+      if command.destination != nil, identity.messageID == nil, scope == .recordedMailbox {
+        throw IntegrationError.missingMessageID
+      }
+      return try await resolve(identity, scope: scope)
+    }
     try Task.checkCancellation()
-    let applied = try await applyChange(command, to: target.location)
+    let change = try await requestChange(command, to: target.location)
     await commandSent()
-    guard applied else { return .init(confirmed: false) }
+    await record(change, of: command, on: identity)
+    switch change {
+      case .unconfirmed: return .init(confirmed: false)
+      case .alreadyApplied: return .init(confirmed: true)
+      case .applied: break
+    }
     guard let destination = command.destination else { return .init(confirmed: true) }
     guard target.location.messageID != nil else { return .init(confirmed: false) }
     return await observeMove(of: target, to: destination, confirmation: confirmation)
   }
-  /// Reports whether Mail confirmed the change; cancellation or timeout after sending is unknown.
-  private func applyChange(_ command: MailCommand, to location: MailMessageLocation) async throws
-    -> Bool
+  /// Rethrows failures from steps that precede any change request as ``ActionNotAttempted``.
+  private func notAttempted<Value>(_ step: () async throws -> Value) async throws -> Value {
+    do {
+      return try await step()
+    } catch let error as ActionNotAttempted {
+      throw error
+    } catch is CancellationError {
+      throw CancellationError()
+    } catch {
+      throw ActionNotAttempted(cause: error)
+    }
+  }
+  /// Requests a change, rethrowing the handler's refusals before it changes anything as
+  /// ``ActionNotAttempted``.
+  private func requestChange(_ command: MailCommand, to location: MailMessageLocation)
+    async throws -> MailChange
   {
     do {
-      return try await invoke(.apply(command, target: location)) == .boolean(true)
+      return try await applyChange(command, to: location)
+    } catch let error as IntegrationError where error.precedesMailChange {
+      throw ActionNotAttempted(cause: error)
+    }
+  }
+  /// Reports what Mail confirmed; cancellation or timeout after sending is unconfirmed.
+  private func applyChange(_ command: MailCommand, to location: MailMessageLocation) async throws
+    -> MailChange
+  {
+    let reply: ScriptValue
+    do {
+      reply = try await invoke(.apply(command, target: location))
     } catch is CancellationError {
-      return false
+      return .unconfirmed
     } catch IntegrationError.timedOut {
-      return false
+      return .unconfirmed
+    }
+    switch reply {
+      case .boolean(true): return .applied
+      case .string(MailScripts.alreadyAnnotated): return .alreadyApplied
+      default: return .unconfirmed
     }
   }
   /**
@@ -300,5 +354,17 @@ extension AppleMailAdapter {
       .compactMap(\.envelope).map(\.identity).filter {
         $0.accountID == account && $0.contentHash == identity.contentHash
       }
+  }
+}
+
+extension IntegrationError {
+  /// Whether the action handler raises this only from the checks that precede any change.
+  fileprivate var precedesMailChange: Bool {
+    switch self {
+      case .accountUnresolved, .mailboxUnresolved, .folderLimit, .messageMoved, .staleMessage,
+        .existingAnnotation:
+        true
+      default: false
+    }
   }
 }

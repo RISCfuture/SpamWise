@@ -20,6 +20,8 @@ public actor AppleMailAdapter: MailClientAdapter {
   let callTimeLimit: Duration
   let moveSettlingTime: Duration
   let observationInterval: Duration
+  /// Holds the messages whose orange flag or background SpamWise set.
+  let reviewMarks: Store?
 
   /**
    Creates an adapter over a Mail handler runner, raising negative durations to zero.
@@ -32,17 +34,21 @@ public actor AppleMailAdapter: MailClientAdapter {
      - callTimeLimit: Wall-clock limit for each handler call.
      - moveSettlingTime: Longest time to wait for Mail to show a moved message.
      - observationInterval: Delay between observations of a moved message.
+     - reviewMarks: The store recording each orange flag or background SpamWise set. Clearing
+       Review removes only those, so without a store it removes none.
    */
   public init(
     runner: any AppleEventRunner,
     callTimeLimit: Duration = defaultCallTimeLimit,
     moveSettlingTime: Duration = defaultMoveSettlingTime,
-    observationInterval: Duration = defaultObservationInterval
+    observationInterval: Duration = defaultObservationInterval,
+    reviewMarks: Store? = nil
   ) {
     self.runner = runner
     self.callTimeLimit = max(.zero, callTimeLimit)
     self.moveSettlingTime = max(.zero, moveSettlingTime)
     self.observationInterval = max(.zero, observationInterval)
+    self.reviewMarks = reviewMarks
   }
 
   /// Runs one handler request on the current task's lane under the adapter's wall-clock limit.
@@ -133,19 +139,6 @@ extension AppleMailAdapter {
   public func selectedMessages() async throws -> MailPage {
     try await selection(maximumCount: MailScripts.maximumSelectionCount)
   }
-  /// Writes up to `limit` raw messages from `role`'s mailboxes to `directory` without overwriting files, returning the count.
-  public func export(role: MailboxRole, to directory: URL, limit: Int = 500) async throws -> Int {
-    let messages = try await messages(limit: limit, role: role)
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    for message in messages {
-      try message.raw.write(
-        to: directory.appending(path: message.identity.key + ".eml"),
-        options: .withoutOverwriting
-      )
-    }
-    return messages.count
-  }
-
   private func unifiedPage(_ role: MailboxRole, offset: Int, limit: Int) async throws -> MailPage {
     try Self.decodePage(
       await invoke(.unifiedPage(role: role, offset: offset, limit: limit)),

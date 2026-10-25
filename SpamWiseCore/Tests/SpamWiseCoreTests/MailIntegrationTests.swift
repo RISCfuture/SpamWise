@@ -3,16 +3,22 @@ import Testing
 import SpamWiseCore
 @testable import MailIntegration
 
+private func notAttemptedCause(_ error: ActionNotAttempted?) -> IntegrationError? {
+  error?.cause as? IntegrationError
+}
+
 @Test
 func `refuses unscoped identities and unverifiable moves before contacting Mail`() async {
   let runner = StubAppleEvents([:])
   let adapter = AppleMailAdapter(runner: runner)
-  await #expect(throws: IntegrationError.accountUnresolved) {
+  let unscoped = await #expect(throws: ActionNotAttempted.self) {
     try await adapter.perform(.orangeFlag, for: .init(accountID: nil, contentHash: "x"))
   }
-  await #expect(throws: IntegrationError.missingMessageID) {
+  #expect(notAttemptedCause(unscoped) == .accountUnresolved)
+  let unverifiable = await #expect(throws: ActionNotAttempted.self) {
     try await adapter.perform(.moveToJunk, for: MailReply.identity(messageID: nil))
   }
+  #expect(notAttemptedCause(unverifiable) == .missingMessageID)
   #expect(await runner.requests.isEmpty)
 }
 
@@ -21,11 +27,34 @@ func `refuses an automatic action once the message has left its recorded mailbox
   async throws
 {
   let runner = StubAppleEvents([.findMessages: [MailReply.found()]])
-  await #expect(throws: IntegrationError.messageMoved) {
+  let error = await #expect(throws: ActionNotAttempted.self) {
     try await AppleMailAdapter(runner: runner).perform(.moveToJunk, for: MailReply.identity())
   }
+  #expect(notAttemptedCause(error) == .messageMoved)
   #expect(await runner.searchedMailboxes == ["Inbox"])
   #expect(await runner.appliedCount == 0)
+}
+
+@Test
+func `clears only an orange flag SpamWise set`() async throws {
+  let userFlagged = MailReply.message(localID: 1)
+  let flagged = MailReply.message(localID: 2, source: "From: a@example.org\r\n\r\nReview")
+  let runner = StubAppleEvents([
+    .findMessages: [MailReply.found(userFlagged), MailReply.found(flagged)],
+    .applyAction: [.string(MailScripts.alreadyAnnotated), MailReply.applied]
+  ])
+  let adapter = AppleMailAdapter(runner: runner, reviewMarks: try testStore())
+  let kept = MailReply.identity()
+  #expect(try await adapter.perform(.orangeFlag, for: kept).confirmed)
+  #expect(try await adapter.performCorrection(.clearOrangeFlag, for: kept).confirmed)
+  #expect(await runner.appliedCount == 1)
+  let set = MailReply.identity(localID: 2, source: "From: a@example.org\r\n\r\nReview")
+  #expect(try await adapter.perform(.orangeFlag, for: set).confirmed)
+  #expect(try await adapter.performCorrection(.clearOrangeFlag, for: set).confirmed)
+  let commands = await runner.requests.compactMap { request -> MailCommand? in
+    if case .apply(let command, _) = request { command } else { nil }
+  }
+  #expect(commands == [.orangeFlag, .orangeFlag, .clearOrangeFlag])
 }
 
 @Test
@@ -330,15 +359,22 @@ func `invokes compiled handlers with typed arguments and private error numbers`(
 
 @Test
 @MainActor
-func `decodes Apple Event booleans`() throws {
+func `decodes Apple Event booleans and integers too large for AppleScript integers`() throws {
   for (source, expected) in [
     ("return true", ScriptValue.boolean(true)),
     ("return false", .boolean(false)),
-    ("return {true, false}", .list([.boolean(true), .boolean(false)]))
+    ("return {true, false}", .list([.boolean(true), .boolean(false)])),
+    ("return {536870911, 3000000000}", .list([.integer(536_870_911), .integer(3_000_000_000)])),
+    ("return 1.5", .string(""))
   ] {
     let script = try #require(NSAppleScript(source: source))
     #expect(ScriptValue.decode(unsafe script.executeAndReturnError(nil)) == expected)
   }
+  var size = Int64(5_000_000_000)
+  let wide = try #require(
+    unsafe NSAppleEventDescriptor(descriptorType: typeSInt64, bytes: &size, length: 8)
+  )
+  #expect(ScriptValue.decode(wide) == .integer(5_000_000_000))
 }
 
 @Test
