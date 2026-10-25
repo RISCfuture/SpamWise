@@ -1347,22 +1347,6 @@
         }
       }
     },
-    "Enter the password or token for this server and username.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Introduce la contraseña o el token para este servidor y nombre de usuario."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saisissez le mot de passe ou le jeton pour ce serveur et ce nom d’utilisateur."
-          }
-        }
-      }
-    },
     "Enter the server that receives this account’s mail and checks who sent it. Separate several with commas.": {
       "localizations": {
         "es": {
@@ -9179,6 +9163,22 @@
         }
       }
     },
+    "Enter the password for this server and username.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce la contraseña para este servidor y nombre de usuario."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez le mot de passe pour ce serveur et ce nom d’utilisateur."
+          }
+        }
+      }
+    },
     "Export Backup": {
       "localizations": {
         "es": {
@@ -10679,6 +10679,22 @@
         }
       }
     },
+    "Password": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contraseña"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mot de passe"
+          }
+        }
+      }
+    },
     "Pick an account to see the messages in its Junk mailbox.": {
       "localizations": {
         "es": {
@@ -11279,22 +11295,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Afficher SpamWise dans la barre des menus"
-          }
-        }
-      }
-    },
-    "Sign in with an OAuth token": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Iniciar sesión con un token OAuth"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se connecter avec un jeton OAuth"
           }
         }
       }
@@ -16031,22 +16031,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Facultatif. SpamWise lit uniquement les adresses e-mail."
-          }
-        }
-      }
-    },
-    "Password or token": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contraseña o token"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mot de passe ou jeton"
           }
         }
       }

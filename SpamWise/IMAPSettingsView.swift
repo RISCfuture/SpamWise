@@ -33,6 +33,17 @@ struct IMAPSettingsView: View {
   }
 }
 
+extension IMAPSettingsView {
+  /// The connection sections over the app's models.
+  init(model: AppModel) {
+    self.init(
+      settings: model.settings,
+      imap: model.imap,
+      storageReady: model.services.storageReady
+    )
+  }
+}
+
 /**
  Chooses Apple Mail or IMAP after confirming, because switching turns dry run on.
 
@@ -97,7 +108,7 @@ private struct IMAPAccountFields: View {
     TextField("Username", text: $imap.username, prompt: Text("name@example.com"))
       .accessibilityIdentifier("imap.username")
     SecureField(
-      "Password or token",
+      "Password",
       text: $imap.credential,
       prompt: imap.canKeepSavedCredential ? Text("Saved in Keychain") : Text("Required")
     )
@@ -108,8 +119,6 @@ private struct IMAPAccountFields: View {
     DisclosureGroup("Connection options") {
       TextField("TLS port", text: $imap.port, prompt: Text(IMAPConnectionModel.defaultPort))
         .accessibilityIdentifier("imap.port")
-      Toggle("Sign in with an OAuth token", isOn: $imap.oauthBearer)
-        .accessibilityIdentifier("imap.oauth")
     }
   }
 }

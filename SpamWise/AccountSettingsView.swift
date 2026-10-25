@@ -1,7 +1,8 @@
 import SwiftUI
 import SpamWiseCore
 
-/// The Accounts tab: the mail connection, each account's filtering, health and trust, and keys.
+/// The Accounts tab: each account's connection, filtering, health and trust, then keys. With Apple
+/// Mail, the choice of another connection follows the Apple Mail sections.
 struct AccountSettingsView: View {
   let model: AppModel
 
@@ -9,20 +10,18 @@ struct AccountSettingsView: View {
 
   var body: some View {
     Form {
-      IMAPSettingsView(
-        settings: model.settings,
-        imap: model.imap,
-        storageReady: model.services.storageReady
-      )
       if transport == .appleMail {
         MailConnectionView(mail: model.mail)
         MailAccountsView(model: model)
-      } else if model.imap.hasSavedConnection {
-        MailAccountSection(
-          model: model,
-          accountID: model.imap.accountID,
-          name: model.imap.accountName
-        )
+      } else {
+        IMAPSettingsView(model: model)
+        if model.imap.hasSavedConnection {
+          MailAccountSection(
+            model: model,
+            accountID: model.imap.accountID,
+            name: model.imap.accountName
+          )
+        }
       }
       RelationshipSettingsView(
         relationships: model.relationships,
@@ -30,7 +29,10 @@ struct AccountSettingsView: View {
         shared: model.shared,
         imap: model.imap
       )
-      if transport == .appleMail { MailRuleSetupView(mail: model.mail) }
+      if transport == .appleMail {
+        MailRuleSetupView(mail: model.mail)
+        IMAPSettingsView(model: model)
+      }
       CredentialsSettingsView(credentials: model.credentials)
     }
     .formStyle(.grouped)
