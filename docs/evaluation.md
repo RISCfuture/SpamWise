@@ -92,16 +92,21 @@ JSON reports include a true-label/effective-label confusion matrix, overall and
 per-path Junk precision/recall (keyed by decision path), unclassified counts,
 original-model confidence buckets, a `calibration` section, newly incurred tokens with
 their pricing, cache hits, estimated cost, failed provider calls, and every mismatched
-filename with its reason. Graymail remains separate from binary good/junk metrics.
+filename with its reason. `observations` lists every message with the model's `modelLabel`,
+`confidence`, `category` and `categoryConfidence`, the effective `label` and `action`, the
+`preference` for its category and the decision `reason`, so decisions can be recomputed
+offline at any threshold. Graymail remains separate from binary good/junk metrics.
 Review and failures count as missed junk for recall; failures are also reported
 explicitly. Calibration uses original model Junk labels, even when a policy threshold
 reduces them to Review. Gate results are excluded from model calibration.
 
-`calibration.curve` scores every Junk threshold from 85 to 100. For each filtering
-strength, `calibration.strengths` reports the current threshold and the lowest
-threshold whose exact one-sided 95% Clopper-Pearson false-positive upper bound on the
-training partition meets the strength's target: 0.1% Conservative, 0.2% Balanced, 0.5%
-Aggressive. It then validates that threshold on the held-out partition. Selection
+`calibration.curve` scores every Junk threshold from 85 to 100, holding the category
+confidence that moves graymail the user chose Junk for at the run strength's
+(`calibration.graymailThreshold`). For each filtering strength, `calibration.strengths`
+reports the current threshold and the lowest threshold whose exact one-sided 95%
+Clopper-Pearson false-positive upper bound on the training partition meets the
+strength's target: 0.1% Conservative, 0.2% Balanced, 0.5% Aggressive, holding that
+strength's graymail category threshold. It then validates that threshold on the held-out partition. Selection
 therefore needs both partitions: use `reviewed --partition all`, or a corpus whose
 hash split covers both. The targets are provisional.
 
@@ -109,8 +114,8 @@ The rule-of-three approximation is reported alongside the exact bound for zero
 errors. With two good fixtures and zero false positives, the approximation is capped
 at 100%, not 0.2%; approximately 1,500 representative good messages with zero false
 positives are needed for the 0.2% bound. Confidence is not a calibrated probability.
-The production thresholds stay 99/95/90 until separately validated; the CLI never
-changes production settings.
+The production thresholds stay 99/95/90, and the graymail category thresholds 95/85/75,
+until separately validated; the CLI never changes production settings.
 
 ## Export from Mail
 

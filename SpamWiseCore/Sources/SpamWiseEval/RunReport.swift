@@ -2,11 +2,16 @@ import Evaluation
 import Foundation
 import SpamWiseCore
 
-/// The JSON report for one labeled run: metrics, calibration, provider usage and provenance notes.
+/**
+ The JSON report for one labeled run: metrics, calibration, every message's result, provider
+ usage and provenance notes.
+ */
 struct RunReport: Encodable {
   var model: String
   var strength: FilteringStrength
   var metrics: EvaluationReport
+  /// Every message's verdict, category, preference and effective decision, in corpus order.
+  var observations: [EvaluationObservation]
   var calibration: ThresholdCalibration
   var calibrationStatus: String
   var cacheHits: Int
@@ -27,7 +32,8 @@ struct RunReport: Encodable {
     model = options.model.description
     strength = options.strength
     metrics = EvaluationReport(observations: observations)
-    calibration = ThresholdCalibration(observations: observations)
+    self.observations = observations
+    calibration = ThresholdCalibration(observations: observations, strength: options.strength)
     calibrationStatus = Self.calibrationStatus(metrics: metrics, observations: observations)
     cacheHits = await cache.hits
     let isMock = options.model == .mock
