@@ -35,6 +35,14 @@
 <li>In SpamWise, open Mailboxes and Details under the account in Settings → Accounts, and choose Check Mailboxes.</li>
 </ol>
 <p>If the account says that Mail shows more than one Junk mailbox, keep the Junk role on one folder only: in Mail, select the folder you want to use, choose Mailbox → Use This Mailbox For → Junk, then choose Check Mailboxes. If Mail still shows another Junk mailbox for the account, its server may report several; ask your mail provider. With an IMAP connection, the server itself must mark one folder as its Junk folder; ask your mail provider if Check Connection can’t find it.</p>
+<h2><a name="gmail-spam" id="gmail-spam"></a>Use Gmail’s Spam as the Junk mailbox</h2>
+<p>Gmail keeps spam in its own Spam mailbox, in the [Gmail] folder ([Google Mail] in some countries). When Mail uses a Gmail label instead, such as a Junk label Mail created, SpamWise still moves junk into that label, but Gmail’s own spam filter doesn’t learn from it, and Gmail on the web and your other devices don’t treat the mail as spam. Setup and the account in Settings → Accounts then say that Mail uses a Gmail label as Junk instead of Gmail’s Spam. To use Gmail’s Spam:</p>
+<ol>
+<li>In Mail, open the account’s [Gmail] folder in the sidebar and select Spam.</li>
+<li>Choose Mailbox → Use This Mailbox For → Junk.</li>
+<li>In SpamWise, open Mailboxes and Details under the account in Settings → Accounts, and choose Check Mailboxes. Junk should show [Gmail]/Spam.</li>
+</ol>
+<p>A label you created yourself isn’t Gmail’s Spam, even when it’s named Spam. If the [Gmail] folder has no Spam mailbox, Gmail is hiding it from Mail: on the Gmail website, open Settings → See all settings → Labels and turn on Show in IMAP for Spam. Mail shows it the next time it checks the account. Messages already in the old label stay there.</p>
 <h2><a name="mail-moved-it" id="mail-moved-it"></a>Mail marked or moved a message itself</h2>
 <p>If a message has Mail’s junk mark, or is in Junk but Activity doesn’t show SpamWise moving it, Mail’s own Junk Mail filter or your mail server did it. In Review Junk, SpamWise says “SpamWise didn’t put this message in Junk. Another filter or the mail server did.” To let SpamWise do the sorting, turn off Mail’s filter; see <a href="getting-started.html#mail-junk-filter">Mail’s own Junk Mail filter</a>. Taking such a message out of Junk doesn’t teach SpamWise anything; to allow its sender, choose Mark as Good and Restore in Review Junk.</p>
 <h2><a name="restore-message" id="restore-message"></a>Restore a message</h2>

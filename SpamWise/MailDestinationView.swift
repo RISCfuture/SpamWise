@@ -7,8 +7,9 @@ struct MailDestinationView: View {
   let mail: MailConnectionModel
   let shared: SharedStateModel
   let accountID: String
-  @State private var destinations: MailDestinations?
   @State private var reading = TrackedOperation()
+
+  private var destinations: MailDestinations? { mail.destinations[accountID] }
 
   var body: some View {
     LabeledContent(
@@ -31,9 +32,8 @@ struct MailDestinationView: View {
   }
 
   private func read() {
-    destinations = nil
     reading.run(retryable: true) { [mail, accountID] in
-      destinations = try await mail.readDestinations(accountID: accountID)
+      try await mail.readDestinations(accountID: accountID)
       return nil
     }
   }
@@ -70,6 +70,47 @@ private struct MailboxRoleWarning: View {
         """
         Mail doesn’t show exactly one Inbox for this account, so SpamWise won’t move its mail. \
         Check the account in Mail, then choose Check Mailboxes.
+        """
+      )
+    } else if destinations.junkBypassesGmailSpam {
+      GmailSpamWarning(destinations: destinations)
+    }
+  }
+}
+
+/// Why a Gmail account's junk misses Gmail's Spam, and how to point Mail's Junk role at it.
+struct GmailSpamWarning: View {
+  let destinations: MailDestinations
+  /// The account's name, for a warning shown outside the account's own section.
+  var accountName: String?
+
+  private var junk: String { destinations.junk.first ?? "" }
+
+  var body: some View {
+    HStack(alignment: .firstTextBaseline) {
+      WarningLabel { message }
+      Spacer()
+      HelpButton(page: "gmail-spam")
+    }
+  }
+
+  @ViewBuilder private var message: some View {
+    if let accountName {
+      Text(
+        """
+        For the “\(accountName)” account, Mail uses the Gmail label “\(junk)” as Junk instead of \
+        Gmail’s Spam, so Gmail’s own filter doesn’t learn from the mail SpamWise moves there. In \
+        Mail, select Spam in the account’s [Gmail] folder, choose Mailbox › Use This Mailbox For › \
+        Junk, then choose Check Mail Connection.
+        """
+      )
+    } else {
+      Text(
+        """
+        Mail uses the Gmail label “\(junk)” as this account’s Junk instead of Gmail’s Spam, so \
+        Gmail’s own filter doesn’t learn from the mail SpamWise moves there. In Mail, select Spam \
+        in the account’s [Gmail] folder, choose Mailbox › Use This Mailbox For › Junk, then choose \
+        Check Mailboxes.
         """
       )
     }

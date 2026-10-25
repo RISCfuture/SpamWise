@@ -244,7 +244,7 @@ creating separate completion criteria for the same work.
   - [x] Expose account-specific special-mailbox destination previews.
   - [ ] Verify concurrent-filter behavior and slow/offline provider synchronization.
   - [ ] Verify coexistence with Mail's own Junk Mail filter, on by default, in both its mark-only mode (whose colors can resemble Review) and its move-to-Junk mode.
-  - [ ] Flag a Gmail-hosted account whose Junk role is a custom label. On the owner's Mac, Mail maps a Gmail account set up as generic IMAP to custom "Junk" and "Deleted Messages" labels, so SpamWise's confirmed Junk moves never reach Gmail's Spam, and the setup check accepts the role.
+  - [x] Flag a Gmail-hosted account whose Junk role is a custom label. On the owner's Mac, Mail maps a Gmail account set up as generic IMAP to custom "Junk" and "Deleted Messages" labels, so SpamWise's confirmed Junk moves never reach Gmail's Spam. Setup and the account's mailboxes warn, without withholding validation, when the Junk role is outside the [Gmail] or [Google Mail] folder; Help explains how to give Spam the Junk role.
 
 - [ ] **SS-03 — Offer a genuinely local filtering mode.** SpamSieve's
   [documented privacy baseline](https://c-command.com/spamsieve/features) is processing
