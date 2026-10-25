@@ -5,17 +5,15 @@ struct RemoteVerdict: Decodable {
   static var schema: [String: Any] {
     [
       "type": "object", "additionalProperties": false,
-      "required": ["category", "label", "confidence", "reason"],
+      "required": ["category", "categoryConfidence", "label", "confidence", "reason"],
       "properties": [
         "category": [
           "type": "string",
           "enum": MailCategory.allCases.filter { $0 != .unknown }.map(\.rawValue)
         ],
+        "categoryConfidence": confidenceSchema,
         "label": ["type": "string", "enum": ["inbox", "review", "junk"]],
-        "confidence": [
-          "type": "integer", "minimum": ClassificationLimits.confidenceRange.lowerBound,
-          "maximum": ClassificationLimits.confidenceRange.upperBound
-        ],
+        "confidence": confidenceSchema,
         "reason": [
           "type": "string", "minLength": 1,
           "maxLength": ClassificationLimits.maximumReasonCharacters
@@ -24,7 +22,15 @@ struct RemoteVerdict: Decodable {
     ]
   }
 
+  private static var confidenceSchema: [String: Any] {
+    [
+      "type": "integer", "minimum": ClassificationLimits.confidenceRange.lowerBound,
+      "maximum": ClassificationLimits.confidenceRange.upperBound
+    ]
+  }
+
   var category: MailCategory?
+  var categoryConfidence: Int?
   var label: MailLabel
   var confidence: Int
   var reason: String
@@ -35,6 +41,7 @@ struct RemoteVerdict: Decodable {
     return try Verdict(
       label: value.label,
       category: value.category ?? .unknown,
+      categoryConfidence: value.categoryConfidence,
       confidence: value.confidence,
       reason: value.reason,
       usage: usage
