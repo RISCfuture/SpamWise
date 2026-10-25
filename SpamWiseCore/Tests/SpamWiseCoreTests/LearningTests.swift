@@ -369,6 +369,41 @@ struct `Statistical training` {
     )
     #expect(enrichedEvidence.learnedMargin == expected)
   }
+
+  @Test(arguments: [(GraymailPreference.keep, true), (.junk, false)])
+  func `self trains only on a confident prediction whose label decided`(
+    preference: GraymailPreference,
+    trains: Bool
+  ) async throws {
+    let store = try testStore(), trained = try trained()
+    try await StateRepository.update(store) {
+      $0.learning = trained
+      $0.settings.advancedOptions.bayes = true
+      $0.settings.categoryPreferences[.newsletter] = preference
+    }
+    let message = try learningMessage(
+      "observatory telescope meeting research colleague agenda discussion digest"
+    )
+    let pipeline = Pipeline(
+      store: store,
+      classifier: MockClassifier(
+        verdict: .init(
+          label: .inbox,
+          category: .newsletter,
+          categoryConfidence: 100,
+          confidence: 99,
+          reason: "Research digest"
+        )
+      )
+    )
+    let record = await pipeline.process(
+      message,
+      identity: .init(accountID: "eval", contentHash: message.hash)
+    )
+    #expect(record.decision.followsCategoryPreference != trains)
+    let samples = try await StateRepository.load(store).learning.samples
+    #expect(samples.contains { $0.provenance == .highConfidencePrediction } == trains)
+  }
 }
 
 /// Junk corrections from three senders at one shop domain.

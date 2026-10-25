@@ -163,6 +163,9 @@ extension Pipeline {
    Saves a classified record with the content-rule counts and Bayes training its classification
    adds, which apply only while the policy it was classified under is current.
 
+   A decision that follows the user's category preference rather than the verdict's label never
+   trains Bayes as a prediction.
+
    - Parameter recordsStatistics: Whether the classification counts toward content-rule
      statistics and training; a manual preview's does not.
    */
@@ -173,7 +176,9 @@ extension Pipeline {
     recordsStatistics: Bool
   ) async throws {
     let tally = recordsStatistics ? classification.contentRuleTally : ContentRuleTally()
-    let trains = recordsStatistics && classification.trainsPrediction
+    let trains =
+      recordsStatistics && classification.trainsPrediction
+      && !record.decision.followsCategoryPreference
     var parts: StateSlices.Parts = []
     if !tally.isEmpty { parts.insert(.contentRules) }
     if trains { parts.insert(.learning) }
