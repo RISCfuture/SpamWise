@@ -1675,6 +1675,22 @@
         }
       }
     },
+    "The correction was saved, but its Mail steps never started. Not retried.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La corrección se guardó, pero sus pasos en Mail nunca empezaron. No se reintentará."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La correction a été enregistrée, mais ses étapes dans Mail n’ont jamais commencé. Aucune nouvelle tentative."
+          }
+        }
+      }
+    },
     "The folder plan no longer exists.": {
       "localizations": {
         "es": {
