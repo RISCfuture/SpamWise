@@ -10,12 +10,13 @@ necessary review access and Apple’s requested issue reference before submittin
 
 SpamWise is a sandboxed Apple Mail filtering companion. It reads bounded message
 source and history, resolves a message within its account, and supports moving it
-to that account’s Inbox or Junk and adding a Review annotation. When the user marks a
-message as Good, it clears Mail’s own junk mark once the move to Inbox is confirmed.
-After a confirmed Junk move it can mark the message read, if the user turns that on.
-It never deletes mail or moves it to Trash. The default is dry run. Leaving it requires an explicit
-confirmation after a read-only check that the account’s Inbox and Junk mailboxes
-resolve uniquely, and every live move is verified afterward and fails open.
+to that account’s Inbox or Junk and adding a Review annotation. When the user marks
+a message as Good, it clears Mail’s own junk mark once the move to Inbox is
+confirmed. After a confirmed Junk move it can mark the message read, if the user
+turns that on. It never deletes mail or moves it to Trash. The default is dry run.
+Leaving it requires an explicit confirmation after a read-only check that the
+account’s Inbox and Junk mailboxes resolve uniquely, and every live move is verified
+afterward and fails open.
 
 The app requests `com.apple.security.temporary-exception.apple-events` only for
 `com.apple.mail`, together with the Automation entitlement and usage description.

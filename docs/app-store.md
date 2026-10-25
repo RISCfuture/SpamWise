@@ -55,8 +55,8 @@ Mail composition permission does not establish access to SpamWise's existing-mai
 inspection and move operations.
 
 Every action path, from history import and lookup to Junk and Inbox moves, flags,
-read status and clearing Mail's junk mark, goes through this exception, and the Mail extension alone does nothing.
-A store build without it could not filter mail, so the exception decision gates the
+read status and clearing Mail's junk mark, goes through this exception, and the Mail
+extension alone does nothing. A store build without it could not filter mail, so the exception decision gates the
 whole edition; see [feasibility](app-store-feasibility.md). The
 [review notes](app-review-notes.md) draft the justification: bounded,
 account-specific Mail actions, user consent, dry-run defaults, persist-before-action

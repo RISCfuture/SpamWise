@@ -118,7 +118,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pudo confirmar que se quitó la marca de no deseado de Mail. El movimiento a Entrada sigue registrado; este paso no se reintentará."
+            "value": "No se pudo confirmar que se quitó la marca de correo no deseado de Mail. El movimiento a Entrada sigue registrado; este paso no se reintentará."
           }
         },
         "fr": {
@@ -134,7 +134,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pudo guardar la eliminación de la marca de no deseado de Mail. Se conserva el movimiento confirmado a Entrada."
+            "value": "No se pudo guardar la eliminación de la marca de correo no deseado de Mail. Se conserva el movimiento confirmado a Entrada."
           }
         },
         "fr": {

@@ -90,7 +90,6 @@ private struct DecisionSummaryView: View {
     if let error = row.readStatusError { WarningLabel(verbatim: error) }
     if let outcome = row.junkMarkOutcome {
       LabeledContent("Mail’s junk mark cleared", value: outcome.localizedTitle)
-        .accessibilityIdentifier("decision.junkMark")
     }
     if let error = row.junkMarkError { WarningLabel(verbatim: error) }
   }
