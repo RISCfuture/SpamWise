@@ -95,6 +95,8 @@ public struct MailScanHealth: Codable, Sendable, Equatable {
   public var lastCompletedSweep: Date?
   /// Sanitized integration failure, cleared by the next successful page.
   public var failure: String?
+  /// A condition of the latest traversal that limits what it did without being a failure.
+  public var note: String?
   /// Passes in a row that failed, cleared by the next successful page.
   public var consecutiveFailures = 0
   /// Passes in a row whose page read timed out, cleared by a pass without a timeout.
@@ -117,6 +119,7 @@ public struct MailScanHealth: Codable, Sendable, Equatable {
     lastSuccess = values.lenient(.lastSuccess, default: nil)
     lastCompletedSweep = values.lenient(.lastCompletedSweep, default: nil)
     failure = values.lenient(.failure, default: nil)
+    note = values.lenient(.note, default: nil)
     consecutiveFailures = values.lenient(.consecutiveFailures, default: 0)
     consecutiveTimeouts = values.lenient(.consecutiveTimeouts, default: 0)
     coverage = values.lenient(.coverage, default: SweepCoverage())
@@ -155,7 +158,7 @@ public struct MailScanHealth: Codable, Sendable, Equatable {
   }
   private enum CodingKeys: String, CodingKey {
     case accountName, inboxStart, nextOffset, observedTotal, scanned, unavailableInSweep
-    case lastSweepUnavailable, lastAttempt, lastSuccess, lastCompletedSweep, failure
+    case lastSweepUnavailable, lastAttempt, lastSuccess, lastCompletedSweep, failure, note
     case consecutiveFailures, consecutiveTimeouts, coverage
   }
 }

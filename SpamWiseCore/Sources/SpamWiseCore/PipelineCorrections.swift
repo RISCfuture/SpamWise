@@ -133,7 +133,7 @@ extension Pipeline {
     }
   }
   /// Records that a saved correction's mail steps never started, so its outcome does not stay pending.
-  private func recordUnstarted(_ correction: DecisionRecord, cause: any Error) async
+  func recordUnstarted(_ correction: DecisionRecord, cause: any Error) async
     -> DecisionRecord
   {
     var record = correction

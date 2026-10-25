@@ -62,17 +62,28 @@ extension StateRepository {
     _ store: Store,
     _ edit: @Sendable (inout Settings) throws -> Void
   ) async throws {
+    try await editSettings(store, edit, alongside: StateSlices(), applying: { _ in })
+  }
+  /// Applies a field-level settings edit and, in the same transaction, `change` to `slices`.
+  static func editSettings(
+    _ store: Store,
+    _ edit: @Sendable (inout Settings) throws -> Void,
+    alongside slices: StateSlices,
+    applying change: @Sendable (inout AppState) -> Void
+  ) async throws {
     try await transaction(store) { transaction in
       let previous = transaction.state.settings
       var settings = previous
       try edit(&settings)
       clamp(&settings)
       guard settings != previous else { return }
+      try transaction.load(slices)
       let clearsRetainedContent =
         previous.advancedOptions.retainReviewedContent
         && !settings.advancedOptions.retainReviewedContent
       if clearsRetainedContent { try transaction.load(StateSlices(reviewedLabels: .all)) }
       transaction.state.settings = settings
+      change(&transaction.state)
       if clearsRetainedContent {
         transaction.state.reviewedLabels = transaction.state.reviewedLabels.map { label in
           var label = label; label.message = nil; return label

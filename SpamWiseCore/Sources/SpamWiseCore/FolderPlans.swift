@@ -121,12 +121,19 @@ public enum FolderPlans {
     }
   }
 
-  /// Removes a saved plan; its folder and the mail in it are left unchanged.
+  /// Removes a saved plan and its training claims; its folder and the mail in it are left unchanged.
   public static func remove(planID: String, in store: Store) async throws {
-    try await editPlans(in: store) { plans in
-      guard plans.contains(where: { $0.id == planID }) else { throw FolderPlanError.notFound }
-      plans.removeAll { $0.id == planID }
-    }
+    try await StateRepository.editSettings(
+      store,
+      { settings in
+        guard settings.mailOptions.folderPlans.contains(where: { $0.id == planID }) else {
+          throw FolderPlanError.notFound
+        }
+        settings.mailOptions.folderPlans.removeAll { $0.id == planID }
+      },
+      alongside: StateSlices([.training]),
+      applying: { $0.forgetTraining(of: planID) }
+    )
   }
 
   private static func validated(

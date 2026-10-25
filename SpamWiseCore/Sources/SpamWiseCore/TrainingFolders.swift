@@ -11,8 +11,6 @@ public enum TrainingFolderError: TrainingFolderFailure, Sendable, Equatable, Loc
   case placementMismatch
   /// The placement was already applied or recorded.
   case alreadyClaimed
-  /// The folder holds more messages than SpamWise tracks for one training plan.
-  case observationLimitReached
   /// A general description of the skipped placement.
   public var errorDescription: String? {
     String(localized: "The training folder placement couldn’t be applied.", bundle: .module)
@@ -32,17 +30,19 @@ public enum TrainingFolderError: TrainingFolderFailure, Sendable, Equatable, Loc
         )
       case .alreadyClaimed:
         String(localized: "This placement was already applied.", bundle: .module)
-      case .observationLimitReached:
-        String(
-          localized: "The training folder holds more messages than SpamWise tracks.",
-          bundle: .module
-        )
     }
   }
 }
 
 /// Deliberate placement processing restricted to explicitly enabled, initially empty training folders.
 public enum TrainingFolders {
+  /// Health note for a training folder whose traversal found more messages than SpamWise tracks.
+  public static var observationLimitNote: String {
+    String(
+      localized: "The training folder holds more messages than SpamWise tracks.",
+      bundle: .module
+    )
+  }
   /// Required dedicated name, kept distinct from ordinary Junk or Inbox membership.
   public static func name(for purpose: MailFolderPurpose) -> String? {
     switch purpose {
@@ -105,55 +105,99 @@ public enum TrainingFolders {
       state.trainingClaims[key] = record.id
     }
   }
-  /// Resets observations at traversal boundaries; only readable traversals can release completed claims.
+  /**
+   Records the placements on one page of a training folder's traversal, and at its end releases
+   the claims of placements the traversal no longer found.
+
+   A claim is released whatever its correction's outcome, so placing the message in the folder
+   again applies it again. Claims stay while their correction awaits dispatch or a move recheck,
+   and every claim stays after a traversal that met unreadable messages or more messages than
+   SpamWise tracks.
+
+   - Parameters:
+     - identities: The messages on the page.
+     - planID: The training plan whose folder was read.
+     - sweepComplete: Whether the page ends the traversal.
+     - canReleaseClaims: Whether the traversal read every message in the folder.
+     - settling: Records whose moves are still to be rechecked after their settling window.
+     - store: The store holding the claims.
+   - Returns: Whether the traversal has found more messages than SpamWise tracks.
+   */
+  @discardableResult
   public static func observe(
     _ identities: [MessageIdentity],
     planID: String,
     sweepComplete: Bool,
     canReleaseClaims: Bool = true,
+    settling: Set<UUID> = [],
     store: Store
-  ) async throws {
+  ) async throws -> Bool {
     try await StateRepository.transaction(store) { transaction in
       try transaction.load(StateSlices([.training]))
       let claimed = Set(
         transaction.state.trainingClaims.filter { $0.key.hasPrefix(planID + ":") }.values
       )
       if sweepComplete { try transaction.load(StateSlices(records: .only(claimed))) }
-      try transaction.state.observeTraining(
+      let overflowed = transaction.state.observeTraining(
         identities.map { key(planID: planID, identity: $0) },
         planID: planID,
         sweepComplete: sweepComplete,
-        canReleaseClaims: canReleaseClaims
+        canReleaseClaims: canReleaseClaims,
+        settling: settling
       )
       try transaction.commit()
+      return overflowed
     }
   }
 }
 
 extension AppState {
+  /// Records observed placement keys up to the retention limit, returning whether any were left out.
   fileprivate mutating func observeTraining(
     _ keys: [String],
     planID: String,
     sweepComplete: Bool,
-    canReleaseClaims: Bool
-  ) throws {
+    canReleaseClaims: Bool,
+    settling: Set<UUID>
+  ) -> Bool {
     var observed = trainingObservations[planID] ?? []
-    observed.formUnion(keys)
-    guard observed.count <= RetentionLimits.trainingObservations else {
-      throw TrainingFolderError.observationLimitReached
+    var overflowed = trainingObservationOverflows.contains(planID)
+    for key in keys where !observed.contains(key) {
+      guard observed.count < RetentionLimits.trainingObservations else {
+        overflowed = true
+        break
+      }
+      observed.insert(key)
     }
-    trainingObservations[planID] = observed
-    guard sweepComplete else { return }
-    let outcomes = Dictionary(
-      records.map { ($0.id, $0.outcome) },
-      uniquingKeysWith: { _, last in last }
-    )
-    trainingClaims = trainingClaims.filter { key, recordID in
-      !canReleaseClaims || !key.hasPrefix(planID + ":") || observed.contains(key)
-        || ![ActionOutcome.applied, .noAction, .dryRun, .unclassified].contains(
-          outcomes[recordID] ?? .requested
-        )
+    guard sweepComplete else {
+      trainingObservations[planID] = observed
+      if overflowed { trainingObservationOverflows.insert(planID) }
+      return overflowed
+    }
+    if canReleaseClaims && !overflowed {
+      releaseTrainingClaims(of: planID, keeping: observed, settling: settling)
     }
     trainingObservations[planID] = []
+    trainingObservationOverflows.remove(planID)
+    return overflowed
+  }
+
+  /// Releases the plan's claims that `observed` lacks, except those awaiting dispatch or a recheck.
+  private mutating func releaseTrainingClaims(
+    of planID: String,
+    keeping observed: Set<String>,
+    settling: Set<UUID>
+  ) {
+    let unsettled = settling.union(records.filter { $0.outcome == .pending }.map(\.id))
+    trainingClaims = trainingClaims.filter { key, recordID in
+      !key.hasPrefix(planID + ":") || observed.contains(key) || unsettled.contains(recordID)
+    }
+  }
+
+  /// Removes the claims and observations of a training plan.
+  mutating func forgetTraining(of planID: String) {
+    trainingClaims = trainingClaims.filter { !$0.key.hasPrefix(planID + ":") }
+    trainingObservations[planID] = nil
+    trainingObservationOverflows.remove(planID)
   }
 }

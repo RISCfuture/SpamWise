@@ -48,16 +48,38 @@ struct `Training folder corrections` {
     )
   }
 
-  private func observe(_ identities: [MessageIdentity] = [], canReleaseClaims: Bool = true)
-    async throws
-  {
+  @discardableResult
+  private func observe(
+    _ identities: [MessageIdentity] = [],
+    sweepComplete: Bool = true,
+    canReleaseClaims: Bool = true,
+    settling: Set<UUID> = []
+  ) async throws -> Bool {
     try await TrainingFolders.observe(
       identities,
       planID: plan.id,
-      sweepComplete: true,
+      sweepComplete: sweepComplete,
       canReleaseClaims: canReleaseClaims,
+      settling: settling,
       store: store
     )
+  }
+
+  private func setOutcome(_ outcome: ActionOutcome, of record: DecisionRecord) async throws {
+    try await StateRepository.update(store) { state in
+      if let index = state.records.firstIndex(where: { $0.id == record.id }) {
+        state.records[index].outcome = outcome
+      }
+    }
+  }
+
+  /// Identities of `count` other messages in the training folder.
+  private func otherPlacements(_ count: Int) -> [MessageIdentity] {
+    (0..<count).map { index in
+      var identity = selected.identity
+      identity.messageID = "<other-\(index)@example.org>"
+      return identity
+    }
   }
 
   private func state() async throws -> AppState { try await StateRepository.load(store) }
@@ -91,6 +113,10 @@ struct `Training folder corrections` {
     #expect(incomplete.trainingObservations[plan.id]?.isEmpty == true)
     try await observe([selected.identity], canReleaseClaims: false)
     #expect(try await state().trainingObservations[plan.id]?.isEmpty == true)
+    try await FolderPlans.remove(planID: plan.id, in: store)
+    let removed = try await state()
+    #expect(removed.trainingClaims.isEmpty)
+    #expect(removed.trainingObservations[plan.id] == nil)
   }
 
   @Test
@@ -102,14 +128,32 @@ struct `Training folder corrections` {
   }
 
   @Test
-  func `keeps the claim when the training correction's move failed`() async throws {
+  func `releases a failed placement's claim but keeps one awaiting dispatch or a recheck`()
+    async throws
+  {
     let record = try await correct()
-    try await StateRepository.update(store) { state in
-      if let index = state.records.firstIndex(where: { $0.id == record.id }) {
-        state.records[index].outcome = .failed
-      }
-    }
+    try await setOutcome(.pending, of: record)
     try await observe()
     #expect(try await state().trainingClaims.count == 1)
+    try await setOutcome(.failed, of: record)
+    try await observe(settling: [record.id])
+    #expect(try await state().trainingClaims.count == 1)
+    try await observe()
+    #expect(try await state().trainingClaims.isEmpty)
+  }
+
+  @Test
+  func `finishes a traversal larger than it tracks without releasing its claims`() async throws {
+    try await correct()
+    let others = otherPlacements(RetentionLimits.trainingObservations + 1)
+    #expect(try await observe(others, sweepComplete: false))
+    let partial = try await state()
+    #expect(partial.trainingObservations[plan.id]?.count == RetentionLimits.trainingObservations)
+    #expect(try await observe())
+    let finished = try await state()
+    #expect(finished.trainingClaims.count == 1)
+    #expect(finished.trainingObservations[plan.id]?.isEmpty == true)
+    #expect(try await !observe())
+    #expect(try await state().trainingClaims.isEmpty)
   }
 }

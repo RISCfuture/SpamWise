@@ -200,6 +200,9 @@ private struct SavedFolderPlanRow: View {
     } else if let failure = health?.failure {
       WarningLabel(verbatim: failure)
     }
+    if let note = health?.note {
+      Text(verbatim: note).foregroundStyle(.secondary)
+    }
     UnreadableMailView(messageCount: health?.unavailableCount ?? 0)
   }
 }

@@ -141,6 +141,7 @@ extension StateTransaction {
     if newParts.contains(.training) {
       let training = try document(Self.trainingKey, slice: .training, default: TrainingDocument())
       state.trainingClaims = training.claims; state.trainingObservations = training.observations
+      state.trainingObservationOverflows = training.overflowed
     }
     if newParts.contains(.learning) {
       state.learning = try document(Self.learningKey, slice: .learning, default: LearningState())

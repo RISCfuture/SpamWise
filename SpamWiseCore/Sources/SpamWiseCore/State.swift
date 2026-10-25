@@ -305,6 +305,8 @@ public struct AppState: Codable, Sendable, Equatable {
   public var trainingClaims: [String: UUID] = [:]
   /// Identities observed during an unfinished training-folder sweep.
   public var trainingObservations: [String: Set<String>] = [:]
+  /// Training plans whose unfinished sweep found more messages than ``trainingObservations`` keeps.
+  public var trainingObservationOverflows: Set<String> = []
   /// Bounded settings, rule and correction revision trail.
   public var auditEvents: [AuditEvent] = []
   /// The latest unchanged correction's bounded undo snapshot.
@@ -350,6 +352,7 @@ public struct AppState: Codable, Sendable, Equatable {
     contentRuleSkips = values.lenient(.contentRuleSkips, default: [:])
     trainingClaims = values.lenient(.trainingClaims, default: [:])
     trainingObservations = values.lenient(.trainingObservations, default: [:])
+    trainingObservationOverflows = values.lenient(.trainingObservationOverflows, default: [])
     auditEvents = values.lenient(.auditEvents, default: [])
     correctionUndo = values.lenient(.correctionUndo, default: nil)
     corrections = values.lenient(.corrections, default: [])
@@ -368,7 +371,8 @@ public struct AppState: Codable, Sendable, Equatable {
   }
   private enum CodingKeys: String, CodingKey {
     case revision, settings, rules, contentRules, contentRuleHits, contentRuleSkips, trainingClaims
-    case trainingObservations, auditEvents, correctionUndo, corrections, records, retries
+    case trainingObservations, trainingObservationOverflows, auditEvents, correctionUndo
+    case corrections, records, retries
     case histories, claimedActions, contactAddresses, contactsUpdatedAt, ownAddresses
     case costByMonth, learning, reviewedLabels, lastDigestWeek, authServerObservations
   }
