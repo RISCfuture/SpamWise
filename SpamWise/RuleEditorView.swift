@@ -108,9 +108,7 @@ private struct SenderRulesPane: View {
       }
       .accessibilityIdentifier("rules.remove.confirm")
     } message: {
-      Text(
-        "SpamWise decides new mail from these senders without the rule. Mail already filtered stays where it is."
-      )
+      Text(removalMessage)
     }
     .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
       if case .success(let url) = result { rules.previewSenderRuleImport(from: url) }
@@ -123,11 +121,30 @@ private struct SenderRulesPane: View {
     ) { transferStatus = ExportResult.status(of: $0, failure: "Rules couldn’t be exported.") }
   }
 
+  /// The rule being removed, when there is exactly one.
+  private var removedRule: SenderRule? {
+    guard removing.count == 1, let id = removing.first else { return nil }
+    return shared.state.rules.first { $0.id == id }
+  }
+
   private var removalTitle: String {
-    guard removing.count == 1, let id = removing.first,
-      let rule = shared.state.rules.first(where: { $0.id == id })
-    else { return String(localized: "Remove \(removing.count) rules?") }
+    guard let rule = removedRule else {
+      return String(localized: "Remove \(removing.count) rules?")
+    }
     return String(localized: "Remove the rule for \(rule.value)?")
+  }
+
+  private var removalMessage: String {
+    guard removedRule?.scope == .address else {
+      return String(
+        localized:
+          "SpamWise decides new mail from these senders without the rule. Mail already filtered stays where it is."
+      )
+    }
+    return String(
+      localized:
+        "SpamWise decides new mail from this sender without the rule. Mail already filtered stays where it is."
+    )
   }
 
   private func edit(_ ids: Set<SenderRule.ID>) {
