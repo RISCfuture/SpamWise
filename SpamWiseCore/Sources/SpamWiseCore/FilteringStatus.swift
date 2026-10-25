@@ -20,7 +20,8 @@ public enum FilteringStatus: String, Sendable, CaseIterable {
   case mailNotAuthorized
   /// Apple Mail is not running.
   case mailNotRunning
-  /// Dry run, with no account's Inbox and Junk mailboxes validated yet.
+  /// Dry run, with no Inbox and Junk mailboxes validated yet for an account of the selected
+  /// transport.
   case rolesNotValidated
   /// Dry run: decisions are recorded but mail is unchanged.
   case dryRun
@@ -45,10 +46,17 @@ public enum FilteringStatus: String, Sendable, CaseIterable {
       } else if appleMail, mailAutomation == .mailNotRunning {
         .mailNotRunning
       } else if settings.dryRun {
-        settings.validatedAccounts.isEmpty ? .rolesNotValidated : .dryRun
+        settings.hasValidatedTransportAccount ? .dryRun : .rolesNotValidated
       } else {
         .filtering
       }
+  }
+}
+
+extension Settings {
+  /// Whether an account of the selected transport has validated Inbox and Junk mailboxes.
+  fileprivate var hasValidatedTransportAccount: Bool {
+    validatedAccounts.contains { MailTransport(accountID: $0) == advancedOptions.transport }
   }
 }
 

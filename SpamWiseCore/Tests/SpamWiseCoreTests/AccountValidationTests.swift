@@ -22,6 +22,22 @@ func `reports the most limiting status before any account is validated`(
   #expect(derived.allowsAutomaticChecks == (status == .rolesNotValidated))
 }
 
+@Test(arguments: [
+  (["mail-account"], MailTransport.imap, FilteringStatus.rolesNotValidated),
+  (["imap:account"], .appleMail, .rolesNotValidated),
+  (["mail-account", "imap:account"], .imap, .dryRun)
+])
+func `counts only the selected transport's validated accounts`(
+  validated: [String],
+  transport: MailTransport,
+  status: FilteringStatus
+) {
+  var settings = onboarded
+  settings.validatedAccounts = Set(validated)
+  settings.advancedOptions.transport = transport
+  #expect(FilteringStatus(settings: settings, mailAutomation: .granted) == status)
+}
+
 @Test
 func `stops automatic checks while paused`() {
   var paused = onboarded

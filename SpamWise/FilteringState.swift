@@ -20,7 +20,8 @@ enum FilteringState: String, CaseIterable {
   case offline
   /// The latest check of some account or folder failed or keeps timing out.
   case failing
-  /// Dry run, with no account's Inbox and Junk mailboxes validated yet.
+  /// Dry run, with no Inbox and Junk mailboxes validated yet for an account of the selected
+  /// transport.
   case rolesNotValidated
   /// Dry run: decisions are recorded but mail is unchanged.
   case dryRun
