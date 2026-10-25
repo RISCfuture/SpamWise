@@ -14,7 +14,7 @@ protocol CredentialStore: Sendable {
   func delete(_ credential: StoredCredential) throws
 }
 
-/// The shared Keychain group, which the app and the Mail extension both read.
+/// The shared Keychain group, which only the app reads.
 struct KeychainCredentialStore: CredentialStore {
   func read(_ credential: StoredCredential) throws -> String {
     guard let keychain = credential.keychain else { throw KeychainError.missing }
