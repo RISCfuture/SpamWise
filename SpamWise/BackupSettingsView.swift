@@ -30,8 +30,8 @@ struct BackupContentsNote: View {
   var body: some View {
     Text(
       """
-      A backup holds your rules, policy, corrections and learning, encrypted with a recovery key. \
-      Keys, passwords and spending stay on this Mac.
+      A backup holds your rules, additional instructions, corrections and learning, encrypted with \
+      a recovery key. Keys, passwords and spending stay on this Mac.
       """
     )
     .foregroundStyle(.secondary)

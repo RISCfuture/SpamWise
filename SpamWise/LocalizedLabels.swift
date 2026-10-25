@@ -113,8 +113,8 @@ extension DecisionPath {
   var localizedTitle: String {
     switch self {
       case .gate: String(localized: "Rule or relationship")
-      case .fingerprint: String(localized: "Campaign match")
-      case .model: String(localized: "Model")
+      case .fingerprint: String(localized: "Similar to mail you marked Junk")
+      case .model: String(localized: "Provider")
       case .correction: String(localized: "Correction")
       case .selection: String(localized: "Selected in Mail")
       case .verification: String(localized: "Connection check")
@@ -163,7 +163,7 @@ extension FilteringState {
       case .rolesNotValidated:
         String(localized: "Dry run — check the Mail connection in Settings to start filtering")
       case .dryRun: String(localized: "Dry run — mail stays unchanged")
-      case .filtering: String(localized: "Filtering validated accounts")
+      case .filtering: String(localized: "Filtering on")
     }
   }
   /// Whether the state stops or limits filtering until the user or the system acts.

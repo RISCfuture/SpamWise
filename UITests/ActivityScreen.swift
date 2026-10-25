@@ -58,7 +58,7 @@ struct ActivityScreen {
   }
 
   func openPreferencesSettings() -> CategoryPreferencesScreen {
-    openSettingsPane("Preferences")
+    openSettingsPane("Mail Choices")
     return CategoryPreferencesScreen.waitForLanding(in: app)
   }
 
@@ -73,7 +73,8 @@ struct ActivityScreen {
   }
 
   func openCorpus() -> CorpusScreen {
-    app.typeKey("c", modifierFlags: [.command, .option])
+    app.menuBars.menuBarItems[AppText.localized("Tools")].click()
+    app.menuItems["activity.corpus"].click()
     return CorpusScreen.waitForLanding(in: app)
   }
 

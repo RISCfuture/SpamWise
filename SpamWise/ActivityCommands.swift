@@ -121,9 +121,8 @@ private struct ToolsMenuItems: View {
   private var openWindow
 
   var body: some View {
-    Button("Reviewed Corpus") { show(.corpus, router: model.router, openWindow: openWindow) }
+    Button("Reviewed Messages…") { show(.corpus, router: model.router, openWindow: openWindow) }
       .accessibilityIdentifier("activity.corpus")
-      .keyboardShortcut("c", modifiers: [.command, .option])
       .disabled(!model.shared.settings.onboardingComplete)
     Button("Configuration History") {
       show(.audit, router: model.router, openWindow: openWindow)

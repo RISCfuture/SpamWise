@@ -36,7 +36,7 @@ struct KeyEntryView: View {
     .onSubmit(submit)
     .accessibilityIdentifier("setup.key")
     HStack {
-      Button(verifies ? "Verify and save key" : "Save key", action: submit)
+      Button(verifies ? "Verify and Save Key" : "Save Key", action: submit)
         .keyboardShortcut(canSubmit ? .defaultAction : nil)
         .disabled(!canSubmit)
         .accessibilityIdentifier("setup.saveKey")

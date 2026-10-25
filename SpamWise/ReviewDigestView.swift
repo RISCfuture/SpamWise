@@ -16,7 +16,7 @@ struct ReviewDigestView: View {
   var body: some View {
     NavigationStack(path: $path) {
       DigestList(records: digest?.records, failure: loadFailure)
-        .navigationTitle("Weekly Review digest")
+        .navigationTitle("Weekly Review Digest")
         .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "digest.done") }
         .navigationDestination(for: DigestRoute.self) { route in
           switch route {
@@ -32,7 +32,7 @@ struct ReviewDigestView: View {
                 .navigationTitle(record.displaySubject)
               }
             case .preview(let preview):
-              MessageTextView(text: preview.text).navigationTitle("Message preview")
+              MessageTextView(text: preview.text).navigationTitle("Message Preview")
           }
         }
     }

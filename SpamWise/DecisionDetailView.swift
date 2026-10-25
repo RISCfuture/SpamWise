@@ -109,9 +109,9 @@ private struct MessageAccessSection: View {
 
   var body: some View {
     Section {
-      Button("Preview message") { messages.preview(row, present: presentPreview) }
+      Button("Preview Message") { messages.preview(row, present: presentPreview) }
       Button("Open in Mail") { messages.open(row) }
-      Button("Export raw source…") {
+      Button("Export Raw Source…") {
         messages.exportSource(row) { data in
           source = RulesDocument(data: data); exporting = true
         }
@@ -144,7 +144,7 @@ private struct UndoCorrectionButton: View {
         "Restore the previous rules and learning? Mail will not move.",
         isPresented: $confirming
       ) {
-        Button("Undo rules and learning") { corrections.undoLatestCorrection() }
+        Button("Undo Rules and Learning") { corrections.undoLatestCorrection() }
           .accessibilityIdentifier("correction.undo.confirm")
       } message: {
         Text(
@@ -219,10 +219,10 @@ private struct DomainCorrectionMenu: View {
   private var domain: String { row.evidence?.fromDomain ?? "" }
 
   var body: some View {
-    Menu("Correct entire domain…") {
-      Button("Allow this domain") { request(.inbox) }
+    Menu("Correct Entire Domain…") {
+      Button("Allow This Domain") { request(.inbox) }
         .accessibilityIdentifier("correction.domain.allow")
-      Button("Block this domain") { request(.junk) }
+      Button("Block This Domain") { request(.junk) }
         .accessibilityIdentifier("correction.domain.block")
     }.accessibilityIdentifier("correction.domain")
       .confirmationDialog(

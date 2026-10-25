@@ -52,9 +52,9 @@ struct ProviderSharingSummary: View {
     VStack(alignment: .leading) {
       Text(
         """
-        Each message’s sender, subject, shortened text and evidence are sent with your policy and \
-        up to \(settings.settings.correctionLimit) similar corrections from the same account. Mail \
-        can contain sensitive information.
+        Each message’s sender, subject, shortened text and evidence are sent with your additional \
+        instructions and up to \(settings.settings.correctionLimit) similar corrections from the \
+        same account. Mail can contain sensitive information.
         """
       )
       Text(

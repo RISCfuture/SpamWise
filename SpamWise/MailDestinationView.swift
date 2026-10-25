@@ -23,11 +23,7 @@ struct MailDestinationView: View {
     if let destinations {
       LabeledContent("Inbox", value: names(destinations.inbox))
       LabeledContent("Junk", value: names(destinations.junk))
-      if !destinations.isUnambiguous {
-        WarningLabel(
-          "Mail doesn’t show exactly one Inbox and one Junk mailbox for this account, so SpamWise won’t move its mail."
-        )
-      }
+      MailboxRoleWarning(destinations: destinations)
     }
     OperationStatusView(operation: reading)
   }
@@ -42,6 +38,39 @@ struct MailDestinationView: View {
 
   private func names(_ values: [String]) -> String {
     values.isEmpty ? String(localized: "None") : values.joined(separator: ", ")
+  }
+}
+
+/// Why SpamWise won't move an account's mail, and how to set its mailboxes up in Mail.
+private struct MailboxRoleWarning: View {
+  let destinations: MailDestinations
+
+  private var missingJunk: Bool { destinations.junk.isEmpty }
+  private var duplicateJunk: Bool { destinations.junk.count > 1 }
+
+  var body: some View {
+    if missingJunk {
+      WarningLabel(
+        """
+        Mail hasn’t set a Junk mailbox for this account. In Mail, select the account’s junk \
+        folder, choose Mailbox › Use This Mailbox For › Junk, then choose Check Mailboxes.
+        """
+      )
+    } else if duplicateJunk {
+      WarningLabel(
+        """
+        Mail shows more than one Junk mailbox for this account. In Mail, keep the Junk role on one \
+        folder only, then choose Check Mailboxes.
+        """
+      )
+    } else if !destinations.isUnambiguous {
+      WarningLabel(
+        """
+        Mail doesn’t show exactly one Inbox for this account, so SpamWise won’t move its mail. \
+        Check the account in Mail, then choose Check Mailboxes.
+        """
+      )
+    }
   }
 }
 

@@ -15,10 +15,10 @@ struct ActivityDateFilterView: View {
         DatePicker("Through", selection: $end, displayedComponents: .date)
       }
       .formStyle(.grouped)
-      .navigationTitle("Date range")
+      .navigationTitle("Date Range")
       .toolbar {
         ConfirmationToolbarItems(
-          confirmTitle: "Apply dates",
+          confirmTitle: "Apply Dates",
           canConfirm: start <= end,
           cancel: { dismiss() },
           confirm: apply
