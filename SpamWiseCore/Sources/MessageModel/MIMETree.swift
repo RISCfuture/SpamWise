@@ -39,7 +39,10 @@ struct MIMEPart {
     case multipart([MIMEPart])
     /// A `message/rfc822` or `message/global` entity's own message, read as a nested part.
     indirect case encapsulated(MIMEPart)
-    /// An entity left unread because its critical headers were ambiguous or a limit was reached.
+    /**
+     An entity left unread because its critical headers were ambiguous, its encapsulated
+     message's transfer encoding was unreadable, or a limit was reached.
+     */
     case skipped
   }
 }
