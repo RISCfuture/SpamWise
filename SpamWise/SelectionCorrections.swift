@@ -11,6 +11,8 @@ struct SelectionBatch {
   var unverifiedIDs: Set<String>
   /// Selected messages Mail couldn’t hand over, such as those over the size limit.
   let unreadableCount: Int
+  /// Groups the batch’s corrections so that one undo reverts them together.
+  let corrections = CorrectionBatch()
 
   /// Every selected message, including those Mail couldn’t hand over.
   var selectedCount: Int { messages.count + unreadableCount }

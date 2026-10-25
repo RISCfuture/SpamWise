@@ -57,6 +57,17 @@ final class CorrectionsModel {
     )
   }
 
+  private static func undoneStatus(_ undo: CorrectionUndo) -> String {
+    let undone =
+      undo.correctionCount == 1
+      ? String(localized: "Correction undone. Use a separate correction to request a Mail action.")
+      : String(
+        localized:
+          "Undid \(undo.correctionCount) corrections of the selected messages. Use a separate correction to request a Mail action."
+      )
+    return [undone, undo.retainedDescription].compactMap(\.self).joined(separator: " ")
+  }
+
   private static func unverifiedRequiresConfirmation(_ record: DecisionRecord, _ label: MailLabel)
     -> Bool
   {
@@ -139,15 +150,16 @@ extension CorrectionsModel {
   /// Keeps the category's preference as it is.
   func dismissCategoryFollowUp() { categoryFollowUp = nil }
 
-  /// Restores the rules and learning saved before the latest correction; mail does not move.
+  /**
+   Restores the rules and learning saved before the latest correction, or before every
+   correction of the latest selected-message batch; mail does not move.
+   */
   func undoLatestCorrection() {
     conflict = nil
     decision.run { [self] in
       decisionOutcome = nil
-      try await CorrectionUndo.apply(store: services.requireStore())
-      return String(
-        localized: "Correction undone. Use a separate correction to request a Mail action."
-      )
+      let undo = try await CorrectionUndo.apply(store: services.requireStore())
+      return Self.undoneStatus(undo)
     }
   }
 
@@ -362,7 +374,8 @@ extension CorrectionsModel {
         envelope: message.envelope,
         label: batch.label,
         scope: batch.scope,
-        adapter: adapter
+        adapter: adapter,
+        batch: batch.corrections
       )
       let conflict = try? await pipeline.overridingRule(for: record)
       return SelectionCorrectionResult(
@@ -430,6 +443,17 @@ struct CorrectionProgress: Equatable {
   let total: Int
   /// The one-based position of the message being corrected.
   var current: Int { min(total, completed + 1) }
+}
+
+extension CorrectionUndo {
+  /// Says which corrections of the undo’s batch stay, or nil when it reverts them all.
+  var retainedDescription: String? {
+    guard retainedCount > 0 else { return nil }
+    return String(
+      localized:
+        "\(retainedCount) earlier corrections of the same selection stay, because another change was saved while it was being corrected."
+    )
+  }
 }
 
 extension DecisionRecord {

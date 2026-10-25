@@ -95,15 +95,18 @@ extension Pipeline {
       known: message,
       adapter: adapter
     )
-    let correction = try await StateRepository.update(
-      store,
-      loading: StateSlices(
-        Self.correctionSlices.parts,
-        records: .only([request.recordID]),
-        reviewedLabels: Self.correctionSlices.reviewedLabels
+    let correction = try await StateRepository.transaction(store) { transaction in
+      try transaction.load(
+        StateSlices(
+          Self.correctionSlices.parts,
+          records: .only([request.recordID]),
+          reviewedLabels: Self.correctionSlices.reviewedLabels
+        )
       )
-    ) { state in
-      try state.applyCorrection(request, message: reviewed)
+      let correction = try transaction.state.applyCorrection(request, message: reviewed)
+      try transaction.commit()
+      request.batch?.recordSaved()
+      return correction
     }
     do {
       return try await dispatch(
@@ -180,6 +183,8 @@ struct CorrectionRequest: Sendable {
   /// Whether the mail steps may find the message outside its recorded mailbox; false leaves a
   /// message that has since left it untouched.
   var searchesAccount = true
+  /// The selected-message batch whose undo reverts this correction with the others.
+  var batch: CorrectionBatch?
 }
 
 extension DecisionRecord {
@@ -261,7 +266,8 @@ extension AppState {
       state: before,
       source: previous,
       recordID: correction.id,
-      revision: revision
+      revision: revision,
+      batch: request.batch
     )
     record(correction)
     recordLabel(label, for: correction, linkedSampleID: linkedSampleID, message: message)

@@ -164,6 +164,20 @@ struct `Selected-message corrections` {
   }
 
   @Test
+  func `undo the whole batch with one undo`() async throws {
+    let mail = SelectedInbox(count: CorrectionsModel.maximumOverlappingCorrections)
+    let corrections = CorrectionsModel(testing: try await services(mail: mail))
+    try await markJunkCorrected(mail.count, with: corrections)
+    #expect(try await StateRepository.load(storage.store).rules.count == 1)
+    corrections.undoLatestCorrection()
+    await corrections.decision.run { nil }.value
+    let state = try await StateRepository.load(storage.store)
+    #expect(state.rules.isEmpty)
+    let corrected = state.records.filter { $0.path == .correction }
+    #expect(corrected.count == mail.count && corrected.allSatisfy(\.correctionUndone))
+  }
+
+  @Test
   func `ask before blocking senders whose check fails`() async throws {
     let mail = SelectedInbox(count: 2)
     let corrections = CorrectionsModel(
