@@ -200,6 +200,7 @@ struct `Selected-message corrections` {
         observationInterval: .milliseconds(10)
       ),
       preferences: try #require(UserDefaults(suiteName: "codes.tim.SpamWise.UnitTests.\(UUID())")),
+      credentials: MemoryCredentialStore(),
       uiTesting: true
     )
   }
