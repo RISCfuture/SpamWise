@@ -72,7 +72,7 @@ extension Pipeline {
     }
     guard (try? await saveObservedOutcome(completed)) != nil else { return completed }
     for settlement in settlements { scheduleCheck(of: settlement, recordID: completed.id) }
-    return await markJunkRead(completed, adapter: adapter)
+    return await markJunkRead(completed, adapter: adapter, settingOn: claim.marksJunkRead)
   }
 
   private func claim(
@@ -91,7 +91,7 @@ extension Pipeline {
       let replaced = state.claimedActions[key]
       if case .automatic = mode, replaced == record.id {
         record.outcome = .duplicate
-        return ActionClaim(record: record, replacedClaim: replaced)
+        return ActionClaim(record: record, replacedClaim: replaced, marksJunkRead: false)
       }
       if state.supersedes(record, claimed: false) {
         record.outcome = .superseded
@@ -119,7 +119,11 @@ extension Pipeline {
       }
       state.records[index] = record
       if !forceDryRun { state.retries.removeAll { $0.identity.key == key } }
-      return ActionClaim(record: record, replacedClaim: replaced)
+      return ActionClaim(
+        record: record,
+        replacedClaim: replaced,
+        marksJunkRead: state.settings.mailOptions.markJunkRead
+      )
     }
     return try await StateRepository.transaction(store) { transaction in
       let related =
@@ -235,6 +239,8 @@ extension Pipeline {
   private struct ActionClaim: Sendable {
     var record: DecisionRecord
     var replacedClaim: UUID?
+    /// Whether the mark-as-read setting was on when the claim was written.
+    var marksJunkRead: Bool
   }
 
   private enum Performance: Sendable {
