@@ -106,9 +106,10 @@ confidence that moves graymail the user chose Junk for at the run strength's
 reports the current threshold and the lowest threshold whose exact one-sided 95%
 Clopper-Pearson false-positive upper bound on the training partition meets the
 strength's target: 0.1% Conservative, 0.2% Balanced, 0.5% Aggressive, holding that
-strength's graymail category threshold. It then validates that threshold on the held-out partition. Selection
-therefore needs both partitions: use `reviewed --partition all`, or a corpus whose
-hash split covers both. The targets are provisional.
+strength's graymail category threshold. It then validates that threshold on the
+held-out partition. Selection therefore needs both partitions: use
+`reviewed --partition all`, or a corpus whose hash split covers both. The targets are
+provisional.
 
 The rule-of-three approximation is reported alongside the exact bound for zero
 errors. With two good fixtures and zero false positives, the approximation is capped
