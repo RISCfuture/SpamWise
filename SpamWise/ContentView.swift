@@ -205,7 +205,7 @@ private struct ActivityTable: View {
         ActivityRowMenu(model: model, row: row) { selection = row.id }
       }
     } primaryAction: { ids in
-      if let row = ids.first.flatMap(activity.record(id:)) { model.messages.open(row) }
+      if let row = ids.first.flatMap(activity.record(id:)) { showMessage(row) }
     }
     .overlay {
       if activity.rows.isEmpty {
@@ -222,6 +222,16 @@ private struct ActivityTable: View {
         }
         .padding(.vertical, 6)
       }
+    }
+  }
+
+  /// Opens `row`'s message in Mail, or previews it with the inspector shown when Mail can't open it.
+  private func showMessage(_ row: DecisionRecord) {
+    if model.messages.canOpenInMail(row) {
+      model.messages.open(row)
+    } else {
+      model.router.showsInspector = true
+      model.messages.preview(row) { model.router.present(.messagePreview($0)) }
     }
   }
 }
