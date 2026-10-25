@@ -3129,22 +3129,6 @@
         }
       }
     },
-    "API connection verification": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verificación de conexión con la API"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vérification de la connexion à l’API"
-          }
-        }
-      }
-    },
     "Apple Mail": {
       "localizations": {
         "es": {
@@ -17465,6 +17449,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Données enregistrées par une version plus récente"
+          }
+        }
+      }
+    },
+    "Provider key check": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobación de la clave del proveedor"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification de la clé du fournisseur"
           }
         }
       }

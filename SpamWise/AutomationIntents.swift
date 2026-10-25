@@ -116,7 +116,7 @@ nonisolated struct IdentifiedAutomationReply: Encodable {
   }
 }
 
-/// Reports SpamWise’s redacted filtering status as JSON text.
+/// Says whether SpamWise is filtering, and returns its redacted status as JSON text for shortcuts.
 public struct SpamWiseStatusIntent: AppIntent {
   public static let title: LocalizedStringResource = "Get SpamWise Status"
   public static var supportedModes: IntentModes { .background }
@@ -125,13 +125,15 @@ public struct SpamWiseStatusIntent: AppIntent {
   /// Creates the intent; App Intents supplies the model when it runs.
   public init() {}
 
-  /// Returns the same redacted diagnostics as the exported file.
-  public func perform() async throws -> some IntentResult & ReturnsValue<String> {
+  /// Says the filtering state, as the menu bar shows it, and returns the same redacted diagnostics as the exported file.
+  public func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
+    let model = model
     let data = try await AutomationContext.diagnostics(model: model)
     guard let text = String(data: data, encoding: .utf8) else {
       throw AutomationIntentError.failed(reason: nil)
     }
-    return .result(value: text)
+    let state = await MainActor.run { model.scanning.filteringState.localizedTitle }
+    return .result(value: text, dialog: IntentDialog(stringLiteral: state))
   }
 }
 

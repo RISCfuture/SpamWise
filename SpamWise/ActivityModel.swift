@@ -124,8 +124,7 @@ final class ActivityModel {
   /// The redacted diagnostics that the status intent also returns.
   func diagnostics() async throws -> Data {
     guard let store else { throw SharedStorageError.unavailable }
-    let state = try await StateRepository.load(store, StateSlices(records: .all, retries: .all))
-    return try JSONEncoder.pretty.encode(DiagnosticSummary(state: state))
+    return try JSONEncoder.pretty.encode(try await StateRepository.diagnosticSummary(store))
   }
 
   /// Distinct senders seen in Activity or corrections at each of `domains`.
@@ -195,9 +194,11 @@ struct TodaySummary: Equatable {
 
   init() {}
 
+  /// Counts `records`, leaving out provider key checks, which decide no message.
   init(_ records: [DecisionRecord]) {
-    decisions = records.count
-    junk = records.count { $0.decision.label == .junk }
-    review = records.count { $0.decision.label == .review }
+    let messages = records.filter { $0.path != .verification }
+    decisions = messages.count
+    junk = messages.count { $0.decision.label == .junk }
+    review = messages.count { $0.decision.label == .review }
   }
 }
