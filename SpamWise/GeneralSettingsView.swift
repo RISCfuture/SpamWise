@@ -78,25 +78,7 @@ private struct DryRunToggle: View {
     Toggle("Dry run — do not change mail", isOn: dryRun)
       .disabled(settings.settings.validatedAccounts.isEmpty)
       .accessibilityIdentifier("settings.dryRun")
-      .confirmationDialog(
-        "Turn off dry run?",
-        isPresented: $confirmsLiveFiltering,
-        titleVisibility: .visible
-      ) {
-        Button("Turn Off Dry Run") { settings.setSetting(\.dryRun, to: false) }
-          .accessibilityIdentifier("settings.dryRun.confirm")
-        Button("Cancel", role: .cancel) {}
-          .accessibilityIdentifier("settings.dryRun.cancel")
-      } message: {
-        Text(
-          """
-          SpamWise will move new Junk to each checked account’s Junk mailbox and mark Review \
-          messages in Inbox. It checks every move afterward. If Mail doesn’t confirm a move, \
-          SpamWise doesn’t retry or reverse it, and Activity shows the failure so you can check \
-          the message in Mail.
-          """
-        )
-      }
+      .liveFilteringConfirmation(isPresented: $confirmsLiveFiltering, settings: settings)
     if settings.settings.validatedAccounts.isEmpty {
       if settings.settings.advancedOptions.transport == .imap {
         Text(

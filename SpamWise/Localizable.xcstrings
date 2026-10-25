@@ -17712,6 +17712,86 @@
           }
         }
       }
+    },
+    "Check Mail Connection…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobar la conexión con Mail…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier la connexion à Mail…"
+          }
+        }
+      }
+    },
+    "SpamWise needs each account’s Inbox and Junk before it can start filtering.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise necesita la Entrada y No deseado de cada cuenta antes de empezar a filtrar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise a besoin de la Réception et des Indésirables de chaque compte avant de commencer à filtrer."
+          }
+        }
+      }
+    },
+    "Start Filtering…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empezar a filtrar…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencer le filtrage…"
+          }
+        }
+      }
+    },
+    "Turns off dry run so SpamWise moves Junk and marks Review messages.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactiva la simulación para que SpamWise mueva el correo no deseado y marque los mensajes por revisar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactive la simulation pour que SpamWise déplace les indésirables et marque les messages à vérifier."
+          }
+        }
+      }
+    },
+    "Settings…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages…"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

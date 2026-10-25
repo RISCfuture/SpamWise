@@ -11,6 +11,14 @@ final class DryRunTests: UITestCase {
   }
 
   @MainActor
+  func testStartingFilteringFromActivityConfirmsFirst() {
+    let settings = ActivityScreen.launchCorrectionFixture().openGeneralSettings()
+    settings.turnOnDryRun()
+    let confirmed = settings.close().startFiltering().confirmFromActivity()
+    XCTAssertTrue(confirmed.waitForMode(.filtering))
+  }
+
+  @MainActor
   func testConfirmingLiveFilteringResumesFiltering() {
     let settings = ActivityScreen.launchCorrectionFixture().openGeneralSettings()
     settings.turnOnDryRun()

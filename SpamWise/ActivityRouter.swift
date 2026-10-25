@@ -56,8 +56,16 @@ final class ActivityRouter {
   var sheet: ActivitySheet?
   /// Whether the Activity window shows the selected decision's inspector.
   var showsInspector = false
+  /// Whether the Activity window asks to confirm turning off dry run.
+  var confirmsLiveFiltering = false
   /// Whether the Activity window closes once settings load, because macOS opened SpamWise at login.
   var closesWindowAtLogin = false
 
   func present(_ sheet: ActivitySheet) { self.sheet = sheet }
+
+  /// Asks in the Activity window, over no sheet, to confirm turning off dry run.
+  func confirmLiveFiltering() {
+    sheet = nil
+    confirmsLiveFiltering = true
+  }
 }

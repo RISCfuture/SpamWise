@@ -1,15 +1,22 @@
 import SwiftUI
 import SpamWiseCore
 
-/// The Activity footer: filtering mode, background checks, announcements and today's totals.
+/// The Activity footer: filtering mode, leaving dry run, checks, announcements and today’s totals.
 struct ActivityStatusView: View {
   let model: AppModel
+  @Environment(\.openSettings)
+  private var openSettings
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       Divider()
       HStack {
         FilteringStateView(state: model.scanning.filteringState)
+        LeaveDryRunButton(state: model.scanning.filteringState) {
+          model.router.confirmLiveFiltering()
+        } checkConnection: {
+          showConnectionCheck(preferences: model.services.preferences, openSettings: openSettings)
+        }
         BackgroundCheckView(scanning: model.scanning)
         Spacer()
         TodayTotalsView(today: model.activity.today, monthCost: model.shared.monthCost)
