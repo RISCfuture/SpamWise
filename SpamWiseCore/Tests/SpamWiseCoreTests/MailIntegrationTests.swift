@@ -63,6 +63,44 @@ func `clears only an orange flag SpamWise set`() async throws {
   #expect(await runner.appliedCount == 3)
 }
 
+@Test(arguments: [(true, true), (true, false), (false, true)])
+func `settles a Review flag Mail didn't confirm by reading the message`(
+  answered: Bool,
+  shown: Bool
+) async throws {
+  let store = try testStore()
+  try await StateRepository.update(store) { state in
+    state.settings.dryRun = false
+    state.settings.validatedAccounts = ["account"]
+  }
+  let runner = StubAppleEvents(
+    [
+      .findMessages: [MailReply.found(MailReply.message())],
+      .applyAction: [.boolean(false), MailReply.applied],
+      .reviewState: [.boolean(false), .boolean(shown)]
+    ],
+    delays: answered ? [:] : [.applyAction: .seconds(10)]
+  )
+  let adapter = AppleMailAdapter(
+    runner: runner,
+    callTimeLimit: answered ? .seconds(30) : .milliseconds(50),
+    moveSettlingTime: .milliseconds(200),
+    observationInterval: .zero,
+    reviewMarks: store
+  )
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(verdict: .init(label: .review, confidence: 60, reason: "unsure"))
+  )
+  let message = MailEnvelope(identity: MailReply.identity(), raw: Data(MailReply.probeSource.utf8))
+  let flagged = await pipeline.process(message, adapter: adapter)
+  #expect(flagged.outcome == (shown ? .applied : .requested))
+  #expect((flagged.actionError == nil) == shown)
+  #expect(await runner.appliedCount == 1)
+  _ = try await adapter.performCorrection(.clearOrangeFlag, for: flagged.identity)
+  #expect(await runner.appliedCount == (answered && shown ? 2 : 1))
+}
+
 @Test
 func `corrects a message wherever it has moved within its account`() async throws {
   let receipts = MailReply.message(mailbox: "Receipts", localID: 7)

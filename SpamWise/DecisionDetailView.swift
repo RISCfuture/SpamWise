@@ -50,7 +50,9 @@ struct DecisionDetailView: View {
           )
         }
       }
-    }.formStyle(.grouped)
+    }
+    .formStyle(.grouped)
+    .onDisappear { messages.abandon() }
   }
 }
 
@@ -123,7 +125,10 @@ private struct MessageAccessSection: View {
         }
       }
       if messages.operation.isBusy {
-        ProgressView { Text("Reading the message…") }.labelsHidden().controlSize(.small)
+        HStack {
+          ProgressView { Text("Reading the message…") }.labelsHidden().controlSize(.small)
+          Button("Stop") { messages.cancel() }
+        }
       }
       OperationStatusView(operation: messages.operation)
       StatusLabel(status: exportFailure)

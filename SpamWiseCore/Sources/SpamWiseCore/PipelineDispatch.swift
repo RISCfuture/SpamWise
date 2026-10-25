@@ -236,6 +236,10 @@ extension Pipeline {
           }
         guard receipt.confirmed else {
           record.outcome = .requested
+          record.actionError = String(
+            localized: "Mail didn’t confirm the change. Its result is unknown; not retried.",
+            bundle: .module
+          )
           break
         }
         if let identity = receipt.updatedIdentity { record.identity = identity }

@@ -499,6 +499,22 @@
         }
       }
     },
+    "Mail didn’t confirm the change. Its result is unknown; not retried.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no confirmó el cambio. Se desconoce el resultado; no se reintenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas confirmé la modification. Le résultat est inconnu ; aucune nouvelle tentative."
+          }
+        }
+      }
+    },
     "Mail didn’t respond in time, so a requested change may still happen.": {
       "localizations": {
         "es": {

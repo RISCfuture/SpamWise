@@ -26,6 +26,7 @@ enum MailHandler: String, CaseIterable {
   case destinationNames = "destinationnames"
   case findMessages = "findmessages"
   case applyAction = "applyaction"
+  case reviewState = "reviewstate"
   case observeMessages = "observemessages"
 }
 
@@ -381,19 +382,19 @@ enum MailScripts {
                     if (flag index of m) is not -1 then error ¬
                         "Existing flag retained" number \(Failure.existingAnnotation.rawValue)
                     set flag index of m to 1
-                    return (flag index of m) is 1
+                    return my showsReview(commandName, m)
                 else if commandName is "\(MailCommand.orangeBackground.rawValue)" then
                     if (background color of m) is orange then return "\(alreadyAnnotated)"
                     if (background color of m) is not none then error "Existing color retained" \
     number \(Failure.existingAnnotation.rawValue)
                     set background color of m to orange
-                    return (background color of m) is orange
+                    return my showsReview(commandName, m)
                 else if commandName is "\(MailCommand.clearOrangeFlag.rawValue)" then
                     if (flag index of m) is 1 then set flag index of m to -1
-                    return (flag index of m) is not 1
+                    return my showsReview(commandName, m)
                 else if commandName is "\(MailCommand.clearOrangeBackground.rawValue)" then
                     if (background color of m) is orange then set background color of m to none
-                    return (background color of m) is not orange
+                    return my showsReview(commandName, m)
                 else if commandName is "\(MailCommand.markRead.rawValue)" then
                     considering case
                         if (name of mailbox of m) is not (name of destination) then error ¬
@@ -410,5 +411,25 @@ enum MailScripts {
             return false
         end timeout
     end \(Handler.applyAction.rawValue)
+    on showsReview(commandName, m)
+        tell application "Mail"
+            if commandName is "\(MailCommand.orangeFlag.rawValue)" then return ¬
+                (flag index of m) is 1
+            if commandName is "\(MailCommand.orangeBackground.rawValue)" then return ¬
+                (background color of m) is orange
+            if commandName is "\(MailCommand.clearOrangeFlag.rawValue)" then return ¬
+                (flag index of m) is not 1
+            if commandName is "\(MailCommand.clearOrangeBackground.rawValue)" then return ¬
+                (background color of m) is not orange
+        end tell
+        return false
+    end showsReview
+    on \(Handler.reviewState.rawValue)(commandName, accountID, mailboxName, wantedLocal, wantedID, \
+    expectedBytes)
+        with timeout of \(eventTimeoutSeconds) seconds
+            set m to my exactMessage(accountID, mailboxName, wantedLocal, wantedID, expectedBytes)
+            return my showsReview(commandName, m)
+        end timeout
+    end \(Handler.reviewState.rawValue)
     """
 }
