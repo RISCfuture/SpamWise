@@ -49,8 +49,9 @@ concern, not automatic proof that the surrounding email is spam.
   intended action and action outcome. Do not silently turn threat findings into
   new moves or override explicit rules. Preserve no Trash/delete and fail-open.
 - Contact and history gates skip classification when the sender's authentication
-  is trusted and aligned. Independent threat coverage therefore needs a separate
-  assessment path even for that mail, while leaving the rule-driven action intact. A gate-approved Inbox result
+  is trusted and aligned (see [receiving-server trust](evidence.md#receiving-server-trust)).
+  Independent threat coverage therefore needs a separate assessment path even for
+  that mail, while leaving the rule-driven action intact. A gate-approved Inbox result
   must never be presented as a completed security scan.
 - Unknown targeting history cannot prove or disprove spearphishing. Unusual style,
   urgency or a new bank account is supporting evidence, not a decisive rule.
