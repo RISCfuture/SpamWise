@@ -155,13 +155,26 @@ func `keeps quotation-shaped text from non-replies and labels genuine quotations
   #expect((disguised["text"] as? String)?.contains("Verify it here") == true)
   #expect(disguised["quotedText"] == nil)
 
-  message.text = "Thanks, see you then.\n\nOn Tue, Alex wrote:\n> Lunch on Friday?"
-  let reply = try untrustedContent(
-    PromptBuilder.prompt(.init(message: message, evidence: .init(message: message)))
-  )
-  #expect(reply["text"] as? String == "Thanks, see you then.\n")
-  #expect((reply["quotedText"] as? String)?.contains("Lunch on Friday?") == true)
-  #expect(reply["omittedQuotedCharacters"] as? Int == 0)
+  for (text, quotation) in [
+    ("Thanks, see you then.\n\nOn Tue, Alex wrote:\n> Lunch on Friday?", "Lunch on Friday?"),
+    (
+      "Thanks, see you then.\n\nDe: Alex <alex@example.es>\nEnviado el: martes\n"
+        + "Asunto: Almuerzo\n\n¿Comemos el viernes?",
+      "¿Comemos el viernes?"
+    ),
+    (
+      "Thanks, see you then.\n\nLe mar. 13 oct. 2026, Alex a écrit\u{00A0}:\n> On déjeune vendredi ?",
+      "On déjeune vendredi ?"
+    )
+  ] {
+    message.text = text
+    let reply = try untrustedContent(
+      PromptBuilder.prompt(.init(message: message, evidence: .init(message: message)))
+    )
+    #expect(reply["text"] as? String == "Thanks, see you then.\n")
+    #expect((reply["quotedText"] as? String)?.contains(quotation) == true)
+    #expect(reply["omittedQuotedCharacters"] as? Int == 0)
+  }
 
   message.headers["in-reply-to"] = ["<thread@example.org>"]
   message.text =
