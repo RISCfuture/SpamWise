@@ -57,11 +57,7 @@ struct OnboardingView: View {
             )
           case .mail:
             if settings.advancedOptions.transport == .imap {
-              IMAPSettingsView(
-                settings: model.settings,
-                imap: model.imap,
-                storageReady: model.services.storageReady
-              )
+              IMAPSettingsView(model: model)
             } else {
               MailConnectionView(model: model)
               RelationshipSettingsView(

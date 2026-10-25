@@ -13,7 +13,6 @@ final class IMAPConnectionModel {
   var username = ""
   var port = IMAPConnectionModel.defaultPort
   var credential = ""
-  var oauthBearer = false
   var accountID = IMAPConnectionModel.newAccountID()
   /// Whether a connection is saved, as of the latest load, save or removal.
   private(set) var hasSavedConnection = false
@@ -23,13 +22,13 @@ final class IMAPConnectionModel {
   let operation = TrackedOperation()
   @ObservationIgnored private let services: AppServices
   @ObservationIgnored private let shared: SharedStateModel
-  /// The server, username and sign-in method the saved credential belongs to.
+  /// The server and username the saved credential belongs to.
   private var savedEndpoint: Endpoint?
 
   /// The connection's account as people recognize it, such as “name@example.com on imap.example.com”.
   var accountName: String { String(localized: "\(username) on \(host)") }
   /// Whether saving can leave the password blank: the draft still signs in to the saved server, as
-  /// the saved username, the same way.
+  /// the saved username.
   var canKeepSavedCredential: Bool { savedEndpoint.map { $0 == draftEndpoint } ?? false }
   /// Whether the saved connection has been read and nothing else is running.
   var canSave: Bool { hasLoaded && !operation.isBusy }
@@ -41,7 +40,7 @@ final class IMAPConnectionModel {
   private var trimmedHost: String { host.trimmingCharacters(in: .whitespacesAndNewlines) }
   private var trimmedUsername: String { username.trimmingCharacters(in: .whitespacesAndNewlines) }
   private var draftEndpoint: Endpoint {
-    Endpoint(host: trimmedHost, username: trimmedUsername, oauthBearer: oauthBearer)
+    Endpoint(host: trimmedHost, username: trimmedUsername)
   }
 
   init(services: AppServices, shared: SharedStateModel) {
@@ -92,7 +91,6 @@ final class IMAPConnectionModel {
       guard let saved else { return nil }
       host = saved.account.host; username = saved.account.username
       port = String(saved.account.port); accountID = saved.account.id
-      oauthBearer = saved.oauthBearer
       hasSavedConnection = true
       savedEndpoint = Endpoint(saved)
       return nil
@@ -189,14 +187,13 @@ final class IMAPConnectionModel {
   }
 
   private func clearDraft() {
-    host = ""; username = ""; port = Self.defaultPort; credential = ""; oauthBearer = false
+    host = ""; username = ""; port = Self.defaultPort; credential = ""
     accountID = Self.newAccountID(); hasSavedConnection = false; savedEndpoint = nil
   }
 
   private func connection(port: UInt16) -> IMAPAppConnection {
     IMAPAppConnection(
-      account: .init(id: accountID, host: trimmedHost, port: port, username: trimmedUsername),
-      oauthBearer: oauthBearer
+      account: .init(id: accountID, host: trimmedHost, port: port, username: trimmedUsername)
     )
   }
 
@@ -227,19 +224,13 @@ private struct Endpoint: Equatable {
   /// The server, compared without regard to case.
   let host: String
   let username: String
-  let oauthBearer: Bool
 
-  init(host: String, username: String, oauthBearer: Bool) {
+  init(host: String, username: String) {
     self.host = host.lowercased()
     self.username = username
-    self.oauthBearer = oauthBearer
   }
 
   init(_ connection: IMAPAppConnection) {
-    self.init(
-      host: connection.account.host,
-      username: connection.account.username,
-      oauthBearer: connection.oauthBearer
-    )
+    self.init(host: connection.account.host, username: connection.account.username)
   }
 }

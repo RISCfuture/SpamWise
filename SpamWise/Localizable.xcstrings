@@ -1347,22 +1347,6 @@
         }
       }
     },
-    "Enter the password or token for this server and username.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Introduce la contraseña o el token para este servidor y nombre de usuario."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saisissez le mot de passe ou le jeton pour ce serveur et ce nom d’utilisateur."
-          }
-        }
-      }
-    },
     "Enter the server that receives this account’s mail and checks who sent it. Separate several with commas.": {
       "localizations": {
         "es": {
@@ -1407,22 +1391,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exporter un diagnostic expurgé…"
-          }
-        }
-      }
-    },
-    "Export Reviewed Labels…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportar etiquetas revisadas…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporter les étiquettes révisées…"
           }
         }
       }
@@ -4105,22 +4073,6 @@
         }
       }
     },
-    "Evaluation data": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Datos de evaluación"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Données d’évaluation"
-          }
-        }
-      }
-    },
     "Evidence": {
       "localizations": {
         "es": {
@@ -5641,22 +5593,6 @@
         }
       }
     },
-    "Retain reviewed text for evaluation export": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conservar texto revisado para exportar la evaluación"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conserver le texte révisé pour l’export d’évaluation"
-          }
-        }
-      }
-    },
     "Review": {
       "localizations": {
         "es": {
@@ -5749,38 +5685,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "À examiner : %lld. Légitimes : %lld. Ouvrez SpamWise pour consulter les décisions."
-          }
-        }
-      }
-    },
-    "Reviewed labels": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Etiquetas revisadas"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Étiquettes révisées"
-          }
-        }
-      }
-    },
-    "Reviewed labels could not be exported.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudieron exportar las etiquetas revisadas."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossible d’exporter les étiquettes révisées."
           }
         }
       }
@@ -8875,6 +8779,22 @@
         }
       }
     },
+    "An API key is a long code, like a password, that lets SpamWise use %@ with your own account. Choose Get an API key to create one on the provider’s website, then copy it and paste it below.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una clave de API es un código largo, como una contraseña, que permite a SpamWise usar %@ con tu propia cuenta. Elige Obtener una clave de API para crear una en el sitio web del proveedor y, después, cópiala y pégala abajo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une clé API est un long code, comme un mot de passe, qui permet à SpamWise d’utiliser %@ avec votre propre compte. Choisissez Obtenir une clé API pour en créer une sur le site web du fournisseur, puis copiez-la et collez-la ci-dessous."
+          }
+        }
+      }
+    },
     "Applies To": {
       "localizations": {
         "es": {
@@ -9255,6 +9175,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saisir le serveur…"
+          }
+        }
+      }
+    },
+    "Enter the password for this server and username.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce la contraseña para este servidor y nombre de usuario."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez le mot de passe pour ce serveur et ce nom d’utilisateur."
           }
         }
       }
@@ -10029,6 +9965,22 @@
         }
       }
     },
+    "Keep text of reviewed messages": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conservar el texto de los mensajes revisados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conserver le texte des messages vérifiés"
+          }
+        }
+      }
+    },
     "Label As": {
       "localizations": {
         "es": {
@@ -10743,6 +10695,22 @@
         }
       }
     },
+    "Password": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contraseña"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mot de passe"
+          }
+        }
+      }
+    },
     "Pick an account to see the messages in its Junk mailbox.": {
       "localizations": {
         "es": {
@@ -11331,18 +11299,18 @@
         }
       }
     },
-    "Sign in with an OAuth token": {
+    "Show SpamWise in the menu bar": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Iniciar sesión con un token OAuth"
+            "value": "Mostrar SpamWise en la barra de menús"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se connecter avec un jeton OAuth"
+            "value": "Afficher SpamWise dans la barre des menus"
           }
         }
       }
@@ -11423,6 +11391,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "SpamWise ne peut pas récupérer cette clé. Sans elle, cette sauvegarde ne peut pas être restaurée."
+          }
+        }
+      }
+    },
+    "SpamWise checks mail while it’s open, even with its windows closed. At login it opens without a window; use its menu bar item or Dock icon. Mail must be open too.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise comprueba el correo mientras está abierto, incluso con sus ventanas cerradas. Al iniciar sesión se abre sin ventana; usa su ítem de la barra de menús o su icono del Dock. Mail también debe estar abierto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise vérifie les messages tant qu’il est ouvert, même fenêtres fermées. À l’ouverture de session, il s’ouvre sans fenêtre ; utilisez son icône dans la barre des menus ou dans le Dock. Mail doit aussi être ouvert."
           }
         }
       }
@@ -13265,76 +13249,6 @@
         }
       }
     },
-    "Keeps the text of up to %lld reviewed messages on this Mac for export. Turning this off deletes the kept text; labels and learning remain.": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Keeps the text of up to %lld reviewed message on this Mac for export. Turning this off deletes the kept text; labels and learning remain."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Keeps the text of up to %lld reviewed messages on this Mac for export. Turning this off deletes the kept text; labels and learning remain."
-                }
-              }
-            }
-          }
-        },
-        "es": {
-          "variations": {
-            "plural": {
-              "many": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Conserva en este Mac el texto de hasta %lld de mensajes revisados para exportarlo. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
-                }
-              },
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Conserva en este Mac el texto de hasta %lld mensaje revisado para exportarlo. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Conserva en este Mac el texto de hasta %lld mensajes revisados para exportarlo. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
-                }
-              }
-            }
-          }
-        },
-        "fr": {
-          "variations": {
-            "plural": {
-              "many": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Conserve sur ce Mac le texte de %lld de messages révisés au maximum pour l’exportation. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
-                }
-              },
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Conserve sur ce Mac le texte de %lld message révisé au maximum pour l’exportation. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Conserve sur ce Mac le texte de %lld messages révisés au maximum pour l’exportation. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "Learn from words in corrected mail": {
       "localizations": {
         "es": {
@@ -13763,22 +13677,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Corrections similaires : %lld"
-          }
-        }
-      }
-    },
-    "SpamWise learns from mail you mark Good or Junk once it has enough of each. Your sender rules always come first.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise aprende del correo que marcas como Deseado o No deseado cuando tiene suficiente de cada tipo. Tus reglas de remitente siempre tienen prioridad."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise apprend des messages que vous marquez comme Légitime ou Indésirables dès qu’il en a assez de chaque type. Vos règles d’expéditeur passent toujours en premier."
           }
         }
       }
@@ -16153,22 +16051,6 @@
         }
       }
     },
-    "Password or token": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contraseña o token"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mot de passe ou jeton"
-          }
-        }
-      }
-    },
     "People in Contacts and people you’ve written to are less likely to be sent to Junk. In accounts with a trusted mail server, their mail goes straight to Inbox.": {
       "localizations": {
         "es": {
@@ -17001,6 +16883,76 @@
         }
       }
     },
+    "SpamWise learns from mail you mark Good or Junk once it has enough of each. Your sender rules always come first. Keeping text saves up to %lld reviewed messages on this Mac, so Reviewed Messages can show and export them. Turning it off deletes the kept text; labels and learning remain.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise learns from mail you mark Good or Junk once it has enough of each. Your sender rules always come first. Keeping text saves up to %lld reviewed message on this Mac, so Reviewed Messages can show and export it. Turning it off deletes the kept text; labels and learning remain."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise learns from mail you mark Good or Junk once it has enough of each. Your sender rules always come first. Keeping text saves up to %lld reviewed messages on this Mac, so Reviewed Messages can show and export them. Turning it off deletes the kept text; labels and learning remain."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise aprende del correo que marcas como Deseado o No deseado cuando tiene suficiente de cada tipo. Tus reglas de remitente siempre tienen prioridad. Al conservar el texto se guarda en este Mac hasta %lld mensaje revisado, para que Mensajes revisados pueda mostrarlo y exportarlo. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise aprende del correo que marcas como Deseado o No deseado cuando tiene suficiente de cada tipo. Tus reglas de remitente siempre tienen prioridad. Al conservar el texto se guardan en este Mac hasta %lld de mensajes revisados, para que Mensajes revisados pueda mostrarlos y exportarlos. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise aprende del correo que marcas como Deseado o No deseado cuando tiene suficiente de cada tipo. Tus reglas de remitente siempre tienen prioridad. Al conservar el texto se guardan en este Mac hasta %lld mensajes revisados, para que Mensajes revisados pueda mostrarlos y exportarlos. Al desactivarlo se elimina el texto conservado; las etiquetas y el aprendizaje se mantienen."
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise apprend des messages que vous marquez comme Légitime ou Indésirables dès qu’il en a assez de chaque type. Vos règles d’expéditeur passent toujours en premier. Conserver le texte enregistre sur ce Mac jusqu’à %lld message vérifié, pour que Messages vérifiés puisse l’afficher et l’exporter. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise apprend des messages que vous marquez comme Légitime ou Indésirables dès qu’il en a assez de chaque type. Vos règles d’expéditeur passent toujours en premier. Conserver le texte enregistre sur ce Mac jusqu’à %lld de messages vérifiés, pour que Messages vérifiés puisse les afficher et les exporter. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "SpamWise apprend des messages que vous marquez comme Légitime ou Indésirables dès qu’il en a assez de chaque type. Vos règles d’expéditeur passent toujours en premier. Conserver le texte enregistre sur ce Mac jusqu’à %lld messages vérifiés, pour que Messages vérifiés puisse les afficher et les exporter. Désactiver cette option supprime le texte conservé ; les étiquettes et l’apprentissage sont conservés."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "SpamWise still couldn’t classify this message: %@": {
       "localizations": {
         "es": {
@@ -17013,6 +16965,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "SpamWise n’arrive toujours pas à classer ce message : %@"
+          }
+        }
+      }
+    },
+    "SpamWise: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise : %@"
           }
         }
       }
@@ -17389,22 +17357,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune clé API pour %@. Les nouveaux messages ne sont pas classés tant que vous n’en ajoutez pas une ci-dessous."
-          }
-        }
-      }
-    },
-    "SpamWise checks mail while it’s open, even with its windows closed. At login it opens without a window; use its menu bar item. Mail must be open too.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise comprueba el correo mientras está abierto, incluso con sus ventanas cerradas. Al iniciar sesión se abre sin ventana; usa su ítem de la barra de menús. Mail también debe estar abierto."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise vérifie les messages tant qu’il est ouvert, même fenêtres fermées. À l’ouverture de session, il s’ouvre sans fenêtre ; utilisez son icône dans la barre des menus. Mail doit aussi être ouvert."
           }
         }
       }
@@ -18571,6 +18523,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Statistiques SpamWise"
+          }
+        }
+      }
+    },
+    "When it’s hidden, click SpamWise in the Dock to open Activity.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando está oculto, haz clic en SpamWise en el Dock para abrir Actividad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorsqu’il est masqué, cliquez sur SpamWise dans le Dock pour ouvrir Activité."
           }
         }
       }
