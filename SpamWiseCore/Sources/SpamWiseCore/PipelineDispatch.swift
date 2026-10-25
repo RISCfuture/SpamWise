@@ -83,7 +83,7 @@ extension Pipeline {
     completed.actionSettled = completed.outcome == .applied && settlements.isEmpty
     guard (try? await saveObservedOutcome(completed)) != nil else { return completed }
     for settlement in settlements { scheduleCheck(of: settlement, recordID: completed.id) }
-    return await markJunkRead(completed, adapter: adapter, settingOn: claim.marksJunkRead)
+    return await followUp(completed, adapter: adapter, marksJunkRead: claim.marksJunkRead)
   }
 
   private func claim(

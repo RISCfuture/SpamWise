@@ -7,11 +7,11 @@
 <h2><a name="in-activity" id="in-activity"></a>Correct a message in Activity</h2>
 <p>Select the message in Activity, then choose one of these from the Filtering menu, or Control-click the message:</p>
 <ul>
-<li>Mark as Good (Option-Command-G) moves the message to Inbox.</li>
+<li>Mark as Good (Option-Command-G) moves the message to Inbox. Once Mail confirms the move, SpamWise also clears Mail’s own junk mark on it, so Mail no longer shows it as junk.</li>
 <li>Mark as Junk (Option-Command-J) moves it to the account’s Junk mailbox.</li>
 <li>Mark for Review (Option-Command-R) returns it to Inbox with the Review mark.</li>
 </ul>
-<p>You can also use the Good, Junk and Review buttons under Correct this decision in the inspector. SpamWise saves your correction first, then asks Mail to move the message. If the move fails, the correction stays saved, and the inspector’s Outcome shows what happened in Mail. A message without a sender address can’t be corrected; move it in Mail instead.</p>
+<p>You can also use the Good, Junk and Review buttons under Correct this decision in the inspector. SpamWise saves your correction first, then asks Mail to move the message. If the move fails, the correction stays saved, and the inspector’s Outcome shows what happened in Mail. For Mark as Good, the inspector also shows whether Mail’s junk mark was cleared; Mark as Junk never adds that mark. A message without a sender address can’t be corrected; move it in Mail instead.</p>
 <h2><a name="what-it-remembers" id="what-it-remembers"></a>What a correction remembers</h2>
 <ul>
 <li>Mark as Good creates an Allow rule for the sender’s address, and Mark as Junk creates a Block rule. A new correction replaces the earlier rule for that address.</li>
@@ -34,7 +34,7 @@
 <p>Make one shortcut for each label you use. The keys work in any app, including Mail, and correct the one message selected in Mail.</p>
 
 <h2><a name="move-in-mail" id="move-in-mail"></a>Take a message out of Junk in Mail</h2>
-<p>If SpamWise moved a message to Junk and you move it back to Inbox in Mail, or choose Not Junk, SpamWise treats it as marked Good the next time it checks your Inbox: it allows the sender and learns from the message. This works the same with an IMAP connection and any mail app. It doesn’t happen:</p>
+<p>If SpamWise moved a message to Junk and you move it back to Inbox in Mail, or choose Not Junk, SpamWise treats it as marked Good the next time it checks your Inbox: it allows the sender, learns from the message and clears Mail’s junk mark if the message still has one. This works the same with an IMAP connection and any mail app. It doesn’t happen:</p>
 <ul>
 <li>during a dry run;</li>
 <li>when you take the message out of Junk within about 30 seconds of the move. SpamWise checks each Junk move again after about 30 seconds and learns only from moves that were still in place. If SpamWise quit before that check, it learns nothing from that message;</li>

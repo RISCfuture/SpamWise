@@ -31,6 +31,9 @@ public enum MailCommand: String, Sendable, CaseIterable {
   case clearOrangeBackground = "unbackground"
   /// Marks the message read while it remains in its account's Junk mailbox.
   case markRead = "read"
+  /// Clears Mail's own junk mark while the message remains in its account's Inbox; a message
+  /// without one is reported without change.
+  case clearJunkMark = "notjunk"
   /// Opens the message in Mail's viewer.
   case open
 

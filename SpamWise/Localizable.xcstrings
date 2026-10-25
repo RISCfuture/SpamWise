@@ -16571,6 +16571,22 @@
         }
       }
     },
+    "Mail’s junk mark cleared": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca de correo no deseado de Mail quitada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marque indésirable de Mail retirée"
+          }
+        }
+      }
+    },
     "Message text sent": {
       "localizations": {
         "es": {

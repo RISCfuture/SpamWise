@@ -145,6 +145,25 @@ struct `Junk dispatch with actions enabled` {
     _ = try await pipeline.correct(recordID: first.id, label: .junk, adapter: adapter)
     #expect(await adapter.readRequests == 2)
     #expect(await adapter.correctionReadRequests == 1)
+    #expect(await adapter.junkMarkClaimedBeforeRequest.isEmpty)
+  }
+
+  @Test(arguments: [
+    (JunkMarkChange?.some(.cleared), ActionOutcome.applied), (.absent, .noAction), (nil, .failed)
+  ])
+  func `clears Mail's junk mark once a Good correction's move to Inbox is confirmed`(
+    change: JunkMarkChange?,
+    expected: ActionOutcome
+  ) async throws {
+    let first = await pipeline.process(try envelope(), adapter: adapter)
+    await adapter.reportJunkMark(change)
+    let correction = try await pipeline.correct(recordID: first.id, label: .inbox, adapter: adapter)
+    #expect(correction.outcome == .applied)
+    #expect(correction.junkMarkOutcome == expected)
+    #expect((correction.junkMarkError == nil) == (change != nil))
+    #expect(await adapter.junkMarkClaimedBeforeRequest == [true])
+    let saved = try await StateRepository.load(store).records.first { $0.id == correction.id }
+    #expect(saved?.junkMarkOutcome == expected)
   }
 
   @Test(arguments: [false, true])

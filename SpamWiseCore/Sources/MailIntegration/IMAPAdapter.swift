@@ -156,6 +156,20 @@ public actor IMAPAdapter: MailClientAdapter {
       }
     }
   }
+  /**
+   Removes the `$Junk` and `Junk` keywords from an Inbox message after persisted validation and
+   an exact content recheck, sending no STORE when neither is set. Other keywords, including
+   `$NotJunk`, are left as they are.
+   */
+  public func clearJunkMarkInInbox(_ identity: MessageIdentity) async throws -> JunkMarkChange {
+    try await notAttempted {
+      try await requireActionValidation()
+      try validateIdentity(identity)
+    }
+    return try await withSession(openingPrecedesAction: true) { session in
+      try await Self.clearJunkKeywords(identity, session: session)
+    }
+  }
   /// Explicit disposable-message probe. Only an Inbox UID whose subject starts with `[SpamWise Probe]` is eligible.
   /// Both moves require COPYUID mappings and verified destination content; failures never trigger a guessed reverse move.
   public func testDisposableMessage(uid: UInt32) async throws -> MessageIdentity {

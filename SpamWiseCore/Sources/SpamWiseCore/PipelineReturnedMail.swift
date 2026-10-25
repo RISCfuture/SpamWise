@@ -17,11 +17,15 @@ extension Pipeline {
 
    Such a message was rescued by the user, through Mail's Not Junk or a move in Mail or another
    client. Its identity key and action claim are unchanged, so it is never classified or junked
-   again; the correction also records the sender as wanted, and its Inbox step acts only on the
-   message where it was just seen. A move not yet recorded as settled is left alone, because its
-   provider may have reverted it. Failures leave the message and its records as they are.
+   again; the correction also records the sender as wanted, and its Inbox step and the clearing
+   of Mail's junk mark act only on the message where it was just seen. A move not yet recorded as
+   settled is left alone, because its provider may have reverted it. Failures leave the message
+   and its records as they are.
 
-   - Parameter envelopes: Messages just read from their accounts' Inboxes.
+   - Parameters:
+     - envelopes: Messages just read from their accounts' Inboxes.
+     - adapter: The integration that performs each correction's mail steps; without one the
+       corrections are saved and no mail is changed.
    - Returns: The correction records that were saved.
    */
   public func correctMailReturnedFromJunk(

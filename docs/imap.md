@@ -180,6 +180,15 @@ acts only on the message where the Inbox sweep saw it, so a message re-junked or
 elsewhere in the meantime stays where it is, and its correction step is recorded as
 failed or not attempted.
 
+Once a Good correction's message is confirmed in `INBOX`, SpamWise clears its junk
+mark: it rechecks the message, reads its flags and, when it carries the registered
+`$Junk` keyword or the older `Junk` keyword that Apple Mail and Thunderbird also set,
+sends one `UID STORE -FLAGS` removing just those and confirms their absence from the
+returned flags. A message with neither gets no STORE. The step has its own claim and
+recorded outcome, is never retried, and leaves `$NotJunk` and every other keyword as
+they are: SpamWise only removes a junk mark and never sets `$Junk` or `$NotJunk`, so
+server-side spam training that watches those keywords sees no new mark from it.
+
 `probe` is an optional end-to-end move test. Place a disposable message whose
 subject starts with `[SpamWise Probe]` in Inbox and pass its current Inbox UID (an
 Apple Mail local message ID is not an IMAP UID). SpamWise neither sends nor deletes
@@ -214,8 +223,9 @@ UIDVALIDITY and UID, mailbox and account form the stable namespace. `BODY.PEEK`
 avoids setting Seen. History imports only bounded Sent replies as partial history,
 never incoming mail's own claims as proof of trust.
 
-Only server-supported `UID MOVE` is used. There is no COPY/STORE Deleted/EXPUNGE
-fallback, mailbox creation or Trash/delete command. A tagged success without a
+Only server-supported `UID MOVE` is used. STORE changes only the Review flag and the
+junk keywords. There is no COPY/STORE Deleted/EXPUNGE fallback, mailbox creation or
+Trash/delete command. A tagged success without a
 matching COPYUID mapping, or whose message can't then be verified at its
 destination, is retained as an uncertain outcome.
 
