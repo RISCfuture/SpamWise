@@ -37,7 +37,7 @@ public struct SpamWiseScenes: Scene {
         .environment(\.updates, updates)
     }
     .windowResizability(.contentSize)
-    MenuBarExtra(isInserted: $showsMenuBarItem) {
+    MenuBarExtra(isInserted: menuBarItemInserted) {
       MailMenuView(
         shared: model.shared,
         scanning: model.scanning,
@@ -50,6 +50,17 @@ public struct SpamWiseScenes: Scene {
     } label: {
       MenuBarLabel(scanning: model.scanning)
     }
+  }
+
+  /// The menu bar item's visibility, written back only when it changes: the status item reports
+  /// its visibility on every update, and an unchanged write would update the scenes again.
+  private var menuBarItemInserted: Binding<Bool> {
+    Binding(
+      get: { showsMenuBarItem },
+      set: { isInserted in
+        if isInserted != showsMenuBarItem { showsMenuBarItem = isInserted }
+      }
+    )
   }
 
   /**
