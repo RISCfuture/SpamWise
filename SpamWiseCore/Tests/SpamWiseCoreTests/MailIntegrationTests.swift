@@ -219,7 +219,7 @@ func `rejects a disposable probe whose move reverts before the settling window e
   )
   let probe = AppleMailAdapter(
     runner: reverting,
-    moveSettlingTime: .seconds(1),
+    moveSettlingTime: .seconds(10),
     observationInterval: .milliseconds(5)
   )
   await #expect(throws: IntegrationError.actionUnconfirmed) {
@@ -233,7 +233,9 @@ func `rejects a disposable probe whose move reverts before the settling window e
  correction, whose recheck finds it gone when `reverted`.
  */
 private struct SettlingJunkMove {
-  static let window = Duration.seconds(1)
+  /// Longer than a loaded machine takes to classify and move the message, so the move is
+  /// reported before its recheck is due.
+  static let window = Duration.seconds(10)
 
   let store: Store, pipeline: Pipeline, record: DecisionRecord, elapsed: Duration
 

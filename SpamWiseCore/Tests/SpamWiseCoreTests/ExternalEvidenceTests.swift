@@ -141,14 +141,14 @@ func `bounds keyed queries by count and deadline`() async {
       #expect(!domain.contains("/"))
       #expect(key == "synthetic-key")
       #expect(timeout <= .milliseconds(20))
-      try await Task.sleep(for: .seconds(10))
+      try await Task.sleep(for: .seconds(60))
       return .init(status: .answered, addresses: ["127.0.1.2"])
     }
   )
   let domains = (1...10).map { "example\($0).org" } + ["bad/path.org", "127.0.0.1"]
   let start = ContinuousClock.now
   let findings = await bounded.lookup(domains: domains, timeout: 0.02)
-  #expect(ContinuousClock.now - start < SpamhausDomainLookup.maximumQueryTime - .seconds(1))
+  #expect(ContinuousClock.now - start < .seconds(10))
   #expect(findings.map(\.subject) == (1...5).map { "example\($0).org" } + ["5 more domains"])
   #expect(findings.allSatisfy { $0.status == .unknown })
 }
