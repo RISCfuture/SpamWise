@@ -5,10 +5,8 @@ import Signals
 
  Features persist by name, so adding a property never shifts the meaning of an
  existing value: a sample recorded before the property existed reads it as zero.
- Samples persisted as schema version one, a positional eight-element vector that
- begins with the bias term, migrate by position. Increment ``schemaVersion`` and
- migrate older versions in `init(from:)` whenever an existing feature changes
- meaning.
+ Increment ``schemaVersion`` and migrate older versions in `init(from:)` whenever an
+ existing feature changes meaning.
 
  Domain age and trusted authentication depend on the receiving account's settings, so a
  sample recorded without that account, such as an imported message, holds zero for them and
@@ -20,7 +18,6 @@ public struct LearningFeatures: Codable, Sendable, Equatable {
   /// Position of the constant intercept input in ``vector``.
   static let biasIndex = 0
   private static let bias = 1.0
-  private static let legacySchemaVersion = 1
   private static let youngDomainAgeDays = 30
   private static let saturatedLinkDomainCount = 10.0
   private static let valueRange = 0.0...1.0
@@ -43,9 +40,9 @@ public struct LearningFeatures: Codable, Sendable, Equatable {
   /// Whether the domain-age and trusted-authentication features reflect a receiving account.
   public let hasAccountContext: Bool
 
-  /// Whether every value is finite and within the bounded unit range.
+  /// Whether the values were recorded under this schema or a later one and each is finite and within the bounded unit range.
   var isValid: Bool {
-    version >= Self.legacySchemaVersion
+    version >= Self.schemaVersion
       && vector().allSatisfy { $0.isFinite && Self.valueRange.contains($0) }
   }
 
@@ -94,15 +91,8 @@ extension LearningFeatures {
     linkDomainDensity = min(1, Double(evidence.linkDomains.count) / Self.saturatedLinkDomainCount)
   }
 
-  /**
-   Decodes named features, zero-filling absent values and migrating positional version-one
-   vectors; a sample without the account-context mark has account context.
-   */
+  /// Decodes named features, zero-filling absent values; a sample without the account-context mark has account context.
   public init(from decoder: any Decoder) throws {
-    if let legacy = try? decoder.singleValueContainer().decode([Double].self) {
-      self.init(legacyVector: legacy)
-      return
-    }
     let values = try decoder.container(keyedBy: CodingKeys.self)
     func value(_ key: CodingKeys) throws -> Double {
       try values.decodeIfPresent(Double.self, forKey: key) ?? 0
@@ -120,30 +110,8 @@ extension LearningFeatures {
     )
   }
 
-  private init(legacyVector legacy: [Double]) {
-    func value(_ position: VersionOnePosition) -> Double {
-      legacy.indices.contains(position.rawValue) ? legacy[position.rawValue] : 0
-    }
-    self.init(
-      version: Self.legacySchemaVersion,
-      abuseHeavyTLD: value(.abuseHeavyTLD),
-      youngDomain: value(.youngDomain),
-      unknownDomainAge: value(.unknownDomainAge),
-      trustedAuthenticationFailure: value(.trustedAuthenticationFailure),
-      replyToMismatch: value(.replyToMismatch),
-      listUnsubscribe: value(.listUnsubscribe),
-      linkDomainDensity: value(.linkDomainDensity),
-      hasAccountContext: true
-    )
-  }
-
   private enum CodingKeys: String, CodingKey {
     case version, abuseHeavyTLD, youngDomain, unknownDomainAge, trustedAuthenticationFailure
     case replyToMismatch, listUnsubscribe, linkDomainDensity, hasAccountContext
-  }
-
-  private enum VersionOnePosition: Int {
-    case bias, abuseHeavyTLD, youngDomain, unknownDomainAge, trustedAuthenticationFailure
-    case replyToMismatch, listUnsubscribe, linkDomainDensity
   }
 }

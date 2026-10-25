@@ -1,26 +1,6 @@
 package import Foundation
 package import SwiftData
 
-/// The original schema: one keyed document per value, including the whole application snapshot.
-package enum StoreSchemaV1: VersionedSchema {
-  /// Schema version of the single-document store.
-  package static var versionIdentifier: Schema.Version { Schema.Version(1, 0, 0) }
-  /// Entities in the single-document store.
-  package static var models: [any PersistentModel.Type] { [StoredValue.self] }
-
-  /// A small keyed document with a JSON payload.
-  @Model
-  package final class StoredValue {
-    /// Unique document name.
-    @Attribute(.unique)
-    package var key: String
-    /// JSON-encoded document value.
-    package var payload: Data
-    /// Creates a document row.
-    package init(key: String, payload: Data) { self.key = key; self.payload = payload }
-  }
-}
-
 /// Entity-per-element schema whose hot paths fetch only the rows they use.
 package enum StoreSchemaV2: VersionedSchema {
   /// Schema version of the entity store.
@@ -35,20 +15,17 @@ package enum StoreSchemaV2: VersionedSchema {
   }
 }
 
-/// Adds the entity tables to an existing single-document store without changing its rows.
-package enum StoreMigrationPlan: SchemaMigrationPlan {
-  /// Schemas in migration order.
-  package static var schemas: [any VersionedSchema.Type] {
-    [StoreSchemaV1.self, StoreSchemaV2.self]
-  }
-  /// Lightweight addition of the entity tables.
-  package static var stages: [MigrationStage] {
-    [.lightweight(fromVersion: StoreSchemaV1.self, toVersion: StoreSchemaV2.self)]
-  }
-}
-
 /// A small keyed document with a JSON payload.
-package typealias StoredValue = StoreSchemaV1.StoredValue
+@Model
+package final class StoredValue {
+  /// Unique document name.
+  @Attribute(.unique)
+  package var key: String
+  /// JSON-encoded document value.
+  package var payload: Data
+  /// Creates a document row.
+  package init(key: String, payload: Data) { self.key = key; self.payload = payload }
+}
 
 /// A JSON element addressed by a unique string key.
 package protocol PayloadRow: PersistentModel {
@@ -85,7 +62,7 @@ package final class ChangeRow {
 /// One Activity decision, with indexed columns for paged and predicate fetches.
 @Model
 package final class RecordRow: PayloadRow {
-  #Index<RecordRow>([\.date], [\.identityKey], [\.changeStamp])
+  #Index<RecordRow>([\.date], [\.identityKey])
   /// Record identifier.
   @Attribute(.unique)
   package var key: String
@@ -109,14 +86,12 @@ package final class RecordRow: PayloadRow {
   package var subject: String
   /// Decision explanation for text search.
   package var reason: String
-  /// Change counter at the latest write.
-  package var changeStamp: Int
   /// JSON-encoded record.
   package var payload: Data
   /// Creates an empty row whose columns are assigned by the caller.
   package init(key: String) {
     self.key = key; identityKey = ""; date = .distantPast; outcome = ""; path = ""
-    sender = ""; subject = ""; reason = ""; changeStamp = 0; payload = Data()
+    sender = ""; subject = ""; reason = ""; payload = Data()
   }
 }
 

@@ -371,25 +371,3 @@ func `keeps evicted action claims without classifying again`() async throws {
   #expect(await adapter.actions == [.moveToJunk])
   #expect(try await StateRepository.load(store).records.isEmpty)
 }
-
-@Test
-func `settles existing Activity once without classifying it again`() async throws {
-  let store = try testStore(), calls = Counter()
-  let classifier = MockClassifier(operation: { _ in
-    calls.increment()
-    return Verdict(label: .junk, confidence: 99, reason: "lure")
-  })
-  let manual = Pipeline(store: store, classifier: classifier)
-  let sweep = { (batch: [MailEnvelope]) in
-    try await Pipeline(store: store, classifier: classifier)
-      .processBatch(batch, adapter: nil, dryRun: true, skipsSettled: true).count
-  }
-  let existing = try envelope(), later = try envelope("unsolicited-newsletter")
-  try await enableActions(store)
-  _ = await manual.process(existing, forceDryRun: true)
-  #expect(try await sweep([existing]) == 0)
-  #expect(calls.value == 1)
-  _ = await manual.process(later, forceDryRun: true)
-  #expect(try await sweep([existing, later]) == 1)
-  #expect(calls.value == 2)
-}
