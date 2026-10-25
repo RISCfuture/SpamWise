@@ -7,7 +7,7 @@ enum StoredCredential: Hashable, Identifiable, Sendable {
   case provider(ModelBackend)
   /// The Spamhaus HTTPS query key.
   case spamhaus
-  /// The saved IMAP connection's password or bearer token, under its Keychain service.
+  /// The saved IMAP connection's password, under its Keychain service.
   case imap(service: String)
 
   /// Providers whose API keys SpamWise stores.

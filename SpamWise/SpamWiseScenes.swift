@@ -12,6 +12,9 @@ import SpamWiseCore
 public struct SpamWiseScenes: Scene {
   private let model: AppModel
   private let updates: (any UpdateChecking)?
+  @AppStorage private var showsMenuBarItem: Bool
+  @Environment(\.openWindow)
+  private var openWindow
 
   public var body: some Scene {
     Window("SpamWise", id: "activity") {
@@ -20,6 +23,7 @@ public struct SpamWiseScenes: Scene {
     .defaultSize(width: 1060, height: 680)
     .defaultLaunchBehavior(.presented)
     .handlesExternalEvents(matching: [])
+    .onChange(of: model.windowRequest, initial: true) { showRequestedWindow() }
     .commands {
       CommandGroup(replacing: .appInfo) { AboutButton() }
       if let updates {
@@ -33,7 +37,7 @@ public struct SpamWiseScenes: Scene {
         .environment(\.updates, updates)
     }
     .windowResizability(.contentSize)
-    MenuBarExtra {
+    MenuBarExtra(isInserted: $showsMenuBarItem) {
       MailMenuView(
         shared: model.shared,
         scanning: model.scanning,
@@ -44,8 +48,7 @@ public struct SpamWiseScenes: Scene {
         preferences: model.services.preferences
       )
     } label: {
-      Label("SpamWise", systemImage: "envelope.badge.shield.half.filled")
-        .modifier(ActivityWindowRequests(model: model))
+      MenuBarLabel(scanning: model.scanning)
     }
   }
 
@@ -60,25 +63,14 @@ public struct SpamWiseScenes: Scene {
   public init(model: AppModel, updates: (any UpdateChecking)? = nil) {
     self.model = model
     self.updates = updates
+    _showsMenuBarItem = MenuBarLabel.isShown(in: model.services.preferences)
   }
-}
 
-/**
- Shows Activity, and any sheet, when a URL, file or notification asks for it.
-
- It modifies the menu bar item, which stays in place while every window is closed.
- */
-private struct ActivityWindowRequests: ViewModifier {
-  let model: AppModel
-  @Environment(\.openWindow)
-  private var openWindow
-
-  func body(content: Content) -> some View {
-    content.onChange(of: model.windowRequest, initial: true) {
-      guard let request = model.takeWindowRequest() else { return }
-      NSApplication.shared.activate()
-      openWindow(id: "activity")
-      if let sheet = request.sheet { model.router.present(sheet) }
-    }
+  /// Shows Activity, and any sheet, when a URL, file, notification or the Dock asks for it.
+  private func showRequestedWindow() {
+    guard let request = model.takeWindowRequest() else { return }
+    NSApplication.shared.activate()
+    openWindow(id: "activity")
+    if let sheet = request.sheet { model.router.present(sheet) }
   }
 }

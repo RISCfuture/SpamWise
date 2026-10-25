@@ -3,6 +3,8 @@ import SpamWiseCore
 
 /// The mail connection SpamWise uses, and the IMAP account details when it is IMAP.
 struct IMAPSettingsView: View {
+  /// The identity of the IMAP account section, for scrolling to it.
+  static let accountSectionID = "imap.account"
   let settings: SettingsModel
   @Bindable var imap: IMAPConnectionModel
   let storageReady: Bool
@@ -28,8 +30,21 @@ struct IMAPSettingsView: View {
           HelpButton(page: "imap-connection")
         }
         OperationStatusView(operation: imap.operation, identifier: "imap.status")
-      }.disabled(!storageReady)
+      }
+      .disabled(!storageReady)
+      .id(Self.accountSectionID)
     }
+  }
+}
+
+extension IMAPSettingsView {
+  /// The connection sections over the app's models.
+  init(model: AppModel) {
+    self.init(
+      settings: model.settings,
+      imap: model.imap,
+      storageReady: model.services.storageReady
+    )
   }
 }
 
@@ -97,7 +112,7 @@ private struct IMAPAccountFields: View {
     TextField("Username", text: $imap.username, prompt: Text("name@example.com"))
       .accessibilityIdentifier("imap.username")
     SecureField(
-      "Password or token",
+      "Password",
       text: $imap.credential,
       prompt: imap.canKeepSavedCredential ? Text("Saved in Keychain") : Text("Required")
     )
@@ -108,8 +123,6 @@ private struct IMAPAccountFields: View {
     DisclosureGroup("Connection options") {
       TextField("TLS port", text: $imap.port, prompt: Text(IMAPConnectionModel.defaultPort))
         .accessibilityIdentifier("imap.port")
-      Toggle("Sign in with an OAuth token", isOn: $imap.oauthBearer)
-        .accessibilityIdentifier("imap.oauth")
     }
   }
 }
