@@ -61,6 +61,23 @@ struct `Evaluation report` {
   }
 
   @Test
+  func `recomputes a graymail preference's decision at another strength`() {
+    var row = EvaluationObservation(
+      file: "graymail/b",
+      truth: .graymail,
+      label: .review,
+      confidence: 20,
+      path: .model,
+      reason: "bulk",
+      modelLabel: .inbox
+    )
+    (row.category, row.categoryConfidence, row.preference) = (.promotion, 80, .junk)
+    let aggressive = row.decided(strength: .aggressive)
+    #expect(aggressive.label == .junk && aggressive.action == .moveToJunk)
+    #expect(row.decided(strength: .balanced).label == .review)
+  }
+
+  @Test
   func `computes one-sided 95 percent binomial upper bounds`() throws {
     #expect(try #require(BinomialBound.upper95(errors: 0, trials: 1500)) <= 0.002)
     #expect(try #require(BinomialBound.upper95(errors: 1, trials: 2)) > 0.97)
