@@ -12,7 +12,11 @@ struct ActivityStatusView: View {
       Divider()
       HStack {
         FilteringStateView(state: model.scanning.filteringState)
-        LeaveDryRunButton(state: model.scanning.filteringState) {
+        LeaveDryRunButton(
+          state: model.scanning.filteringState,
+          transport: model.shared.settings.advancedOptions.transport,
+          canStartFiltering: model.router.canConfirmLiveFiltering
+        ) {
           model.router.confirmLiveFiltering()
         } checkConnection: {
           showConnectionCheck(preferences: model.services.preferences, openSettings: openSettings)

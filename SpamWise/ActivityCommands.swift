@@ -44,7 +44,11 @@ private struct FilteringMenuItems: View {
   private var openSettings
 
   var body: some View {
-    LeaveDryRunButton(state: model.scanning.filteringState) {
+    LeaveDryRunButton(
+      state: model.scanning.filteringState,
+      transport: model.shared.settings.advancedOptions.transport,
+      canStartFiltering: model.router.canConfirmLiveFiltering
+    ) {
       openWindow(id: "activity")
       model.router.confirmLiveFiltering()
     } checkConnection: {

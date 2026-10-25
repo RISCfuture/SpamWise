@@ -27,7 +27,11 @@ struct MailMenuView: View {
   var body: some View {
     Text(scanning.filteringState.localizedTitle)
     if scanning.progress != nil { Text("Checking mail…") }
-    LeaveDryRunButton(state: scanning.filteringState) {
+    LeaveDryRunButton(
+      state: scanning.filteringState,
+      transport: shared.settings.advancedOptions.transport,
+      canStartFiltering: router.canConfirmLiveFiltering
+    ) {
       showActivity()
       router.confirmLiveFiltering()
     } checkConnection: {

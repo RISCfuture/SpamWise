@@ -10,7 +10,7 @@ final class BackupModel {
   static var restoredMessage: String {
     String(
       localized:
-        "Backup restored. Filtering is paused with dry run on. Check Mail connection in Accounts, then resume."
+        "Backup restored. Filtering is paused with dry run on. In Accounts, choose Check Mail Connection, or Check Connection for an IMAP account, then resume."
     )
   }
   /// Exporting and restoring backups.
