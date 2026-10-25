@@ -50,7 +50,7 @@ func `recognizes text only from bounded embedded image bytes`() async throws {
     Issue.record("Only PNG and JPEG images may reach Vision")
     return "unexpected"
   }
-  for mime in ["image/gif", "image/png"] {
+  for mime in ["image/gif", "image/png", "image/jpeg"] {
     #expect(await unsupported.text(from: imageMessage(payload: gif, mime: mime)) == nil)
   }
   #expect(await ocr.text(from: imageMessage(parts: 5)) == nil)
