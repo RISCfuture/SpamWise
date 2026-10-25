@@ -23,19 +23,6 @@ struct IMAPRevalidation {
 extension IMAPAdapter {
   private static let reviewKeyword = Flag("$SpamWiseReview")
 
-  /// Rethrows failures from steps that precede any mail command as ``ActionNotAttempted``.
-  static func notAttempted<Value>(_ step: () async throws -> Value) async throws -> Value {
-    do {
-      return try await step()
-    } catch let error as ActionNotAttempted {
-      throw error
-    } catch is CancellationError {
-      throw CancellationError()
-    } catch {
-      throw ActionNotAttempted(cause: error)
-    }
-  }
-
   static func move(
     _ identity: MessageIdentity,
     for action: MailAction,
@@ -63,8 +50,12 @@ extension IMAPAdapter {
     return .init(confirmed: true, updatedIdentity: moved)
   }
 
-  /// Moves an exact, revalidated message and confirms it at the destination COPYUID reports.
-  /// Returns nil when the server sent no usable COPYUID mapping, so the outcome is unknown.
+  /**
+   Moves an exact, revalidated message and confirms it at the destination COPYUID reports.
+
+   Returns nil when the outcome is unknown: the server sent no usable COPYUID mapping, or the
+   moved message couldn't be verified at its destination after the server reported the move.
+   */
   static func moveAndVerify(
     _ identity: MessageIdentity,
     to destination: String,
@@ -80,11 +71,27 @@ extension IMAPAdapter {
     moved.localID = mapping.uid
     moved.mailboxValidity = mapping.validity
     moved.mailbox = destination
-    let observed = try await select(destination, writable: false, session: session)
-    guard observed.validity == mapping.validity,
-      try await lookup(moved, session: session) != nil
-    else { throw IntegrationError.staleMessage }
-    return moved
+    return try await verifiedMove(moved, validity: mapping.validity, session: session)
+  }
+
+  /// The moved message when its destination still has the COPYUID validity and its exact
+  /// content; nil when that can't be shown.
+  private static func verifiedMove(
+    _ moved: MessageIdentity,
+    validity: UInt64,
+    session: IMAPSession
+  ) async throws -> MessageIdentity? {
+    do {
+      guard let destination = moved.mailbox,
+        try await select(destination, writable: false, session: session).validity == validity,
+        try await lookup(moved, session: session) != nil
+      else { return nil }
+      return moved
+    } catch is CancellationError {
+      throw CancellationError()
+    } catch {
+      return nil
+    }
   }
 
   /**

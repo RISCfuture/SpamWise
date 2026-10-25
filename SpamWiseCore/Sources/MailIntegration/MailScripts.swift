@@ -46,6 +46,9 @@ enum MailScripts {
   static let maximumSearchedMailboxes = 100
   /// Limit for each individual Apple Event sent to Mail.
   static let eventTimeoutSeconds = 8
+  /// What the action handler returns, without changing the message, when it already shows the
+  /// requested orange flag or background.
+  static let alreadyAnnotated = "already"
   /// Permission and timeout failures that must never be mistaken for an unreadable message.
   static let propagatedFailures = [-1743, -10004, -1712]
   private static let propagatedFailureList =
@@ -366,15 +369,15 @@ enum MailScripts {
                     move m to destination
                     return true
                 else if commandName is "\(MailCommand.orangeFlag.rawValue)" then
-                    if (flag index of m) is not -1 and (flag index of m) is not 1 then error ¬
+                    if (flag index of m) is 1 then return "\(alreadyAnnotated)"
+                    if (flag index of m) is not -1 then error ¬
                         "Existing flag retained" number \(Failure.existingAnnotation.rawValue)
                     set flag index of m to 1
                     return (flag index of m) is 1
                 else if commandName is "\(MailCommand.orangeBackground.rawValue)" then
-                    if (background color of m) is not none and (background color of m) is not \
-    orange ¬
-                        then error "Existing color retained" number \
-    \(Failure.existingAnnotation.rawValue)
+                    if (background color of m) is orange then return "\(alreadyAnnotated)"
+                    if (background color of m) is not none then error "Existing color retained" \
+    number \(Failure.existingAnnotation.rawValue)
                     set background color of m to orange
                     return (background color of m) is orange
                 else if commandName is "\(MailCommand.clearOrangeFlag.rawValue)" then

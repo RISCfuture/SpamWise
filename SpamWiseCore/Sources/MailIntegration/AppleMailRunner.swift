@@ -14,19 +14,26 @@ public indirect enum ScriptValue: Sendable, Equatable {
   var integer: Int? { if case .integer(let value) = self { value } else { nil } }
   var list: [Self]? { if case .list(let value) = self { value } else { nil } }
 
+  /**
+   Decodes a handler result.
+
+   AppleScript returns integers beyond 29 bits as reals, so a real or 64-bit integer with an
+   exact integer value decodes as an integer, and any other number as an empty string, which no
+   integer field accepts. Other values decode as their text, or as an empty string when they
+   have none, as `missing value` does.
+   */
   static func decode(_ descriptor: NSAppleEventDescriptor) -> Self {
-    if descriptor.descriptorType == typeAEList {
-      return .list(
-        (1...max(1, descriptor.numberOfItems)).compactMap { descriptor.atIndex($0) }.map(decode)
-      )
+    switch descriptor.descriptorType {
+      case typeAEList:
+        .list(
+          (1...max(1, descriptor.numberOfItems)).compactMap { descriptor.atIndex($0) }.map(decode)
+        )
+      case typeBoolean, typeTrue, typeFalse: .boolean(descriptor.booleanValue)
+      case typeSInt16, typeSInt32: .integer(Int(descriptor.int32Value))
+      case typeSInt64, typeIEEE32BitFloatingPoint, typeIEEE64BitFloatingPoint:
+        Int(exactly: descriptor.doubleValue).map(Self.integer) ?? .string("")
+      default: .string(descriptor.stringValue ?? "")
     }
-    if [typeBoolean, typeTrue, typeFalse].contains(descriptor.descriptorType) {
-      return .boolean(descriptor.booleanValue)
-    }
-    if [typeSInt16, typeSInt32, typeSInt64].contains(descriptor.descriptorType) {
-      return .integer(Int(descriptor.int32Value))
-    }
-    return .string(descriptor.stringValue ?? "")
   }
 }
 
@@ -166,9 +173,14 @@ actor AppleScriptExecutor {
     }
   }
 
+  /// Runs one handler call; a permission failure before a change request is an action not attempted.
   func run(_ request: MailRequest) throws -> ScriptValue {
     try Task.checkCancellation()
-    try MailAutomationPermission.check(askUser: false)
+    do {
+      try MailAutomationPermission.check(askUser: false)
+    } catch {
+      throw request.changesMail ? ActionNotAttempted(cause: error) : error
+    }
     do {
       let result = try call(request.handler.rawValue, request.arguments)
       logger.info("Mail handler \(request.handler.rawValue) returned")
@@ -281,6 +293,11 @@ final class AppleScriptLibrary {
 }
 
 extension MailRequest {
+  /// Whether this request asks Mail to change a message.
+  var changesMail: Bool {
+    guard case .apply(let command, _) = self else { return false }
+    return command != .open
+  }
   var handler: MailHandler {
     switch self {
       case .accounts: .accountList
