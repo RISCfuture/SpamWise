@@ -30,13 +30,7 @@ struct GeneralSettingsView: View {
       } header: {
         Text("Filtering")
       } footer: {
-        Text(
-          """
-          In a dry run, Activity shows what SpamWise would do and mail stays where it is. When you \
-          turn it off, SpamWise acts on the mail it checked that’s still in your Inbox.
-          """
-        )
-        .foregroundStyle(.secondary)
+        DryRunFooter(transport: settings.settings.advancedOptions.transport)
       }
       Section {
         Toggle("Show a weekly Review digest", isOn: settings.advancedBinding(\.weeklyDigest))
@@ -119,6 +113,33 @@ private struct DryRunToggle: View {
         .foregroundStyle(.secondary)
         MailRoleCheck(mail: mail)
       }
+    }
+  }
+}
+
+/// What turning off dry run does to mail the connection already checked.
+private struct DryRunFooter: View {
+  let transport: MailTransport
+
+  var body: some View {
+    switch transport {
+      case .appleMail:
+        Text(
+          """
+          In a dry run, Activity shows what SpamWise would do and mail stays where it is. When you \
+          turn it off, SpamWise acts on the mail it checked that’s still in your Inbox.
+          """
+        )
+        .foregroundStyle(.secondary)
+      case .imap:
+        Text(
+          """
+          In a dry run, Activity shows what SpamWise would do and mail stays where it is. When you \
+          turn it off, SpamWise acts only on mail that arrives afterward; mail it already checked \
+          stays where it is.
+          """
+        )
+        .foregroundStyle(.secondary)
     }
   }
 }

@@ -97,7 +97,7 @@ and [version metadata](https://developer.apple.com/help/app-store-connect/refere
 | Contact | <tim@tim.codes> |
 | Price | Free; optional third-party API usage is billed separately by the provider |
 | Subtitle | Mail filtering you control |
-| Primary category | Productivity |
+| Primary category | Utilities |
 | Keywords | email,junk,inbox,filter,privacy,mail,review,rules |
 | Promotional text | Preview mail decisions, set your own sender rules, and review uncertain messages before enabling automatic actions. |
 

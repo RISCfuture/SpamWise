@@ -54,7 +54,7 @@ struct ProviderSharingSummary: View {
         """
         Each message’s sender, subject, shortened text and evidence are sent with your additional \
         instructions and up to \(settings.settings.correctionLimit) similar corrections from the \
-        same account. Mail can contain sensitive information.
+        same account or your imported reviewed examples. Mail can contain sensitive information.
         """
       )
       Text(
