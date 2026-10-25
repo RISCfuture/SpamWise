@@ -43,7 +43,8 @@ public struct SpamWiseScenes: Scene {
         settings: model.settings,
         corrections: model.corrections,
         router: model.router,
-        storageReady: model.services.storageReady
+        storageReady: model.services.storageReady,
+        preferences: model.services.preferences
       )
     }
   }

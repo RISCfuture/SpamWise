@@ -138,6 +138,7 @@ private struct ActivityView: View {
     .onAppear { router.showsInspector = showsInspector }
     .onChange(of: router.showsInspector) { _, shown in showsInspector = shown }
     .sheet(item: $router.sheet) { sheet in ActivitySheetView(sheet: sheet, model: model) }
+    .liveFilteringConfirmation(isPresented: $router.confirmsLiveFiltering, settings: model.settings)
   }
 }
 

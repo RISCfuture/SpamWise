@@ -73,6 +73,13 @@ struct LiveFilteringConfirmation {
     return dismissed()
   }
 
+  /// Confirms a request made from the Activity window.
+  func confirmFromActivity() -> ActivityScreen {
+    confirmButton.click()
+    XCTAssertTrue(confirmButton.waitForNonExistence(timeout: UITestTiming.transition))
+    return ActivityScreen.waitForLanding(in: app)
+  }
+
   private func dismissed() -> GeneralSettingsScreen {
     XCTAssertTrue(confirmButton.waitForNonExistence(timeout: UITestTiming.transition))
     return GeneralSettingsScreen.waitForLanding(in: app)

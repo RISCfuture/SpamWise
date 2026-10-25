@@ -89,6 +89,14 @@ struct ActivityScreen {
     return item.isEnabled
   }
 
+  /// Asks, from the footer, to leave dry run, which the app confirms first.
+  func startFiltering() -> LiveFilteringConfirmation {
+    let button = app.buttons["activity.startFiltering"]
+    XCTAssertTrue(button.waitForExistence(timeout: UITestTiming.transition))
+    button.click()
+    return LiveFilteringConfirmation.waitForLanding(in: app)
+  }
+
   /// Opens Settings on the tab titled by `titleKey`.
   private func openSettingsPane(_ titleKey: String) {
     app.typeKey(",", modifierFlags: .command)

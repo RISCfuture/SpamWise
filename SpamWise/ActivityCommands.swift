@@ -40,8 +40,16 @@ private struct FilteringMenuItems: View {
   private var selected
   @Environment(\.openWindow)
   private var openWindow
+  @Environment(\.openSettings)
+  private var openSettings
 
   var body: some View {
+    LeaveDryRunButton(state: model.scanning.filteringState) {
+      openWindow(id: "activity")
+      model.router.confirmLiveFiltering()
+    } checkConnection: {
+      showConnectionCheck(preferences: model.services.preferences, openSettings: openSettings)
+    }
     PauseFilteringButton(settings: model.settings, paused: model.shared.settings.paused)
       .disabled(!model.canCorrectMail)
     ActivityActionButton(action: .dryRun) {
