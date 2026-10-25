@@ -71,7 +71,7 @@ struct `Evaluation report` {
       reason: "bulk",
       modelLabel: .inbox
     )
-    (row.category, row.categoryConfidence, row.preference) = (.promotion, 80, .junk)
+    (row.category, row.categoryConfidence, row.preference) = (.promotion, 87, .junk)
     let aggressive = row.decided(strength: .aggressive)
     #expect(aggressive.label == .junk && aggressive.action == .moveToJunk)
     #expect(row.decided(strength: .balanced).label == .review)

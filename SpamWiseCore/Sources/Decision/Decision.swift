@@ -6,10 +6,10 @@ public enum FilteringStrength: String, Codable, Sendable, CaseIterable {
   /// Requires confidence of at least 99 before a Junk action, or category confidence of 95 for
   /// graymail the user chose Junk for.
   case conservative
-  /// Requires confidence of at least 95 before a Junk action, or category confidence of 85 for
+  /// Requires confidence of at least 95 before a Junk action, or category confidence of 90 for
   /// graymail the user chose Junk for.
   case balanced
-  /// Requires confidence of at least 90 before a Junk action, or category confidence of 75 for
+  /// Requires confidence of at least 90 before a Junk action, or category confidence of 85 for
   /// graymail the user chose Junk for.
   case aggressive
   /// Minimum provisional confidence required to act on a Junk verdict.
@@ -21,10 +21,11 @@ public enum FilteringStrength: String, Codable, Sendable, CaseIterable {
    Minimum category confidence for moving graymail to Junk because the user chose Junk for its
    category, whatever the verdict's label.
 
-   Provisional pending the graymail adherence evaluation.
+   Chosen on the development split of the October 2026 preference-adherence evaluation and
+   still provisional; see `docs/probes/2026-10-25-preference-adherence.md`.
    */
   public var graymailThreshold: Int {
-    switch self { case .conservative: 95;  case .balanced: 85;  case .aggressive: 75
+    switch self { case .conservative: 95;  case .balanced: 90;  case .aggressive: 85
     }
   }
 }
