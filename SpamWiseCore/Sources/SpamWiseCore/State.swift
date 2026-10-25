@@ -138,6 +138,12 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var correctedLabel: MailLabel?
   /// Whether a later explicit undo restored this correction's rules and learning only.
   public var correctionUndone = false
+  /**
+   Whether the applied action outlasted its provider's settling window: it needed no later
+   check, or its move was still in place when rechecked. A move that is not settled may yet be
+   reverted by its provider.
+   */
+  public var actionSettled = false
   /// Separately recorded read-status follow-up after a confirmed Junk move; nil when not attempted.
   public var readStatusOutcome: ActionOutcome?
   /// Failure of optional mark-as-read, independent of the already completed move.
@@ -186,6 +192,7 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
     revision = values.lenient(.revision, default: revision)
     correctedLabel = values.lenient(.correctedLabel, default: nil)
     correctionUndone = values.lenient(.correctionUndone, default: false)
+    actionSettled = values.lenient(.actionSettled, default: false)
     readStatusOutcome = values.lenient(.readStatusOutcome, default: nil)
     readStatusError = values.lenient(.readStatusError, default: nil)
     sampleID = values.lenient(.sampleID, default: nil)
@@ -193,7 +200,7 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   }
   private enum CodingKeys: String, CodingKey {
     case id, date, identity, sender, subject, evidence, verdict, threats, decision, outcome
-    case actionError, path, latency, revision, correctedLabel, correctionUndone
+    case actionError, path, latency, revision, correctedLabel, correctionUndone, actionSettled
     case readStatusOutcome, readStatusError, sampleID
   }
 }
