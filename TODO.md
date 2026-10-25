@@ -67,7 +67,7 @@ handling. See [detection design](docs/detection-design.md) and
 - [x] Explicit Good/Junk/Review label collection and optional bounded reviewed-text export for later evaluation.
 - [x] Production spending: an optional user-set monthly limit, off by default, reserves each paid request's token-bound maximum and settles it to measured usage. The conservative lifetime ledger is confined to `spamwise-eval`, which requires an explicit `--budget-store`; its authorized additional evaluation ceiling is $150, not a spending target.
 - [x] Retain unstarted persistent retries when cancellation interrupts a batch; individual atomic claims reject superseded jobs. Transient failures retry with backoff for up to three days, and Pause or dry-run edits no longer invalidate pending work.
-- [x] Shared state in real SwiftData entities with change tokens and slice-scoped loads, a cross-process lock, retention limits and a set-aside path for unreadable legacy state. The legacy import has been tested only against a synthetic unversioned store.
+- [x] Shared state in real SwiftData entities with change tokens and slice-scoped loads, a cross-process lock, retention limits and a set-aside path for unreadable state. Pre-1.0 stores are not imported: a single-document snapshot from a build before the entity schema is set aside for recovery.
 
 See [evidence](docs/evidence.md), [IMAP](docs/imap.md), [evaluation](docs/evaluation.md)
 and [packaging](docs/packaging.md) for limits and reproducible commands.

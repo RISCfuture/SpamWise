@@ -134,7 +134,6 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
  */
 public enum ProcessedMessageRepository {
   private static let keyPrefix = "processed-v1:"
-  private static let legacyImportKey = "processed-v1:legacy-activity"
   private static let bucketPrefixLength = 2
   private static let maximumEntriesPerBucket = 250
   private static let retentionSec: TimeInterval = 400 * 86_400
@@ -160,8 +159,7 @@ public enum ProcessedMessageRepository {
    ``ProcessedMessage/isSettled(revision:dryRun:now:)``.
 
    Settled results not observed for a week have their retention renewed, so mail that stays in
-   a swept mailbox is not forgotten and classified again. Results recorded only in Activity
-   count once ``importLegacyActivity(in:)`` has run.
+   a swept mailbox is not forgotten and classified again.
    */
   public static func settledKeys(
     among keys: some Sequence<String>,
@@ -206,34 +204,6 @@ public enum ProcessedMessageRepository {
       bucket[key] = entry
       prune(&bucket, now: now)
     }
-  }
-
-  /// Imports results from the Activity log once per store, before the index is first consulted.
-  public static func importLegacyActivity(in store: Store) async throws {
-    guard try await store.read(legacyImportKey, default: false) == false else { return }
-    let records = try await StateRepository.load(store, StateSlices(records: .all)).records
-    var buckets: [String: [String: ProcessedMessage]] = [:]
-    for record in records where record.identity.accountID != nil && !record.deferredBySpendingLimit
-    {
-      let key = record.identity.key
-      let entry = ProcessedMessage(record: record, now: record.date)
-      if let previous = buckets[bucketKey(for: key)]?[key], !entry.shouldReplace(previous) {
-        continue
-      }
-      buckets[bucketKey(for: key), default: [:]][key] = entry
-    }
-    let imported = buckets
-    if !imported.isEmpty {
-      try await store.update(Set(imported.keys), as: [String: ProcessedMessage].self) { current in
-        let now = Date.now
-        for (bucket, entries) in imported {
-          var merged = current[bucket, default: [:]].merging(entries) { existing, _ in existing }
-          prune(&merged, now: now)
-          current[bucket] = merged
-        }
-      }
-    }
-    try await store.update(legacyImportKey, default: false) { $0 = true }
   }
 
   private static func renewRetention(

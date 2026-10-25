@@ -242,19 +242,6 @@ struct `Bounded learning state` {
     let empty = try JSONDecoder().decode(LearningState.self, from: Data("{}".utf8))
     #expect(empty.samples.isEmpty)
   }
-
-  @Test
-  func `migrates legacy sample features to the current schema`() throws {
-    let legacy = try JSONDecoder().decode(
-      LearningState.self,
-      from: Data(legacySampleJSON(id: try #require(state.samples.first?.id)).utf8)
-    )
-    let migrated = try #require(legacy.samples.first?.features)
-    #expect(migrated.version < LearningFeatures.schemaVersion)
-    #expect(migrated.abuseHeavyTLD == 1)
-    #expect(migrated.unknownDomainAge == 1)
-    #expect(migrated.linkDomainDensity == 0.5)
-  }
 }
 
 @Suite
@@ -504,11 +491,4 @@ private func learningMessage(
 
 private func authenticatedEvidence(_ message: ParsedMessage) -> EvidenceBundle {
   EvidenceBundle(message: message, trustedAuthServers: [trustedAuthServer])
-}
-
-private func legacySampleJSON(id: String) -> String {
-  """
-  {"samples": [{"id": "\(id)", "date": 0, "label": "junk", "provenance": "explicitCorrection", \
-  "partition": "training", "tokens": ["casino"], "features": [1, 1, 0, 1, 0, 0, 0, 0.5]}]}
-  """
 }

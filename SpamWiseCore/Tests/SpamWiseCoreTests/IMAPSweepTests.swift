@@ -126,34 +126,6 @@ struct `sweeps new IMAP Inbox mail` {
   }
 
   @Test
-  func `resumes from sweep progress saved under the host as written`() async throws {
-    var mixedCase = IMAPConfiguration.test
-    mixedCase.host = "IMAP.Example.com"
-    let raw = "From: sender@example.com\r\n\r\nHello"
-    let original = try testStore(), upgraded = try testStore()
-    let first = await IMAPTestServer(Self.inbox(exists: 0, uidNext: 1)).adapter(mixedCase)
-    try await first.commit(
-      try await first.nextInboxSweep(limit: 20, cursorStore: original),
-      cursorStore: original
-    )
-    let cursor = try await original.read(
-      "imap-sweep-v1:" + mixedCase.endpointFingerprint,
-      default: IMAPSweepCursor()
-    )
-    try await upgraded.update(
-      "imap-sweep-v1:" + mixedCase.legacyEndpointFingerprint,
-      default: IMAPSweepCursor()
-    ) { $0 = cursor }
-    let delivered = IMAPTestServer(
-      Self.inbox(exists: 2, uidNext: 3).metadata(Self.rows(1...2, size: raw.utf8.count))
-        .body(raw, uid: 1, sequence: 1).body(raw, uid: 2, sequence: 2)
-    )
-    let sweep = try await delivered.adapter(mixedCase)
-      .nextInboxSweep(limit: 20, cursorStore: upgraded)
-    #expect(sweep.messages.map(\.identity.localID) == [1, 2])
-  }
-
-  @Test
   func `reads the same new mail again after a paused batch stops before committing`()
     async throws
   {

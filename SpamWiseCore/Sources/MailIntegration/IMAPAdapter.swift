@@ -233,12 +233,10 @@ extension IMAPAdapter {
     return receipt
   }
 
-  /// The saved sweep cursor, read under the legacy endpoint key when the current key has none.
+  /// The sweep cursor saved in `store`, or this adapter's own when there is no store.
   private func savedCursor(in store: Store?) async throws -> IMAPSweepCursor {
     guard let store else { return sweepCursor }
-    let legacyKey = "imap-sweep-v1:" + configuration.legacyEndpointFingerprint
-    let saved = try await store.read([sweepCursorKey, legacyKey], as: IMAPSweepCursor.self)
-    return saved[sweepCursorKey] ?? saved[legacyKey] ?? sweepCursor
+    return try await store.read(sweepCursorKey, default: sweepCursor)
   }
 
   private func validateIdentity(_ identity: MessageIdentity) throws {

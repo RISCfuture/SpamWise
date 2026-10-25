@@ -70,9 +70,12 @@ one), `codes.tim.SpamWise.MailExtension`, team `2NFSK2WB24`, App Group
 Credentials live only in that Keychain group, never in settings or backups.
 
 Shared state is one SwiftData store (`SpamWise.store`) in the App Group, with an entity
-per collection (`StoreSchemaV2`, migrated from the single-document V1). Every
-read-modify-write transaction takes a process-shared `flock` on `SpamWise.store.lock`
-with a bounded five-second wait, then uses a fresh `ModelContext` on the process's one
+per collection (`StoreSchemaV2`, without a migration plan, so schema changes must suit
+SwiftData's automatic lightweight migration). A `state.schema` mark refuses a store a
+newer version wrote. Pre-1.0 data is not imported; a single-document snapshot from a
+build before the entity schema is set aside for recovery. Every read-modify-write
+transaction takes a process-shared `flock` on `SpamWise.store.lock` with a bounded
+five-second wait, then uses a fresh `ModelContext` on the process's one
 `ModelContainer`, so it sees rows other processes committed. Callers load only the
 `StateSlices` they need and detect other processes' writes by polling `changeTokens()`;
 never rely on Core Data change notifications. Lock contention fails open.
