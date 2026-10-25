@@ -14,7 +14,8 @@ extension Pipeline {
      - key: The placement's training claim.
      - adapter: The integration that performs the move.
    - Returns: The dispatched record, or nil when the claim no longer belongs to a dry-run
-     correction, or filtering is paused, in dry run or not validated for the message's account.
+     correction the user still stands by, or filtering is paused, in dry run or not validated for
+     the message's account.
    */
   func dispatchTrainingPlacement(
     claimedBy recordID: UUID,
@@ -24,11 +25,11 @@ extension Pipeline {
     let claimed = try await StateRepository.update(
       store,
       loading: StateSlices([.training], records: .only([recordID]))
-    ) { state -> (record: DecisionRecord, review: ReviewTreatment)? in
+    ) { state -> (record: DecisionRecord, step: MailAction)? in
       guard state.trainingClaims[key] == recordID,
         let saved = state.records.first(where: { $0.id == recordID }),
         saved.path == .correction, saved.outcome == .dryRun,
-        state.acts(onAccount: saved.identity.accountID)
+        let label = saved.standingCorrection, state.acts(onAccount: saved.identity.accountID)
       else { return nil }
       var placement = saved
       placement.id = UUID(); placement.date = .now
@@ -36,19 +37,27 @@ extension Pipeline {
       placement.outcome = .pending; placement.actionError = nil
       state.record(placement)
       state.trainingClaims[key] = placement.id
-      return (placement, state.settings.review)
+      return (placement, Self.correctionAction(label, review: state.settings.review))
     }
-    guard let claimed, let label = claimed.record.correctedLabel else { return nil }
+    guard let claimed else { return nil }
     do {
       return try await dispatch(
         claimed.record,
         adapter: adapter,
         forceDryRun: false,
-        mode: .correction(steps: [Self.correctionAction(label, review: claimed.review)])
+        mode: .correction(steps: [claimed.step])
       )
     } catch {
       return await recordUnstarted(claimed.record, cause: error)
     }
+  }
+}
+
+extension DecisionRecord {
+  /// The correction's label, or nil once it is undone or corrected again.
+  fileprivate var standingCorrection: MailLabel? {
+    guard !correctionUndone, correctedLabel == decision.label else { return nil }
+    return decision.label
   }
 }
 
