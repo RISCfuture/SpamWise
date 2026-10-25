@@ -26,6 +26,7 @@ public enum StateBackup {
   /// The largest backup file, in bytes, that ``restore(_:recoveryKey:store:)`` reads.
   public static let maximumBytes = 64 * 1024 * 1024
   private static let keyBytes = 32
+  private static let readableVersions = 1...Payload.currentVersion
   private static let slices = StateSlices(
     [.rules, .contentRules, .corrections, .learning, .undo],
     reviewedLabels: .all
@@ -48,32 +49,42 @@ public enum StateBackup {
       includeContent: includeContent
     )
   }
-  /// Encrypts settings and learning with optional explicitly retained message content.
+  /**
+   Encrypts settings and learning, with retained message text and correction excerpts only when
+   `includeContent` is set.
+   */
   public static func export(_ state: AppState, recoveryKey: String, includeContent: Bool = false)
     throws -> Data
   {
-    var labels = state.reviewedLabels
-    if !includeContent {
-      labels = labels.map {
-        var label = $0; label.message = nil; return label
-      }
-    }
+    let options = state.settings.advancedOptions
     let payload = Payload(
       policy: state.settings.policy,
       categoryPreferences: state.settings.categoryPreferences,
       strength: state.settings.strength,
       review: state.settings.review,
       rules: state.rules,
-      corrections: state.corrections,
-      labels: labels,
+      corrections: includeContent ? state.corrections : state.corrections.map(withoutExcerpt),
+      labels: includeContent ? state.reviewedLabels : state.reviewedLabels.map(withoutMessage),
       learning: state.learning,
-      contentRules: state.contentRules
+      contentRules: state.contentRules,
+      trustExclusions: state.settings.mailOptions.trustExclusions,
+      learningOptions: LearningOptions(
+        fingerprints: options.fingerprints,
+        bayes: options.bayes,
+        learnedWeights: options.learnedWeights
+      )
     )
     let data = try JSONEncoder().encode(payload)
     guard data.count <= maximumBytes else { throw BackupError.invalidArchive }
     return try AES.GCM.seal(data, using: key(recoveryKey), authenticating: authentication).combined!
   }
-  /// Authenticates and validates the whole archive before replacing portable state atomically.
+  /**
+   Authenticates and validates the whole archive before replacing portable state atomically.
+
+   This Mac keeps its choice of whether to retain reviewed message text, so the backup's text is
+   restored only while that setting is on. A version-one backup has no trust exclusions or
+   learning options, so restoring one keeps this Mac's.
+   */
   public static func restore(_ data: Data, recoveryKey: String, store: Store) async throws {
     let payload: Payload
     do {
@@ -94,16 +105,19 @@ public enum StateBackup {
       state.contentRuleSkips = state.contentRuleSkips.filter { ruleIDs.contains($0.key) }
       state.corrections = payload.corrections
       state.learning = payload.learning ?? LearningState()
-      state.reviewedLabels = payload.labels
+      state.reviewedLabels =
+        state.settings.advancedOptions.retainReviewedContent
+        ? payload.labels : payload.labels.map(withoutMessage)
       state.settings.policy =
         PromptBuilder.formerDefaultPolicies.contains(payload.policy)
         ? PromptBuilder.defaultPolicy : payload.policy
       state.settings.categoryPreferences = payload.categoryPreferences ?? .defaults
       state.settings.strength = payload.strength
       state.settings.review = payload.review
-      state.settings.advancedOptions.retainReviewedContent = payload.labels.contains {
-        $0.message != nil
+      if let exclusions = payload.trustExclusions {
+        state.settings.mailOptions.trustExclusions = exclusions
       }
+      payload.learningOptions?.apply(to: &state.settings.advancedOptions)
       state.settings.paused = true
       state.settings.dryRun = true
       state.settings.validatedAccounts = []
@@ -119,13 +133,15 @@ public enum StateBackup {
     return SymmetricKey(data: bytes)
   }
   private static func validate(_ payload: Payload) throws {
-    guard payload.version == 1, payload.rules.count <= RetentionLimits.senderRules,
+    guard readableVersions.contains(payload.version),
+      payload.rules.count <= RetentionLimits.senderRules,
       payload.corrections.count <= RetentionLimits.corrections,
       payload.labels.count <= RetentionLimits.reviewedLabels,
       payload.policy.count <= RetentionLimits.policyCharacters,
       Set(payload.rules.map(\.id)).count == payload.rules.count,
       Set(payload.corrections.map(\.id)).count == payload.corrections.count,
-      Set(payload.labels.map(\.id)).count == payload.labels.count
+      Set(payload.labels.map(\.id)).count == payload.labels.count,
+      payload.trustExclusions.map(TrustExclusions.isValid) ?? true
     else { throw BackupError.invalidArchive }
     for rule in payload.rules {
       guard try RuleManagement.normalized(rule.value, scope: rule.scope) == rule.value else {
@@ -154,8 +170,19 @@ public enum StateBackup {
       }
     }
   }
+  private static func withoutMessage(_ label: ReviewedLabel) -> ReviewedLabel {
+    var label = label
+    label.message = nil
+    return label
+  }
+  private static func withoutExcerpt(_ correction: CorrectionExample) -> CorrectionExample {
+    var correction = correction
+    correction.quote("")
+    return correction
+  }
   private struct Payload: Codable {
-    var version = 1
+    static let currentVersion = 2
+    var version = currentVersion
     var policy: String
     var categoryPreferences: CategoryPreferences?
     var strength: FilteringStrength
@@ -165,5 +192,20 @@ public enum StateBackup {
     var labels: [ReviewedLabel]
     var learning: LearningState?
     var contentRules: [ContentRule]?
+    /// Addresses excluded from relationship trust; absent from version-one backups.
+    var trustExclusions: Set<String>?
+    /// Which learned signals are enabled; absent from version-one backups.
+    var learningOptions: LearningOptions?
+  }
+  /// The optional learned signals a backup turns on or off.
+  private struct LearningOptions: Codable {
+    var fingerprints: Bool
+    var bayes: Bool
+    var learnedWeights: Bool
+
+    func apply(to options: inout AdvancedSettings) {
+      options.fingerprints = fingerprints; options.bayes = bayes
+      options.learnedWeights = learnedWeights
+    }
   }
 }
