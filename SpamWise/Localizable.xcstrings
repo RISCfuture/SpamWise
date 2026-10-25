@@ -49,6 +49,22 @@
         }
       }
     },
+    "%lld Block rules become Allow rules, including %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld reglas de bloqueo pasan a ser reglas de permitir, entre ellas %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld règles de blocage deviennent des règles d’autorisation, dont %2$@."
+          }
+        }
+      }
+    },
     "%lld Good or Junk · %lld Review · %lld not classified": {
       "localizations": {
         "es": {
@@ -973,6 +989,38 @@
         }
       }
     },
+    "Import Rules": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar reglas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer les règles"
+          }
+        }
+      }
+    },
+    "Import these sender rules?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Importar estas reglas de remitente?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer ces règles d’expéditeur ?"
+          }
+        }
+      }
+    },
     "Just This Sender": {
       "localizations": {
         "es": {
@@ -1197,6 +1245,22 @@
         }
       }
     },
+    "New rules: %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas nuevas: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouvelles règles : %lld"
+          }
+        }
+      }
+    },
     "No Junk mail was found to learn from. Check the Mail connection, then scan again.": {
       "localizations": {
         "es": {
@@ -1337,6 +1401,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rétablir les préférences par défaut ?"
+          }
+        }
+      }
+    },
+    "Rules already saved: %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas ya guardadas: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles déjà enregistrées : %lld"
+          }
+        }
+      }
+    },
+    "Rules that change: %lld": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reglas que cambian: %lld"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Règles modifiées : %lld"
           }
         }
       }
@@ -1545,6 +1641,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "La clé n’a pas été vérifiée."
+          }
+        }
+      }
+    },
+    "These Block rules become Allow rules: %@.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estas reglas de bloqueo pasan a ser reglas de permitir: %@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ces règles de blocage deviennent des règles d’autorisation : %@."
           }
         }
       }

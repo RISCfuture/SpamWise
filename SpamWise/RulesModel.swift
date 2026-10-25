@@ -11,6 +11,8 @@ final class RulesModel {
   let senderRules = TrackedOperation()
   /// Removing, importing, exporting and turning content rules on or off.
   let contentRules = TrackedOperation()
+  /// A validated sender-rule archive, waiting for the user to confirm what it changes.
+  private(set) var pendingImport: RuleImportPreview?
   @ObservationIgnored private let services: AppServices
   @ObservationIgnored private let shared: SharedStateModel
 
@@ -19,7 +21,7 @@ final class RulesModel {
     self.shared = shared
   }
 
-  private static func outcome(
+  nonisolated private static func outcome(
     of rule: ContentRule,
     evaluation: ContentRuleEvaluation,
     overridden: Bool
@@ -35,10 +37,62 @@ final class RulesModel {
     }
   }
 
-  /// Parses `envelope` away from the main actor.
+  /// Reads and validates the sender-rule archive at `url` against the saved rules.
   @concurrent
-  private static func parse(_ envelope: MailEnvelope) async throws -> ParsedMessage {
-    try MIMEParser().parse(envelope.raw)
+  private static func previewImport(from url: URL, store: Store) async throws
+    -> RuleImportPreview
+  {
+    let data = try url.readSecurityScoped(maximumBytes: RuleManagement.maximumArchiveBytes)
+    let saved = try await StateRepository.load(store, StateSlices([.rules])).rules
+    return try RuleManagement.previewImport(data, against: saved)
+  }
+
+  /// Reads the content-rule archive at `url` and merges it.
+  @concurrent
+  private static func importContentRules(from url: URL, store: Store) async throws {
+    let data = try url.readSecurityScoped(maximumBytes: ContentRuleManagement.maximumArchiveBytes)
+    try await ContentRuleManagement.importRules(data, store: store)
+  }
+
+  /**
+   Describes how `candidate` would decide the message in `envelope`, alongside the saved rules.
+
+   - Parameters:
+     - contentRules: The saved content rules; any with the candidate's identity is replaced.
+     - senderRules: The saved sender rules, which decide before any content rule.
+     - trustedAuthServers: The receiving servers trusted for the message's account.
+   */
+  @concurrent
+  private static func describe(
+    _ candidate: ContentRule,
+    in envelope: MailEnvelope,
+    contentRules: [ContentRule],
+    senderRules: [SenderRule],
+    trustedAuthServers: Set<String>
+  ) async throws -> String {
+    let message = try MIMEParser().parse(envelope.raw)
+    let evaluation = ContentRules.evaluate(
+      contentRules.filter { $0.id != candidate.id } + [candidate],
+      message: message
+    )
+    let evidence = EvidenceBundle(message: message, trustedAuthServers: trustedAuthServers)
+    let senderRule = Gates.evaluate(
+      address: message.fromAddress,
+      domain: evidence.fromDomain,
+      rules: senderRules,
+      contact: nil,
+      history: .init(),
+      authentication: evidence.senderAuthentication
+    )
+    var result = outcome(of: candidate, evaluation: evaluation, overridden: senderRule != nil)
+    if evaluation.matching.count > 1 {
+      result +=
+        " "
+        + String(
+          localized: "\(evaluation.matching.count) content rules match; the newest one decides."
+        )
+    }
+    return result
   }
 
   /// Saves a sender rule, replacing any rule of the same scope and value.
@@ -70,14 +124,26 @@ final class RulesModel {
     }
   }
 
-  func importSenderRules(from url: URL) {
+  /// Validates the sender-rule archive at `url` and holds what it changes for confirmation.
+  func previewSenderRuleImport(from url: URL) {
     senderRules.run { [self] in
-      let data = try url.readSecurityScoped(maximumBytes: RuleManagement.maximumArchiveBytes)
-      try await RuleManagement.importRules(data, store: services.requireStore())
+      pendingImport = try await Self.previewImport(from: url, store: services.requireStore())
+      return nil
+    }
+  }
+
+  /// Imports the previewed archive the user confirmed.
+  func importSenderRules(_ preview: RuleImportPreview) {
+    pendingImport = nil
+    senderRules.run { [self] in
+      try await RuleManagement.commitImport(preview, store: services.requireStore())
       await shared.refresh()
       return String(localized: "Rules imported. Pending classifications were invalidated.")
     }
   }
+
+  /// Discards the archive waiting for confirmation.
+  func cancelSenderRuleImport() { pendingImport = nil }
 
   /// The saved sender rules in the transfer format.
   func exportedSenderRules() throws -> Data {
@@ -121,10 +187,7 @@ final class RulesModel {
 
   func importContentRules(from url: URL) {
     contentRules.run { [self] in
-      let data = try url.readSecurityScoped(
-        maximumBytes: ContentRuleManagement.maximumArchiveBytes
-      )
-      try await ContentRuleManagement.importRules(data, store: services.requireStore())
+      try await Self.importContentRules(from: url, store: services.requireStore())
       await shared.refresh()
       return String(localized: "Content rules imported. Pending classifications were invalidated.")
     }
@@ -138,36 +201,17 @@ final class RulesModel {
   /// Describes how `draft` would decide the message selected in Mail, alongside the saved rules.
   func test(_ draft: ContentRule) async throws -> String {
     let envelope = try await services.appleMail.selectedMessage()
-    let message = try await Self.parse(envelope)
     var candidate = draft
     candidate.updatedAt = .now
     let state = shared.state
-    let evaluation = ContentRules.evaluate(
-      state.contentRules.filter { $0.id != candidate.id } + [candidate],
-      message: message
-    )
-    let evidence = EvidenceBundle(
-      message: message,
+    return try await Self.describe(
+      candidate,
+      in: envelope,
+      contentRules: state.contentRules,
+      senderRules: state.rules,
       trustedAuthServers: state.settings.mailOptions.trustedAuthServers(
         for: envelope.identity.accountID
       )
     )
-    let senderRule = Gates.evaluate(
-      address: message.fromAddress,
-      domain: evidence.fromDomain,
-      rules: state.rules,
-      contact: nil,
-      history: .init(),
-      authentication: evidence.senderAuthentication
-    )
-    var result = Self.outcome(of: candidate, evaluation: evaluation, overridden: senderRule != nil)
-    if evaluation.matching.count > 1 {
-      result +=
-        " "
-        + String(
-          localized: "\(evaluation.matching.count) content rules match; the newest one decides."
-        )
-    }
-    return result
   }
 }
