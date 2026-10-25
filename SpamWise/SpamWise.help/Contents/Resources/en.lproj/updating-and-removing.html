@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Updating and removing SpamWise — SpamWise Help</title><meta name="description" content="Update SpamWise, stop it opening at login, remove its keys and passwords, or remove it from your Mac.">
+<link rel="stylesheet" href="help.css"></head><body>
+<nav aria-label="Help topics"><h2>Get started</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li></ul><h2>Everyday use</h2><ul><li><a href="activity.html">Using Activity</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="review-junk.html">Reviewing Junk</a></li><li><a href="notifications.html">Notifications and the Review digest</a></li><li><a href="statistics.html">Statistics</a></li><li><a href="shortcuts.html">Shortcuts</a></li></ul><h2>Rules and learning</h2><ul><li><a href="rules.html">Sender and content rules</a></li><li><a href="folders.html">Folders</a></li><li><a href="reviewed-messages-and-learning.html">Reviewed messages and learning</a></li></ul><h2>Accounts and data</h2><ul><li><a href="imap-connection.html">Connecting with IMAP</a></li><li><a href="backup-and-restore.html">Backup and restore</a></li><li><a href="updating-and-removing.html" aria-current="page">Updating and removing SpamWise</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
+<main><a name="updating-and-removing" id="updating-and-removing"></a><h1>Updating and removing SpamWise</h1>
+<p>Keep only one copy of SpamWise on your Mac. The App Store version and the downloaded version share their settings, so install one or the other.</p>
+<h2><a name="update-app" id="update-app"></a>Update SpamWise</h2>
+<p>If you got SpamWise from the App Store, it updates through the App Store like your other apps.</p>
+<p>If you downloaded SpamWise, it checks for new versions itself. In Settings → General, under App updates:</p>
+<ul>
+<li>Check for updates sets how often it checks: Hourly, Daily, Weekly or Never.</li>
+<li>Include prerelease versions also offers test versions before their release.</li>
+<li>Check Now checks right away, as does SpamWise → Check for Updates…. Reset Skipped Versions offers versions you chose to skip again.</li>
+</ul>
+<p>When you accept an update, SpamWise downloads it as a disk image. Before you install it, you can export a backup; see <a href="backup-and-restore.html#export-backup">Export a backup</a>. Then quit SpamWise, open the disk image, drag SpamWise to the Applications folder to replace the old copy, and open SpamWise again. Your settings, rules and learning stay as they were.</p>
+<h2><a name="login-item" id="login-item"></a>Stop SpamWise from opening at login</h2>
+<p>Turn off Open SpamWise at login in Settings → General. You can also check the login items in System Settings → General. SpamWise filters only while it’s open, so to stop filtering now, choose Quit SpamWise in its menu bar menu or SpamWise → Quit SpamWise.</p>
+<h2><a name="remove-keys" id="remove-keys"></a>Remove keys and passwords</h2>
+<p>SpamWise keeps your API keys, the Spamhaus query key and your IMAP password in Keychain. Removing the app alone leaves them there, so remove them first if you won’t use SpamWise again. In Settings → Accounts, under Keys and passwords:</p>
+<ul>
+<li>To remove one, choose Remove next to it. To remove a provider’s API key, you can also choose Remove Key… in Settings → Provider.</li>
+<li>To remove them all, choose Remove All SpamWise Keys and Passwords…, then Remove All.</li>
+</ul>
+<p>Mail isn’t classified with a provider until you add its key again. To stop using an IMAP connection, see <a href="imap-connection.html">Connecting with IMAP</a>.</p>
+<h2><a name="uninstall" id="uninstall"></a>Remove SpamWise from your Mac</h2>
+<ol>
+<li>Remove your keys and passwords, as above, and turn off Open SpamWise at login.</li>
+<li>If you added the Mail rule that runs the SpamWise script, open Mail → Settings, click Rules, select the rule and click Remove. Then remove the SpamWise script from the folder ~/Library/Application Scripts/com.apple.mail.</li>
+<li>Quit SpamWise, then drag it from the Applications folder to the Trash.</li>
+</ol>
+<p>Removing SpamWise doesn’t change your mail. Messages it moved to Junk stay there, and Review marks stay until you remove them in Mail. Your rules, corrections and learning stay on this Mac, so they’re back if you install SpamWise again.</p>
+<p>To remove that data too, export a backup first if you might want it later. Then, in Finder, choose Go → Go to Folder and open ~/Library/Group Containers. Move the folder group.codes.tim.SpamWise to the Trash. Then open ~/Library/Containers and move the folders codes.tim.SpamWise and codes.tim.SpamWise.MailExtension to the Trash; Finder may show them as SpamWise. Don’t remove Mail’s folders.</p>
+</main></body></html>
