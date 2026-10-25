@@ -32,7 +32,7 @@ func `excludes corrected mail from the Review digest`() {
 
 @Test(arguments: [
   (text: "PERSON", accountID: String?.none, matches: true), ("PERSON", "account", true),
-  ("PERSON", "other", false), ("nobody", nil, false)
+  ("PERSON", "other", false), ("nobody", nil, false), ("account", nil, false)
 ])
 func `filters Activity by case-insensitive text and exact account`(
   text: String,
@@ -94,13 +94,15 @@ func `ranks failed Mail actions ahead of less confident Review`() {
 }
 
 @Test
-func `summarizes diagnostic reasons without sender or explanation text`() throws {
-  var unconsented = reviewRecord()
+func `summarizes diagnostic reasons without sender or explanation text`() async throws {
+  let store = try testStore()
+  var unconsented = reviewRecord(outcome: .failed)
   unconsented.decision.reason = .classificationFailed(.consentRequired)
-  var state = AppState()
-  state.records = [reviewRecord(), unconsented]
-  let summary = DiagnosticSummary(state: state)
+  let records = [reviewRecord(), unconsented]
+  try await StateRepository.update(store) { state in records.forEach { state.record($0) } }
+  let summary = try await StateRepository.diagnosticSummary(store)
   #expect(summary.reasons == ["model": 1, "unclassified: consentRequired": 1])
+  #expect(summary.outcomes == ["dryRun": 1, "failed": 1])
   let diagnostic = try JSONEncoder().encodeText(summary)
   #expect(!diagnostic.contains("person@example.com"))
   #expect(!diagnostic.contains("uncertain"))

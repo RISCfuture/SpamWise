@@ -10,7 +10,7 @@ struct SpendingSettingsView: View {
   var body: some View {
     LabeledContent(
       "Month-to-date estimated API cost",
-      value: shared.monthCost.formatted(.currency(code: "USD"))
+      value: EstimatedCost.formatted(shared.monthCost)
     )
     .onChange(of: shared.spending?.limitUSD, initial: true) { _, saved in
       if let saved { limitUSD = saved }
@@ -40,7 +40,7 @@ struct SpendingSettingsView: View {
         }
         LabeledContent(
           "Counted toward this month’s limit",
-          value: spending.committedUSD.formatted(.currency(code: "USD"))
+          value: EstimatedCost.formatted(spending.committedUSD)
         )
         if shared.spendingLimitReached {
           Text(

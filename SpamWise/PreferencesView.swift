@@ -1,7 +1,7 @@
 import SwiftUI
 import SpamWiseCore
 
-/// The Preferences tab: what the user wants for each kind of graymail, in their own words too.
+/// The Mail Choices tab: what the user wants for each kind of graymail, in their own words too.
 struct PreferencesView: View {
   private static let editorMinimumHeight: CGFloat = 120
   let preferences: PreferencesModel
@@ -36,7 +36,7 @@ struct PreferencesView: View {
       JunkFolderImportView(preferences: preferences)
       Section {
         HStack {
-          Button("Reset to defaults") { confirmsReset = true }
+          Button("Restore Defaults…") { confirmsReset = true }
           Spacer()
           HelpButton(page: "how-decisions-are-made")
         }

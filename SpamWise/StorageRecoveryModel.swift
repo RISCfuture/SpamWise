@@ -22,6 +22,13 @@ final class StorageRecoveryModel {
     self.shared = shared
   }
 
+  /// Reads, decrypts and restores the backup at `url` away from the main actor.
+  @concurrent
+  private static func restore(from url: URL, recoveryKey: String, store: Store) async throws {
+    let data = try url.readSecurityScoped(maximumBytes: StateBackup.maximumBytes)
+    try await StateRecovery.restore(backup: data, recoveryKey: recoveryKey, store: store)
+  }
+
   /// Encodes the set-aside data as one JSON file and hands it to `save`.
   func exportPreservedData(save: @escaping @MainActor (Data) -> Void) {
     operation.run { [self] in
@@ -34,12 +41,7 @@ final class StorageRecoveryModel {
   /// Restores the backup at `url` with `recoveryKey`, then discards the set-aside data.
   func restore(from url: URL, recoveryKey: String) {
     operation.run { [self] in
-      let data = try url.readSecurityScoped(maximumBytes: StateBackup.maximumBytes)
-      try await StateRecovery.restore(
-        backup: data,
-        recoveryKey: recoveryKey,
-        store: services.requireStore()
-      )
+      try await Self.restore(from: url, recoveryKey: recoveryKey, store: services.requireStore())
       return try await resolved(BackupModel.restoredMessage)
     }
   }

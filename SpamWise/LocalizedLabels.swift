@@ -113,8 +113,8 @@ extension DecisionPath {
   var localizedTitle: String {
     switch self {
       case .gate: String(localized: "Rule or relationship")
-      case .fingerprint: String(localized: "Campaign match")
-      case .model: String(localized: "Model")
+      case .fingerprint: String(localized: "Similar to mail you marked Junk")
+      case .model: String(localized: "Provider")
       case .correction: String(localized: "Correction")
       case .selection: String(localized: "Selected in Mail")
       case .verification: String(localized: "Connection check")
@@ -133,12 +133,22 @@ extension DecisionRecord {
   var displaySubject: String {
     subject
       ?? (path == .verification
-        ? String(localized: "API connection verification") : String(localized: "No subject"))
+        ? String(localized: "Provider key check") : String(localized: "No subject"))
   }
 }
 
 extension ParsedMessage {
   var displaySubject: String { subject.isEmpty ? String(localized: "No subject") : subject }
+}
+
+extension SenderAuthentication {
+  var localizedTitle: String {
+    switch self {
+      case .alignedPass: String(localized: "Passed, as checked by your mail server")
+      case .failed: String(localized: "Failed")
+      case .unverified: String(localized: "Not checked by a server you trust")
+    }
+  }
 }
 
 extension IncomingRoute {
@@ -163,7 +173,7 @@ extension FilteringState {
       case .rolesNotValidated:
         String(localized: "Dry run — check the Mail connection in Settings to start filtering")
       case .dryRun: String(localized: "Dry run — mail stays unchanged")
-      case .filtering: String(localized: "Filtering validated accounts")
+      case .filtering: String(localized: "Filtering on")
     }
   }
   /// Whether the state stops or limits filtering until the user or the system acts.
@@ -209,5 +219,16 @@ extension GraymailPreference {
       case .review: String(localized: "Flag for Review")
       case .junk: String(localized: "Move to Junk")
     }
+  }
+}
+
+/// An estimated cost in US dollars, as the app shows it.
+enum EstimatedCost {
+  private static let smallestShownUSD = 0.005
+
+  /// `usd` to the cent, or “Less than $0.01” for a cost above zero that would round to nothing.
+  static func formatted(_ usd: Double) -> String {
+    guard usd > 0, usd < smallestShownUSD else { return usd.formatted(.currency(code: "USD")) }
+    return String(localized: "Less than \(0.01.formatted(.currency(code: "USD")))")
   }
 }

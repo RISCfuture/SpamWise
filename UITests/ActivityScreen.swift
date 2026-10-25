@@ -58,7 +58,7 @@ struct ActivityScreen {
   }
 
   func openPreferencesSettings() -> CategoryPreferencesScreen {
-    openSettingsPane("Preferences")
+    openSettingsPane("Mail Choices")
     return CategoryPreferencesScreen.waitForLanding(in: app)
   }
 
@@ -73,11 +73,29 @@ struct ActivityScreen {
   }
 
   func openCorpus() -> CorpusScreen {
-    app.typeKey("c", modifierFlags: [.command, .option])
+    app.menuBars.menuBarItems[AppText.localized("Tools")].click()
+    app.menuItems["activity.corpus"].click()
     return CorpusScreen.waitForLanding(in: app)
   }
 
   func pause() { app.buttons["activity.pause"].click() }
+
+  /// Whether the Filtering menu offers to mark the selected decision as Junk.
+  func canMarkSelectionAsJunk() -> Bool {
+    app.menuBars.menuBarItems[AppText.localized("Filtering")].click()
+    let item = app.menuItems["activity.correct.junk"]
+    XCTAssertTrue(item.waitForExistence(timeout: UITestTiming.transition))
+    defer { app.typeKey(.escape, modifierFlags: []) }
+    return item.isEnabled
+  }
+
+  /// Asks, from the footer, to leave dry run, which the app confirms first.
+  func startFiltering() -> LiveFilteringConfirmation {
+    let button = app.buttons["activity.startFiltering"]
+    XCTAssertTrue(button.waitForExistence(timeout: UITestTiming.transition))
+    button.click()
+    return LiveFilteringConfirmation.waitForLanding(in: app)
+  }
 
   /// Opens Settings on the tab titled by `titleKey`.
   private func openSettingsPane(_ titleKey: String) {

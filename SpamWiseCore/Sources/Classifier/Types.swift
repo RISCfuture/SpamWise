@@ -282,7 +282,7 @@ public enum ClassificationError: String, ClassificationFailure, Codable, Sendabl
       case .consentRequired:
         String(
           localized:
-            "Allow mail sharing with the selected provider in Settings → Classifier first.",
+            "Allow mail sharing with the selected provider in Settings → Provider first.",
           bundle: .module
         )
       case .rateLimited:

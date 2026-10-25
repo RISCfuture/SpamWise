@@ -27,7 +27,8 @@ struct AccountSettingsView: View {
       RelationshipSettingsView(
         relationships: model.relationships,
         settings: model.settings,
-        shared: model.shared
+        shared: model.shared,
+        imap: model.imap
       )
       if transport == .appleMail { MailRuleSetupView(mail: model.mail) }
       CredentialsSettingsView(credentials: model.credentials)

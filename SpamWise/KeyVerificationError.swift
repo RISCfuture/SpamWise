@@ -13,6 +13,6 @@ nonisolated enum KeyVerificationError: KeyVerificationFailure, LocalizedError, E
     String(localized: "Keep filtering on this Mac is on, so SpamWise sends nothing to providers.")
   }
   var recoverySuggestion: String? {
-    String(localized: "Turn off Keep filtering on this Mac in Classifier settings, then try again.")
+    String(localized: "Turn off Keep filtering on this Mac in Provider settings, then try again.")
   }
 }

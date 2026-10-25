@@ -6,6 +6,10 @@ struct ClassifierSettingsView: View {
   let model: AppModel
 
   private var backend: ModelBackend { model.settings.settings.advancedOptions.backend }
+  /// Whether spending matters here: a paid provider is chosen, or a cost or limit is on record.
+  private var showsSpending: Bool {
+    backend.isCloud || model.shared.monthCost > 0 || model.shared.spending?.limitMicroUSD != nil
+  }
 
   var body: some View {
     Form {
@@ -24,16 +28,20 @@ struct ClassifierSettingsView: View {
         isLocalOnly: model.settings.settings.mailOptions.localOnly,
         credentials: model.credentials
       )
-      Section {
-        SpendingSettingsView(settings: model.settings, shared: model.shared)
-      } header: {
-        Text("Usage and spending")
-      } footer: {
-        HStack(alignment: .firstTextBaseline) {
-          Text("With a limit set, paid classification pauses until next month once it is reached.")
+      if showsSpending {
+        Section {
+          SpendingSettingsView(settings: model.settings, shared: model.shared)
+        } header: {
+          Text("Usage and spending")
+        } footer: {
+          HStack(alignment: .firstTextBaseline) {
+            Text(
+              "With a limit set, paid classification pauses until next month once it is reached."
+            )
             .foregroundStyle(.secondary)
-          Spacer()
-          HelpButton(page: "what-data-is-sent")
+            Spacer()
+            HelpButton(page: "what-data-is-sent")
+          }
         }
       }
     }.formStyle(.grouped)

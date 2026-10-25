@@ -40,7 +40,7 @@ struct LearningSettingsView: View {
         "Retain reviewed text for evaluation export",
         isOn: settings.advancedBinding(\.retainReviewedContent)
       )
-      Button("Export reviewed labels…") { exportLabels() }
+      Button("Export Reviewed Labels…") { exportLabels() }
         .disabled(shared.state.reviewedLabels.isEmpty)
       StatusLabel(status: exportStatus)
     } header: {
@@ -93,7 +93,7 @@ private struct DomainSuggestionsView: View {
       Section("Suggested domain rules") {
         ForEach(suggestions) { suggestion in
           LabeledContent {
-            Button(suggestion.label == .inbox ? "Allow domain" : "Block domain") {
+            Button(suggestion.label == .inbox ? "Allow Domain" : "Block Domain") {
               rules.saveSuggestedRule(
                 domain: suggestion.domain,
                 disposition: suggestion.label == .inbox ? .allow : .block

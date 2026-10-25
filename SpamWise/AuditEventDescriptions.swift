@@ -41,7 +41,7 @@ enum SettingsFieldTitles {
 
   private static func advancedTitle(_ field: String?) -> String {
     switch field {
-      case "backend", "modelID": String(localized: "Classifier")
+      case "backend", "modelID": String(localized: "Provider")
       case "mailSharingConsent": String(localized: "Provider consent")
       case "domainRegistrationLookup": String(localized: "Domain age lookup")
       case "transport": String(localized: "Mail connection")

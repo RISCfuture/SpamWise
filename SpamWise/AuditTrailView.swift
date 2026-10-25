@@ -26,14 +26,16 @@ struct AuditTrailView: View {
             ContentUnavailableView(
               "No configuration changes",
               systemImage: "clock.arrow.circlepath",
-              description: Text("Rule, policy and learning changes appear here.")
+              description: Text(
+                "Changes to rules, additional instructions and learning appear here."
+              )
             )
           } else {
             ContentUnavailableView.search(text: search)
           }
         }
       }
-      .navigationTitle("Configuration history")
+      .navigationTitle("Configuration History")
       .searchable(text: $search, prompt: "Search configuration history")
       .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "audit.done") }
     }

@@ -3,9 +3,7 @@ import ServiceManagement
 
 /// Whether SpamWise opens at login, so it keeps checking mail after a restart.
 struct StartupSettingsView: View {
-  @State private var status = SMAppService.mainApp.status
-  @State private var failure: OperationStatus?
-  @State private var busy = false
+  let loginItem: LoginItemModel
   @Environment(\.scenePhase)
   private var scenePhase
 
@@ -13,14 +11,11 @@ struct StartupSettingsView: View {
     Section("Startup") {
       Toggle(
         "Open SpamWise at login",
-        isOn: Binding(
-          get: { status == .enabled || status == .requiresApproval },
-          set: { setEnabled($0) }
-        )
+        isOn: Binding(get: { loginItem.isEnabled }, set: { loginItem.setEnabled($0) })
       )
-      .disabled(busy)
+      .disabled(loginItem.operation.isBusy)
       .accessibilityIdentifier("settings.login")
-      if status == .requiresApproval {
+      if loginItem.requiresApproval {
         Text("macOS needs your approval before SpamWise can open at login.")
           .foregroundStyle(.secondary)
         Button("Open Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
@@ -32,34 +27,13 @@ struct StartupSettingsView: View {
         """
       )
       .foregroundStyle(.secondary)
-      StatusLabel(status: failure)
+      OperationStatusView(operation: loginItem.operation)
     }
-    .onChange(of: scenePhase) { _, _ in status = SMAppService.mainApp.status }
-  }
-
-  private func setEnabled(_ enabled: Bool) {
-    busy = true
-    Task {
-      defer { busy = false; status = SMAppService.mainApp.status }
-      do {
-        if enabled {
-          try SMAppService.mainApp.register()
-        } else {
-          try await SMAppService.mainApp.unregister()
-        }
-        failure = nil
-      } catch {
-        failure = .failure(
-          OperationFailure(
-            message: String(
-              localized:
-                "SpamWise couldn’t change its login item. Check Login Items in System Settings › General."
-            )
-          )
-        )
-      }
-    }
+    .onAppear { loginItem.refresh() }
+    .onChange(of: scenePhase) { _, _ in loginItem.refresh() }
   }
 }
 
-#Preview("Startup") { Form { StartupSettingsView() }.formStyle(.grouped) }
+#Preview("Startup") {
+  Form { StartupSettingsView(loginItem: LoginItemModel()) }.formStyle(.grouped)
+}

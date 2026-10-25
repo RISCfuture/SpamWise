@@ -36,7 +36,9 @@ struct ContentRulesPane: View {
         Button("Edit…") { edit(selection) }.disabled(selection.count != 1)
         Button("Remove…", role: .destructive) { removing = selection }
           .disabled(selection.isEmpty)
-        if rules.contentRules.isBusy { ProgressView().controlSize(.small) }
+        if rules.contentRules.isBusy {
+          ProgressView { Text("Updating content rules…") }.labelsHidden().controlSize(.small)
+        }
         Spacer()
         Menu("Transfer Rules") {
           Button("Import Content Rules…") { importing = true }
@@ -111,13 +113,21 @@ private struct ContentRuleTable: View {
           isOn: Binding(get: { rule.enabled }, set: { rules.setContentRule(rule.id, enabled: $0) })
         )
         .labelsHidden()
+        .accessibilityLabel(Text("Use rule \(rule.pattern)"))
       }.width(36)
       TableColumn("Field") { Text($0.field.localizedTitle) }
+      TableColumn("Match") { Text($0.operation.localizedTitle) }
       TableColumn("Expression", value: \.pattern)
       TableColumn("Action") { Text($0.disposition.localizedTitle) }
       TableColumn("Matches") { Text(shared.state.contentRuleHits[$0.id, default: 0].formatted()) }
-      TableColumn("Skipped") {
+      TableColumn("Couldn’t Check") {
         Text(shared.state.contentRuleSkips[$0.id, default: 0].formatted())
+          .help(
+            """
+            Messages this rule couldn’t be checked against because its expression is invalid or \
+            took too long. The rule doesn’t match those messages.
+            """
+          )
       }
     }
     .contextMenu(forSelectionType: ContentRule.ID.self) { ids in
@@ -175,7 +185,9 @@ struct ContentRuleFormView: View {
           .foregroundStyle(.secondary)
         HStack {
           Button("Test with Message Selected in Mail") { test() }
-          if testing.isBusy { ProgressView().controlSize(.small) }
+          if testing.isBusy {
+            ProgressView { Text("Testing the rule…") }.labelsHidden().controlSize(.small)
+          }
         }
         OperationStatusView(operation: testing)
         OperationStatusView(operation: saving)

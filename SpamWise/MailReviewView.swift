@@ -73,7 +73,7 @@ private struct JunkListPlaceholder: View {
         description: Text("Pick an account to see the messages in its Junk mailbox.")
       )
     } else if !review.hasLoaded, review.loading.isBusy {
-      ProgressView()
+      ProgressView { Text("Loading Junk…") }.labelsHidden()
     } else if review.hasLoaded, review.rows.isEmpty {
       ContentUnavailableView(
         "Nothing in Junk",
@@ -106,7 +106,9 @@ private struct JunkMessageDetail: View {
         HStack {
           OperationStatusView(operation: review.restoring)
           Spacer()
-          if review.restoring.isBusy { ProgressView().controlSize(.small) }
+          if review.restoring.isBusy {
+            ProgressView { Text("Restoring the message…") }.labelsHidden().controlSize(.small)
+          }
           Button("Mark as Good and Restore") { restore(row) }
             .disabled(review.restoring.isBusy)
             .accessibilityIdentifier("junk.restore")
@@ -150,7 +152,9 @@ private struct JunkPager: View {
       }
       Button("Next Page") { review.showPage(review.pageIndex + 1) }
         .disabled(!review.hasNextPage || review.loading.isBusy)
-      if review.loading.isBusy { ProgressView().controlSize(.small) }
+      if review.loading.isBusy {
+        ProgressView { Text("Loading Junk…") }.labelsHidden().controlSize(.small)
+      }
     }
   }
 }
@@ -199,7 +203,7 @@ struct MessagePreviewSheet: View {
   var body: some View {
     NavigationStack {
       MessageTextView(text: preview.text)
-        .navigationTitle("Message preview")
+        .navigationTitle("Message Preview")
         .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "preview.done") }
     }
     .frame(minWidth: 560, minHeight: 400)

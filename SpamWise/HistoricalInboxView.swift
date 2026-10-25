@@ -14,14 +14,13 @@ struct HistoricalInboxView: View {
       Stepper("Older mail page: \(page + 1)", value: $page, in: ScanCoordinator.previewPages)
       HStack {
         Group {
-          Button("Preview older Inbox mail") {
+          Button("Preview Older Inbox Mail") {
             olderMail.preview(accountID: accountID, page: page)
           }
-          Button("Apply previewed decisions") { olderMail.apply(accountID: accountID) }
-            .disabled(olderMail.previews[accountID]?.isEmpty ?? true)
+          ApplyOlderMailButton(olderMail: olderMail, accountID: accountID)
         }.disabled(shared.settings.dryRun)
         if operation.isBusy {
-          ProgressView().controlSize(.small)
+          ProgressView { Text("Checking older mail…") }.labelsHidden().controlSize(.small)
           Button("Stop") { operation.cancel() }
         }
       }
@@ -35,6 +34,29 @@ struct HistoricalInboxView: View {
       )
       .foregroundStyle(.secondary)
     }
+  }
+}
+
+/// Applies an account's previewed older-mail decisions after confirming what they do to mail.
+private struct ApplyOlderMailButton: View {
+  let olderMail: OlderMailModel
+  let accountID: String
+  @State private var confirming = false
+
+  private var summary: OlderMailSummary? { olderMail.summaries[accountID] }
+
+  var body: some View {
+    Button("Apply \(summary?.total ?? 0) Decisions…") { confirming = true }
+      .disabled((summary?.total ?? 0) == 0)
+      .confirmationDialog(
+        "Apply \(summary?.total ?? 0) previewed decisions?",
+        isPresented: $confirming,
+        presenting: summary
+      ) { _ in
+        Button("Apply Decisions") { olderMail.apply(accountID: accountID) }
+      } message: { summary in
+        Text(summary.consequences)
+      }
   }
 }
 

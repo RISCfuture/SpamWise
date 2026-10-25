@@ -65,13 +65,15 @@ private struct NetworkLookupsSection: View {
     } header: {
       Text("Network lookups")
     } footer: {
-      NetworkLookupsFooter(localOnly: localOnly)
+      NetworkLookupsFooter(localOnly: localOnly, rspamdEnabled: settings.evidence.localRspamd)
     }
   }
 }
 
+/// What the network lookups share, including the whole message while Rspamd is on.
 private struct NetworkLookupsFooter: View {
   let localOnly: Bool
+  let rspamdEnabled: Bool
 
   private var rspamdAddress: String {
     let endpoint = RspamdLookup.endpoint
@@ -80,18 +82,22 @@ private struct NetworkLookupsFooter: View {
   }
 
   var body: some View {
-    Group {
+    VStack(alignment: .leading) {
       if localOnly {
-        Text(
-          "Unavailable while Keep filtering on this Mac is on in Classifier settings."
-        )
+        Text("Unavailable while Keep filtering on this Mac is on in Provider settings.")
       } else {
         Text(
-          """
-          Rspamd receives the whole message at \(rspamdAddress), and its own configuration may use \
-          online services. A lookup that fails never counts against a message.
-          """
+          "Domain-age and Spamhaus lookups share only sender and link domain names, never message content."
         )
+        if rspamdEnabled {
+          Text(
+            """
+            Rspamd receives the whole message at \(rspamdAddress), and its own configuration may \
+            use online services.
+            """
+          )
+        }
+        Text("A lookup that fails never counts against a message.")
       }
     }
     .foregroundStyle(.secondary)

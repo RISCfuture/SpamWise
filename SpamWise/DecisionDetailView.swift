@@ -30,8 +30,10 @@ struct DecisionDetailView: View {
         if row.correctionUndone {
           Text("You undid this correction. The message stays where it is in Mail.")
         }
-        if let undo = shared.state.correctionUndo, undo.isAvailable(in: shared.state) {
-          UndoCorrectionButton(corrections: corrections, undo: undo)
+        if let undo = shared.state.correctionUndo, undo.applies(to: row),
+          undo.isAvailable(in: shared.state)
+        {
+          UndoCorrectionButton(corrections: corrections, row: row)
         }
         OperationStatusView(
           operation: corrections.decision,
@@ -63,7 +65,11 @@ private struct DecisionSummaryView: View {
     }
     LabeledContent("Date") { Text(row.date, format: .dateTime) }
     VStack(alignment: .leading) {
-      VerdictBadge(label: row.decision.label)
+      VerdictBadge(label: row.effectiveLabel)
+      if row.wasCorrected {
+        Text("SpamWise said: \(VerdictBadge.title(for: row.decision.label))")
+          .foregroundStyle(.secondary)
+      }
       Text(row.decision.reason.localizedDescription).textSelection(.enabled)
     }
     if let category = row.verdict?.category, category != .unknown {
@@ -75,13 +81,11 @@ private struct DecisionSummaryView: View {
     }
     LabeledContent("Outcome", value: row.outcome.localizedTitle)
       .accessibilityIdentifier("correction.outcome")
-    if let error = row.actionError {
-      Label(error, systemImage: "exclamationmark.triangle")
-    }
+    if let error = row.actionError { WarningLabel(verbatim: error) }
     if let outcome = row.readStatusOutcome {
       LabeledContent("Marked as read", value: outcome.localizedTitle)
     }
-    if let error = row.readStatusError { Text(error) }
+    if let error = row.readStatusError { WarningLabel(verbatim: error) }
   }
 }
 
@@ -98,57 +102,64 @@ private struct RetryClassificationButton: View {
   }
 }
 
-/// Reads the message from Mail to preview, open or export it.
+/// Reads the message from its mail integration to preview, open or export it.
 private struct MessageAccessSection: View {
   let row: DecisionRecord
   let messages: MessageAccessModel
   let presentPreview: @MainActor (MessagePreview) -> Void
-  @State private var source: RulesDocument?
+  @State private var source: EmailSourceDocument?
   @State private var exporting = false
   @State private var exportFailure: OperationStatus?
 
   var body: some View {
     Section {
-      Button("Preview message") { messages.preview(row, present: presentPreview) }
-      Button("Open in Mail") { messages.open(row) }
-      Button("Export raw source…") {
+      Button("Preview Message") { messages.preview(row, present: presentPreview) }
+      if messages.canOpenInMail(row) {
+        Button("Open in Mail") { messages.open(row) }
+      }
+      Button("Export Raw Source…") {
         messages.exportSource(row) { data in
-          source = RulesDocument(data: data); exporting = true
+          source = EmailSourceDocument(data: data); exporting = true
         }
       }
-      if messages.operation.isBusy { ProgressView().controlSize(.small) }
+      if messages.operation.isBusy {
+        ProgressView { Text("Reading the message…") }.labelsHidden().controlSize(.small)
+      }
       OperationStatusView(operation: messages.operation)
       StatusLabel(status: exportFailure)
     }
     .fileExporter(
       isPresented: $exporting,
       document: source,
-      contentType: .data,
-      defaultFilename: "message.eml"
+      contentType: EmailSourceDocument.contentType,
+      defaultFilename: "message"
     ) { result in
       exportFailure = ExportResult.status(of: result, failure: "Message source export failed.")
     }
   }
 }
 
+/// Undoes the correction this decision shows, naming the sender and verdict it reverts.
 private struct UndoCorrectionButton: View {
   let corrections: CorrectionsModel
-  let undo: CorrectionUndo
+  let row: DecisionRecord
   @State private var confirming = false
 
+  private var label: String { VerdictBadge.title(for: row.effectiveLabel) }
+
   var body: some View {
-    Button("Undo latest correction…") { confirming = true }
+    Button("Undo Latest Correction…") { confirming = true }
       .disabled(corrections.decision.isBusy)
       .accessibilityIdentifier("correction.undo")
       .confirmationDialog(
-        "Restore the previous rules and learning? Mail will not move.",
+        "Undo marking messages from \(row.displaySender) as \(label)?",
         isPresented: $confirming
       ) {
-        Button("Undo rules and learning") { corrections.undoLatestCorrection() }
+        Button("Undo Rules and Learning") { corrections.undoLatestCorrection() }
           .accessibilityIdentifier("correction.undo.confirm")
       } message: {
         Text(
-          "Restores \(undo.ruleCount) rules and \(undo.exampleCount) examples. Later changes disable undo."
+          "Rules and examples go back to how they were before that correction. Mail doesn’t move."
         )
       }
   }
@@ -166,7 +177,9 @@ private struct CorrectionControls: View {
         CorrectionButton(corrections: corrections, row: row, label: .junk)
         CorrectionButton(corrections: corrections, row: row, label: .review)
       }.disabled(!corrections.canCorrect(row))
-      if corrections.decision.isBusy { ProgressView().controlSize(.small) }
+      if corrections.decision.isBusy {
+        ProgressView { Text("Saving the correction…") }.labelsHidden().controlSize(.small)
+      }
     }
     if row.sender == nil {
       Text(
@@ -219,10 +232,10 @@ private struct DomainCorrectionMenu: View {
   private var domain: String { row.evidence?.fromDomain ?? "" }
 
   var body: some View {
-    Menu("Correct entire domain…") {
-      Button("Allow this domain") { request(.inbox) }
+    Menu("Correct Entire Domain…") {
+      Button("Allow This Domain") { request(.inbox) }
         .accessibilityIdentifier("correction.domain.allow")
-      Button("Block this domain") { request(.junk) }
+      Button("Block This Domain") { request(.junk) }
         .accessibilityIdentifier("correction.domain.block")
     }.accessibilityIdentifier("correction.domain")
       .confirmationDialog(
@@ -259,13 +272,6 @@ private struct DecisionDiagnosticsView: View {
   let row: DecisionRecord
   let accountName: String
 
-  private var evidenceDescription: String? {
-    guard let evidence = row.evidence, let data = try? JSONEncoder.pretty.encode(evidence) else {
-      return nil
-    }
-    return String(data: data, encoding: .utf8)
-  }
-
   var body: some View {
     LabeledContent("Decided by", value: row.path.localizedTitle)
     LabeledContent("Policy revision", value: row.revision.formatted())
@@ -295,9 +301,59 @@ private struct DecisionDiagnosticsView: View {
         format: .measurement(width: .abbreviated, usage: .asProvided)
       )
     }
-    if let evidenceDescription {
-      Text("Evidence").font(.headline)
-      Text(evidenceDescription).monospaced().textSelection(.enabled)
+    if let evidence = row.evidence { EvidenceSummaryView(evidence: evidence) }
+  }
+}
+
+/// The evidence a decision weighed, as plain statements; unknown signals are left out.
+private struct EvidenceSummaryView: View {
+  private static let secondsPerDay: Int64 = 86_400
+  let evidence: EvidenceBundle
+
+  private var learningSignal: Double? {
+    let signals = [evidence.bayesLogOdds, evidence.learnedMargin].compactMap(\.self)
+    return signals.isEmpty ? nil : signals.reduce(0, +)
+  }
+
+  var body: some View {
+    if let domain = evidence.fromDomain {
+      LabeledContent("Sender’s domain", value: domain)
+    }
+    if let domain = evidence.replyToDomain, domain != evidence.fromDomain {
+      LabeledContent("Replies go to", value: domain)
+    }
+    if let domain = evidence.returnPathDomain, domain != evidence.fromDomain {
+      LabeledContent("Bounces go to", value: domain)
+    }
+    LabeledContent("Authentication", value: evidence.senderAuthentication.localizedTitle)
+    if let days = evidence.domainAgeDays {
+      LabeledContent("Domain registered") {
+        Text(
+          "\(Duration.seconds(Int64(days) * Self.secondsPerDay), format: .units(allowed: [.days], width: .wide)) ago"
+        )
+      }
+    }
+    if let address = evidence.mismatchedDisplayNameAddress {
+      LabeledContent("Name shows another address", value: address)
+    }
+    if evidence.tldIsAbuseHeavy, let tld = evidence.tld {
+      LabeledContent("Domain ending", value: String(localized: ".\(tld), often used for spam"))
+    }
+    if let learningSignal {
+      LabeledContent(
+        "Learned from your corrections",
+        value: Self.description(ofLearningSignal: learningSignal)
+      )
+    }
+  }
+
+  private static func description(ofLearningSignal signal: Double) -> String {
+    if signal > 0 {
+      String(localized: "Resembles mail you marked Junk")
+    } else if signal < 0 {
+      String(localized: "Resembles mail you marked Good")
+    } else {
+      String(localized: "Neither Good nor Junk")
     }
   }
 }
@@ -305,12 +361,64 @@ private struct DecisionDiagnosticsView: View {
 /// A verdict as a symbol and its noun; an unclassified decision has its own symbol.
 struct VerdictBadge: View {
   let label: MailLabel?
+  /// The title of the verdict a correction replaced, when the badge shows a corrected decision.
+  var originalTitle: String?
 
-  private var title: String { label?.localizedTitle ?? String(localized: "Unclassified") }
+  private var title: String { Self.title(for: label) }
 
   var body: some View {
-    Label(title, systemImage: label?.systemImage ?? "questionmark.circle")
-      .accessibilityLabel("Verdict: \(title)")
+    HStack(spacing: 4) {
+      Label(title, systemImage: label?.systemImage ?? "questionmark.circle")
+        .accessibilityLabel("Verdict: \(title)")
+      if let originalTitle {
+        Image(systemName: "arrow.uturn.backward")
+          .foregroundStyle(.secondary)
+          .help("Corrected from \(originalTitle)")
+          .accessibilityLabel("Corrected from \(originalTitle)")
+      }
+    }
+  }
+
+  /// The verdict `row` ends with, marked when the user's correction replaced SpamWise's own.
+  init(row: DecisionRecord) {
+    label = row.effectiveLabel
+    originalTitle = row.wasCorrected ? Self.title(for: row.decision.label) : nil
+  }
+
+  init(label: MailLabel?) { self.label = label }
+
+  /// The noun of `label`, or Unclassified.
+  static func title(for label: MailLabel?) -> String {
+    label?.localizedTitle ?? String(localized: "Unclassified")
+  }
+}
+
+/// A message's raw source, saved as an email file.
+private struct EmailSourceDocument: FileDocument {
+  /// An `.eml` email message, the type Mail saves.
+  static let contentType =
+    UTType(filenameExtension: "eml", conformingTo: .emailMessage) ?? .emailMessage
+  static var readableContentTypes: [UTType] { [contentType] }
+  var data: Data
+
+  init(data: Data) { self.data = data }
+  init(configuration: ReadConfiguration) throws {
+    guard let data = configuration.file.regularFileContents else {
+      throw CocoaError(.fileReadCorruptFile)
+    }
+    self.data = data
+  }
+  func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {
+    FileWrapper(regularFileWithContents: data)
+  }
+}
+
+extension DecisionRecord {
+  /// The verdict that stands: the user's correction when there is one, else SpamWise's own.
+  var effectiveLabel: MailLabel? { correctedLabel ?? decision.label }
+  /// Whether the user later corrected this decision to a different verdict than SpamWise's.
+  var wasCorrected: Bool {
+    path != .correction && correctedLabel != nil && correctedLabel != decision.label
   }
 }
 
@@ -322,6 +430,7 @@ struct VerdictBadge: View {
   VStack(alignment: .leading) {
     ForEach(MailLabel.allCases, id: \.self) { VerdictBadge(label: $0) }
     VerdictBadge(label: nil)
+    VerdictBadge(row: PreviewHelper.correctedRecord)
   }.padding()
 }
 #Preview("Corrections") {

@@ -7,14 +7,18 @@ import MailIntegration
 @MainActor
 @Observable
 final class MessageAccessModel {
-  /// Reading the message from Mail.
+  /// Reading the message from its mail integration.
   let operation = TrackedOperation()
   @ObservationIgnored private let services: AppServices
 
   init(services: AppServices) { self.services = services }
 
-  /// Shows `record`'s message in Mail.
+  /// Whether Mail can show `record`'s message, which it can only for Apple Mail identities.
+  func canOpenInMail(_ record: DecisionRecord) -> Bool { record.identity.mailboxValidity == nil }
+
+  /// Shows `record`'s message in Mail; does nothing for a message Mail can't address.
   func open(_ record: DecisionRecord) {
+    guard canOpenInMail(record) else { return }
     operation.run(retryable: true) { [self] in
       try await services.appleMail.open(record.identity)
       return nil
@@ -38,7 +42,7 @@ final class MessageAccessModel {
   }
 
   private func envelope(of record: DecisionRecord) async throws -> MailEnvelope {
-    guard let envelope = try await services.appleMail.lookup(record.identity) else {
+    guard let envelope = try await services.adapter(for: record).lookup(record.identity) else {
       throw IntegrationError.messageNotFound
     }
     return envelope

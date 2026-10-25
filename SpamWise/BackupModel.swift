@@ -10,7 +10,7 @@ final class BackupModel {
   static var restoredMessage: String {
     String(
       localized:
-        "Backup restored. Filtering is paused with dry run on. Check Mail connection in Accounts, then resume."
+        "Backup restored. Filtering is paused with dry run on. In Accounts, choose Check Mail Connection, or Check Connection for an IMAP account, then resume."
     )
   }
   /// Exporting and restoring backups.
@@ -18,6 +18,13 @@ final class BackupModel {
   @ObservationIgnored private let services: AppServices
 
   init(services: AppServices) { self.services = services }
+
+  /// Reads, decrypts and restores the backup at `url` away from the main actor.
+  @concurrent
+  private static func restore(from url: URL, recoveryKey: String, store: Store) async throws {
+    let data = try url.readSecurityScoped(maximumBytes: StateBackup.maximumBytes)
+    try await StateBackup.restore(data, recoveryKey: recoveryKey, store: store)
+  }
 
   /// Encrypts a backup with `recoveryKey` and hands it to `save`.
   func export(
@@ -40,8 +47,7 @@ final class BackupModel {
   /// Replaces rules, policy and learning from the backup at `url`, then pauses filtering.
   func restore(from url: URL, recoveryKey: String) {
     operation.run { [self] in
-      let data = try url.readSecurityScoped(maximumBytes: StateBackup.maximumBytes)
-      try await StateBackup.restore(data, recoveryKey: recoveryKey, store: services.requireStore())
+      try await Self.restore(from: url, recoveryKey: recoveryKey, store: services.requireStore())
       return Self.restoredMessage
     }
   }

@@ -40,8 +40,20 @@ private struct FilteringMenuItems: View {
   private var selected
   @Environment(\.openWindow)
   private var openWindow
+  @Environment(\.openSettings)
+  private var openSettings
 
   var body: some View {
+    LeaveDryRunButton(
+      state: model.scanning.filteringState,
+      transport: model.shared.settings.advancedOptions.transport,
+      canStartFiltering: model.router.canConfirmLiveFiltering
+    ) {
+      openWindow(id: "activity")
+      model.router.confirmLiveFiltering()
+    } checkConnection: {
+      showConnectionCheck(preferences: model.services.preferences, openSettings: openSettings)
+    }
     PauseFilteringButton(settings: model.settings, paused: model.shared.settings.paused)
       .disabled(!model.canCorrectMail)
     ActivityActionButton(action: .dryRun) {
@@ -71,43 +83,54 @@ private struct FilteringMenuItems: View {
   }
 }
 
+/// A verdict correction Activity offers for one decision, with its key equivalent.
+struct DecisionCorrectionCommand {
+  /// Good, Junk and Review, in menu order.
+  static let all = [
+    Self(label: .inbox, key: "g"), Self(label: .junk, key: "j"), Self(label: .review, key: "r")
+  ]
+  /// The modifiers of every correction’s key equivalent.
+  static let modifiers: EventModifiers = [.command, .option]
+  /// The verdict the correction records.
+  let label: MailLabel
+  /// The key that, with ``modifiers``, chooses the correction.
+  let key: KeyEquivalent
+  /// The menu item’s identifier, `activity.correct.<label>`.
+  var identifier: String { "activity.correct.\(label.rawValue)" }
+}
+
 /**
  Corrects the decision selected in Activity, with Mail-like shortcuts.
 
  Each correction shows the inspector, where its status and any confirmation it needs appear.
  */
 private struct SelectedDecisionCorrections: View {
-  private static let shortcuts: [(label: MailLabel, key: KeyEquivalent)] = [
-    (.inbox, "g"), (.junk, "j"), (.review, "r")
-  ]
   let corrections: CorrectionsModel
   let router: ActivityRouter
   let selected: DecisionRecord?
 
   var body: some View {
-    ForEach(Self.shortcuts, id: \.label) { shortcut in
-      Button(shortcut.label.correctionTitle) {
+    ForEach(DecisionCorrectionCommand.all, id: \.label) { command in
+      Button(command.label.correctionTitle) {
         guard let selected else { return }
         router.showsInspector = true
-        corrections.correct(selected, label: shortcut.label)
+        corrections.correct(selected, label: command.label)
       }
-      .keyboardShortcut(shortcut.key, modifiers: [.command, .shift])
+      .keyboardShortcut(command.key, modifiers: DecisionCorrectionCommand.modifiers)
       .disabled(selected.map { !corrections.canCorrect($0) } ?? true)
+      .accessibilityIdentifier(command.identifier)
     }
   }
 }
 
 private struct ViewMenuItems: View {
   let model: AppModel
-  @FocusedValue(\.selectedDecision)
-  private var selected
   @Environment(\.openWindow)
   private var openWindow
 
   var body: some View {
     InspectorToggle(router: model.router)
       .keyboardShortcut("i", modifiers: [.command, .option])
-      .disabled(selected == nil)
     ActivityActionButton(action: .statistics) {
       show(.statistics, router: model.router, openWindow: openWindow)
     }
@@ -121,9 +144,8 @@ private struct ToolsMenuItems: View {
   private var openWindow
 
   var body: some View {
-    Button("Reviewed Corpus") { show(.corpus, router: model.router, openWindow: openWindow) }
+    Button("Reviewed Messages…") { show(.corpus, router: model.router, openWindow: openWindow) }
       .accessibilityIdentifier("activity.corpus")
-      .keyboardShortcut("c", modifiers: [.command, .option])
       .disabled(!model.shared.settings.onboardingComplete)
     Button("Configuration History") {
       show(.audit, router: model.router, openWindow: openWindow)
