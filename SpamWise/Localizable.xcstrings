@@ -12707,6 +12707,22 @@
         }
       }
     },
+    "SpamWise can’t verify this message’s sender, so this Allow rule only makes Junk less likely.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise no puede verificar al remitente de este mensaje, así que esta regla de permitir solo hace menos probable No deseado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise ne peut pas vérifier l’expéditeur de ce message, donc cette règle d’autorisation rend seulement Indésirables moins probable."
+          }
+        }
+      }
+    },
     "This rule doesn’t decide the selected message.": {
       "localizations": {
         "es": {

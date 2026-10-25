@@ -24,14 +24,20 @@ final class RulesModel {
   nonisolated private static func outcome(
     of rule: ContentRule,
     evaluation: ContentRuleEvaluation,
+    deciding: ContentRule?,
     overridden: Bool
   ) -> String {
     if overridden {
       String(localized: "A sender rule decides this message first, so this rule isn’t used.")
     } else if evaluation.skipped[rule.id] != nil {
       String(localized: "This rule took too long to check, so it doesn’t match this message.")
-    } else if evaluation.decisive?.id == rule.id {
+    } else if deciding?.id == rule.id {
       String(localized: "This rule decides the selected message.")
+    } else if deciding == nil, evaluation.decisive?.id == rule.id {
+      String(
+        localized:
+          "SpamWise can’t verify this message’s sender, so this Allow rule only makes Junk less likely."
+      )
     } else {
       String(localized: "This rule doesn’t decide the selected message.")
     }
@@ -84,8 +90,14 @@ final class RulesModel {
       history: .init(),
       authentication: evidence.senderAuthentication
     )
-    var result = outcome(of: candidate, evaluation: evaluation, overridden: senderRule != nil)
-    if evaluation.matching.count > 1 {
+    let deciding = evaluation.deciding(authentication: evidence.senderAuthentication)
+    var result = outcome(
+      of: candidate,
+      evaluation: evaluation,
+      deciding: deciding,
+      overridden: senderRule != nil
+    )
+    if evaluation.matching.count > 1, deciding?.id == evaluation.matching.first?.id {
       result +=
         " "
         + String(

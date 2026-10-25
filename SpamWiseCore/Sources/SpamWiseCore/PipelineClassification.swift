@@ -67,10 +67,8 @@ extension Pipeline {
     }
     let contentRules = ContentRules.evaluate(state.contentRules, message: message)
     var tally = ContentRuleTally(skipped: Array(contentRules.skipped.keys))
-    if let decisive = contentRules.decisive {
-      let rule =
-        evidence.senderAuthentication == .alignedPass ? decisive : contentRules.decisiveBlock
-      guard let rule else {
+    if contentRules.decisive != nil {
+      guard let rule = contentRules.deciding(authentication: evidence.senderAuthentication) else {
         evidence.record(findings: [unconfirmedContentAllowFinding])
         return (nil, tally)
       }
