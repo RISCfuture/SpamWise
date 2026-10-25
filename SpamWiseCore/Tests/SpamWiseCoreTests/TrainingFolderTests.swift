@@ -127,15 +127,20 @@ struct `Training folder corrections` {
     #expect(try await correct().id != first.id)
   }
 
-  @Test
-  func `releases a failed placement's claim but keeps one awaiting dispatch or a recheck`()
-    async throws
-  {
+  @Test(arguments: [ActionOutcome.pending, .requested, .failed])
+  func `keeps the claim of a placement awaiting dispatch or whose move is unconfirmed`(
+    outcome: ActionOutcome
+  ) async throws {
     let record = try await correct()
-    try await setOutcome(.pending, of: record)
+    try await setOutcome(outcome, of: record)
     try await observe()
     #expect(try await state().trainingClaims.count == 1)
-    try await setOutcome(.failed, of: record)
+  }
+
+  @Test
+  func `releases an applied placement's claim once its move recheck is done`() async throws {
+    let record = try await correct()
+    try await setOutcome(.applied, of: record)
     try await observe(settling: [record.id])
     #expect(try await state().trainingClaims.count == 1)
     try await observe()

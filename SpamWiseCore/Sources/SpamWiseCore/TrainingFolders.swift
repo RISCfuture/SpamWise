@@ -109,10 +109,10 @@ public enum TrainingFolders {
    Records the placements on one page of a training folder's traversal, and at its end releases
    the claims of placements the traversal no longer found.
 
-   A claim is released whatever its correction's outcome, so placing the message in the folder
-   again applies it again. Claims stay while their correction awaits dispatch or a move recheck,
-   and every claim stays after a traversal that met unreadable messages or more messages than
-   SpamWise tracks.
+   A claim is released once nothing more can come of its correction, so placing the message in
+   the folder again applies it again. Claims stay while their correction awaits dispatch or a move
+   recheck, or when its move may have been sent without being confirmed, and every claim stays
+   after a traversal that met unreadable messages or more messages than SpamWise tracks.
 
    - Parameters:
      - identities: The messages on the page.
@@ -182,15 +182,15 @@ extension AppState {
     return overflowed
   }
 
-  /// Releases the plan's claims that `observed` lacks, except those awaiting dispatch or a recheck.
+  /// Releases the plan's claims that `observed` lacks, except those whose correction may still act or may have acted unconfirmed.
   private mutating func releaseTrainingClaims(
     of planID: String,
     keeping observed: Set<String>,
     settling: Set<UUID>
   ) {
-    let unsettled = settling.union(records.filter { $0.outcome == .pending }.map(\.id))
+    let held = settling.union(records.filter(\.holdsTrainingClaim).map(\.id))
     trainingClaims = trainingClaims.filter { key, recordID in
-      !key.hasPrefix(planID + ":") || observed.contains(key) || unsettled.contains(recordID)
+      !key.hasPrefix(planID + ":") || observed.contains(key) || held.contains(recordID)
     }
   }
 
@@ -199,5 +199,12 @@ extension AppState {
     trainingClaims = trainingClaims.filter { !$0.key.hasPrefix(planID + ":") }
     trainingObservations[planID] = nil
     trainingObservationOverflows.remove(planID)
+  }
+}
+
+extension DecisionRecord {
+  /// Whether this correction awaits dispatch, or may have sent a move whose result is unknown.
+  fileprivate var holdsTrainingClaim: Bool {
+    outcome == .pending || (decision.action != .none && [.requested, .failed].contains(outcome))
   }
 }
