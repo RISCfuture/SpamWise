@@ -2,27 +2,28 @@
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>Corregir errores — Ayuda de SpamWise</title><meta name="description" content="Corrige una decisión en Actividad o en Mail, y descubre qué recuerda SpamWise de tu corrección.">
 <link rel="stylesheet" href="help.css"></head><body>
-<nav aria-label="Temas de ayuda"><h2>Primeros pasos</h2><ul><li><a href="getting-started.html">Primeros pasos</a></li><li><a href="how-decisions-are-made.html">Cómo se toman las decisiones</a></li><li><a href="filtering-strength.html">Intensidad del filtrado</a></li><li><a href="what-data-is-sent.html">Qué datos se envían</a></li></ul><h2>Uso diario</h2><ul><li><a href="activity.html">Usar Actividad</a></li><li><a href="correcting-mistakes.html" aria-current="page">Corregir errores</a></li><li><a href="review-junk.html">Revisar el correo no deseado</a></li><li><a href="notifications.html">Notificaciones y resumen de mensajes para revisar</a></li><li><a href="statistics.html">Estadísticas</a></li><li><a href="shortcuts.html">Atajos</a></li></ul><h2>Reglas y aprendizaje</h2><ul><li><a href="rules.html">Reglas de remitente y de contenido</a></li><li><a href="folders.html">Carpetas</a></li><li><a href="reviewed-messages-and-learning.html">Mensajes revisados y aprendizaje</a></li></ul><h2>Cuentas y datos</h2><ul><li><a href="imap-connection.html">Conectar por IMAP</a></li><li><a href="backup-and-restore.html">Copia de seguridad y restauración</a></li><li><a href="troubleshooting-mail-integration.html">Resolver problemas de integración con Mail</a></li></ul></nav>
+<nav aria-label="Temas de ayuda"><h2>Primeros pasos</h2><ul><li><a href="getting-started.html">Primeros pasos</a></li><li><a href="how-decisions-are-made.html">Cómo se toman las decisiones</a></li><li><a href="filtering-strength.html">Intensidad del filtrado</a></li><li><a href="what-data-is-sent.html">Qué datos se envían</a></li></ul><h2>Uso diario</h2><ul><li><a href="activity.html">Usar Actividad</a></li><li><a href="correcting-mistakes.html" aria-current="page">Corregir errores</a></li><li><a href="review-junk.html">Revisar el correo no deseado</a></li><li><a href="notifications.html">Notificaciones y resumen de mensajes para revisar</a></li><li><a href="statistics.html">Estadísticas</a></li><li><a href="shortcuts.html">Atajos</a></li></ul><h2>Reglas y aprendizaje</h2><ul><li><a href="rules.html">Reglas de remitente y de contenido</a></li><li><a href="folders.html">Carpetas</a></li><li><a href="reviewed-messages-and-learning.html">Mensajes revisados y aprendizaje</a></li></ul><h2>Cuentas y datos</h2><ul><li><a href="imap-connection.html">Conectar por IMAP</a></li><li><a href="backup-and-restore.html">Copia de seguridad y restauración</a></li><li><a href="updating-and-removing.html">Actualizar y desinstalar SpamWise</a></li><li><a href="troubleshooting-mail-integration.html">Resolver problemas de integración con Mail</a></li></ul></nav>
 <main><a name="correcting-mistakes" id="correcting-mistakes"></a><h1>Corregir errores</h1>
 <h2><a name="in-activity" id="in-activity"></a>Corregir un mensaje en Actividad</h2>
-<p>Selecciona el mensaje en Actividad y elige una de estas opciones del menú Filtrado:</p>
+<p>Selecciona el mensaje en Actividad y elige una de estas opciones del menú Filtrado, o haz clic en el mensaje con la tecla Control pulsada:</p>
 <ul>
-<li>Marcar como deseado (Mayúsculas + Comando + G) mueve el mensaje a Entrada.</li>
-<li>Marcar como no deseado (Mayúsculas + Comando + J) lo mueve al buzón de correo no deseado de la cuenta.</li>
-<li>Marcar para revisión (Mayúsculas + Comando + R) lo devuelve a Entrada con la marca de revisión.</li>
+<li>Marcar como deseado (Opción + Comando + G) mueve el mensaje a Entrada.</li>
+<li>Marcar como no deseado (Opción + Comando + J) lo mueve al buzón de correo no deseado de la cuenta.</li>
+<li>Marcar para revisión (Opción + Comando + R) lo devuelve a Entrada con la marca de revisión.</li>
 </ul>
-<p>También puedes usar los botones Deseado, No deseado y Revisar de Corregir esta decisión, en el inspector. SpamWise guarda primero tu corrección y después pide a Mail que mueva el mensaje. Si el movimiento falla, la corrección sigue guardada y el Resultado del inspector muestra lo que ocurrió en Mail.</p>
+<p>También puedes usar los botones Deseado, No deseado y Revisar de Corregir esta decisión, en el inspector. SpamWise guarda primero tu corrección y después pide a Mail que mueva el mensaje. Si el movimiento falla, la corrección sigue guardada y el Resultado del inspector muestra lo que ocurrió en Mail. Un mensaje sin dirección de remitente no se puede corregir; muévelo en Mail.</p>
 <h2><a name="what-it-remembers" id="what-it-remembers"></a>Qué recuerda una corrección</h2>
 <ul>
 <li>Marcar como deseado crea una regla Permitir para la dirección del remitente, y Marcar como no deseado crea una regla Bloquear. Una corrección nueva sustituye la regla anterior de esa dirección.</li>
 <li>Marcar para revisión elimina la regla de la dirección del remitente. Una regla para el dominio del remitente sigue vigente.</li>
 <li>Cada corrección se guarda también como ejemplo para tu proveedor y para el aprendizaje. Consulta <a href="reviewed-messages-and-learning.html">Mensajes revisados y aprendizaje</a>.</li>
 </ul>
-<p>Si SpamWise no pudo verificar que un mensaje procede de verdad de su remitente, pregunta antes de bloquear, porque bloquear una dirección falsificada también envía a No deseado el correo del remitente real. Elige Bloquear el remitente de todos modos o Cancelar. Si una regla de dominio sigue decidiendo el correo del remitente en contra de tu corrección, SpamWise te avisa; elige Mantener regla o Eliminar regla.</p>
+<p>Si SpamWise no pudo verificar que un mensaje procede de verdad de su remitente, pregunta antes de bloquear, porque bloquear una dirección falsificada también envía a No deseado el correo del remitente real. Elige Bloquear el remitente de todos modos, Marcar como estafa para mover el mensaje a No deseado sin crear una regla para el remitente, o Cancelar. Si una regla de dominio sigue decidiendo el correo del remitente en contra de tu corrección, SpamWise te avisa; elige Mantener regla o Eliminar regla.</p>
+<p>Si el mensaje es de un tipo de correo que puedes elegir en Opciones de correo, como una promoción de tienda, SpamWise puede preguntarte si quieres hacer lo mismo con todo ese tipo. Elige Solo este remitente, o Conservar todos en Entrada, Marcar todos para Revisar o Mover todos a No deseado.</p>
 <h2><a name="correct-domain" id="correct-domain"></a>Corregir un dominio entero</h2>
 <p>Para permitir o bloquear a todos los remitentes de un dominio, elige Corregir todo el dominio… en el inspector y después Permitir este dominio o Bloquear este dominio. En los dominios que comparte mucha gente, como los grandes proveedores de correo, SpamWise pregunta antes, porque la regla también se aplicaría a personas sin relación entre sí. Una regla para una dirección sigue prevaleciendo sobre una regla para su dominio.</p>
 <h2><a name="in-mail" id="in-mail"></a>Corregir mensajes seleccionados en Mail</h2>
-<p>Selecciona uno o varios mensajes en Mail. Después, en el menú de SpamWise de la barra de menús, en Mensajes seleccionados en Mail, elige Marcar como deseado, Marcar como no deseado o Marcar para revisión, o elige Corregir dominios de los remitentes → Permitir dominios de los remitentes o Bloquear dominios de los remitentes. El menú muestra el progreso; elige Mostrar resultados de la corrección… para ver los detalles. Si algunos remitentes no se pueden verificar, elige Confirmar remitentes no verificados… para decidir si los bloqueas.</p>
+<p>Selecciona uno o varios mensajes en Mail. Después, en el menú de SpamWise de la barra de menús, en Mensajes seleccionados en Mail, elige Marcar como deseado, Marcar como no deseado o Marcar para revisión, o elige Corregir dominios de los remitentes → Permitir dominios de los remitentes o Bloquear dominios de los remitentes. El menú muestra el progreso; elige Mostrar resultados de la corrección… para ver los detalles. Si algunos remitentes no se pueden verificar, elige Confirmar remitentes no verificados… y después Bloquear todos u Omitir remitentes no verificados. Estas correcciones también quitan la marca naranja de revisión de SpamWise.</p>
 <p>Los comandos de la barra de menús no tienen atajos de teclado. Para corregir con una tecla el mensaje seleccionado en Mail:</p>
 
 <ol>
@@ -32,8 +33,16 @@
 </ol>
 <p>Crea un atajo para cada etiqueta que uses. Las teclas funcionan en cualquier app, también en Mail, y corrigen el mensaje seleccionado en Mail.</p>
 
+<h2><a name="move-in-mail" id="move-in-mail"></a>Sacar un mensaje de No deseado en Mail</h2>
+<p>Si SpamWise movió un mensaje a No deseado y tú lo devuelves a Entrada en Mail, o le quitas la marca de correo no deseado, SpamWise lo trata como marcado como deseado la próxima vez que comprueba tu Entrada: permite al remitente y aprende del mensaje. Funciona igual con una conexión IMAP y cualquier app de correo. No ocurre:</p>
+<ul>
+<li>durante una simulación;</li>
+<li>si sacas el mensaje de No deseado en los 30 segundos más o menos posteriores al movimiento. SpamWise vuelve a comprobar cada movimiento a No deseado unos 30 segundos después y solo aprende de los que seguían en su sitio. Si SpamWise se cerró antes de esa comprobación, no aprende nada de ese mensaje;</li>
+<li>con correo que SpamWise no movió a No deseado, o que ya corregiste.</li>
+</ul>
+<p>Esta corrección nunca mueve correo. Si has vuelto a mover el mensaje cuando SpamWise lo revisa, se queda donde lo pusiste, y Actividad muestra que la acción de correo de la corrección no se realizó.</p>
 <h2><a name="undo-correction" id="undo-correction"></a>Deshacer una corrección</h2>
-<p>Para deshacer las reglas y el aprendizaje de tu última corrección, elige Deshacer la última corrección… en el inspector y después Deshacer reglas y aprendizaje. El correo no se mueve, así que mueve el mensaje tú si hace falta. No puedes deshacer una corrección si has hecho cambios después, como guardar la clave de API del proveedor que usas.</p>
+<p>Para deshacer las reglas y el aprendizaje de tu última corrección, selecciona ese mensaje y elige Deshacer la última corrección… en el inspector y después Deshacer reglas y aprendizaje. El correo no se mueve, así que mueve el mensaje tú si hace falta. No puedes deshacer una corrección si has hecho cambios después, como guardar la clave de API del proveedor que usas.</p>
 <h2><a name="classify-again" id="classify-again"></a>Volver a clasificar un mensaje</h2>
 <p>Si un mensaje no se clasificó, por ejemplo porque tu proveedor no estaba disponible, selecciónalo y elige Filtrado → Volver a clasificar, o Volver a clasificar en el inspector. La simulación y la pausa siguen aplicándose.</p>
 </main></body></html>

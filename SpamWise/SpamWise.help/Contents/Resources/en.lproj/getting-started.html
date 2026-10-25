@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>Getting started — SpamWise Help</title><meta name="description" content="Set up SpamWise, choose how it classifies mail, connect it to Mail and try a dry run before it changes any mail.">
 <link rel="stylesheet" href="help.css"></head><body>
-<nav aria-label="Help topics"><h2>Get started</h2><ul><li><a href="getting-started.html" aria-current="page">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li></ul><h2>Everyday use</h2><ul><li><a href="activity.html">Using Activity</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="review-junk.html">Reviewing Junk</a></li><li><a href="notifications.html">Notifications and the Review digest</a></li><li><a href="statistics.html">Statistics</a></li><li><a href="shortcuts.html">Shortcuts</a></li></ul><h2>Rules and learning</h2><ul><li><a href="rules.html">Sender and content rules</a></li><li><a href="folders.html">Folders</a></li><li><a href="reviewed-messages-and-learning.html">Reviewed messages and learning</a></li></ul><h2>Accounts and data</h2><ul><li><a href="imap-connection.html">Connecting with IMAP</a></li><li><a href="backup-and-restore.html">Backup and restore</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
+<nav aria-label="Help topics"><h2>Get started</h2><ul><li><a href="getting-started.html" aria-current="page">Getting started</a></li><li><a href="how-decisions-are-made.html">How decisions are made</a></li><li><a href="filtering-strength.html">Filtering strength</a></li><li><a href="what-data-is-sent.html">What data is sent</a></li></ul><h2>Everyday use</h2><ul><li><a href="activity.html">Using Activity</a></li><li><a href="correcting-mistakes.html">Correcting mistakes</a></li><li><a href="review-junk.html">Reviewing Junk</a></li><li><a href="notifications.html">Notifications and the Review digest</a></li><li><a href="statistics.html">Statistics</a></li><li><a href="shortcuts.html">Shortcuts</a></li></ul><h2>Rules and learning</h2><ul><li><a href="rules.html">Sender and content rules</a></li><li><a href="folders.html">Folders</a></li><li><a href="reviewed-messages-and-learning.html">Reviewed messages and learning</a></li></ul><h2>Accounts and data</h2><ul><li><a href="imap-connection.html">Connecting with IMAP</a></li><li><a href="backup-and-restore.html">Backup and restore</a></li><li><a href="updating-and-removing.html">Updating and removing SpamWise</a></li><li><a href="troubleshooting-mail-integration.html">Troubleshooting Mail integration</a></li></ul></nav>
 <main><a name="getting-started" id="getting-started"></a><h1>Getting started</h1>
 <p>SpamWise sorts your incoming mail in Apple Mail. Good mail stays in Inbox. Review mail stays in Inbox with an orange flag or background, so you can check it. Junk moves to the account’s Junk mailbox. SpamWise never deletes mail or moves it to Trash.</p>
 <h2><a name="setup-steps" id="setup-steps"></a>Set up SpamWise</h2>
@@ -12,31 +12,34 @@
 <li>Choose a Provider, which classifies the mail your rules and known senders don’t decide:
 <ul>
 <li>Apple on-device classifies mail on this Mac with Apple Intelligence. Mail isn’t sent anywhere, and there’s no API key or charge.</li>
-<li>Claude, OpenAI and Gemini classify mail with your own API key, and your provider account is charged for each message. Enter the key, choose Verify and save key or Save key, then turn on “Allow mail context to be sent to <var>provider</var>”.</li>
+<li>Claude, OpenAI and Gemini classify mail with your own API key, and your provider account is charged for each message. An API key is a long code, like a password, that lets SpamWise use the provider with your account. Choose Get an API key to create one on the provider’s website, then copy it and paste it into SpamWise. Choose Verify and Save Key or Save Key, then turn on “Allow mail context to be sent to <var>provider</var>”.</li>
 </ul>
-To decide later, choose Skip for now; you can choose a provider any time in Settings → Classifier.</li>
-<li>Choose Check Mail Connection and allow SpamWise to control Mail when macOS asks. SpamWise finds each account’s Inbox and Junk mailboxes without changing any mail. To help it recognize people you know, choose Connect Contacts and Import Inbox and Sent History.</li>
+To decide later, choose Skip for Now; you can choose a provider any time in Settings → Provider.</li>
+<li>Choose Check Mail Connection and allow SpamWise to control Mail when macOS asks. SpamWise finds each account’s Inbox and Junk mailboxes without changing any mail. To help it recognize people you know, choose Connect Contacts and Import Inbox and Sent History. If you use an IMAP connection instead, this step shows its settings; see <a href="imap-connection.html">Connecting with IMAP</a>.</li>
 <li>Choose what to do with each kind of mail you might not want, such as store promotions or newsletters: Keep, Flag or Junk. To give SpamWise examples of what you don’t want, choose Scan Junk Folders, then Save Examples. See <a href="how-decisions-are-made.html#mail-policy">Choose what you want to receive</a>.</li>
-<li>Choose Dry run recent mail to see what SpamWise would do with your 20 newest Inbox messages. Nothing in Mail changes. Then choose Finish setup.</li>
+<li>Choose Dry Run Recent Mail to see what SpamWise would do with your 20 newest Inbox messages. Nothing in Mail changes. Then choose Finish Setup.</li>
 </ol>
-<p>To go through these steps again, choose Show setup in Settings → General.</p>
-<h2><a name="start-filtering" id="start-filtering"></a>Start filtering</h2>
-<p>Dry run stays on after setup: Activity shows what SpamWise would do, and your mail stays where it is. When the decisions look right:</p>
+<p>To go through these steps again, choose Show Setup in Settings → General.</p>
+<h2><a name="mail-junk-filter" id="mail-junk-filter"></a>Mail’s own Junk Mail filter</h2>
+<p>Mail has its own Junk Mail filter, which is on unless you turned it off. It works separately from SpamWise: it can mark Inbox messages as junk, which looks different from SpamWise’s orange Review mark, or move messages to Junk itself. To let SpamWise do the sorting:</p>
 <ol>
-<li>Choose SpamWise → Settings, then General.</li>
-<li>Turn off “Dry run — do not change mail”, then choose Turn off dry run.</li>
+<li>In Mail, choose Mail → Settings, then click Junk Mail.</li>
+<li>Turn off “Enable junk mail filtering”.</li>
 </ol>
-<p>The switch becomes available once SpamWise has found the Inbox and Junk mailboxes of at least one account, and only those accounts are filtered. SpamWise checks every move afterward. If Mail doesn’t confirm a move, SpamWise doesn’t retry or reverse it, and Activity shows the failure so you can check the message in Mail.</p>
-<p>While dry run stays on, SpamWise checks each message once, even if you change your rules or filtering settings or correct a message afterward. When you turn off dry run, SpamWise also acts on the mail it checked during the dry run that’s still in your Inbox. If your rules, your filtering settings and the API key of the provider you use haven’t changed since, it reuses those decisions instead of sending the messages to your provider again.</p>
+<p>If you keep Mail’s filter on, its marks and moves aren’t SpamWise’s. Activity lists only what SpamWise decided, and Review Junk says which messages SpamWise moved.</p>
+<h2><a name="start-filtering" id="start-filtering"></a>Start filtering</h2>
+<p>Dry run stays on after setup: Activity shows what SpamWise would do, and your mail stays where it is. When the decisions look right, choose Start Filtering…, then Turn Off Dry Run. Start Filtering… is at the bottom of the Activity window, in the Filtering menu and in the SpamWise menu bar menu. You can also turn off “Dry run — do not change mail” in Settings → General.</p>
+<p>Live filtering needs the Inbox and Junk mailboxes of at least one account, and only those accounts are filtered. Until SpamWise has found them, those places offer Check Mail Connection… instead, or Check Connection… for IMAP, which opens Settings → General. SpamWise checks every move afterward. If Mail doesn’t confirm a move, SpamWise doesn’t retry or reverse it, and Activity shows the failure so you can check the message in Mail.</p>
+<p>While dry run stays on, SpamWise checks each message once, even if you change your rules or filtering settings or correct a message afterward. When you turn off dry run, SpamWise also acts on the mail it checked during the dry run that’s still in your Inbox. If your rules, your filtering settings and the API key of the provider you use haven’t changed since, it reuses those decisions instead of sending the messages to your provider again. With an IMAP connection, mail checked during a dry run stays where it is.</p>
 <h2><a name="keep-running" id="keep-running"></a>Keep SpamWise running</h2>
-<p>SpamWise checks each account’s Inbox every minute while both SpamWise and Mail are open. Closing SpamWise’s windows leaves it running; quitting it stops filtering. While it runs, its menu bar item shows whether it’s filtering. If you turn off Show SpamWise in the menu bar in Settings → General, click SpamWise in the Dock to open Activity. To open it automatically, turn on Open SpamWise at login in Settings → General. To check new mail the moment it arrives, see <a href="troubleshooting-mail-integration.html#new-mail">Check new mail sooner</a>.</p>
+<p>SpamWise checks each account’s Inbox every minute while both SpamWise and Mail are open. Closing SpamWise’s windows leaves it running; quitting it stops filtering. While it runs, its menu bar item shows whether it’s filtering: a shield while it filters, an envelope while mail stays unchanged, a pause symbol while it’s paused and a warning symbol when something needs your attention. If you turn off Show SpamWise in the menu bar in Settings → General, click SpamWise in the Dock to open Activity. To open SpamWise automatically, turn on Open SpamWise at login in Settings → General. To check new mail the moment it arrives, see <a href="troubleshooting-mail-integration.html#new-mail">Check new mail sooner</a>.</p>
 <h2><a name="older-mail" id="older-mail"></a>Sort older mail</h2>
-<p>Automatic filtering covers mail that arrives after setup, or after you include an account. To sort mail that was already in your Inbox:</p>
+<p>Automatic filtering covers mail that arrives after setup, or after you include an account. To sort mail that was already in your Inbox with Apple Mail:</p>
 <ol>
 <li>Turn off dry run.</li>
 <li>In Settings → Accounts, open Older mail under the account.</li>
-<li>Choose Preview older Inbox mail, then check the decisions in Activity.</li>
-<li>Choose Apply previewed decisions. To continue, increase Older mail page and preview the next page.</li>
+<li>Choose Preview Older Inbox Mail, then check the decisions in Activity.</li>
+<li>Choose Apply <var>number</var> Decisions…. SpamWise says how many messages move to Junk, are marked for Review or stay in Inbox; choose Apply Decisions. To continue, increase Older mail page and preview the next page.</li>
 </ol>
 <p>Previews send messages to your provider, which can cost money. Changing settings discards previews you haven’t applied.</p>
 </main></body></html>
