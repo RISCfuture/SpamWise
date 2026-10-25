@@ -359,7 +359,7 @@ func `retains billing provenance after introductory rates end`() throws {
 }
 
 @Test
-func `rejects provider refusals and rate limits without a verdict`() async throws {
+func `rejects provider refusals, rate limits and bad requests without a verdict`() async throws {
   let refused =
     #"{"status":"completed","output":[{"type":"message","content":[{"type":"refusal","refusal":"No"}]}]}"#
   let openAI = OpenAIClassifier(
@@ -378,6 +378,22 @@ func `rejects provider refusals and rate limits without a verdict`() async throw
   )
   await #expect(throws: ClassificationError.rateLimited) {
     try await limited.classify(providerInput())
+  }
+  for (body, error) in [
+    (
+      #"{"error":{"code":400,"status":"INVALID_ARGUMENT","details":[{"reason":"API_KEY_INVALID"}]}}"#,
+      ClassificationError.missingCredential
+    ),
+    (#"{"error":{"type":"invalid_request_error","code":"invalid_api_key"}}"#, .missingCredential),
+    (#"{"error":{"code":"context_length_exceeded","message":"Too long"}}"#, .contextExceeded),
+    (
+      #"{"error":{"code":400,"message":"The input token count exceeds the maximum number of tokens allowed"}}"#,
+      .contextExceeded
+    ),
+    (#"{"error":{"code":"model_not_found"}}"#, .configuration), ("Bad request", .configuration)
+  ] {
+    let rejected = GeminiClassifier(key: { "fixture" }, http: providerHTTP(body, status: 400))
+    await #expect(throws: error) { try await rejected.classify(providerInput()) }
   }
 }
 
