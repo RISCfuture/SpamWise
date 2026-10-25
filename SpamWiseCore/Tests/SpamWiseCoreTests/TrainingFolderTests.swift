@@ -137,6 +137,19 @@ struct `Training folder corrections` {
     #expect(try await state().trainingClaims.count == 1)
   }
 
+  @Test(arguments: [false, true])
+  func `releases a failed live placement's claim only when its move was never sent`(
+    neverSent: Bool
+  ) async throws {
+    let failure = IntegrationError.permissionDenied
+    try await enableActions(store)
+    await adapter.deny(with: neverSent ? ActionNotAttempted(cause: failure) : failure)
+    let failed = try await correct()
+    #expect(failed.outcome == .failed)
+    try await observe()
+    #expect(try await state().trainingClaims.isEmpty == neverSent)
+  }
+
   @Test
   func `releases an applied placement's claim once its move recheck is done`() async throws {
     let record = try await correct()

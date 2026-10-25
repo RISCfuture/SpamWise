@@ -144,6 +144,11 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
    reverted by its provider.
    */
   public var actionSettled = false
+  /**
+   Whether dispatch stopped before it sent any mail command, so the message is as it was. False
+   whenever a command may have been sent, and when this is unknown.
+   */
+  public var actionNeverSent = false
   /// Separately recorded read-status follow-up after a confirmed Junk move; nil when not attempted.
   public var readStatusOutcome: ActionOutcome?
   /// Failure of optional mark-as-read, independent of the already completed move.
@@ -193,6 +198,7 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
     correctedLabel = values.lenient(.correctedLabel, default: nil)
     correctionUndone = values.lenient(.correctionUndone, default: false)
     actionSettled = values.lenient(.actionSettled, default: false)
+    actionNeverSent = values.lenient(.actionNeverSent, default: false)
     readStatusOutcome = values.lenient(.readStatusOutcome, default: nil)
     readStatusError = values.lenient(.readStatusError, default: nil)
     sampleID = values.lenient(.sampleID, default: nil)
@@ -200,7 +206,7 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   private enum CodingKeys: String, CodingKey {
     case id, date, identity, sender, subject, evidence, verdict, threats, decision, outcome
     case actionError, path, latency, revision, correctedLabel, correctionUndone, actionSettled
-    case readStatusOutcome, readStatusError, sampleID
+    case actionNeverSent, readStatusOutcome, readStatusError, sampleID
   }
 }
 extension DecisionRecord {
