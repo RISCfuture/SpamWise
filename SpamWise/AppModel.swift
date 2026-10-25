@@ -99,6 +99,11 @@ public final class AppModel {
     return model
   }
 
+  /// Whether `url` is the Mail rule's request to check mail, which shows no window.
+  static func isInboxCheck(_ url: URL) -> Bool {
+    url.scheme == "spamwise" && url.host == "check-inbox"
+  }
+
   private static func isBackup(_ url: URL) -> Bool {
     let type = try? url.resourceValues(forKeys: [.contentTypeKey]).contentType
     return type?.conforms(to: .spamWiseBackup) == true
