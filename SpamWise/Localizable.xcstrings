@@ -441,18 +441,18 @@
         }
       }
     },
-    "Backup restored. Filtering is paused with dry run on. Check Mail connection in Accounts, then resume.": {
+    "Backup restored. Filtering is paused with dry run on. In Accounts, choose Check Mail Connection, or Check Connection for an IMAP account, then resume.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copia de seguridad restaurada. El filtrado está en pausa y la simulación activada. Comprueba la conexión con Mail en Cuentas y luego reanuda."
+            "value": "Copia de seguridad restaurada. El filtrado está en pausa y la simulación activada. En Cuentas, elige Comprobar conexión con Mail, o Comprobar conexión en una cuenta IMAP, y luego reanuda."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sauvegarde restaurée. Le filtrage est suspendu et la simulation activée. Vérifiez la connexion à Mail dans Comptes, puis reprenez."
+            "value": "Sauvegarde restaurée. Le filtrage est suspendu et la simulation activée. Dans Comptes, choisissez Vérifier la connexion à Mail, ou Vérifier la connexion pour un compte IMAP, puis reprenez."
           }
         }
       }
@@ -549,6 +549,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cliquez sur Vérifier la connexion ci-dessus pour trouver l’adresse de votre compte."
+          }
+        }
+      }
+    },
+    "Check Connection…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobar conexión…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier la connexion…"
           }
         }
       }
