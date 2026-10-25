@@ -7,15 +7,15 @@ and what still waits on acceptance is tracked only in [TODO.md](../TODO.md).
 
 - [Support](support.md): setup, troubleshooting and corrections (published page).
 - [Install, upgrade, recover and remove](lifecycle.md) (published page).
-- [Mail.app compatibility](mail-compatibility.md): tested accounts and the acceptance
-  matrix (published page).
+- [Mail compatibility](mail-compatibility.md): requirements, tested accounts, mailbox
+  roles and move checks (published page).
 - [Privacy policy](privacy.md) (published page) and the
   [privacy data inventory](privacy-audit.md) behind it and the privacy manifests.
 
 ## Features
 
-- [Optional evidence and OCR](evidence.md): Spamhaus DBL, local Rspamd and embedded
-  image OCR.
+- [Evidence, receiving-server trust and OCR](evidence.md): Spamhaus DBL, local
+  Rspamd, which authentication results SpamWise trusts, and embedded image OCR.
 - [Spamhaus fit for SpamWise](spamhaus.md): access routes, eligibility and setup.
 - [IMAP and headless operation](imap.md): the IMAP route and `spamwise-daemon`.
 - [Mail.app automation](automation.md): App Intents, Shortcuts and the native intent
@@ -32,7 +32,8 @@ and what still waits on acceptance is tracked only in [TODO.md](../TODO.md).
 - Probe records under [probes/](probes/): model screenings, corpus audits, runtime
   harnesses and live Mail probes. The
   [signed runtime acceptance checklist](probes/runtime-checklist.md) lists the checks
-  a release build must pass.
+  a release build must pass, and the [live Mail follow-up](probes/live-mail-followup.md)
+  holds the per-account probe matrix and acceptance procedure.
 
 ## Building and distribution
 
@@ -48,4 +49,3 @@ and what still waits on acceptance is tracked only in [TODO.md](../TODO.md).
 ## Background
 
 - [Phase 1 brief](phase-one-brief.md), the original contract, preserved verbatim.
-- [Full code review, 2026-10-17](reviews/2026-10-17-full-review.md).
