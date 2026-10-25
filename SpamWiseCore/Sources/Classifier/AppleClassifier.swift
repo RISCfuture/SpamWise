@@ -106,7 +106,9 @@ public struct AppleClassifier: Classifier {
    Generates a validated verdict, shortening a prompt that exceeds the model's context in
    proportion and trying again, up to three attempts in all.
 
-   - Throws: ``ClassificationError/evidenceExceedsPrompt`` when no shorter prompt remains.
+   - Throws: ``ClassificationError/evidenceExceedsPrompt`` when the evidence alone exceeds
+     ``PromptBuilder/maximumPromptBytes``, and ``ClassificationError/contextExceeded`` when no
+     shorter prompt remains or the last attempt still exceeds the model's context.
    */
   private static func fittedVerdict(
     _ input: ClassificationInput,
@@ -123,7 +125,7 @@ public struct AppleClassifier: Classifier {
       } catch let LanguageModelError.contextSizeExceeded(exceeded) {
         let maximumBytes = shortenedBytes(prompt, exceeding: exceeded)
         guard let shorter = try candidates.next(maximumBytes: maximumBytes) else {
-          throw ClassificationError.evidenceExceedsPrompt
+          throw ClassificationError.contextExceeded
         }
         prompt = shorter
       }
@@ -149,7 +151,7 @@ public struct AppleClassifier: Classifier {
    fail open.
 
    A prompt that exceeds the model's context is shortened to fit when it can be; otherwise this
-   throws ``ClassificationError/evidenceExceedsPrompt``.
+   throws ``ClassificationError/contextExceeded``, leaving the message unclassified.
    */
   public func classify(_ input: ClassificationInput) async throws -> Verdict {
     do {
