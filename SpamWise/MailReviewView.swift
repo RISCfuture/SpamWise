@@ -30,11 +30,14 @@ struct MailReviewView: View {
         .fixedSize()
         .accessibilityIdentifier("junk.account")
         HSplitView {
-          JunkMessageList(review: review, selection: $selection).frame(minWidth: 240)
-          JunkMessageDetail(review: review, row: selected).frame(minWidth: 320)
+          JunkMessageList(review: review, selection: $selection)
+            .frame(minWidth: 240, maxHeight: .infinity)
+          JunkMessageDetail(review: review, row: selected)
+            .frame(minWidth: 320, maxHeight: .infinity)
         }
         JunkPager(review: review)
         OperationStatusView(operation: review.loading)
+        OperationStatusView(operation: review.restoring)
       }
       .padding()
       .navigationTitle("Review Junk")
@@ -104,7 +107,6 @@ private struct JunkMessageDetail: View {
           text: row.message.text ?? String(localized: "SpamWise couldn’t read this message.")
         )
         HStack {
-          OperationStatusView(operation: review.restoring)
           Spacer()
           if review.restoring.isBusy {
             ProgressView { Text("Restoring the message…") }.labelsHidden().controlSize(.small)
