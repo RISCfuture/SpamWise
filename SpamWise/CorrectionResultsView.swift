@@ -119,7 +119,7 @@ private struct SelectionResultRow: View {
   let model = PreviewHelper.model()
   model.corrections.preview(
     results: PreviewHelper.selectionResults,
-    progress: CorrectionProgress(completed: 2, total: 6)
+    progress: CorrectionProgress(completed: 2, total: 6, started: 4)
   )
   return CorrectionResultsView(corrections: model.corrections)
 }
