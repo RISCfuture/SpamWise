@@ -95,8 +95,6 @@ struct DecisionCorrectionCommand {
   let label: MailLabel
   /// The key that, with ``modifiers``, chooses the correction.
   let key: KeyEquivalent
-  /// The menu item’s identifier, `activity.correct.<label>`.
-  var identifier: String { "activity.correct.\(label.rawValue)" }
 }
 
 /**
@@ -118,7 +116,6 @@ private struct SelectedDecisionCorrections: View {
       }
       .keyboardShortcut(command.key, modifiers: DecisionCorrectionCommand.modifiers)
       .disabled(selected.map { !corrections.canCorrect($0) } ?? true)
-      .accessibilityIdentifier(command.identifier)
     }
   }
 }
@@ -145,7 +142,6 @@ private struct ToolsMenuItems: View {
 
   var body: some View {
     Button("Reviewed Messages") { show(.corpus, router: model.router, openWindow: openWindow) }
-      .accessibilityIdentifier("activity.corpus")
       .disabled(!model.shared.settings.onboardingComplete)
     Button("Configuration History") {
       show(.audit, router: model.router, openWindow: openWindow)

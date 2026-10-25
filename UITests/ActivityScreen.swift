@@ -73,9 +73,16 @@ struct ActivityScreen {
   }
 
   func openCorpus() -> CorpusScreen {
-    app.menuBars.menuBarItems[AppText.localized("Tools")].click()
-    app.menuItems["activity.corpus"].click()
+    openMenuItem("Reviewed Messages", in: "Tools").click()
     return CorpusScreen.waitForLanding(in: app)
+  }
+
+  /// Opens the menu bar menu titled `menu` and returns its item titled `title`. Main-menu items
+  /// don't carry SwiftUI's accessibility identifiers, so both are found by localized title.
+  private func openMenuItem(_ title: String, in menu: String) -> XCUIElement {
+    let menuBarItem = app.menuBars.menuBarItems[AppText.localized(menu)]
+    menuBarItem.click()
+    return menuBarItem.menuItems[AppText.localized(title)]
   }
 
   func pause() { app.buttons["activity.pause"].click() }
@@ -96,8 +103,7 @@ struct ActivityScreen {
 
   /// Whether the Filtering menu offers to mark the selected decision as Junk.
   func canMarkSelectionAsJunk() -> Bool {
-    app.menuBars.menuBarItems[AppText.localized("Filtering")].click()
-    let item = app.menuItems["activity.correct.junk"]
+    let item = openMenuItem("Mark as Junk", in: "Filtering")
     XCTAssertTrue(item.waitForExistence(timeout: UITestTiming.transition))
     defer { app.typeKey(.escape, modifierFlags: []) }
     return item.isEnabled
