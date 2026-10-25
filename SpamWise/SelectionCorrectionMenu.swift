@@ -45,8 +45,8 @@ private struct SelectionCorrectionStatus: View {
 
   var body: some View {
     if let progress = corrections.selectionProgress {
-      Text("Correcting \(progress.current) of \(progress.total)…")
-      Button("Stop Correcting") { corrections.cancelSelection() }
+      Text(progress.localizedDescription)
+      Button("Stop Correcting") { corrections.cancelSelection() }.disabled(!progress.canStop)
     } else if corrections.pendingSelection != nil {
       Button("Confirm Unverified Senders…") { show(.selectionCorrections) }
     } else if let summary = corrections.selectionSummary {

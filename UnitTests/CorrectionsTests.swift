@@ -164,6 +164,17 @@ struct `Selected-message corrections` {
   }
 
   @Test
+  func `finish checking the moves already sent to Mail when stopped`() async throws {
+    let overlap = CorrectionsModel.maximumOverlappingCorrections
+    let mail = SelectedInbox(count: overlap + 2, showingMovesAfter: overlap)
+    let corrections = CorrectionsModel(testing: try await services(mail: mail))
+    try await markJunkCorrected(mail.count, with: corrections, stoppingAfter: overlap)
+    let records = corrections.selectionResults.map(\.record)
+    #expect(records.map { $0?.outcome } == Array(repeating: .applied, count: overlap))
+    #expect(await mail.moved == overlap)
+  }
+
+  @Test
   func `ask before blocking senders whose check fails`() async throws {
     let mail = SelectedInbox(count: 2)
     let corrections = CorrectionsModel(
@@ -175,12 +186,24 @@ struct `Selected-message corrections` {
     #expect(corrections.selectionResults.isEmpty)
   }
 
-  /// Corrects Mail's selection as Junk, confirming its unverified senders, and waits for the batch.
-  private func markJunkCorrected(_ count: Int, with corrections: CorrectionsModel) async throws {
+  /**
+   Corrects Mail's selection as Junk, confirming its unverified senders, and waits for the batch.
+
+   When `started` is given, the batch is stopped once that many messages have started.
+   */
+  private func markJunkCorrected(
+    _ count: Int,
+    with corrections: CorrectionsModel,
+    stoppingAfter started: Int? = nil
+  ) async throws {
     #expect(corrections.correctSelection(.junk) {})
     await corrections.selection.run { nil }.value
     #expect(try #require(corrections.pendingSelection).unverifiedIDs.count == count)
     corrections.confirmPendingSelection(skippingUnverified: false)
+    if let started {
+      while corrections.selectionProgress?.started != started { await Task.yield() }
+      corrections.cancelSelection()
+    }
     await corrections.selection.run { nil }.value
   }
 
@@ -219,18 +242,22 @@ struct `Selected-message corrections` {
 /**
  Mail with messages selected in the Inbox.
 
- A message moved to Junk appears there only once every selected message has been moved, so a
- batch that waits for each move to settle before starting the next never sees one confirmed.
+ A message moved to Junk appears there only once a given number of selected messages, by default
+ all of them, have been moved, so a batch that waits for each move to settle before starting the
+ next never sees one confirmed.
  */
 private actor SelectedInbox: AppleEventRunner {
   static let accountID = "account"
   nonisolated let count: Int
   nonisolated let subjects: [String?]
+  nonisolated private let shownAfter: Int
   private var messages: [Message]
-  private var moved = 0
+  /// How many messages have been moved to Junk.
+  private(set) var moved = 0
 
-  init(count: Int) {
+  init(count: Int, showingMovesAfter shownAfter: Int? = nil) {
     self.count = count
+    self.shownAfter = shownAfter ?? count
     let messages = (1...count).map(Message.init)
     self.messages = messages
     subjects = messages.map(\.subject)
@@ -249,7 +276,7 @@ private actor SelectedInbox: AppleEventRunner {
         return .boolean(move(target))
       case .apply(.markRead, _):
         return .boolean(true)
-      case let .observe(_, .junk, messageID, _) where moved == messages.count:
+      case let .observe(_, .junk, messageID, _) where moved >= shownAfter:
         return .list(
           messages.filter { $0.messageID == messageID && $0.mailbox == "Junk" }.map(\.row)
         )
