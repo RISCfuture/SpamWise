@@ -1,15 +1,16 @@
 public import Foundation
 import ImageIO
 
-/// ImageIO validation of a message's embedded raster parts, without remote resources.
+/**
+ ImageIO validation of a message's embedded PNG and JPEG parts, without remote resources.
+
+ Other image formats are never parsed, which keeps their decoders away from unopened mail.
+ */
 public struct EmbeddedImages: Sendable {
   private static let maximumTotalImageBytes = 1_048_576
   private static let maximumTotalImagePixels = 8_000_000
   private static let maximumImageDimension = 4096
-  private static let imageTypes = [
-    "image/png": "public.png", "image/jpeg": "public.jpeg",
-    "image/gif": "com.compuserve.gif", "image/tiff": "public.tiff", "image/heic": "public.heic"
-  ]
+  private static let imageTypes = ["image/png": "public.png", "image/jpeg": "public.jpeg"]
   /// Maximum inline images accepted for one message.
   public static let maximumImages = 4
   /// Maximum decoded bytes in one image.
