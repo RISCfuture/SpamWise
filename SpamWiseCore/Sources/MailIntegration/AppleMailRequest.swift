@@ -92,6 +92,6 @@ public enum MailRequest: Sendable, Equatable {
   /// Applies one command after rechecking the message's exact location and fingerprint.
   case apply(MailCommand, target: MailMessageLocation)
   /// Finds messages with a Message-ID in one account's special mailbox, those of `byteCount`
-  /// first.
-  case observe(accountID: String, role: MailboxRole, messageID: String, byteCount: Int)
+  /// first; without a Message-ID, only those of `byteCount`.
+  case observe(accountID: String, role: MailboxRole, messageID: String?, byteCount: Int)
 }

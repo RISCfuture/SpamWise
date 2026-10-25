@@ -4,13 +4,22 @@ import Foundation
 enum DispatchMode: Sendable {
   /// An automatic action, applied only where the message was recorded, at most once per message.
   case automatic
-  /// A user correction's ordered steps, applied wherever the message now is in its account.
-  case correction(steps: [MailAction])
+  /// A user correction's ordered steps, applied wherever the message now is in its account, or
+  /// only where it was recorded when the account isn't searched.
+  case correction(steps: [MailAction], searchesAccount: Bool = true)
+
+  /// Whether steps may find the message outside the mailbox where it was recorded.
+  var searchesAccount: Bool {
+    switch self {
+      case .automatic: false
+      case .correction(_, let searchesAccount): searchesAccount
+    }
+  }
 
   func steps(for record: DecisionRecord) -> [MailAction] {
     switch self {
       case .automatic: record.decision.action == .none ? [] : [record.decision.action]
-      case .correction(let steps): steps
+      case .correction(let steps, _): steps
     }
   }
 }
@@ -65,11 +74,12 @@ extension Pipeline {
     )
     guard claim.record.outcome == .requested, let adapter else { return claim.record }
     if let abandoned = await abandonedBeforeAction(claim) { return abandoned }
-    let completed: DecisionRecord, settlements: [MoveSettlement]
+    var completed: DecisionRecord, settlements: [MoveSettlement]
     switch await perform(steps, on: claim.record, adapter: adapter, mode: mode) {
       case .notAttempted(let record): return await release(claim, as: record)
       case let .attempted(record, pending): (completed, settlements) = (record, pending)
     }
+    completed.actionSettled = completed.outcome == .applied && settlements.isEmpty
     guard (try? await saveObservedOutcome(completed)) != nil else { return completed }
     for settlement in settlements { scheduleCheck(of: settlement, recordID: completed.id) }
     return await markJunkRead(completed, adapter: adapter, settingOn: claim.marksJunkRead)
@@ -214,7 +224,7 @@ extension Pipeline {
       }
       do {
         let receipt =
-          if case .correction = mode {
+          if mode.searchesAccount {
             try await adapter.performCorrection(step, for: record.identity)
           } else {
             try await adapter.perform(step, for: record.identity)

@@ -38,11 +38,26 @@ extension Pipeline {
       || state.records.contains { $0.id != moved.id && $0.date > moved.date }
   }
 
-  /// Marks the move unconfirmed, retrying while storage is busy; a move that still can't be marked keeps its applied outcome.
-  private static func recordUnsettled(_ recordID: UUID, in store: Store) async {
+  /// Marks a still-applied move settled, so a later return to Inbox is known to be someone else's.
+  private static func markSettled(_ recordID: UUID, in store: Store) async throws {
+    try await StateRepository.update(store, loading: StateSlices(records: .only([recordID]))) {
+      state in
+      guard let index = state.records.firstIndex(where: { $0.id == recordID }),
+        state.records[index].outcome == .applied
+      else { return }
+      state.records[index].actionSettled = true
+    }
+  }
+
+  /**
+   Saves the recheck's result, retrying while storage is busy. A move that still can't be marked
+   keeps its applied outcome and stays unsettled.
+   */
+  private static func recordSettlement(_ recordID: UUID, settled: Bool, in store: Store) async {
     for _ in 1...maximumPostActionSaveAttempts {
       do {
-        try await markUnsettled(recordID, in: store)
+        try await settled
+          ? markSettled(recordID, in: store) : markUnsettled(recordID, in: store)
         return
       } catch let error as StoreError where error.retryable {
         continue
@@ -55,17 +70,18 @@ extension Pipeline {
   /**
    Rechecks a move once its provider's settling window ends, without holding up dispatch.
 
-   When the moved message is no longer the destination's one copy, an applied outcome becomes
-   requested: the command was sent but its result is unknown. Nothing is sent again. A record
-   that a correction or later decision for the same message has superseded keeps its outcome,
-   because that later action may have moved the message.
+   When the moved message is still the destination's one copy, the record is marked settled.
+   Otherwise an applied outcome becomes requested: the command was sent but its result is
+   unknown. Nothing is sent again. A record that a correction or later decision for the same
+   message has superseded keeps its outcome, because that later action may have moved the
+   message.
    */
   func scheduleCheck(of settlement: MoveSettlement, recordID: UUID) {
     let store = self.store, checkID = UUID()
     let check = Task {
       try? await Task.sleep(until: settlement.due)
-      if !Task.isCancelled, await !settlement.verify() {
-        await Self.recordUnsettled(recordID, in: store)
+      if !Task.isCancelled {
+        await Self.recordSettlement(recordID, settled: await settlement.verify(), in: store)
       }
       self.finishSettlement(checkID)
     }
