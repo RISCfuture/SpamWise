@@ -13,10 +13,19 @@ final class MailConnectionModel {
   var automation = MailAutomationStatus.unknown
   /// Whether the latest connection check was refused Automation permission.
   var permissionDenied = false
+  /// Each account's Inbox and Junk mailboxes, as Mail last reported them.
+  private(set) var destinations: [String: MailDestinations] = [:]
   /// Checking the connection: permission, accounts and mailbox roles.
   let check = TrackedOperation()
   @ObservationIgnored private let services: AppServices
   @ObservationIgnored private let shared: SharedStateModel
+
+  /// Discovered accounts whose Junk mailbox is a Gmail label rather than Gmail's Spam.
+  var accountsBypassingGmailSpam: [(account: MailAccount, destinations: MailDestinations)] {
+    accounts.compactMap { account in
+      destinations[account.id].flatMap { $0.junkBypassesGmailSpam ? (account, $0) : nil }
+    }
+  }
 
   #if DEBUG
     /// The development builds' disposable-message move test.
@@ -87,8 +96,9 @@ final class MailConnectionModel {
     var results: [String: Bool] = [:]
     for account in accounts {
       try Task.checkCancellation()
-      if let destinations = try? await services.appleMail.destinations(accountID: account.id) {
-        results[account.id] = destinations.isUnambiguous
+      if let read = try? await services.appleMail.destinations(accountID: account.id) {
+        destinations[account.id] = read
+        results[account.id] = read.isUnambiguous
       }
     }
     if let store = services.store {
@@ -101,16 +111,14 @@ final class MailConnectionModel {
     return accounts.count { results[$0.id] ?? shared.settings.validatedAccounts.contains($0.id) }
   }
 
-  /// Reads one account's mailbox roles and records whether they resolve uniquely.
-  func readDestinations(accountID: String) async throws -> MailDestinations {
-    let destinations = try await services.appleMail.destinations(accountID: accountID)
+  /// Rereads one account's mailbox roles and records whether they resolve uniquely.
+  func readDestinations(accountID: String) async throws {
+    destinations[accountID] = nil
+    let read = try await services.appleMail.destinations(accountID: accountID)
+    destinations[accountID] = read
     if let store = services.store {
-      try await StateRepository.recordMailboxRoles(
-        [accountID: destinations.isUnambiguous],
-        in: store
-      )
+      try await StateRepository.recordMailboxRoles([accountID: read.isUnambiguous], in: store)
     }
-    return destinations
   }
 
   #if DEBUG

@@ -199,6 +199,7 @@ extension Help {
       case "reviewed-messages-and-learning": String(localized: "Reviewed messages and learning")
       case "statistics": String(localized: "Statistics")
       case "imap-connection": String(localized: "Connecting with IMAP")
+      case "gmail-spam": String(localized: "Using Gmail’s Spam as Junk")
       default: String(localized: "SpamWise Help")
     }
   }

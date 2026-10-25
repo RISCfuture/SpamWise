@@ -1,5 +1,6 @@
 import SwiftUI
 import SpamWiseCore
+import MailIntegration
 
 /// Connects SpamWise to Apple Mail: Automation permission and the accounts Mail reports.
 struct MailConnectionView: View {
@@ -52,6 +53,9 @@ struct MailConnectionStatus: View {
         .accessibilityIdentifier(identifier)
     } else {
       OperationStatusView(operation: mail.check, identifier: identifier)
+      ForEach(mail.accountsBypassingGmailSpam, id: \.account.id) { account, destinations in
+        GmailSpamWarning(destinations: destinations, accountName: account.name)
+      }
     }
   }
 }

@@ -242,6 +242,7 @@ creating separate completion criteria for the same work.
   default comparison runs to dry run. Extend the existing slow-server and uncertain
   move tests; preserve source-folder/action provenance and clean up generated probes.
   - [x] Expose account-specific special-mailbox destination previews.
+  - [x] Warn in setup and the account's mailboxes, without withholding validation, when a Gmail account's Junk role is a label outside the [Gmail] system folder, so Junk moves miss Gmail's Spam; Help explains how to give Spam the Junk role.
   - [ ] Verify concurrent-filter behavior and slow/offline provider synchronization.
   - [ ] Verify coexistence with Mail's own Junk Mail filter, on by default, in both its mark-only mode (whose colors can resemble Review) and its move-to-Junk mode.
   - [ ] Flag a Gmail-hosted account whose Junk role is a custom label. On the owner's Mac, Mail maps a Gmail account set up as generic IMAP to custom "Junk" and "Deleted Messages" labels, so SpamWise's confirmed Junk moves never reach Gmail's Spam, and the setup check accepts the role.

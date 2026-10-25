@@ -1507,6 +1507,22 @@
         }
       }
     },
+    "For the “%@” account, Mail uses the Gmail label “%@” as Junk instead of Gmail’s Spam, so Gmail’s own filter doesn’t learn from the mail SpamWise moves there. In Mail, select Spam in the account’s [Gmail] folder, choose Mailbox › Use This Mailbox For › Junk, then choose Check Mail Connection.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En la cuenta «%1$@», Mail usa la etiqueta de Gmail «%2$@» como correo no deseado en lugar de Spam de Gmail, así que el filtro de Gmail no aprende del correo que SpamWise mueve allí. En Mail, selecciona Spam en la carpeta [Gmail] de la cuenta, elige Buzón › Usar este buzón para › Correo no deseado y luego elige Comprobar conexión con Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour le compte « %1$@ », Mail utilise le libellé Gmail « %2$@ » comme Indésirables au lieu du Spam de Gmail : le filtre de Gmail n’apprend donc rien des messages que SpamWise y déplace. Dans Mail, sélectionnez Spam dans le dossier [Gmail] du compte, choisissez Boîte aux lettres › Utiliser cette boîte pour › Indésirables, puis choisissez Vérifier la connexion à Mail."
+          }
+        }
+      }
+    },
     "Found %lld messages from %lld senders.": {
       "localizations": {
         "es": {
@@ -1839,6 +1855,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mail affiche plusieurs boîtes d’indésirables pour ce compte. Dans Mail, gardez le rôle Indésirables sur un seul dossier, puis choisissez Vérifier les boîtes aux lettres."
+          }
+        }
+      }
+    },
+    "Mail uses the Gmail label “%@” as this account’s Junk instead of Gmail’s Spam, so Gmail’s own filter doesn’t learn from the mail SpamWise moves there. In Mail, select Spam in the account’s [Gmail] folder, choose Mailbox › Use This Mailbox For › Junk, then choose Check Mailboxes.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail usa la etiqueta de Gmail «%@» como correo no deseado de esta cuenta en lugar de Spam de Gmail, así que el filtro de Gmail no aprende del correo que SpamWise mueve allí. En Mail, selecciona Spam en la carpeta [Gmail] de la cuenta, elige Buzón › Usar este buzón para › Correo no deseado y luego elige Comprobar buzones."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail utilise le libellé Gmail « %@ » comme Indésirables de ce compte au lieu du Spam de Gmail : le filtre de Gmail n’apprend donc rien des messages que SpamWise y déplace. Dans Mail, sélectionnez Spam dans le dossier [Gmail] du compte, choisissez Boîte aux lettres › Utiliser cette boîte pour › Indésirables, puis choisissez Vérifier les boîtes aux lettres."
           }
         }
       }
@@ -6277,6 +6309,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nom d’utilisateur"
+          }
+        }
+      }
+    },
+    "Using Gmail’s Spam as Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar Spam de Gmail como correo no deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser le Spam de Gmail comme Indésirables"
           }
         }
       }
