@@ -58,15 +58,19 @@ struct `Correction of a message whose classification failed` {
   }
 
   @Test
-  func `records a Review correction as a label without a rule or learning`() async throws {
+  func `records a Review correction with an excerpt but no rule, content or learning`()
+    async throws
+  {
+    await adapter.retain(try envelope())
     let review = try await correct(.review)
     let reviewed = try await state()
     #expect(review.decision.action == .orangeFlag)
     #expect(reviewed.rules.isEmpty)
     #expect(reviewed.reviewedLabels.map(\.label) == [.review])
+    #expect(reviewed.reviewedLabels.allSatisfy { $0.message == nil })
     #expect(reviewed.corrections.last?.label == .review)
+    #expect(reviewed.corrections.last?.excerpt.isEmpty == false)
     #expect(reviewed.learning == LearningState())
-    #expect(await adapter.lookups == 0)
   }
 
   @Test
@@ -80,9 +84,10 @@ struct `Correction of a message whose classification failed` {
   @Test
   func `forgets the linked correction examples without reading mail`() async throws {
     try await correct(.review)
+    let lookups = await adapter.lookups
     try await CorpusManagement.forget(id: reviewedLabelID(), store: store)
     #expect(try await state().corrections.isEmpty)
-    #expect(await adapter.lookups == 0)
+    #expect(await adapter.lookups == lookups)
   }
 
   @Test

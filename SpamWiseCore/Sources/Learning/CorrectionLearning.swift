@@ -102,6 +102,61 @@ public enum PolicyDistiller {
   }
 }
 
+/// A change to one graymail category's preference that the user's corrections consistently ask for.
+public struct CategorySuggestion: Sendable, Equatable, Identifiable {
+  /// Stable identity of the category and preference.
+  public var id: String { category.rawValue + ":" + preference.rawValue }
+  /// The graymail category the corrections share.
+  public let category: MailCategory
+  /// The preference the corrections imply.
+  public let preference: GraymailPreference
+  /// How many distinct sender domains the supporting corrections came from.
+  public let domainCount: Int
+}
+
+extension PolicyDistiller {
+  /**
+   Suggests a category preference when at least three corrections of that category, from at
+   least two domains, all imply the same preference and it differs from the current one.
+
+   Examples without a category, such as imported ones, never support a suggestion.
+   */
+  public static func categorySuggestions(
+    from corrections: [CorrectionExample],
+    preferences: CategoryPreferences
+  ) -> [CategorySuggestion] {
+    let groups = Dictionary(
+      grouping: LearningText.uniqueCorrections(corrections).filter {
+        $0.category?.isGraymail == true
+      }
+    ) { $0.category ?? .unknown }
+    return groups.compactMap { category, examples -> CategorySuggestion? in
+      let implied = Set(examples.map { GraymailPreference(correctedTo: $0.label) })
+      let domains = Set(examples.map { ($0.domain ?? $0.sender).lowercased() })
+      guard examples.count >= minimumCorrections, domains.count >= minimumAddresses,
+        implied.count == 1, let preference = implied.first,
+        preference != preferences[category]
+      else { return nil }
+      return CategorySuggestion(
+        category: category,
+        preference: preference,
+        domainCount: domains.count
+      )
+    }.sorted { ($0.domainCount, $1.id) > ($1.domainCount, $0.id) }
+  }
+}
+
+extension GraymailPreference {
+  /// The preference a correction to `label` expresses for its message's category.
+  public init(correctedTo label: MailLabel) {
+    switch label {
+      case .inbox: self = .keep
+      case .review: self = .review
+      case .junk: self = .junk
+    }
+  }
+}
+
 enum LearningText {
   private static let maximumTextCharacters = 8000
   private static let maximumTokenCharacters = 40

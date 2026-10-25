@@ -21,7 +21,7 @@ struct IntroductionScreen {
     let mail = continueSetup().continueSetup()
     mail.checkMailPermission()
     XCTAssertTrue(mail.waitForPermissionDenied())
-    return mail.continueSetup().finish()
+    return mail.continueSetup().continueSetup().finish()
   }
 }
 
@@ -63,6 +63,40 @@ struct MailSetupScreen {
   /// Waits for the status that reports Mail permission as denied.
   func waitForPermissionDenied() -> Bool {
     app.staticTexts["mail.permissionDenied"].waitForExistence(timeout: UITestTiming.transition)
+  }
+
+  func continueSetup() -> CategoryPreferencesScreen {
+    app.buttons["setup.continue"].click()
+    return CategoryPreferencesScreen.waitForLanding(in: app)
+  }
+}
+
+/// A graymail preference, in the order its segmented control shows it.
+enum GraymailChoice: Int { case keep, flag, junk }
+
+/// The choice for each kind of graymail, in setup or in Settings → Preferences.
+@MainActor
+struct CategoryPreferencesScreen {
+  let app: XCUIApplication
+
+  static func waitForLanding(in app: XCUIApplication) -> Self {
+    XCTAssertTrue(
+      app.radioGroups["preferences.promotion"].waitForExistence(timeout: UITestTiming.transition)
+    )
+    return Self(app: app)
+  }
+
+  private func segment(_ choice: GraymailChoice, for category: String) -> XCUIElement {
+    app.radioGroups["preferences.\(category)"].radioButtons.element(boundBy: choice.rawValue)
+  }
+
+  func choose(_ choice: GraymailChoice, for category: String) {
+    segment(choice, for: category).click()
+  }
+
+  /// Waits until `choice` is selected for `category`.
+  func waitForChoice(_ choice: GraymailChoice, for category: String) -> Bool {
+    segment(choice, for: category).waitForSelection()
   }
 
   func continueSetup() -> FinishSetupScreen {

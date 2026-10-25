@@ -276,6 +276,8 @@ func `decodes legacy settings with defaults for options they lack`() throws {
   var settings = try #require(object["settings"] as? [String: Any])
   settings.removeValue(forKey: "advanced"); settings["paused"] = true
   settings.removeValue(forKey: "mailPreferences"); settings["route"] = "mailKit"
+  settings.removeValue(forKey: "categoryPreferences")
+  settings["policy"] = PromptBuilder.formerDefaultPolicies.sorted()[0]
   object["settings"] = settings
   let decoded = try JSONDecoder().decode(
     AppState.self,
@@ -286,6 +288,8 @@ func `decodes legacy settings with defaults for options they lack`() throws {
   #expect(!decoded.settings.advancedOptions.fingerprints)
   #expect(!decoded.settings.mailOptions.localOnly)
   #expect(decoded.settings.incomingRoute == .mailRule)
+  #expect(decoded.settings.policy == PromptBuilder.defaultPolicy)
+  #expect(decoded.settings.categoryPreferences == .defaults)
 }
 
 @Test

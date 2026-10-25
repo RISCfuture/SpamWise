@@ -27,7 +27,11 @@ extension Pipeline {
     for envelope in envelopes where Self.isInIMAPInbox(envelope.identity) {
       guard !Task.isCancelled else { break }
       guard let recordID = try? await adoptReturnedIdentity(envelope.identity),
-        let correction = try? await correct(recordID: recordID, label: .inbox, adapter: adapter)
+        let correction = try? await correct(
+          CorrectionRequest(recordID: recordID, label: .inbox, scope: .address),
+          adapter: adapter,
+          message: try? MIMEParser().parse(envelope.raw)
+        )
       else { continue }
       corrections.append(correction)
     }

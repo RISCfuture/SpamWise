@@ -45,6 +45,21 @@ struct `Prompt construction` {
   }
 
   @Test
+  func `states the user's category preferences and each example's category`() throws {
+    var preferences = CategoryPreferences.defaults
+    preferences[.newsletter] = .junk
+    var example = input.corrections[0]
+    example.category = .newsletter
+    var input = input
+    input.categoryPreferences = preferences
+    input.corrections = [example]
+    let prompt = try PromptBuilder.prompt(input)
+    #expect(prompt.contains(#""newsletter":"junk""#))
+    #expect(prompt.contains(#""promotion":"review""#))
+    #expect(prompt.contains(#""category":"newsletter""#))
+  }
+
+  @Test
   func `bounds the body without marking a prompt that fits as shortened`() throws {
     let prompt = try PromptBuilder.prompt(input)
     #expect(!prompt.contains(String(repeating: "a", count: 7000)))

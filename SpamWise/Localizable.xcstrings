@@ -147,6 +147,22 @@
         }
       }
     },
+    "%lld messages": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld mensajes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages"
+          }
+        }
+      }
+    },
     "A backup holds your rules, policy, corrections and learning, encrypted with a recovery key. Keys, passwords and spending stay on this Mac.": {
       "localizations": {
         "es": {
@@ -265,6 +281,22 @@
         }
       }
     },
+    "Additional instructions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instrucciones adicionales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instructions supplémentaires"
+          }
+        }
+      }
+    },
     "Addresses that don’t count as people you know": {
       "localizations": {
         "es": {
@@ -293,6 +325,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Avancé. Laissez vide pour une nouvelle demande. Pour réessayer une exécution sans risque, saisissez l’UUID de la demande indiqué dans son résultat ou son erreur."
+          }
+        }
+      }
+    },
+    "Anything the choices above don’t cover, in your own words, such as “Newsletters about aviation are fine.” Your instructions are sent to your selected provider with eligible messages.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lo que las opciones de arriba no cubren, con tus palabras, por ejemplo «Los boletines de aviación están bien». Tus instrucciones se envían al proveedor elegido con los mensajes que reúnen los requisitos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que les choix ci-dessus ne couvrent pas, avec vos mots, par exemple « Les infolettres sur l’aviation me conviennent ». Vos instructions sont envoyées au fournisseur choisi avec les messages concernés."
           }
         }
       }
@@ -421,6 +469,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choisissez un dossier"
+          }
+        }
+      }
+    },
+    "Choose senders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir remitentes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir les expéditeurs"
           }
         }
       }
@@ -845,6 +909,118 @@
         }
       }
     },
+    "Flag": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler"
+          }
+        }
+      }
+    },
+    "Flag All for Review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar todos para Revisar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout signaler À vérifier"
+          }
+        }
+      }
+    },
+    "Flag for Review": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar para Revisar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler À vérifier"
+          }
+        }
+      }
+    },
+    "Found %lld messages from %lld senders.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se encontraron %lld mensajes de %lld remitentes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld messages trouvés, de %lld expéditeurs."
+          }
+        }
+      }
+    },
+    "Just This Sender": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo este remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet expéditeur seulement"
+          }
+        }
+      }
+    },
+    "Keep": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conservar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder"
+          }
+        }
+      }
+    },
+    "Keep All in Inbox": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conservar todos en Entrada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout garder dans Réception"
+          }
+        }
+      }
+    },
     "Keep filtering on this Mac is on, so SpamWise sends nothing to providers.": {
       "localizations": {
         "es": {
@@ -857,6 +1033,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Garder le filtrage sur ce Mac est activé, donc SpamWise n’envoie rien aux fournisseurs."
+          }
+        }
+      }
+    },
+    "Keep in Inbox": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conservar en Entrada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder dans Réception"
+          }
+        }
+      }
+    },
+    "Kind of mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tipo de correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type de message"
+          }
+        }
+      }
+    },
+    "Learn from your Junk folders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprender de tus carpetas de correo no deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apprendre de vos dossiers d’indésirables"
+          }
+        }
+      }
+    },
+    "Learning from Junk folders is available with Apple Mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprender de las carpetas de correo no deseado está disponible con Apple Mail."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’apprentissage à partir des dossiers d’indésirables est disponible avec Apple Mail."
           }
         }
       }
@@ -893,6 +1133,102 @@
         }
       }
     },
+    "Mail preferences": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferencias de correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préférences de messagerie"
+          }
+        }
+      }
+    },
+    "Mail you might not want": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo que quizá no quieras"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages dont vous ne voulez peut-être pas"
+          }
+        }
+      }
+    },
+    "Mark as Scam": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar como estafa"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler comme arnaque"
+          }
+        }
+      }
+    },
+    "Move All to Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mover todos a No deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout déplacer dans Indésirables"
+          }
+        }
+      }
+    },
+    "No Junk mail was found to learn from. Check the Mail connection, then scan again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró correo no deseado del que aprender. Comprueba la conexión con Mail y vuelve a analizar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun message indésirable dont apprendre n’a été trouvé. Vérifiez la connexion à Mail, puis relancez l’analyse."
+          }
+        }
+      }
+    },
+    "Not saved. Shorten your instructions to %lld characters or fewer.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se guardó. Acorta tus instrucciones a %lld caracteres o menos."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non enregistré. Raccourcissez vos instructions à %lld caractères ou moins."
+          }
+        }
+      }
+    },
     "Optional": {
       "localizations": {
         "es": {
@@ -905,6 +1241,150 @@
           "stringUnit": {
             "state": "translated",
             "value": "Facultatif"
+          }
+        }
+      }
+    },
+    "Personal mail, receipts and account notices always stay in your Inbox, and spam and scams always go to Review or Junk. Junk moves wait until SpamWise is confident enough for your filtering strength; until then the message is flagged.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El correo personal, los recibos y los avisos de cuenta siempre se quedan en Entrada, y el spam y las estafas siempre van a Revisar o a No deseado. Los traslados a No deseado esperan a que SpamWise tenga confianza suficiente para tu intensidad del filtrado; mientras tanto, el mensaje se marca."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le courrier personnel, les reçus et les avis de compte restent toujours dans Réception, et le spam et les arnaques vont toujours dans À vérifier ou Indésirables. Les déplacements dans Indésirables attendent que SpamWise soit assez sûr pour votre intensité du filtrage ; d’ici là, le message est signalé."
+          }
+        }
+      }
+    },
+    "Possibly wanted: in your Contacts or mail history": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quizá deseado: está en tus Contactos o en tu historial de correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peut-être voulu : figure dans vos Contacts ou votre historique"
+          }
+        }
+      }
+    },
+    "Preferences": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferencias"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préférences"
+          }
+        }
+      }
+    },
+    "Reset to defaults": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restablecer valores predeterminados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rétablir les valeurs par défaut"
+          }
+        }
+      }
+    },
+    "Restore Defaults": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restablecer"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rétablir"
+          }
+        }
+      }
+    },
+    "Restore the default preferences?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Restablecer las preferencias predeterminadas?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rétablir les préférences par défaut ?"
+          }
+        }
+      }
+    },
+    "Save %lld Examples": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar %lld ejemplos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer %lld exemples"
+          }
+        }
+      }
+    },
+    "Saved %lld examples of mail you don’t want.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se guardaron %lld ejemplos de correo que no quieres."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld exemples de messages dont vous ne voulez pas ont été enregistrés."
+          }
+        }
+      }
+    },
+    "Scan Junk Folders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analizar carpetas de no deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyser les dossiers d’indésirables"
           }
         }
       }
@@ -1017,6 +1497,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "SpamWise n’est ni affiliée à Anthropic, ni approuvée ou parrainée par Anthropic. Claude est une marque d’Anthropic PBC."
+          }
+        }
+      }
+    },
+    "SpamWise saw this as %@. Do the same for all of them?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise lo identificó como %@. ¿Hacer lo mismo con todos?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise l’a identifié comme %@. Faire de même pour tous ?"
+          }
+        }
+      }
+    },
+    "Suggested from your corrections": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sugerencias a partir de tus correcciones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggestions tirées de vos corrections"
           }
         }
       }
@@ -2109,22 +2621,6 @@
         }
       }
     },
-    "Describe what you want to receive. Your policy is sent to your selected provider with eligible messages.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Describe qué quieres recibir. Tus preferencias se envían al proveedor seleccionado con los mensajes pertinentes."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Décrivez ce que vous souhaitez recevoir. Vos préférences sont envoyées au fournisseur choisi avec les messages concernés."
-          }
-        }
-      }
-    },
     "DNS resolver address": {
       "localizations": {
         "es": {
@@ -3053,22 +3549,6 @@
         }
       }
     },
-    "Mail filtering policy": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Preferencias de filtrado de correo"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Préférences de filtrage du courrier"
-          }
-        }
-      }
-    },
     "Mail label": {
       "localizations": {
         "es": {
@@ -3145,22 +3625,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Marquer pour vérification"
-          }
-        }
-      }
-    },
-    "Keep personal correspondence, support replies, receipts, shipping and account notices, substantive informational newsletters, and community or service updates in Inbox unless their content gives a concrete reason for concern or I express a contrary preference. Missing history or unavailable trusted authentication means unknown; neither alone makes a message unwanted. Do not require an order-history match to keep an otherwise ordinary transactional notice.\nFor mail whose main purpose is a sale, discount, product recommendation, upsell, or abandoned-cart reminder, use Review when my preference is unknown. A sender saying I subscribed, shopped, or left a cart is not proof that I did. Do not infer my interests from the topic, brand, or recipient address. Use Junk for clear spam or mail that an explicit preference makes unwanted; keep genuinely ambiguous or suspicious messages in Review. An example expresses a preference for similar content, not a blanket rule for every message from that sender or domain.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mantén en Entrada la correspondencia personal, las respuestas de soporte, los recibos, los avisos de envío y de cuenta, los boletines con contenido informativo y las novedades de la comunidad o del servicio, salvo que su contenido dé un motivo concreto de preocupación o yo indique otra preferencia. La falta de historial o de autenticación de confianza significa que se desconoce esa información; ninguna de las dos basta para considerar un mensaje no deseado. No exijas que un aviso transaccional normal coincida con un pedido del historial.\nPara los mensajes cuyo objetivo principal sea una venta, un descuento, una recomendación de productos, una venta adicional o un recordatorio de carrito abandonado, usa Revisar cuando se desconozca mi preferencia. Que un remitente diga que me suscribí, compré o dejé un carrito no demuestra que lo haya hecho. No deduzcas mis intereses por el tema, la marca ni la dirección del destinatario. Usa No deseado para el spam claro o los mensajes que una preferencia explícita considere no deseados; mantén en Revisar los mensajes realmente ambiguos o sospechosos. Un ejemplo expresa una preferencia por contenido similar, no una regla general para todos los mensajes de ese remitente o dominio."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Garde dans Réception la correspondance personnelle, les réponses du support, les reçus, les avis d’expédition et de compte, les lettres d’information au contenu substantiel et les actualités d’une communauté ou d’un service, sauf si leur contenu donne une raison concrète de s’inquiéter ou si j’exprime une préférence contraire. L’absence d’historique ou d’authentification de confiance signifie que ces informations sont inconnues ; ni l’une ni l’autre ne suffit à rendre un message indésirable. N’exige pas qu’un avis transactionnel ordinaire corresponde à une commande dans mon historique.\nPour les messages dont le but principal est une vente, une réduction, une recommandation de produits, une offre complémentaire ou un rappel de panier abandonné, utilise À vérifier lorsque ma préférence est inconnue. Si un expéditeur affirme que je me suis abonné, que j’ai acheté ou que j’ai laissé un panier, cela ne prouve pas que je l’ai fait. Ne déduis pas mes intérêts du sujet, de la marque ou de l’adresse du destinataire. Utilise Indésirable pour le spam évident ou les messages qu’une préférence explicite rend indésirables ; garde dans À vérifier les messages réellement ambigus ou suspects. Un exemple exprime une préférence pour un contenu similaire, pas une règle générale pour tous les messages de cet expéditeur ou de ce domaine."
           }
         }
       }
@@ -4009,22 +4473,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "UUID de la demande"
-          }
-        }
-      }
-    },
-    "Reset to default": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Restablecer valores predeterminados"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rétablir les valeurs par défaut"
           }
         }
       }
@@ -5129,6 +5577,38 @@
         }
       }
     },
+    "Your choices are restored and your additional instructions are cleared.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se restablecen tus opciones y se borran tus instrucciones adicionales."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos choix sont rétablis et vos instructions supplémentaires sont effacées."
+          }
+        }
+      }
+    },
+    "Your corrections for %lld senders agree.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus correcciones de %lld remitentes coinciden."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos corrections pour %lld expéditeurs concordent."
+          }
+        }
+      }
+    },
     "Your Inbox, with fewer distractions": {
       "localizations": {
         "es": {
@@ -5141,6 +5621,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Votre boîte de réception, avec moins de distractions"
+          }
+        }
+      }
+    },
+    "Your Junk folders already show what you don’t want. SpamWise can read up to %lld recent Junk messages per account and save one example from each sender. It creates no rules and moves no mail.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus carpetas de correo no deseado ya muestran lo que no quieres. SpamWise puede leer hasta %lld mensajes recientes de No deseado por cuenta y guardar un ejemplo de cada remitente. No crea reglas ni mueve correo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos dossiers d’indésirables montrent déjà ce dont vous ne voulez pas. SpamWise peut lire jusqu’à %lld messages indésirables récents par compte et enregistrer un exemple de chaque expéditeur. Il ne crée aucune règle et ne déplace aucun message."
+          }
+        }
+      }
+    },
+    "Your preference": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu preferencia"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre préférence"
           }
         }
       }
@@ -12451,76 +12963,6 @@
         }
       }
     },
-    "Not saved. Shorten your policy to %lld characters or fewer.": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Not saved. Shorten your policy to %lld character or fewer."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Not saved. Shorten your policy to %lld characters or fewer."
-                }
-              }
-            }
-          }
-        },
-        "es": {
-          "variations": {
-            "plural": {
-              "many": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "No se ha guardado. Acorta tu política a %lld de caracteres o menos."
-                }
-              },
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "No se ha guardado. Acorta tu política a %lld carácter o menos."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "No se ha guardado. Acorta tu política a %lld caracteres o menos."
-                }
-              }
-            }
-          }
-        },
-        "fr": {
-          "variations": {
-            "plural": {
-              "many": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Non enregistré. Raccourcissez votre politique à %lld de caractères au maximum."
-                }
-              },
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Non enregistré. Raccourcissez votre politique à %lld caractère au maximum."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Non enregistré. Raccourcissez votre politique à %lld caractères au maximum."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "Notifications show counts, never message content. Set both quiet hours the same to turn quiet hours off.": {
       "localizations": {
         "es": {
@@ -12565,22 +13007,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seuls les nouveaux messages sont envoyés automatiquement ; les messages plus anciens ne le sont que lorsque vous les prévisualisez. Désactiver cette option arrête les futures requêtes, mais celles déjà envoyées ne peuvent pas être rappelées."
-          }
-        }
-      }
-    },
-    "Policy": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Política"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Politique"
           }
         }
       }
@@ -12645,38 +13071,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reconnaître les campagnes que vous avez marquées comme Indésirables"
-          }
-        }
-      }
-    },
-    "Replace Policy": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reemplazar política"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remplacer la politique"
-          }
-        }
-      }
-    },
-    "Replace your policy with the default?": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Reemplazar tu política por la predeterminada?"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remplacer votre politique par celle par défaut ?"
           }
         }
       }
@@ -12901,38 +13295,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Avec une limite définie, la classification payante est suspendue jusqu’au mois suivant une fois la limite atteinte."
-          }
-        }
-      }
-    },
-    "Your current policy text will be replaced.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se reemplazará el texto actual de tu política."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le texte actuel de votre politique sera remplacé."
-          }
-        }
-      }
-    },
-    "Your mail policy": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu política de correo"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre politique de messagerie"
           }
         }
       }
@@ -16479,22 +16841,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vous avez annulé cette correction. Le message reste où il est dans Mail."
-          }
-        }
-      }
-    },
-    "Your policy": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu política"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre politique"
           }
         }
       }

@@ -20,6 +20,16 @@ final class OnboardingTests: UITestCase {
   }
 
   @MainActor
+  func testSetupPreferenceAppliesInSettings() {
+    let mail = IntroductionScreen.launchOffline().continueSetup().continueSetup()
+    let preferences = mail.continueSetup()
+    XCTAssertTrue(preferences.waitForChoice(.flag, for: "promotion"))
+    preferences.choose(.junk, for: "promotion")
+    let settings = preferences.continueSetup().finish().openPreferencesSettings()
+    XCTAssertTrue(settings.waitForChoice(.junk, for: "promotion"))
+  }
+
+  @MainActor
   func testFinishingWithoutMailPermissionShowsMailNotAuthorized() {
     let activity = IntroductionScreen.launchOffline().completeOfflineSetup()
     XCTAssertTrue(activity.waitForMode(.mailNotAuthorized))

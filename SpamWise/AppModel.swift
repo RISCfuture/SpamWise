@@ -22,6 +22,7 @@ public final class AppModel {
   let mail: MailConnectionModel
   let imap: IMAPConnectionModel
   let relationships: RelationshipsModel
+  let preferences: PreferencesModel
   let scanning: ScanCoordinator
   let activity: ActivityModel
   let corrections: CorrectionsModel
@@ -52,6 +53,12 @@ public final class AppModel {
     mail = MailConnectionModel(services: services, shared: shared)
     imap = IMAPConnectionModel(services: services, shared: shared)
     relationships = RelationshipsModel(services: services, shared: shared)
+    preferences = PreferencesModel(
+      services: services,
+      shared: shared,
+      settings: settings,
+      mail: mail
+    )
     scanning = ScanCoordinator(
       services: services,
       shared: shared,
@@ -61,7 +68,7 @@ public final class AppModel {
     activity =
       services.store.map { ActivityModel(store: $0, shared: shared) }
       ?? ActivityModel(fixtures: activityFixtures, shared: shared)
-    corrections = CorrectionsModel(services: services)
+    corrections = CorrectionsModel(services: services, settings: settings)
     junkReview = JunkReviewModel(services: services, mail: mail, shared: shared)
     messages = MessageAccessModel(services: services)
     rules = RulesModel(services: services, shared: shared)

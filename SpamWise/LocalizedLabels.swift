@@ -193,3 +193,21 @@ extension Help {
     }
   }
 }
+
+extension GraymailPreference {
+  var localizedTitle: String {
+    switch self {
+      case .keep: String(localized: "Keep")
+      case .review: String(localized: "Flag")
+      case .junk: String(localized: "Junk")
+    }
+  }
+  /// What this preference does, in a full phrase.
+  var localizedDescription: String {
+    switch self {
+      case .keep: String(localized: "Keep in Inbox")
+      case .review: String(localized: "Flag for Review")
+      case .junk: String(localized: "Move to Junk")
+    }
+  }
+}

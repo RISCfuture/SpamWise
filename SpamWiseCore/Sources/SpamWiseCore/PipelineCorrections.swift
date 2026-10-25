@@ -41,10 +41,21 @@ extension Pipeline {
    Atomically saves a correction's rule, example, reviewed label and learning, then attempts
    its separately recorded mail steps.
 
-   Message text for the label and learning is read before saving and only when a setting
-   needs it; when it is unavailable the correction is saved without it. Once the correction is
-   saved, every problem with its mail steps, including a claim that cannot be recorded, is
-   reported through the returned record's outcome.
+   Message text is read before saving, for the example's excerpt and, when a setting keeps
+   them, the reviewed label's content and learning; when it is unavailable the correction is
+   saved without it. Once the correction is saved, every problem with its mail steps, including
+   a claim that cannot be recorded, is reported through the returned record's outcome.
+
+   - Parameters:
+     - recordID: The Activity record being corrected.
+     - label: The label the user chose.
+     - scope: Whether the saved rule covers the sender's address or its whole domain.
+     - adapter: The integration that reads the message and performs the mail steps.
+     - trainingPlanID: The training folder whose placement this correction claims, if any.
+     - savesRule: Whether the correction saves a sender rule; a scam whose From address is
+       likely forged is corrected without one.
+     - category: What kind of mail the user says the message is, replacing the model's category
+       in the saved example.
 
    - Throws: ``CorrectionError`` when the record or its sender cannot be corrected, or a
      storage error when the correction cannot be saved; nothing is saved either way.
@@ -54,20 +65,24 @@ extension Pipeline {
     label: MailLabel,
     scope: RuleScope = .address,
     adapter: (any MailClientAdapter)? = nil,
-    trainingPlanID: String? = nil
+    trainingPlanID: String? = nil,
+    savesRule: Bool = true,
+    category: MailCategory? = nil
   ) async throws -> DecisionRecord {
     try await correct(
       CorrectionRequest(
         recordID: recordID,
         label: label,
         scope: scope,
-        trainingPlanID: trainingPlanID
+        trainingPlanID: trainingPlanID,
+        savesRule: savesRule,
+        category: category
       ),
       adapter: adapter,
       message: nil
     )
   }
-  /// Corrects a record, reading its message through `adapter` when `message` is nil and a setting needs it.
+  /// Corrects a record, reading its message through `adapter` when `message` is nil.
   func correct(
     _ request: CorrectionRequest,
     adapter: (any MailClientAdapter)?,
@@ -127,18 +142,16 @@ extension Pipeline {
     try? await saveObservedOutcome(record)
     return record
   }
-  /// Bounded message text for the reviewed label and learning, or nil when no setting needs it.
+  /// Bounded message text for the example's excerpt, reviewed label and learning, or nil when unavailable.
   private func reviewedMessage(
     recordID: UUID,
     known: ParsedMessage?,
     adapter: (any MailClientAdapter)?
   ) async -> ParsedMessage? {
-    guard
-      let state = try? await StateRepository.load(store, StateSlices(records: .only([recordID]))),
-      state.settings.advancedOptions.retainReviewedContent
-        || Self.collectsLearning(state.settings.advancedOptions)
-    else { return nil }
     if let known { return known.boundedForRetention() }
+    guard
+      let state = try? await StateRepository.load(store, StateSlices(records: .only([recordID])))
+    else { return nil }
     guard let identity = state.records.first(where: { $0.id == recordID })?.identity,
       let envelope = try? await adapter?.lookup(identity)
     else { return nil }
@@ -156,6 +169,10 @@ struct CorrectionRequest: Sendable {
   var scope: RuleScope
   /// The training folder whose placement this correction claims, if any.
   var trainingPlanID: String?
+  /// Whether the correction saves a sender rule.
+  var savesRule = true
+  /// The category the user gave the message, replacing the model's.
+  var category: MailCategory?
 }
 
 extension DecisionRecord {
@@ -195,7 +212,9 @@ extension AppState {
       throw CorrectionError.unreadableSender
     }
     let domain = DomainResolver().domain(ofAddress: address)
-    try applyCorrectionRule(label: label, scope: scope, address: address, domain: domain)
+    if request.savesRule {
+      try applyCorrectionRule(label: label, scope: scope, address: address, domain: domain)
+    }
     let linkedSampleID =
       reviewedLabels.first { $0.id == previous.identity.contentHash }?.sampleID
       ?? previous.identity.contentHash
@@ -209,6 +228,7 @@ extension AppState {
       promptScope: previous.identity.accountID.map(CorrectionExample.PromptScope.account)
     )
     example.sampleID = sampleID
+    example.category = request.category ?? previous.verdict?.category
     corrections.append(example)
     corrections = Array(corrections.suffix(RetentionLimits.corrections))
     invalidatePendingWork(.corrected(scope: scope, sender: address, label: label))

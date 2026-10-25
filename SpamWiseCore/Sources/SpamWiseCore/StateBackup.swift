@@ -60,6 +60,7 @@ public enum StateBackup {
     }
     let payload = Payload(
       policy: state.settings.policy,
+      categoryPreferences: state.settings.categoryPreferences,
       strength: state.settings.strength,
       review: state.settings.review,
       rules: state.rules,
@@ -91,7 +92,10 @@ public enum StateBackup {
       state.corrections = payload.corrections
       state.learning = payload.learning ?? LearningState()
       state.reviewedLabels = payload.labels
-      state.settings.policy = payload.policy
+      state.settings.policy =
+        PromptBuilder.formerDefaultPolicies.contains(payload.policy)
+        ? PromptBuilder.defaultPolicy : payload.policy
+      state.settings.categoryPreferences = payload.categoryPreferences ?? .defaults
       state.settings.strength = payload.strength
       state.settings.review = payload.review
       state.settings.advancedOptions.retainReviewedContent = payload.labels.contains {
@@ -137,6 +141,7 @@ public enum StateBackup {
   private struct Payload: Codable {
     var version = 1
     var policy: String
+    var categoryPreferences: CategoryPreferences?
     var strength: FilteringStrength
     var review: ReviewTreatment
     var rules: [SenderRule]

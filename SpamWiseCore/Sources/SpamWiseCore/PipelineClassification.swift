@@ -112,6 +112,7 @@ extension Pipeline {
     let input = ClassificationInput(
       message: message,
       evidence: evidence,
+      categoryPreferences: state.settings.categoryPreferences,
       policy: state.settings.policy,
       corrections: CorrectionRetrieval.examples(
         for: message,
@@ -309,7 +310,8 @@ extension Pipeline {
         reason: reason,
         strength: settings.strength,
         review: settings.review,
-        concealsContent: path == .model && message.concealsContent
+        concealsContent: path == .model && message.concealsContent,
+        preference: path == .model ? settings.categoryPreferences[verdict.category] : nil
       )
       var record = DecisionRecord(
         identity: identity,

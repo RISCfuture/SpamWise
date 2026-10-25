@@ -134,3 +134,48 @@ struct `Reviewed corpus import` {
     return renamed
   }
 }
+
+@Suite
+struct `Junk folder bootstrap` {
+  private static func message(from sender: String, subject: String) throws -> ParsedMessage {
+    var message = try MIMEParser().parse(fixture("filler-spam"))
+    message.fromAddress = sender
+    message.subject = subject
+    message.hash = stableHash(Data((sender + subject).utf8))
+    return message
+  }
+
+  @Test
+  func `groups Junk by sender domain, or address at shared providers, most frequent first`()
+    throws
+  {
+    var state = AppState()
+    state.contactAddresses = ["friend@gmail.com"]
+    let messages = try [
+      Self.message(from: "deals@news.shop.example", subject: "Newest sale"),
+      Self.message(from: "offers@shop.example", subject: "Older sale"),
+      Self.message(from: "friend@gmail.com", subject: "Hello"),
+      Self.message(from: "stranger@gmail.com", subject: "Hello")
+    ]
+    let senders = JunkFolderBootstrap.senders(in: messages, state: state)
+    #expect(senders.map(\.id) == ["shop.example", "friend@gmail.com", "stranger@gmail.com"])
+    #expect(senders[0].messageCount == 2 && senders[0].representative.subject == "Newest sale")
+    #expect(senders.map(\.possiblyWanted) == [false, true, false])
+  }
+
+  @Test
+  func `imports one example per sender in batches without rules`() async throws {
+    let store = try testStore()
+    let messages = try (0..<25).map {
+      try Self.message(from: "news@shop\($0).example", subject: "Sale \($0)")
+    }
+    let senders = JunkFolderBootstrap.senders(in: messages, state: AppState())
+    try await JunkFolderBootstrap.importExamples(from: senders, store: store)
+    let state = try await StateRepository.load(store)
+    #expect(
+      state.reviewedLabels.count == 25 && state.reviewedLabels.allSatisfy { $0.label == .junk }
+    )
+    #expect(state.corrections.allSatisfy { !$0.excerpt.isEmpty })
+    #expect(state.rules.isEmpty)
+  }
+}

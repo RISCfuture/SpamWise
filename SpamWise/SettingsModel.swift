@@ -14,37 +14,16 @@ import SpamWiseCore
 final class SettingsModel {
   private static let stepperDelay: Duration = .milliseconds(600)
   private static let textDelay: Duration = .milliseconds(1500)
-  /// The default policy in the user's language, shown in place of the stored English default.
-  static var localizedDefaultPolicy: String {
-    String(
-      localized:
-        """
-        Keep personal correspondence, support replies, receipts, shipping and account notices, \
-        substantive informational newsletters, and community or service updates in Inbox unless \
-        their content gives a concrete reason for concern or I express a contrary preference. \
-        Missing history or unavailable trusted authentication means unknown; neither alone makes a \
-        message unwanted. Do not require an order-history match to keep an otherwise ordinary \
-        transactional notice.
-        For mail whose main purpose is a sale, discount, product recommendation, upsell, or \
-        abandoned-cart reminder, use Review when my preference is unknown. A sender saying I \
-        subscribed, shopped, or left a cart is not proof that I did. Do not infer my interests \
-        from the topic, brand, or recipient address. Use Junk for clear spam or mail that an \
-        explicit preference makes unwanted; keep genuinely ambiguous or suspicious messages in \
-        Review. An example expresses a preference for similar content, not a blanket rule for \
-        every message from that sender or domain.
-        """
-    )
-  }
   /// The latest settings write failure, until the next write succeeds.
   var saveFailure: OperationFailure?
   /// Why the latest spending-limit change was refused.
   var spendingLimitError: String?
   @ObservationIgnored private let shared: SharedStateModel
   @ObservationIgnored private var tail: Task<Void, Never>?
-  /// The filtering policy, saved after a pause in typing; one over the limit stays unsaved.
+  /// The additional instructions, saved after a pause in typing; text over the limit stays unsaved.
   @ObservationIgnored private(set) lazy var policy = SettingDraft(
     delay: Self.textDelay,
-    persisted: { [shared] in Self.displayedPolicy(shared.state.settings.policy) },
+    persisted: { [shared] in shared.state.settings.policy },
     accepts: { $0.count <= ClassificationLimits.maximumPolicyCharacters },
     save: { [weak self] in self?.setSetting(\.policy, to: $0) }
   )
@@ -83,10 +62,6 @@ final class SettingsModel {
   }
 
   init(shared: SharedStateModel) { self.shared = shared }
-
-  private static func displayedPolicy(_ policy: String) -> String {
-    policy == PromptBuilder.defaultPolicy ? localizedDefaultPolicy : policy
-  }
 
   private static func evidence(in settings: SpamWiseCore.Settings) -> ExternalEvidenceSettings {
     settings.advancedOptions.externalEvidence ?? ExternalEvidenceSettings()
@@ -169,10 +144,11 @@ final class SettingsModel {
     }
   }
 
-  /// Replaces the policy with the default, at once.
-  func resetPolicy() {
-    policy.value = Self.localizedDefaultPolicy
+  /// Clears the additional instructions and restores every category preference, at once.
+  func resetPreferences() {
+    policy.value = PromptBuilder.defaultPolicy
     policy.commit()
+    setSetting(\.categoryPreferences, to: .defaults)
   }
 
   func togglePause() {

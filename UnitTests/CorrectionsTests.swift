@@ -106,7 +106,7 @@ struct `Selected-message batches` {
 struct `Decision corrections` {
   @Test
   func `wait for confirmation before blocking an unverified sender`() {
-    let corrections = CorrectionsModel(services: .preview())
+    let corrections = CorrectionsModel(testing: .preview())
     let unverified = record(.none)
     corrections.correct(unverified, label: .junk)
     #expect(corrections.pendingDecision?.record.id == unverified.id)
@@ -117,7 +117,7 @@ struct `Decision corrections` {
 
   @Test
   func `save a Good correction without asking`() {
-    let corrections = CorrectionsModel(services: .preview())
+    let corrections = CorrectionsModel(testing: .preview())
     corrections.correct(record(.none), label: .inbox)
     #expect(corrections.pendingDecision == nil)
     #expect(corrections.decision.isBusy)
@@ -145,7 +145,7 @@ struct `Selected-message corrections` {
   @Test
   func `overlap each message's wait for Mail to show it in Junk`() async throws {
     let mail = SelectedInbox(count: CorrectionsModel.maximumOverlappingCorrections)
-    let corrections = CorrectionsModel(services: try await services(mail: mail))
+    let corrections = CorrectionsModel(testing: try await services(mail: mail))
     try await markJunkCorrected(mail.count, with: corrections)
     let records = corrections.selectionResults.map(\.record)
     #expect(records.map { $0?.outcome } == Array(repeating: .applied, count: mail.count))
@@ -157,7 +157,7 @@ struct `Selected-message corrections` {
   func `ask before blocking senders whose check fails`() async throws {
     let mail = SelectedInbox(count: 2)
     let corrections = CorrectionsModel(
-      services: try await services(mail: mail, checksSendersWith: unreadableStore())
+      testing: try await services(mail: mail, checksSendersWith: unreadableStore())
     )
     #expect(corrections.correctSelection(.junk) {})
     await corrections.selection.run { nil }.value
@@ -292,5 +292,17 @@ private actor SelectedInbox: AppleEventRunner {
       subject = "Offer \(number)"
       localID = number
     }
+  }
+}
+
+extension CorrectionsModel {
+  /// A model over `services` whose settings are read from the same store.
+  convenience init(testing services: AppServices) {
+    self.init(
+      services: services,
+      settings: SettingsModel(
+        shared: SharedStateModel(store: services.store, reportsMissingStore: false)
+      )
+    )
   }
 }

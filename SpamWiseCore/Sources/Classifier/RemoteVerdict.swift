@@ -5,8 +5,12 @@ struct RemoteVerdict: Decodable {
   static var schema: [String: Any] {
     [
       "type": "object", "additionalProperties": false,
-      "required": ["label", "confidence", "reason"],
+      "required": ["category", "label", "confidence", "reason"],
       "properties": [
+        "category": [
+          "type": "string",
+          "enum": MailCategory.allCases.filter { $0 != .unknown }.map(\.rawValue)
+        ],
         "label": ["type": "string", "enum": ["inbox", "review", "junk"]],
         "confidence": [
           "type": "integer", "minimum": ClassificationLimits.confidenceRange.lowerBound,
@@ -20,6 +24,7 @@ struct RemoteVerdict: Decodable {
     ]
   }
 
+  var category: MailCategory?
   var label: MailLabel
   var confidence: Int
   var reason: String
@@ -27,11 +32,9 @@ struct RemoteVerdict: Decodable {
   static func decode(_ text: String, usage: TokenUsage) throws -> Verdict {
     guard text.utf8.count <= maximumEncodedBytes else { throw ClassificationError.invalidOutput }
     let value = try JSONDecoder().decode(Self.self, from: Data(text.utf8))
-    guard value.reason.count <= ClassificationLimits.maximumReasonCharacters else {
-      throw ClassificationError.invalidOutput
-    }
     return try Verdict(
       label: value.label,
+      category: value.category ?? .unknown,
       confidence: value.confidence,
       reason: value.reason,
       usage: usage
