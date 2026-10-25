@@ -10,7 +10,12 @@ extension BoundedHTTPClient: HTTPFetcher {
   /// Returns the body of a successful response.
   package func fetch(_ url: URL) async throws -> Data { try await send(URLRequest(url: url)).body }
 }
-/// Caches domain registration ages discovered through IANA RDAP bootstrap data.
+/**
+ Caches domain registration ages discovered through IANA RDAP bootstrap data.
+
+ Only known ages are saved to the cache file. Unknown results, including an unavailable
+ bootstrap file, are cached in memory for an hour.
+ */
 public actor RDAPLookup {
   private static let secondsPerDay: TimeInterval = 86_400
   private static let knownLifetimeSec: TimeInterval = 604_800
@@ -26,8 +31,10 @@ public actor RDAPLookup {
   private let fetcher: any HTTPFetcher
   private let cacheURL: URL?
   private var cache: [String: Entry] = [:]
+  private var persisted: [String: Entry] = [:]
   private var bootstrap: Bootstrap?
   private var bootstrapExpires = Date.distantPast
+  private var bootstrapFetch: Task<Bootstrap?, Never>?
   /// Looks up registration data over bounded HTTPS that never follows redirects, reading any cache at `cacheURL` synchronously.
   public init(cacheURL: URL? = nil) {
     self.init(fetcher: BoundedHTTPClient(policy: Self.policy), cacheURL: cacheURL)
@@ -43,6 +50,7 @@ public actor RDAPLookup {
       let saved = try? JSONDecoder().decode([String: Entry].self, from: data)
     {
       cache = saved
+      persisted = saved.filter { $0.value.age != nil }
     }
   }
 
@@ -61,16 +69,11 @@ public actor RDAPLookup {
       }
     }
     do {
-      if bootstrap == nil || bootstrapExpires < now {
-        bootstrap = try JSONDecoder().decode(
-          Bootstrap.self,
-          from: await fetcher.fetch(Self.bootstrapURL)
-        )
-        bootstrapExpires = now.addingTimeInterval(Self.knownLifetimeSec)
-      }
       let tld = String(domain.split(separator: ".").last ?? "")
       guard
-        let service = bootstrap?.services.first(where: { $0.count == 2 && $0[0].contains(tld) }),
+        let service = await currentBootstrap(now: now)?.services.first(where: {
+          $0.count == 2 && $0[0].contains(tld)
+        }),
         let endpoint = service[1].first(where: { $0.hasPrefix("https://") }),
         let base = URL(string: endpoint), base.host != nil
       else {
@@ -86,22 +89,58 @@ public actor RDAPLookup {
       save(domain, age: age, now: now); return age
     } catch { save(domain, age: nil, now: now); return nil }
   }
+
+  /**
+   Returns the bootstrap file, fetching it once for every caller when it has expired.
+
+   A failed fetch keeps any earlier file and is retried only after the unknown lifetime.
+   */
+  private func currentBootstrap(now: Date) async -> Bootstrap? {
+    guard bootstrapExpires <= now else { return bootstrap }
+    let fetch =
+      bootstrapFetch
+      ?? Task { [fetcher] in
+        try? JSONDecoder().decode(Bootstrap.self, from: await fetcher.fetch(Self.bootstrapURL))
+      }
+    bootstrapFetch = fetch
+    defer { bootstrapFetch = nil }
+    if let fetched = await fetch.value {
+      bootstrap = fetched
+      bootstrapExpires = now.addingTimeInterval(Self.knownLifetimeSec)
+    } else {
+      bootstrapExpires = now.addingTimeInterval(Self.unknownLifetimeSec)
+    }
+    return bootstrap
+  }
+
   private func save(_ domain: String, age: Int?, now: Date) {
     cache = cache.filter { $0.value.expires > now }
-    if cache.count >= Self.maximumCachedDomains, let key = cache.keys.min() {
-      cache.removeValue(forKey: key)
+    if cache.count >= Self.maximumCachedDomains,
+      let oldest = cache.min(by: { $0.value.recordedAt < $1.value.recordedAt })?.key
+    {
+      cache.removeValue(forKey: oldest)
     }
     cache[domain] = Entry(
       age: age,
       expires: now.addingTimeInterval(age == nil ? Self.unknownLifetimeSec : Self.knownLifetimeSec),
       recordedAt: now
     )
-    if let cacheURL, let data = try? JSONEncoder().encode(cache) {
-      try? data.write(to: cacheURL, options: .atomic)
-    }
+    persist()
   }
 
-  private struct Entry: Codable { var age: Int?; var expires: Date; var recordedAt: Date }
+  /// Writes the known ages to the cache file when they differ from what it holds.
+  private func persist() {
+    let known = cache.filter { $0.value.age != nil }
+    guard let cacheURL, known != persisted, let data = try? JSONEncoder().encode(known) else {
+      return
+    }
+    try? data.write(to: cacheURL, options: .atomic)
+    persisted = known
+  }
+
+  private struct Entry: Codable, Equatable {
+    var age: Int?; var expires: Date; var recordedAt: Date
+  }
   private struct Bootstrap: Codable { var services: [[[String]]] }
   private struct Response: Decodable {
     var events: [Event]?
