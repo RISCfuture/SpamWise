@@ -62,7 +62,7 @@ extension StoreError: Equatable {}
  occurs between acquiring the lock and saving a transaction.
  */
 public actor Store {
-  /// App Group shared by the app and extension.
+  /// App Group whose container holds the shared store.
   public static let appGroupIdentifier = "group.codes.tim.SpamWise"
   private static let maximumLockWait: Duration = .seconds(5)
   private static let initialLockBackoff: Duration = .milliseconds(2)
