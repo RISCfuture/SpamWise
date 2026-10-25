@@ -103,7 +103,7 @@ Open findings from code reviews and audits, each confirmed against the current c
 
 - [ ] Fix the dependencies upstream, then bump their pins:
   - [ ] ClaudeForFoundationModels: let SpamWise inject a hardened URL session. Claude requests use the SDK's default session (shared cookies and cache, same-origin redirects, no response cap), unlike the ephemeral, redirect-refusing OpenAI and Gemini client, and the per-request timeout gives every classification a new executor and session.
-  - [ ] XCUITestKit: its `ios-release.yml` runs unpinned actions and `curl | bash` alongside signing secrets.
+  - [x] XCUITestKit: its `ios-release.yml` ran unpinned actions and `curl | bash` alongside signing secrets. 1.1.1 pins every action to a commit, installs `sentry-cli` from its Homebrew cask, keeps the certificates token out of Git config and limits jobs to read-only access; `release.yml` pins 1.1.1.
 - [ ] Classification and app behavior:
   - [ ] Show model confidence as an uncalibrated score out of 100, as Help describes it, rather than as a percentage in the inspector.
   - [ ] Keep the images already accepted when a later embedded image is excess or invalid; today one such image drops OCR for the whole message.
