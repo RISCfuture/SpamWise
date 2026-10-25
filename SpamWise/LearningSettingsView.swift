@@ -1,15 +1,12 @@
 import SwiftUI
 import SpamWiseCore
-import UniformTypeIdentifiers
 
+/// Learning from corrections, kept reviewed text and suggested domain rules.
 struct LearningSettingsView: View {
   let settings: SettingsModel
   let shared: SharedStateModel
   let rules: RulesModel
   let activity: ActivityModel
-  @State private var exporting = false
-  @State private var exportDocument: RulesDocument?
-  @State private var exportStatus: OperationStatus?
 
   var body: some View {
     Section {
@@ -22,58 +19,24 @@ struct LearningSettingsView: View {
         "Learn which evidence matters most",
         isOn: settings.advancedBinding(\.learnedWeights)
       )
+      Toggle(
+        "Keep text of reviewed messages",
+        isOn: settings.advancedBinding(\.retainReviewedContent)
+      )
     } header: {
       Text("Learning from corrections")
     } footer: {
       Text(
         """
         SpamWise learns from mail you mark Good or Junk once it has enough of each. Your sender \
-        rules always come first.
+        rules always come first. Keeping text saves up to \(RetentionLimits.reviewedLabels) \
+        reviewed messages on this Mac, so Reviewed Messages can show and export them. Turning it \
+        off deletes the kept text; labels and learning remain.
         """
       )
       .foregroundStyle(.secondary)
     }
     DomainSuggestionsView(shared: shared, rules: rules, activity: activity)
-    Section {
-      LabeledContent("Reviewed labels", value: shared.state.reviewedLabels.count.formatted())
-      Toggle(
-        "Retain reviewed text for evaluation export",
-        isOn: settings.advancedBinding(\.retainReviewedContent)
-      )
-      Button("Export Reviewed Labels…") { exportLabels() }
-        .disabled(shared.state.reviewedLabels.isEmpty)
-      StatusLabel(status: exportStatus)
-    } header: {
-      Text("Evaluation data")
-    } footer: {
-      Text(
-        """
-        Keeps the text of up to \(RetentionLimits.reviewedLabels) reviewed messages on this Mac \
-        for export. Turning this off deletes the kept text; labels and learning remain.
-        """
-      )
-      .foregroundStyle(.secondary)
-    }
-    .fileExporter(
-      isPresented: $exporting,
-      document: exportDocument,
-      contentType: .json,
-      defaultFilename: "SpamWise-reviewed-labels"
-    ) {
-      exportStatus = ExportResult.status(of: $0, failure: "Reviewed labels could not be exported.")
-    }
-  }
-
-  private func exportLabels() {
-    do {
-      exportDocument = RulesDocument(
-        data: try JSONEncoder.pretty.encode(shared.state.reviewedLabels)
-      )
-      exportStatus = nil
-      exporting = true
-    } catch {
-      exportStatus = .failure(OperationFailure(error))
-    }
   }
 }
 
