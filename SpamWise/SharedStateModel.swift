@@ -112,7 +112,9 @@ final class SharedStateModel {
    Reloads the slices whose change tokens moved and rechecks set-aside data, publishing only real
    differences.
 
-   The first successful reload also tells a first run from data this version can't use.
+   The first successful reload also tells a first run from data this version can't use. Once
+   settings are loaded, a store busy with another process's write keeps the current status, and
+   the next reload tries again.
    */
   func refresh() async {
     defer { hasLoadedState = true }
@@ -126,6 +128,7 @@ final class SharedStateModel {
       await reloadSpendingIfChanged(from: store)
       try await checkDigest(store)
       if case .failure = storageStatus, !needsRecovery { storageStatus = nil }
+    } catch StoreError.lockUnavailable where hasLoadedSettings {
     } catch {
       if let error = error as? StoredStateError { storedStateError = error }
       storageStatus = .failure(OperationFailure(error))

@@ -27,7 +27,7 @@ struct ContentView: View {
           ActivityView(model: model)
       }
     }
-    .modifier(LoginLaunchWindow(router: model.router, shared: model.shared))
+    .modifier(BackgroundLaunchWindow(router: model.router, shared: model.shared))
   }
 }
 
@@ -65,19 +65,20 @@ enum MainWindowContent: Equatable {
   }
 }
 
-/// Closes the window macOS presents when it opens SpamWise at login, once setup is known finished.
-private struct LoginLaunchWindow: ViewModifier {
+/// Closes the window macOS presents when it opens SpamWise in the background, once setup is known
+/// finished.
+private struct BackgroundLaunchWindow: ViewModifier {
   let router: ActivityRouter
   let shared: SharedStateModel
   @Environment(\.dismissWindow)
   private var dismissWindow
 
-  private var isReady: Bool { router.closesWindowAtLogin && shared.hasLoadedState }
+  private var isReady: Bool { router.closesWindowAtLaunch && shared.hasLoadedState }
 
   func body(content: Content) -> some View {
     content.onChange(of: isReady, initial: true) { _, ready in
       guard ready else { return }
-      router.closesWindowAtLogin = false
+      router.closesWindowAtLaunch = false
       if MainWindowContent(shared) == .activity { dismissWindow(id: "activity") }
     }
   }

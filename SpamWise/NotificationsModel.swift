@@ -53,13 +53,16 @@ final class NotificationsModel {
     }
   }
 
+  /// Calls `open` with the sheet to show when the user clicks a summary notification.
+  func onOpen(_ open: @escaping (ActivitySheet?) -> Void) { center.open = open }
+
   /// Delivers a due summary when notifications are enabled.
   func deliverIfEnabled() async {
     guard shared.settings.mailOptions.notifications.enabledSince != nil,
       let store = services.store
     else { return }
     do {
-      try await center.deliver(store: store)
+      try await center.deliver(store: store, settings: shared.settings)
       deliveryFailure = nil
     } catch {
       deliveryFailure = OperationFailure(

@@ -55,11 +55,17 @@ struct `Notification batches` {
     }
   }
 
-  private func claim(_ store: Store, after seconds: TimeInterval = 0) async throws
-    -> NotificationBatch?
-  {
-    try await NotificationPlanning.claim(
+  /// Claims with the stored settings, or with them changed by `edit`.
+  private func claim(
+    _ store: Store,
+    after seconds: TimeInterval = 0,
+    editing edit: (inout Settings) -> Void = { _ in }
+  ) async throws -> NotificationBatch? {
+    var settings = try await StateRepository.load(store, StateSlices()).settings
+    edit(&settings)
+    return try await NotificationPlanning.claim(
       store: store,
+      settings: settings,
       now: Self.now.addingTimeInterval(seconds),
       calendar: utcCalendar
     )
@@ -69,6 +75,14 @@ struct `Notification batches` {
   func `counts unresolved Review without announcing Inbox by default`() async throws {
     let batch = try #require(await claim(store))
     #expect(batch.review == 1 && batch.good == 0)
+  }
+
+  @Test(arguments: Hold.allCases)
+  func `holds the batch while filtering is paused, in a dry run or in quiet hours`(
+    hold: Hold
+  ) async throws {
+    #expect(try await claim(store, editing: hold.apply(to:)) == nil)
+    #expect(try await claim(store)?.review == 1)
   }
 
   @Test
@@ -87,5 +101,18 @@ struct `Notification batches` {
       state.records.append(record)
     }
     #expect(try await claim(store, after: 5000)?.review == (corrected ? nil : 1))
+  }
+
+  /// A setting that keeps a due batch from being announced yet.
+  enum Hold: CaseIterable, Sendable {
+    case paused, dryRun, quietHours
+
+    func apply(to settings: inout Settings) {
+      switch self {
+        case .paused: settings.paused = true
+        case .dryRun: settings.dryRun = true
+        case .quietHours: settings.mailOptions.notifications.quietEndHour = 23
+      }
+    }
   }
 }

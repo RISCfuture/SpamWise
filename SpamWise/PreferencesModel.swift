@@ -57,6 +57,12 @@ final class PreferencesModel {
     self.services = services; self.shared = shared; self.settings = settings; self.mail = mail
   }
 
+  /// Parses a page of Junk mail off the main actor, skipping messages that can't be parsed.
+  @concurrent
+  private static func parse(_ envelopes: [MailEnvelope]) async -> [ParsedMessage] {
+    envelopes.compactMap { try? MIMEParser().parse($0.raw) }
+  }
+
   /// The user's preference for a graymail `category`.
   func preference(for category: MailCategory) -> GraymailPreference {
     shared.settings.categoryPreferences[category] ?? .keep
@@ -110,7 +116,7 @@ final class PreferencesModel {
           limit: Self.pageSize,
           role: .junk
         )
-        messages += page.messages.compactMap { try? MIMEParser().parse($0.raw) }
+        messages += await Self.parse(page.messages)
         offset += page.visitedCount
         guard page.visitedCount > 0, offset < page.total else { break }
       }

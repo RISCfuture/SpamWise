@@ -11,6 +11,7 @@ struct `Processed-message index` {
   private let previewed: MailEnvelope
   private let transient: MailEnvelope
   private let unparseable: MailEnvelope
+  private let keyless: MailEnvelope
   private var batch: [MailEnvelope] { [previewed, transient, unparseable] }
 
   init() throws {
@@ -21,6 +22,7 @@ struct `Processed-message index` {
       classifier: MockClassifier(operation: { input in
         calls.increment()
         if input.message.subject.contains("cart") { throw ClassificationError.network }
+        if input.message.subject.contains("Dinner") { throw ClassificationError.missingCredential }
         return Verdict(label: .junk, confidence: 99, reason: "lure")
       })
     )
@@ -30,6 +32,7 @@ struct `Processed-message index` {
     unparseable.raw = Data(repeating: 65, count: 2_100_000)
     unparseable.identity.contentHash = stableHash(unparseable.raw)
     self.unparseable = unparseable
+    keyless = try envelope("personal")
   }
 
   /// Runs automatic discovery over `envelopes`, returning how many it processed.
@@ -92,6 +95,17 @@ struct `Processed-message index` {
       try await settled([transient, unparseable], dryRun: true, now: later)
         == [unparseable.identity.key]
     )
+  }
+
+  @Test(arguments: [(saved: ModelBackend.claude, retried: true), (.openAI, false)])
+  func `retries mail that failed for want of a key once the selected provider's key is saved`(
+    saved: ModelBackend,
+    retried: Bool
+  ) async throws {
+    try await sweep([keyless], dryRun: true)
+    #expect(try await settled([keyless], dryRun: true) == [keyless.identity.key])
+    try await CredentialChanges.recordKeySaved(for: saved, in: store)
+    #expect(try await settled([keyless], dryRun: true).isEmpty == retried)
   }
 
   @Test(arguments: [

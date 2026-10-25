@@ -98,6 +98,20 @@ public actor Store {
       try context.document(key).map { try JSONDecoder().decode(T.self, from: $0) } ?? fallback
     }
   }
+  /**
+   Decodes the committed document stored under `key` without waiting for the transaction lock, or
+   returns `fallback` when none is stored.
+
+   The result can be stale by the time it is used, so it suits checks that a locked update
+   repeats before acting.
+   */
+  public func readSnapshot<T: Codable & Sendable>(_ key: String, default fallback: T) async throws
+    -> T
+  {
+    try await snapshot { context in
+      try context.document(key).map { try JSONDecoder().decode(T.self, from: $0) } ?? fallback
+    }
+  }
   /// Reads the stored documents among several keys in one transaction, omitting absent keys.
   public func read<T: Codable & Sendable>(_ keys: Set<String>, as _: T.Type) async throws
     -> [String: T]

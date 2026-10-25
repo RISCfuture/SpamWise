@@ -37,6 +37,7 @@ struct `Trust exception edits` {
       pipeline: nil,
       appleMail: preview.appleMail,
       preferences: preview.preferences,
+      credentials: preview.credentials,
       uiTesting: true
     )
   }
