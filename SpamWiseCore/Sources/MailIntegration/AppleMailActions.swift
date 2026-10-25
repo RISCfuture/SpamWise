@@ -83,7 +83,8 @@ extension AppleMailAdapter {
    Acts only while the message remains in its recorded mailbox, then observes the result.
 
    An orange flag or background already on the message is reported as applied without change,
-   and clearing Review removes only one that SpamWise set.
+   and clearing Review removes only one that SpamWise set. A Review change Mail doesn't confirm
+   is applied once the message shows it within the settling window.
 
    - Throws: ``ActionNotAttempted`` when the message can't be resolved, the record of Review
      marks SpamWise set can't be read before clearing one, or Mail refuses before changing it, as
@@ -202,7 +203,7 @@ extension AppleMailAdapter {
       return try await resolve(identity, scope: scope)
     }
     try Task.checkCancellation()
-    let change = try await requestChange(command, to: target.location)
+    let change = try await observedChange(command, to: target.location)
     await record(change, of: command, on: identity)
     switch change {
       case .unconfirmed: return .init(confirmed: false)
@@ -229,6 +230,33 @@ extension AppleMailAdapter {
     } catch let error as IntegrationError where error.precedesMailChange {
       throw ActionNotAttempted(cause: error)
     }
+  }
+  /**
+   Requests a change; when Mail doesn't confirm a Review change, reads the message until it shows
+   the change or ``moveSettlingTime`` passes, without sending the change again.
+   */
+  private func observedChange(_ command: MailCommand, to location: MailMessageLocation)
+    async throws -> MailChange
+  {
+    let change = try await requestChange(command, to: location)
+    guard change == .unconfirmed, command.reviewAnnotation != nil else { return change }
+    return await observesReview(command, on: location) ? .applied : .unconfirmed
+  }
+  private func observesReview(_ command: MailCommand, on location: MailMessageLocation) async
+    -> Bool
+  {
+    let clock = ContinuousClock(), deadline = clock.now + moveSettlingTime
+    while clock.now < deadline {
+      do {
+        try await Task.sleep(for: min(observationInterval, deadline - clock.now))
+        if try await invoke(.reviewState(command, target: location)) == .boolean(true) {
+          return true
+        }
+      } catch is CancellationError {
+        return false
+      } catch {}
+    }
+    return false
   }
   /// Reports what Mail confirmed; cancellation or timeout after sending is unconfirmed.
   private func applyChange(_ command: MailCommand, to location: MailMessageLocation) async throws

@@ -309,6 +309,7 @@ extension MailRequest {
       case .destinations: .destinationNames
       case .find: .findMessages
       case .apply: .applyAction
+      case .reviewState: .reviewState
       case .observe: .observeMessages
     }
   }
@@ -331,7 +332,7 @@ extension MailRequest {
           .string(accountID), .string(messageID ?? ""), .integer(localID ?? -1),
           .string(mailbox ?? "")
         ]
-      case let .apply(command, location):
+      case let .apply(command, location), let .reviewState(command, location):
         [
           .string(command.rawValue), .string(location.accountID), .string(location.mailbox),
           .integer(location.localID), .string(location.messageID ?? ""),
