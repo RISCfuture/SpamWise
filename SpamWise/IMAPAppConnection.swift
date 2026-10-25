@@ -17,13 +17,15 @@ struct IMAPAppConnection: Codable, Sendable {
 
 /// Failures while setting up the app's separate IMAP connection.
 enum IMAPSetupError: IMAPOperationError, LocalizedError {
-  case noSavedConnection, invalidPort
+  case noSavedConnection, invalidPort, credentialRequired
 
   var errorDescription: String? { String(localized: "Couldn’t set up the IMAP connection.") }
   var failureReason: String? {
     switch self {
       case .noSavedConnection: String(localized: "No IMAP connection is saved.")
       case .invalidPort: String(localized: "The TLS port must be a number from 1 to 65535.")
+      case .credentialRequired:
+        String(localized: "Enter the password or token for this server and username.")
     }
   }
   var recoverySuggestion: String? {

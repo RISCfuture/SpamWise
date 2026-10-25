@@ -6,6 +6,7 @@ struct RelationshipSettingsView: View {
   let relationships: RelationshipsModel
   let settings: SettingsModel
   let shared: SharedStateModel
+  let imap: IMAPConnectionModel
 
   var body: some View {
     Section("Contacts and history") {
@@ -34,7 +35,7 @@ struct RelationshipSettingsView: View {
         isOn: settings.mailBinding(\.excludeOwnAddresses)
       )
     }
-    TrustExclusionsView(relationships: relationships, shared: shared)
+    TrustExclusionsView(relationships: relationships, shared: shared, imap: imap)
   }
 }
 
@@ -77,7 +78,8 @@ struct MailRuleSetupView: View {
     RelationshipSettingsView(
       relationships: model.relationships,
       settings: model.settings,
-      shared: model.shared
+      shared: model.shared,
+      imap: model.imap
     )
   }
   .formStyle(.grouped)

@@ -409,6 +409,22 @@
         }
       }
     },
+    "Check Connection above to find your account address.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulsa Comprobar conexión arriba para encontrar la dirección de tu cuenta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquez sur Vérifier la connexion ci-dessus pour trouver l’adresse de votre compte."
+          }
+        }
+      }
+    },
     "Check Mail Connection": {
       "localizations": {
         "es": {
@@ -921,6 +937,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "La simulation s’active : les messages restent inchangés jusqu’à ce que vous la désactiviez dans Général. Les vérifications automatiques utilisent désormais la nouvelle connexion."
+          }
+        }
+      }
+    },
+    "Enter the password or token for this server and username.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce la contraseña o el token para este servidor y nombre de usuario."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez le mot de passe ou le jeton pour ce serveur et ce nom d’utilisateur."
           }
         }
       }
@@ -5717,6 +5749,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vos corrections pour %lld expéditeurs concordent."
+          }
+        }
+      }
+    },
+    "Your IMAP username isn’t an email address, so SpamWise can’t tell which address is yours. Enter your address below so its mail doesn’t count as from people you know.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu nombre de usuario IMAP no es una dirección de correo, así que SpamWise no puede saber cuál es tu dirección. Introdúcela abajo para que su correo no cuente como de personas que conoces."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre nom d’utilisateur IMAP n’est pas une adresse e-mail : SpamWise ne peut donc pas savoir quelle adresse est la vôtre. Saisissez-la ci-dessous pour que ses messages ne comptent pas comme venant de personnes que vous connaissez."
           }
         }
       }
