@@ -27,8 +27,9 @@ before access; denial leaves mail unchanged and appears in the app.
 There is no direct Mail database access, Full Disk Access requirement, private Mail
 plug-in injection, external executable or code downloaded to change functionality.
 The store build contains no updater and does not offer the ungranted Private Cloud
-Compute choice. The Mail extension returns no decision for any message. Launch at
-login is opt-in. Quitting stops monitoring.
+Compute choice. The Mail extension returns no decision for any message and holds
+only the App Sandbox entitlement. Launch at login is opt-in. Quitting stops
+monitoring.
 
 ## Suggested review flow
 

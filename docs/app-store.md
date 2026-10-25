@@ -36,6 +36,12 @@ app record exists for bundle ID `codes.tim.SpamWise` on platform macOS. Apple's
 directs developers to create new apps on the App Store Connect website; the API key
 does not provide that creation operation.
 
+### Export compliance
+
+Both editions set `ITSAppUsesNonExemptEncryption` to `NO`, so App Store Connect
+asks no encryption question on upload: SpamWise uses only the encryption macOS
+provides, TLS through URLSession and Network.framework and AES-GCM through CryptoKit.
+
 ## Mail Automation exception
 
 The app currently declares

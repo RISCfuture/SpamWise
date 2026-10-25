@@ -3,9 +3,9 @@
 ## Editions
 
 SpamWise ships two editions from one project. Both share the bundle identifier
-`codes.tim.SpamWise`, the Mail extension, the App Group, the shared Keychain
-group and every line of the interface, which lives in the `SpamWise Common`
-framework.
+`codes.tim.SpamWise`, the Mail extension, the app's App Group and shared
+Keychain group, and every line of the interface, which lives in the `SpamWise
+Common` framework.
 
 | Edition | Scheme | Distribution | Updates |
 | --- | --- | --- | --- |
@@ -38,12 +38,24 @@ in any language, when an anchor appears on two pages, when a language lacks one
 of the English pages, when an element is left unclosed, or when a link between
 pages reaches no page or anchor.
 
+`check.sh` also runs `Scripts/check-compiled-resources.py`, which fails when a
+committed `search.cshelpindex` no longer carries what `hiutil` builds from its
+pages, or when the bundled Mail rule script `SpamWise/SpamWiseRule.scpt` no
+longer decompiles to `Resources/SpamWiseRule.applescript`. Recompile the script
+after editing its source:
+
+```sh
+osacompile -o SpamWise/SpamWiseRule.scpt Resources/SpamWiseRule.applescript
+```
+
 ## Versions
 
 `Config/SpamWise.xcconfig` holds the version a development build carries. A
 release stamps `MARKETING_VERSION` from the tag and `CURRENT_PROJECT_VERSION`
 from the commit count on the command line, so a release leaves no commit
-behind. Each release needs a `## <version>` section in `CHANGELOG.md`;
+behind. The archive lanes also stamp both numbers into the Help book's
+`Info.plist`, so Help Viewer drops its cached pages, and restore the file
+afterward. Each release needs a `## <version>` section in `CHANGELOG.md`;
 `Scripts/release-notes.sh` renders it for the GitHub release and App Store
 Connect.
 
@@ -69,19 +81,21 @@ App Store edition to App Store Connect without submitting it for review, and
 `beta` uploads it to TestFlight. Each archive lane rebuilds the Help indexes
 first and keeps the archive's dSYMs as `build/SpamWise-<version>.dSYM.zip`.
 
-Pushing a version tag runs `.github/workflows/release.yml` through the shared
-XCUITestKit release workflow and the CI lanes: `ci_verify_release_notes` checks
-the changelog section and the update repository before anything is built,
+Pushing a version tag (`1.2` or `1.2.3`, with no prefix) runs
+`.github/workflows/release.yml` through the shared XCUITestKit release workflow
+and the CI lanes: `ci_verify_release_notes` checks the version's format, the
+changelog section and the update repository before anything is built,
 `ci_release` archives and ships each edition (`mas` and `download`), and
 `ci_finish_release` writes the store release notes and attaches the App Store
 build to its version. `ci_next_build_number` reports the commit-count build
-number. A final job attaches the notarized disk image to a GitHub release.
+number. A final job attaches the notarized disk image to a GitHub release,
+tagging the commit the run built.
 
 ## App icon and signatures
 
-`Scripts/check-app-icon.sh` fails unless a bundle contains `Contents/Resources/Assets.car` and its `Info.plist` sets `CFBundleIconName` to `AppIcon`. `check.sh` runs it on each edition's Debug app, the release lanes run it on every archived app, and the Developer ID lanes run it again on the exported app before notarizing it. The icon source is the Icon Composer bundle `SpamWise/AppIcon.icon`, which both app targets compile through `ASSETCATALOG_COMPILER_APPICON_NAME`.
+`Scripts/check-app-icon.sh` fails unless a bundle contains `Contents/Resources/Assets.car` and its `Info.plist` sets `CFBundleIconName` to `AppIcon`. `check.sh` and CI run it on each edition's Release build, the release lanes run it on every archived app, and the Developer ID lanes run it again on the exported app before notarizing it. The icon source is the Icon Composer bundle `SpamWise/AppIcon.icon`, which both app targets compile through `ASSETCATALOG_COMPILER_APPICON_NAME`.
 
-The app and extension preserve their original identifiers and share `group.codes.tim.SpamWise` plus the Keychain group `2NFSK2WB24.codes.tim.SpamWise.shared`. The app retains Automation and Contacts entitlements. Inspect both nested extension and app signatures before distribution. Never distribute an unsigned or unnotarized download build as a completed release.
+The app and extension keep their original identifiers. The app holds `group.codes.tim.SpamWise`, the Keychain group `2NFSK2WB24.codes.tim.SpamWise.shared` and the Automation and Contacts entitlements; the extension, which leaves every message to Mail, holds only the App Sandbox entitlement. Inspect both nested extension and app signatures before distribution. Never distribute an unsigned or unnotarized download build as a completed release.
 
 ## Release checklist
 

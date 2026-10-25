@@ -18,3 +18,11 @@ asc_api_key.json
 
 # SwiftLint caches the remote parent_config here.
 .swiftlint/RemoteConfigCache
+
+# Python bytecode from the scripts and tool tests.
+__pycache__/
+
+# Per-developer agent tooling and working notes.
+.claude/Libraries
+.codex/
+docs/superpowers/

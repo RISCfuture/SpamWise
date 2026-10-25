@@ -80,7 +80,8 @@ never rely on Core Data change notifications. Lock contention fails open.
 ## Commands
 
 ```sh
-Scripts/check.sh [build-token]     # localization and Help checks, package tests, both
+Scripts/check.sh [build-token]     # localization, Help and compiled-resource checks,
+                                   # tool and package tests, Release builds of both
                                    # editions, extension and hostless unit tests
 Scripts/ui-check.sh [build-token]  # development-signed XCTest UI flows (needs the team)
 swift test --package-path SpamWiseCore --scratch-path .build/swiftpm -Xswiftc -warnings-as-errors
@@ -108,10 +109,12 @@ Every user-visible string needs `es` and `fr` values. Package modules declare
 own `Localizable.xcstrings`; the app catalog holds only strings app targets extract.
 Every Help anchor the app opens must exist in all three Help languages.
 
-On pushes and pull requests to `main`, `ci.yml` runs package tests, hostless unit
-tests, unsigned edition and extension builds, UI tests on an ad-hoc-signed App Store
-edition in test mode, and DocC (failing on SpamWiseCore warnings); `lint.yml` runs
-SwiftLint. `site.yml` validates the site; `release.yml` ships a pushed version tag.
+On pushes and pull requests to `main`, `ci.yml` runs the localization, Help-anchor
+and package-reference checks and Python tool tests, package tests, hostless unit tests,
+unsigned Release builds of both editions (with the icon check) and the extension, UI
+tests on an ad-hoc-signed App Store edition in test mode, and DocC (failing on
+SpamWiseCore warnings); the package, unit and build jobs fail on any build diagnostic
+in their logs. `lint.yml` runs a pinned SwiftLint. `site.yml` validates the site; `release.yml` ships a pushed version tag.
 
 ## Signing and sandbox caveats
 
