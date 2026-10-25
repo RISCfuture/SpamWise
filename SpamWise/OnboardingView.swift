@@ -188,8 +188,8 @@ private struct SetupIntroductionView: View {
         """
         Your rules and known senders are checked on this Mac. If you choose a cloud provider, \
         messages they can’t decide are sent to it: a shortened message, your preferences, and up \
-        to \(correctionLimit) similar corrections from the same account, each with its sender \
-        domain, subject, a short excerpt and your label.
+        to \(correctionLimit) similar corrections from the same account or your imported reviewed \
+        examples, each with its sender domain, subject, a short excerpt and your label.
         """
       )
       Text(
