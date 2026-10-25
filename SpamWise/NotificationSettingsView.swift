@@ -63,17 +63,13 @@ struct NotificationSettingsView: View {
 
 /// Whether notifications wait during quiet hours, and the hours those span.
 private struct QuietHoursControls: View {
-  private static let defaultHours = QuietHours(NotificationPreferences())
   let settings: SettingsModel
-  /// The hours to restore when quiet hours are turned back on.
-  @State private var restoredHours: QuietHours?
 
   private var preferences: NotificationPreferences { settings.settings.mailOptions.notifications }
-  private var isOn: Bool { preferences.quietStartHour != preferences.quietEndHour }
 
   var body: some View {
-    Toggle("Quiet hours", isOn: Binding(get: { isOn }, set: { $0 ? turnOn() : turnOff() }))
-    if isOn {
+    Toggle("Quiet hours", isOn: settings.mailBinding(\.notifications.quietHoursEnabled))
+    if preferences.quietHoursEnabled {
       QuietHoursPicker(
         title: "Quiet from",
         selection: settings.mailBinding(\.notifications.quietStartHour),
@@ -85,32 +81,6 @@ private struct QuietHoursControls: View {
         excluding: preferences.quietStartHour
       )
     }
-  }
-
-  private func turnOn() {
-    let hours = restoredHours ?? Self.defaultHours
-    settings.editSettings {
-      $0.mailOptions.notifications.quietStartHour = hours.start
-      $0.mailOptions.notifications.quietEndHour = hours.end
-    }
-  }
-
-  /// Ends the quiet period where it starts, which leaves no quiet hours.
-  private func turnOff() {
-    let hours = QuietHours(preferences)
-    restoredHours = hours
-    settings.editSettings { $0.mailOptions.notifications.quietEndHour = hours.start }
-  }
-}
-
-/// The local-clock hours a quiet period starts and ends.
-private struct QuietHours {
-  let start: Int
-  let end: Int
-
-  init(_ preferences: NotificationPreferences) {
-    start = preferences.quietStartHour
-    end = preferences.quietEndHour
   }
 }
 
