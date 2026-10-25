@@ -103,6 +103,18 @@ extension StateTransaction {
     )
     return Set(rows.compactMap { UUID(uuidString: $0.key) })
   }
+  /// Identifiers of corrections saved before `cutoff` that are still pending, without decoding them.
+  func pendingCorrectionIDs(savedBefore cutoff: Date) throws -> Set<UUID> {
+    let pending = ActionOutcome.pending.rawValue, correction = DecisionPath.correction.rawValue
+    let rows = try context.fetch(
+      FetchDescriptor<RecordRow>(
+        predicate: #Predicate {
+          $0.path == correction && $0.outcome == pending && $0.date < cutoff
+        }
+      )
+    )
+    return Set(rows.compactMap { UUID(uuidString: $0.key) })
+  }
   /// Saves documents that reading set aside for recovery, which only a commit would otherwise save.
   func keepSetAsideData() throws {
     if context.hasChanges { try context.save() }

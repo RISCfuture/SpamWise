@@ -56,7 +56,8 @@ extension Pipeline {
    dispatch stops before any command was sent. Cancellation interrupts neither the saved outcome
    nor the release.
 
-   - Throws: When the decision cannot be claimed.
+   - Throws: When the decision cannot be claimed, including a correction that is no longer
+     pending because it was resolved as not attempted.
    */
   func dispatch(
     _ original: DecisionRecord,
@@ -98,6 +99,7 @@ extension Pipeline {
         throw DecisionRecordError.notFound
       }
       var record = state.records[index]
+      if case .correction = mode, record.outcome != .pending { throw UnstartedCorrection() }
       let replaced = state.claimedActions[key]
       if case .automatic = mode, replaced == record.id {
         record.outcome = .duplicate

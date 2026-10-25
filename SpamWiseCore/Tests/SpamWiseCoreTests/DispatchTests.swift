@@ -112,6 +112,33 @@ struct `Correction dispatch` {
     return [good, review, junk]
   }
 
+  /// Saves a pending Good correction of the message `name` dated `age` seconds ago, holding its
+  /// message's claim when `claimed`.
+  @discardableResult
+  private func savePendingCorrection(
+    _ name: String,
+    savedAgo age: TimeInterval,
+    claimed: Bool = false
+  ) async throws -> DecisionRecord {
+    var correction = DecisionRecord(
+      identity: MessageIdentity(accountID: flagged.identity.accountID, contentHash: name),
+      decision: .init(
+        label: .inbox,
+        action: .moveToInbox,
+        reason: .userCorrection(scope: .address)
+      ),
+      outcome: .pending,
+      path: .correction
+    )
+    correction.date = .now.addingTimeInterval(-age)
+    let saved = correction
+    try await StateRepository.update(store) { state in
+      state.record(saved)
+      if claimed { state.claimedActions[saved.identity.key] = saved.id }
+    }
+    return saved
+  }
+
   @Test
   func `restores each corrected label's mail state`() async throws {
     let corrections = try await correctToGoodReviewAndJunk()
@@ -175,6 +202,39 @@ struct `Correction dispatch` {
     let records = try await StateRepository.load(store).records
     #expect(records.first { $0.id == good.id }?.outcome == .failed)
     #expect(try await StateRepository.load(store).rules.map(\.disposition) == [.allow])
+  }
+
+  @Test
+  func `resolves only long-pending unclaimed corrections as not attempted`() async throws {
+    let age = Pipeline.unstartedCorrectionAgeSec
+    let abandoned = try await savePendingCorrection("abandoned", savedAgo: age + 1)
+    try await savePendingCorrection("claimed", savedAgo: age + 1, claimed: true)
+    try await savePendingCorrection("recent", savedAgo: age - 60)
+    let resolved = try await pipeline.resolveUnstartedCorrections()
+    #expect(resolved.map(\.id) == [abandoned.id])
+    #expect(resolved.allSatisfy { $0.actionError != nil })
+    let outcomes = try await StateRepository.load(store).records
+      .filter { $0.path == .correction }
+      .reduce(into: [:]) { $0[$1.identity.contentHash] = $1.outcome }
+    #expect(outcomes == ["abandoned": .failed, "claimed": .pending, "recent": .pending])
+    #expect(await adapter.actions == [.orangeFlag])
+  }
+
+  @Test
+  func `never dispatches a correction resolved while it waited to claim its steps`()
+    async throws
+  {
+    let pipeline = pipeline
+    await adapter.beforeEachSupportCheck {
+      _ = try? await pipeline.resolveUnstartedCorrections(
+        now: .now.addingTimeInterval(Pipeline.unstartedCorrectionAgeSec + 1)
+      )
+    }
+    let good = try await pipeline.correct(recordID: flagged.id, label: .inbox, adapter: adapter)
+    #expect(good.outcome == .failed)
+    #expect(await adapter.actions == [.orangeFlag])
+    let records = try await StateRepository.load(store).records
+    #expect(records.first { $0.id == good.id }?.outcome == .failed)
   }
 
   @Test
