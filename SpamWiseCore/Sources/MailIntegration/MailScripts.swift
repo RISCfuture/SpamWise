@@ -51,7 +51,8 @@ enum MailScripts {
   static let alreadyAnnotated = "already"
   /// Permission and timeout failures that must never be mistaken for an unreadable message.
   static let propagatedFailures = [-1743, -10004, -1712]
-  private static let propagatedFailureList =
+  /// `propagatedFailures` as an AppleScript list literal.
+  static let propagatedFailureList =
     "{" + propagatedFailures.map(String.init).joined(separator: ", ") + "}"
   /// The complete handler library.
   static let library =
