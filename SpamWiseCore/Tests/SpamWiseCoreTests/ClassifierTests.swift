@@ -45,11 +45,14 @@ struct `Prompt construction` {
   }
 
   @Test
-  func `marks an example from the same sender only for a trusted aligned pass`() throws {
+  func `summarizes untrusted claims and marks a same-sender example only for a trusted pass`()
+    throws
+  {
     let message = try MIMEParser().parse(
       Data(
         ("From: Jane <jane@example.org>\n"
-          + "Authentication-Results: mx.example; dmarc=pass header.from=example.org\n\nHello").utf8
+          + "Authentication-Results: mx.example; dmarc=pass header.from=example.org; "
+          + "dkim=pass header.d=example.org\n\nHello").utf8
       )
     )
     let example = CorrectionExample(
@@ -69,8 +72,15 @@ struct `Prompt construction` {
         )
       )
     }
-    #expect(try prompt(trusting: ["mx.example"]).contains(#""sameSender":true"#))
-    #expect(try prompt(trusting: []).contains(#""sameSender":false"#))
+    let trusted = try prompt(trusting: ["mx.example"])
+    #expect(trusted.contains(#""sameSender":true"#))
+    #expect(try untrustedContent(trusted)["unverifiedAuthentication"] == nil)
+    let untrusted = try prompt(trusting: [])
+    #expect(untrusted.contains(#""sameSender":false"#))
+    let content = try untrustedContent(untrusted)
+    #expect(content["unverifiedAuthentication"] as? String == "dkim=pass, dmarc=pass")
+    let evidence = try #require(content["evidence"] as? [String: Any])
+    #expect((evidence["authResults"] as? [Any])?.isEmpty == true)
   }
 
   @Test
