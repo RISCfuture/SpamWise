@@ -141,6 +141,16 @@ extension ParsedMessage {
   var displaySubject: String { subject.isEmpty ? String(localized: "No subject") : subject }
 }
 
+extension SenderAuthentication {
+  var localizedTitle: String {
+    switch self {
+      case .alignedPass: String(localized: "Passed, as checked by your mail server")
+      case .failed: String(localized: "Failed")
+      case .unverified: String(localized: "Not checked by a server you trust")
+    }
+  }
+}
+
 extension IncomingRoute {
   var localizedTitle: String {
     switch self {

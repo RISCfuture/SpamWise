@@ -5417,22 +5417,6 @@
         }
       }
     },
-    "Restore the previous rules and learning? Mail will not move.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Restaurar las reglas y el aprendizaje anteriores? No se moverá correo."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Restaurer les règles et l’apprentissage précédents ? Aucun message ne sera déplacé."
-          }
-        }
-      }
-    },
     "Restored portable learning state; actions paused": {
       "localizations": {
         "es": {
@@ -5445,178 +5429,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "État d’apprentissage restauré ; actions en pause"
-          }
-        }
-      }
-    },
-    "Restores %lld rules and %lld examples. Later changes disable undo.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Restores %#@arg1@ and %#@arg2@. Later changes disable undo."
-          },
-          "substitutions": {
-            "arg1": {
-              "argNum": 1,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg rule"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg rules"
-                    }
-                  }
-                }
-              }
-            },
-            "arg2": {
-              "argNum": 2,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg example"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg examples"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Restaura %#@arg1@ y %#@arg2@. Los cambios posteriores impiden deshacer."
-          },
-          "substitutions": {
-            "arg1": {
-              "argNum": 1,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "many": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg de reglas"
-                    }
-                  },
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg regla"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg reglas"
-                    }
-                  }
-                }
-              }
-            },
-            "arg2": {
-              "argNum": 2,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "many": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg de ejemplos"
-                    }
-                  },
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg ejemplo"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg ejemplos"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Restaure %#@arg1@ et %#@arg2@. Des modifications ultérieures empêchent l’annulation."
-          },
-          "substitutions": {
-            "arg1": {
-              "argNum": 1,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "many": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg de règles"
-                    }
-                  },
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg règle"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg règles"
-                    }
-                  }
-                }
-              }
-            },
-            "arg2": {
-              "argNum": 2,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "many": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg d’exemples"
-                    }
-                  },
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg exemple"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg exemples"
-                    }
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -17465,6 +17277,342 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vérification de la clé du fournisseur"
+          }
+        }
+      }
+    },
+    "%@ ago": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hace %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "il y a %@"
+          }
+        }
+      }
+    },
+    ".%@, often used for spam": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".%@, usado a menudo para spam"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".%@, souvent utilisé pour le spam"
+          }
+        }
+      }
+    },
+    "Authentication": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autenticación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentification"
+          }
+        }
+      }
+    },
+    "Bounces go to": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las devoluciones van a"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les retours vont à"
+          }
+        }
+      }
+    },
+    "Corrected from %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corregido desde %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corrigé depuis %@"
+          }
+        }
+      }
+    },
+    "Domain ending": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminación del dominio"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extension du domaine"
+          }
+        }
+      }
+    },
+    "Domain registered": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dominio registrado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domaine enregistré"
+          }
+        }
+      }
+    },
+    "Learned from your corrections": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprendido de tus correcciones"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appris de vos corrections"
+          }
+        }
+      }
+    },
+    "Name shows another address": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El nombre muestra otra dirección"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le nom affiche une autre adresse"
+          }
+        }
+      }
+    },
+    "Neither Good nor Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ni deseado ni no deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ni légitime ni indésirable"
+          }
+        }
+      }
+    },
+    "Not checked by a server you trust": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No comprobado por un servidor de confianza"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non vérifié par un serveur de confiance"
+          }
+        }
+      }
+    },
+    "Passed, as checked by your mail server": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superada, según tu servidor de correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réussie, selon votre serveur de messagerie"
+          }
+        }
+      }
+    },
+    "Reading the message…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leyendo el mensaje…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture du message…"
+          }
+        }
+      }
+    },
+    "Replies go to": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las respuestas van a"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les réponses vont à"
+          }
+        }
+      }
+    },
+    "Resembles mail you marked Good": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se parece al correo que marcaste como deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ressemble aux messages que vous avez marqués comme légitimes"
+          }
+        }
+      }
+    },
+    "Resembles mail you marked Junk": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se parece al correo que marcaste como no deseado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ressemble aux messages que vous avez marqués comme indésirables"
+          }
+        }
+      }
+    },
+    "Rules and examples go back to how they were before that correction. Mail doesn’t move.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las reglas y los ejemplos vuelven a como estaban antes de esa corrección. El correo no se mueve."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les règles et les exemples reviennent à leur état d’avant cette correction. Les messages ne sont pas déplacés."
+          }
+        }
+      }
+    },
+    "Saving the correction…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardando la corrección…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement de la correction…"
+          }
+        }
+      }
+    },
+    "Sender’s domain": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dominio del remitente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domaine de l’expéditeur"
+          }
+        }
+      }
+    },
+    "SpamWise said: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise dijo: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise avait dit : %@"
+          }
+        }
+      }
+    },
+    "Undo marking messages from %@ as %@?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Deshacer la marca de los mensajes de %1$@ como %2$@?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler le marquage des messages de %1$@ comme %2$@ ?"
           }
         }
       }

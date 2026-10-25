@@ -53,7 +53,7 @@ struct CorpusView: View {
     .frame(minWidth: 760, minHeight: 450)
     .fileImporter(
       isPresented: $importing,
-      allowedContentTypes: [.data],
+      allowedContentTypes: [.emailMessage],
       allowsMultipleSelection: true
     ) {
       if case .success(let urls) = $0 { requestImport(urls) }
