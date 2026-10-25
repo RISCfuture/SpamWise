@@ -115,7 +115,12 @@ public struct ProcessedMessage: Codable, Sendable, Equatable {
   }
 
   func shouldReplace(_ previous: Self) -> Bool {
-    isClassified || !previous.isClassified
+    isClassified || !previous.isClassified || previous.isPreviewReplaced(by: self)
+  }
+
+  /// A dry-run preview gives way to any later result that is not itself a preview.
+  private func isPreviewReplaced(by later: Self) -> Bool {
+    outcome == .dryRun && later.outcome != .dryRun
   }
 
   func isRetained(at now: Date, for retention: TimeInterval) -> Bool {
@@ -176,7 +181,13 @@ public enum ProcessedMessageRepository {
     return Set(settled.keys)
   }
 
-  /// Records a result for the discovered identity key unless it would replace a classified result with an unclassified one.
+  /**
+   Records a result for the discovered identity key unless it would replace a classified result
+   with an unclassified one.
+
+   A dry-run preview is the exception: any result that is not a preview replaces it, so a
+   failure after dry run ends backs off instead of classifying the message on every pass.
+   */
   public static func record(
     _ record: DecisionRecord,
     key: String,
