@@ -137,6 +137,24 @@ struct `Mail sweeper` {
     }
   }
 
+  /// Saves an enabled, validated Train Junk plan and returns it.
+  private func savedTrainJunkPlan() async throws -> MailFolderPlan {
+    let folder = MailFolder(accountID: "account", path: ["SpamWise Train Junk"])
+    var plan = MailFolderPlan(folder: folder, purpose: .trainJunk)
+    plan.enabled = true; plan.trainingBaselineValidated = true
+    let saved = plan
+    try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [saved] }
+    return saved
+  }
+
+  /// Turns on live actions for `accountID`.
+  private func goLive(_ accountID: String) async throws {
+    try await StateRepository.editSettings(store) {
+      $0.validatedAccounts = [accountID]
+      $0.dryRun = false
+    }
+  }
+
   private func records() async throws -> [DecisionRecord] {
     try await StateRepository.load(store, StateSlices(records: .all)).records
   }
@@ -186,11 +204,7 @@ struct `Mail sweeper` {
   func `trains past a placement that cannot be corrected and does not retry it every sweep`()
     async throws
   {
-    let folder = MailFolder(accountID: "account", path: ["SpamWise Train Junk"])
-    var plan = MailFolderPlan(folder: folder, purpose: .trainJunk)
-    plan.enabled = true; plan.trainingBaselineValidated = true
-    let saved = plan
-    try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [saved] }
+    let plan = try await savedTrainJunkPlan(), folder = plan.folder
     let source = StubSweepSource([("account", [])])
     let mailbox = folder.path[0]
     await source.place(
@@ -220,26 +234,35 @@ struct `Mail sweeper` {
   func `moves a training placement corrected in dry run once filtering acts on mail`()
     async throws
   {
-    let folder = MailFolder(accountID: "account", path: ["SpamWise Train Junk"])
-    var plan = MailFolderPlan(folder: folder, purpose: .trainJunk)
-    plan.enabled = true; plan.trainingBaselineValidated = true
-    let saved = plan
-    try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [saved] }
+    let folder = try await savedTrainJunkPlan().folder
     let source = StubSweepSource([("account", [])])
     await source.place([StubSweepSource.message("account", 1, mailbox: folder.path[0])], in: folder)
     let sweeper = sweeper(source)
 
     try await sweeper.sweep(dryRun: true, limit: 20)
     #expect(await source.actions.isEmpty)
-    try await StateRepository.editSettings(store) {
-      $0.validatedAccounts = [folder.accountID]
-      $0.dryRun = false
-    }
+    try await goLive(folder.accountID)
     for _ in 1...2 { try await sweeper.sweep(dryRun: false, limit: 20) }
     #expect(await source.actions == [.moveToJunk])
     #expect(
       try await StateRepository.load(store, StateSlices([.corrections])).corrections.count == 1
     )
+  }
+
+  @Test
+  func `leaves a training placement in place once its dry-run correction is undone`()
+    async throws
+  {
+    let folder = try await savedTrainJunkPlan().folder
+    let source = StubSweepSource([("account", [])])
+    await source.place([StubSweepSource.message("account", 1, mailbox: folder.path[0])], in: folder)
+    let sweeper = sweeper(source)
+
+    try await sweeper.sweep(dryRun: true, limit: 20)
+    try await CorrectionUndo.apply(store: store)
+    try await goLive(folder.accountID)
+    for _ in 1...2 { try await sweeper.sweep(dryRun: false, limit: 20) }
+    #expect(await source.actions.isEmpty)
   }
 
   @Test
