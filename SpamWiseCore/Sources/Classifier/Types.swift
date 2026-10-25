@@ -22,13 +22,13 @@ public struct TokenUsage: Codable, Sendable, Equatable {
   public var cached: Int
   /// Whether token counts are estimates rather than provider measurements.
   public var estimated: Bool
-  /// Explicit model identity; absent on historical Haiku records.
+  /// Explicit model identity, when known.
   public var modelID: String?
   /// Rates captured when this usage was measured.
   public var pricing: ModelTokenPricing?
-  /// Estimated USD from captured rates; historical records without a model identity use Haiku rates.
+  /// Estimated USD from captured rates, or from Claude Haiku's when none were captured.
   public var estimatedCost: Double {
-    let rates = pricing ?? .legacyHaiku
+    let rates = pricing ?? .claudeHaiku
     return
       (Double(input - cached) * rates.input + Double(cached) * rates.cached
       + Double(output) * rates.output) / Self.tokensPerPricingUnit
