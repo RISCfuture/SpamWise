@@ -60,6 +60,13 @@ jobs:
       - name: Check the Help book
         run: python3 Scripts/check-help-book.py
 
+      # The corpus tools stream archives through /usr/bin/bsdtar, which macOS ships and Ubuntu
+      # leaves to this package.
+      - name: Install bsdtar
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libarchive-tools
+
       - name: Test the corpus tools
         run: python3 -B -m unittest discover -s Tools/Corpus -p 'test_*.py'
 
