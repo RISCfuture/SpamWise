@@ -29,10 +29,9 @@ struct ActivityStatusView: View {
         DigestAnnouncementView(count: digest.records.count) { model.router.present(.digest) }
       }
       if model.shared.spendingLimitReached {
-        Text(
+        WarningLabel(
           "Monthly spending limit reached — new mail isn’t sent to the provider until next month or a higher limit."
         )
-        .foregroundStyle(.primary)
         .accessibilityIdentifier("activity.spendingLimit")
       }
       MissingProviderKeyBanner(
@@ -73,7 +72,7 @@ private struct BackgroundCheckView: View {
 
   var body: some View {
     if let progress = scanning.progress {
-      ProgressView().controlSize(.small)
+      ProgressView { Text("Checking mail…") }.labelsHidden().controlSize(.small)
       if progress.total > 0 {
         Text("Checking mail… \(progress.processed) of \(progress.total)")
           .foregroundStyle(.secondary)
@@ -86,7 +85,7 @@ private struct BackgroundCheckView: View {
       Text("Last checked \(date, format: .activityDate)").foregroundStyle(.secondary)
     }
     if scanning.preview.isBusy {
-      ProgressView().controlSize(.small)
+      ProgressView { Text("Running dry run…") }.labelsHidden().controlSize(.small)
       Text("Running dry run…").foregroundStyle(.secondary)
       Button("Stop Dry Run") { scanning.preview.cancel() }
     }

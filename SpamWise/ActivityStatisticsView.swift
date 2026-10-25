@@ -16,6 +16,7 @@ struct ActivityStatisticsView: View {
   @State private var statistics: ActivityStatistics?
   @State private var status: OperationStatus?
   @State private var export: RulesDocument?
+  @State private var exportName = ""
   @State private var showsExport = false
   @Environment(\.dismiss)
   private var dismiss
@@ -40,8 +41,13 @@ struct ActivityStatisticsView: View {
     NavigationStack {
       Form {
         Section {
-          DatePicker("From", selection: $start, displayedComponents: .date)
-          DatePicker("Through", selection: $end, displayedComponents: .date)
+          DatePicker("From", selection: $start, in: ...end, displayedComponents: .date)
+          DatePicker(
+            "Through",
+            selection: $end,
+            in: min(start, .now)...Date.now,
+            displayedComponents: .date
+          )
           Picker("Account", selection: $account) {
             Text("All accounts").tag(String?.none)
             ForEach(shared.activityAccounts, id: \.id) { account in
@@ -51,7 +57,7 @@ struct ActivityStatisticsView: View {
           if let statistics {
             StatisticsCounts(statistics: statistics)
           } else {
-            ProgressView()
+            ProgressView { Text("Counting decisions…") }.labelsHidden()
           }
         }
         if let statistics {
@@ -79,7 +85,7 @@ struct ActivityStatisticsView: View {
       isPresented: $showsExport,
       document: export,
       contentType: .json,
-      defaultFilename: "SpamWise-report"
+      defaultFilename: exportName
     ) { status = ExportResult.status(of: $0, failure: "Report export failed.") }
   }
 
@@ -95,13 +101,17 @@ struct ActivityStatisticsView: View {
 
   private func exportStatistics() {
     guard let statistics, let data = try? JSONEncoder.pretty.encode(statistics) else { return }
-    export = RulesDocument(data: data); showsExport = true
+    export = RulesDocument(data: data)
+    exportName = String(localized: "SpamWise Statistics")
+    showsExport = true
   }
 
   private func exportDiagnostics() {
     Task {
       do {
-        export = RulesDocument(data: try await activity.diagnostics()); showsExport = true
+        export = RulesDocument(data: try await activity.diagnostics())
+        exportName = String(localized: "SpamWise Diagnostics")
+        showsExport = true
       } catch {
         status = .failure(OperationFailure(error))
       }
