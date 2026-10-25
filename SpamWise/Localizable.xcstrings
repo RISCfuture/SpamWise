@@ -3849,22 +3849,6 @@
         }
       }
     },
-    "Estimated API cost this month": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Coste estimado de API este mes"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Coût estimé des API ce mois-ci"
-          }
-        }
-      }
-    },
     "Estimated cost": {
       "localizations": {
         "es": {
@@ -4677,22 +4661,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Coût estimé de l’API depuis le début du mois"
-          }
-        }
-      }
-    },
-    "Month: %@": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mes: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mois : %@"
           }
         }
       }
@@ -18171,6 +18139,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aperçu des anciens messages de Réception"
+          }
+        }
+      }
+    },
+    "Estimated cost this month: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coste estimado este mes: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût estimé ce mois-ci : %@"
+          }
+        }
+      }
+    },
+    "Less than %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menos de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moins de %@"
           }
         }
       }

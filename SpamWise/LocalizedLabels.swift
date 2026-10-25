@@ -221,3 +221,14 @@ extension GraymailPreference {
     }
   }
 }
+
+/// An estimated cost in US dollars, as the app shows it.
+enum EstimatedCost {
+  private static let smallestShownUSD = 0.005
+
+  /// `usd` to the cent, or “Less than $0.01” for a cost above zero that would round to nothing.
+  static func formatted(_ usd: Double) -> String {
+    guard usd > 0, usd < smallestShownUSD else { return usd.formatted(.currency(code: "USD")) }
+    return String(localized: "Less than \(0.01.formatted(.currency(code: "USD")))")
+  }
+}

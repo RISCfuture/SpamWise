@@ -168,7 +168,7 @@ private struct StatisticsCounts: View {
     ReviewedDisagreementsView(statistics: statistics)
     LabeledContent(
       "Estimated cost",
-      value: statistics.estimatedCostUSD.formatted(.currency(code: "USD"))
+      value: EstimatedCost.formatted(statistics.estimatedCostUSD)
     )
   }
 }
