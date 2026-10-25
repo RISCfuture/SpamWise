@@ -114,6 +114,7 @@ Open findings from code reviews and audits, each confirmed against the current c
   - [ ] Key monthly costs and weekly digests by a fixed Gregorian calendar rather than `Calendar.current`.
   - [ ] Export statistics with labeled ISO-8601 days; daily counts encode as an unlabeled alternating array.
   - [ ] Let a training-folder placement whose move failed before any command was sent be retried by placing the message again. A record doesn't say whether a failed move sent a command, so every failed or unconfirmed training move keeps its claim; recording that would let the never-sent ones release theirs.
+  - [ ] Remember the user's quiet hours after turning them off and on again across a Settings reload. Off is stored as equal start and end hours, so the hours to restore live only in the view and fall back to 22–8; keeping them needs a stored flag or saved hours in `NotificationPreferences`.
 - [ ] Command-line tools:
   - [ ] Require the daemon configuration's `allowsActions` as well as `--actions`; the flag replaces it today.
   - [ ] Give `spamwise-daemon` and `spamwise-eval` domain-age lookups when the setting is on, or say they are unavailable.
