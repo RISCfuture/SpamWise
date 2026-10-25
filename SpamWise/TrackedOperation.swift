@@ -60,8 +60,9 @@ struct OperationFailure: Equatable {
  One kind of user operation, such as saving rules or checking the Mail connection.
 
  Runs are serialized: a run requested while another is in progress waits for it, so a click is
- never dropped. Each run's result replaces ``status``: its message, nothing on a silent success,
- or its failure. Different operations run independently of each other.
+ never dropped unless ``discard()`` abandons it. Each run's result replaces ``status``: its
+ message, nothing on a silent success, or its failure. Different operations run independently of
+ each other.
  */
 @MainActor
 @Observable
@@ -73,6 +74,8 @@ final class TrackedOperation {
   @ObservationIgnored private var tail: Task<Void, Never>?
   @ObservationIgnored private var tasks: [UUID: Task<Void, Never>] = [:]
   @ObservationIgnored private var retry: (@MainActor () async throws -> String?)?
+  /// Runs that ``discard()`` cancelled, whose results are never shown.
+  @ObservationIgnored private var discarded: Set<UUID> = []
 
   /// The failure of the latest run, if it failed.
   var failure: OperationFailure? {
@@ -97,8 +100,9 @@ final class TrackedOperation {
     isBusy = true
     let task = Task { [self] in
       await previous?.value
-      await execute(work, retryable: retryable)
+      await execute(work, retryable: retryable, run: id)
       tasks[id] = nil
+      discarded.remove(id)
       isBusy = !tasks.isEmpty
     }
     tasks[id] = task
@@ -111,6 +115,14 @@ final class TrackedOperation {
     for task in tasks.values { task.cancel() }
   }
 
+  /// Cancels the running and waiting runs without reporting them, and clears ``status``.
+  func discard() {
+    discarded.formUnion(tasks.keys)
+    cancel()
+    status = nil
+    retry = nil
+  }
+
   /// Runs the failed work again, when it offered to.
   func retryFailed() {
     guard let retry else { return }
@@ -119,18 +131,28 @@ final class TrackedOperation {
 
   private func execute(
     _ work: @escaping @MainActor () async throws -> String?,
-    retryable: Bool
+    retryable: Bool,
+    run id: UUID
   ) async {
+    guard !discarded.contains(id) else { return }
     status = nil
     retry = nil
+    let result: Result<String?, any Error>
     do {
       try Task.checkCancellation()
-      status = try await work().map(OperationStatus.message)
-    } catch is CancellationError {
-      status = .message(OperationFailure.describe(CancellationError()))
+      result = .success(try await work())
     } catch {
-      status = .failure(OperationFailure(error, retry: retryable ? .tryAgain : nil))
-      if retryable { retry = work }
+      result = .failure(error)
+    }
+    guard !discarded.contains(id) else { return }
+    switch result {
+      case .success(let message):
+        status = message.map(OperationStatus.message)
+      case .failure(let error) where error is CancellationError:
+        status = .message(OperationFailure.describe(error))
+      case .failure(let error):
+        status = .failure(OperationFailure(error, retry: retryable ? .tryAgain : nil))
+        if retryable { retry = work }
     }
   }
 }
