@@ -69,7 +69,27 @@ extension Pipeline {
   private static let automationKey = "automation-requests-v1"
   private static let maximumAutomationClaims = 10_000
   private static let maximumAutomationReasonCharacters = 500
-  /// Claims a caller-supplied UUID before work; reuse returns its saved result or refuses uncertain replay.
+  private static let automationReplayWindowSec: TimeInterval = 30 * 86_400
+  /// Drops completed claims past the replay window, then the oldest completed ones while full.
+  private static func pruneCompleted(_ claims: inout [UUID: Claim], now: Date) {
+    claims = claims.filter {
+      $0.value.reply == nil || now.timeIntervalSince($0.value.claimedAt) < automationReplayWindowSec
+    }
+    let excess = claims.count - maximumAutomationClaims + 1
+    guard excess > 0 else { return }
+    let oldest = claims.filter { $0.value.reply != nil }
+      .sorted { $0.value.claimedAt < $1.value.claimedAt }
+      .prefix(excess)
+    for (id, _) in oldest { claims[id] = nil }
+  }
+  /**
+   Claims a caller-supplied UUID before work; reuse returns its saved result or refuses uncertain
+   replay.
+
+   Completed requests are remembered for 30 days, or until room is needed for a new request.
+   Requests whose result was never saved are kept, so the store refuses new requests only when
+   all of them are unfinished.
+   */
   public func execute(
     _ operation: AutomationOperation,
     requestID: UUID,
@@ -86,6 +106,7 @@ extension Pipeline {
     let fingerprint = stableHash(
       try encoder.encode(RequestIdentity(operation: operation, identity: envelope.identity.key))
     )
+    let now = Date.now
     let saved = try await store.update(Self.automationKey, default: [UUID: Claim]()) {
       claims -> AutomationReply? in
       if let existing = claims[requestID] {
@@ -93,10 +114,11 @@ extension Pipeline {
         guard let reply = existing.reply else { throw AutomationError.resultUnknown }
         return reply
       }
+      Self.pruneCompleted(&claims, now: now)
       guard claims.count < Self.maximumAutomationClaims else {
         throw AutomationError.tooManyRequests(limit: Self.maximumAutomationClaims)
       }
-      claims[requestID] = Claim(fingerprint: fingerprint)
+      claims[requestID] = Claim(fingerprint: fingerprint, claimedAt: now)
       return nil
     }
     if let saved { return saved }
@@ -127,5 +149,21 @@ extension Pipeline {
   private struct RequestIdentity: Encodable {
     let operation: AutomationOperation; let identity: String
   }
-  private struct Claim: Codable, Sendable { let fingerprint: String; var reply: AutomationReply? }
+  private struct Claim: Codable, Sendable {
+    let fingerprint: String
+    var reply: AutomationReply?
+    /// When the request was first claimed; claims saved without a time count from when they are read.
+    let claimedAt: Date
+
+    init(fingerprint: String, claimedAt: Date) {
+      self.fingerprint = fingerprint; self.claimedAt = claimedAt
+    }
+    init(from decoder: any Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      fingerprint = try values.decode(String.self, forKey: .fingerprint)
+      reply = try values.decodeIfPresent(AutomationReply.self, forKey: .reply)
+      claimedAt = values.lenient(.claimedAt, default: Date.now)
+    }
+    private enum CodingKeys: String, CodingKey { case fingerprint, reply, claimedAt }
+  }
 }

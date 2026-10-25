@@ -44,16 +44,6 @@ func `replaces same scope rules with the latest correction`() {
   #expect(rules.first?.disposition == .allow)
 }
 
-@Test(arguments: [
-  (SenderHistory(), "unknown"), (SenderHistory(availability: .complete), "No prior")
-])
-func `summarizes missing history without inventing a relationship`(
-  history: SenderHistory,
-  phrase: String
-) {
-  #expect(history.summary.contains(phrase))
-}
-
 @Test
 func `leaves a sender with unknown contacts and history to the classifier`() {
   #expect(

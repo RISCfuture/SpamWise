@@ -89,27 +89,7 @@ extension AppleMailAdapter {
   public func performCorrection(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
   {
-    try await performCorrection(action, for: identity) {}
-  }
-  /**
-   Acts on a user-corrected message wherever it now is in its account, then observes the result.
-
-   - Parameters:
-     - action: The correction step to apply.
-     - identity: The corrected message, searched for throughout its account.
-     - commandSent: Called after the command goes to Mail and before the wait for a moved
-       message to appear in its destination, so the caller can start other work meanwhile. It
-       isn't called when no command applies, the message can't be found or Mail reports an
-       error.
-   */
-  public func performCorrection(
-    _ action: MailAction,
-    for identity: MessageIdentity,
-    commandSent: @Sendable () async -> Void
-  ) async throws -> ActionReceipt {
-    try await interactively {
-      try await perform(action, for: identity, scope: .account, commandSent: commandSent)
-    }
+    try await interactively { try await perform(action, for: identity, scope: .account) }
   }
   /// Marks read only after rechecking the exact message and its account's Junk membership.
   public func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt {
@@ -193,8 +173,7 @@ extension AppleMailAdapter {
     _ action: MailAction,
     for identity: MessageIdentity,
     scope: MessageSearchScope,
-    confirmation: MoveConfirmation = .observed,
-    commandSent: @Sendable () async -> Void = {}
+    confirmation: MoveConfirmation = .observed
   ) async throws -> ActionReceipt {
     guard let command = MailCommand(action) else { return .init(confirmed: true) }
     if command.destination != nil, identity.messageID == nil, scope == .recordedMailbox {
@@ -203,7 +182,6 @@ extension AppleMailAdapter {
     let target = try await resolve(identity, scope: scope)
     try Task.checkCancellation()
     let applied = try await applyChange(command, to: target.location)
-    await commandSent()
     guard applied else { return .init(confirmed: false) }
     guard let destination = command.destination else { return .init(confirmed: true) }
     guard target.location.messageID != nil else { return .init(confirmed: false) }

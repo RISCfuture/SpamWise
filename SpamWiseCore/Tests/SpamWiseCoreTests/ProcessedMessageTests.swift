@@ -130,6 +130,38 @@ struct `Processed-message index` {
   }
 
   @Test
+  func `backs off a live failure of mail previewed under an earlier policy`() async throws {
+    let identity = MessageIdentity(accountID: "account-A", contentHash: "previewed")
+    let preview = DecisionRecord(
+      identity: identity,
+      decision: .init(label: .junk, action: .moveToJunk, reason: .model("lure")),
+      outcome: .dryRun,
+      revision: 4
+    )
+    var failure = preview
+    failure.decision = .init(label: nil, action: .none, reason: .classificationFailed(.network))
+    failure.outcome = .unclassified
+    failure.revision = 5
+    let now = Date.now
+    for (record, kind) in [(preview, nil), (failure, ProcessingFailure.transient)] {
+      try await ProcessedMessageRepository.record(
+        record,
+        key: identity.key,
+        failure: kind,
+        in: store,
+        now: now
+      )
+    }
+    let entry = try #require(
+      try await ProcessedMessageRepository.entries(for: [identity.key], in: store)[identity.key]
+    )
+    let retryAfter = try #require(entry.retryAfter)
+    #expect(entry.failure == .transient)
+    #expect(entry.isSettled(revision: 5, dryRun: false, now: now))
+    #expect(!entry.isSettled(revision: 5, dryRun: false, now: retryAfter))
+  }
+
+  @Test
   func `acts on mail previewed during a dry run once dry run is off, without classifying it again`()
     async throws
   {

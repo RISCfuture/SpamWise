@@ -151,6 +151,36 @@ public enum SpendingLimit {
     guard let reservation else { throw SpendingLimitError.limitReached }
     return reservation
   }
+  /**
+   Whether this month’s limit leaves room for a request to `model` with `input` at most, without
+   reserving anything.
+
+   A refusal is recorded like a refused reservation, so the ledger shows the limit as reached.
+   */
+  static func admits(
+    _ input: ClassificationInput,
+    model: ModelIdentifier,
+    store: Store,
+    at date: Date = .now
+  ) async throws -> Bool {
+    let amount = try MonthlySpending.microUSD(
+      ModelTokenPricing.rates(for: model).maximumCost(of: input)
+    )
+    let ledger = try await load(store, at: date)
+    guard let limit = ledger.limitMicroUSD, ledger.committedMicroUSD + amount > limit else {
+      return true
+    }
+    if !ledger.limitReached {
+      try await store.update(key, default: MonthlySpending(month: .init(containing: date))) {
+        current in
+        current = current.current(at: date)
+        if let limit = current.limitMicroUSD, current.committedMicroUSD + amount > limit {
+          current.limitReached = true
+        }
+      }
+    }
+    return false
+  }
   /// Replaces a reservation with the request’s measured cost; zero refunds an unbilled request.
   public static func settle(
     _ reservation: SpendingReservation,
@@ -164,6 +194,12 @@ public enum SpendingLimit {
         ledger.committedMicroUSD - min(reservation.microUSD, ledger.committedMicroUSD) + cost
     }
   }
+}
+
+/// A classifier that can tell, before evidence is gathered, whether the spending limit refuses a request.
+protocol SpendingAdmission: Sendable {
+  /// Whether this month’s limit leaves room for a request with at most `input`.
+  func admits(_ input: ClassificationInput) async throws -> Bool
 }
 
 /// Counts each paid request in the monthly spending ledger and enforces the user’s optional limit.
@@ -217,5 +253,11 @@ public struct SpendingLimitedClassifier: Classifier {
       try? await Task.sleep(for: Self.settlementRetryDelay)
       try? await SpendingLimit.settle(reservation, costUSD: costUSD, store: store)
     } catch {}
+  }
+}
+
+extension SpendingLimitedClassifier: SpendingAdmission {
+  func admits(_ input: ClassificationInput) async throws -> Bool {
+    try await SpendingLimit.admits(input, model: model, store: store)
   }
 }

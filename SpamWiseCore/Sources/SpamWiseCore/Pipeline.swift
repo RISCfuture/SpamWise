@@ -2,13 +2,23 @@ public import Foundation
 
 /// Persists decisions before claiming actions and fails open on errors.
 public actor Pipeline {
+  /// Scans a raw message with the local Rspamd service within a budget in seconds.
+  public typealias RspamdScan = @Sendable (Data, TimeInterval) async -> ExternalEvidenceFinding
+  /// Builds the Spamhaus lookup for one configuration.
+  public typealias SpamhausLookupFactory = @Sendable (SpamhausConfiguration) -> SpamhausDomainLookup
+
   private static let maximumRetryAttempts = 3
   private static let initialRetryDelaySec = 30.0
   private static let retryBackoffFactor = 2.0
   private static let retryLifetimeSec = 86_400.0
+  /// A quarter of the four characters each body token stands for.
+  private static let imageTextCharactersPerBodyToken = 1
+  private static let imageTextNotice = "Text found in images (untrusted):"
   let store: Store
   let classifier: any Classifier
   let rdap: RDAPLookup?
+  let rspamdScan: RspamdScan
+  let spamhaus: SpamhausLookupFactory
   let threatDetector: (any ThreatDetector)?
   var inFlight: Set<String> = []
   /// Processed-message index entries whose write failed, keyed by identity, awaiting another attempt.
@@ -20,17 +30,46 @@ public actor Pipeline {
   /**
    Creates a pipeline that persists to `store` and classifies with `classifier`.
 
-   Without `rdap` it never looks up domain registration age, and without `threatDetector` its
-   records carry no threat assessment.
+   - Parameters:
+     - store: The shared state that records decisions and claims actions.
+     - classifier: The model that classifies mail no rule or relationship decides.
+     - rdap: Looks up domain registration age when that setting is on; without it the age is
+       never looked up.
+     - rspamdScan: Scans a message when the local Rspamd setting is on; by default through the
+       fixed loopback endpoint.
+     - spamhaus: Builds the domain blocklist lookup when that setting is on; by default with the
+       live transports and the Spamhaus key from the shared Keychain.
+     - threatDetector: Assesses threats in each classified message; without it records carry no
+       threat assessment.
    */
   public init(
     store: Store,
     classifier: any Classifier,
     rdap: RDAPLookup? = nil,
+    rspamdScan: @escaping RspamdScan = { await RspamdLookup().lookup(raw: $0, timeout: $1) },
+    spamhaus: @escaping SpamhausLookupFactory = Pipeline.liveSpamhaus,
     threatDetector: (any ThreatDetector)? = nil
   ) {
     self.store = store; self.classifier = classifier; self.rdap = rdap
+    self.rspamdScan = rspamdScan; self.spamhaus = spamhaus
     self.threatDetector = threatDetector
+  }
+  /// The Spamhaus lookup over the live transports, reading its key from the shared Keychain.
+  public static func liveSpamhaus(_ configuration: SpamhausConfiguration) -> SpamhausDomainLookup {
+    SpamhausDomainLookup(
+      configuration: configuration,
+      key: { try APIKeychain(service: APIKeychain.spamhausService).read() }
+    )
+  }
+  /**
+   `body` after the text found in its images, which comes first so prompt shortening keeps it,
+   bounded to a quarter of the body budget so it cannot crowd out the body.
+   */
+  private static func leadingImageText(_ text: String, body: String, bodyTokenBudget: Int)
+    -> String
+  {
+    let limit = bodyTokenBudget * imageTextCharactersPerBodyToken
+    return imageTextNotice + "\n" + text.prefix(limit) + "\n\n" + body
   }
   private static func isRetryable(_ error: any Error) -> Bool {
     (error as? ClassificationError)?.retryable == true || (error as? StoreError)?.retryable == true
@@ -86,25 +125,24 @@ public actor Pipeline {
         revision: current.revision
       )
     }
-    var message = parsed.inspection.message, findings = parsed.findings
+    var message = parsed.inspection.message
     if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: parsed.inspection.images) {
-      message.text += "\nEmbedded image text (untrusted):\n" + text
-    }
-    if !current.settings.mailOptions.localOnly, settings.externalEvidence?.localRspamd == true {
-      findings.append(
-        await RspamdLookup()
-          .lookup(raw: envelope.raw, timeout: max(0, timeout - Date().timeIntervalSince(start)))
-          .summary
+      message.text = Self.leadingImageText(
+        text,
+        body: message.text,
+        bodyTokenBudget: current.settings.bodyTokenBudget
       )
     }
-    return await process(
+    return await processParsed(
       message,
       identity: envelope.identity,
       adapter: adapter,
       forceDryRun: forceDryRun,
       timeout: max(0, timeout - Date().timeIntervalSince(start)),
-      auxiliaryFindings: findings,
-      discovered: discovered
+      attempt: 0,
+      auxiliaryFindings: parsed.findings,
+      discovered: discovered,
+      raw: envelope.raw
     )
   }
   /**
@@ -131,13 +169,37 @@ public actor Pipeline {
     auxiliaryFindings: [String] = [],
     discovered: Bool = false
   ) async -> DecisionRecord {
+    await processParsed(
+      message,
+      identity: identity,
+      adapter: adapter,
+      forceDryRun: forceDryRun,
+      timeout: timeout,
+      attempt: attempt,
+      auxiliaryFindings: auxiliaryFindings,
+      discovered: discovered,
+      raw: nil
+    )
+  }
+  /// Processes a parsed message, scanning `raw` with the local Rspamd service when it is given.
+  private func processParsed(
+    _ message: ParsedMessage,
+    identity: MessageIdentity,
+    adapter: (any MailClientAdapter)?,
+    forceDryRun: Bool,
+    timeout: Double,
+    attempt: Int,
+    auxiliaryFindings: [String],
+    discovered: Bool,
+    raw: Data?
+  ) async -> DecisionRecord {
     guard inFlight.insert(identity.key).inserted else {
       var record = failure(identity: identity, reason: .duplicateCallback)
       record.outcome = .duplicate; return record
     }
     defer { inFlight.remove(identity.key) }
     let start = Date()
-    var revision: Int?
+    var revision: Int?, pending: DecisionRecord?, findings = auxiliaryFindings
     var settles = discovered || !forceDryRun
     do {
       try Task.checkCancellation()
@@ -162,10 +224,10 @@ public actor Pipeline {
         identity: identity,
         state: state,
         budget: (start, timeout),
-        auxiliaryFindings: auxiliaryFindings
+        auxiliaryFindings: &findings,
+        raw: raw
       )
       try Task.checkCancellation()
-      guard Date().timeIntervalSince(start) < timeout else { throw ClassificationError.timeout }
       var record = try classification.record(
         of: message,
         identity: identity,
@@ -174,31 +236,55 @@ public actor Pipeline {
         latency: Date().timeIntervalSince(start)
       )
       // Persist the explanation before an external action can be claimed.
-      try await save(record)
+      try await save(
+        record,
+        of: message,
+        classification: classification,
+        recordsStatistics: discovered || !forceDryRun
+      )
+      pending = record
       record = try await dispatch(record, adapter: adapter, forceDryRun: forceDryRun)
       if settles { await remember(record, discoveredAs: identity) }
       return record
     } catch {
-      let record = failure(
+      let unclassified = failure(
         identity: identity,
         sender: message.fromAddress,
         subject: message.subject,
         reason: DecisionReason(failure: error),
         revision: revision ?? 0
       )
-      try? await saveFailure(record)
+      let record = await recordFailure(error, of: pending, otherwise: unclassified)
       if settles {
-        await remember(record, discoveredAs: identity, failure: Self.failureKind(error))
+        await remember(unclassified, discoveredAs: identity, failure: Self.failureKind(error))
       }
       await scheduleRetry(
         error: error,
         message: message,
         identity: identity,
         revision: revision,
-        retry: (attempt, forceDryRun)
+        retry: (attempt, forceDryRun, findings)
       )
       return record
     }
+  }
+  /**
+   Records a processing failure: on `pending`, the saved decision whose action never started,
+   or else as `unclassified`.
+   */
+  func recordFailure(
+    _ error: any Error,
+    of pending: DecisionRecord?,
+    otherwise unclassified: DecisionRecord
+  ) async -> DecisionRecord {
+    guard var record = pending else {
+      try? await saveFailure(unclassified)
+      return unclassified
+    }
+    record.outcome = .failed
+    record.actionError = Self.notAttemptedDescription(error)
+    try? await saveObservedOutcome(record)
+    return record
   }
   /// Queues a retry; an unknown revision means classification never started, so the current one applies.
   private func scheduleRetry(
@@ -206,12 +292,15 @@ public actor Pipeline {
     message: ParsedMessage,
     identity: MessageIdentity,
     revision: Int?,
-    retry: (attempt: Int, dryRun: Bool)
+    retry: (attempt: Int, dryRun: Bool, findings: [String])
   ) async {
-    let (attempt, forceDryRun) = retry
+    let (attempt, forceDryRun, findings) = retry
     guard !forceDryRun else { return }
     if Self.isRetryable(error), attempt < Self.maximumRetryAttempts, !Task.isCancelled {
       let retryMessage = message.boundedForRetention(keepingHeaders: true)
+      let retryFindings = findings.prefix(RetentionLimits.retryFindings).map {
+        String($0.prefix(RetentionLimits.retryFindingCharacters))
+      }
       try? await StateRepository.update(store, loading: StateSlices(retries: .all)) { state in
         let retryRevision = revision ?? state.revision
         guard state.revision == retryRevision else { return }
@@ -227,7 +316,7 @@ public actor Pipeline {
               Self.initialRetryDelaySec * pow(Self.retryBackoffFactor, Double(attempt))
             ),
             expires: Date().addingTimeInterval(Self.retryLifetimeSec),
-            dryRun: forceDryRun
+            auxiliaryFindings: retryFindings
           )
         )
       }
@@ -263,8 +352,9 @@ public actor Pipeline {
         job.message,
         identity: job.identity,
         adapter: adapter,
-        forceDryRun: job.dryRun,
-        attempt: job.attempt
+        forceDryRun: false,
+        attempt: job.attempt,
+        auxiliaryFindings: job.auxiliaryFindings
       )
     }
   }

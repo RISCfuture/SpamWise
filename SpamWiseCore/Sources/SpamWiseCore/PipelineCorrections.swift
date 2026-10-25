@@ -18,14 +18,13 @@ extension Pipeline {
 
    Review means Inbox with the Review annotation, so a Review correction first returns the
    message to Inbox. Good and Junk corrections of a message SpamWise annotated for Review
-   remove that annotation.
+   remove that `annotation`.
    */
   static func correctionSteps(
     _ label: MailLabel,
-    previous: DecisionRecord,
+    annotation: MailAction?,
     review: ReviewTreatment
   ) -> [MailAction] {
-    let annotation = previous.reviewAnnotation
     switch label {
       case .inbox: return [.moveToInbox] + [annotation?.clearingAnnotation].compactMap(\.self)
       case .junk: return [annotation?.clearingAnnotation].compactMap(\.self) + [.moveToJunk]
@@ -173,6 +172,10 @@ struct CorrectionRequest: Sendable {
   var savesRule = true
   /// The category the user gave the message, replacing the model's.
   var category: MailCategory?
+  /// The record of an explicitly selected message, saved with the correction that corrects it.
+  var seed: DecisionRecord?
+  /// The Review annotation SpamWise left on the message, when the corrected record doesn't carry it.
+  var reviewAnnotation: MailAction?
 }
 
 extension DecisionRecord {
@@ -198,6 +201,7 @@ extension AppState {
     message: ParsedMessage?
   ) throws -> (record: DecisionRecord, steps: [MailAction]) {
     let label = request.label, scope = request.scope
+    if let seed = request.seed { record(seed) }
     guard let index = records.firstIndex(where: { $0.id == request.recordID }) else {
       throw CorrectionError.recordNotFound
     }
@@ -260,7 +264,11 @@ extension AppState {
     if let trainingKey { trainingClaims[trainingKey] = correction.id }
     return (
       correction,
-      Pipeline.correctionSteps(label, previous: previous, review: settings.review)
+      Pipeline.correctionSteps(
+        label,
+        annotation: request.reviewAnnotation ?? previous.reviewAnnotation,
+        review: settings.review
+      )
     )
   }
   /**

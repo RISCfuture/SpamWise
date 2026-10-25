@@ -72,17 +72,7 @@ extension Pipeline {
     }
     guard (try? await saveObservedOutcome(completed)) != nil else { return completed }
     for settlement in settlements { scheduleCheck(of: settlement, recordID: completed.id) }
-    do {
-      return try await markJunkRead(completed, adapter: adapter)
-    } catch {
-      var unconfirmed = completed
-      unconfirmed.readStatusOutcome = .requested
-      unconfirmed.readStatusError = String(
-        localized: "Mark-as-read status could not be saved. The confirmed Junk move is retained.",
-        bundle: .module
-      )
-      return unconfirmed
-    }
+    return await markJunkRead(completed, adapter: adapter, settingOn: claim.marksJunkRead)
   }
 
   private func claim(
@@ -93,12 +83,7 @@ extension Pipeline {
     mode: DispatchMode
   ) async throws -> ActionClaim {
     let key = original.identity.key, steps = mode.steps(for: original)
-    let slices = StateSlices(
-      records: .only([original.id]),
-      retries: .only([key]),
-      claims: .only([key])
-    )
-    return try await StateRepository.update(store, loading: slices) { state -> ActionClaim in
+    let decide: @Sendable (inout AppState) throws -> ActionClaim = { state in
       guard let index = state.records.firstIndex(where: { $0.id == original.id }) else {
         throw DecisionRecordError.notFound
       }
@@ -106,9 +91,9 @@ extension Pipeline {
       let replaced = state.claimedActions[key]
       if case .automatic = mode, replaced == record.id {
         record.outcome = .duplicate
-        return ActionClaim(record: record, replacedClaim: replaced)
+        return ActionClaim(record: record, replacedClaim: replaced, marksJunkRead: false)
       }
-      if state.revision != record.revision {
+      if state.supersedes(record, claimed: false) {
         record.outcome = .superseded
       } else if state.settings.paused {
         record.outcome = .paused
@@ -134,11 +119,29 @@ extension Pipeline {
       }
       state.records[index] = record
       if !forceDryRun { state.retries.removeAll { $0.identity.key == key } }
-      return ActionClaim(record: record, replacedClaim: replaced)
+      return ActionClaim(
+        record: record,
+        replacedClaim: replaced,
+        marksJunkRead: state.settings.mailOptions.markJunkRead
+      )
+    }
+    return try await StateRepository.transaction(store) { transaction in
+      let related =
+        original.path == .correction ? try transaction.recordIDs(identityKey: key) : []
+      try transaction.load(
+        StateSlices(
+          records: .only(related.union([original.id])),
+          retries: .only([key]),
+          claims: .only([key])
+        )
+      )
+      let claim = try decide(&transaction.state)
+      try transaction.commit()
+      return claim
     }
   }
 
-  /// Releases the claim when policy changed, filtering stopped or the task ended before any command.
+  /// Releases the claim when a newer decision replaced it, filtering stopped or the task ended before any command.
   private func abandonedBeforeAction(_ claim: ActionClaim) async -> DecisionRecord? {
     var record = claim.record
     if Task.isCancelled {
@@ -146,8 +149,11 @@ extension Pipeline {
       record.actionError = Self.notAttemptedDescription(CancellationError())
     } else {
       do {
-        let current = try await StateRepository.load(store, StateSlices())
-        if current.revision != record.revision {
+        let current = try await StateRepository.load(
+          store,
+          StateSlices(claims: .only([record.identity.key]))
+        )
+        if current.supersedes(record, claimed: true) {
           record.outcome = .superseded
         } else if current.settings.paused {
           record.outcome = .paused
@@ -233,6 +239,8 @@ extension Pipeline {
   private struct ActionClaim: Sendable {
     var record: DecisionRecord
     var replacedClaim: UUID?
+    /// Whether the mark-as-read setting was on when the claim was written.
+    var marksJunkRead: Bool
   }
 
   private enum Performance: Sendable {
@@ -241,5 +249,32 @@ extension Pipeline {
     /// At least one mail command may have been sent; moves confirmed before they settled carry
     /// their later checks.
     case attempted(DecisionRecord, settlements: [MoveSettlement])
+  }
+}
+
+extension AppState {
+  /**
+   Whether a newer decision replaces `record`.
+
+   An automatic decision is replaced once settings, rules or corrections change the revision. A
+   user's correction stands until it is undone or a newer correction of its message is saved,
+   and once it holds its message's claim, until another decision takes that claim, so changes
+   to other messages and to settings made meanwhile leave it in force.
+
+   - Parameters:
+     - record: The decision to check; this state must hold its message's claim and, for a
+       correction that has not claimed it yet, every retained record of its message.
+     - claimed: Whether `record` has already claimed its message.
+   */
+  func supersedes(_ record: DecisionRecord, claimed: Bool) -> Bool {
+    guard record.path == .correction else { return revision != record.revision }
+    let key = record.identity.key
+    if claimed { return claimedActions[key] != record.id }
+    return records.contains { other in
+      guard other.identity.key == key else { return false }
+      return other.id == record.id
+        ? other.correctionUndone
+        : other.path == .correction && other.revision > record.revision && !other.correctionUndone
+    }
   }
 }
