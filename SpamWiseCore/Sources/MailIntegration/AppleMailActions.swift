@@ -85,8 +85,9 @@ extension AppleMailAdapter {
    An orange flag or background already on the message is reported as applied without change,
    and clearing Review removes only one that SpamWise set.
 
-   - Throws: ``ActionNotAttempted`` when the message can't be resolved, or Mail refuses before
-     changing it, as when it has left its mailbox or another flag or color is already set.
+   - Throws: ``ActionNotAttempted`` when the message can't be resolved, the record of Review
+     marks SpamWise set can't be read before clearing one, or Mail refuses before changing it, as
+     when it has left its mailbox or another flag or color is already set.
    */
   public func perform(_ action: MailAction, for identity: MessageIdentity) async throws
     -> ActionReceipt
@@ -211,8 +212,7 @@ extension AppleMailAdapter {
     confirmation: MoveConfirmation = .observed,
     commandSent: @Sendable () async -> Void = {}
   ) async throws -> ActionReceipt {
-    guard let command = MailCommand(action) else { return .init(confirmed: true) }
-    if command.removesReview, !(await setReview(removedBy: command, on: identity)) {
+    guard let command = MailCommand(action), try await needsCommand(command, on: identity) else {
       return .init(confirmed: true)
     }
     let target = try await notAttempted {
@@ -233,6 +233,13 @@ extension AppleMailAdapter {
     guard let destination = command.destination else { return .init(confirmed: true) }
     guard target.location.messageID != nil else { return .init(confirmed: false) }
     return await observeMove(of: target, to: destination, confirmation: confirmation)
+  }
+  /// Whether `command` has anything to change: clearing Review applies only to a mark SpamWise set.
+  private func needsCommand(_ command: MailCommand, on identity: MessageIdentity) async throws
+    -> Bool
+  {
+    guard command.removesReview else { return true }
+    return try await notAttempted { try await hasRecordedReview(removedBy: command, on: identity) }
   }
   /// Requests a change, rethrowing the handler's refusals before it changes anything as
   /// ``ActionNotAttempted``.
