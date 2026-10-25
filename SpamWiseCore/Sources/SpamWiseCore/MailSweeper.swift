@@ -55,12 +55,14 @@ public struct MailSweepSummary: Sendable, Equatable {
 /**
  Automatic mail discovery shared by the app and the headless daemon.
 
- A sweep maintains Sent history on its own schedule, then runs one Inbox pass per account in
- scope, then one page of each enabled folder plan. It decides which messages are new with the
- processed-message index (see ``ProcessedMessage/isSettled(revision:dryRun:now:)``), saves each
- pass's cursor, coverage and failures in ``MailScanHealth``, requests due retries after live
- passes and observes training folders. A failing account or folder is recorded and the sweep
- continues; cancellation always ends it.
+ A sweep first resolves long-pending corrections whose mail steps never started (see
+ ``Pipeline/resolveUnstartedCorrections(now:)``), then maintains Sent history on its own
+ schedule, runs one Inbox pass per account in scope, then one page of each enabled folder plan.
+ It decides which messages are new with the processed-message index (see
+ ``ProcessedMessage/isSettled(revision:dryRun:now:)``), saves each pass's cursor, coverage and
+ failures in ``MailScanHealth``, requests due retries after live passes and observes training
+ folders. A failing account or folder is recorded and the sweep continues; cancellation always
+ ends it.
  */
 public actor MailSweeper {
   /// Receives sweep events.
@@ -130,6 +132,7 @@ public actor MailSweeper {
     onEvent: @escaping EventHandler = { _ in }
   ) async throws -> MailSweepSummary {
     var summary = MailSweepSummary()
+    await resolveUnstartedCorrections()
     let settings = try await currentSettings()
     guard !settings.paused else { summary.paused = true; return summary }
     let accounts = try await accountsInScope(settings)
@@ -146,6 +149,11 @@ public actor MailSweeper {
     guard scope.includesFolders else { return summary }
     summary.failures += try await sweepFolders(dryRun: dryRun, limit: limit, onEvent: onEvent)
     return summary
+  }
+
+  /// Resolves long-pending unclaimed corrections; when storage is busy, the next sweep tries again.
+  private func resolveUnstartedCorrections() async {
+    _ = try? await pipeline.resolveUnstartedCorrections()
   }
 
   func currentSettings() async throws -> Settings {
