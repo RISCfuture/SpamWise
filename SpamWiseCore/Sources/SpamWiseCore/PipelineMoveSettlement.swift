@@ -62,18 +62,22 @@ extension Pipeline {
    */
   func scheduleCheck(of settlement: MoveSettlement, recordID: UUID) {
     let store = self.store, checkID = UUID()
-    moveSettlements[checkID] = Task {
+    let check = Task {
       try? await Task.sleep(until: settlement.due)
       if !Task.isCancelled, await !settlement.verify() {
         await Self.recordUnsettled(recordID, in: store)
       }
       self.finishSettlement(checkID)
     }
+    moveSettlements[checkID] = (recordID, check)
   }
+
+  /// Records whose moves this pipeline has yet to recheck after their settling window.
+  func settlingRecordIDs() -> Set<UUID> { Set(moveSettlements.values.map(\.recordID)) }
 
   /// Waits until every scheduled move recheck has finished.
   public func settleMoves() async {
-    while let check = moveSettlements.values.first { await check.value }
+    while let settlement = moveSettlements.values.first { await settlement.check.value }
   }
 
   private func finishSettlement(_ checkID: UUID) {

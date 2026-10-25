@@ -63,6 +63,8 @@ extension MailSweeper {
     )
     coverage = SweepCoverage()
     let departures: Int
+    let traversalEnds = page.visitedCount == 0 || offset + page.visitedCount >= page.total
+    var overflowed = false
     if plan.purpose == .filter {
       let processed = try await process(
         page,
@@ -74,20 +76,22 @@ extension MailSweeper {
       guard processed.completed else { return }
       departures = processed.records.count(where: \.mayHaveLeftMailbox)
     } else {
-      guard let trained = try await train(page, plan: plan) else { return }
+      guard let trained = try await train(page, plan: plan, dryRun: dryRun) else { return }
       departures = trained
-      try await TrainingFolders.observe(
+      overflowed = try await TrainingFolders.observe(
         page.messages.map(\.identity),
         planID: plan.id,
-        sweepComplete: offset + page.visitedCount >= page.total || page.visitedCount == 0,
+        sweepComplete: traversalEnds,
         canReleaseClaims: page.unavailableCount == 0 && (health?.unavailableInSweep ?? 0) == 0,
+        settling: await pipeline.settlingRecordIDs(),
         store: store
       )
     }
     try Task.checkCancellation()
-    let coverage = coverage
+    let coverage = coverage, note = overflowed ? TrainingFolders.observationLimitNote : nil
     try await MailHealthRepository.update(store, accountID: key, name: plan.folder.displayName) {
       $0.coverage = coverage
+      if note != nil || traversalEnds { $0.note = note }
       $0.complete(
         through: Self.folderOffset(after: page, from: offset, departures: departures),
         visited: page.visitedCount,
@@ -101,20 +105,27 @@ extension MailSweeper {
    Applies each unclaimed placement on a training page as a correction.
 
    A placement that cannot be corrected is recorded with a claim, so it is not retried every
-   sweep, and the rest of the page continues.
+   sweep, and the rest of the page continues. Outside dry run, it also moves each placement whose
+   correction was saved during dry run.
 
    - Returns: The number of placements whose correction may have moved them out of the folder,
      or nil when filtering paused or the plan stopped applying part way through.
    */
-  private func train(_ page: MailPage, plan: MailFolderPlan) async throws -> Int? {
+  private func train(_ page: MailPage, plan: MailFolderPlan, dryRun: Bool) async throws -> Int? {
     guard plan.trainingBaselineValidated else { throw TrainingFolderError.planInactive }
     let label: MailLabel = plan.purpose == .trainGood ? .inbox : .junk
     var departures = 0
     for envelope in page.messages {
       try Task.checkCancellation()
+      let key = TrainingFolders.key(planID: plan.id, identity: envelope.identity)
       let claims = try await StateRepository.load(store, StateSlices([.training])).trainingClaims
-      guard claims[TrainingFolders.key(planID: plan.id, identity: envelope.identity)] == nil
-      else { coverage.classified += 1; continue }
+      if let recordID = claims[key] {
+        if !dryRun, try await movesDryRunPlacement(claimedBy: recordID, key: key) {
+          departures += 1
+        }
+        coverage.classified += 1
+        continue
+      }
       do {
         let correction = try await pipeline.correct(
           envelope: envelope,
@@ -133,6 +144,12 @@ extension MailSweeper {
     }
     coverage.unclassified += page.unavailableCount
     return departures
+  }
+
+  /// Moves a placement corrected during dry run, returning whether the move may have taken it out of the folder.
+  private func movesDryRunPlacement(claimedBy recordID: UUID, key: String) async throws -> Bool {
+    try await pipeline.dispatchTrainingPlacement(claimedBy: recordID, key: key, adapter: source)?
+      .mayHaveLeftMailbox == true
   }
 
   /// Whether filtering is running and the plan is still enabled for training.

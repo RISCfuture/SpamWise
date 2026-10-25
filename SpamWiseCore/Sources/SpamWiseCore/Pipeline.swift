@@ -14,8 +14,9 @@ public actor Pipeline {
   /// Processed-message index entries whose write failed, keyed by identity, awaiting another attempt.
   var unrecordedResults: [String: (record: DecisionRecord, failure: ProcessingFailure?)] = [:]
   var importedLegacyActivity = false
-  /// Scheduled rechecks of moves confirmed before their provider settled, keyed by check.
-  var moveSettlements: [UUID: Task<Void, Never>] = [:]
+  /// Scheduled rechecks of moves confirmed before their provider settled, with the record each
+  /// rechecks, keyed by check.
+  var moveSettlements: [UUID: (recordID: UUID, check: Task<Void, Never>)] = [:]
   /**
    Creates a pipeline that persists to `store` and classifies with `classifier`.
 

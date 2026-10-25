@@ -311,11 +311,22 @@ struct ContactsDocument: Codable, Equatable {
 struct TrainingDocument: Codable, Equatable {
   var claims: [String: UUID] = [:]
   var observations: [String: Set<String>] = [:]
+  /// Plans whose unfinished traversal found more messages than `observations` keeps.
+  var overflowed: Set<String> = []
 
   init() {}
   init(_ state: AppState) {
     claims = state.trainingClaims; observations = state.trainingObservations
+    overflowed = state.trainingObservationOverflows
   }
+  init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    claims = try values.decode([String: UUID].self, forKey: .claims)
+    observations = try values.decode([String: Set<String>].self, forKey: .observations)
+    overflowed = values.lenient(.overflowed, default: [])
+  }
+
+  private enum CodingKeys: String, CodingKey { case claims, observations, overflowed }
 }
 
 /// One content rule's winning-match count, stored as a bare integer.

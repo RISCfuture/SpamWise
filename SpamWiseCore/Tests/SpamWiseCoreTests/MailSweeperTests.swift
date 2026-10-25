@@ -217,6 +217,32 @@ struct `Mail sweeper` {
   }
 
   @Test
+  func `moves a training placement corrected in dry run once filtering acts on mail`()
+    async throws
+  {
+    let folder = MailFolder(accountID: "account", path: ["SpamWise Train Junk"])
+    var plan = MailFolderPlan(folder: folder, purpose: .trainJunk)
+    plan.enabled = true; plan.trainingBaselineValidated = true
+    let saved = plan
+    try await StateRepository.editSettings(store) { $0.mailOptions.folderPlans = [saved] }
+    let source = StubSweepSource([("account", [])])
+    await source.place([StubSweepSource.message("account", 1, mailbox: folder.path[0])], in: folder)
+    let sweeper = sweeper(source)
+
+    try await sweeper.sweep(dryRun: true, limit: 20)
+    #expect(await source.actions.isEmpty)
+    try await StateRepository.editSettings(store) {
+      $0.validatedAccounts = [folder.accountID]
+      $0.dryRun = false
+    }
+    for _ in 1...2 { try await sweeper.sweep(dryRun: false, limit: 20) }
+    #expect(await source.actions == [.moveToJunk])
+    #expect(
+      try await StateRepository.load(store, StateSlices([.corrections])).corrections.count == 1
+    )
+  }
+
+  @Test
   func `reaches folder mail that moved up into positions the previous page emptied`()
     async throws
   {
