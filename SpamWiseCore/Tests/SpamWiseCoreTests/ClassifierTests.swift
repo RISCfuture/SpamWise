@@ -45,6 +45,35 @@ struct `Prompt construction` {
   }
 
   @Test
+  func `marks an example from the same sender only for a trusted aligned pass`() throws {
+    let message = try MIMEParser().parse(
+      Data(
+        ("From: Jane <jane@example.org>\n"
+          + "Authentication-Results: mx.example; dmarc=pass header.from=example.org\n\nHello").utf8
+      )
+    )
+    let example = CorrectionExample(
+      sender: "Jane@example.org",
+      domain: "example.org",
+      subject: "Lunch",
+      excerpt: "See you",
+      label: .inbox,
+      promptScope: .everyAccount
+    )
+    func prompt(trusting servers: Set<String>) throws -> String {
+      try PromptBuilder.prompt(
+        .init(
+          message: message,
+          evidence: .init(message: message, trustedAuthServers: servers),
+          corrections: [example]
+        )
+      )
+    }
+    #expect(try prompt(trusting: ["mx.example"]).contains(#""sameSender":true"#))
+    #expect(try prompt(trusting: []).contains(#""sameSender":false"#))
+  }
+
+  @Test
   func `states the user's category preferences and each example's category`() throws {
     var preferences = CategoryPreferences.defaults
     preferences[.newsletter] = .junk

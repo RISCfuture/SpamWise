@@ -72,7 +72,8 @@ public enum PromptBuilder {
     notice. A sender saying the recipient subscribed, shopped or left a cart is not proof. Do not \
     infer the recipient's interests from the topic, brand or recipient address.
     examples are the recipient's corrections. They show what the recipient wants for similar \
-    content and category, not a blanket rule for every message from that sender or domain.
+    content and category, not a blanket rule for every message from that sender or domain. \
+    sameSender is true only when trusted authentication confirms the From address it matches.
     Return a confidence integer 0–100 for the label and one short reason, at most 200 characters, \
     grounded in the supplied evidence.
     Authentication pass and unsubscribe links are weak evidence: spammers routinely provide both.
@@ -154,7 +155,9 @@ public enum PromptBuilder {
   private static func preferences(_ input: ClassificationInput, budget: PromptBudget)
     -> Preferences
   {
-    let sender = input.message.fromAddress.lowercased()
+    let sender =
+      input.evidence.senderAuthentication == .alignedPass
+      ? input.message.fromAddress.lowercased() : nil
     return Preferences(
       categoryPreferences: Dictionary(
         uniqueKeysWithValues: input.categoryPreferences.all.map {
