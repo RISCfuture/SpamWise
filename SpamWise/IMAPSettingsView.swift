@@ -3,6 +3,8 @@ import SpamWiseCore
 
 /// The mail connection SpamWise uses, and the IMAP account details when it is IMAP.
 struct IMAPSettingsView: View {
+  /// The identity of the IMAP account section, for scrolling to it.
+  static let accountSectionID = "imap.account"
   let settings: SettingsModel
   @Bindable var imap: IMAPConnectionModel
   let storageReady: Bool
@@ -28,7 +30,9 @@ struct IMAPSettingsView: View {
           HelpButton(page: "imap-connection")
         }
         OperationStatusView(operation: imap.operation, identifier: "imap.status")
-      }.disabled(!storageReady)
+      }
+      .disabled(!storageReady)
+      .id(Self.accountSectionID)
     }
   }
 }
