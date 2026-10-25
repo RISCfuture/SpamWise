@@ -10,27 +10,55 @@ public struct NotificationPreferences: Codable, Sendable, Equatable {
   public var includeGood = false
   /// Minimum spacing between notification batches, clamped to ``intervalRangeMin``.
   public var intervalMin = 30
-  /// Local-clock quiet period start; equal endpoints disable quiet hours.
+  /// Whether notifications wait during the quiet period; its hours are kept while it is off.
+  public var quietHoursEnabled = true
+  /// Local-clock quiet period start.
   public var quietStartHour = 22
   /// Local-clock quiet period end, supporting overnight periods.
   public var quietEndHour = 8
   /// ``intervalMin`` limited to ``intervalRangeMin``.
   var boundedIntervalMin: Int { Self.intervalRangeMin.clamp(intervalMin) }
-  /// Creates disabled, quiet notification defaults.
+  /// Creates disabled notification defaults with quiet hours from 22:00 to 08:00.
   public init() {}
+  /**
+   Decodes each field independently, using its default when absent or unreadable.
+
+   Equal start and end hours read as quiet hours off, with the default hours. A value without
+   ``quietHoursEnabled`` has quiet hours on when its hours differ.
+   */
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    let defaults = Self()
+    enabledSince = values.lenient(.enabledSince, default: defaults.enabledSince)
+    includeGood = values.lenient(.includeGood, default: defaults.includeGood)
+    intervalMin = values.lenient(.intervalMin, default: defaults.intervalMin)
+    let start = values.lenient(.quietStartHour, default: defaults.quietStartHour)
+    let end = values.lenient(.quietEndHour, default: defaults.quietEndHour)
+    guard start != end else {
+      quietHoursEnabled = false
+      return
+    }
+    quietHoursEnabled = values.lenient(.quietHoursEnabled, default: true)
+    quietStartHour = start
+    quietEndHour = end
+  }
   /**
    Whether `date` falls in the quiet period, which may run overnight.
 
-   Equal start and end hours disable quiet hours; an hour outside 0 through 23 makes every time
-   quiet.
+   Nothing is quiet while ``quietHoursEnabled`` is off or the start and end hours are equal; an
+   hour outside 0 through 23 makes every time quiet.
    */
   public func isQuiet(at date: Date, calendar: Calendar = .current) -> Bool {
+    guard quietHoursEnabled else { return false }
     guard (0...23).contains(quietStartHour), (0...23).contains(quietEndHour) else { return true }
     guard quietStartHour != quietEndHour else { return false }
     let hour = calendar.component(.hour, from: date)
     return quietStartHour < quietEndHour
       ? (quietStartHour..<quietEndHour).contains(hour)
       : hour >= quietStartHour || hour < quietEndHour
+  }
+  private enum CodingKeys: String, CodingKey {
+    case enabledSince, includeGood, intervalMin, quietHoursEnabled, quietStartHour, quietEndHour
   }
 }
 
