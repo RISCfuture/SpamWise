@@ -128,20 +128,24 @@ UIDVALIDITY change falls below the new boundary and is not filtered automaticall
 IMAP has no preview or refilter for mail below the boundary.
 
 Each run first reads every message above the highest UID already read, oldest first,
-up to five pages and the 4 MB byte budget; the rest resumes on the next run. Once new
-mail is caught up, the run reads one persisted backfill page that restarts after
-reaching the boundary or the newest 10,000 messages. That progress is saved only after
-every message the run read has been processed, so mail from a cancelled, failed or
-paused run is read again. While filtering is paused, runs read nothing. Runs also
-maintain bounded Sent history for reply evidence, at most every 15 minutes, and
-action-enabled runs process due classification retries for the configured account.
+up to five pages and the 4 MB byte budget; the rest resumes on the next run. A run
+scans at most the newest 2,000 messages for new mail, so a burst deeper than that leaves
+its older part to a persisted backfill. Once new mail is caught up, each run reads one
+backfill page, newest first, skipping without download the mail already read, until
+the backfill reaches the mail read before the burst or the newest 10,000 messages; it
+then stops until another burst. That progress is saved only after every message the
+run read has been processed, so mail from a cancelled, failed or paused run is read
+again. Otherwise each message is read once. While filtering is paused, runs read
+nothing. Runs also maintain bounded Sent history for reply evidence, at most every 15
+minutes, and action-enabled runs process due classification retries for the configured
+account.
 
-A dry run records the decisions it previews without moving mail. While dry run stays
-on, a previewed message is not classified again, even after a rule, setting or
-correction changes the policy. Once filtering that shares the store is live, including
-the app's, it acts on that mail, reusing each decision made under unchanged rules and
-settings instead of classifying the message again. While the app filters live, dry-run polling in the same store therefore makes
-the decisions the app acts on; give it its own `statePath` to keep them apart.
+A dry run records the decisions it previews without moving mail. Because runs don't
+read a message again, mail previewed during a dry run stays where it is when filtering
+goes live, and rule, setting or correction changes make no new provider requests for
+it. Dry-run polling that shares the store and account with live IMAP filtering,
+including the app's, therefore leaves the mail it reads unfiltered; give it its own
+`statePath` to keep them apart.
 
 In poll mode a failed sweep is logged with its category and retried after a delay
 that doubles from the poll interval up to an hour. The daemon exits on configuration
