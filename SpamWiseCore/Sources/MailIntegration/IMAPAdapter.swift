@@ -85,13 +85,15 @@ public actor IMAPAdapter: MailClientAdapter {
     try await messages(mailbox: "INBOX", limit: limit)
   }
   /**
-   Reads new Inbox mail, then one backfill page toward the account's start boundary.
+   Reads new Inbox mail, then one page of any pending backfill.
 
    The first sweep for a UIDVALIDITY records the highest existing UID as the boundary and reads
    nothing; later sweeps only return messages whose UIDs exceed it. Each sweep first reads every
-   message above the highest UID already read, oldest first and within a budget, and reads the
-   backfill page only once it has caught up. Nothing advances until ``commit(_:cursorStore:)``,
-   so mail from a sweep whose processing stopped early is read again as new mail.
+   message above the highest UID already read, oldest first and within a budget. An arrival
+   burst too deep to scan leaves its older part to a backfill, which a sweep pages through only
+   once it has caught up, skipping mail already read without fetching it. Nothing advances until
+   ``commit(_:cursorStore:)``, so mail from a sweep whose processing stopped early is read again
+   as new mail.
    */
   public func nextInboxSweep(limit: Int, cursorStore: Store? = nil) async throws
     -> IMAPInboxSweep
