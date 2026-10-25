@@ -318,9 +318,16 @@ enum MailScripts {
             return rows
         end timeout
     end \(Handler.findMessages.rawValue)
+    on sizedMatches(targetBox, wantedBytes)
+        if wantedBytes < 0 then return {}
+        tell application "Mail" to return (every message of targetBox whose message size is \
+    wantedBytes)
+    end sizedMatches
     on \(Handler.observeMessages.rawValue)(accountID, roleName, wantedID, wantedBytes)
         with timeout of \(eventTimeoutSeconds) seconds
             set targetBox to my roleBox(roleName, accountID)
+            if wantedID is "" then return my appendMatches(my sizedMatches(targetBox, \
+    wantedBytes), {})
             return my appendMatches(my matchesIn(targetBox, wantedID, -1, wantedBytes), {})
         end timeout
     end \(Handler.observeMessages.rawValue)

@@ -87,7 +87,10 @@ message in Recovered Messages. After each move, SpamWise polls the message every
 seconds and confirms the move after two consecutive matching observations, giving up
 after 30 seconds. Once those 30 seconds have passed it checks again, and records the
 outcome as unconfirmed if the message is no longer the destination's only copy; the
-disposable probe instead waits the full 30 seconds before each move counts. That is an
+disposable probe instead waits the full 30 seconds before each move counts. Automatic
+moves leave mail without a Message-ID in place. A correction still moves such a message,
+then observes it in the account's destination mailbox among the messages of its recorded
+size, confirms it only by an exact content match, and rechecks it the same way. That is an
 observation of Mail's local state, not a server acknowledgement, and the Apple Events handlers rewritten since these probes still need
 a fresh signed run.</p>
 <p>Mail's account-specific special Inbox/Junk roles are used for moves; SpamWise does

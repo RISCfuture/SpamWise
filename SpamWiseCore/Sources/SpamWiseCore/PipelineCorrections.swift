@@ -110,7 +110,7 @@ extension Pipeline {
         correction.record,
         adapter: adapter,
         forceDryRun: false,
-        mode: .correction(steps: correction.steps)
+        mode: .correction(steps: correction.steps, searchesAccount: request.searchesAccount)
       )
     } catch {
       return await recordUnstarted(correction.record, cause: error)
@@ -176,6 +176,9 @@ struct CorrectionRequest: Sendable {
   var seed: DecisionRecord?
   /// The Review annotation SpamWise left on the message, when the corrected record doesn't carry it.
   var reviewAnnotation: MailAction?
+  /// Whether the mail steps may find the message outside its recorded mailbox; false leaves a
+  /// message that has since left it untouched.
+  var searchesAccount = true
 }
 
 extension DecisionRecord {
