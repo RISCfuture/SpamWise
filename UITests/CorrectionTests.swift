@@ -3,9 +3,13 @@ import XCTest
 /// Corrections of the fixture's recorded Junk decision while every Mail action fails.
 final class CorrectionTests: UITestCase {
   @MainActor
-  func testStatisticsCountTheRecordedDecision() {
-    let statistics = ActivityScreen.launchCorrectionFixture().openStatistics()
+  func testStatisticsCountTheRecordedDecisionAndHideTheSelectionFromCorrections() {
+    let activity = ActivityScreen.launchCorrectionFixture()
+    _ = activity.openFixture()
+    XCTAssertTrue(activity.canMarkSelectionAsJunk())
+    let statistics = activity.openStatistics()
     XCTAssertTrue(statistics.waitForDecisionCount(1))
+    XCTAssertFalse(activity.canMarkSelectionAsJunk())
   }
 
   @MainActor

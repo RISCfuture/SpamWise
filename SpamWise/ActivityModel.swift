@@ -81,6 +81,13 @@ final class ActivityModel {
     rows.first { $0.id == id }
   }
 
+  /// The stored record with `id`, shown or not; nil once the log no longer holds it or it can't be read.
+  func storedRecord(id: UUID) async -> DecisionRecord? {
+    guard let store else { return record(id: id) }
+    return try? await StateRepository.load(store, StateSlices(records: .only([id]))).records
+      .first { $0.id == id }
+  }
+
   /// Fetches the shown page and today's counts, after a short pause so typing coalesces.
   func reload() async {
     guard let store else { return }

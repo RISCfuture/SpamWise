@@ -17616,6 +17616,102 @@
           }
         }
       }
+    },
+    "No Decision Selected": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguna decisión seleccionada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune décision sélectionnée"
+          }
+        }
+      }
+    },
+    "Select a decision to see why SpamWise made it and to correct it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selecciona una decisión para ver por qué SpamWise la tomó y para corregirla."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélectionnez une décision pour voir pourquoi SpamWise l’a prise et pour la corriger."
+          }
+        }
+      }
+    },
+    "Show in Inspector": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar en el inspector"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher dans l’inspecteur"
+          }
+        }
+      }
+    },
+    "Decision Unavailable": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisión no disponible"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Décision indisponible"
+          }
+        }
+      }
+    },
+    "Activity no longer keeps this decision.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actividad ya no conserva esta decisión."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activité ne conserve plus cette décision."
+          }
+        }
+      }
+    },
+    "Loading the Review digest…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando el resumen de revisión…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement du récapitulatif à vérifier…"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

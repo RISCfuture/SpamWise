@@ -10,7 +10,7 @@ struct ContentView: View {
     Group {
       switch MainWindowContent(model.shared) {
         case .loading:
-          ProgressView().controlSize(.large)
+          ProgressView { Text("Loading…") }.labelsHidden().controlSize(.large)
             .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
         case .recovery:
           StorageRecoveryView(recovery: model.recovery)
@@ -86,8 +86,22 @@ private struct LoginLaunchWindow: ViewModifier {
 private struct ActivityView: View {
   let model: AppModel
   @State private var selection: UUID?
+  @SceneStorage("activity.showsInspector")
+  private var showsInspector = true
 
   private var selected: DecisionRecord? { model.activity.record(id: selection) }
+  /// The selection, which clears the previous decision's correction and message statuses when it changes.
+  private var tableSelection: Binding<UUID?> {
+    Binding(
+      get: { selection },
+      set: { id in
+        guard id != selection else { return }
+        selection = id
+        model.corrections.decision.status = nil
+        model.messages.operation.status = nil
+      }
+    )
+  }
   private var reload: ActivityReload {
     ActivityReload(
       records: model.shared.recordsVersion,
@@ -103,34 +117,26 @@ private struct ActivityView: View {
       if activity.query.hasFilters {
         ActivityFilterBanner(activity: activity)
       }
-      ActivityTable(activity: activity, selection: $selection)
+      ActivityTable(model: model, selection: tableSelection)
         .navigationTitle("Activity")
         .searchable(text: $activity.query.text, prompt: "Search sender, subject or reason")
         .toolbar(id: "activity") {
-          ActivityToolbar(model: model, canInspect: selected != nil)
+          ActivityToolbar(model: model)
         }
         .inspector(isPresented: $router.showsInspector) {
-          if let selected {
-            DecisionDetailView(
-              row: selected,
-              corrections: model.corrections,
-              messages: model.messages,
-              shared: model.shared,
-              activity: model.activity
-            ) { model.router.present(.messagePreview($0)) }
+          ActivityInspector(model: model, selected: selected)
             .inspectorColumnWidth(min: 300, ideal: 340, max: 440)
-          }
         }
-        .onChange(of: selection) { _, value in
-          router.showsInspector = value != nil
-          model.corrections.decision.status = nil
-          model.messages.operation.status = nil
+        .onChange(of: selected?.id) { _, id in
+          if id == nil { tableSelection.wrappedValue = nil }
         }
       ActivityStatusView(model: model)
     }
     .frame(minWidth: ContentView.minimumSize.width, minHeight: ContentView.minimumSize.height)
-    .focusedSceneValue(\.selectedDecision, selected)
+    .focusedSceneValue(\.selectedDecision, router.sheet == nil ? selected : nil)
     .task(id: reload) { await activity.reload() }
+    .onAppear { router.showsInspector = showsInspector }
+    .onChange(of: router.showsInspector) { _, shown in showsInspector = shown }
     .sheet(item: $router.sheet) { sheet in ActivitySheetView(sheet: sheet, model: model) }
   }
 }
@@ -142,11 +148,36 @@ private struct ActivityReload: Equatable {
   let limit: Int
 }
 
+/// The selected decision's details, or a note that nothing is selected.
+private struct ActivityInspector: View {
+  let model: AppModel
+  let selected: DecisionRecord?
+
+  var body: some View {
+    if let selected {
+      DecisionDetailView(
+        row: selected,
+        corrections: model.corrections,
+        messages: model.messages,
+        shared: model.shared,
+        activity: model.activity
+      ) { model.router.present(.messagePreview($0)) }
+    } else {
+      ContentUnavailableView(
+        "No Decision Selected",
+        systemImage: "sidebar.trailing",
+        description: Text("Select a decision to see why SpamWise made it and to correct it.")
+      )
+    }
+  }
+}
+
 private struct ActivityTable: View {
-  @Bindable var activity: ActivityModel
+  let model: AppModel
   @Binding var selection: UUID?
 
   var body: some View {
+    @Bindable var activity = model.activity
     Table(activity.rows, selection: $selection, sortOrder: $activity.sortOrder) {
       TableColumn("Date", value: \.date) { row in
         Text(row.date, format: .activityDate)
@@ -156,7 +187,7 @@ private struct ActivityTable: View {
         Text(row.displaySubject).accessibilityIdentifier("activity.subject.\(row.id)")
       }.width(min: 160, ideal: 280)
       TableColumn("Verdict") { row in
-        VerdictBadge(label: row.decision.label)
+        VerdictBadge(row: row)
       }.width(min: 90, ideal: 110)
       TableColumn("Confidence") { row in
         if let verdict = row.verdict {
@@ -167,6 +198,13 @@ private struct ActivityTable: View {
         let reason = row.decision.reason.localizedDescription
         Text(reason).lineLimit(1).help(reason)
       }.width(min: 120, ideal: 240)
+    }
+    .contextMenu(forSelectionType: UUID.self) { ids in
+      if let row = ids.first.flatMap(activity.record(id:)) {
+        ActivityRowMenu(model: model, row: row) { selection = row.id }
+      }
+    } primaryAction: { ids in
+      if let row = ids.first.flatMap(activity.record(id:)) { model.messages.open(row) }
     }
     .overlay {
       if activity.rows.isEmpty {
@@ -184,6 +222,54 @@ private struct ActivityTable: View {
         .padding(.vertical, 6)
       }
     }
+  }
+}
+
+/**
+ The actions for one Activity row: its corrections, a new classification and the message itself.
+
+ An action whose status or follow-up appears in the inspector selects the row and shows the
+ inspector first.
+ */
+private struct ActivityRowMenu: View {
+  let model: AppModel
+  let row: DecisionRecord
+  /// Selects the row, so the inspector shows it.
+  let select: () -> Void
+
+  var body: some View {
+    ForEach(DecisionCorrectionCommand.all, id: \.label) { command in
+      Button(command.label.correctionTitle) {
+        inspect()
+        model.corrections.correct(row, label: command.label)
+      }
+      .disabled(!model.corrections.canCorrect(row))
+    }
+    if row.isRetryable {
+      Button("Classify Again") {
+        inspect()
+        model.corrections.retryClassification(row)
+      }
+      .disabled(!model.corrections.canRetry(row))
+    }
+    Divider()
+    Button("Preview Message") {
+      inspect()
+      model.messages.preview(row) { model.router.present(.messagePreview($0)) }
+    }
+    if model.messages.canOpenInMail(row) {
+      Button("Open in Mail") {
+        inspect()
+        model.messages.open(row)
+      }
+    }
+    Divider()
+    Button("Show in Inspector", action: inspect)
+  }
+
+  private func inspect() {
+    select()
+    model.router.showsInspector = true
   }
 }
 
@@ -231,7 +317,6 @@ private struct ActivityFilterBanner: View {
 
 private struct ActivityToolbar: CustomizableToolbarContent {
   let model: AppModel
-  let canInspect: Bool
 
   var body: some CustomizableToolbarContent {
     ToolbarItem(id: "pause") {
@@ -260,7 +345,6 @@ private struct ActivityToolbar: CustomizableToolbarContent {
     }
     ToolbarItem(id: "inspector", placement: .primaryAction) {
       InspectorToggle(router: model.router)
-        .disabled(!canInspect)
         .accessibilityIdentifier("activity.inspector")
     }
   }
