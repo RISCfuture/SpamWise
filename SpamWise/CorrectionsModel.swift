@@ -28,6 +28,8 @@ final class CorrectionsModel {
   private(set) var pendingDecision: PendingCorrection?
   /// A rule that still decides the sender’s mail after the latest decision correction.
   private(set) var conflict: RuleConflict?
+  /// The category preference the latest decision correction suggests, until applied or dismissed.
+  private(set) var categoryFollowUp: CategoryFollowUp?
   /// Selected messages waiting for the user to confirm unverified senders.
   private(set) var pendingSelection: SelectionBatch?
   /// How far the running selected-message correction has got.
@@ -37,10 +39,13 @@ final class CorrectionsModel {
   /// A summary of the latest selected-message correction, for the menu bar.
   private(set) var selectionSummary: String?
   @ObservationIgnored private let services: AppServices
+  @ObservationIgnored private let settings: SettingsModel
   /// Results of the running selected-message correction, by position in Mail's selection.
   @ObservationIgnored private var finishedSelection: [Int: SelectionCorrectionResult] = [:]
 
-  init(services: AppServices) { self.services = services }
+  init(services: AppServices, settings: SettingsModel) {
+    self.services = services; self.settings = settings
+  }
 
   private static func savedStatus(_ record: DecisionRecord, failures: [String]) -> String {
     let outcome = record.outcome.localizedTitle
@@ -111,8 +116,28 @@ extension CorrectionsModel {
     perform(pendingDecision)
   }
 
+  /// Saves the waiting Junk correction as a scam: the message moves to Junk and no sender rule is
+  /// saved, because a scam's From address is likely forged.
+  func confirmPendingDecisionAsScam() {
+    guard let pendingDecision else { return }
+    self.pendingDecision = nil
+    perform(pendingDecision, savesRule: false, category: .scam)
+  }
+
   /// Drops the correction waiting for confirmation; nothing is saved.
   func cancelPendingDecision() { pendingDecision = nil }
+
+  /// Applies the latest correction's suggested preference to its whole category.
+  func applyCategoryFollowUp() {
+    guard let categoryFollowUp else { return }
+    self.categoryFollowUp = nil
+    settings.editSettings {
+      $0.categoryPreferences[categoryFollowUp.category] = categoryFollowUp.preference
+    }
+  }
+
+  /// Keeps the category's preference as it is.
+  func dismissCategoryFollowUp() { categoryFollowUp = nil }
 
   /// Restores the rules and learning saved before the latest correction; mail does not move.
   func undoLatestCorrection() {
@@ -136,8 +161,13 @@ extension CorrectionsModel {
   /// Keeps the rule that overrides the latest correction.
   func keepConflictingRule() { conflict = nil }
 
-  private func perform(_ correction: PendingCorrection) {
+  private func perform(
+    _ correction: PendingCorrection,
+    savesRule: Bool = true,
+    category: MailCategory? = nil
+  ) {
     conflict = nil
+    categoryFollowUp = nil
     decision.run { [self] in
       decisionOutcome = nil
       let pipeline = try services.requirePipeline()
@@ -152,10 +182,19 @@ extension CorrectionsModel {
         recordID: record.id,
         label: correction.label,
         scope: correction.scope,
-        adapter: adapter
+        adapter: adapter,
+        savesRule: savesRule,
+        category: category
       )
       if let rule = try? await pipeline.overridingRule(for: result) {
         conflict = RuleConflict(recordID: record.id, rule: rule)
+      }
+      if category == nil {
+        categoryFollowUp = CategoryFollowUp(
+          correcting: record,
+          to: correction.label,
+          current: settings.settings.categoryPreferences
+        )
       }
       decisionOutcome = result.outcome
       let failures = [result.actionError, adapterFailure].compactMap(\.self)
@@ -367,6 +406,23 @@ struct PendingCorrection: Equatable {
 
   static func == (lhs: Self, rhs: Self) -> Bool {
     lhs.record.id == rhs.record.id && lhs.label == rhs.label && lhs.scope == rhs.scope
+  }
+}
+
+/// A preference for a whole graymail category that one correction implies.
+struct CategoryFollowUp: Equatable {
+  /// The corrected record.
+  let recordID: UUID
+  let category: MailCategory
+  let preference: GraymailPreference
+
+  /// The follow-up for correcting `record` to `label`, or nil when its category already has that preference.
+  init?(correcting record: DecisionRecord, to label: MailLabel, current: CategoryPreferences) {
+    guard let category = record.verdict?.category, let preference = current[category],
+      preference != GraymailPreference(correctedTo: label)
+    else { return nil }
+    recordID = record.id; self.category = category
+    self.preference = GraymailPreference(correctedTo: label)
   }
 }
 

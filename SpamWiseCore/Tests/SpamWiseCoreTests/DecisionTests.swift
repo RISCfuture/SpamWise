@@ -18,6 +18,43 @@ func `selects actions at each decision threshold`(
   #expect(try action(.junk, strength.threshold).action == .moveToJunk)
 }
 
+@Test(arguments: FilteringStrength.allCases)
+func `bounds a graymail verdict by the user's preference for its category`(
+  _ strength: FilteringStrength
+) throws {
+  func label(_ label: MailLabel, _ preference: GraymailPreference, confidence: Int = 100) throws
+    -> MailLabel?
+  {
+    try Decision.evaluate(
+      .init(label: label, category: .promotion, confidence: confidence, reason: "fixture"),
+      strength: strength,
+      preference: preference
+    ).label
+  }
+  #expect(try label(.junk, .keep) == .review)
+  #expect(try label(.inbox, .keep) == .inbox)
+  #expect(try label(.inbox, .review) == .review)
+  #expect(try label(.junk, .review) == .review)
+  #expect(try label(.inbox, .junk) == .review)
+  #expect(try label(.junk, .junk) == .junk)
+  #expect(try label(.junk, .junk, confidence: strength.threshold - 1) == .review)
+}
+
+@Test
+func `applies a category preference only to model verdicts`() async throws {
+  let store = try testStore()
+  try await StateRepository.update(store) {
+    $0.settings.categoryPreferences[.promotion] = .keep
+    $0.rules = [SenderRule(scope: .address, value: "reward@courtesy-kit.lat", disposition: .block)]
+  }
+  let verdict = Verdict(label: .junk, category: .promotion, confidence: 100, reason: "sale")
+  let pipeline = Pipeline(store: store, classifier: MockClassifier(verdict: verdict))
+  let ruled = await pipeline.process(try envelope(), adapter: RecordingAdapter())
+  #expect(ruled.decision.label == .junk && ruled.decision.preference == nil)
+  let modeled = await pipeline.process(try envelope("stranger-cart"), adapter: RecordingAdapter())
+  #expect(modeled.decision.label == .review && modeled.decision.preference == .keep)
+}
+
 @Test
 func `annotates Review with the chosen treatment`() throws {
   let verdict = Verdict(label: .review, confidence: 50, reason: "uncertain")

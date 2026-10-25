@@ -22,6 +22,10 @@ public struct EvaluationObservation: Codable, Sendable {
   public var concealsContent: Bool
   /// Statistical split used to select thresholds; nil when the source assigns none.
   public var partition: LearningPartition?
+  /// The model's category for the message; nil without a verdict or for other systems' results.
+  public var category: MailCategory?
+  /// The graymail preference that bounded the decision; nil when none applied.
+  public var preference: GraymailPreference?
   /// Explanation retained for misclassification review.
   public var reason: String
   /**
@@ -72,19 +76,31 @@ public struct EvaluationObservation: Codable, Sendable {
       concealsContent: record.decision.reason == .concealedContent,
       partition: partition
     )
+    category = record.verdict?.category
+    preference = record.decision.preference
   }
 
   /// This result as `Decision` would label it at `strength`; results without a verdict are unchanged.
   public func decided(strength: FilteringStrength) -> Self {
     decided { verdict in
-      try Decision.evaluate(verdict, strength: strength, concealsContent: concealsContent)
+      try Decision.evaluate(
+        verdict,
+        strength: strength,
+        concealsContent: concealsContent,
+        preference: preference
+      )
     }
   }
 
   /// This result as `Decision` would label it at an explicit Junk confidence threshold.
   public func decided(junkThreshold: Int) -> Self {
     decided { verdict in
-      try Decision.evaluate(verdict, junkThreshold: junkThreshold, concealsContent: concealsContent)
+      try Decision.evaluate(
+        verdict,
+        junkThreshold: junkThreshold,
+        concealsContent: concealsContent,
+        preference: preference
+      )
     }
   }
 

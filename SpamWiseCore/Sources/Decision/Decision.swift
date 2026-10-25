@@ -83,9 +83,16 @@ public struct Decision: Codable, Sendable, Equatable {
   public var action: MailAction
   /// The evidence or policy behind this result.
   public var reason: DecisionReason
-  /// Records a label and action as given; ``evaluate(_:reason:strength:review:concealsContent:)`` derives them by policy.
-  public init(label: MailLabel?, action: MailAction, reason: DecisionReason) {
-    self.label = label; self.action = action; self.reason = reason
+  /// The user's preference for the verdict's graymail category, when one shaped this result.
+  public var preference: GraymailPreference?
+  /// Records a label and action as given; ``evaluate(_:reason:strength:review:concealsContent:preference:)`` derives them by policy.
+  public init(
+    label: MailLabel?,
+    action: MailAction,
+    reason: DecisionReason,
+    preference: GraymailPreference? = nil
+  ) {
+    self.label = label; self.action = action; self.reason = reason; self.preference = preference
   }
   /**
    Decodes a stored decision, mapping a reason saved as text to ``DecisionReason`` and a reason
@@ -101,6 +108,7 @@ public struct Decision: Codable, Sendable, Equatable {
       } else {
         (try? container.decode(DecisionReason.self, forKey: .reason)) ?? .unrecognized
       }
+    preference = try? container.decodeIfPresent(GraymailPreference.self, forKey: .preference)
   }
   /**
    Applies deterministic policy without requesting a mail action.
@@ -112,20 +120,24 @@ public struct Decision: Codable, Sendable, Equatable {
      - review: The annotation for Review messages.
      - concealsContent: Whether part of the message couldn't be read reliably; an Inbox verdict
        then becomes Review for ``DecisionReason/concealedContent``.
+     - preference: The user's preference for the verdict's graymail category, or nil when none
+       applies, as for gate decisions and mail that is not graymail.
    */
   public static func evaluate(
     _ verdict: Verdict,
     reason: DecisionReason? = nil,
     strength: FilteringStrength = .balanced,
     review: ReviewTreatment = .orangeFlag,
-    concealsContent: Bool = false
+    concealsContent: Bool = false,
+    preference: GraymailPreference? = nil
   ) throws -> Self {
     try evaluate(
       verdict,
       reason: reason,
       junkThreshold: strength.threshold,
       review: review,
-      concealsContent: concealsContent
+      concealsContent: concealsContent,
+      preference: preference
     )
   }
   /**
@@ -139,18 +151,20 @@ public struct Decision: Codable, Sendable, Equatable {
      - review: The annotation for Review messages.
      - concealsContent: Whether part of the message couldn't be read reliably; an Inbox verdict
        then becomes Review for ``DecisionReason/concealedContent``.
+     - preference: The user's preference for the verdict's graymail category. Keep never moves a
+       message to Junk, Review always flags it, and Junk never leaves it unflagged in Inbox.
    */
   public static func evaluate(
     _ verdict: Verdict,
     reason: DecisionReason? = nil,
     junkThreshold: Int,
     review: ReviewTreatment = .orangeFlag,
-    concealsContent: Bool = false
+    concealsContent: Bool = false,
+    preference: GraymailPreference? = nil
   ) throws -> Self {
     _ = try verdict.validated()
-    var label =
-      verdict.label == .junk && verdict.confidence < junkThreshold
-      ? MailLabel.review : verdict.label
+    var label = verdict.label.bounded(by: preference)
+    if label == .junk, verdict.confidence < junkThreshold { label = .review }
     var reason = reason ?? .model(verdict.reason)
     if concealsContent, label == .inbox { (label, reason) = (.review, .concealedContent) }
     let action: MailAction
@@ -159,7 +173,17 @@ public struct Decision: Codable, Sendable, Equatable {
       case .review: action = review.action
       case .junk: action = .moveToJunk
     }
-    return .init(label: label, action: action, reason: reason)
+    return .init(label: label, action: action, reason: reason, preference: preference)
   }
-  private enum CodingKeys: String, CodingKey { case label, action, reason }
+  private enum CodingKeys: String, CodingKey { case label, action, reason, preference }
+}
+
+extension MailLabel {
+  /// This label within the range a graymail preference allows.
+  fileprivate func bounded(by preference: GraymailPreference?) -> Self {
+    switch (preference, self) {
+      case (.keep, .junk), (.review, _), (.junk, .inbox): .review
+      default: self
+    }
+  }
 }

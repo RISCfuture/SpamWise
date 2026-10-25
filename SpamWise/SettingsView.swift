@@ -65,7 +65,7 @@ struct SettingsView: View {
 
 /// A tab of the Settings window.
 enum SettingsPane: String, CaseIterable, Identifiable {
-  case general, classifier, accounts, rules, policy, advanced
+  case general, classifier, accounts, rules, preferences, advanced
 
   var id: Self { self }
   var title: LocalizedStringResource {
@@ -74,7 +74,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
       case .classifier: "Classifier"
       case .accounts: "Accounts"
       case .rules: "Rules"
-      case .policy: "Policy"
+      case .preferences: "Preferences"
       case .advanced: "Advanced"
     }
   }
@@ -84,7 +84,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
       case .classifier: "sparkles"
       case .accounts: "at"
       case .rules: "line.3.horizontal.decrease"
-      case .policy: "text.bubble"
+      case .preferences: "slider.horizontal.3"
       case .advanced: "gearshape.2"
     }
   }
@@ -106,8 +106,8 @@ private struct SettingsPaneView: View {
         AccountSettingsView(model: model)
       case .rules:
         RuleEditorView(rules: model.rules, shared: model.shared)
-      case .policy:
-        PolicyView(settings: model.settings)
+      case .preferences:
+        PreferencesView(preferences: model.preferences, settings: model.settings)
       case .advanced:
         AdvancedSettingsView(model: model)
     }

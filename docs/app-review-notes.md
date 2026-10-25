@@ -35,7 +35,7 @@ login is opt-in. Quitting stops monitoring.
 Use a test Mail account with disposable synthetic messages. Do not use the
 developer’s private mailbox or API keys.
 
-1. Launch the release app, complete the four setup steps and retain dry run.
+1. Launch the release app, complete the five setup steps and retain dry run.
 2. Grant Automation permission to connect Mail, or deny it to inspect the explicit
    failure state.
 3. Set an address rule and preview a matching synthetic message. Inspect its

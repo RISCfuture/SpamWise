@@ -57,6 +57,11 @@ struct ActivityScreen {
     return GeneralSettingsScreen.waitForLanding(in: app)
   }
 
+  func openPreferencesSettings() -> CategoryPreferencesScreen {
+    openSettingsPane("Preferences")
+    return CategoryPreferencesScreen.waitForLanding(in: app)
+  }
+
   func openEvidenceSettings() -> EvidenceScreen {
     openSettingsPane("Advanced")
     return EvidenceScreen.waitForLanding(in: app)

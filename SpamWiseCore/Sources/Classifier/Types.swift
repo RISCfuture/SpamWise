@@ -68,6 +68,8 @@ public struct Verdict: Codable, Sendable, Equatable {
   }
   /// The explicit Inbox, Review, or Junk label.
   public var label: MailLabel
+  /// What kind of mail the model judged the message to be.
+  public var category: MailCategory
   /// Uncalibrated model confidence on the integer scale 0 through 100.
   public var confidence: Int
   /// Short explanation of the evidence or policy behind this result.
@@ -75,10 +77,27 @@ public struct Verdict: Codable, Sendable, Equatable {
   /// Provider token counts with explicit measurement provenance.
   public var usage: TokenUsage
   /// Creates a verdict, truncating `reason` to 240 characters; ``validated()`` checks the result.
-  public init(label: MailLabel, confidence: Int, reason: String, usage: TokenUsage = .init()) {
-    self.label = label; self.confidence = confidence
+  public init(
+    label: MailLabel,
+    category: MailCategory = .unknown,
+    confidence: Int,
+    reason: String,
+    usage: TokenUsage = .init()
+  ) {
+    self.label = label; self.category = category; self.confidence = confidence
     self.reason = String(reason.prefix(ClassificationLimits.maximumReasonCharacters))
     self.usage = usage
+  }
+  /// Decodes a stored verdict; one recorded before categories existed is ``MailCategory/unknown``.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    self.init(
+      label: try values.decode(MailLabel.self, forKey: .label),
+      category: try values.decodeIfPresent(MailCategory.self, forKey: .category) ?? .unknown,
+      confidence: try values.decode(Int.self, forKey: .confidence),
+      reason: try values.decode(String.self, forKey: .reason),
+      usage: try values.decode(TokenUsage.self, forKey: .usage)
+    )
   }
 
   /// Rejects confidence outside 0 through 100 and empty explanations.
@@ -88,6 +107,7 @@ public struct Verdict: Codable, Sendable, Equatable {
     else { throw ClassificationError.invalidOutput }
     return self
   }
+  private enum CodingKeys: String, CodingKey { case label, category, confidence, reason, usage }
 }
 /// A bounded quotation of an explicit user correction.
 public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {
@@ -108,6 +128,8 @@ public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {
   public private(set) var excerpt: String
   /// The explicit Inbox, Review, or Junk label.
   public var label: MailLabel
+  /// What kind of mail the corrected message was judged to be; nil when it was not classified.
+  public var category: MailCategory?
   /// Content identity for forgetting an explicitly linked training example.
   public var sampleID: String?
   /// Mail whose prompts may quote this example; nil examples are never quoted.
@@ -146,7 +168,7 @@ public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {
     case everyAccount
   }
   private enum CodingKeys: String, CodingKey {
-    case id, date, sender, domain, subject, label, sampleID, promptScope
+    case id, date, sender, domain, subject, label, category, sampleID, promptScope
     case excerpt = "gist"
   }
 }
@@ -156,6 +178,8 @@ public struct ClassificationInput: Sendable {
   public var message: ParsedMessage
   /// Signals available when the decision was made.
   public var evidence: EvidenceBundle
+  /// The user's preference for each kind of graymail.
+  public var categoryPreferences: CategoryPreferences
   /// The user's bounded plain-English filtering preferences.
   public var policy: String
   /// Explicit user corrections, most relevant first, quoted as examples.
@@ -175,13 +199,15 @@ public struct ClassificationInput: Sendable {
   public init(
     message: ParsedMessage,
     evidence: EvidenceBundle,
+    categoryPreferences: CategoryPreferences = .defaults,
     policy: String = PromptBuilder.defaultPolicy,
     corrections: [CorrectionExample] = [],
     correctionLimit: Int = 5,
     bodyTokenBudget: Int = 1500,
     timeout: TimeInterval = 15
   ) {
-    self.message = message; self.evidence = evidence; self.policy = policy
+    self.message = message; self.evidence = evidence
+    self.categoryPreferences = categoryPreferences; self.policy = policy
     self.corrections = corrections
     self.correctionLimit = ClassificationLimits.correctionLimitRange.clamp(correctionLimit)
     self.bodyTokenBudget = ClassificationLimits.bodyTokenBudgetRange.clamp(bodyTokenBudget)

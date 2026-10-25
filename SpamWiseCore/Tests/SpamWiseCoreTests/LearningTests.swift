@@ -82,6 +82,29 @@ struct `Policy suggestions` {
   }
 
   @Test
+  func `suggests a category preference only when corrections across senders agree`() throws {
+    func promotion(_ sender: String, _ label: MailLabel, date: Double) -> CorrectionExample {
+      var example = correction("sale \(sender)", sender: sender, label: label, date: date)
+      example.category = .promotion
+      return example
+    }
+    let junked = [
+      promotion("deals@a.example", .junk, date: 1), promotion("deals@b.example", .junk, date: 2),
+      promotion("deals@c.example", .junk, date: 3)
+    ]
+    let suggestion = try #require(
+      PolicyDistiller.categorySuggestions(from: junked, preferences: .defaults).first
+    )
+    #expect(suggestion.category == .promotion && suggestion.preference == .junk)
+    #expect(suggestion.domainCount == 3)
+    let kept = junked + [promotion("deals@d.example", .inbox, date: 4)]
+    #expect(PolicyDistiller.categorySuggestions(from: kept, preferences: .defaults).isEmpty)
+    var preferences = CategoryPreferences.defaults
+    preferences[.promotion] = .junk
+    #expect(PolicyDistiller.categorySuggestions(from: junked, preferences: preferences).isEmpty)
+  }
+
+  @Test
   func `counts known senders at a domain from corrections and records`() {
     var state = AppState()
     state.corrections = repeatedShopJunk + friendsAtSharedProviders

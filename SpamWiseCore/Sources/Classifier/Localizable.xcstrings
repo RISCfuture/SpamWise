@@ -49,6 +49,54 @@
         }
       }
     },
+    "Articles, digests and editorial mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artículos, resúmenes y correo editorial"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Articles, résumés et courriers éditoriaux"
+          }
+        }
+      }
+    },
+    "Card and loan offers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ofertas de tarjetas y préstamos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offres de cartes et de prêts"
+          }
+        }
+      }
+    },
+    "Cart reminders": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordatorios de carrito"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rappels de panier"
+          }
+        }
+      }
+    },
     "Classification is unavailable. Mail was left unchanged.": {
       "localizations": {
         "es": {
@@ -77,6 +125,310 @@
           "stringUnit": {
             "state": "translated",
             "value": "La classification a été annulée."
+          }
+        }
+      }
+    },
+    "Clubs and groups": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clubes y grupos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clubs et groupes"
+          }
+        }
+      }
+    },
+    "Concert, ticket, webinar and conference offers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ofertas de conciertos, entradas, seminarios web y conferencias"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offres de concerts, de billets, de webinaires et de conférences"
+          }
+        }
+      }
+    },
+    "Donation, annual fund and political appeals": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peticiones de donativos, fondos anuales y campañas políticas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appels aux dons, fonds annuels et sollicitations politiques"
+          }
+        }
+      }
+    },
+    "Event and ticket offers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ofertas de eventos y entradas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offres d’événements et de billets"
+          }
+        }
+      }
+    },
+    "Fundraising": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recaudación de fondos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collectes de fonds"
+          }
+        }
+      }
+    },
+    "Meetings, events and updates from groups you belong to": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reuniones, eventos y novedades de grupos a los que perteneces"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réunions, événements et nouvelles des groupes dont vous faites partie"
+          }
+        }
+      }
+    },
+    "Newsletters": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boletines"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Infolettres"
+          }
+        }
+      }
+    },
+    "Personal mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo personal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courrier personnel"
+          }
+        }
+      }
+    },
+    "Posts, suggestions and activity from social networks": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publicaciones, sugerencias y actividad de redes sociales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Publications, suggestions et activité des réseaux sociaux"
+          }
+        }
+      }
+    },
+    "Pre-approvals, credit cards, loans and points offers": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preaprobaciones, tarjetas de crédito, préstamos y ofertas de puntos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préapprobations, cartes de crédit, prêts et offres de points"
+          }
+        }
+      }
+    },
+    "Product news": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novedades de productos"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveautés produits"
+          }
+        }
+      }
+    },
+    "Receipts and account notices": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recibos y avisos de cuenta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reçus et avis de compte"
+          }
+        }
+      }
+    },
+    "Sales pitches": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Propuestas comerciales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarchages commerciaux"
+          }
+        }
+      }
+    },
+    "Sales, discounts and new arrivals": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rebajas, descuentos y novedades"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soldes, réductions et nouveautés"
+          }
+        }
+      }
+    },
+    "Scams and phishing": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estafas y phishing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arnaques et hameçonnage"
+          }
+        }
+      }
+    },
+    "Social network notifications": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones de redes sociales"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications de réseaux sociaux"
+          }
+        }
+      }
+    },
+    "Spam": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spam"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spam"
+          }
+        }
+      }
+    },
+    "Store promotions": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Promociones de tiendas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Promotions de boutiques"
+          }
+        }
+      }
+    },
+    "Surveys and review requests": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encuestas y solicitudes de reseña"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sondages et demandes d’avis"
           }
         }
       }
@@ -237,6 +589,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "La configuration du modèle sélectionné est indisponible."
+          }
+        }
+      }
+    },
+    "Uncategorized": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin categoría"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non classé"
+          }
+        }
+      }
+    },
+    "Unsolicited business pitches and press releases": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Propuestas comerciales y comunicados de prensa no solicitados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarchages commerciaux et communiqués de presse non sollicités"
+          }
+        }
+      }
+    },
+    "What’s new and changelogs from apps and services": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novedades y cambios de apps y servicios"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveautés et journaux des modifications d’apps et de services"
+          }
+        }
+      }
+    },
+    "“How did we do?” and rating requests": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«¿Qué tal lo hicimos?» y solicitudes de valoración"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Comment avons-nous fait ? » et demandes de note"
+          }
+        }
+      }
+    },
+    "“You left something in your cart”": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Dejaste algo en tu carrito»"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "« Vous avez oublié quelque chose dans votre panier »"
           }
         }
       }

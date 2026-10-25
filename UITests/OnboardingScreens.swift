@@ -21,7 +21,7 @@ struct IntroductionScreen {
     let mail = continueSetup().continueSetup()
     mail.checkMailPermission()
     XCTAssertTrue(mail.waitForPermissionDenied())
-    return mail.continueSetup().finish()
+    return mail.continueSetup().continueSetup().finish()
   }
 }
 
@@ -63,6 +63,38 @@ struct MailSetupScreen {
   /// Waits for the status that reports Mail permission as denied.
   func waitForPermissionDenied() -> Bool {
     app.staticTexts["mail.permissionDenied"].waitForExistence(timeout: UITestTiming.transition)
+  }
+
+  func continueSetup() -> CategoryPreferencesScreen {
+    app.buttons["setup.continue"].click()
+    return CategoryPreferencesScreen.waitForLanding(in: app)
+  }
+}
+
+/// The choice for each kind of graymail, in setup or in Settings → Preferences.
+@MainActor
+struct CategoryPreferencesScreen {
+  let app: XCUIApplication
+
+  static func waitForLanding(in app: XCUIApplication) -> Self {
+    XCTAssertTrue(
+      app.radioGroups["preferences.promotion"].waitForExistence(timeout: UITestTiming.transition)
+    )
+    return Self(app: app)
+  }
+
+  private func choice(_ description: String, for category: String) -> XCUIElement {
+    app.radioGroups["preferences.\(category)"].radioButtons[AppText.localized(description)]
+  }
+
+  /// Chooses the preference whose accessibility label is `description`, such as "Move to Junk".
+  func choose(_ description: String, for category: String) {
+    choice(description, for: category).click()
+  }
+
+  /// Waits until the preference described by `description` is selected for `category`.
+  func waitForChoice(_ description: String, for category: String) -> Bool {
+    choice(description, for: category).waitForSelection()
   }
 
   func continueSetup() -> FinishSetupScreen {

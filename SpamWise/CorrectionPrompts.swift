@@ -11,8 +11,17 @@ struct CorrectionPrompts: View {
       UnverifiedSenderPrompt(
         message: UnverifiedSenderPrompt.message(sender: row.displaySender),
         confirmTitle: pending.scope == .domain ? "Block Domain Anyway" : "Block Sender Anyway",
+        skipTitle: "Mark as Scam",
         cancel: corrections.cancelPendingDecision,
+        skip: corrections.confirmPendingDecisionAsScam,
         confirm: corrections.confirmPendingDecision
+      )
+    }
+    if let followUp = corrections.categoryFollowUp, followUp.recordID == row.id {
+      CategoryFollowUpPrompt(
+        followUp: followUp,
+        apply: corrections.applyCategoryFollowUp,
+        dismiss: corrections.dismissCategoryFollowUp
       )
     }
     if let conflict = corrections.conflict, conflict.recordID == row.id {
@@ -48,6 +57,39 @@ struct UnverifiedSenderPrompt: View {
       localized:
         "SpamWise couldn’t verify that this message came from \(sender). If the address is forged, blocking it also sends the real sender’s mail to Junk."
     )
+  }
+}
+
+/// An offer to apply a correction's preference to every message of its kind.
+struct CategoryFollowUpPrompt: View {
+  let followUp: CategoryFollowUp
+  let apply: () -> Void
+  let dismiss: () -> Void
+
+  var body: some View {
+    VStack(alignment: .leading) {
+      Text(Self.question(followUp)).accessibilityIdentifier("correction.followUp")
+      HStack {
+        Button("Just This Sender", action: dismiss)
+        Button(Self.applyTitle(followUp.preference), action: apply)
+          .accessibilityIdentifier("correction.followUp.apply")
+      }
+    }
+  }
+
+  static func question(_ followUp: CategoryFollowUp) -> String {
+    String(
+      localized:
+        "SpamWise saw this as \(followUp.category.localizedName). Do the same for all of them?"
+    )
+  }
+
+  private static func applyTitle(_ preference: GraymailPreference) -> LocalizedStringKey {
+    switch preference {
+      case .keep: "Keep All in Inbox"
+      case .review: "Flag All for Review"
+      case .junk: "Move All to Junk"
+    }
   }
 }
 

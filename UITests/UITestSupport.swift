@@ -115,6 +115,11 @@ extension XCUIElement {
   func waitForEnabled(_ isEnabled: Bool, timeout: TimeInterval = UITestTiming.transition) -> Bool {
     wait(for: \.isEnabled, toEqual: isEnabled, timeout: timeout)
   }
+
+  /// Waits until the element, such as a segment, is selected.
+  func waitForSelection(timeout: TimeInterval = UITestTiming.transition) -> Bool {
+    wait(for: \.isSelected, toEqual: true, timeout: timeout)
+  }
 }
 
 @MainActor

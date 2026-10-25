@@ -45,6 +45,7 @@ handling. See [detection design](docs/detection-design.md) and
 - [ ] Evaluate zero-shot graymail preferences and incremental private personalization; distinguish example retrieval from actual model fine-tuning.
   - [x] Run a reproducible 12-context EN/ES/FR synthetic policy-only/two-example comparison; record labels, effective actions, usage and limitations in [preference results](docs/probes/graymail-preferences.md). Examples showed no categorical improvement; this is not fine tuning or independent real-mail quality.
   - [x] Screen the default against 16 private Junk candidates, four real wanted controls and eight synthetic wanted controls, with a sender-disjoint reserved set; tune unknown promotions to Review and preserve ordinary wanted mail. Compare one simulated correction and four deceptive challenges in [first-run results](docs/probes/graymail-oobe.md). One-shot benefit and broad quality remain unproven.
+  - [x] Screen 495 owner-confirmed unwanted Junk messages and 15 provisional wanted controls with sender-disjoint development and holdout sets; add category preferences, a setup Junk-folder import and category-level correction follow-ups, and fix reason-length failures (21 of 86 shipped requests). Owner-equivalent preferences flagged 40/40 unwanted holdout messages but moved none, since no confidence reached 95; they also flagged 7/9 wanted controls. The Junk import showed no measurable benefit. See [Junk-folder results](docs/probes/junk-folder-oobe.md).
   - [ ] Validate a clean signed-app setup and provider request, independent owners and campaigns, owner-adjudicated labels, multilingual mail and repeated runs before claiming general zero-shot or one-shot quality.
 - [ ] Establish dedicated attachment/malware coverage without treating text-model predictions as antivirus results.
 
@@ -439,6 +440,7 @@ creating separate completion criteria for the same work.
   providers alone are not evidence of better filtering.
   - [x] Support frozen policy/no-policy comparisons in the offline reporting tool.
   - [ ] Compare zero-shot preferences with small increments of private corrections; do not require universal training from personal graymail.
+    - [x] Compare shipped, category-preference and Junk-import conditions on a frozen private holdout; the import changed no effective decision ([Junk-folder results](docs/probes/junk-folder-oobe.md)).
   - [x] Complete the synthetic multilingual policy/example smoke test with $0.0020729 estimated new cost and $1.20 conservative reservations; leave thresholds unchanged.
   - [ ] Measure semantic-preference benefit on independently reviewed unseen mail.
 

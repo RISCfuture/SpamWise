@@ -6,9 +6,17 @@ import ClaudeForFoundationModels
 @Generable
 enum GuidedLabel: String { case inbox, review, junk }
 
+/// Guided-generation category whose raw values match ``MailCategory``.
+@Generable
+enum GuidedCategory: String {
+  case personal, transactional, community, promotion, abandonedCart, newsletter, productUpdate
+  case event, socialNotification, survey, financialOffer, fundraising, coldOutreach, spam, scam
+}
+
 /// Guided-generation verdict shared by every Foundation Models session.
 @Generable
 struct GuidedVerdict {
+  var category: GuidedCategory
   var label: GuidedLabel
   @Guide(description: "Uncalibrated confidence from 0 through 100", .range(0...100))
   var confidence: Int
@@ -17,14 +25,19 @@ struct GuidedVerdict {
 }
 
 extension Verdict {
-  /// Validates a guided response and records the session's measured usage at the model's rates.
+  /**
+   Validates a guided response and records the session's measured usage at the model's rates.
+
+   A reason longer than the guide asks for is shortened rather than rejected, as ``init(label:category:confidence:reason:usage:)`` does.
+   */
   init(guided: GuidedVerdict, session: LanguageModelSession, model: ModelIdentifier) throws {
     guard let label = MailLabel(rawValue: guided.label.rawValue),
-      guided.reason.count <= ClassificationLimits.maximumReasonCharacters
+      let category = MailCategory(rawValue: guided.category.rawValue)
     else { throw ClassificationError.invalidOutput }
     let usage = session.usage
     self.init(
       label: label,
+      category: category,
       confidence: guided.confidence,
       reason: guided.reason,
       usage: .init(

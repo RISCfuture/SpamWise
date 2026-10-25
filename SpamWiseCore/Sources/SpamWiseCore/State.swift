@@ -19,7 +19,9 @@ public struct Settings: Codable, Sendable, Equatable {
   public var dryRun = true
   /// Whether classification and actions are paused.
   public var paused = false
-  /// The user's bounded plain-English filtering preferences.
+  /// How the user wants each kind of graymail handled.
+  public var categoryPreferences = CategoryPreferences.defaults
+  /// The user's bounded plain-English instructions beyond their category preferences.
   public var policy = PromptBuilder.defaultPolicy
   /// Maximum number of correction examples included in a prompt.
   public var correctionLimit = 5
@@ -43,7 +45,8 @@ public struct Settings: Codable, Sendable, Equatable {
    Decodes each field independently, using its default when absent or unreadable.
 
    Unreadable Mail preferences take ``MailPreferences``' restrictive values instead, so they
-   never widen the account scope or allow external processing.
+   never widen the account scope or allow external processing. A policy that an earlier version
+   installed by default becomes empty, because category preferences carry those defaults.
    */
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -52,7 +55,12 @@ public struct Settings: Codable, Sendable, Equatable {
     review = values.lenient(.review, default: defaults.review)
     dryRun = values.lenient(.dryRun, default: defaults.dryRun)
     paused = values.lenient(.paused, default: defaults.paused)
+    categoryPreferences = values.lenient(
+      .categoryPreferences,
+      default: defaults.categoryPreferences
+    )
     policy = values.lenient(.policy, default: defaults.policy)
+    if PromptBuilder.formerDefaultPolicies.contains(policy) { policy = defaults.policy }
     correctionLimit = values.lenient(.correctionLimit, default: defaults.correctionLimit)
     bodyTokenBudget = values.lenient(.bodyTokenBudget, default: defaults.bodyTokenBudget)
     onboardingComplete = values.lenient(.onboardingComplete, default: defaults.onboardingComplete)
@@ -65,7 +73,8 @@ public struct Settings: Codable, Sendable, Equatable {
     )
   }
   private enum CodingKeys: String, CodingKey {
-    case strength, review, dryRun, paused, policy, correctionLimit, bodyTokenBudget
+    case strength, review, dryRun, paused, categoryPreferences, policy, correctionLimit
+    case bodyTokenBudget
     case onboardingComplete, validatedAccounts
     case advancedOptions = "advanced"
     case mailOptions = "mailPreferences"

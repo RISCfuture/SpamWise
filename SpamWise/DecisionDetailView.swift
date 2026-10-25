@@ -66,6 +66,13 @@ private struct DecisionSummaryView: View {
       VerdictBadge(label: row.decision.label)
       Text(row.decision.reason.localizedDescription).textSelection(.enabled)
     }
+    if let category = row.verdict?.category, category != .unknown {
+      LabeledContent("Kind of mail", value: category.localizedName)
+        .accessibilityIdentifier("decision.category")
+    }
+    if let preference = row.decision.preference {
+      LabeledContent("Your preference", value: preference.localizedDescription)
+    }
     LabeledContent("Outcome", value: row.outcome.localizedTitle)
       .accessibilityIdentifier("correction.outcome")
     if let error = row.actionError {
