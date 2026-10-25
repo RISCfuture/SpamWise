@@ -8,7 +8,7 @@ extension IMAPAdapter: MailSweepSource {
   }
 
   /**
-   Reads new mail above the UID high-water mark, then one backfill page, as one page.
+   Reads new mail above the UID high-water mark, then one page of any pending backfill, as one page.
 
    The sweep cursor is saved in the adapter's validation store, and only once the page was
    processed completely; the request's position is unused because UIDs order IMAP mail. Every

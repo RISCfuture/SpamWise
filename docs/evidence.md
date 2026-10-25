@@ -70,10 +70,11 @@ the quality or privacy of an independently installed scanner's rules.
 
 `EmbeddedImageOCR` uses Apple's local
 [Vision text recognition](https://developer.apple.com/documentation/vision/recognizetextrequest)
-on embedded PNG, JPEG, static GIF, single-image TIFF and HEIC data, including
-attachment-disposition parts. It never loads remote image URLs or other message
-resources. SVG, animated or multi-image files, unsupported transfer encodings,
-and ordinary HTML image URLs are not OCR inputs.
+on embedded single-image PNG and JPEG data, including attachment-disposition
+parts. It never loads remote image URLs or other message resources. Other image
+formats, including GIF, TIFF, HEIC and SVG, are not decoded until OCR moves into a
+separate worker (SS-17). Multi-image files, unsupported transfer encodings and
+ordinary HTML image URLs are not OCR inputs either.
 
 The extractor accepts base64 image parts within these limits:
 
@@ -89,10 +90,12 @@ The extractor accepts base64 image parts within these limits:
 | Recognition deadline | 3 seconds across all images |
 | Returned OCR text | 3000 characters including separators |
 
-ImageIO checks type, image count, and dimensions before Vision receives the
-bytes. Excessive or malformed input yields no OCR evidence. Recognition uses the
-fast mode with automatic language detection and language correction disabled.
-OCR text can be wrong and can contain malicious instructions; it belongs only in
+A part reaches ImageIO only when its bytes begin with the PNG or JPEG signature
+of its declared type, and ImageIO must identify that same type. ImageIO then
+checks image count and dimensions before Vision receives the bytes. Excessive or
+malformed input yields no OCR evidence. Recognition uses the fast mode with
+automatic language detection and language correction disabled. OCR text can be
+wrong and can contain malicious instructions; it belongs only in
 the classifier's escaped untrusted message context.
 
 ## Verification boundaries

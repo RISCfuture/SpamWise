@@ -46,12 +46,13 @@ func `recognizes text only from bounded embedded image bytes`() async throws {
   #expect(await ocr.text(from: imageMessage()) == "Offer shown inside image")
   #expect(await ocr.text(from: imageMessage(attachment: true)) == "Offer shown inside image")
   let gif = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-  let additional = EmbeddedImageOCR { _ in "Static image text" }
-  #expect(
-    await additional.text(from: imageMessage(payload: gif, mime: "image/gif"))
-      == "Static image text"
-  )
-  #expect(await additional.text(from: imageMessage(payload: gif, mime: "image/png")) == nil)
+  let unsupported = EmbeddedImageOCR { _ in
+    Issue.record("Only PNG and JPEG images may reach Vision")
+    return "unexpected"
+  }
+  for mime in ["image/gif", "image/png", "image/jpeg"] {
+    #expect(await unsupported.text(from: imageMessage(payload: gif, mime: mime)) == nil)
+  }
   #expect(await ocr.text(from: imageMessage(parts: 5)) == nil)
   #expect(await ocr.text(from: imageMessage(payload: "invalid")) == nil)
   let remote = Data(

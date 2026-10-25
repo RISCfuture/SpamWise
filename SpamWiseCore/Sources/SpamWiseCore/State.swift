@@ -196,7 +196,6 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
     readStatusOutcome = values.lenient(.readStatusOutcome, default: nil)
     readStatusError = values.lenient(.readStatusError, default: nil)
     sampleID = values.lenient(.sampleID, default: nil)
-    clearLegacyPlaceholders()
   }
   private enum CodingKeys: String, CodingKey {
     case id, date, identity, sender, subject, evidence, verdict, threats, decision, outcome
@@ -205,21 +204,9 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   }
 }
 extension DecisionRecord {
-  private static let legacyUnknownSender = "Unknown"
-  private static let legacyUnreadableSubject = "Unclassified message"
-  private static let legacyMissingSubject = "(No subject)"
-
   /// Whether the monthly spending limit refused this message before any provider request.
   public var deferredBySpendingLimit: Bool {
     outcome == .unclassified && correctedLabel == nil && decision.reason == .spendingLimitReached
-  }
-
-  /// Clears English placeholder text that earlier versions stored for a missing sender or subject.
-  private mutating func clearLegacyPlaceholders() {
-    if subject == Self.legacyMissingSubject { subject = nil }
-    guard path == .error else { return }
-    if sender == Self.legacyUnknownSender { sender = nil }
-    if subject == Self.legacyUnreadableSubject { subject = nil }
   }
 }
 /// A bounded, revision-specific classification retry.

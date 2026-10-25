@@ -61,13 +61,13 @@ handling. See [detection design](docs/detection-design.md) and
 - [x] Optional Spamhaus DBL lookups for From, Reply-To, Return-Path and link domains, with explicit terms acknowledgement and unknown results for service errors. Public DNS uses in-process resolver queries to one configured resolver and works in both editions.
 - [x] Optional user-keyed Spamhaus HTTPS transport, shared Keychain storage, explicit service selection, bounded requests and fail-open handling. Live authorization awaits an HTTPS-enabled account; free DNS access does not establish HTTPS entitlement. See [setup and limits](docs/spamhaus.md).
 - [x] Optional local Rspamd symbols through the fixed-loopback HTTP transport; errors remain unknown. It works in the signed sandbox harness without new entitlements, defaults off and is blocked in local-only mode. No external executable transport exists.
-- [x] Bounded Vision OCR of embedded PNG/JPEG/GIF/TIFF/HEIC parts without remote image loading.
+- [x] Bounded Vision OCR of embedded PNG and JPEG parts without remote image loading. Other formats are not decoded until OCR moves into a separate worker (SS-17).
 - [x] IMAP adapter on swift-nio-imap with implicit TLS, UIDVALIDITY/UID identity, SPECIAL-USE discovery, capability checks, Review as `$SpamWiseReview` or `\Flagged`, verified move identities, and implicit Good corrections for mail rescued from Junk in another client. The headless `spamwise-daemon` (`run`, `validate`, `probe`) records daemon-scoped validation.
 - [x] Local weekly digest of unresolved Review items, without sending email.
 - [x] Explicit Good/Junk/Review label collection and optional bounded reviewed-text export for later evaluation.
 - [x] Production spending: an optional user-set monthly limit, off by default, reserves each paid request's token-bound maximum and settles it to measured usage. The conservative lifetime ledger is confined to `spamwise-eval`, which requires an explicit `--budget-store`; its authorized additional evaluation ceiling is $150, not a spending target.
 - [x] Retain unstarted persistent retries when cancellation interrupts a batch; individual atomic claims reject superseded jobs. Transient failures retry with backoff for up to three days, and Pause or dry-run edits no longer invalidate pending work.
-- [x] Shared state in real SwiftData entities with change tokens and slice-scoped loads, a cross-process lock, retention limits and a set-aside path for unreadable legacy state. The legacy import has been tested only against a synthetic unversioned store.
+- [x] Shared state in real SwiftData entities with change tokens and slice-scoped loads, a cross-process lock, retention limits and a set-aside path for unreadable state. Pre-1.0 stores are not imported: a single-document snapshot from a build before the entity schema is set aside for recovery.
 
 See [evidence](docs/evidence.md), [IMAP](docs/imap.md), [evaluation](docs/evaluation.md)
 and [packaging](docs/packaging.md) for limits and reproducible commands.

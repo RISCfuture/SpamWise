@@ -41,13 +41,6 @@ final class StateTransaction {
     state.costByMonth = meta.costByMonth; state.lastDigestWeek = meta.lastDigestWeek
     baseline = state
   }
-  /// Opens a transaction that writes `imported` into empty entity tables.
-  init(importing imported: AppState, context: ModelContext) {
-    self.context = context
-    state = imported
-    parts = .all
-    loadedAll = Set(StateSlice.allCases)
-  }
 }
 
 extension StateTransaction {
@@ -116,17 +109,13 @@ extension StateTransaction {
   }
   /// Writes every changed slice, stamps its change token, and saves.
   func commit() throws {
-    try stage()
-    try context.save()
-  }
-  /// Writes every changed slice and stamps its change token without saving.
-  func stage() throws {
     let stamp = try context.nextChangeStamp()
     nextOrder = stamp << Self.ordersPerCommit
     var changed = Set<StateSlice>()
-    try commitCollections(stamp: stamp, &changed)
+    try commitCollections(&changed)
     try commitDocuments(&changed)
     if !changed.isEmpty { try context.markChanged(changed.map(\.rawValue), stamp: stamp) }
+    try context.save()
   }
 }
 

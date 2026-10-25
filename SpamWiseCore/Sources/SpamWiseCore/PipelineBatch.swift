@@ -64,7 +64,7 @@ extension Pipeline {
   ) async throws -> [DecisionRecord] {
     var handled: Set<String> = [], pass = DiscoveryPass(revision: 0, dryRun: dryRun)
     if skipsSettled {
-      try await prepareDiscovery()
+      try await recordUnrecordedResults()
       let state = try await StateRepository.load(store, StateSlices())
       pass = DiscoveryPass(revision: state.revision, dryRun: dryRun || state.settings.dryRun)
       handled = try await settledKeys(among: envelopes, pass: pass)
@@ -223,14 +223,6 @@ extension Pipeline {
       }
       return state.records[index]
     }
-  }
-
-  private func prepareDiscovery() async throws {
-    if !importedLegacyActivity {
-      try await ProcessedMessageRepository.importLegacyActivity(in: store)
-      importedLegacyActivity = true
-    }
-    try await recordUnrecordedResults()
   }
 
   private func recordUnrecordedResults() async throws {
