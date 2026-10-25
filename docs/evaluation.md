@@ -114,7 +114,7 @@ The rule-of-three approximation is reported alongside the exact bound for zero
 errors. With two good fixtures and zero false positives, the approximation is capped
 at 100%, not 0.2%; approximately 1,500 representative good messages with zero false
 positives are needed for the 0.2% bound. Confidence is not a calibrated probability.
-The production thresholds stay 99/95/90, and the graymail category thresholds 95/85/75,
+The production thresholds stay 99/95/90, and the graymail category thresholds 95/90/85,
 until separately validated; the CLI never changes production settings.
 
 ## Export from Mail
