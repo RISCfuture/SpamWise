@@ -131,8 +131,9 @@ public actor Pipeline {
       )
     }
     var message = parsed.inspection.message
+    let images = parsed.inspection.images
     let imageText =
-      settings.imageOCR ? await imageText(in: parsed.inspection.images, of: envelope.raw) : nil
+      settings.imageOCR && !images.isEmpty ? await imageText(in: images, of: envelope.raw) : nil
     if let text = imageText?.text {
       message.text = Self.leadingImageText(
         text,
