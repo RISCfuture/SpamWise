@@ -2361,34 +2361,18 @@
         }
       }
     },
-    "Restore the default preferences?": {
+    "Restore the default mail choices?": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "¿Restablecer las preferencias predeterminadas?"
+            "value": "¿Restablecer las opciones de correo predeterminadas?"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rétablir les préférences par défaut ?"
-          }
-        }
-      }
-    },
-    "Reviewed Messages…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mensajes revisados…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Messages vérifiés…"
+            "value": "Rétablir les choix de courrier par défaut ?"
           }
         }
       }
@@ -6489,18 +6473,18 @@
         }
       }
     },
-    "Your choices are restored and your additional instructions are cleared.": {
+    "Each kind of mail goes back to its default choice, and your additional instructions are cleared.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se restablecen tus opciones y se borran tus instrucciones adicionales."
+            "value": "Cada tipo de correo vuelve a su opción predeterminada y se borran tus instrucciones adicionales."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vos choix sont rétablis et vos instructions supplémentaires sont effacées."
+            "value": "Chaque type de message revient à son choix par défaut et vos instructions supplémentaires sont effacées."
           }
         }
       }
@@ -14915,18 +14899,18 @@
         }
       }
     },
-    "Your rules, address exceptions, additional instructions, corrections and learning are replaced with the backup’s. Its message text is restored only while “Retain reviewed text for evaluation export” is on. Filtering pauses with dry run on until you check your accounts. Keys, passwords and spending stay as they are.": {
+    "Your rules, address exceptions, additional instructions, corrections and learning are replaced with the backup’s. Its message text is restored only while “Keep text of reviewed messages” is on in Settings → Advanced. Filtering pauses with dry run on until you check your accounts. Keys, passwords and spending stay as they are.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tus reglas, tus excepciones de direcciones, tus instrucciones adicionales, tus correcciones y el aprendizaje se sustituyen por los de la copia. El texto de los mensajes de la copia solo se restaura si «Conservar texto revisado para exportar la evaluación» está activado. El filtrado se pausa con la simulación activada hasta que compruebes tus cuentas. Las claves, las contraseñas y el gasto se quedan como están."
+            "value": "Tus reglas, tus excepciones de direcciones, tus instrucciones adicionales, tus correcciones y el aprendizaje se sustituyen por los de la copia. El texto de los mensajes de la copia solo se restaura si «Conservar el texto de los mensajes revisados» está activado en Ajustes → Avanzado. El filtrado se pausa con la simulación activada hasta que compruebes tus cuentas. Las claves, las contraseñas y el gasto se quedan como están."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vos règles, vos exceptions d’adresses, vos instructions supplémentaires, vos corrections et l’apprentissage sont remplacés par ceux de la sauvegarde. Le texte des messages de la sauvegarde n’est restauré que si « Conserver le texte révisé pour l’export d’évaluation » est activé. Le filtrage est suspendu avec la simulation activée jusqu’à ce que vous vérifiiez vos comptes. Les clés, les mots de passe et les dépenses restent tels quels."
+            "value": "Vos règles, vos exceptions d’adresses, vos instructions supplémentaires, vos corrections et l’apprentissage sont remplacés par ceux de la sauvegarde. Le texte des messages de la sauvegarde n’est restauré que si « Conserver le texte des messages vérifiés » est activé dans Réglages → Avancé. Le filtrage est suspendu avec la simulation activée jusqu’à ce que vous vérifiiez vos comptes. Les clés, les mots de passe et les dépenses restent tels quels."
           }
         }
       }
@@ -15427,18 +15411,18 @@
         }
       }
     },
-    "IMAP password or token": {
+    "IMAP password": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Contraseña o token de IMAP"
+            "value": "Contraseña de IMAP"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mot de passe ou jeton IMAP"
+            "value": "Mot de passe IMAP"
           }
         }
       }
@@ -17926,7 +17910,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Comprobar la conexión con Mail…"
+            "value": "Comprobar conexión con Mail…"
           }
         },
         "fr": {

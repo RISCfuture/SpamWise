@@ -44,14 +44,16 @@ struct PreferencesView: View {
     }
     .formStyle(.grouped)
     .confirmationDialog(
-      "Restore the default preferences?",
+      "Restore the default mail choices?",
       isPresented: $confirmsReset,
       titleVisibility: .visible
     ) {
       Button("Restore Defaults", role: .destructive) { settings.resetPreferences() }
       Button("Cancel", role: .cancel) {}
     } message: {
-      Text("Your choices are restored and your additional instructions are cleared.")
+      Text(
+        "Each kind of mail goes back to its default choice, and your additional instructions are cleared."
+      )
     }
   }
 }
