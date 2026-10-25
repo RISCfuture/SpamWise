@@ -62,7 +62,9 @@ Keychain. User operations run through `TrackedOperation` and show their own
 after the previous sweep ends. Activity sheets are `ActivitySheet` cases routed through
 `ActivityRouter`, and the Activity table pages 200 rows at a time from the store.
 Settings apply on change; text fields and steppers save through a debounced
-`SettingDraft`. App Intents generate a request UUID unless the caller supplies one.
+`SettingDraft`, and quitting commits any edit still waiting. URLs reach the app
+delegate, and window requests are answered at the scene, because the menu bar item can
+be hidden. App Intents generate a request UUID unless the caller supplies one.
 
 Identifiers are fixed: bundle ID `codes.tim.SpamWise` for both editions (install only
 one), `codes.tim.SpamWise.MailExtension`, team `2NFSK2WB24`, App Group
@@ -83,9 +85,10 @@ never rely on Core Data change notifications. Lock contention fails open.
 ## Commands
 
 ```sh
-Scripts/check.sh [build-token]     # localization, Help and compiled-resource checks,
-                                   # tool and package tests, Release builds of both
-                                   # editions, extension and hostless unit tests
+Scripts/check.sh [build-token]     # package-reference, localization, Help and
+                                   # compiled-resource checks, tool and package tests,
+                                   # Release builds of both editions, extension and
+                                   # hostless unit tests, then the diagnostics grep
 Scripts/ui-check.sh [build-token]  # development-signed XCTest UI flows (needs the team)
 swift test --package-path SpamWiseCore --scratch-path .build/swiftpm -Xswiftc -warnings-as-errors
 swift format format -i -r SpamWise SpamWise-MAS SpamWise-download SpamWiseCore/Sources \
@@ -94,6 +97,7 @@ swiftlint lint --fix && swiftlint lint --strict
 python3 Scripts/check-core-localizations.py   # package strings: bundle, es/fr, unused keys
 python3 Scripts/check-help-book.py            # Help anchors the app opens, links, structure
 Scripts/help-index.sh                         # rebuild the Help search indexes
+python3 Scripts/check-compiled-resources.py   # Mail rule script, Help indexes vs sources
 bash Scripts/store-check.sh <build-token>     # two-process store transaction probe
 bundle exec fastlane mac download_release version:X build:N   # Developer ID DMG
 bundle exec fastlane mac release version:X build:N            # App Store upload
@@ -117,7 +121,10 @@ and package-reference checks and Python tool tests, package tests, hostless unit
 unsigned Release builds of both editions (with the icon check) and the extension, UI
 tests on an ad-hoc-signed App Store edition in test mode, and DocC (failing on
 SpamWiseCore warnings); the package, unit and build jobs fail on any build diagnostic
-in their logs. `lint.yml` runs a pinned SwiftLint. `site.yml` validates the site; `release.yml` ships a pushed version tag.
+in their logs (`Scripts/check-diagnostics.sh`). CI doesn't run the compiled-resource
+check. `lint.yml` runs a pinned SwiftLint. `site.yml` validates the site;
+`release.yml` ships a pushed version tag, refusing one that names another commit
+(`Scripts/check-release-tag.sh`) before anything is uploaded.
 
 ## Signing and sandbox caveats
 
@@ -131,6 +138,8 @@ in their logs. `lint.yml` runs a pinned SwiftLint. `site.yml` validates the site
 - Mail builds the extension's principal object off the main actor; keep it `nonisolated`.
 - Stale Launch Services registrations route App Intents to another installed copy; run
   intent tests with exactly one SpamWise process.
+- `--ui-testing` (isolated store, preferences and in-memory credentials) is honored only
+  in Debug builds.
 
 ## Live tests, spending and probe mail
 
@@ -140,7 +149,7 @@ in their logs. `lint.yml` runs a pinned SwiftLint. `site.yml` validates the site
 - The additional evaluation spend is capped at $150. It is a ceiling, not a target.
 - Never act on ordinary mail. Action probes use only generated messages whose subject
   starts with `[SpamWise Probe]`, sent cross-account so no same-account Sent copy shares
-  the Message-ID.
+  the Message-ID. The app's Apple Mail move test exists only in Debug builds.
 - When a check finishes, move each generated probe, including its Sent copies and
   leftover drafts, to its own account's Trash, resolving it by account and exact
   identity, and verify where it landed. For Gmail, verify the system `TRASH` label,
