@@ -75,7 +75,15 @@ func `never trusts results without an authserv-id`() {
         "dkim=pass header.d=other.example; dmarc=fail header.from=example.org"
       ),
       MicrosoftHeaders.arcSet()
-    ], "mx.microsoft.com", .unverified
+    ], "mx.microsoft.com", .failed
+  ),
+  (
+    [
+      MicrosoftHeaders.receipt(
+        "dkim=pass header.d=mail.example.org; dmarc=fail header.from=example.org"
+      ),
+      MicrosoftHeaders.arcSet(results: "dkim=pass header.d=mail.example.org")
+    ], "mx.microsoft.com", .failed
   ),
   (
     [
@@ -88,7 +96,7 @@ func `never trusts results without an authserv-id`() {
     .unverified
   )
 ])
-func `trusts only the receiving provider's sole ARC set, as far as its own header agrees`(
+func `trusts the provider's own header through its sole ARC set, whatever that set reports`(
   headers: [String],
   trusted: String,
   expected: SenderAuthentication
