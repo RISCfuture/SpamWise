@@ -5,10 +5,14 @@ import SpamWiseCore
 enum MailChange: Equatable {
   /// Mail confirmed the change.
   case applied
-  /// The message already showed the requested Review annotation, which stays the user's.
+  /// The message shows the requested Review annotation, which stays the user's because SpamWise
+  /// didn't see that it set it.
   case alreadyApplied
-  /// Mail didn't confirm the change, which it may still apply.
+  /// Mail reported that the message doesn't show the change yet; it may still apply it.
   case unconfirmed
+  /// Mail didn't reply in time or the request was cancelled, so it may still apply the change,
+  /// or may have found the annotation already there.
+  case unanswered
 }
 
 extension MailCommand {
