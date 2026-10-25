@@ -54,8 +54,13 @@ struct ClassifierOptions: ParsableArguments {
   @Option(help: "Classifier model.")
   var model: EvaluationModel = .mock
 
-  @Option(help: "Filtering strength whose threshold sets the reported labels.")
-  var strength: FilteringStrength = .balanced
+  @Option(
+    help: """
+      Filtering strength whose thresholds set the reported labels; defaults to the --state \
+      snapshot's, which defaults to balanced.
+      """
+  )
+  var strength: FilteringStrength?
 
   @Option(help: "Directory of validated responses reused across runs.")
   var cache = ".spamwise-eval-cache"

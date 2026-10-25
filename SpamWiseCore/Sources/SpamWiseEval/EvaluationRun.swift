@@ -9,13 +9,16 @@ struct EvaluationRun {
   private static let messageExtension = "eml"
   let pipeline: Pipeline
   let cache: CachedClassifier
+  /// The filtering strength the run decides at.
+  let strength: FilteringStrength
 
   /**
    Runs `body` with a pipeline seeded from `seed` and the selected classifier, removing the
    temporary store afterward.
 
    The seed's activity, retries, action claims and optional network or OCR evidence are cleared,
-   and filtering is set live in dry run at the selected strength.
+   and filtering is set live in dry run at the selected strength, or the seed's when none is
+   selected.
    */
   static func with<T>(
     _ options: ClassifierOptions,
@@ -27,7 +30,8 @@ struct EvaluationRun {
     )
     defer { try? FileManager.default.removeItem(at: temporary) }
     let store = try Store(url: temporary.appending(path: "state.store"))
-    let initial = isolated(seed, strength: options.strength)
+    let strength = options.strength ?? seed.settings.strength
+    let initial = isolated(seed, strength: strength)
     try await StateRepository.update(store) { $0 = initial }
     let cache = try CachedClassifier(
       directory: URL(filePath: options.cache),
@@ -35,7 +39,7 @@ struct EvaluationRun {
       underlying: await options.classifier()
     )
     return try await body(
-      Self(pipeline: Pipeline(store: store, classifier: cache), cache: cache)
+      Self(pipeline: Pipeline(store: store, classifier: cache), cache: cache, strength: strength)
     )
   }
 
