@@ -15,10 +15,13 @@ final class MailConnectionModel {
   var permissionDenied = false
   /// Checking the connection: permission, accounts and mailbox roles.
   let check = TrackedOperation()
-  /// The optional disposable-message move test.
-  let moveTest = TrackedOperation()
   @ObservationIgnored private let services: AppServices
   @ObservationIgnored private let shared: SharedStateModel
+
+  #if DEBUG
+    /// The development builds' disposable-message move test.
+    let moveTest = TrackedOperation()
+  #endif
 
   init(services: AppServices, shared: SharedStateModel) {
     self.services = services
@@ -110,13 +113,15 @@ final class MailConnectionModel {
     return destinations
   }
 
-  /// Moves the selected disposable probe to Junk and back, then flags it.
-  func testDisposableMessage() {
-    moveTest.run { [self] in
-      _ = try await services.appleMail.testDisposableMessage()
-      return String(localized: "Junk, Inbox restoration, and orange flag verified in Mail.")
+  #if DEBUG
+    /// Moves the selected disposable probe to Junk and back, then flags it.
+    func testDisposableMessage() {
+      moveTest.run { [self] in
+        _ = try await services.appleMail.testDisposableMessage()
+        return String(localized: "Junk, Inbox restoration, and orange flag verified in Mail.")
+      }
     }
-  }
+  #endif
 
   /// Shows the bundled Mail rule script in Finder.
   func revealRuleScript() throws {

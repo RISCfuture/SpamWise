@@ -64,7 +64,8 @@ private struct ContextSection: View {
   }
 }
 
-/// Rarely needed details and the disposable-message move test, behind one disclosure.
+/// Rarely needed details behind one disclosure, with the disposable-message move test in
+/// development builds.
 private struct DiagnosticsSection: View {
   let model: AppModel
 
@@ -73,45 +74,50 @@ private struct DiagnosticsSection: View {
       DisclosureGroup("Diagnostics") {
         LabeledContent("Mail access", value: model.settings.settings.incomingRoute.localizedTitle)
         LabeledContent("Pending retries", value: model.shared.state.retries.count.formatted())
-        if model.settings.settings.advancedOptions.transport == .appleMail {
-          MoveTestView(mail: model.mail)
-        }
+        #if DEBUG
+          if model.settings.settings.advancedOptions.transport == .appleMail {
+            MoveTestView(mail: model.mail)
+          }
+        #endif
       }
     }
-  }
-}
-
-private struct MoveTestView: View {
-  let mail: MailConnectionModel
-
-  private var settlingTime: String {
-    AppleMailAdapter.defaultMoveSettlingTime.formatted(.units(allowed: [.seconds], width: .wide))
-  }
-
-  var body: some View {
-    LabeledContent {
-      HStack {
-        if mail.moveTest.isBusy {
-          ProgressView { Text("Testing the selected message…") }.labelsHidden().controlSize(.small)
-        }
-        Button("Test Selected Message") { mail.testDisposableMessage() }
-          .disabled(mail.moveTest.isBusy)
-      }
-    } label: {
-      Text("Move test")
-      Text(
-        """
-        Select one Inbox message whose subject begins “[SpamWise Probe]”. SpamWise moves it to \
-        Junk and back, then flags it orange, waiting up to \(settlingTime) for Mail to show each \
-        move. Dry run isn’t changed.
-        """
-      )
-    }
-    OperationStatusView(operation: mail.moveTest)
   }
 }
 
 #Preview("Advanced") { AdvancedSettingsView(model: PreviewHelper.model()) }
-#Preview("Move test") {
-  Form { MoveTestView(mail: PreviewHelper.model().mail) }.formStyle(.grouped)
-}
+
+#if DEBUG
+  private struct MoveTestView: View {
+    let mail: MailConnectionModel
+
+    private var settlingTime: String {
+      AppleMailAdapter.defaultMoveSettlingTime.formatted(.units(allowed: [.seconds], width: .wide))
+    }
+
+    var body: some View {
+      LabeledContent {
+        HStack {
+          if mail.moveTest.isBusy {
+            ProgressView { Text("Testing the selected message…") }.labelsHidden().controlSize(.small)
+          }
+          Button("Test Selected Message") { mail.testDisposableMessage() }
+            .disabled(mail.moveTest.isBusy)
+        }
+      } label: {
+        Text("Move test")
+        Text(
+          """
+          Select one Inbox message whose subject begins “[SpamWise Probe]”. SpamWise moves it to \
+          Junk and back, then flags it orange, waiting up to \(settlingTime) for Mail to show each \
+          move. Dry run isn’t changed.
+          """
+        )
+      }
+      OperationStatusView(operation: mail.moveTest)
+    }
+  }
+
+  #Preview("Move test") {
+    Form { MoveTestView(mail: PreviewHelper.model().mail) }.formStyle(.grouped)
+  }
+#endif
