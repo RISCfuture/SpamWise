@@ -82,14 +82,12 @@ extension StateRepository {
       let clearsRetainedContent =
         previous.advancedOptions.retainReviewedContent
         && !settings.advancedOptions.retainReviewedContent
-      if clearsRetainedContent { try transaction.load(StateSlices(reviewedLabels: .all)) }
+      if clearsRetainedContent {
+        try transaction.load(StateSlices([.corrections], reviewedLabels: .all))
+      }
       transaction.state.settings = settings
       update(&transaction.state)
-      if clearsRetainedContent {
-        transaction.state.reviewedLabels = transaction.state.reviewedLabels.map { label in
-          var label = label; label.message = nil; return label
-        }
-      }
+      if clearsRetainedContent { transaction.state.deleteRetainedContent() }
       let change = AuditEvent.Change.settingsChanged(fields: settings.changedFields(from: previous))
       if settings.policyProjection != previous.policyProjection {
         transaction.state.invalidatePendingWork(change)
@@ -236,4 +234,14 @@ extension StateRepository {
 /// The decision of a stored record, decoded without the rest of the record.
 private struct StoredDecision: Decodable {
   let decision: Decision
+}
+
+extension AppState {
+  /// Deletes reviewed messages' kept text and imported examples' excerpts; labels and learning remain.
+  fileprivate mutating func deleteRetainedContent() {
+    for index in reviewedLabels.indices { reviewedLabels[index].message = nil }
+    for index in corrections.indices where corrections[index].promptScope == .everyAccount {
+      corrections[index].quote("")
+    }
+  }
 }
