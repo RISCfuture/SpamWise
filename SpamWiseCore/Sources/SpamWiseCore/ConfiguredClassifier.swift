@@ -22,32 +22,35 @@ public struct ConfiguredClassifier: Classifier {
     }
     return try keychain.read()
   }
-  /// Executes one explicitly selected backend, counting paid requests toward the monthly spending limit.
-  public func classify(_ input: ClassificationInput) async throws -> Verdict {
-    let current = try await StateRepository.load(store, StateSlices()).settings
-    let settings = current.advancedOptions
-    guard !current.mailOptions.localOnly || settings.backend == .onDevice else {
+  /// The selected model, once local-only mode, mail-sharing consent and the backend permit a request.
+  private static func requestableModel(_ settings: Settings) throws -> ModelIdentifier {
+    let options = settings.advancedOptions
+    guard !settings.mailOptions.localOnly || options.backend == .onDevice else {
       throw ClassificationError.configuration
     }
-    guard
-      settings.backend == .onDevice
-        || settings.mailSharingConsent.contains(settings.backend)
+    guard options.backend == .onDevice || options.mailSharingConsent.contains(options.backend)
     else {
       throw ClassificationError.consentRequired
     }
-    guard settings.backend != .privateCloudCompute else {
+    guard options.backend != .privateCloudCompute else {
       throw ClassificationError.configuration
     }
-    let model = settings.model
+    return options.model
+  }
+  /// Executes one explicitly selected backend, counting paid requests toward the monthly spending limit.
+  public func classify(_ input: ClassificationInput) async throws -> Verdict {
+    let settings = try await StateRepository.load(store, StateSlices()).settings
+    let model = try Self.requestableModel(settings)
     guard model.reservationUSD != nil else {
       return try await ClassifierFactory.make(model, credential: { "" }).classify(input)
     }
-    let key = try providerKey(settings.backend)
+    let backend = settings.advancedOptions.backend
+    let key = try providerKey(backend)
     return try await SpendingLimitedClassifier(
       ConsentCheckedClassifier(
         underlying: ClassifierFactory.make(model, credential: { key }, http: http),
         store: store,
-        backend: settings.backend
+        backend: backend
       ),
       model: model,
       store: store
@@ -65,9 +68,12 @@ public struct ConfiguredClassifier: Classifier {
 }
 
 extension ConfiguredClassifier: SpendingAdmission {
+  /// Whether the spending limit leaves room for `input`, admitting a request that never reaches a paid provider so ``classify(_:)`` reports why.
   func admits(_ input: ClassificationInput) async throws -> Bool {
-    let model = try await StateRepository.load(store, StateSlices()).settings.advancedOptions.model
-    guard model.reservationUSD != nil else { return true }
+    let settings = try await StateRepository.load(store, StateSlices()).settings
+    guard let model = try? Self.requestableModel(settings), model.reservationUSD != nil,
+      (try? providerKey(settings.advancedOptions.backend)) != nil
+    else { return true }
     return try await SpendingLimit.admits(input, model: model, store: store)
   }
 }
