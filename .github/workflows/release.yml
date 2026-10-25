@@ -46,7 +46,7 @@ jobs:
 
   release:
     needs: tag
-    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@b76d0fc269f04019767530b0180671738128fe7e  # 1.0.0
+    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@696f561bec731d411314971e908e8ec903d85a0c  # 1.1.1
     with:
       # GitHub names its macOS images after the major Xcode version they carry.
       runner: xcode-27
