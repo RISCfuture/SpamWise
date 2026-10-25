@@ -14311,7 +14311,7 @@
         }
       }
     },
-    "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label.": {
+    "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar corrections from the same account or your imported reviewed examples, each with its sender domain, subject, a short excerpt and your label.": {
       "localizations": {
         "en": {
           "variations": {
@@ -14319,13 +14319,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar correction from the same account, with its sender domain, subject, a short excerpt and your label."
+                  "value": "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar correction from the same account or your imported reviewed examples, with its sender domain, subject, a short excerpt and your label."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar corrections from the same account, each with its sender domain, subject, a short excerpt and your label."
+                  "value": "Your rules and known senders are checked on this Mac. If you choose a cloud provider, messages they can’t decide are sent to it: a shortened message, your preferences, and up to %lld similar corrections from the same account or your imported reviewed examples, each with its sender domain, subject, a short excerpt and your label."
                 }
               }
             }
@@ -14337,19 +14337,19 @@
               "many": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld de correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld de correcciones similares de la misma cuenta o de los ejemplos revisados que importaste, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
                 }
               },
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld corrección similar de la misma cuenta, con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld corrección similar de la misma cuenta o de los ejemplos revisados que importaste, con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld correcciones similares de la misma cuenta, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
+                  "value": "Tus reglas y los remitentes conocidos se comprueban en este Mac. Si eliges un proveedor en la nube, los mensajes que no pueden decidir se le envían: un mensaje abreviado, tus preferencias y hasta %lld correcciones similares de la misma cuenta o de los ejemplos revisados que importaste, cada una con el dominio del remitente, el asunto, un breve extracto y tu etiqueta."
                 }
               }
             }
@@ -14361,19 +14361,19 @@
               "many": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld de corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld de corrections similaires du même compte ou de vos exemples vérifiés importés, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
                 }
               },
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld correction similaire du même compte, avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld correction similaire du même compte ou de vos exemples vérifiés importés, avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld corrections similaires du même compte, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
+                  "value": "Vos règles et les expéditeurs connus sont vérifiés sur ce Mac. Si vous choisissez un fournisseur dans le cloud, les messages qu’ils ne peuvent pas trancher lui sont envoyés : un message raccourci, vos préférences et jusqu’à %lld corrections similaires du même compte ou de vos exemples vérifiés importés, chacune avec le domaine de l’expéditeur, l’objet, un court extrait et votre étiquette."
                 }
               }
             }
