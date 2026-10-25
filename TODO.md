@@ -90,8 +90,8 @@ and [packaging](docs/packaging.md) for limits and reproducible commands.
 - [ ] Ask for the same unverified-sender confirmation in the Correct Selected Mail App Intent that the app's Junk corrections ask for.
 - [x] Add Help buttons for the newer Help pages (rules, folders, Review Junk, backup, notifications, reviewed messages, statistics, IMAP) on the screens they describe.
 - [x] Test a selected-message correction batch in the hostless unit tests against a stub Apple Events runner.
-- [ ] Resolve correction records left pending when the process ends between saving a correction and recording its mail outcome, or when storage stays locked through every retry of that outcome. A claim failure is reported as a failed, not-attempted outcome, but nothing revisits a pending correction later; decide the age after which a pending correction with no action claim reads as not attempted.
-- [ ] Stop repeating embedded-image OCR for a message the monthly spending limit defers: each later sweep decodes and recognizes its images again. This needs a per-message OCR cache or a decision to skip OCR until the limit allows the request.
+- [x] Resolve correction records left pending when the process ends between saving a correction and recording its mail outcome, or when storage stays locked through every retry of that outcome. Each sweep records a correction pending for more than ten minutes (`Pipeline.unstartedCorrectionAgeSec`) without its message's action claim as failed and not attempted; a correction no longer pending is never claimed, and one holding its claim keeps its outcome.
+- [x] Stop repeating embedded-image OCR for a message the monthly spending limit defers. The pipeline keeps the image text of up to 500 deferred messages in memory, by raw-message digest, for their later sweeps, and forgets it once the message is processed otherwise.
 - [ ] Give the store's keyed documents (`Store.read(_:default:)` and its update) a set-aside path. They decode strictly, so an unreadable document fails every read and update of it instead of being set aside for recovery like other unreadable state.
 - [ ] Add a reason-category column to `RecordRow` so Activity can filter and count by status category from the store rather than by decoding every reason.
 - [ ] Owner action: reset a store written by builds before 1.0 once. SpamWise clears only the orange Review marks it recorded setting, and those builds recorded none, so corrections leave their marks in place.
@@ -113,8 +113,8 @@ Open findings from code reviews and audits, each confirmed against the current c
   - [ ] Move the hourly Contacts enumeration off the cooperative thread pool.
   - [ ] Key monthly costs and weekly digests by a fixed Gregorian calendar rather than `Calendar.current`.
   - [ ] Export statistics with labeled ISO-8601 days; daily counts encode as an unlabeled alternating array.
-  - [ ] Let a training-folder placement whose move failed before any command was sent be retried by placing the message again. A record doesn't say whether a failed move sent a command, so every failed or unconfirmed training move keeps its claim; recording that would let the never-sent ones release theirs.
-  - [ ] Remember the user's quiet hours after turning them off and on again across a Settings reload. Off is stored as equal start and end hours, so the hours to restore live only in the view and fall back to 22–8; keeping them needs a stored flag or saved hours in `NotificationPreferences`.
+  - [x] Let a training-folder placement whose move failed before any command was sent be retried by placing the message again. A record says whether dispatch stopped before sending any command, so only those failed moves release their claim; every failed or unconfirmed move that may have been sent keeps it.
+  - [x] Remember the user's quiet hours after turning them off and on again across a Settings reload. `NotificationPreferences` stores `quietHoursEnabled` beside the chosen hours, and a stored value with equal start and end hours reads as off with the default 22–8.
 - [ ] Command-line tools:
   - [ ] Require the daemon configuration's `allowsActions` as well as `--actions`; the flag replaces it today.
   - [ ] Give `spamwise-daemon` and `spamwise-eval` domain-age lookups when the setting is on, or say they are unavailable.
