@@ -19,7 +19,9 @@ struct RelationshipSettingsView: View {
       .foregroundStyle(.secondary)
       HStack {
         Button("Connect Contacts") { relationships.connectContacts() }
-        if relationships.contacts.isBusy { ProgressView().controlSize(.small) }
+        if relationships.contacts.isBusy {
+          ProgressView { Text("Connecting Contacts…") }.labelsHidden().controlSize(.small)
+        }
       }
       if relationships.contacts.status == nil {
         Text("Optional. SpamWise reads only email addresses.").foregroundStyle(.secondary)
@@ -27,7 +29,9 @@ struct RelationshipSettingsView: View {
       OperationStatusView(operation: relationships.contacts)
       HStack {
         Button("Import Inbox and Sent History") { relationships.importHistory() }
-        if relationships.historyImport.isBusy { ProgressView().controlSize(.small) }
+        if relationships.historyImport.isBusy {
+          ProgressView { Text("Importing history…") }.labelsHidden().controlSize(.small)
+        }
       }
       OperationStatusView(operation: relationships.historyImport)
       Toggle(

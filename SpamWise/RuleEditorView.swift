@@ -69,7 +69,9 @@ private struct SenderRulesPane: View {
           .disabled(selection.count != 1).accessibilityIdentifier("rules.edit")
         Button("Remove…", role: .destructive) { removing = selection }
           .disabled(selection.isEmpty).accessibilityIdentifier("rules.remove")
-        if rules.senderRules.isBusy { ProgressView().controlSize(.small) }
+        if rules.senderRules.isBusy {
+          ProgressView { Text("Updating sender rules…") }.labelsHidden().controlSize(.small)
+        }
         Spacer()
         Menu("Transfer Rules") {
           Button("Import Rules…") { importing = true }

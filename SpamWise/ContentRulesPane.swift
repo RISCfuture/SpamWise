@@ -36,7 +36,9 @@ struct ContentRulesPane: View {
         Button("Edit…") { edit(selection) }.disabled(selection.count != 1)
         Button("Remove…", role: .destructive) { removing = selection }
           .disabled(selection.isEmpty)
-        if rules.contentRules.isBusy { ProgressView().controlSize(.small) }
+        if rules.contentRules.isBusy {
+          ProgressView { Text("Updating content rules…") }.labelsHidden().controlSize(.small)
+        }
         Spacer()
         Menu("Transfer Rules") {
           Button("Import Content Rules…") { importing = true }
@@ -183,7 +185,9 @@ struct ContentRuleFormView: View {
           .foregroundStyle(.secondary)
         HStack {
           Button("Test with Message Selected in Mail") { test() }
-          if testing.isBusy { ProgressView().controlSize(.small) }
+          if testing.isBusy {
+            ProgressView { Text("Testing the rule…") }.labelsHidden().controlSize(.small)
+          }
         }
         OperationStatusView(operation: testing)
         OperationStatusView(operation: saving)

@@ -41,7 +41,7 @@ struct KeyEntryView: View {
         .disabled(!canSubmit)
         .accessibilityIdentifier("setup.saveKey")
       if operation.isBusy {
-        ProgressView().controlSize(.small)
+        ProgressView { Text("Saving the key…") }.labelsHidden().controlSize(.small)
         if verifies {
           Text("Verifying with \(model.displayName)…").foregroundStyle(.secondary)
         }

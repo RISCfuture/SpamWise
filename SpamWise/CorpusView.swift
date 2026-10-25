@@ -154,7 +154,9 @@ private struct CorpusActions: View {
       Button("Forget…", role: .destructive, action: forget)
         .disabled(selection.isEmpty)
         .accessibilityIdentifier("corpus.forget")
-      if corpus.operation.isBusy { ProgressView().controlSize(.small) }
+      if corpus.operation.isBusy {
+        ProgressView { Text("Updating your reviewed examples…") }.labelsHidden().controlSize(.small)
+      }
       Spacer()
       Menu("More") {
         Button("Export Reviewed Messages…", action: export).disabled(corpus.labels.isEmpty)

@@ -16,7 +16,9 @@ struct MailConnectionView: View {
       HStack {
         Button("Check Mail Connection") { mail.checkConnection() }
           .accessibilityIdentifier("mail.check")
-        if mail.check.isBusy { ProgressView().controlSize(.small) }
+        if mail.check.isBusy {
+          ProgressView { Text("Checking the Mail connection…") }.labelsHidden().controlSize(.small)
+        }
       }
       MailConnectionStatus(
         mail: mail,

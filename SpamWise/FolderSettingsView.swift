@@ -33,7 +33,9 @@ struct FolderSettingsView: View {
         Section("Add or change a plan") {
           HStack {
             Button("Refresh Folders") { folders.discoverFolders() }
-            if folders.plans.isBusy { ProgressView().controlSize(.small) }
+            if folders.plans.isBusy {
+              ProgressView { Text("Updating folder plans…") }.labelsHidden().controlSize(.small)
+            }
             Spacer()
             HelpButton(page: "folders")
           }
@@ -56,7 +58,9 @@ struct FolderSettingsView: View {
             HStack {
               Button("Save Plan") { save(plan) }
                 .accessibilityIdentifier("folders.save")
-              if folders.saving.isBusy { ProgressView().controlSize(.small) }
+              if folders.saving.isBusy {
+                ProgressView { Text("Saving the plan…") }.labelsHidden().controlSize(.small)
+              }
               if isEdited, !folders.saving.isBusy {
                 Text("Unsaved changes").foregroundStyle(.secondary)
               }
@@ -217,7 +221,7 @@ private struct FolderPreviewControls: View {
         folders.previewPage(of: plan.folder, since: plan.startDate, page: page)
       }
       if folders.preview.isBusy {
-        ProgressView().controlSize(.small)
+        ProgressView { Text("Previewing the page…") }.labelsHidden().controlSize(.small)
         Button("Stop Preview") { folders.preview.cancel() }
       }
     }

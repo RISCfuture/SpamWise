@@ -91,7 +91,9 @@ private struct MoveTestView: View {
   var body: some View {
     LabeledContent {
       HStack {
-        if mail.moveTest.isBusy { ProgressView().controlSize(.small) }
+        if mail.moveTest.isBusy {
+          ProgressView { Text("Testing the selected message…") }.labelsHidden().controlSize(.small)
+        }
         Button("Test Selected Message") { mail.testDisposableMessage() }
           .disabled(mail.moveTest.isBusy)
       }

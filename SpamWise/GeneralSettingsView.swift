@@ -110,7 +110,9 @@ private struct MailRoleCheck: View {
     HStack {
       Button("Check Mail Connection") { mail.checkConnection() }
         .accessibilityIdentifier("settings.checkMail")
-      if mail.check.isBusy { ProgressView().controlSize(.small) }
+      if mail.check.isBusy {
+        ProgressView { Text("Checking the Mail connection…") }.labelsHidden().controlSize(.small)
+      }
     }
     MailConnectionStatus(
       mail: mail,
@@ -125,7 +127,9 @@ private struct IMAPRoleCheck: View {
   var body: some View {
     HStack {
       Button("Check Connection") { imap.check() }
-      if imap.operation.isBusy { ProgressView().controlSize(.small) }
+      if imap.operation.isBusy {
+        ProgressView { Text("Checking the connection…") }.labelsHidden().controlSize(.small)
+      }
     }
     .task { imap.loadIfNeeded() }
     OperationStatusView(operation: imap.operation)

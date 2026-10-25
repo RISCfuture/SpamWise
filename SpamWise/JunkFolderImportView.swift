@@ -19,7 +19,9 @@ struct JunkFolderImportView: View {
           Button("Scan Junk Folders", action: preferences.scanJunk)
             .disabled(preferences.scan.isBusy || preferences.importing.isBusy)
             .accessibilityIdentifier("preferences.scanJunk")
-          if preferences.scan.isBusy { ProgressView().controlSize(.small) }
+          if preferences.scan.isBusy {
+            ProgressView { Text("Scanning Junk folders…") }.labelsHidden().controlSize(.small)
+          }
         }
         OperationStatusView(operation: preferences.scan)
         if !preferences.junkSenders.isEmpty { JunkSendersSummary(preferences: preferences) }
@@ -62,7 +64,9 @@ private struct JunkSendersSummary: View {
           || preferences.hasImported
       )
       .accessibilityIdentifier("preferences.importJunk")
-      if preferences.importing.isBusy { ProgressView().controlSize(.small) }
+      if preferences.importing.isBusy {
+        ProgressView { Text("Saving the examples…") }.labelsHidden().controlSize(.small)
+      }
     }
     OperationStatusView(operation: preferences.importing, identifier: "preferences.importStatus")
   }

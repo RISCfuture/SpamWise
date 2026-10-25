@@ -36,7 +36,7 @@ struct SetupPreviewView: View {
           .disabled(scanning.preview.isBusy)
           .accessibilityIdentifier("setup.dryRun")
         if scanning.preview.isBusy {
-          ProgressView().controlSize(.small)
+          ProgressView { Text("Running dry run…") }.labelsHidden().controlSize(.small)
           Button("Stop Dry Run") { scanning.preview.cancel() }
         }
       }
