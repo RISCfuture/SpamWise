@@ -77,6 +77,21 @@ private struct SenderRulesPane: View {
         }
         .fixedSize()
       }
+      .confirmationDialog(
+        "Import these sender rules?",
+        isPresented: Binding(
+          get: { rules.pendingImport != nil },
+          set: { if !$0 { rules.cancelSenderRuleImport() } }
+        ),
+        titleVisibility: .visible,
+        presenting: rules.pendingImport
+      ) { preview in
+        Button("Import Rules") { rules.importSenderRules(preview) }
+          .accessibilityIdentifier("rules.import.confirm")
+        Button("Cancel", role: .cancel) { rules.cancelSenderRuleImport() }
+      } message: { preview in
+        Text(preview.localizedSummary)
+      }
       OperationStatusView(operation: rules.senderRules)
       StatusLabel(status: transferStatus)
     }
@@ -96,7 +111,7 @@ private struct SenderRulesPane: View {
       )
     }
     .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
-      if case .success(let url) = result { rules.importSenderRules(from: url) }
+      if case .success(let url) = result { rules.previewSenderRuleImport(from: url) }
     }
     .fileExporter(
       isPresented: $exporting,
@@ -168,6 +183,31 @@ private struct SenderRuleTable: View {
         )
       }
     }
+  }
+}
+
+extension RuleImportPreview {
+  /// How many Block rules that would become Allow rules the summary names.
+  private static let namedBlockLimit = 5
+
+  /// What importing the archive changes, for the import confirmation.
+  fileprivate var localizedSummary: String {
+    var lines = [
+      String(localized: "New rules: \(added)"),
+      String(localized: "Rules that change: \(replaced)"),
+      String(localized: "Rules already saved: \(unchanged)")
+    ]
+    if !blocksToAllow.isEmpty { lines.append(blocksToAllowSummary) }
+    return lines.joined(separator: "\n")
+  }
+
+  private var blocksToAllowSummary: String {
+    let named = Array(blocksToAllow.prefix(Self.namedBlockLimit)).formatted(.list(type: .and))
+    return blocksToAllow.count > Self.namedBlockLimit
+      ? String(
+        localized: "\(blocksToAllow.count) Block rules become Allow rules, including \(named)."
+      )
+      : String(localized: "These Block rules become Allow rules: \(named).")
   }
 }
 

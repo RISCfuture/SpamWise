@@ -94,8 +94,15 @@ public enum RuleManagement {
     let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     return try encoder.encode(Archive(rules: rules.sorted { $0.id < $1.id }))
   }
-  /// Validates the whole archive before merging; imported rules replace matching scopes atomically.
-  public static func importRules(_ data: Data, store: Store) async throws {
+  /**
+   Validates a whole archive and describes how importing it would change `rules`, saving nothing.
+
+   - Throws: ``RuleManagementError/invalidArchive`` for an oversized, malformed or unsupported
+     archive, or ``RuleManagementError/invalidRule`` when any rule in it is invalid.
+   */
+  public static func previewImport(_ data: Data, against rules: [SenderRule]) throws
+    -> RuleImportPreview
+  {
     guard data.count <= maximumArchiveBytes else { throw RuleManagementError.invalidArchive }
     let archive: Archive
     do { archive = try JSONDecoder().decode(Archive.self, from: data) } catch {
@@ -104,13 +111,18 @@ public enum RuleManagement {
     guard archive.version == 1, archive.rules.count <= maximumRules else {
       throw RuleManagementError.invalidArchive
     }
-    let rules = try archive.rules.map {
+    let imported = try archive.rules.map {
       SenderRule(
         scope: $0.scope,
         value: try normalized($0.value, scope: $0.scope),
         disposition: $0.disposition
       )
     }
+    return RuleImportPreview(rules: imported, replacing: rules)
+  }
+  /// Merges a previewed archive; its rules replace the saved rules of the same scope and value.
+  public static func commitImport(_ preview: RuleImportPreview, store: Store) async throws {
+    let rules = preview.rules
     try await StateRepository.update(store, loading: StateSlices([.rules])) { state in
       for rule in rules { state.rules = Gates.replacing(rule, in: state.rules) }
       guard state.rules.count <= maximumRules else { throw RuleManagementError.tooManyRules }
@@ -118,6 +130,32 @@ public enum RuleManagement {
     }
   }
   private struct Archive: Codable { var version = 1; var rules: [SenderRule] }
+}
+
+/// What importing a validated sender-rule archive would change, before it is committed.
+public struct RuleImportPreview: Sendable {
+  /// The archive's normalized rules, in archive order.
+  let rules: [SenderRule]
+  /// Rules for addresses or domains that have no rule yet.
+  public let added: Int
+  /// Rules whose saved counterpart already has the same disposition.
+  public let unchanged: Int
+  /// Rules that change the disposition of a saved rule, including ``blocksToAllow``.
+  public let replaced: Int
+  /// The addresses and domains whose Block rules would become Allow rules, sorted.
+  public let blocksToAllow: [String]
+
+  /// Compares `rules` with the `saved` rules they would replace; a later duplicate wins.
+  init(rules: [SenderRule], replacing saved: [SenderRule]) {
+    self.rules = rules
+    let current = Dictionary(saved.map { ($0.id, $0.disposition) }, uniquingKeysWith: { $1 })
+    let incoming = Dictionary(rules.map { ($0.id, $0) }, uniquingKeysWith: { $1 }).values
+    added = incoming.count { current[$0.id] == nil }
+    unchanged = incoming.count { current[$0.id] == $0.disposition }
+    replaced = incoming.count - added - unchanged
+    blocksToAllow = incoming.filter { current[$0.id] == .block && $0.disposition == .allow }
+      .map(\.value).sorted()
+  }
 }
 
 extension AppState {
