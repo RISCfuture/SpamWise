@@ -109,7 +109,7 @@ package final class RecordRow: PayloadRow {
   package var subject: String
   /// Decision explanation for text search.
   package var reason: String
-  /// Change counter at the latest write, for incremental reloads.
+  /// Change counter at the latest write.
   package var changeStamp: Int
   /// JSON-encoded record.
   package var payload: Data
