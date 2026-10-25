@@ -4,7 +4,12 @@ import Signals
 
 /// Builds separate fixed instructions and escaped, untrusted message context.
 public enum PromptBuilder {
-  /// Maximum UTF-8 size of escaped preferences and message context across all providers.
+  /**
+   Maximum UTF-8 size of escaped preferences and message context across all providers.
+
+   A provider whose context window is smaller, such as the on-device model, uses a shorter
+   rendering of the same prompt.
+   */
   public static let maximumPromptBytes = 65_536
   /// Identity of the guided-output schema used in response-cache keys.
   public static let schemaID = "spamwise-verdict-v3"
@@ -114,19 +119,18 @@ public enum PromptBuilder {
 
    Oversized context is shortened rather than rejected: examples are dropped first, then the body
    is cut, and the message is marked `shortenedToFit` so the model treats its size as weak junk
-   evidence.
+   evidence. This is the first prompt that fits, which a provider with a smaller context window
+   shortens further.
 
    - Throws: ``ClassificationError/evidenceExceedsPrompt`` only when the evidence, subject and
      policy alone exceed the limit.
    */
   public static func prompt(_ input: ClassificationInput) throws -> String {
-    let body = QuotedReply(input.message)
-    var budget = PromptBudget(input)
-    while true {
-      let prompt = try render(input, body: body, budget: budget)
-      if prompt.utf8.count <= maximumPromptBytes { return prompt }
-      guard budget.shrink() else { throw ClassificationError.evidenceExceedsPrompt }
+    var candidates = Candidates(input)
+    guard let prompt = try candidates.next() else {
+      throw ClassificationError.evidenceExceedsPrompt
     }
+    return prompt
   }
 
   private static func render(
@@ -187,6 +191,29 @@ public enum PromptBuilder {
       omittedQuotedCharacters: fitted.omittedQuotedCharacters,
       shortenedToFit: budget.shortened ? true : nil
     )
+  }
+
+  /// Successively shorter renderings of one input's prompt, in the budget's shrinking order.
+  struct Candidates {
+    private let input: ClassificationInput
+    private let body: QuotedReply
+    private var budget: PromptBudget?
+
+    init(_ input: ClassificationInput) {
+      self.input = input
+      body = QuotedReply(input.message)
+      budget = PromptBudget(input)
+    }
+
+    /// Returns the next rendering of at most `maximumBytes`, or nil once none is left.
+    mutating func next(maximumBytes: Int = maximumPromptBytes) throws -> String? {
+      while var current = budget {
+        let prompt = try render(input, body: body, budget: current)
+        budget = current.shrink() ? current : nil
+        if prompt.utf8.count <= maximumBytes { return prompt }
+      }
+      return nil
+    }
   }
 
   private struct PromptBudget {
