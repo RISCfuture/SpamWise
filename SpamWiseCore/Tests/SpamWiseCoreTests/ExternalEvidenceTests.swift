@@ -208,16 +208,22 @@ func `requires consent and valid domain names for blocklist queries`() async {
 }
 
 @Test
-func `posts raw mail to loopback Rspamd and extracts only valid evidence symbols`() async {
+func `posts raw mail to loopback Rspamd and extracts its verdict and valid symbols`() async {
   let lookup = RspamdLookup(
     configuration: fixtureConfiguration(RspamdFixtureProtocol.self),
     scanTimeLimit: .seconds(60)
   )
   let result = await lookup.lookup(raw: RspamdFixtureProtocol.message("valid"))
   #expect(result.status == .observed)
-  #expect(result.details == ["BAYES_SPAM: 5.1", "R_DKIM_ALLOW: -0.2"])
+  #expect(
+    result.details == [
+      "action: reject, score: 8.0, required score: 6.0", "BAYES_SPAM: 5.1", "R_DKIM_ALLOW: -0.2",
+      "A_ZERO: 0.0"
+    ]
+  )
   for scenario in [
-    "bad-symbol", "excessive-score", "no-symbols", "oversized", "redirect", "failure"
+    "bad-symbol", "excessive-score", "excessive-total", "bad-action", "no-symbols", "oversized",
+    "redirect", "failure"
   ] {
     #expect(await lookup.lookup(raw: RspamdFixtureProtocol.message(scenario)).status == .unknown)
   }
@@ -323,11 +329,13 @@ private final class RspamdFixtureProtocol: URLProtocol {
       200,
       #"""
       {"score":8,"required_score":6,"action":"reject",
-       "symbols":{"BAYES_SPAM":{"score":5.1},"R_DKIM_ALLOW":{"score":-0.2}}}
+       "symbols":{"A_ZERO":{"score":0},"BAYES_SPAM":{"score":5.1},"R_DKIM_ALLOW":{"score":-0.2}}}
       """#
     ),
     "bad-symbol": (200, #"{"symbols":{"BAD SYMBOL":{"score":1}}}"#),
     "excessive-score": (200, #"{"symbols":{"SPAM":{"score":10001}}}"#),
+    "excessive-total": (200, #"{"score":-10001,"symbols":{"SPAM":{"score":1}}}"#),
+    "bad-action": (200, #"{"action":"delete","symbols":{"SPAM":{"score":1}}}"#),
     "no-symbols": (200, #"{"action":"reject"}"#),
     "oversized": (200, String(repeating: " ", count: 65_537)),
     "redirect": (302, #"{"symbols":{}}"#),
