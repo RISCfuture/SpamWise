@@ -80,13 +80,13 @@ HTTP transport tests do not establish a tested Spamhaus-enabled scanner.
 In Settings → Advanced → Network lookups, turn on **Look up sender and link domains
 in Spamhaus DBL**, then choose the **Spamhaus service** in the Spamhaus section that
 appears. For HTTPS, obtain your own HTTPS-authorized subscription/trial query key,
-paste it into the query key field and choose **Save query key**, which stores it in
+paste it into the query key field and choose **Save Query Key**, which stores it in
 Keychain. Saving a key does not verify service access or send a request. Review the
 requirements and turn on **I meet the lookup service’s usage terms**; changing the
 service withdraws that acknowledgement. Settings apply as soon as they change. Keep
 dry run enabled for initial testing; dry run still permits explicitly authorized
 network lookups. To stop new queries, turn the lookup off or turn on **Keep filtering
-on this Mac** in Settings → Classifier. Remove the saved key under Settings → Accounts
+on this Mac** in Settings → Provider. Remove the saved key under Settings → Accounts
 → Keys and passwords.
 
 No immediate account action is required while the feature is off. For shared

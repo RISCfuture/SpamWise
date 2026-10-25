@@ -1,6 +1,6 @@
 # Conventions and design decisions
 
-The authoritative code conventions are the owner's `swift-conventions` and
+The authoritative code conventions are the maintainer's `swift-conventions` and
 `swiftui-conventions` skills. This page records how SpamWise applies them and the
 interface design they produced, so a change can stay consistent without re-deriving
 either. It is not a per-file review record. Vendor packages, generated build output,
@@ -26,14 +26,16 @@ guidance informs the design.
 - Every Activity sheet shares the same navigation chrome, with Done, Cancel and
   confirmation buttons in the toolbar, and is presented through one router. The
   weekly Review digest is announced rather than opened unprompted.
-- Settings has General, Classifier, Accounts, Rules, Policy and Advanced tabs, built
+- Settings has General, Provider, Accounts, Rules, Mail Choices and Advanced tabs, built
   as grouped forms with section footers. Every control applies on change; there are
   no Save buttons for settings. Conditional controls appear only when relevant, one
   Diagnostics disclosure holds Mail access, pending retries and, in Debug builds only,
   the move test, and the app remembers the selected tab.
-- First launch presents four setup steps in the main window: an introduction, the
-  provider choice with its key and mail-sharing consent, the Mail connection, and a
-  dry run whose results are listed. General can reopen them in a sheet with Cancel.
+- First launch presents five setup steps in the main window: an introduction, the
+  provider choice with its key and mail-sharing consent, the Mail connection with
+  Contacts and history, Keep, Flag or Junk choices for each kind of bulk mail with an
+  optional Junk-folder import, and a dry run whose results are listed. General's Show
+  Setup reopens them in a sheet with Cancel.
 - Each operation shows its own progress, result or failure with a recovery action,
   next to the control that started it. Destructive actions confirm first.
 - A menu-bar extra keeps monitoring, Pause and selected-message corrections reachable

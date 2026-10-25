@@ -2,12 +2,13 @@
 
 SpamWise defines four App Intents for Shortcuts: **Preview Selected Mail**,
 **Correct Selected Mail**, **Get SpamWise Status**, and **Export SpamWise Diagnostics**.
-The first two require one selected Mail message, completed setup, Mail Automation
-permission, and an unlocked Mac. Preview uses the configured provider and spending
+The first two require one selected Mail message, completed setup, SpamWise connected
+through Apple Mail rather than IMAP, Mail Automation permission, and an unlocked Mac. Preview uses the configured provider and spending
 limit; it never requests mail actions. Correction saves an address rule and example
 before attempting its action under Pause, dry run and account validation.
 
-Status returns redacted JSON; export returns the same data as a JSON file. Neither
+Status speaks the current filtering state, as the menu bar shows it, and returns
+redacted JSON as its value; export returns the same data as a JSON file. Neither
 includes credentials, subjects, senders, account identities or message bodies.
 The Filtering Status App Shortcut exposes status without building a custom shortcut.
 
@@ -23,8 +24,9 @@ its original JSON result without a new classification or action. Reusing a UUID
 for a different operation or selected message fails. An interrupted/uncertain
 request also fails on retry instead of risking another move or charge. Inspect
 Activity before creating another request. Claims survive Activity retention and
-have a hard 10,000-request limit; saturation fails without evicting old
-protection.
+hold up to 10,000 requests. A completed request can be replayed for 30 days, after
+which its claim is dropped, and the oldest completed claims make room when the store
+is full. A claim whose result was never saved is kept, since replaying it is unsafe.
 
 Replies contain `requestID`, `recordID`, optional `label`, `action`, `outcome` and
 a bounded `reason`. A label is not an action acknowledgement. Cancellation stops pending work;
