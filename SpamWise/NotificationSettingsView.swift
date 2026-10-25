@@ -14,6 +14,16 @@ struct NotificationSettingsView: View {
       set: { notifications.setEnabled($0) }
     )
   }
+  /// Why no notification arrives while SpamWise leaves mail unchanged.
+  private var deliveryNote: LocalizedStringKey? {
+    if settings.settings.dryRun {
+      "Notifications start once dry run is off."
+    } else if settings.settings.paused {
+      "Notifications resume when filtering resumes."
+    } else {
+      nil
+    }
+  }
 
   var body: some View {
     @Bindable var interval = settings.notificationIntervalMin
@@ -24,19 +34,12 @@ struct NotificationSettingsView: View {
       if preferences.enabledSince != nil {
         Toggle("Also include good mail", isOn: settings.mailBinding(\.notifications.includeGood))
         Stepper(
-          "Batch interval: \(Measurement(value: Double(interval.value), unit: UnitDuration.minutes), format: .measurement(width: .wide, usage: .asProvided))",
+          "Notify at most every \(Measurement(value: Double(interval.value), unit: UnitDuration.minutes), format: .measurement(width: .wide, usage: .asProvided))",
           value: $interval.value,
           in: NotificationPreferences.intervalRangeMin,
           step: Self.intervalStepMin
         )
-        QuietHoursPicker(
-          title: "Quiet from",
-          selection: settings.mailBinding(\.notifications.quietStartHour)
-        )
-        QuietHoursPicker(
-          title: "Quiet until",
-          selection: settings.mailBinding(\.notifications.quietEndHour)
-        )
+        QuietHoursControls(settings: settings)
       }
       OperationStatusView(operation: notifications.save)
     } header: {
@@ -46,9 +49,8 @@ struct NotificationSettingsView: View {
         VStack(alignment: .leading) {
           Text(notifications.permission)
             .accessibilityIdentifier("notifications.status")
-          Text(
-            "Notifications show counts, never message content. Set both quiet hours the same to turn quiet hours off."
-          )
+          if let deliveryNote { Text(deliveryNote) }
+          Text("Notifications show counts, never message content.")
         }
         .foregroundStyle(.secondary)
         Spacer()
@@ -56,6 +58,57 @@ struct NotificationSettingsView: View {
       }
     }
     .task { await notifications.refreshPermission() }
+  }
+}
+
+/// Whether notifications wait during quiet hours, and the hours those span.
+private struct QuietHoursControls: View {
+  private static let defaultHours = QuietHours(NotificationPreferences())
+  let settings: SettingsModel
+  /// The hours to restore when quiet hours are turned back on.
+  @State private var restoredHours: QuietHours?
+
+  private var preferences: NotificationPreferences { settings.settings.mailOptions.notifications }
+  private var isOn: Bool { preferences.quietStartHour != preferences.quietEndHour }
+
+  var body: some View {
+    Toggle("Quiet hours", isOn: Binding(get: { isOn }, set: { $0 ? turnOn() : turnOff() }))
+    if isOn {
+      QuietHoursPicker(
+        title: "Quiet from",
+        selection: settings.mailBinding(\.notifications.quietStartHour)
+      )
+      QuietHoursPicker(
+        title: "Quiet until",
+        selection: settings.mailBinding(\.notifications.quietEndHour)
+      )
+    }
+  }
+
+  private func turnOn() {
+    let hours = restoredHours ?? Self.defaultHours
+    settings.editSettings {
+      $0.mailOptions.notifications.quietStartHour = hours.start
+      $0.mailOptions.notifications.quietEndHour = hours.end
+    }
+  }
+
+  /// Ends the quiet period where it starts, which leaves no quiet hours.
+  private func turnOff() {
+    let hours = QuietHours(preferences)
+    restoredHours = hours
+    settings.editSettings { $0.mailOptions.notifications.quietEndHour = hours.start }
+  }
+}
+
+/// The local-clock hours a quiet period starts and ends.
+private struct QuietHours {
+  let start: Int
+  let end: Int
+
+  init(_ preferences: NotificationPreferences) {
+    start = preferences.quietStartHour
+    end = preferences.quietEndHour
   }
 }
 

@@ -9,7 +9,7 @@ struct GeneralSettingsView: View {
 
   var body: some View {
     Form {
-      StartupSettingsView()
+      StartupSettingsView(loginItem: settings.loginItem)
       UpdateSettingsView()
       Section {
         Picker("Filtering strength", selection: settings.binding(\.strength)) {
@@ -47,6 +47,7 @@ struct GeneralSettingsView: View {
         )
         .foregroundStyle(.secondary)
       }
+      NotificationSettingsView(notifications: model.notifications, settings: settings)
       Section {
         HStack {
           Button("Show setup", action: showSetup)
