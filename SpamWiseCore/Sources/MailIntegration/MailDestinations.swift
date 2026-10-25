@@ -66,8 +66,8 @@ extension MailScripts {
   static let destinationHandlers = """
     on boxPath(b)
         tell application "Mail"
-            set parentBox to container of b
             try
+                set parentBox to container of b
                 get account of parentBox
             on error number failureNumber
                 if \(propagatedFailureList) contains failureNumber then error number failureNumber
