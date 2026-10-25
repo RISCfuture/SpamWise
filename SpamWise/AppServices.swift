@@ -211,8 +211,7 @@ extension AppServices {
     return IMAPAdapter(
       configuration: configuration,
       credentials: { [credentials] in
-        let value = try credentials.read(.imap(service: connection.credentialService))
-        return connection.oauthBearer ? .oauthBearer(value) : .password(value)
+        .password(try credentials.read(.imap(service: connection.credentialService)))
       },
       validations: store
     )
