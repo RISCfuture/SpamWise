@@ -221,9 +221,14 @@ func `posts raw mail to loopback Rspamd and extracts its verdict and valid symbo
       "A_ZERO: 0.0"
     ]
   )
+  #expect(
+    await lookup.lookup(raw: RspamdFixtureProtocol.message("custom-action")).details == [
+      "SPAM: 1.0"
+    ]
+  )
   for scenario in [
-    "bad-symbol", "excessive-score", "excessive-total", "bad-action", "no-symbols", "oversized",
-    "redirect", "failure"
+    "bad-symbol", "excessive-score", "excessive-total", "no-symbols", "oversized", "redirect",
+    "failure"
   ] {
     #expect(await lookup.lookup(raw: RspamdFixtureProtocol.message(scenario)).status == .unknown)
   }
@@ -335,7 +340,7 @@ private final class RspamdFixtureProtocol: URLProtocol {
     "bad-symbol": (200, #"{"symbols":{"BAD SYMBOL":{"score":1}}}"#),
     "excessive-score": (200, #"{"symbols":{"SPAM":{"score":10001}}}"#),
     "excessive-total": (200, #"{"score":-10001,"symbols":{"SPAM":{"score":1}}}"#),
-    "bad-action": (200, #"{"action":"delete","symbols":{"SPAM":{"score":1}}}"#),
+    "custom-action": (200, #"{"action":"tag","symbols":{"SPAM":{"score":1}}}"#),
     "no-symbols": (200, #"{"action":"reject"}"#),
     "oversized": (200, String(repeating: " ", count: 65_537)),
     "redirect": (302, #"{"symbols":{}}"#),
