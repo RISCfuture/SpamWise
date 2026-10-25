@@ -38,12 +38,16 @@ struct AppServices {
       if uiTesting { removeStaleIsolatedState() }
     #endif
     let store = openStore { try uiTesting ? isolatedStoreURL() : Store.sharedURL() }
+    let credentials: any CredentialStore =
+      uiTesting ? MemoryCredentialStore() : KeychainCredentialStore()
     return Self(
       store: store,
-      pipeline: store.map { pipeline(for: $0, automationFixture: automation) },
+      pipeline: store.map {
+        pipeline(for: $0, credentials: credentials, automationFixture: automation)
+      },
       appleMail: AppleMailAdapter(runner: runner(uiTesting: uiTesting, automation: automation)),
       preferences: uiTesting ? isolatedPreferences() : .standard,
-      credentials: uiTesting ? MemoryCredentialStore() : KeychainCredentialStore(),
+      credentials: credentials,
       uiTesting: uiTesting
     )
   }
@@ -98,7 +102,11 @@ struct AppServices {
     return isolated
   }
 
-  private static func pipeline(for store: Store, automationFixture: Bool) -> Pipeline {
+  private static func pipeline(
+    for store: Store,
+    credentials: any CredentialStore,
+    automationFixture: Bool
+  ) -> Pipeline {
     #if DEBUG
       if automationFixture {
         return Pipeline(
@@ -111,7 +119,7 @@ struct AppServices {
     #endif
     return Pipeline(
       store: store,
-      classifier: ConfiguredClassifier(store: store),
+      classifier: ConfiguredClassifier(store: store) { try credentials.read(.provider($0)) },
       rdap: RDAPLookup(
         cacheURL: store.url.deletingLastPathComponent().appending(path: "rdap-cache.json")
       )
