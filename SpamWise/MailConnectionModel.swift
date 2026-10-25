@@ -96,10 +96,9 @@ final class MailConnectionModel {
     var results: [String: Bool] = [:]
     for account in accounts {
       try Task.checkCancellation()
-      if let read = try? await services.appleMail.destinations(accountID: account.id) {
-        destinations[account.id] = read
-        results[account.id] = read.isUnambiguous
-      }
+      let read = try? await services.appleMail.destinations(accountID: account.id)
+      destinations[account.id] = read
+      results[account.id] = read?.isUnambiguous
     }
     if let store = services.store {
       try await StateRepository.recordAppleMailRoles(
