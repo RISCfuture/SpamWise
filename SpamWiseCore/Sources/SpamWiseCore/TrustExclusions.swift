@@ -46,6 +46,11 @@ public enum TrustExclusions {
       $0.mailOptions.trustExclusions = Set(addresses)
     }
   }
+  /// Whether `addresses` is a set ``save(_:store:)`` could have saved.
+  static func isValid(_ addresses: Set<String>) -> Bool {
+    addresses.count <= maximumAddresses
+      && addresses.allSatisfy { (try? RuleManagement.normalized($0, scope: .address)) == $0 }
+  }
   private static func address(_ line: Substring) throws -> String {
     do { return try RuleManagement.normalized(String(line), scope: .address) } catch {
       throw TrustExclusionError.invalidAddress(
