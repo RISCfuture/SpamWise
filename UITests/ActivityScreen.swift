@@ -80,6 +80,15 @@ struct ActivityScreen {
 
   func pause() { app.buttons["activity.pause"].click() }
 
+  /// Whether the Filtering menu offers to mark the selected decision as Junk.
+  func canMarkSelectionAsJunk() -> Bool {
+    app.menuBars.menuBarItems[AppText.localized("Filtering")].click()
+    let item = app.menuItems["activity.correct.junk"]
+    XCTAssertTrue(item.waitForExistence(timeout: UITestTiming.transition))
+    defer { app.typeKey(.escape, modifierFlags: []) }
+    return item.isEnabled
+  }
+
   /// Opens Settings on the tab titled by `titleKey`.
   private func openSettingsPane(_ titleKey: String) {
     app.typeKey(",", modifierFlags: .command)
