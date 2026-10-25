@@ -75,12 +75,12 @@ private struct APIKeyExplanation: View {
   var body: some View {
     Text(
       """
-      An API key is a long code, like a password, that lets SpamWise use \
-      \(backend.localizedTitle) with your own account. Choose Get an API key to create one on the \
-      provider’s website, then copy it and paste it below. The provider bills your account for \
-      the mail SpamWise sends it.
+      An API key is a long code, like a password, that lets SpamWise use \(backend.localizedTitle) \
+      with your own account. Choose Get an API key to create one on the provider’s website, then \
+      copy it and paste it below.
       """
     )
+    .foregroundStyle(.secondary)
   }
 }
 
