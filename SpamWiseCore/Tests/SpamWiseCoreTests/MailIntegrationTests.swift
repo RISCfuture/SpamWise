@@ -171,6 +171,7 @@ func `runs corrections and lookups interactively and automatic actions in the ba
   _ = try await adapter.lookup(MailReply.identity())
   _ = try await adapter.performCorrection(.orangeFlag, for: MailReply.identity())
   _ = try await adapter.markCorrectionReadInJunk(MailReply.identity())
+  _ = try await adapter.clearJunkMarkInInbox(MailReply.identity())
   #expect(await runner.lanes.dropFirst(automatic).allSatisfy { $0 == .interactive })
 }
 

@@ -210,6 +210,32 @@ struct `integrates bounded IMAP messages` {
     #expect(await server.commands.contains { $0.hasPrefix("UID STORE") } == (expected != nil))
   }
 
+  @Test(arguments: [("\\Seen $Junk Junk $NotJunk", "$Junk Junk"), ("\\Seen $NotJunk", nil)])
+  func `clears only the junk keywords an Inbox message carries`(
+    flags: String,
+    removed: String?
+  ) async throws {
+    let raw = "From: sender@example.com\r\nSubject: wanted\r\n\r\nGood"
+    var transcript = IMAPTranscript.authenticated().select(validity: 33).body(raw, uid: 7)
+      .flags(uid: 7, flags)
+    if let removed {
+      transcript = transcript.then(
+        "UID STORE 7 -FLAGS (\(removed))",
+        "* 1 FETCH (UID 7 FLAGS (\\Seen $NotJunk))"
+      )
+    }
+    let server = IMAPTestServer(transcript)
+    let adapter = await server.adapter(validations: try await Self.validatedStore())
+    let change = try await adapter.clearJunkMarkInInbox(Self.identity(raw))
+    #expect(change == (removed == nil ? .absent : .cleared))
+    await #expect(throws: ActionNotAttempted.self) {
+      _ = try await adapter.clearJunkMarkInInbox(Self.identity(raw, mailbox: "Junk Mail"))
+    }
+    #expect(
+      await server.commands.filter { $0.hasPrefix("UID STORE") }.count == (removed == nil ? 0 : 1)
+    )
+  }
+
   @Test
   func `removes the Flagged fallback only where SpamWise set it`() async throws {
     let raw = "From: sender@example.com\r\nSubject: maybe\r\n\r\nUncertain"
@@ -281,7 +307,9 @@ struct `integrates bounded IMAP messages` {
     async throws
   {
     let returned = try await ReturnedFromJunk()
-    #expect(await returned.correctRescued().map(\.decision.label) == [.inbox])
+    let corrections = await returned.correctRescued()
+    #expect(corrections.map(\.decision.label) == [.inbox])
+    #expect(corrections.map(\.junkMarkOutcome) == [.applied])
     let rules = try await StateRepository.load(returned.store).rules
     #expect(rules.contains { $0.value == "sender@example.com" && $0.disposition == .allow })
   }
@@ -475,6 +503,8 @@ struct `integrates bounded IMAP messages` {
           .move(uid: 7, to: "Junk Mail", copyUID: (40, 90))
           .examine("Junk Mail", validity: 40).body(Self.raw, uid: 90)
           .examine(validity: 33).body(Self.raw, uid: 95)
+          .select(validity: 33).body(Self.raw, uid: 95).flags(uid: 95, "\\Seen $Junk")
+          .then("UID STORE 95 -FLAGS ($Junk)", "* 1 FETCH (UID 95 FLAGS (\\Seen))")
       )
       store = try await validatedStore()
       try await StateRepository.editSettings(store) { $0.dryRun = false }

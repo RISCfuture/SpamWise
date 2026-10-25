@@ -49,6 +49,15 @@ public struct MoveSettlement: Sendable {
     self.due = due; self.verify = verify
   }
 }
+/// What the mail client showed after a request to clear its own junk mark on a message.
+public enum JunkMarkChange: Sendable, Equatable {
+  /// The message had no junk mark, so nothing was changed.
+  case absent
+  /// The client showed the junk mark removed.
+  case cleared
+  /// The client didn't show the junk mark removed; it may still remove it.
+  case unconfirmed
+}
 /// Message discovery, history, and non-destructive Mail action operations.
 public protocol MailClientAdapter: Sendable {
   /// Resolves one message using its account-scoped identity.
@@ -66,6 +75,14 @@ public protocol MailClientAdapter: Sendable {
   func markReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt
   /// Marks a message read in Junk as a step of the user's correction, which someone is waiting for.
   func markCorrectionReadInJunk(_ identity: MessageIdentity) async throws -> ActionReceipt
+  /**
+   Clears the mail client's own junk mark on an exact message only while it remains in this
+   account's Inbox, as a step of the user's Good correction, which someone is waiting for.
+
+   - Throws: ``ActionNotAttempted`` when the message can't be resolved in the Inbox, so nothing
+     was changed.
+   */
+  func clearJunkMarkInInbox(_ identity: MessageIdentity) async throws -> JunkMarkChange
 }
 extension MailClientAdapter {
   /// Integrations support every action unless they say otherwise.
@@ -85,6 +102,10 @@ extension MailClientAdapter {
     -> ActionReceipt
   {
     try await markReadInJunk(identity)
+  }
+  /// Unsupported integrations leave the junk mark unchanged.
+  public func clearJunkMarkInInbox(_: MessageIdentity) throws -> JunkMarkChange {
+    throw IntegrationError.unavailable
   }
 }
 /// Failures while resolving messages or executing mail-client operations.

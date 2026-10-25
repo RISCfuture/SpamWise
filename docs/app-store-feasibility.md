@@ -9,8 +9,9 @@ an App Review approval.
 
 Every SpamWise action reaches Mail through Apple Events under
 `com.apple.security.temporary-exception.apple-events` for `com.apple.mail`: history
-import, message lookup, Junk and Inbox moves, Review flags and read status. Both
-editions use it. Guideline 2.4.5(i) limits modifying other apps' data, temporary
+import, message lookup, Junk and Inbox moves, Review flags, read status and clearing
+Mail's junk mark on mail the user marks as Good. Both editions use it. Guideline
+2.4.5(i) limits modifying other apps' data, temporary
 exceptions are granted case by case, and Mail's scripting dictionary exposes only a
 `com.apple.mail.compose` access group, which covers none of these operations.
 Replacing the exception with compose access would break the product.

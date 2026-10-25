@@ -153,6 +153,11 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
   public var readStatusOutcome: ActionOutcome?
   /// Failure of optional mark-as-read, independent of the already completed move.
   public var readStatusError: String?
+  /// Separately recorded clearing of Mail's own junk mark after a Good correction's confirmed move
+  /// to Inbox; nil when not attempted, and `noAction` when the message had none.
+  public var junkMarkOutcome: ActionOutcome?
+  /// Failure of clearing Mail's junk mark, independent of the already completed move.
+  public var junkMarkError: String?
   /// Learning identity of the text that was classified, so corrections replace its sample.
   public var sampleID: String?
   /// Creates a record with a new ID and the current date, storing an empty subject as nil.
@@ -201,12 +206,15 @@ public struct DecisionRecord: Codable, Sendable, Equatable, Identifiable {
     actionNeverSent = values.lenient(.actionNeverSent, default: false)
     readStatusOutcome = values.lenient(.readStatusOutcome, default: nil)
     readStatusError = values.lenient(.readStatusError, default: nil)
+    junkMarkOutcome = values.lenient(.junkMarkOutcome, default: nil)
+    junkMarkError = values.lenient(.junkMarkError, default: nil)
     sampleID = values.lenient(.sampleID, default: nil)
   }
   private enum CodingKeys: String, CodingKey {
     case id, date, identity, sender, subject, evidence, verdict, threats, decision, outcome
     case actionError, path, latency, revision, correctedLabel, correctionUndone, actionSettled
-    case actionNeverSent, readStatusOutcome, readStatusError, sampleID
+    case actionNeverSent, readStatusOutcome, readStatusError, junkMarkOutcome, junkMarkError
+    case sampleID
   }
 }
 extension DecisionRecord {

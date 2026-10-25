@@ -7,11 +7,11 @@
 <h2><a name="in-activity" id="in-activity"></a>Corriger un message dans Activité</h2>
 <p>Sélectionnez le message dans Activité, puis choisissez l’une de ces commandes dans le menu Filtrage, ou cliquez sur le message en maintenant la touche Contrôle enfoncée :</p>
 <ul>
-<li>Marquer comme légitime (Option + Commande + G) déplace le message dans Réception.</li>
+<li>Marquer comme légitime (Option + Commande + G) déplace le message dans Réception. Une fois le déplacement confirmé par Mail, SpamWise retire aussi la marque indésirable de Mail, pour que Mail ne l’affiche plus comme indésirable.</li>
 <li>Marquer comme indésirable (Option + Commande + J) le déplace dans la boîte des indésirables du compte.</li>
 <li>Marquer pour vérification (Option + Commande + R) le remet dans Réception avec la marque À vérifier.</li>
 </ul>
-<p>Vous pouvez aussi utiliser les boutons Légitime, Indésirables et À vérifier sous Corriger cette décision, dans l’inspecteur. SpamWise enregistre d’abord votre correction, puis demande à Mail de déplacer le message. Si le déplacement échoue, la correction reste enregistrée et le Résultat de l’inspecteur indique ce qui s’est passé dans Mail. Un message sans adresse d’expéditeur ne peut pas être corrigé ; déplacez-le dans Mail.</p>
+<p>Vous pouvez aussi utiliser les boutons Légitime, Indésirables et À vérifier sous Corriger cette décision, dans l’inspecteur. SpamWise enregistre d’abord votre correction, puis demande à Mail de déplacer le message. Si le déplacement échoue, la correction reste enregistrée et le Résultat de l’inspecteur indique ce qui s’est passé dans Mail. Pour Marquer comme légitime, l’inspecteur indique aussi si la marque indésirable de Mail a été retirée. Marquer comme indésirable n’ajoute jamais cette marque. Un message sans adresse d’expéditeur ne peut pas être corrigé ; déplacez-le dans Mail.</p>
 <h2><a name="what-it-remembers" id="what-it-remembers"></a>Ce que retient une correction</h2>
 <ul>
 <li>Marquer comme légitime crée une règle Autoriser pour l’adresse de l’expéditeur, et Marquer comme indésirable une règle Bloquer. Une nouvelle correction remplace la règle précédente pour cette adresse.</li>
@@ -34,7 +34,7 @@
 <p>Créez un raccourci pour chaque étiquette que vous utilisez. Les touches fonctionnent dans toutes les apps, y compris Mail, et corrigent le message sélectionné dans Mail.</p>
 
 <h2><a name="move-in-mail" id="move-in-mail"></a>Sortir un message des indésirables dans Mail</h2>
-<p>Si SpamWise a déplacé un message dans Indésirables et que vous le remettez dans Réception dans Mail, ou le marquez comme non indésirable, SpamWise le considère comme marqué légitime lors de sa prochaine vérification de votre boîte de réception : il autorise l’expéditeur et apprend du message. Cela fonctionne de la même façon avec une connexion IMAP et n’importe quelle app de messagerie. Ce n’est pas le cas :</p>
+<p>Si SpamWise a déplacé un message dans Indésirables et que vous le remettez dans Réception dans Mail, ou le marquez comme non indésirable, SpamWise le considère comme marqué légitime lors de sa prochaine vérification de votre boîte de réception : il autorise l’expéditeur, apprend du message et retire la marque indésirable de Mail si le message l’a encore. Cela fonctionne de la même façon avec une connexion IMAP et n’importe quelle app de messagerie. Ce n’est pas le cas :</p>
 <ul>
 <li>pendant une simulation ;</li>
 <li>si vous sortez le message des indésirables dans les 30 secondes environ qui suivent le déplacement. SpamWise vérifie à nouveau chaque déplacement vers Indésirables environ 30 secondes plus tard et n’apprend que des déplacements toujours en place. Si SpamWise a été quitté avant cette vérification, il n’apprend rien de ce message ;</li>

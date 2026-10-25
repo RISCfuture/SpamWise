@@ -55,6 +55,10 @@ If you move a message SpamWise put in Junk back to the Inbox, or choose Not Junk
 SpamWise counts it as marked Good on its next check, once its own move has held for
 those 30 seconds. Learning from it doesn't move the message.
 
+When you mark a message as Good, or SpamWise counts it as marked Good, SpamWise clears
+Mail's own junk mark on it once Mail shows it in the Inbox, so Mail stops showing it as
+junk. SpamWise never sets that mark.
+
 ## Other filters
 
 SpamWise checks each account's Inbox through Mail about once a minute while SpamWise
