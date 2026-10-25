@@ -76,11 +76,13 @@ private struct QuietHoursControls: View {
     if isOn {
       QuietHoursPicker(
         title: "Quiet from",
-        selection: settings.mailBinding(\.notifications.quietStartHour)
+        selection: settings.mailBinding(\.notifications.quietStartHour),
+        excluding: preferences.quietEndHour
       )
       QuietHoursPicker(
         title: "Quiet until",
-        selection: settings.mailBinding(\.notifications.quietEndHour)
+        selection: settings.mailBinding(\.notifications.quietEndHour),
+        excluding: preferences.quietStartHour
       )
     }
   }
@@ -112,15 +114,17 @@ private struct QuietHours {
   }
 }
 
-/// An hour of the day, shown in the user's clock format.
+/// An hour of the day, shown in the user's clock format, other than the hour at the other end of quiet hours.
 private struct QuietHoursPicker: View {
   private static let hours = 0..<24
   let title: LocalizedStringKey
   @Binding var selection: Int
+  /// The hour at the other end of quiet hours, which isn't offered.
+  let excluding: Int
 
   var body: some View {
     Picker(title, selection: $selection) {
-      ForEach(Self.hours, id: \.self) { hour in
+      ForEach(Self.hours.filter { $0 != excluding }, id: \.self) { hour in
         Text(Self.date(atHour: hour), format: .dateTime.hour()).tag(hour)
       }
     }
