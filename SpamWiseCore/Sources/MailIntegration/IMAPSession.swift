@@ -9,6 +9,7 @@ final class IMAPSession {
   private static let maximumResponsesPerCommand = 2048
   private static let maximumCommandResponseBytes = 4_200_000
   private static let reuseWindow = Duration.seconds(10)
+  private static let fetchMargin = Duration.seconds(5)
   private static let oauthBearer = AuthenticationMechanism("OAUTHBEARER")
   /// Capabilities advertised after authentication, uppercased.
   private(set) var capabilities: Set<String> = []
@@ -22,6 +23,9 @@ final class IMAPSession {
   var isReusable: Bool {
     !failed && connection.channel.isActive && ContinuousClock.now - opened < Self.reuseWindow
   }
+  /// True once too little time remains before the cutoff to start another message fetch, so a
+  /// sweep keeps what it has read instead of losing it when the connection closes.
+  var isPastFetchDeadline: Bool { ContinuousClock.now >= connection.cutoff - Self.fetchMargin }
 
   init(connection: IMAPConnection) {
     self.connection = connection
@@ -65,6 +69,11 @@ final class IMAPSession {
 }
 
 extension IMAPSession {
+  /// Why the connection closed: its cutoff, or anything else.
+  private var closedConnectionError: IMAPError {
+    connection.expiry.hasExpired ? .deadlineExceeded : .unavailable
+  }
+
   private func refreshCapabilities() async throws -> Set<String> {
     let reply = try await command(.capability)
     capabilities = Set(
@@ -78,8 +87,9 @@ extension IMAPSession {
   private func login(configuration: IMAPConfiguration, password: String, advertised: Set<String>)
     async throws
   {
-    guard !advertised.contains("LOGINDISABLED") else { throw IMAPError.authenticationFailed }
-    try IMAPWireText.validate(password)
+    guard !advertised.contains("LOGINDISABLED"), IMAPWireText.isSendable(password: password) else {
+      throw IMAPError.authenticationFailed
+    }
     _ = try await command(.login(username: configuration.username, password: password))
   }
 
@@ -112,7 +122,7 @@ extension IMAPSession {
         IMAPClientHandler.Message.part(.tagged(TaggedCommand(tag: tag, command: command)))
       )
     } catch {
-      throw IMAPError.unavailable
+      throw closedConnectionError
     }
     var reply = IMAPReply.Builder(
       maximumResponses: Self.maximumResponsesPerCommand,
@@ -140,7 +150,7 @@ extension IMAPSession {
         IMAPClientHandler.Message.part(.continuationResponse(ByteBuffer(bytes: [1])))
       )
     } catch {
-      throw IMAPError.unavailable
+      throw closedConnectionError
     }
   }
 
@@ -152,17 +162,26 @@ extension IMAPSession {
       throw IMAPError(connectionFailure: error)
     }
     try Task.checkCancellation()
-    throw IMAPError.unavailable
+    throw closedConnectionError
   }
 }
 
-/// Validates text the client sends as an IMAP string: bounded, non-empty printable ASCII.
+/// Validates text the client sends as an IMAP string.
 enum IMAPWireText {
   private static let maximumBytes = 8192
+  private static let lineBreaksAndNull: Set<UInt8> = [0, 10, 13]
 
+  /// Requires bounded, non-empty printable ASCII.
   static func validate(_ value: String) throws {
     guard !value.isEmpty, value.utf8.count <= maximumBytes,
       value.utf8.allSatisfy({ (32..<127).contains($0) })
     else { throw IMAPError.invalidConfiguration }
+  }
+
+  /// Whether a password is bounded and non-empty without NUL, CR or LF; other text, including
+  /// non-ASCII characters, is sent as a literal.
+  static func isSendable(password: String) -> Bool {
+    !password.isEmpty && password.utf8.count <= maximumBytes
+      && !password.utf8.contains(where: lineBreaksAndNull.contains)
   }
 }

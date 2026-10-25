@@ -38,12 +38,23 @@ extension IMAPAdapter {
     for row in metadata {
       guard row.uid > boundary else { return (envelopes, 0) }
       guard row.size <= MIMEParser.maximumMessageBytes else { continue }
-      guard row.size <= maximumPageBytes - total else {
+      guard row.size <= maximumPageBytes - total, envelopes.isEmpty || !session.isPastFetchDeadline
+      else {
         nextOffset = selected.count - row.sequence
         break
       }
-      guard let raw = try await fetch(uid: row.uid, session: session) else { continue }
-      guard raw.count == row.size else { throw IMAPError.malformedResponse }
+      let fetched: Data?
+      do {
+        fetched = try await fetch(uid: row.uid, session: session)
+      } catch IMAPError.limitExceeded {
+        nextOffset = selected.count - row.sequence + 1
+        break
+      }
+      guard let raw = fetched else { continue }
+      guard raw.count <= maximumPageBytes - total else {
+        nextOffset = selected.count - row.sequence
+        break
+      }
       total += raw.count
       envelopes.append(
         envelope(raw, account: account, uid: row.uid, mailbox: mailbox, validity: selected.validity)
@@ -75,7 +86,9 @@ extension IMAPAdapter {
     )
     var envelopes = arrivals.envelopes
     var offset = cursor.currentOffset(validity: selected.validity, count: selected.count)
-    if arrivals.caughtUp, max(offset, arrivals.scanned) < selected.count {
+    if arrivals.caughtUp, !session.isPastFetchDeadline,
+      max(offset, arrivals.scanned) < selected.count
+    {
       let backfill = try await messages(
         mailbox: "INBOX",
         account: account,
@@ -100,10 +113,13 @@ extension IMAPAdapter {
   }
 
   /**
-   Reads messages whose UIDs exceed `highWater`, oldest first, within a count and byte budget.
+   Reads messages whose UIDs exceed `highWater`, oldest first, within a count and byte budget
+   and, after the first fetch, before the session's fetch deadline.
 
    UIDs grow with arrival order, so the high-water mark advances without gaps. An arrival burst
-   deeper than the scan budget leaves its oldest part to the backfill.
+   deeper than the scan budget leaves its oldest part to the backfill. RFC822.SIZE only
+   estimates each message for the budget; a message whose literal exceeds the size limit stays
+   unclassified, the mark passes it and reading stops, since the session can't continue.
    */
   static func arrivals(
     account: String,
@@ -124,9 +140,18 @@ extension IMAPAdapter {
         return result
       }
       if row.size <= MIMEParser.maximumMessageBytes {
-        guard row.size <= maximumPageBytes - bytes else { return result }
-        if let raw = try await fetch(uid: row.uid, session: session) {
-          guard raw.count == row.size else { throw IMAPError.malformedResponse }
+        guard row.size <= maximumPageBytes - bytes,
+          result.highWater == highWater || !session.isPastFetchDeadline
+        else { return result }
+        let fetched: Data?
+        do {
+          fetched = try await fetch(uid: row.uid, session: session)
+        } catch IMAPError.limitExceeded {
+          result.highWater = row.uid
+          return result
+        }
+        if let raw = fetched {
+          guard raw.count <= maximumPageBytes - bytes else { return result }
           bytes += raw.count
           result.envelopes.append(
             envelope(
