@@ -139,12 +139,12 @@ final class IMAPConnectionModel {
         throw IMAPSetupError.noSavedConnection
       }
       let result = try await services.imapAdapter().validateReadOnly()
+      try await Self.recordOwnAddress(of: connection.account.username, in: store)
       let validated = try await IMAPAccountValidation.record(
         result,
         for: connection.account,
         store: store
       )
-      try await Self.recordOwnAddress(of: connection.account.username, in: store)
       await shared.refresh()
       return validated
         ? String(localized: "Connected. SpamWise found the Inbox and Junk mailboxes.")
