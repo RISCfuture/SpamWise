@@ -15,7 +15,7 @@ struct CorrectionResultsView: View {
         }
         if let progress = corrections.selectionProgress {
           ProgressView(value: Double(progress.completed), total: Double(progress.total)) {
-            Text("Correcting \(progress.current) of \(progress.total)…")
+            Text(progress.localizedDescription)
           }
           .accessibilityIdentifier("corrections.progress")
         }
@@ -44,7 +44,8 @@ struct CorrectionResultsView: View {
 /**
  Done, which closes the sheet, taking Escape while no batch runs.
 
- While a batch runs, Escape goes to Cancel, which stops it, and Done leaves it running.
+ While a batch runs, Escape goes to Cancel, which keeps further messages from starting, and Done
+ leaves it running. Cancel is unavailable once every message has started.
  */
 private struct CorrectionResultsToolbar: ToolbarContent {
   let corrections: CorrectionsModel
@@ -55,6 +56,7 @@ private struct CorrectionResultsToolbar: ToolbarContent {
       ToolbarItem(placement: .cancellationAction) {
         Button("Cancel") { corrections.cancelSelection() }
           .keyboardShortcut(.cancelAction)
+          .disabled(corrections.selectionProgress.map { !$0.canStop } ?? false)
           .accessibilityIdentifier("corrections.cancel")
       }
       ToolbarItem(placement: .confirmationAction) {
@@ -117,7 +119,7 @@ private struct SelectionResultRow: View {
   let model = PreviewHelper.model()
   model.corrections.preview(
     results: PreviewHelper.selectionResults,
-    progress: CorrectionProgress(completed: 2, total: 6)
+    progress: CorrectionProgress(completed: 2, total: 6, started: 4)
   )
   return CorrectionResultsView(corrections: model.corrections)
 }

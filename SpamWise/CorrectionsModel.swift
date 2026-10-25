@@ -272,9 +272,12 @@ extension CorrectionsModel {
   /**
    Stops the running selection before any further message starts.
 
-   Corrections already saved are kept; a move already sent to Mail may be reported unconfirmed.
+   Messages already started finish, including the check that Mail shows each move.
    */
-  func cancelSelection() { selection.cancel() }
+  func cancelSelection() {
+    selectionProgress?.isStopping = true
+    selection.cancel()
+  }
 
   /// Removes `rule`, which overrides a selected-message correction.
   func removeOverridingRule(_ rule: SenderRule) {
@@ -310,8 +313,8 @@ extension CorrectionsModel {
     await BackgroundActivity.run(Self.selectionActivityReason) {
       await correctOverlapping(batch, pipeline: pipeline)
     }
-    guard !Task.isCancelled else {
-      selectionSummary = batch.stoppedSummary(after: selectionResults.count)
+    guard selectionResults.count == batch.messages.count else {
+      selectionSummary = batch.stoppedSummary(of: selectionResults)
       throw CancellationError()
     }
     let summary = batch.summary(of: selectionResults)
@@ -324,7 +327,8 @@ extension CorrectionsModel {
    message's wait for Mail to show it moved overlaps the next messages' corrections.
 
    Results are published in Mail's order as they finish. Once cancelled, no further message
-   starts.
+   starts, but each started correction runs in its own task to the end, so a move already sent
+   to Mail still gets its check and nothing is sent again.
    */
   private func correctOverlapping(_ batch: SelectionBatch, pipeline: Pipeline) async {
     finishedSelection = [:]
@@ -333,9 +337,12 @@ extension CorrectionsModel {
       for (index, message) in batch.messages.enumerated() {
         if index >= Self.maximumOverlappingCorrections { _ = await group.next() }
         guard !Task.isCancelled else { break }
+        selectionProgress?.started += 1
         group.addTask { [self] in
-          let result = await correct(message, in: batch, pipeline: pipeline, adapter: mail)
-          await publish(result, at: index)
+          let correction = Task {
+            await correct(message, in: batch, pipeline: pipeline, adapter: mail)
+          }
+          await publish(correction.value, at: index)
         }
       }
     }
@@ -428,8 +435,19 @@ struct RuleConflict: Equatable {
 struct CorrectionProgress: Equatable {
   var completed: Int
   let total: Int
+  /// How many messages have started, including those completed.
+  var started = 0
+  /// Whether the batch was stopped; messages already started still finish.
+  var isStopping = false
   /// The one-based position of the message being corrected.
   var current: Int { min(total, completed + 1) }
+  /// Whether stopping would keep any message from starting.
+  var canStop: Bool { !isStopping && started < total }
+  /// What the batch is doing, for the menu bar and the results sheet.
+  var localizedDescription: String {
+    guard isStopping else { return String(localized: "Correcting \(current) of \(total)…") }
+    return String(localized: "Stopping after \(started - completed) corrections in progress…")
+  }
 }
 
 extension CorrectionUndo {
