@@ -43,23 +43,32 @@ public struct ContentRule: Codable, Sendable, Identifiable, Equatable {
 /// Invalid or over-budget explicit content rules.
 public protocol ContentRuleFailure: Error {}
 
-/// Syntax and deadline failures that prevent safe rule evaluation.
+/// Syntax and deadline failures that prevent safe rule evaluation, and unreadable rule files.
 public enum ContentRuleError: ContentRuleFailure, LocalizedError, Sendable {
   /// Invalid syntax or unsupported configuration bounds.
   case invalid
   /// Evaluation exceeded its time limit.
   case timeout
+  /// An imported rule file has an invalid schema, encoding, or size.
+  case invalidArchive
   /// General user-visible rule failure.
   public var errorDescription: String? {
-    String(localized: "Content rules could not be evaluated.", bundle: .module)
+    switch self {
+      case .invalid, .timeout:
+        String(localized: "Content rules could not be evaluated.", bundle: .module)
+      case .invalidArchive:
+        String(localized: "The content rules could not be imported.", bundle: .module)
+    }
   }
-  /// Specific constraint preventing a decision.
+  /// Specific constraint preventing a decision or an import.
   public var failureReason: String? {
     switch self {
       case .invalid:
         String(localized: "Check the rule expression and size limits.", bundle: .module)
       case .timeout:
         String(localized: "A rule exceeded the time limit and did not match.", bundle: .module)
+      case .invalidArchive:
+        String(localized: "The rule file is invalid or exceeds the import limit.", bundle: .module)
     }
   }
 }

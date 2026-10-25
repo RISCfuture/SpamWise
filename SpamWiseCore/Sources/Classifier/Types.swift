@@ -134,6 +134,12 @@ public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {
   public var sampleID: String?
   /// Mail whose prompts may quote this example; nil examples are never quoted.
   public var promptScope: PromptScope?
+  /// Whether the sender, subject and excerpt are within the bounds the initializer applies.
+  public var isBounded: Bool {
+    sender.unicodeScalars.count <= Self.maximumSenderScalars
+      && subject.unicodeScalars.count <= Self.maximumSubjectScalars
+      && excerpt.unicodeScalars.count <= Self.maximumExcerptScalars
+  }
   /// Creates a correction example, bounding the quoted sender, subject and excerpt.
   public init(
     sender: String,
