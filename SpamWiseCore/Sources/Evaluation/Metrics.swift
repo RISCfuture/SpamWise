@@ -12,6 +12,8 @@ public struct EvaluationObservation: Codable, Sendable {
   public var truth: EvaluationTruth
   /// Effective decision label after applying the selected threshold.
   public var label: MailLabel?
+  /// The intended Mail operation for ``label``; nil for failures and other systems' results.
+  public var action: MailAction?
   /// Original model label used for confidence calibration before policy thresholds.
   public var modelLabel: MailLabel?
   /// Uncalibrated model confidence, absent for failures.
@@ -24,6 +26,8 @@ public struct EvaluationObservation: Codable, Sendable {
   public var partition: LearningPartition?
   /// The model's category for the message; nil without a verdict or for other systems' results.
   public var category: MailCategory?
+  /// The model's confidence in ``category``; nil when the verdict names none.
+  public var categoryConfidence: Int?
   /// The graymail preference that bounded the decision; nil when none applied.
   public var preference: GraymailPreference?
   /// Explanation retained for misclassification review.
@@ -76,7 +80,9 @@ public struct EvaluationObservation: Codable, Sendable {
       concealsContent: record.decision.reason == .concealedContent,
       partition: partition
     )
+    action = record.decision.label == nil ? nil : record.decision.action
     category = record.verdict?.category
+    categoryConfidence = record.verdict?.categoryConfidence
     preference = record.decision.preference
   }
 
@@ -92,12 +98,13 @@ public struct EvaluationObservation: Codable, Sendable {
     }
   }
 
-  /// This result as `Decision` would label it at an explicit Junk confidence threshold.
-  public func decided(junkThreshold: Int) -> Self {
+  /// This result as `Decision` would label it at explicit Junk and graymail category thresholds.
+  public func decided(junkThreshold: Int, graymailThreshold: Int) -> Self {
     decided { verdict in
       try Decision.evaluate(
         verdict,
         junkThreshold: junkThreshold,
+        graymailThreshold: graymailThreshold,
         concealsContent: concealsContent,
         preference: preference
       )
@@ -105,11 +112,21 @@ public struct EvaluationObservation: Codable, Sendable {
   }
 
   private func decided(by policy: (Verdict) throws -> Decision) -> Self {
-    guard let modelLabel, let confidence,
-      let decision = try? policy(Verdict(label: modelLabel, confidence: confidence, reason: reason))
-    else { return self }
+    let verdict = modelLabel.flatMap { label in
+      confidence.map { confidence in
+        Verdict(
+          label: label,
+          category: category ?? .unknown,
+          categoryConfidence: categoryConfidence,
+          confidence: confidence,
+          reason: reason
+        )
+      }
+    }
+    guard let verdict, let decision = try? policy(verdict) else { return self }
     var row = self
     row.label = decision.label
+    row.action = decision.action
     return row
   }
 }

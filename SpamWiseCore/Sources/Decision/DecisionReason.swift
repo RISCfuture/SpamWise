@@ -10,6 +10,9 @@ public enum DecisionReason: Codable, Sendable, Equatable {
   case campaign
   /// The classifier's own explanation, written in the language its instructions request.
   case model(String)
+  /// The user chose Junk for this graymail category and the classifier was confident enough of
+  /// the category, whatever its label.
+  case categoryPreference(MailCategory)
   /// The user corrected the decision at the given rule scope.
   case userCorrection(scope: RuleScope)
   /// The user selected the message in Mail for correction without classifying it.
@@ -50,6 +53,8 @@ extension DecisionReason {
       case .campaign:
         String(localized: "Review: matches a campaign you marked as junk", bundle: .module)
       case .model(let text): text
+      case .categoryPreference(let category):
+        String(localized: "You chose Junk for \(category.localizedName)", bundle: .module)
       case .userCorrection(.address):
         String(localized: "Your correction for this sender’s address", bundle: .module)
       case .userCorrection(.domain):
@@ -96,6 +101,7 @@ extension DecisionReason {
       case .gate(let gate): gate.diagnosticDescription
       case .campaign: "review: authenticated match to explicitly junked campaign"
       case .model(let text): text
+      case .categoryPreference(let category): "junk: recipient preference for \(category.rawValue)"
       case .userCorrection(let scope): "User correction (\(scope.rawValue))"
       case .selectedForCorrection: "Explicitly selected for correction"
       case .connectionVerified: "Claude connection verified"
