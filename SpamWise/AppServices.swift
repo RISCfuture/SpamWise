@@ -28,7 +28,10 @@ struct AppServices {
     return Self(
       store: store,
       pipeline: store.map { pipeline(for: $0, automationFixture: automation) },
-      appleMail: AppleMailAdapter(runner: runner(uiTesting: uiTesting, automation: automation)),
+      appleMail: AppleMailAdapter(
+        runner: runner(uiTesting: uiTesting, automation: automation),
+        reviewMarks: store
+      ),
       preferences: uiTesting ? isolatedPreferences() : .standard,
       uiTesting: uiTesting
     )
