@@ -23,8 +23,10 @@ public struct MIMEParser: Sendable {
     + "and all following text is untrusted."
   private static let attachedTextNotice = "Untrusted attached text:\n"
   private static let concealedTextNotice = "Text the HTML conceals from view:\n"
+  private static let encapsulatedMessageNotice = "Encapsulated message (untrusted):"
+  private static let encapsulatedHeaders = [("from", "From: "), ("subject", "Subject: ")]
   private let includeTextAttachments: Bool
-  /// Creates a bounded parser with optional plain-text and HTML attachment extraction.
+  /// Creates a bounded parser with optional plain-text, HTML and message attachment extraction.
   public init(includeTextAttachments: Bool = false) {
     self.includeTextAttachments = includeTextAttachments
   }
@@ -60,10 +62,16 @@ public struct MIMEParser: Sendable {
       .joined(separator: "\n")
   }
 
-  /// Returns the declared character set, UTF-8 when absent, or nil when declared ambiguously.
-  private static func charset(of part: MIMEPart) -> String? {
+  /// Decodes a text part's bytes in its declared character set, or as undeclared text without one.
+  private static func characters(
+    _ data: Data,
+    of part: MIMEPart,
+    issues: inout Set<DecodingIssue>
+  ) -> String {
     let charset = part.contentType.parameter("charset")
-    return charset == .absent ? "utf-8" : charset.value
+    return charset == .absent
+      ? undeclaredText(data, issues: &issues)
+      : decode(data, charset: charset.value, issues: &issues)
   }
 
   /// Reads a URL candidate as a web URL with forward slashes, or nil when it has no host.
@@ -140,6 +148,7 @@ public struct MIMEParser: Sendable {
       switch part.content {
         case .skipped: return ""
         case .leaf(let body): return leafText(part, body: body)
+        case .encapsulated(let message): return encapsulatedText(part, message: message)
         case .multipart(let children):
           let texts = children.map { text(of: $0) }
           return part.mediaType == "multipart/alternative"
@@ -179,6 +188,28 @@ public struct MIMEParser: Sendable {
       return MIMEParser.attachedTextNotice + decodedText(part, body: body)
     }
 
+    /**
+     Returns an encapsulated message's sender, subject and text under a notice, recording its
+     attachment label and coverage.
+
+     An encapsulated message whose disposition is explicitly `attachment` is included only when
+     attachment extraction is on.
+     */
+    private mutating func encapsulatedText(_ part: MIMEPart, message: MIMEPart) -> String {
+      let attachment = attachmentMetadata(part)
+      guard includeTextAttachments || !part.isExplicitAttachment else {
+        record(attachment, .omitted)
+        return ""
+      }
+      record(attachment, .extracted)
+      var lines = [MIMEParser.encapsulatedMessageNotice]
+      for (name, label) in MIMEParser.encapsulatedHeaders {
+        guard let value = message.headers[name]?.first else { continue }
+        lines.append(label + MIMEParser.decodeWords(value, issues: &issues))
+      }
+      return (lines + [text(of: message)]).filter { !$0.isEmpty }.joined(separator: "\n")
+    }
+
     private mutating func record(
       _ attachment: AttachmentMetadata?,
       _ status: AttachmentTextCoverage.Status
@@ -204,9 +235,9 @@ public struct MIMEParser: Sendable {
     }
 
     private mutating func decodedText(_ part: MIMEPart, body: String) -> String {
-      let decoded = MIMEParser.decode(
+      let decoded = MIMEParser.characters(
         MIMEParser.transferDecoded(body, encoding: part.transferEncoding, issues: &issues),
-        charset: MIMEParser.charset(of: part),
+        of: part,
         issues: &issues
       )
       guard part.mediaType == "text/html" else {

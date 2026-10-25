@@ -11,6 +11,14 @@ import MessageModel
 struct QuotedReply {
   private static let minimumQuotedShareDivisor = 4
   private static let originalMessageMarker = "-----Original Message-----"
+  /// The prefix and suffix of an attribution line in English, Spanish and French.
+  private static let attributions: [(prefix: String, suffix: String)] = [
+    ("On ", "wrote:"), ("El ", "escribió:"), ("Le ", "a écrit :"), ("Le ", "a écrit:")
+  ]
+  /// The sender and date fields that open an Outlook header block in English, Spanish and French.
+  private static let outlookSenderFields = ["From:", "De:", "De :"]
+  private static let outlookDateFields = ["Sent:", "Enviado:", "Enviado el:", "Envoyé :", "Envoyé:"]
+  private static let nonBreakingSpaces: Set<Character> = ["\u{00A0}", "\u{202F}"]
   private static let alternativeMarkerPrefix = "[Alternative "
   /// New text written for this message.
   let text: String
@@ -36,15 +44,36 @@ struct QuotedReply {
   }
 
   private static func kinds(of lines: [Substring]) -> [LineKind] {
+    let trimmed = lines.map(normalized)
     var insideOriginal = false
-    return lines.map { line in
-      let trimmed = line.trimmingCharacters(in: .whitespaces)
-      if trimmed.hasPrefix(originalMessageMarker) { insideOriginal = true }
+    return trimmed.indices.map { index in
+      let line = trimmed[index]
+      if line.hasPrefix(originalMessageMarker) || opensOutlookHeader(trimmed, at: index) {
+        insideOriginal = true
+      }
       let isQuoted =
-        insideOriginal || trimmed.hasPrefix(">")
-        || (line.hasPrefix("On ") && trimmed.hasSuffix("wrote:"))
+        insideOriginal || line.hasPrefix(">") || isAttribution(lines[index], normalized: line)
       return isQuoted ? .quoted : .new
     }
+  }
+
+  /// A line with non-breaking spaces read as spaces and surrounding whitespace trimmed.
+  private static func normalized(_ line: Substring) -> String {
+    String(line.map { nonBreakingSpaces.contains($0) ? " " : $0 })
+      .trimmingCharacters(in: .whitespaces)
+  }
+
+  /// Whether a line introduces quoted text, as in `On …, Alex wrote:` or `Le …, Alex a écrit :`.
+  private static func isAttribution(_ line: Substring, normalized: String) -> Bool {
+    attributions.contains { line.hasPrefix($0.prefix) && normalized.hasSuffix($0.suffix) }
+  }
+
+  /// Whether a sender field begins an Outlook header block, which a date field follows.
+  private static func opensOutlookHeader(_ lines: [String], at index: Int) -> Bool {
+    guard outlookSenderFields.contains(where: lines[index].hasPrefix),
+      let next = lines[(index + 1)...].first(where: { !$0.isEmpty })
+    else { return false }
+    return outlookDateFields.contains(where: next.hasPrefix)
   }
 
   private static func quotationFollowsNewText(lines: [Substring], kinds: [LineKind]) -> Bool {

@@ -4,7 +4,12 @@ import Signals
 
 /// Builds separate fixed instructions and escaped, untrusted message context.
 public enum PromptBuilder {
-  /// Maximum UTF-8 size of escaped preferences and message context across all providers.
+  /**
+   Maximum UTF-8 size of escaped preferences and message context across all providers.
+
+   A provider whose context window is smaller, such as the on-device model, uses a shorter
+   rendering of the same prompt.
+   */
   public static let maximumPromptBytes = 65_536
   /// Identity of the guided-output schema used in response-cache keys.
   public static let schemaID = "spamwise-verdict-v3"
@@ -67,7 +72,8 @@ public enum PromptBuilder {
     notice. A sender saying the recipient subscribed, shopped or left a cart is not proof. Do not \
     infer the recipient's interests from the topic, brand or recipient address.
     examples are the recipient's corrections. They show what the recipient wants for similar \
-    content and category, not a blanket rule for every message from that sender or domain.
+    content and category, not a blanket rule for every message from that sender or domain. \
+    sameSender is true only when trusted authentication confirms the From address it matches.
     Return a confidence integer 0–100 for the label and one short reason, at most 200 characters, \
     grounded in the supplied evidence.
     Authentication pass and unsubscribe links are weak evidence: spammers routinely provide both.
@@ -81,6 +87,14 @@ public enum PromptBuilder {
     result authenticates the From domain, that address may be forged, so they are moderate \
     evidence of a wanted sender, weaker than a trusted authentication failure or signs of \
     impersonation.
+    bayesLogOdds and learnedMargin are optional scores from filters trained on the recipient's \
+    corrections. They are uncalibrated: positive leans junk, negative leans inbox. They are weak \
+    evidence, never decisive alone.
+    auxiliaryFindings are computed by SpamWise, not written by the sender. A Spamhaus DBL listed \
+    result is strong evidence of a bad domain reputation; unknown means unknown. Local Rspamd \
+    symbols are weak evidence. Message decoding degraded means some text may be garbled. An \
+    unconfirmed content Allow rule match is the recipient's evidence that authentication did not \
+    confirm.
     Platforms that notify on a person's behalf may show that person's address in the display name.
     History unavailable or partial means unknown, not no relationship. Do not infer a purchase \
     from a shipping claim.
@@ -114,19 +128,18 @@ public enum PromptBuilder {
 
    Oversized context is shortened rather than rejected: examples are dropped first, then the body
    is cut, and the message is marked `shortenedToFit` so the model treats its size as weak junk
-   evidence.
+   evidence. This is the first prompt that fits, which a provider with a smaller context window
+   shortens further.
 
    - Throws: ``ClassificationError/evidenceExceedsPrompt`` only when the evidence, subject and
      policy alone exceed the limit.
    */
   public static func prompt(_ input: ClassificationInput) throws -> String {
-    let body = QuotedReply(input.message)
-    var budget = PromptBudget(input)
-    while true {
-      let prompt = try render(input, body: body, budget: budget)
-      if prompt.utf8.count <= maximumPromptBytes { return prompt }
-      guard budget.shrink() else { throw ClassificationError.evidenceExceedsPrompt }
+    var candidates = Candidates(input)
+    guard let prompt = try candidates.next() else {
+      throw ClassificationError.evidenceExceedsPrompt
     }
+    return prompt
   }
 
   private static func render(
@@ -150,7 +163,9 @@ public enum PromptBuilder {
   private static func preferences(_ input: ClassificationInput, budget: PromptBudget)
     -> Preferences
   {
-    let sender = input.message.fromAddress.lowercased()
+    let sender =
+      input.evidence.senderAuthentication == .alignedPass
+      ? input.message.fromAddress.lowercased() : nil
     return Preferences(
       categoryPreferences: Dictionary(
         uniqueKeysWithValues: input.categoryPreferences.all.map {
@@ -189,6 +204,35 @@ public enum PromptBuilder {
     )
   }
 
+  /// Successively shorter renderings of one input's prompt, in the budget's shrinking order.
+  struct Candidates {
+    private let input: ClassificationInput
+    private let body: QuotedReply
+    private var budget: PromptBudget?
+
+    init(_ input: ClassificationInput) {
+      self.input = input
+      body = QuotedReply(input.message)
+      budget = PromptBudget(input)
+    }
+
+    /**
+     Returns the next rendering of at most `maximumBytes`, or nil once none is left.
+
+     Only a rendering that exceeds ``maximumPromptBytes`` marks the shorter ones `shortenedToFit`;
+     a smaller `maximumBytes` reflects the provider's capacity, not the message's size.
+     */
+    mutating func next(maximumBytes: Int = maximumPromptBytes) throws -> String? {
+      while var current = budget {
+        let prompt = try render(input, body: body, budget: current)
+        let bytes = prompt.utf8.count
+        budget = current.shrink(markingShortened: bytes > maximumPromptBytes) ? current : nil
+        if bytes <= maximumBytes { return prompt }
+      }
+      return nil
+    }
+  }
+
   private struct PromptBudget {
     var examples: Int
     var bodyCharacters: Int
@@ -204,7 +248,7 @@ public enum PromptBuilder {
         * ClassificationLimits.charactersPerToken
     }
 
-    mutating func shrink() -> Bool {
+    mutating func shrink(markingShortened oversized: Bool) -> Bool {
       if examples > 0 {
         examples /= 2
       } else if bodyCharacters > 0 {
@@ -212,7 +256,7 @@ public enum PromptBuilder {
       } else {
         return false
       }
-      shortened = true
+      shortened = shortened || oversized
       return true
     }
   }

@@ -100,7 +100,10 @@ actor StubRDAP: HTTPFetcher {
 
 @Test
 func `leaves domain age unknown after an RDAP lookup failure`() async {
-  #expect(await RDAPLookup(fetcher: StubRDAP(fail: true)).ageDays(domain: "example.com") == nil)
+  let network = StubRDAP(fail: true), rdap = RDAPLookup(fetcher: network)
+  #expect(await rdap.ageDays(domain: "example.com") == nil)
+  #expect(await rdap.ageDays(domain: "example.net") == nil)
+  #expect(await network.calls == 1)
 }
 
 @Test

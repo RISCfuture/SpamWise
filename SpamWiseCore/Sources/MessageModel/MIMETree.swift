@@ -37,7 +37,12 @@ struct MIMEPart {
     case leaf(String)
     /// The child entities of a multipart, in order.
     case multipart([MIMEPart])
-    /// An entity left unread because its critical headers were ambiguous or a limit was reached.
+    /// A `message/rfc822` or `message/global` entity's own message, read as a nested part.
+    indirect case encapsulated(MIMEPart)
+    /**
+     An entity left unread because its critical headers were ambiguous, its encapsulated
+     message's transfer encoding was unreadable, or a limit was reached.
+     */
     case skipped
   }
 }
@@ -48,8 +53,9 @@ struct MIMEPart {
 
  Only an oversized message or message header block throws. Every other structural problem
  degrades the affected entity and records a ``DecodingIssue``: ambiguous critical headers or
- boundary parameters skip that entity, parts beyond the part or nesting limit are skipped, and
- a multipart without a usable boundary is read as plain text.
+ boundary parameters skip that entity, parts beyond the part or nesting limit are skipped, a
+ multipart without a usable boundary is read as plain text, and an encapsulated message with a
+ transfer encoding other than 7bit, 8bit or binary is skipped.
  */
 struct MIMETree {
   /// The message's own headers, kept even when its body is skipped.
@@ -94,6 +100,8 @@ extension MIMETree {
     private static let criticalHeaders = [
       "content-type", "content-transfer-encoding", "content-disposition"
     ]
+    private static let encapsulatingMediaTypes: Set<String> = ["message/rfc822", "message/global"]
+    private static let identityTransferEncodings: Set<String> = ["7bit", "8bit", "binary"]
     private(set) var issues: Set<DecodingIssue> = []
     private var parts = 0
 
@@ -113,7 +121,7 @@ extension MIMETree {
       guard !name.isEmpty, name.utf8.allSatisfy({ $0 > 32 && $0 < 127 }) else { return nil }
       return (
         name.lowercased(),
-        String(line[line.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
+        line[line.index(after: colon)...].trimmingFoldingWhitespace
       )
     }
 
@@ -129,7 +137,7 @@ extension MIMETree {
             complete = false
             continue
           }
-          lines[lines.count - 1] += " " + line.trimmingCharacters(in: .whitespaces)
+          lines[lines.count - 1] += " " + line.trimmingFoldingWhitespace
         } else {
           lines.append(line)
         }
@@ -246,6 +254,10 @@ extension MIMETree {
         mediaType: contentType.token,
         content: .leaf(split.body)
       )
+      if Self.encapsulatingMediaTypes.contains(part.mediaType) {
+        part.content = encapsulated(split.body, encoding: part.transferEncoding, depth: depth)
+        return part
+      }
       guard part.mediaType.hasPrefix("multipart/") else { return part }
       let boundary = contentType.parameter("boundary")
       if boundary == .ambiguous {
@@ -275,6 +287,21 @@ extension MIMETree {
         children.append(child)
       }
       return .multipart(children)
+    }
+
+    /// Reads an encapsulated message as a nested part when its transfer encoding leaves it as is.
+    private mutating func encapsulated(_ body: String, encoding: String?, depth: Int)
+      -> MIMEPart.Content
+    {
+      guard encoding.map(Self.identityTransferEncodings.contains) ?? true else {
+        issues.insert(.unreadableEncapsulatedMessage)
+        return .skipped
+      }
+      guard depth < Self.maximumNestingDepth else {
+        issues.insert(.partLimitExceeded)
+        return .skipped
+      }
+      return part(body, depth: depth + 1).map(MIMEPart.Content.encapsulated) ?? .skipped
     }
   }
 }

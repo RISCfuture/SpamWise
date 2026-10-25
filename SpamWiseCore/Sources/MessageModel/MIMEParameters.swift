@@ -47,7 +47,7 @@ struct MIMEHeaderValue {
   /// Parses a header value held in the parser's byte-preserving Latin-1 form.
   init(_ value: String, issues: inout Set<DecodingIssue>) {
     let segments = Self.segments(value)
-    token = segments.first?.trimmingCharacters(in: .whitespaces).lowercased() ?? ""
+    token = segments.first?.trimmingFoldingWhitespace.lowercased() ?? ""
     var forms: [String: ParameterForms] = [:]
     for segment in segments.dropFirst() {
       guard let (name, value) = Self.assignment(segment) else { continue }
@@ -77,14 +77,14 @@ struct MIMEHeaderValue {
     return segments + [current]
   }
 
-  /// Splits `name=value`, unquoting a quoted value and ending a bare value at whitespace.
+  /// Splits `name=value`, unquoting a quoted value and ending a bare value at ASCII whitespace.
   private static func assignment(_ segment: String) -> (name: String, value: String)? {
     guard let equals = segment.firstIndex(of: "=") else { return nil }
-    let name = segment[..<equals].trimmingCharacters(in: .whitespaces).lowercased()
-    let value = segment[segment.index(after: equals)...].trimmingCharacters(in: .whitespaces)
+    let name = segment[..<equals].trimmingFoldingWhitespace.lowercased()
+    let value = segment[segment.index(after: equals)...].trimmingFoldingWhitespace
     guard !name.isEmpty else { return nil }
     guard value.first == "\"" else {
-      return (name, String(value.prefix { !$0.isWhitespace }))
+      return (name, String(value.prefix { !$0.isFoldingWhitespace }))
     }
     var unquoted = "", escaped = false
     for character in value.dropFirst() {

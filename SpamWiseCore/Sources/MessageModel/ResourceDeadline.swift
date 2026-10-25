@@ -17,12 +17,15 @@ private final class DeadlineRace<T: Sendable>: Sendable {
   static var minimumTimeoutSec: TimeInterval { 0.001 }
   private let state = Mutex(State())
 
-  func install(_ continuation: CheckedContinuation<T, any Error>) {
+  /// Stores the continuation, or resumes it at once and returns true when the race is over.
+  func install(_ continuation: CheckedContinuation<T, any Error>) -> Bool {
     let existing = state.withLock { state -> Result<T, any Error>? in
       if let result = state.result { return result }
       state.continuation = continuation; return nil
     }
-    if let existing { continuation.resume(with: existing) }
+    guard let existing else { return false }
+    continuation.resume(with: existing)
+    return true
   }
   func register(_ tasks: [Task<Void, Never>]) {
     let done = state.withLock { state in
@@ -54,7 +57,7 @@ public func withResourceDeadline<T: Sendable>(
   let race = DeadlineRace<T>()
   return try await withTaskCancellationHandler {
     try await withCheckedThrowingContinuation { continuation in
-      race.install(continuation)
+      guard !race.install(continuation) else { return }
       let work = Task.detached {
         do { try Task.checkCancellation(); race.finish(.success(try await operation())) } catch {
           race.finish(.failure(error))
