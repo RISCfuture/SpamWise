@@ -12511,99 +12511,139 @@
         }
       }
     },
-    "Stopped after %lld of %lld messages.": {
+    "Stopped before %lld messages started.": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stopped after %1$lld of %#@arg2@."
-          },
-          "substitutions": {
-            "arg2": {
-              "argNum": 2,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg message"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg messages"
-                    }
-                  }
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Stopped before %lld message started."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Stopped before %lld messages started."
                 }
               }
             }
           }
         },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se detuvo tras %1$lld de %#@arg2@."
-          },
-          "substitutions": {
-            "arg2": {
-              "argNum": 2,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "many": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg de mensajes"
-                    }
-                  },
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg mensaje"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg mensajes"
-                    }
-                  }
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se detuvo antes de empezar %lld de mensajes."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se detuvo antes de empezar %lld mensaje."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Se detuvo antes de empezar %lld mensajes."
                 }
               }
             }
           }
         },
         "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arrêté après %#@arg1@ sur %2$lld."
-          },
-          "substitutions": {
-            "arg1": {
-              "argNum": 1,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "many": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg de messages"
-                    }
-                  },
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg message"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg messages"
-                    }
-                  }
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Arrêté avant le début de %lld de messages."
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Arrêté avant le début de %lld message."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Arrêté avant le début de %lld messages."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Stopping after %lld corrections in progress…": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Stopping after %lld correction in progress…"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Stopping after %lld corrections in progress…"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Deteniendo tras %lld de correcciones en curso…"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Deteniendo tras %lld corrección en curso…"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Deteniendo tras %lld correcciones en curso…"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Arrêt après %lld de corrections en cours…"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Arrêt après %lld correction en cours…"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Arrêt après %lld corrections en cours…"
                 }
               }
             }

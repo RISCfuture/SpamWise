@@ -40,9 +40,11 @@ struct SelectionBatch {
     return parts.joined(separator: " ")
   }
 
-  /// What a cancelled batch did before it stopped.
-  func stoppedSummary(after count: Int) -> String {
-    String(localized: "Stopped after \(count) of \(selectedCount) messages.")
+  /// What a stopped batch did with the messages it started, and how many it never started.
+  func stoppedSummary(of results: [SelectionCorrectionResult]) -> String {
+    let unstarted = messages.count - results.count
+    return summary(of: results) + " "
+      + String(localized: "Stopped before \(unstarted) messages started.")
   }
 
   private func correctedSummary(_ count: Int, of total: Int) -> String {
