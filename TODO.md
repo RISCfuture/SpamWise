@@ -86,8 +86,8 @@ and [packaging](docs/packaging.md) for limits and reproducible commands.
 - [ ] Give `spamwise-daemon`'s failure messages CLI-specific recovery suggestions. Both executables embed an Info.plist declaring `CFBundleLocalizations`, and the daemon's output goes through localized strings.
 - [ ] Decide whether to run `swiftlint analyze`. It stays out of CI: its `explicit_self` findings contradict the house style, its `unused_declaration` findings were false positives, and its `unused_import` autofix removed imports the build needs. A useful gate would disable those rules and read a full `xcodebuild` log.
 - [x] Save Settings text and stepper edits, and trust-exclusion edits, still inside their debounce window when the app quits.
-- [ ] Show an IMAP account that was never checked as not validated, rather than Dry run, when Apple Mail accounts are validated; `FilteringStatus` checks validated accounts globally.
-- [ ] Ask for the same unverified-sender confirmation in the Correct Selected Mail App Intent that the app's Junk corrections ask for.
+- [x] Show an IMAP account that was never checked as not validated, rather than Dry run, when Apple Mail accounts are validated; `FilteringStatus` counts only the selected transport's validated accounts, telling IMAP accounts by their `imap:` identifier prefix.
+- [x] Ask for the same unverified-sender confirmation in the Correct Selected Mail App Intent that the app's Junk corrections ask for.
 - [x] Add Help buttons for the newer Help pages (rules, folders, Review Junk, backup, notifications, reviewed messages, statistics, IMAP) on the screens they describe.
 - [x] Test a selected-message correction batch in the hostless unit tests against a stub Apple Events runner.
 - [ ] Resolve correction records left pending when the process ends between saving a correction and recording its mail outcome, or when storage stays locked through every retry of that outcome. A claim failure is reported as a failed, not-attempted outcome, but nothing revisits a pending correction later; decide the age after which a pending correction with no action claim reads as not attempted.

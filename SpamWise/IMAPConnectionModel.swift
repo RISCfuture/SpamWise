@@ -48,7 +48,9 @@ final class IMAPConnectionModel {
     self.shared = shared
   }
 
-  private static func newAccountID() -> String { "imap:" + UUID().uuidString }
+  private static func newAccountID() -> String {
+    MailTransport.imapAccountPrefix + UUID().uuidString
+  }
 
   @concurrent
   private static func deleteCredential(service: String) async throws {
