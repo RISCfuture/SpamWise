@@ -45,6 +45,35 @@ struct `Prompt construction` {
   }
 
   @Test
+  func `marks an example from the same sender only for a trusted aligned pass`() throws {
+    let message = try MIMEParser().parse(
+      Data(
+        ("From: Jane <jane@example.org>\n"
+          + "Authentication-Results: mx.example; dmarc=pass header.from=example.org\n\nHello").utf8
+      )
+    )
+    let example = CorrectionExample(
+      sender: "Jane@example.org",
+      domain: "example.org",
+      subject: "Lunch",
+      excerpt: "See you",
+      label: .inbox,
+      promptScope: .everyAccount
+    )
+    func prompt(trusting servers: Set<String>) throws -> String {
+      try PromptBuilder.prompt(
+        .init(
+          message: message,
+          evidence: .init(message: message, trustedAuthServers: servers),
+          corrections: [example]
+        )
+      )
+    }
+    #expect(try prompt(trusting: ["mx.example"]).contains(#""sameSender":true"#))
+    #expect(try prompt(trusting: []).contains(#""sameSender":false"#))
+  }
+
+  @Test
   func `states the user's category preferences and each example's category`() throws {
     var preferences = CategoryPreferences.defaults
     preferences[.newsletter] = .junk
@@ -126,13 +155,26 @@ func `keeps quotation-shaped text from non-replies and labels genuine quotations
   #expect((disguised["text"] as? String)?.contains("Verify it here") == true)
   #expect(disguised["quotedText"] == nil)
 
-  message.text = "Thanks, see you then.\n\nOn Tue, Alex wrote:\n> Lunch on Friday?"
-  let reply = try untrustedContent(
-    PromptBuilder.prompt(.init(message: message, evidence: .init(message: message)))
-  )
-  #expect(reply["text"] as? String == "Thanks, see you then.\n")
-  #expect((reply["quotedText"] as? String)?.contains("Lunch on Friday?") == true)
-  #expect(reply["omittedQuotedCharacters"] as? Int == 0)
+  for (text, quotation) in [
+    ("Thanks, see you then.\n\nOn Tue, Alex wrote:\n> Lunch on Friday?", "Lunch on Friday?"),
+    (
+      "Thanks, see you then.\n\nDe: Alex <alex@example.es>\nEnviado el: martes\n"
+        + "Asunto: Almuerzo\n\n¿Comemos el viernes?",
+      "¿Comemos el viernes?"
+    ),
+    (
+      "Thanks, see you then.\n\nLe mar. 13 oct. 2026, Alex a écrit\u{00A0}:\n> On déjeune vendredi ?",
+      "On déjeune vendredi ?"
+    )
+  ] {
+    message.text = text
+    let reply = try untrustedContent(
+      PromptBuilder.prompt(.init(message: message, evidence: .init(message: message)))
+    )
+    #expect(reply["text"] as? String == "Thanks, see you then.\n")
+    #expect((reply["quotedText"] as? String)?.contains(quotation) == true)
+    #expect(reply["omittedQuotedCharacters"] as? Int == 0)
+  }
 
   message.headers["in-reply-to"] = ["<thread@example.org>"]
   message.text =

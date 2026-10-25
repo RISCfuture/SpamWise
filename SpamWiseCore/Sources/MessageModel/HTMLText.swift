@@ -73,6 +73,23 @@ struct HTMLText {
     "sol": "/", "bsol": "\\", "period": ".", "quest": "?", "equals": "=", "num": "#",
     "percnt": "%", "commat": "@", "lowbar": "_", "hyphen": "-"
   ]
+  /// Named references decoded only in text: typography, currency and common accented letters,
+  /// with invisible formatting characters removed.
+  private static let textEntities: [String: String] = [
+    "lsquo": "‘", "rsquo": "’", "sbquo": "‚", "ldquo": "“", "rdquo": "”", "bdquo": "„",
+    "laquo": "«", "raquo": "»", "lsaquo": "‹", "rsaquo": "›", "ndash": "–", "mdash": "—",
+    "hellip": "…", "bull": "•", "middot": "·", "prime": "′", "Prime": "″", "dagger": "†",
+    "Dagger": "‡", "ensp": " ", "emsp": " ", "thinsp": " ", "iexcl": "¡", "iquest": "¿",
+    "copy": "©", "reg": "®", "trade": "™", "deg": "°", "sect": "§", "para": "¶", "times": "×",
+    "divide": "÷", "plusmn": "±", "frac12": "½", "frac14": "¼", "frac34": "¾", "ordf": "ª",
+    "ordm": "º", "euro": "€", "pound": "£", "yen": "¥", "cent": "¢", "curren": "¤",
+    "aacute": "á", "eacute": "é", "iacute": "í", "oacute": "ó", "uacute": "ú", "Aacute": "Á",
+    "Eacute": "É", "Iacute": "Í", "Oacute": "Ó", "Uacute": "Ú", "agrave": "à", "egrave": "è",
+    "ugrave": "ù", "Agrave": "À", "Egrave": "È", "acirc": "â", "ecirc": "ê", "icirc": "î",
+    "ocirc": "ô", "ucirc": "û", "euml": "ë", "iuml": "ï", "uuml": "ü", "ntilde": "ñ",
+    "Ntilde": "Ñ", "ccedil": "ç", "Ccedil": "Ç", "oelig": "œ", "szlig": "ß",
+    "zwnj": "", "zwj": "", "shy": "", "lrm": "", "rlm": ""
+  ]
   private static let urlAttributes: Set<String> = [
     "href", "src", "srcset", "action", "formaction", "background", "poster", "cite", "data",
     "content"
@@ -153,6 +170,19 @@ struct HTMLText {
       let scalar = Unicode.Scalar(value)
     else { return nil }
     return (scalar, digitsEnd < end && scalars[digitsEnd] == ";" ? digitsEnd + 1 : digitsEnd)
+  }
+
+  /// Decodes a named reference that only text recognizes, returning its text and the position
+  /// after its closing semicolon.
+  private static func textEntity(in scalars: [Unicode.Scalar], at start: Int)
+    -> (text: String, end: Int)?
+  {
+    let nameStart = start + 1, searchEnd = min(scalars.count, nameStart + maximumEntityScalars)
+    guard nameStart < searchEnd,
+      let semicolon = scalars[nameStart..<searchEnd].firstIndex(of: ";"),
+      let text = textEntities[string(scalars[nameStart..<semicolon])]
+    else { return nil }
+    return (text, semicolon + 1)
   }
 
   private static func isDigit(_ scalar: Unicode.Scalar, radix: Int) -> Bool {
@@ -500,6 +530,9 @@ struct HTMLText {
   private mutating func appendEntity() {
     if let entity = Self.entity(in: input, at: index, end: input.count) {
       appendText(entity.scalar)
+      index = entity.end
+    } else if let entity = Self.textEntity(in: input, at: index) {
+      entity.text.unicodeScalars.forEach { appendText($0) }
       index = entity.end
     } else {
       emit("&")

@@ -1,5 +1,6 @@
 import Foundation
 import FoundationModels
+import Synchronization
 import Testing
 import SpamWiseCore
 
@@ -358,7 +359,7 @@ func `retains billing provenance after introductory rates end`() throws {
 }
 
 @Test
-func `rejects provider refusals and rate limits without a verdict`() async throws {
+func `rejects provider refusals, rate limits and bad requests without a verdict`() async throws {
   let refused =
     #"{"status":"completed","output":[{"type":"message","content":[{"type":"refusal","refusal":"No"}]}]}"#
   let openAI = OpenAIClassifier(
@@ -377,6 +378,22 @@ func `rejects provider refusals and rate limits without a verdict`() async throw
   )
   await #expect(throws: ClassificationError.rateLimited) {
     try await limited.classify(providerInput())
+  }
+  for (body, error) in [
+    (
+      #"{"error":{"code":400,"status":"INVALID_ARGUMENT","details":[{"reason":"API_KEY_INVALID"}]}}"#,
+      ClassificationError.missingCredential
+    ),
+    (#"{"error":{"type":"invalid_request_error","code":"invalid_api_key"}}"#, .missingCredential),
+    (#"{"error":{"code":"context_length_exceeded","message":"Too long"}}"#, .contextExceeded),
+    (
+      #"{"error":{"code":400,"message":"The input token count exceeds the maximum number of tokens allowed"}}"#,
+      .contextExceeded
+    ),
+    (#"{"error":{"code":"model_not_found"}}"#, .configuration), ("Bad request", .configuration)
+  ] {
+    let rejected = GeminiClassifier(key: { "fixture" }, http: providerHTTP(body, status: 400))
+    await #expect(throws: error) { try await rejected.classify(providerInput()) }
   }
 }
 
@@ -435,4 +452,43 @@ func `preserves Apple backend errors and validates session results`() async thro
     }
   )
   await #expect(throws: ClassificationError.refused) { try await refusal.classify(providerInput()) }
+}
+
+@Test
+func `shortens a prompt that exceeds the Apple model's context`() async throws {
+  let message = try MIMEParser().parse(
+    Data(
+      ("From: shop@example.jp\nSubject: お知らせ\n\n"
+        + String(repeating: "日本語の長い本文です。", count: 1_500)).utf8
+    )
+  )
+  let input = ClassificationInput(message: message, evidence: .init(message: message), timeout: 15)
+  let fitted = Mutex<String?>(nil)
+  let verdict = try await appleClassifier(contextTokens: 3_000) { prompt in
+    fitted.withLock { $0 = prompt }
+  }.classify(input)
+  #expect(verdict.label == .review)
+  #expect(fitted.withLock { $0 }?.contains("shortenedToFit") == false)
+  await #expect(throws: ClassificationError.contextExceeded) {
+    try await appleClassifier(contextTokens: 100) { _ in }.classify(input)
+  }
+}
+
+private func appleClassifier(
+  contextTokens: Int,
+  fitted: @escaping @Sendable (String) -> Void
+) -> AppleClassifier {
+  AppleClassifier(
+    backend: .onDevice,
+    generate: { _, _, prompt, _ in
+      let tokens = prompt.unicodeScalars.count
+      guard tokens <= contextTokens else {
+        throw LanguageModelError.contextSizeExceeded(
+          .init(contextSize: contextTokens, tokenCount: tokens, debugDescription: "Fixture")
+        )
+      }
+      fitted(prompt)
+      return Verdict(label: .review, confidence: 60, reason: "Shortened")
+    }
+  )
 }
