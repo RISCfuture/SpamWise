@@ -46,8 +46,9 @@ extension Pipeline {
    the content-rule counts the evaluation adds.
 
    Content fields are sender-controlled, so a content Allow rule decides only when trusted
-   authentication confirms the sender. Otherwise it reaches the classifier as evidence and, like
-   an unconfirmed address Allow rule, ends the evaluation.
+   authentication confirms the sender. Otherwise the highest-ranked matching Block rule decides,
+   unless a rule that could not be evaluated ranks above it; without one, the Allow match reaches
+   the classifier as evidence and ends the evaluation.
    */
   private static func deterministicGate(
     _ message: ParsedMessage,
@@ -66,8 +67,10 @@ extension Pipeline {
     }
     let contentRules = ContentRules.evaluate(state.contentRules, message: message)
     var tally = ContentRuleTally(skipped: Array(contentRules.skipped.keys))
-    if let rule = contentRules.decisive {
-      guard rule.disposition == .block || evidence.senderAuthentication == .alignedPass else {
+    if let decisive = contentRules.decisive {
+      let rule =
+        evidence.senderAuthentication == .alignedPass ? decisive : contentRules.decisiveBlock
+      guard let rule else {
         evidence.record(findings: [unconfirmedContentAllowFinding])
         return (nil, tally)
       }

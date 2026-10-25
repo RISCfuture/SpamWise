@@ -77,6 +77,13 @@ public struct ContentRuleEvaluation: Sendable, Equatable {
    because that rule might have decided the message differently.
    */
   public var decisive: ContentRule?
+  /**
+   The first matching Block rule, when no skipped rule ranks ahead of it.
+
+   Applies when the caller disregards Allow rules, as for a sender that trusted authentication
+   did not confirm.
+   */
+  public var decisiveBlock: ContentRule?
   /// Creates an evaluation with no matching or skipped rules.
   public init() {}
 }
@@ -117,7 +124,8 @@ public enum ContentRules {
    Each rule has a 50 ms time limit within a shared 250 ms ceiling. A rule that is invalid
    or runs out of time is reported in ``ContentRuleEvaluation/skipped`` and does not match,
    so the remaining rules and later classification stages still run. Such a rule also
-   prevents any lower-precedence match from becoming ``ContentRuleEvaluation/decisive``.
+   prevents any lower-precedence match from becoming ``ContentRuleEvaluation/decisive`` or
+   ``ContentRuleEvaluation/decisiveBlock``.
    */
   public static func evaluate(_ rules: [ContentRule], message: ParsedMessage)
     -> ContentRuleEvaluation
@@ -129,7 +137,12 @@ public enum ContentRules {
         guard index < maximumRules else { throw ContentRuleError.invalid }
         let deadline = min(ceiling, ContinuousClock.now.advanced(by: ruleBudget))
         if try matches(rule, text: value(rule.field, message: message), deadline: deadline) {
-          if evaluation.matching.isEmpty, evaluation.skipped.isEmpty { evaluation.decisive = rule }
+          if evaluation.skipped.isEmpty {
+            if evaluation.matching.isEmpty { evaluation.decisive = rule }
+            if rule.disposition == .block, evaluation.decisiveBlock == nil {
+              evaluation.decisiveBlock = rule
+            }
+          }
           evaluation.matching.append(rule)
         }
       } catch {

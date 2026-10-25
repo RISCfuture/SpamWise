@@ -149,35 +149,34 @@ func `decides by address rule, then domain rule, then content rule, then Contact
   content: RuleDisposition,
   decidedBySender: Bool
 ) async throws {
-  let screened = try await screenContact(content: content, sender: sender.rule, trusted: true)
+  let screened = try await screenContact(content: [content], sender: sender.rule, trusted: true)
+  let contentRule = screened.rules[0]
   let expected: GateReason =
     if let rule = sender.rule {
       .senderRule(scope: rule.scope, disposition: rule.disposition)
     } else {
-      .contentRule(id: screened.rule.id, disposition: content, note: nil)
+      .contentRule(id: contentRule.id, disposition: content, note: nil)
     }
   #expect(screened.record.decision.reason == .gate(expected))
-  #expect(screened.state.contentRuleHits == (decidedBySender ? [:] : [screened.rule.id: 1]))
+  #expect(screened.state.contentRuleHits == (decidedBySender ? [:] : [contentRule.id: 1]))
 }
 
 @Test(arguments: [
-  (
-    content: RuleDisposition.allow, trusted: false, label: MailLabel.review,
-    path: DecisionPath.model
-  ),
-  (.allow, true, .inbox, .gate),
-  (.block, false, .junk, .gate)
+  (content: [RuleDisposition.allow], trusted: false, label: MailLabel.review, deciding: Int?.none),
+  ([.allow], true, .inbox, 0),
+  ([.block], false, .junk, 0),
+  ([.allow, .block], false, .junk, 1)
 ])
 func `lets a content Allow rule decide only for an authenticated sender`(
-  content: RuleDisposition,
+  content: [RuleDisposition],
   trusted: Bool,
   label: MailLabel,
-  path: DecisionPath
+  deciding: Int?
 ) async throws {
   let screened = try await screenContact(content: content, trusted: trusted, isContact: false)
-  #expect(screened.record.path == path)
+  #expect(screened.record.path == (deciding == nil ? .model : .gate))
   #expect(screened.record.decision.label == label)
-  #expect(screened.state.contentRuleHits == (path == .gate ? [screened.rule.id: 1] : [:]))
+  #expect(screened.state.contentRuleHits == (deciding.map { [screened.rules[$0].id: 1] } ?? [:]))
 }
 
 /// The sender rules the precedence test saves for the authentic contact.
@@ -203,25 +202,30 @@ enum SenderRuleCase: Sendable, CustomTestStringConvertible {
 }
 
 /**
- Processes the authentic contact's message, whose subject mentions Tuesday, under a content rule
+ Processes the authentic contact's message, whose subject mentions Tuesday, under content rules
  on Tuesday and an optional sender rule, with a classifier that answers Review.
 
  - Parameters:
+   - content: The content rules' dispositions, highest-ranked first.
    - trusted: Whether the account trusts the receiving server that authenticated the sender.
    - isContact: Whether the sender is in Contacts.
  */
 private func screenContact(
-  content: RuleDisposition,
+  content: [RuleDisposition],
   sender: SenderRule? = nil,
   trusted: Bool,
   isContact: Bool = true
-) async throws -> (record: DecisionRecord, state: AppState, rule: ContentRule) {
-  let store = try testStore(), message = try envelope("authentic-contact")
-  var rule = ContentRule()
-  rule.pattern = "Tuesday"; rule.disposition = content
+) async throws -> (record: DecisionRecord, state: AppState, rules: [ContentRule]) {
+  let store = try testStore(), message = try envelope("authentic-contact"), saved = Date.now
+  let rules = content.enumerated().map { rank, disposition in
+    var rule = ContentRule()
+    rule.pattern = "Tuesday"; rule.disposition = disposition
+    rule.updatedAt = saved.addingTimeInterval(-Double(rank))
+    return rule
+  }
   let address = try MIMEParser().parse(message.raw).fromAddress
-  try await StateRepository.update(store) { [rule] state in
-    state.contentRules = [rule]
+  try await StateRepository.update(store) { state in
+    state.contentRules = rules
     state.rules = sender.map { [$0] } ?? []
     if isContact { state.contactAddresses = [address]; state.contactsUpdatedAt = .now }
   }
@@ -233,7 +237,7 @@ private func screenContact(
     classifier: MockClassifier(verdict: .init(label: .review, confidence: 50, reason: "unsure"))
   )
   let record = await pipeline.process(message)
-  return (record, try await StateRepository.load(store), rule)
+  return (record, try await StateRepository.load(store), rules)
 }
 
 @Test
