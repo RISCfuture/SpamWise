@@ -95,6 +95,15 @@ public struct ContentRuleEvaluation: Sendable, Equatable {
   public var decisiveBlock: ContentRule?
   /// Creates an evaluation with no matching or skipped rules.
   public init() {}
+  /**
+   The rule that decides a message whose sender has `authentication`.
+
+   Allow rules decide only for a sender that trusted, aligned authentication confirmed; for any
+   other sender this is ``decisiveBlock``.
+   */
+  public func deciding(authentication: SenderAuthentication) -> ContentRule? {
+    authentication == .alignedPass ? decisive : decisiveBlock
+  }
 }
 
 /// Time- and input-bounded matching with explicit conflict ordering.
