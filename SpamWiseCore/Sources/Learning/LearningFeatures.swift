@@ -6,7 +6,7 @@ import Signals
  Features persist by name, so adding a property never shifts the meaning of an
  existing value: a sample recorded before the property existed reads it as zero.
  Increment ``schemaVersion`` and migrate older versions in `init(from:)` whenever an
- existing feature changes meaning.
+ existing feature changes meaning; samples older than the minimum readable version are dropped.
 
  Domain age and trusted authentication depend on the receiving account's settings, so a
  sample recorded without that account, such as an imported message, holds zero for them and
@@ -15,6 +15,8 @@ import Signals
 public struct LearningFeatures: Codable, Sendable, Equatable {
   /// Schema version of features recorded by this build.
   public static let schemaVersion = 2
+  /// Oldest schema version whose samples are read; samples recorded under an older one are dropped.
+  private static let minimumReadableVersion = 2
   /// Position of the constant intercept input in ``vector``.
   static let biasIndex = 0
   private static let bias = 1.0
@@ -40,9 +42,9 @@ public struct LearningFeatures: Codable, Sendable, Equatable {
   /// Whether the domain-age and trusted-authentication features reflect a receiving account.
   public let hasAccountContext: Bool
 
-  /// Whether the values were recorded under this schema or a later one and each is finite and within the bounded unit range.
+  /// Whether the values were recorded under a readable schema and each is finite and within the bounded unit range.
   var isValid: Bool {
-    version >= Self.schemaVersion
+    version >= Self.minimumReadableVersion
       && vector().allSatisfy { $0.isFinite && Self.valueRange.contains($0) }
   }
 
