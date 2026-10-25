@@ -234,18 +234,6 @@ extension AppleMailAdapter {
     guard target.location.messageID != nil else { return .init(confirmed: false) }
     return await observeMove(of: target, to: destination, confirmation: confirmation)
   }
-  /// Rethrows failures from steps that precede any change request as ``ActionNotAttempted``.
-  private func notAttempted<Value>(_ step: () async throws -> Value) async throws -> Value {
-    do {
-      return try await step()
-    } catch let error as ActionNotAttempted {
-      throw error
-    } catch is CancellationError {
-      throw CancellationError()
-    } catch {
-      throw ActionNotAttempted(cause: error)
-    }
-  }
   /// Requests a change, rethrowing the handler's refusals before it changes anything as
   /// ``ActionNotAttempted``.
   private func requestChange(_ command: MailCommand, to location: MailMessageLocation)
