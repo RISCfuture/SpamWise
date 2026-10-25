@@ -35,11 +35,18 @@ extension AppleMailAdapter {
     annotation.rawValue + ":" + identity.key
   }
 
-  /// Whether SpamWise recorded setting the Review annotation that `command` removes.
-  func setReview(removedBy command: MailCommand, on identity: MessageIdentity) async -> Bool {
+  /**
+   Whether SpamWise recorded setting the Review annotation that `command` removes; false without
+   a store.
+
+   - Throws: The store's error when the recorded marks can't be read.
+   */
+  func hasRecordedReview(removedBy command: MailCommand, on identity: MessageIdentity) async throws
+    -> Bool
+  {
     guard let annotation = command.reviewAnnotation, let reviewMarks else { return false }
-    let marks = try? await reviewMarks.read(Self.reviewMarksKey, default: [String]())
-    return marks?.contains(Self.reviewMark(annotation, for: identity)) ?? false
+    return try await reviewMarks.read(Self.reviewMarksKey, default: [String]())
+      .contains(Self.reviewMark(annotation, for: identity))
   }
 
   /// Records a Review annotation SpamWise set, or forgets one it removed, once Mail confirms it.

@@ -43,7 +43,8 @@ func `clears only an orange flag SpamWise set`() async throws {
     .findMessages: [MailReply.found(userFlagged), MailReply.found(flagged)],
     .applyAction: [.string(MailScripts.alreadyAnnotated), MailReply.applied]
   ])
-  let adapter = AppleMailAdapter(runner: runner, reviewMarks: try testStore())
+  let store = try testStore()
+  let adapter = AppleMailAdapter(runner: runner, reviewMarks: store)
   let kept = MailReply.identity()
   #expect(try await adapter.perform(.orangeFlag, for: kept).confirmed)
   #expect(try await adapter.performCorrection(.clearOrangeFlag, for: kept).confirmed)
@@ -55,6 +56,11 @@ func `clears only an orange flag SpamWise set`() async throws {
     if case .apply(let command, _) = request { command } else { nil }
   }
   #expect(commands == [.orangeFlag, .orangeFlag, .clearOrangeFlag])
+  try await store.update("apple-mail-review-marks-v1", default: [Int]()) { $0 = [1] }
+  await #expect(throws: ActionNotAttempted.self) {
+    try await adapter.performCorrection(.clearOrangeFlag, for: set)
+  }
+  #expect(await runner.appliedCount == 3)
 }
 
 @Test
