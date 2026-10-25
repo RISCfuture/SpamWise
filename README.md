@@ -212,8 +212,8 @@ Junk mailboxes, review the dry-run results in Activity, then choose Start Filter
 and confirm. SpamWise filters only while it runs: closing its windows leaves it
 filtering, reachable from its menu bar item or Dock icon, and opening at login is
 optional. Automatic checks consider mail received after setup; older mail is filtered
-only through an explicit preview under each account's Mailboxes and Details → Older
-mail in Settings → Accounts. The [support guide](docs/support.md) covers everyday use.
+only through an explicit preview under each account's Older mail in Settings →
+Accounts. The [support guide](docs/support.md) covers everyday use.
 
 `spamwise-daemon` filters one IMAP account headlessly; see [IMAP](docs/imap.md).
 

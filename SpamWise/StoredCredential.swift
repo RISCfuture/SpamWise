@@ -43,7 +43,7 @@ enum StoredCredential: Hashable, Identifiable, Sendable {
     switch self {
       case .provider(let backend): String(localized: "\(backend.localizedTitle) API key")
       case .spamhaus: String(localized: "Spamhaus query key")
-      case .imap: String(localized: "IMAP password or token")
+      case .imap: String(localized: "IMAP password")
     }
   }
 

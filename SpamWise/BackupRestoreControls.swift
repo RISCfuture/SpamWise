@@ -51,9 +51,9 @@ struct BackupRestoreControls: View {
         Text(
           """
           Your rules, address exceptions, additional instructions, corrections and learning are \
-          replaced with the backup’s. Its message text is restored only while “Retain reviewed \
-          text for evaluation export” is on. Filtering pauses with dry run on until you check your \
-          accounts. Keys, passwords and spending stay as they are.
+          replaced with the backup’s. Its message text is restored only while “Keep text of \
+          reviewed messages” is on in Settings → Advanced. Filtering pauses with dry run on until \
+          you check your accounts. Keys, passwords and spending stay as they are.
           """
         )
       }
