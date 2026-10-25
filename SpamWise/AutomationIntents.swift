@@ -70,13 +70,31 @@ struct CorrectSelectedMailIntent: AppIntent, CancellableIntent {
     let id = try AutomationRequestID.resolve(requestID)
     let operation = AutomationOperation.correct(label.label)
     let model = model
-    let task = Task { try await AutomationContext.execute(operation, id: id, model: model) }
+    let task = Task {
+      try await AutomationContext.execute(operation, id: id, model: model) { sender in
+        try await confirmBlocking(sender)
+      }
+    }
     let result = try await withIntentCancellationHandler {
       try await task.value
     } onCancel: { _ in
       task.cancel()
     }
     return .result(value: result)
+  }
+
+  /// Asks, as the app's Junk corrections do, before blocking a sender SpamWise couldn’t verify.
+  private func confirmBlocking(_ sender: String) async throws {
+    try await requestConfirmation(
+      actionName: .custom(
+        acceptLabel: "Block Sender Anyway",
+        acceptAlternatives: [],
+        denyLabel: "Cancel",
+        denyAlternatives: [],
+        destructive: true
+      ),
+      dialog: "\(UnverifiedSenderPrompt.message(sender: sender))"
+    )
   }
 }
 
@@ -152,22 +170,42 @@ struct ExportSpamWiseDiagnosticsIntent: AppIntent {
 }
 
 nonisolated private enum AutomationContext {
+  /// Asks the user to let a correction block `sender`, which SpamWise couldn’t verify, and throws
+  /// when they decline.
+  typealias SenderConfirmation = @Sendable (_ sender: String) async throws -> Void
+
   static func diagnostics(model: AppModel) async throws -> Data {
     do { return try await model.activity.diagnostics() } catch {
       throw AutomationIntentError(error)
     }
   }
 
-  static func execute(_ operation: AutomationOperation, id: UUID, model: AppModel) async throws
-    -> String
-  {
-    do {
+  /**
+   Runs `operation` on Mail's selected message as request `id`.
+
+   A Junk correction of a sender SpamWise couldn’t verify first waits for `confirmSender`. An
+   error it throws passes through unchanged, and nothing is saved.
+   */
+  static func execute(
+    _ operation: AutomationOperation,
+    id: UUID,
+    model: AppModel,
+    confirmSender: SenderConfirmation? = nil
+  ) async throws -> String {
+    let (pipeline, adapter, selected) = try await identifyingFailures(of: id) {
       try Task.checkCancellation()
       let (store, pipeline, adapter) = try await MainActor.run {
         let services = model.services
         return (try services.requireStore(), try services.requirePipeline(), services.appleMail)
       }
-      let selected = try await selectedMessage(from: adapter, store: store)
+      return (pipeline, adapter, try await selectedMessage(from: adapter, store: store))
+    }
+    if case .correct(let label) = operation, let confirmSender,
+      await pipeline.correctionWarning(envelope: selected, label: label) == .unauthenticatedSender
+    {
+      try await confirmSender(sender(of: selected))
+    }
+    return try await identifyingFailures(of: id) {
       let reply = try await pipeline.execute(
         operation,
         requestID: id,
@@ -177,9 +215,22 @@ nonisolated private enum AutomationContext {
       return try JSONEncoder.pretty.encodeText(
         IdentifiedAutomationReply(requestID: id, reply: reply)
       )
-    } catch is CancellationError { throw CancellationError() } catch {
+    }
+  }
+
+  /// Runs `work`, naming request `id` in every failure but cancellation.
+  private static func identifyingFailures<Value>(
+    of id: UUID,
+    _ work: () async throws -> Value
+  ) async throws -> Value {
+    do { return try await work() } catch is CancellationError { throw CancellationError() } catch {
       throw AutomationRequestFailure(requestID: id, failure: AutomationIntentError(error))
     }
+  }
+
+  /// The address `envelope` says it’s from, or “Unknown sender”.
+  private static func sender(of envelope: MailEnvelope) -> String {
+    (try? MIMEParser().parse(envelope.raw).fromAddress) ?? String(localized: "Unknown sender")
   }
 
   /// Mail's one selected message, once setup is finished with Apple Mail as the transport.

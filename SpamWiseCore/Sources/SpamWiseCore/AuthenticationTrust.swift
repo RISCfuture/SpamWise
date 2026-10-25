@@ -244,19 +244,28 @@ extension DecisionRecord {
 }
 
 extension Pipeline {
-  /// The warning to show before correcting a selected message to `label`; nil when none applies.
-  public func correctionWarning(envelope: MailEnvelope, label: MailLabel) async throws
+  /**
+   The warning to show before correcting a selected message to `label`; nil when none applies.
+
+   When the settings or the message can't be read, the warning is the one for a message without
+   evidence.
+   */
+  public func correctionWarning(envelope: MailEnvelope, label: MailLabel) async
     -> CorrectionWarning?
   {
-    let settings = try await StateRepository.load(store, StateSlices()).settings
-    return .check(
-      label: label,
-      evidence: EvidenceBundle(
-        message: try MIMEParser().parse(envelope.raw),
-        trustedAuthServers: settings.mailOptions.trustedAuthServers(
-          for: envelope.identity.accountID
+    do {
+      let settings = try await StateRepository.load(store, StateSlices()).settings
+      return .check(
+        label: label,
+        evidence: EvidenceBundle(
+          message: try MIMEParser().parse(envelope.raw),
+          trustedAuthServers: settings.mailOptions.trustedAuthServers(
+            for: envelope.identity.accountID
+          )
         )
       )
-    )
+    } catch {
+      return .check(label: label, evidence: nil)
+    }
   }
 }

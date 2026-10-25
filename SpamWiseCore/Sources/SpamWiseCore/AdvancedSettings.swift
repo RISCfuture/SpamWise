@@ -6,6 +6,14 @@ public enum MailTransport: String, Codable, Sendable, CaseIterable {
   case appleMail = "appleMail"
   /// Accesses an explicitly configured account through IMAP.
   case imap
+
+  /// The prefix of the identifiers SpamWise gives IMAP accounts; Apple Mail's identifiers lack it.
+  public static let imapAccountPrefix = "imap:"
+
+  /// The transport whose accounts `accountID` identifies.
+  public init(accountID: String) {
+    self = accountID.hasPrefix(Self.imapAccountPrefix) ? .imap : .appleMail
+  }
 }
 
 /// Optional capabilities with conservative defaults.
