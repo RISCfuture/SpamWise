@@ -99,6 +99,16 @@ struct `Encrypted state backup` {
         message: message
       )
     ]
+    state.corrections = [
+      CorrectionExample(
+        sender: "friend@example.org",
+        domain: "example.org",
+        subject: "Hello",
+        excerpt: "Quoted body text",
+        label: .inbox,
+        promptScope: .account("account-A")
+      )
+    ]
     let archive = try StateBackup.export(state, recoveryKey: key, includeContent: true)
     for retains in [false, true] {
       try await StateRepository.editSettings(store) {
@@ -108,11 +118,15 @@ struct `Encrypted state backup` {
       let restored = try await StateRepository.load(store)
       #expect(restored.settings.advancedOptions.retainReviewedContent == retains)
       #expect(restored.reviewedLabels.map { $0.message != nil } == [retains])
+      #expect(restored.corrections.map(\.excerpt) == [retains ? "Quoted body text" : ""])
     }
   }
 
   @Test
   func `leaves correction excerpts out of a backup without message text`() async throws {
+    try await StateRepository.editSettings(store) {
+      $0.advancedOptions.retainReviewedContent = true
+    }
     var state = backedUp
     state.corrections = [
       CorrectionExample(
