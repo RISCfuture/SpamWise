@@ -28,8 +28,11 @@ concurrency:
 env:
   # macOS will not launch an unsigned app, and the runner has no certificate or profile, so the UI
   # job signs ad hoc. Its entitlements files are dropped: the App Group and shared Keychain group
-  # would demand a provisioning profile, and test mode uses neither. The UITests target requires a
-  # profile for its runner, which ad-hoc signing cannot supply, so that requirement is lifted too.
+  # would demand a provisioning profile, and test mode uses neither. The sandbox goes as well: an
+  # ad-hoc signature can't prove it owns the app's sandbox container, so macOS holds a sandboxed
+  # launch at an "unidentified developer" prompt nobody answers, and test mode keeps its state in a
+  # temporary store instead. The UITests target requires a profile for its runner, which ad-hoc
+  # signing cannot supply, so that requirement is lifted too.
   SIGNING: >-
     CODE_SIGN_IDENTITY=-
     CODE_SIGNING_REQUIRED=NO
@@ -39,6 +42,7 @@ env:
     PROVISIONING_PROFILE_SPECIFIER=
     PROVISIONING_PROFILE_REQUIRED=NO
     CODE_SIGN_ENTITLEMENTS=
+    ENABLE_APP_SANDBOX=NO
 
 jobs:
   # Source checks that need no Xcode, so they run on Linux.
