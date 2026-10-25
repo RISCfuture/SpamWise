@@ -27,7 +27,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Before the release job's App Store upload, which cannot be undone: a dispatched version whose
+  # tag already names another commit stops here.
+  tag:
+    name: Check the release tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check the tag names this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version || github.ref_name }}
+        run: Scripts/check-release-tag.sh "$VERSION"
+
   release:
+    needs: tag
     uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@b76d0fc269f04019767530b0180671738128fe7e  # 1.0.0
     with:
       # GitHub names its macOS images after the major Xcode version they carry.
@@ -88,13 +106,9 @@ jobs:
           # From CHANGELOG.md, the same text App Store Connect carries as "What's New".
           Scripts/release-notes.sh "$VERSION" > release-notes.md
 
-          # The disk image belongs to the commit this run built. A tag that already names another
-          # commit, say from an earlier release of the same version, is never given it.
-          if tagged=$(gh api "repos/$GITHUB_REPOSITORY/commits/$VERSION" --jq .sha 2>/dev/null) \
-            && [ "$tagged" != "$GITHUB_SHA" ]; then
-            echo "::error::Tag $VERSION points at $tagged, but this run built $GITHUB_SHA."
-            exit 1
-          fi
+          # The disk image belongs to the commit this run built. A tag created on another commit
+          # while the editions built is never given it.
+          Scripts/check-release-tag.sh "$VERSION"
 
           # A re-run after a later failure finds the release already there; it takes the asset
           # instead of stopping the run. A new release tags the built commit, not the default
