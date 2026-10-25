@@ -81,12 +81,16 @@ func `conceals the body of mail with ambiguous part headers`(_ source: String) t
 }
 
 @Test
-func `reads a Latin-1 subject and records its invalid characters`() throws {
-  let latin1Subject = try MIMEParser().parse(
-    Data(Array("From: a@example.org\nSubject: Caf".utf8) + [0xE9] + Array("\n\nBody".utf8))
+func `reads a Latin-1 subject and undeclared body and records their invalid characters`() throws {
+  let latin1 = try MIMEParser().parse(
+    Data(
+      Array("From: a@example.org\nSubject: Caf".utf8) + [0xE9]
+        + Array("\nContent-Type: text/plain\n\nCaf".utf8) + [0xE9]
+    )
   )
-  #expect(latin1Subject.subject == "Café")
-  #expect(latin1Subject.decodingIssues == [.invalidCharacters])
+  #expect(latin1.subject == "Café")
+  #expect(latin1.text == "Café")
+  #expect(latin1.decodingIssues == [.invalidCharacters])
 }
 
 @Test
@@ -292,8 +296,12 @@ func `finds another address in punctuated or commented display names`(_ sender: 
 
 @Test
 func `keeps accented and non-Latin display names`() throws {
-  let accented = try parsed("From: Voilà Åsa 株式会社 <shop@example.fr>\n\nBonjour")
+  let accented = try parsed(
+    "From: Voilà Åsa 株式会社 <shop@example.fr>\nSubject: Réunion à\n  Paris voilà\n\nBonjour"
+  )
   #expect(accented.fromDisplayName == "Voilà Åsa 株式会社")
+  #expect(accented.subject == "Réunion à Paris voilà")
+  #expect(accented.decodingIssues == nil)
 }
 
 @Test(arguments: [
@@ -365,6 +373,10 @@ func `drops skipped elements and decodes entities in HTML text`() throws {
       + #"<a href="x>y" title='a>b'>link</a>"#
   )
   #expect(markup.text == "a < b\n<b>AB&lt; &bogus; shown link")
+  let preheader = try parsedHTML(
+    "It&rsquo;s &copy; &mdash; 5&euro;&hellip;&zwnj;&nbsp;&zwnj;&nbsp;&shy;<br>Caf&eacute;"
+  )
+  #expect(preheader.text == "It’s © — 5€… \nCafé")
 }
 
 @Test(arguments: [

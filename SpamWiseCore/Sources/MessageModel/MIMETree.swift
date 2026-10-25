@@ -113,7 +113,7 @@ extension MIMETree {
       guard !name.isEmpty, name.utf8.allSatisfy({ $0 > 32 && $0 < 127 }) else { return nil }
       return (
         name.lowercased(),
-        String(line[line.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
+        line[line.index(after: colon)...].trimmingFoldingWhitespace
       )
     }
 
@@ -129,7 +129,7 @@ extension MIMETree {
             complete = false
             continue
           }
-          lines[lines.count - 1] += " " + line.trimmingCharacters(in: .whitespaces)
+          lines[lines.count - 1] += " " + line.trimmingFoldingWhitespace
         } else {
           lines.append(line)
         }
