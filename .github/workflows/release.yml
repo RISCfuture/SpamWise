@@ -11,7 +11,7 @@ name: Release
 # CFBundleShortVersionString, so "1.2" is the tag for version 1.2.
 on:
   push:
-    tags: ["[0-9]+.[0-9]+*"]
+    tags: ["[0-9]+.[0-9]+", "[0-9]+.[0-9]+.[0-9]+"]
   workflow_dispatch:
     inputs:
       version:
@@ -38,8 +38,9 @@ jobs:
       platforms: '["mas", "download"]'
       version: ${{ inputs.version || github.ref_name }}
       certificates-repo: RISCfuture/certificates
-      # Runs before anything is built, with no credentials: a release whose notes or update
-      # repository are missing fails in seconds rather than after an upload that cannot be undone.
+      # Runs before anything is built, with no credentials: a release whose version is malformed or
+      # whose notes or update repository are missing fails in seconds rather than after an upload
+      # that cannot be undone.
       verify-lane: ci_verify_release_notes
       # After every edition has uploaded: writes the version's notes and attaches the build once
       # Apple has processed it.
@@ -87,13 +88,23 @@ jobs:
           # From CHANGELOG.md, the same text App Store Connect carries as "What's New".
           Scripts/release-notes.sh "$VERSION" > release-notes.md
 
+          # The disk image belongs to the commit this run built. A tag that already names another
+          # commit, say from an earlier release of the same version, is never given it.
+          if tagged=$(gh api "repos/$GITHUB_REPOSITORY/commits/$VERSION" --jq .sha 2>/dev/null) \
+            && [ "$tagged" != "$GITHUB_SHA" ]; then
+            echo "::error::Tag $VERSION points at $tagged, but this run built $GITHUB_SHA."
+            exit 1
+          fi
+
           # A re-run after a later failure finds the release already there; it takes the asset
-          # instead of stopping the run.
+          # instead of stopping the run. A new release tags the built commit, not the default
+          # branch's head, which may have moved on while the editions built.
           if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$VERSION" --repo "$GITHUB_REPOSITORY" --clobber "$dmg"
           else
             gh release create "$VERSION" \
               --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
               --title "SpamWise $VERSION" \
               --notes-file release-notes.md \
               "$dmg"
