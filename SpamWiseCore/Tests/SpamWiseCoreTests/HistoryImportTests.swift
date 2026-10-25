@@ -32,6 +32,11 @@ private enum HistoryRows {
       )
     }
 
+  /// A Sent mailbox deeper than one run's page budget.
+  static let deepSent = (1...600).map { index in
+    row("Sent", id: "deep-\(index)", .string("To: friend\(index)@example.com\r"))
+  }
+
   static func receipt(_ sender: String, auth: String?) -> ScriptValue {
     let headers = ["From: \(sender)", "Subject: Your receipt", auth].compactMap(\.self)
     return row(
@@ -57,15 +62,25 @@ private enum HistoryRows {
 private actor HistoryEvents: AppleEventRunner {
   private let accountIDs: [String]
   private let failingInbox: String?
-  private let failingSent: String?
+  private let sentRows: [ScriptValue]
+  private var failingSent: String?
   private(set) var sentOffsets: [String: [Int]] = [:]
   private(set) var inboxOffsets: [String: [Int]] = [:]
 
-  init(accounts: [String] = ["account"], failingInbox: String? = nil, failingSent: String? = nil) {
+  init(
+    accounts: [String] = ["account"],
+    sentRows: [ScriptValue] = HistoryRows.sent,
+    failingInbox: String? = nil,
+    failingSent: String? = nil
+  ) {
     accountIDs = accounts
+    self.sentRows = sentRows
     self.failingInbox = failingInbox
     self.failingSent = failingSent
   }
+
+  /// Makes every Sent read of `account` fail, or none when nil.
+  func failSent(_ account: String?) { failingSent = account }
 
   func run(_ request: MailRequest) throws -> ScriptValue {
     if request == .accounts {
@@ -82,7 +97,7 @@ private actor HistoryEvents: AppleEventRunner {
       inboxOffsets[account, default: []].append(offset)
     }
     if account == (isSent ? failingSent : failingInbox) { throw IntegrationError.scriptFailed }
-    let rows = (isSent ? HistoryRows.sent : HistoryRows.inbox).map { row in
+    let rows = (isSent ? sentRows : HistoryRows.inbox).map { row in
       row.list.map { ScriptValue.list([.string(account)] + $0.dropFirst()) } ?? row
     }
     return .list([.integer(rows.count), .list(Array(rows.dropFirst(offset).prefix(limit)))])
@@ -266,6 +281,28 @@ func `maintains each account's Sent history on its own schedule`() async throws 
   #expect(await runner.sentOffsets["daemon"] == [0, 20])
   #expect(try await maintenance.runIfDue(for: [app], now: now + HistoryMaintenance.interval))
   #expect(await runner.sentOffsets["app"] == [0, 20, 0])
+}
+@Test
+func `resumes the Sent backfill where it stopped after the newest page keeps failing`()
+  async throws
+{
+  let store = try testStore(), now = Date.now
+  let runner = HistoryEvents(sentRows: HistoryRows.deepSent)
+  let maintenance = HistoryMaintenance(source: AppleMailAdapter(runner: runner), store: store)
+  let account = MailAccount(id: "account", name: "account")
+  try await maintenance.runIfDue(for: [account], now: now)
+  await runner.failSent("account")
+  for run in 1...3 {
+    await #expect(throws: IntegrationError.self) {
+      try await maintenance.runIfDue(
+        for: [account],
+        now: now + HistoryMaintenance.interval * Double(run)
+      )
+    }
+  }
+  await runner.failSent(nil)
+  try await maintenance.runIfDue(for: [account], now: now + HistoryMaintenance.interval * 4)
+  #expect(await runner.sentOffsets["account"]?.suffix(3) == [0, 420, 520])
 }
 @Test
 func `fails maintenance when the only due mailbox fails`() async throws {

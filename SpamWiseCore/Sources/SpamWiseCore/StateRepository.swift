@@ -106,27 +106,6 @@ extension StateRepository {
       if let slice = StateSlice(rawValue: entry.key) { tokens[slice] = entry.value }
     }
   }
-  /**
-   Records written after `stamp`, with the stamp to pass next time.
-
-   Passing zero returns the whole retained log. Records pruned from the log are not reported.
-   */
-  public static func recordChanges(_ store: Store, after stamp: Int) async throws -> (
-    records: [DecisionRecord], stamp: Int
-  ) {
-    try await StatePersistence.prepared(store)
-    return try await store.snapshot { context in
-      let rows = try context.fetch(
-        FetchDescriptor<RecordRow>(predicate: #Predicate { $0.changeStamp > stamp })
-      )
-      let decoder = JSONDecoder()
-      return (
-        rows.compactMap { try? decoder.decode(DecisionRecord.self, from: $0.payload) }
-          .sorted { $0.date < $1.date },
-        rows.map(\.changeStamp).max() ?? stamp
-      )
-    }
-  }
   /// One page of matching Activity records in the query's order, fetched without reading the whole log.
   public static func activity(
     _ store: Store,
@@ -188,12 +167,12 @@ extension StateRepository {
     let pending = try await load(store, StateSlices(retries: .all, reviewedLabels: .all))
     let superseded = ActionOutcome.superseded.rawValue
     let decisions = try await store.snapshot { context in
-      try context.fetch(
-        FetchDescriptor<RecordRow>(
-          predicate: #Predicate { $0.outcome != superseded },
-          sortBy: [SortDescriptor(\.date)]
-        )
-      ).map {
+      var descriptor = FetchDescriptor<RecordRow>(
+        predicate: #Predicate { $0.outcome != superseded },
+        sortBy: [SortDescriptor(\.date)]
+      )
+      descriptor.propertiesToFetch = [\.identityKey, \.label, \.correctedLabel, \.date]
+      return try context.fetch(descriptor).map {
         InboxDecision(
           key: $0.identityKey,
           corrected: $0.correctedLabel.flatMap(MailLabel.init(rawValue:)),
