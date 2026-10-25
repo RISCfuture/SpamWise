@@ -144,10 +144,10 @@ extension StateRepository {
 public enum StateRecovery {
   private static let indexKey = "state.quarantine"
   private static let payloadPrefix = "state.quarantine."
-  /// Set-aside data awaiting a recovery decision; empty when all state was readable.
+  /// Set-aside data awaiting a recovery decision, read without the lock; empty when all is readable.
   public static func entries(_ store: Store) async throws -> [Entry] {
     try await StatePersistence.prepared(store)
-    return try await store.transaction { context in try index(in: context) }
+    return try await store.snapshot { context in try index(in: context) }
   }
   /// The preserved bytes of each set-aside source, for export or support.
   public static func preservedData(_ store: Store) async throws -> [String: Data] {

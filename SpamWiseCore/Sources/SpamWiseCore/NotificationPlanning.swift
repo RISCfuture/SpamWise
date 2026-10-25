@@ -48,19 +48,32 @@ public enum NotificationPlanning {
   /**
    Claims eligible records before delivery; failed notification requests do not replay on restart.
 
-   Activity since activation is read only once the batch interval has elapsed. Claims are kept
-   only for messages still in the bounded Activity log, so the ledger stays within its bound.
+   Nothing is claimed while `settings` pause filtering, keep dry run on, leave notifications off
+   or fall in quiet hours. The batch interval is checked without the transaction lock, and
+   Activity since activation is read only once it has elapsed. Claims are kept only for messages
+   still in the bounded Activity log, so the ledger stays within its bound.
+
+   - Parameters:
+     - store: Shared storage holding the Activity log and the claim ledger.
+     - settings: The current settings, which decide whether a batch may be announced now.
+     - now: The time of the claim.
+     - calendar: The calendar quiet hours are read in.
+   - Returns: The counts to announce, or nil when nothing is due.
    */
-  public static func claim(store: Store, now: Date = .now, calendar: Calendar = .current)
-    async throws -> NotificationBatch?
-  {
-    let settings = try await StateRepository.load(store, StateSlices()).settings
+  public static func claim(
+    store: Store,
+    settings: Settings,
+    now: Date = .now,
+    calendar: Calendar = .current
+  ) async throws -> NotificationBatch? {
     let preferences = settings.mailOptions.notifications
     guard let since = preferences.enabledSince, !settings.paused,
       !settings.dryRun, !preferences.isQuiet(at: now, calendar: calendar)
     else { return nil }
     let intervalSec = Double(preferences.boundedIntervalMin) * 60
-    let lastBatch = try await store.read(key, default: Ledger()).lastBatch
+    let lastBatch = try await store.snapshot { context in
+      try context.document(key).map { try JSONDecoder().decode(Ledger.self, from: $0) }
+    }?.lastBatch
     guard now.timeIntervalSince(lastBatch ?? since) >= intervalSec else { return nil }
     var query = ActivityQuery(); query.start = since
     let records = try await StateRepository.activity(
