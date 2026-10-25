@@ -1,6 +1,7 @@
 public import Observation
 import SwiftUI
 import AppIntents
+import UniformTypeIdentifiers
 import SpamWiseCore
 import MailIntegration
 
@@ -39,6 +40,8 @@ public final class AppModel {
   let recovery: StorageRecoveryModel
   /// A background problem outside any user operation, such as a fixture that failed to load.
   private(set) var backgroundFailure: OperationFailure?
+  /// What a URL, file or notification asked Activity to show, until the scenes show it.
+  private(set) var windowRequest: ActivityWindowRequest?
   @ObservationIgnored private var monitoring: Task<Void, Never>?
 
   /// Whether the user can act on mail: setup is finished and shared storage is open.
@@ -80,6 +83,7 @@ public final class AppModel {
     credentials = CredentialsModel(services: services)
     trust = AuthenticationTrustModel(services: services, shared: shared)
     recovery = StorageRecoveryModel(services: services, shared: shared)
+    notifications.onOpen { [weak self] in self?.showActivity(presenting: $0) }
   }
 
   /**
@@ -93,6 +97,16 @@ public final class AppModel {
     unsafe AppDependencyManager.shared.add(dependency: model)
     model.startMonitoring()
     return model
+  }
+
+  /// Whether `url` is the Mail rule's request to check mail, which shows no window.
+  static func isInboxCheck(_ url: URL) -> Bool {
+    url.scheme == "spamwise" && url.host == "check-inbox"
+  }
+
+  private static func isBackup(_ url: URL) -> Bool {
+    let type = try? url.resourceValues(forKeys: [.contentTypeKey]).contentType
+    return type?.conforms(to: .spamWiseBackup) == true
   }
 
   /**
@@ -109,15 +123,49 @@ public final class AppModel {
     )
   }
 
-  /// Opens `url` from the Mail rule script or a notification.
+  /**
+   Handles a URL opened from outside SpamWise: a `spamwise://` URL, such as the Mail rule
+   script's, or a backup opened in Finder.
+
+   `check-inbox` checks mail without showing a window. `review` and `activity` bring Activity
+   forward, `review` with the digest, and a backup opens Restore from Backup.
+   */
   func handle(_ url: URL) {
+    if url.isFileURL {
+      if Self.isBackup(url) { showActivity(presenting: .backup(.restore)) }
+      return
+    }
     guard url.scheme == "spamwise" else { return }
     switch url.host {
       case "check-inbox": scanning.requestInboxCheck()
-      case "review": router.present(.digest)
+      case "review": showActivity(presenting: .digest)
+      case "activity": showActivity()
       default: return
     }
   }
+
+  /// Asks the scenes to bring Activity forward, presenting `sheet` in it when given.
+  func showActivity(presenting sheet: ActivitySheet? = nil) {
+    windowRequest = ActivityWindowRequest(sheet: sheet)
+  }
+
+  /// Takes the pending window request, which the caller then shows.
+  func takeWindowRequest() -> ActivityWindowRequest? {
+    defer { windowRequest = nil }
+    return windowRequest
+  }
+
+  /// Saves every edit still waiting to be saved: settings drafts and trust exclusions.
+  func savePendingEdits() async {
+    await settings.savePendingEdits()
+    await relationships.commitTrustExclusions().value
+  }
+}
+
+/// Activity, and the sheet to present in it, as a URL, file or notification asked to show them.
+struct ActivityWindowRequest: Equatable {
+  /// The sheet to present, or nil for the Activity window alone.
+  let sheet: ActivitySheet?
 }
 
 extension AppModel {

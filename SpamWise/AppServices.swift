@@ -5,8 +5,16 @@ import MailIntegration
 /// The long-lived integrations every feature model draws its dependencies from.
 @MainActor
 struct AppServices {
-  private static let uiTestingArgument = "--ui-testing"
-  private static let uiAutomationArgument = "--ui-automation"
+  private static let isolatedStorePrefix = "SpamWise-UI-"
+  private static let isolatedPreferencesPrefix = "codes.tim.SpamWise.ui."
+
+  #if DEBUG
+    private static let uiTestingArgument = "--ui-testing"
+    private static let uiAutomationArgument = "--ui-automation"
+    /// How long an isolated store or preferences suite is kept after the launch that made it.
+    private static let isolatedStateLifetimeSec: TimeInterval = 86_400
+  #endif
+
   /// Durable shared state; nil when the App Group container could not be opened.
   let store: Store?
   /// Classifies, persists and dispatches messages; nil without a store.
@@ -15,34 +23,63 @@ struct AppServices {
   let appleMail: AppleMailAdapter
   /// Per-installation interface preferences, isolated while UI testing.
   let preferences: UserDefaults
+  /// API keys and passwords: the shared Keychain, or memory while UI testing.
+  let credentials: any CredentialStore
   /// Whether the app runs under UI tests or previews, which never touch Mail or the shared store.
   let uiTesting: Bool
   var storageReady: Bool { store != nil }
 
-  /// The production services, or isolated fixtures when launched for UI tests.
+  /// The production services, or isolated fixtures when a debug build is launched for UI tests.
   static func launched() -> Self {
     let arguments = ProcessInfo.processInfo.arguments
-    let uiTesting = arguments.contains(uiTestingArgument)
-    let automation = uiTesting && arguments.contains(uiAutomationArgument)
+    let uiTesting = isUITesting(arguments)
+    let automation = uiTesting && isUIAutomation(arguments)
+    #if DEBUG
+      if uiTesting { removeStaleIsolatedState() }
+    #endif
     let store = openStore { try uiTesting ? isolatedStoreURL() : Store.sharedURL() }
+    let credentials: any CredentialStore =
+      uiTesting ? MemoryCredentialStore() : KeychainCredentialStore()
     return Self(
       store: store,
-      pipeline: store.map { pipeline(for: $0, automationFixture: automation) },
+      pipeline: store.map {
+        pipeline(for: $0, credentials: credentials, automationFixture: automation)
+      },
       appleMail: AppleMailAdapter(runner: runner(uiTesting: uiTesting, automation: automation)),
       preferences: uiTesting ? isolatedPreferences() : .standard,
+      credentials: credentials,
       uiTesting: uiTesting
     )
   }
 
-  /// Services for previews: no store, no pipeline, and Mail denies every request.
+  /// Services for previews: no store, no pipeline, no Keychain, and Mail denies every request.
   static func preview() -> Self {
     Self(
       store: nil,
       pipeline: nil,
       appleMail: AppleMailAdapter(runner: runner(uiTesting: true, automation: false)),
       preferences: isolatedPreferences(),
+      credentials: MemoryCredentialStore(),
       uiTesting: true
     )
+  }
+
+  /// Whether a debug build was launched for UI tests; release builds never are.
+  private static func isUITesting(_ arguments: [String]) -> Bool {
+    #if DEBUG
+      arguments.contains(uiTestingArgument)
+    #else
+      false
+    #endif
+  }
+
+  /// Whether a debug build's UI tests act on fixture messages; release builds never do.
+  private static func isUIAutomation(_ arguments: [String]) -> Bool {
+    #if DEBUG
+      arguments.contains(uiAutomationArgument)
+    #else
+      false
+    #endif
   }
 
   private static func openStore(at url: () throws -> URL) -> Store? {
@@ -53,17 +90,23 @@ struct AppServices {
   }
 
   private static func isolatedStoreURL() -> URL {
-    FileManager.default.temporaryDirectory.appending(path: "SpamWise-UI-\(UUID())/state.store")
+    FileManager.default.temporaryDirectory.appending(
+      path: "\(isolatedStorePrefix)\(UUID())/state.store"
+    )
   }
 
   private static func isolatedPreferences() -> UserDefaults {
-    guard let isolated = UserDefaults(suiteName: "codes.tim.SpamWise.ui.\(UUID())") else {
+    guard let isolated = UserDefaults(suiteName: "\(isolatedPreferencesPrefix)\(UUID())") else {
       preconditionFailure("UI fixtures require an isolated preferences suite.")
     }
     return isolated
   }
 
-  private static func pipeline(for store: Store, automationFixture: Bool) -> Pipeline {
+  private static func pipeline(
+    for store: Store,
+    credentials: any CredentialStore,
+    automationFixture: Bool
+  ) -> Pipeline {
     #if DEBUG
       if automationFixture {
         return Pipeline(
@@ -76,7 +119,7 @@ struct AppServices {
     #endif
     return Pipeline(
       store: store,
-      classifier: ConfiguredClassifier(store: store),
+      classifier: ConfiguredClassifier(store: store) { try credentials.read(.provider($0)) },
       rdap: RDAPLookup(
         cacheURL: store.url.deletingLastPathComponent().appending(path: "rdap-cache.json")
       )
@@ -104,6 +147,55 @@ struct AppServices {
   }
 }
 
+#if DEBUG
+  extension AppServices {
+    /**
+     Removes the isolated stores and preferences suites that earlier UI-testing launches left.
+
+     Only those unchanged for ``isolatedStateLifetimeSec`` are removed, so a concurrent run keeps
+     its own.
+     */
+    private static func removeStaleIsolatedState(now: Date = .now) {
+      let fileManager = FileManager.default
+      let cutoff = now.addingTimeInterval(-isolatedStateLifetimeSec)
+      let stores = items(
+        in: fileManager.temporaryDirectory,
+        prefix: isolatedStorePrefix,
+        modifiedBefore: cutoff
+      )
+      for store in stores { try? fileManager.removeItem(at: store) }
+      guard let library = fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first
+      else { return }
+      let suites = items(
+        in: library.appending(path: "Preferences"),
+        prefix: isolatedPreferencesPrefix,
+        modifiedBefore: cutoff
+      )
+      for suite in suites where suite.pathExtension == "plist" {
+        UserDefaults.standard.removePersistentDomain(
+          forName: suite.deletingPathExtension().lastPathComponent
+        )
+        try? fileManager.removeItem(at: suite)
+      }
+    }
+
+    private static func items(in directory: URL, prefix: String, modifiedBefore cutoff: Date)
+      -> [URL]
+    {
+      let key = URLResourceKey.contentModificationDateKey
+      let contents =
+        (try? FileManager.default.contentsOfDirectory(
+          at: directory,
+          includingPropertiesForKeys: [key]
+        )) ?? []
+      return contents.filter { item in
+        let modified = try? item.resourceValues(forKeys: [key]).contentModificationDate
+        return item.lastPathComponent.hasPrefix(prefix) && (modified ?? .distantFuture) < cutoff
+      }
+    }
+  }
+#endif
+
 extension AppServices {
   /// An adapter for the saved IMAP connection; actions stay gated by the persisted account validation.
   func imapAdapter() async throws -> IMAPAdapter {
@@ -115,8 +207,8 @@ extension AppServices {
     configuration.allowsActions = true
     return IMAPAdapter(
       configuration: configuration,
-      credentials: {
-        let value = try APIKeychain(service: connection.credentialService).read()
+      credentials: { [credentials] in
+        let value = try credentials.read(.imap(service: connection.credentialService))
         return connection.oauthBearer ? .oauthBearer(value) : .password(value)
       },
       validations: store

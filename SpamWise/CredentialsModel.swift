@@ -34,63 +34,67 @@ final class CredentialsModel {
   init(services: AppServices) { self.services = services }
 
   @concurrent
-  private static func save(_ credential: String, in keychain: APIKeychain?)
-    async throws
+  private static func save(
+    _ secret: String,
+    as credential: StoredCredential,
+    in credentials: any CredentialStore
+  ) async throws {
+    try credentials.save(secret, as: credential)
+  }
+
+  @concurrent
+  private static func providersWithSavedKeys(in credentials: any CredentialStore) async
+    -> Set<ModelBackend>
   {
-    guard let keychain else { throw ClassificationError.configuration }
-    try keychain.save(credential)
+    Set(StoredCredential.providers.filter { (try? credentials.exists(.provider($0))) == true })
   }
 
   @concurrent
-  private static func providersWithSavedKeys() async -> Set<ModelBackend> {
-    Set(
-      ModelBackend.allCases.filter { backend in
-        (try? APIKeychain(backend: backend)?.exists()) == true
-      }
-    )
-  }
-
-  @concurrent
-  private static func spamhausKeyStatus() async throws -> String {
-    try APIKeychain(service: APIKeychain.spamhausService).exists()
+  private static func spamhausKeyStatus(in credentials: any CredentialStore) async throws
+    -> String
+  {
+    try credentials.exists(.spamhaus)
       ? String(localized: "Query key saved in Keychain") : String(localized: "No query key saved")
   }
 
   /// Whether `credential` is saved, read from its attributes without loading the secret.
   @concurrent
-  private static func exists(_ credential: StoredCredential) async throws -> Bool {
-    try credential.keychain?.exists() ?? false
+  private static func exists(_ credential: StoredCredential, in credentials: any CredentialStore)
+    async throws -> Bool
+  {
+    try credentials.exists(credential)
   }
 
   @concurrent
-  private static func delete(_ credentials: [StoredCredential]) async throws {
-    for credential in credentials { try credential.keychain?.delete() }
+  private static func delete(_ removed: [StoredCredential], from credentials: any CredentialStore)
+    async throws
+  {
+    for credential in removed { try credentials.delete(credential) }
   }
 
-  private static func recordVerification(
-    _ verdict: Verdict,
-    message: ParsedMessage,
-    store: Store
-  ) async throws {
-    let record = DecisionRecord(
+  private static func verificationRecord(_ verdict: Verdict, message: ParsedMessage)
+    -> DecisionRecord
+  {
+    DecisionRecord(
       identity: .init(accountID: nil, contentHash: message.hash),
       verdict: verdict,
       decision: .init(label: .inbox, action: .none, reason: .connectionVerified),
       outcome: .noAction,
       path: .verification
     )
-    try await StateRepository.update(store, loading: StateSlices()) { $0.record(record) }
   }
 
   /// Checks which providers have API keys saved in Keychain.
   func refreshSavedKeys() async {
-    savedKeys = await Self.providersWithSavedKeys()
+    savedKeys = await Self.providersWithSavedKeys(in: services.credentials)
   }
 
   /**
    Sends one synthetic message to the Claude `model` with `key`, then saves the key if it works.
 
-   Nothing is sent while Keep filtering on this Mac is on; the check fails with the reason.
+   Nothing is sent while Keep filtering on this Mac is on; the check fails with the reason. When
+   Claude is the selected provider, mail left unclassified for want of a working key is classified
+   again once the key is saved.
    */
   @discardableResult
   func verifyClaudeKey(_ key: String, model: ModelIdentifier = .claudeHaiku)
@@ -109,14 +113,24 @@ final class CredentialsModel {
         model: model,
         store: store
       ).classify(.init(message: message, evidence: .init(message: message)))
-      try await Self.save(credential, in: APIKeychain(backend: .claude))
+      try await Self.save(credential, as: .provider(.claude), in: services.credentials)
       recordSaved(.provider(.claude))
-      try await Self.recordVerification(verdict, message: message, store: store)
+      try await CredentialChanges.recordKeySaved(
+        for: .claude,
+        in: store,
+        recording: Self.verificationRecord(verdict, message: message)
+      )
       return String(localized: "Verified — stored in Keychain")
     }
   }
 
-  /// Saves `key` for `backend` without making a request.
+  /**
+   Saves `key` for `backend` without making a request.
+
+   When `backend` is the selected provider, mail left unclassified for want of a working key is
+   classified again once the key is saved, unless shared storage is unavailable or busy; the key
+   is saved either way.
+   */
   @discardableResult
   func saveProviderKey(_ key: String, for backend: ModelBackend)
     -> Task<Void, Never>
@@ -124,23 +138,26 @@ final class CredentialsModel {
     let credential = key.trimmingCharacters(in: .whitespacesAndNewlines)
     return providerKey.run { [self] in
       guard !credential.isEmpty else { throw ClassificationError.missingCredential }
-      try await Self.save(credential, in: APIKeychain(backend: backend))
+      try await Self.save(credential, as: .provider(backend), in: services.credentials)
       recordSaved(.provider(backend))
+      if let store = services.store {
+        try? await CredentialChanges.recordKeySaved(for: backend, in: store)
+      }
       return String(localized: "Provider key saved in Keychain. Use a dry run to verify.")
     }
   }
 
   /// Reports whether a Spamhaus query key is saved.
   func refreshSpamhausKeyStatus() {
-    spamhausKey.run { try await Self.spamhausKeyStatus() }
+    spamhausKey.run { [self] in try await Self.spamhausKeyStatus(in: services.credentials) }
   }
 
   /// Saves the Spamhaus query key, then reports that it is saved.
   func saveSpamhausKey(_ key: String) {
     spamhausKey.run { [self] in
-      try await Self.save(key, in: APIKeychain(service: APIKeychain.spamhausService))
+      try await Self.save(key, as: .spamhaus, in: services.credentials)
       recordSaved(.spamhaus)
-      return try await Self.spamhausKeyStatus()
+      return try await Self.spamhausKeyStatus(in: services.credentials)
     }
   }
 }
@@ -194,7 +211,7 @@ extension CredentialsModel {
   /// Removes one credential from Keychain.
   func remove(_ credential: StoredCredential) {
     storedCredentials.run { [self] in
-      try await Self.delete([credential])
+      try await Self.delete([credential], from: services.credentials)
       recordRemoved(credential)
       return String(localized: "Removed the \(credential.localizedTitle) from Keychain.")
     }
@@ -204,15 +221,14 @@ extension CredentialsModel {
   func removeAll() {
     storedCredentials.run { [self] in
       let credentials = try await allCredentials()
-      try await Self.delete(credentials)
+      try await Self.delete(credentials, from: services.credentials)
       for credential in credentials { recordRemoved(credential) }
       return String(localized: "Removed every SpamWise key and password from Keychain.")
     }
   }
 
-  /// Whether `credential` is saved; previews and UI tests never read the shared Keychain.
   private func exists(_ credential: StoredCredential) async throws -> Bool {
-    services.uiTesting ? false : try await Self.exists(credential)
+    try await Self.exists(credential, in: services.credentials)
   }
 
   private func allCredentials() async throws -> [StoredCredential] {
