@@ -1,0 +1,70 @@
+{
+  "schema": "spamwise-preference-profiles-v1",
+  "profiles": {
+    "defaults": {
+      "promotion": "review",
+      "abandonedCart": "review",
+      "newsletter": "keep",
+      "productUpdate": "keep",
+      "event": "keep",
+      "socialNotification": "keep",
+      "survey": "keep",
+      "financialOffer": "review",
+      "fundraising": "review",
+      "coldOutreach": "review",
+      "community": "keep"
+    },
+    "declutter": {
+      "promotion": "junk",
+      "abandonedCart": "junk",
+      "newsletter": "review",
+      "productUpdate": "review",
+      "event": "junk",
+      "socialNotification": "junk",
+      "survey": "junk",
+      "financialOffer": "junk",
+      "fundraising": "junk",
+      "coldOutreach": "junk",
+      "community": "keep"
+    },
+    "deal-seeker": {
+      "promotion": "keep",
+      "abandonedCart": "junk",
+      "newsletter": "keep",
+      "productUpdate": "keep",
+      "event": "keep",
+      "socialNotification": "keep",
+      "survey": "keep",
+      "financialOffer": "junk",
+      "fundraising": "review",
+      "coldOutreach": "junk",
+      "community": "keep"
+    },
+    "inbox-minimalist": {
+      "promotion": "junk",
+      "abandonedCart": "junk",
+      "newsletter": "review",
+      "productUpdate": "junk",
+      "event": "junk",
+      "socialNotification": "junk",
+      "survey": "junk",
+      "financialOffer": "junk",
+      "fundraising": "junk",
+      "coldOutreach": "junk",
+      "community": "junk"
+    },
+    "permissive": {
+      "promotion": "keep",
+      "abandonedCart": "keep",
+      "newsletter": "keep",
+      "productUpdate": "keep",
+      "event": "keep",
+      "socialNotification": "keep",
+      "survey": "keep",
+      "financialOffer": "keep",
+      "fundraising": "keep",
+      "coldOutreach": "keep",
+      "community": "keep"
+    }
+  }
+}

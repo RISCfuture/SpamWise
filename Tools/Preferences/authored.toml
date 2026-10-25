@@ -1,0 +1,1501 @@
+# Synthetic messages written for the preference-adherence set. Every sender, brand,
+# person and domain is fictional; `.example` domains are reserved and never resolve.
+# Keys are opaque so the generated manifest reveals nothing about content.
+
+[recipients]
+en = "Jordan Avery <jordan.avery@averyhome.example>"
+es = "Lucía Moreno <lucia.moreno@correo-casa.example>"
+fr = "Camille Durand <camille.durand@boite-perso.example>"
+
+[[message]]
+key = "a01"
+language = "en"
+from = "The Weekly Ledger <editor@weeklyledger.example>"
+bulk = true
+subject = "The Weekly Ledger: why index funds still beat stock picking"
+body = """
+This week in The Weekly Ledger
+
+1. Why index funds keep beating stock pickers
+A new twenty-year study of 4,000 managed funds found that fewer than one in ten outperformed a simple total-market index after fees. Our columnist Dana Whitfield explains what that means for your retirement account.
+Read more: https://weeklyledger.example/articles/index-funds-2026
+
+2. The hidden cost of "buy now, pay later"
+Short installment plans look free, but late fees add up. We ran the numbers on three common scenarios.
+Read more: https://weeklyledger.example/articles/bnpl-costs
+
+3. Reader question: should I pay off my car loan early?
+It depends on your rate. Here is a quick rule of thumb.
+Read more: https://weeklyledger.example/articles/reader-car-loan
+
+You are receiving this because you subscribed at weeklyledger.example.
+Manage preferences: https://weeklyledger.example/preferences
+"""
+
+[[message]]
+key = "a02"
+language = "en"
+from = "Simmer & Salt <hello@simmerandsalt.example>"
+bulk = true
+subject = "Three weeknight soups for the first cold snap"
+body = """
+Hi Jordan,
+
+The first real cold week is here, and nothing beats a pot of soup that's ready in 30 minutes. This week's picks:
+
+- Roasted tomato and white bean soup, with a crispy parmesan topping
+- Ginger chicken noodle soup that freezes beautifully
+- A five-ingredient lentil soup for nights when the fridge is nearly empty
+
+Each recipe includes a shopping list and make-ahead notes.
+Get the recipes: https://simmerandsalt.example/recipes/cold-snap-soups
+
+Kitchen tip of the week: salt your pasta water before it boils, not after. It dissolves faster and you won't forget.
+
+Happy cooking,
+Priya from Simmer & Salt
+
+Unsubscribe: https://simmerandsalt.example/unsubscribe
+"""
+
+[[message]]
+key = "a03"
+language = "en"
+from = "Trailhead Notes <notes@trailheadsupply.example>"
+bulk = true
+subject = "Trailhead Notes: layering for shoulder season + member sale"
+body = """
+TRAILHEAD NOTES — October
+
+How to layer for shoulder season
+Mornings near freezing, afternoons in the 60s. Our guide Mateo Reyes walks through a three-layer system that works from trailhead to summit: a merino base, a light fleece or grid midlayer, and a packable shell. He also explains why cotton is still the enemy on wet days.
+Read the guide: https://trailheadsupply.example/notes/layering
+
+Trail report: Granite Loop
+The upper switchbacks reopened after the summer washout repairs. Expect mud near the creek crossing.
+
+Leave no trace reminder
+Pack out fruit peels, too. They take up to two years to break down at elevation.
+
+SHOP THE MEMBER SALE
+Members save 20% on fleece and insulated jackets through Sunday.
+Shop now: https://trailheadsupply.example/sale
+
+You're receiving Trailhead Notes because you signed up at trailheadsupply.example.
+Unsubscribe: https://trailheadsupply.example/unsubscribe
+"""
+
+[[message]]
+key = "a04"
+language = "en"
+from = "Tallyboard <updates@tallyboard.example>"
+bulk = true
+subject = "What's new in Tallyboard: dark mode, CSV export and faster sync"
+body = """
+Here's what shipped in Tallyboard this month.
+
+Dark mode
+Tallyboard now follows your system appearance on Mac, iPhone and the web. You can also pick light or dark manually in Settings > Appearance.
+
+CSV export
+Export any board, including archived cards, from the board menu. Exports keep custom fields and due dates.
+
+Faster sync
+Changes now reach your other devices in under a second for most boards, down from about five seconds.
+
+Fixes
+- Due-date reminders no longer fire twice after a time-zone change.
+- Attachments larger than 25 MB upload reliably on slow connections.
+
+Full release notes: https://tallyboard.example/changelog
+
+You're receiving product updates because you have a Tallyboard account. Update email settings: https://tallyboard.example/settings/email
+"""
+
+[[message]]
+key = "a05"
+language = "en"
+from = "Tallyboard <offers@tallyboard.example>"
+bulk = true
+subject = "Introducing Tallyboard Pro: 30% off your first year"
+body = """
+Meet Tallyboard Pro.
+
+Unlimited boards, automations, guest access and priority support, all in one plan. Pro launches today, and as an existing user you can lock in 30% off your first year.
+
+What you get with Pro:
+- Unlimited automations that move cards for you
+- Guest access for clients and contractors
+- Version history for every board
+- Priority support with replies in under four hours
+
+Offer ends November 15. Upgrade in one click and keep everything you've already built.
+
+Upgrade now: https://tallyboard.example/pro?code=EARLY30
+
+Questions? Reply to this email.
+
+Unsubscribe from offers: https://tallyboard.example/settings/email
+"""
+
+[[message]]
+key = "a06"
+language = "en"
+from = "Fernway Developer Platform <platform@fernway.example>"
+bulk = true
+subject = "Upcoming change: new API rate limits on November 15"
+body = """
+Hello,
+
+On November 15 we're updating rate limits for the Fernway REST API to make performance more predictable for everyone.
+
+What's changing
+- Standard plans: 600 requests per minute per key (currently 1,000 burst, 300 sustained)
+- Rate-limit headers will be returned on every response
+- Requests over the limit will receive HTTP 429 with a Retry-After header
+
+What you need to do
+Most integrations need no changes. If you poll frequently, consider switching to webhooks.
+
+Migration guide: https://fernway.example/docs/rate-limits
+
+Thanks for building with Fernway,
+The Fernway Platform Team
+
+You're receiving this because you have an active API key. Email settings: https://fernway.example/account/notifications
+"""
+
+[[message]]
+key = "a07"
+language = "en"
+from = "Halden & Co. <style@haldenandco.example>"
+bulk = true
+subject = "48 hours only: 40% off all outerwear"
+body = """
+THE OUTERWEAR EVENT
+
+40% off every coat, parka and jacket. 48 hours only.
+
+Our bestselling wool overcoat, now $174 (was $290)
+The weatherproof parka, now $210 (was $350)
+Quilted liners from $54
+
+Free shipping and free returns on every order.
+
+Shop outerwear: https://haldenandco.example/sale/outerwear
+
+Ends Thursday at midnight. Prices as marked, no code needed.
+
+Halden & Co. | You're receiving this email because you joined our list.
+Unsubscribe: https://haldenandco.example/unsubscribe
+"""
+
+[[message]]
+key = "a08"
+language = "en"
+from = "Wren Home <hello@wrenhome.example>"
+bulk = true
+subject = "New arrivals: the autumn knit collection is here"
+body = """
+Cozy season, sorted.
+
+Our autumn knit collection just landed: chunky throws in five new colors, cable-knit cushion covers and our softest-ever alpaca blend blanket.
+
+Every piece is made in small batches by our partner mill, and every throw is machine washable.
+
+See the new arrivals: https://wrenhome.example/new
+
+Members get early access to restocks. Not a member? It's free to join.
+
+Wren Home
+Unsubscribe: https://wrenhome.example/unsubscribe
+"""
+
+[[message]]
+key = "a09"
+language = "en"
+from = "Brightmarket <deals@brightmarket.example>"
+bulk = true
+subject = "Free shipping weekend + up to 25% off kitchen essentials"
+body = """
+This weekend only: free shipping on everything, no minimum.
+
+Plus up to 25% off kitchen essentials:
+- Cast-iron skillets from $29
+- Glass storage sets, 12 pieces, $34
+- Our top-rated chef's knife, $49
+
+Shop the weekend deals: https://brightmarket.example/weekend
+
+Offer valid Saturday and Sunday. Prices and availability may vary.
+
+Unsubscribe: https://brightmarket.example/email-preferences
+"""
+
+[[message]]
+key = "a10"
+language = "en"
+from = "Grindstone Coffee Gear <orders@grindstonegear.example>"
+bulk = true
+subject = "You left something in your cart"
+body = """
+Hi Jordan,
+
+Still thinking it over? Your cart is saved and ready when you are.
+
+In your cart:
+Burr Grinder Mk II, matte black — $189.00
+
+Complete your order: https://grindstonegear.example/cart
+
+Items in your cart aren't reserved, and popular colors sell out quickly.
+
+Grindstone Coffee Gear
+Unsubscribe: https://grindstonegear.example/unsubscribe
+"""
+
+[[message]]
+key = "a11"
+language = "en"
+from = "Seaside Inn Reservations <stay@seasideinn-marlow.example>"
+bulk = true
+subject = "Your stay at Seaside Inn is waiting"
+body = """
+Hello Jordan,
+
+You started a reservation but didn't finish booking.
+
+Seaside Inn, Marlow Bay
+Ocean-view queen room
+Friday, November 13 – Sunday, November 15
+2 adults
+
+Rooms for these dates are limited. Finish your booking to secure today's rate.
+
+Complete your reservation: https://seasideinn-marlow.example/book/resume
+
+We hope to welcome you soon,
+The Seaside Inn Team
+
+Unsubscribe: https://seasideinn-marlow.example/unsubscribe
+"""
+
+[[message]]
+key = "a12"
+language = "en"
+from = "Loomwell <cart@loomwell.example>"
+bulk = true
+subject = "Your bag is about to expire — here's 10% off to finish checkout"
+body = """
+Hi Jordan,
+
+The items in your bag will be released in 24 hours. To help you decide, here's 10% off when you check out today.
+
+Linen duvet cover, queen, sage — $148
+Linen pillowcases, set of two — $58
+
+Use code FINISH10 at checkout.
+Return to your bag: https://loomwell.example/bag
+
+Code expires in 24 hours and applies to items currently in your bag.
+
+Unsubscribe: https://loomwell.example/unsubscribe
+"""
+
+[[message]]
+key = "a13"
+language = "en"
+from = "Riverbend Amphitheater <tickets@riverbendamp.example>"
+bulk = true
+subject = "Presale starts Thursday: The Lantern Fields live at Riverbend"
+body = """
+PRESALE ACCESS
+
+The Lantern Fields bring their Northern Lights tour to Riverbend Amphitheater on Saturday, June 6.
+
+Presale for email subscribers starts Thursday at 10 a.m., a full day before general on-sale.
+
+Presale code: LANTERN26
+Lawn from $39 · Reserved seats from $69
+
+Get presale tickets: https://riverbendamp.example/events/lantern-fields
+
+Limit eight tickets per order. All sales final.
+
+Riverbend Amphitheater
+Unsubscribe: https://riverbendamp.example/unsubscribe
+"""
+
+[[message]]
+key = "a14"
+language = "en"
+from = "Quarry Data <events@quarrydata.example>"
+bulk = true
+subject = "Live webinar: scaling Postgres to a billion rows"
+body = """
+Join us Wednesday, November 4 at 11 a.m. Pacific for a live technical session.
+
+Scaling Postgres to a Billion Rows
+Our principal engineer Ruth Okafor will cover partitioning strategies, connection pooling and the indexing mistakes that cost the most at scale. Bring your questions for the live Q&A.
+
+Can't make it? Register anyway and we'll send you the recording.
+
+Save your seat: https://quarrydata.example/webinars/postgres-scale
+
+Quarry Data · Managed databases for growing teams
+Unsubscribe: https://quarrydata.example/unsubscribe
+"""
+
+[[message]]
+key = "a15"
+language = "en"
+from = "DesignOps Summit <register@designopssummit.example>"
+bulk = true
+subject = "Early-bird pricing ends Friday — DesignOps Summit 2027"
+body = """
+DesignOps Summit returns to Portland, March 9–11, 2027.
+
+Three days of talks and workshops on design systems, research operations and scaling creative teams, with 40+ speakers.
+
+Early-bird passes are $495 (regular $795) until Friday at midnight.
+
+Register now: https://designopssummit.example/register
+
+Bringing a team of three or more? Group discounts are available.
+
+DesignOps Summit
+Unsubscribe: https://designopssummit.example/unsubscribe
+"""
+
+[[message]]
+key = "a16"
+language = "en"
+from = "Circlet <notifications@circlet.example>"
+bulk = true
+subject = "Maya Chen and 3 others commented on your post"
+body = """
+Maya Chen, Theo Grant and 2 others commented on your post "Finally finished the bookshelf build!"
+
+Maya Chen: "This looks amazing — what wood did you use?"
+Theo Grant: "Clean joints! Teach me your ways."
+
+View comments: https://circlet.example/p/8812734
+
+You're receiving this because you have comment notifications turned on.
+Notification settings: https://circlet.example/settings/notifications
+"""
+
+[[message]]
+key = "a17"
+language = "en"
+from = "Linkwise <invitations@linkwise.example>"
+bulk = true
+subject = "Jordan, you have 6 new people you may know"
+body = """
+People you may know
+
+Samira Holt — Product Manager at Fernway
+Devon Pike — Senior Engineer at Quarry Data
+Lena Ostrowski — UX Researcher at Tallyboard
+...and 3 more
+
+Growing your network helps you stay on top of opportunities.
+
+See all suggestions: https://linkwise.example/mynetwork
+
+Linkwise · Unsubscribe: https://linkwise.example/settings/email
+"""
+
+[[message]]
+key = "a18"
+language = "en"
+from = "Linkwise <digest@linkwise.example>"
+bulk = true
+subject = "Your profile appeared in 14 searches this week"
+body = """
+Hi Jordan,
+
+Here's your weekly activity summary.
+
+14 searches — people found you through searches for "product design" and "design systems"
+3 profile views — including someone at Quarry Data
+1 post you might like — Lena Ostrowski shared "What we learned from 50 usability tests"
+
+See who's viewed your profile: https://linkwise.example/me/activity
+
+Linkwise · Unsubscribe from weekly summaries: https://linkwise.example/settings/email
+"""
+
+[[message]]
+key = "a19"
+language = "en"
+from = "Parcelrun Delivery <feedback@parcelrun.example>"
+bulk = true
+subject = "How did we do? Rate your recent delivery"
+body = """
+Hi Jordan,
+
+Your package was delivered on Tuesday. We'd love to hear how it went.
+
+How would you rate your delivery experience?
+1 — Poor   2   3   4   5 — Excellent
+Rate now: https://parcelrun.example/survey/d/55102
+
+It takes less than a minute, and your feedback helps our drivers.
+
+Thank you,
+Parcelrun Delivery
+
+Unsubscribe from surveys: https://parcelrun.example/unsubscribe
+"""
+
+[[message]]
+key = "a20"
+language = "en"
+from = "Harborview Hotel <guestexperience@harborviewhotel.example>"
+bulk = true
+subject = "Tell us about your stay"
+body = """
+Dear Jordan,
+
+Thank you for staying at the Harborview Hotel. We hope you enjoyed your visit.
+
+Would you take five minutes to tell us about your stay? Your answers go directly to our general manager.
+
+Start the survey: https://harborviewhotel.example/survey/stay
+
+As a thank-you, everyone who completes the survey this month is entered into a drawing for a complimentary night.
+
+Warm regards,
+Guest Experience Team, Harborview Hotel
+
+Unsubscribe: https://harborviewhotel.example/unsubscribe
+"""
+
+[[message]]
+key = "a21"
+language = "en"
+from = "Tallyboard <hello@tallyboard.example>"
+bulk = true
+subject = "Enjoying Tallyboard? We'd love a review"
+body = """
+Hi Jordan,
+
+You've been using Tallyboard for three months now — thank you!
+
+If Tallyboard has made your week a little easier, would you leave us a quick rating in the App Store? Reviews help other people find us, and we read every one.
+
+Leave a review: https://tallyboard.example/review
+
+Something not working the way you'd like? Just reply to this email and it comes straight to our team.
+
+Cheers,
+Sam, Tallyboard co-founder
+
+Unsubscribe: https://tallyboard.example/settings/email
+"""
+
+[[message]]
+key = "a22"
+language = "en"
+from = "Crestline Card Services <offers@crestlinecard.example>"
+bulk = true
+subject = "Jordan, you're pre-approved for the Crestline Rewards Card"
+body = """
+You're pre-approved*
+
+The Crestline Rewards Card
+- 0% intro APR on purchases for 15 months
+- 3% cash back on dining and groceries
+- $200 bonus after you spend $1,000 in the first 3 months
+- No annual fee
+
+Accept your offer: https://crestlinecard.example/accept?ref=PA2611
+
+Respond by December 1, 2026.
+
+*Pre-approval is based on information in your credit report and is not a guarantee of credit. After the intro period, a variable APR of 19.99%–28.99% applies.
+
+To opt out of prescreened offers: https://crestlinecard.example/optout
+"""
+
+[[message]]
+key = "a23"
+language = "en"
+from = "Northgate Lending <rates@northgatelending.example>"
+bulk = true
+subject = "Personal loan rates from 7.49% APR — check your rate in 2 minutes"
+body = """
+Consolidate credit card debt or fund a home project with a fixed-rate personal loan.
+
+- Borrow $2,000 to $50,000
+- Fixed rates from 7.49% APR with autopay
+- Funds as soon as the next business day
+- Checking your rate won't affect your credit score
+
+Check your rate: https://northgatelending.example/check-rate
+
+Rates and terms depend on credit history. Loans are subject to approval.
+
+Unsubscribe: https://northgatelending.example/unsubscribe
+"""
+
+[[message]]
+key = "a24"
+language = "en"
+from = "Bramble Mutual Insurance <quotes@bramblemutual.example>"
+bulk = true
+subject = "Drivers in your area are saving $412 a year"
+body = """
+Hi Jordan,
+
+When did you last compare your car insurance? Drivers who switched to Bramble Mutual saved an average of $412 a year.
+
+Get a free quote in about five minutes. Bundle home and auto to save even more.
+
+Get my quote: https://bramblemutual.example/quote
+
+Average savings based on surveyed new customers who switched. Your savings may vary.
+
+Unsubscribe: https://bramblemutual.example/unsubscribe
+"""
+
+[[message]]
+key = "a25"
+language = "en"
+from = "Fairhaven Bank <alerts@fairhavenbank.example>"
+bulk = true
+subject = "A new offer for you: increase your credit limit"
+body = """
+Hello Jordan,
+
+As a valued Fairhaven Bank customer, you may be eligible for a higher credit limit on your Fairhaven Visa ending in 4412.
+
+A higher limit can lower your credit utilization and give you more flexibility for larger purchases.
+
+Request an increase in Online Banking: https://fairhavenbank.example/offers/limit
+
+There's no fee to request an increase. Approval is subject to review.
+
+Fairhaven Bank will never ask for your password by email.
+Marketing preferences: https://fairhavenbank.example/preferences
+"""
+
+[[message]]
+key = "a26"
+language = "en"
+from = "Clearwater Wells Project <giving@clearwaterwells.example>"
+bulk = true
+subject = "Your gift will be doubled until December 31"
+body = """
+Dear Jordan,
+
+Right now, 2,000 families in the Upper Tana region walk more than an hour each way for water that isn't safe to drink.
+
+This year, a group of donors has pledged to match every gift up to $150,000 until December 31. That means your $50 becomes $100 — enough to provide clean water to two people for the life of a well.
+
+Double your gift: https://clearwaterwells.example/donate
+
+Thank you for standing with us,
+Amara Nwosu, Executive Director
+
+Clearwater Wells Project is a registered charity.
+Unsubscribe: https://clearwaterwells.example/unsubscribe
+"""
+
+[[message]]
+key = "a27"
+language = "en"
+from = "Elena Vasquez for State Senate <team@vasquezforsenate.example>"
+bulk = true
+subject = "Midnight deadline — can you chip in $15?"
+body = """
+Jordan,
+
+Our end-of-quarter deadline is TONIGHT at midnight, and we're still $8,400 short of our goal.
+
+Our opponent just launched a new round of attack ads. We need to answer — and we can only do that with grassroots support from people like you.
+
+Can you chip in $15 before midnight?
+
+Donate $15: https://vasquezforsenate.example/donate?amt=15
+Donate $50: https://vasquezforsenate.example/donate?amt=50
+Donate another amount: https://vasquezforsenate.example/donate
+
+Thank you,
+Team Elena
+
+Paid for by Elena Vasquez for State Senate.
+Unsubscribe: https://vasquezforsenate.example/unsubscribe
+"""
+
+[[message]]
+key = "a28"
+language = "en"
+from = "Hollowbrook Wildlife Refuge <news@hollowbrookrefuge.example>"
+bulk = true
+subject = "Refuge Notes: the herons are back, and a new boardwalk opens"
+body = """
+REFUGE NOTES — Autumn Edition
+
+The herons are back
+Volunteers counted 46 great blue herons at the north marsh last week, the highest count in a decade. Biologist Kai Lindqvist explains what's behind the rebound.
+
+New boardwalk opens November 7
+The accessible 800-foot boardwalk through the cattail marsh is finished. Join us for the ribbon cutting at 10 a.m.
+
+Volunteer spotlight
+Meet Rosa, who has led Saturday bird walks for 15 years.
+
+Upcoming walks and talks: https://hollowbrookrefuge.example/calendar
+
+Hollowbrook is supported by members like you. If you'd like to help, you can give at https://hollowbrookrefuge.example/give
+
+Unsubscribe: https://hollowbrookrefuge.example/unsubscribe
+"""
+
+[[message]]
+key = "a29"
+language = "en"
+from = "Westmoor University Annual Fund <annualfund@westmoor.example>"
+bulk = true
+subject = "Class of 2014: help us win the reunion giving challenge"
+body = """
+Dear Jordan,
+
+Your class is just 38 gifts away from winning this year's Reunion Giving Challenge — and earning a $25,000 scholarship gift from the Board of Trustees.
+
+Every gift counts toward participation, whatever the size. Gifts to the Westmoor Fund support financial aid, student research and the library.
+
+Make your gift: https://westmoor.example/give/2014
+
+With gratitude,
+Office of the Annual Fund, Westmoor University
+
+Unsubscribe from Annual Fund emails: https://westmoor.example/email-preferences
+"""
+
+[[message]]
+key = "a30"
+language = "en"
+from = "Brooke Langley <brooke.langley@onboardly.example>"
+bulk = false
+subject = "Quick question about onboarding at Averyhome"
+body = """
+Hi Jordan,
+
+I came across your work on Averyhome's design team and wanted to reach out.
+
+We help product teams cut new-hire onboarding time in half with interactive walkthroughs that don't require engineering time. Teams like yours typically see new designers shipping in their first week instead of their third.
+
+Would you be open to a 15-minute call next Tuesday or Wednesday to see if it's a fit?
+
+Best,
+Brooke Langley
+Account Executive, Onboardly
+https://onboardly.example
+
+If you're not the right person, could you point me to who handles onboarding?
+"""
+
+[[message]]
+key = "a31"
+language = "en"
+from = "Marcus Thorne <marcus@rankrise-seo.example>"
+bulk = false
+subject = "Your website is missing out on 3x traffic"
+body = """
+Hello,
+
+I was analyzing averyhome.example and noticed a few issues that may be keeping you off the first page of search results:
+
+- 23 pages missing meta descriptions
+- Slow mobile load time (4.8 seconds)
+- Few authoritative backlinks
+
+Our team at RankRise has helped over 300 small businesses triple their organic traffic within six months. I'd be happy to send a free, no-obligation audit.
+
+Just reply "yes" and I'll put it together this week.
+
+Regards,
+Marcus Thorne
+Growth Consultant, RankRise SEO
+
+Reply "no thanks" and I won't contact you again.
+"""
+
+[[message]]
+key = "a32"
+language = "en"
+from = "Nadia Brennan <nadia@brennan-pr.example>"
+bulk = false
+subject = "Press release: Lumenstack raises $12M to bring AI to small-business bookkeeping"
+body = """
+Hi Jordan,
+
+I thought this might interest you and your readers. Embargoed until Tuesday, 9 a.m. ET.
+
+FOR IMMEDIATE RELEASE
+Lumenstack Raises $12 Million Series A to Bring AI Bookkeeping to Small Businesses
+
+SAN DIEGO — Lumenstack, a bookkeeping platform for businesses with fewer than 50 employees, today announced a $12 million Series A led by Harrow Ventures. The company will use the funds to expand its automated reconciliation features and grow its team to 80.
+
+Founder and CEO Ines Kader is available for interviews this week. High-resolution images and the full release are in our press kit: https://brennan-pr.example/lumenstack
+
+Best,
+Nadia Brennan
+Brennan PR
+"""
+
+[[message]]
+key = "a33"
+language = "en"
+from = "Brooke Langley <brooke.langley@onboardly.example>"
+bulk = false
+subject = "Re: Quick question about onboarding at Averyhome"
+body = """
+Hi Jordan,
+
+Just bumping this to the top of your inbox in case it got buried.
+
+We recently helped a 40-person design team reduce onboarding from three weeks to six days. Happy to share how in a quick call.
+
+Would Thursday at 2 p.m. work?
+
+Best,
+Brooke
+
+On Tue, Oct 13, 2026, Brooke Langley wrote:
+> I came across your work on Averyhome's design team and wanted to reach out.
+"""
+
+[[message]]
+key = "a34"
+language = "en"
+from = "Maple Court Residents' Association <board@maplecourt-hoa.example>"
+bulk = true
+subject = "Water shutoff Tuesday 9am–1pm (Buildings B and C)"
+body = """
+Dear Maple Court residents,
+
+The city will replace a main valve on Tuesday, October 27. Water will be shut off in Buildings B and C from 9 a.m. to about 1 p.m.
+
+Please fill a few containers the night before. Building A is not affected.
+
+Also a reminder: the fall board meeting is Thursday, November 5 at 7 p.m. in the clubhouse. The agenda and last meeting's minutes are on the residents' portal.
+
+Thank you,
+Gail Hendricks, Secretary
+Maple Court Residents' Association
+
+Residents' portal: https://maplecourt-hoa.example/portal
+"""
+
+[[message]]
+key = "a35"
+language = "en"
+from = "Eastside Striders Running Club <club@eastsidestriders.example>"
+bulk = true
+subject = "This week: hill repeats Wednesday, long run Saturday 7am"
+body = """
+Hi Striders,
+
+Here's the plan for this week:
+
+Wednesday 6:15 p.m. — Hill repeats at Cedar Park. Meet at the north lot. 6–8 repeats depending on your plan.
+Saturday 7:00 a.m. — Long run from the boathouse. Pace groups for 8, 10 and 12 miles. Water stop at mile 5.
+
+Club news: congratulations to everyone who ran the Harvest Half last weekend — 23 Striders finished and 9 set new personal bests!
+
+Membership renewals for 2027 open December 1.
+
+See you out there,
+Coach Dana
+
+Club calendar: https://eastsidestriders.example/calendar
+Unsubscribe: https://eastsidestriders.example/unsubscribe
+"""
+
+[[message]]
+key = "a36"
+language = "en"
+from = "Lincoln Elementary PTA <pta@lincolnelementary-pta.example>"
+bulk = true
+subject = "PTA update: bake sale Friday, book fair volunteers needed"
+body = """
+Hello Lincoln families,
+
+Bake sale this Friday
+Our fall bake sale is Friday after school by the front entrance. All proceeds go to the 5th grade science camp. Drop off baked goods in the office by 9 a.m. Please label anything containing nuts.
+
+Book fair volunteers
+We still need six volunteers for the book fair, November 9–13. Sign up for a one-hour shift: https://lincolnelementary-pta.example/volunteer
+
+Next PTA meeting
+Tuesday, November 3 at 6:30 p.m. in the library. Childcare provided.
+
+Thank you for everything you do!
+Lincoln Elementary PTA
+
+Unsubscribe: https://lincolnelementary-pta.example/unsubscribe
+"""
+
+[[message]]
+key = "a37"
+language = "en"
+from = "Friends of the Ashford Library <friends@ashfordlibraryfriends.example>"
+bulk = true
+subject = "Minutes from October meeting and next month's agenda"
+body = """
+Dear Friends,
+
+Attached below are the minutes from our October 14 meeting.
+
+Highlights:
+- The fall used-book sale raised $3,240 for the children's reading room.
+- Volunteers are needed to sort donations on Saturday mornings.
+- The board approved funding for two new museum passes.
+
+Next meeting: Wednesday, November 11, 6:00 p.m., Community Room.
+Agenda: holiday author event, 2027 membership drive, sorting schedule.
+
+Full minutes: https://ashfordlibraryfriends.example/minutes/2026-10
+
+Warmly,
+Helen Park, Recording Secretary
+
+Unsubscribe: https://ashfordlibraryfriends.example/unsubscribe
+"""
+
+[[message]]
+key = "a38"
+language = "en"
+from = "Brightmarket <orders@brightmarket.example>"
+bulk = false
+subject = "Your Brightmarket order #BM-4417820 is confirmed"
+body = """
+Hi Jordan,
+
+Thanks for your order! We'll email you again when it ships.
+
+Order #BM-4417820
+Placed October 21, 2026
+
+1 × Cast-iron skillet, 10 inch — $29.00
+1 × Glass storage set, 12 pieces — $34.00
+
+Subtotal: $63.00
+Shipping: $0.00
+Tax: $5.20
+Total: $68.20
+
+Paid with Visa ending in 4412.
+
+Shipping to:
+Jordan Avery
+214 Linden Street, Apt 3
+Riverton
+
+View your order: https://brightmarket.example/orders/BM-4417820
+
+Questions? Visit https://brightmarket.example/help
+"""
+
+[[message]]
+key = "a39"
+language = "en"
+from = "Halden & Co. <orders@haldenandco.example>"
+bulk = false
+subject = "Order confirmation #HC-20931"
+body = """
+Thank you for your order, Jordan.
+
+Order #HC-20931 — October 22, 2026
+
+Wool overcoat, charcoal, size M — $174.00
+Shipping: Free
+Tax: $14.36
+Order total: $188.36
+
+Estimated delivery: October 27–29
+Track your order: https://haldenandco.example/orders/HC-20931
+
+COMPLETE THE LOOK
+Customers who bought this coat also loved:
+Cashmere scarf — $68
+Leather gloves — $54
+Members get 15% off accessories this week: https://haldenandco.example/accessories
+
+Need to make a change? Reply within 1 hour of ordering.
+"""
+
+[[message]]
+key = "a40"
+language = "en"
+from = "Parcelrun Delivery <tracking@parcelrun.example>"
+bulk = false
+subject = "Your package is on its way"
+body = """
+Hi Jordan,
+
+Good news — your package from Brightmarket has shipped.
+
+Tracking number: PR 7731 2290 4418
+Estimated delivery: Monday, October 26, by 8 p.m.
+
+Track your package: https://parcelrun.example/track/PR773122904418
+
+Delivery address: 214 Linden Street, Apt 3, Riverton
+
+Want to leave delivery instructions? Update them at the link above before 7 a.m. on the delivery day.
+
+Parcelrun Delivery
+"""
+
+[[message]]
+key = "a41"
+language = "en"
+from = "Tallyboard Security <security@tallyboard.example>"
+bulk = false
+subject = "New sign-in to your Tallyboard account"
+body = """
+Hi Jordan,
+
+We noticed a new sign-in to your Tallyboard account.
+
+When: October 23, 2026, 8:42 p.m. Pacific
+Device: Safari on macOS
+Location: Riverton (approximate)
+
+If this was you, you don't need to do anything.
+
+If you don't recognize this activity, change your password from Settings > Security in the app and turn on two-factor authentication.
+
+The Tallyboard Team
+This is a required security notice about your account.
+"""
+
+[[message]]
+key = "a42"
+language = "en"
+from = "Fernway <no-reply@fernway.example>"
+bulk = false
+subject = "Reset your Fernway password"
+body = """
+Hi Jordan,
+
+We received a request to reset the password for your Fernway account.
+
+To choose a new password, open the link below. It expires in 30 minutes.
+https://fernway.example/account/reset?token=4f9a2c71e0
+
+If you didn't request a reset, you can ignore this email. Your password won't change.
+
+— Fernway Accounts
+"""
+
+[[message]]
+key = "a43"
+language = "en"
+from = "Riverton Family Dental <appointments@rivertondental.example>"
+bulk = false
+subject = "Appointment reminder: Thursday, Oct 29 at 3:30 PM"
+body = """
+Hi Jordan,
+
+This is a reminder of your upcoming appointment.
+
+Riverton Family Dental
+Cleaning and exam with Dr. Ana Kowalski
+Thursday, October 29, 2026 at 3:30 PM
+118 Harbor Road, Suite 200
+
+Please reply C to confirm or call us at (555) 014-2290 to reschedule. We ask for 24 hours' notice for cancellations.
+
+See you soon!
+"""
+
+[[message]]
+key = "a44"
+language = "en"
+from = "Riverton Power & Water <billing@rivertonutilities.example>"
+bulk = false
+subject = "Your October statement is ready"
+body = """
+Hello Jordan Avery,
+
+Your Riverton Power & Water statement for account ending 0381 is ready.
+
+Statement date: October 20, 2026
+Amount due: $86.14
+Due date: November 10, 2026
+
+You're enrolled in AutoPay. We'll draft your bank account ending 7720 on the due date.
+
+View your statement: https://rivertonutilities.example/account/statements
+
+Riverton Power & Water
+"""
+
+[[message]]
+key = "a45"
+language = "en"
+from = "Sam Okoro <sam.okoro@mailnest.example>"
+bulk = false
+subject = "Saturday hike?"
+body = """
+Hey Jordan,
+
+Are you still up for the Granite Loop on Saturday? Mia and I were thinking of leaving around 8 so we can get parking at the trailhead. I heard the upper switchbacks are open again.
+
+I can drive if you don't mind squeezing in with the dog. Bring layers, it's supposed to be cold in the morning.
+
+Let me know!
+Sam
+"""
+
+[[message]]
+key = "a46"
+language = "en"
+from = "Mom <ruth.avery@mailnest.example>"
+bulk = false
+subject = "Photos from Grandpa's birthday"
+body = """
+Hi sweetheart,
+
+I finally uploaded the photos from Grandpa's 80th. There are some really nice ones of you and the cousins by the lake. Here's the album: https://photos.mailnest.example/album/averys-80th
+
+Grandpa keeps talking about the cake you made. He wants the recipe.
+
+Are you still coming for Thanksgiving? Let me know if you want me to pick you up at the station.
+
+Love,
+Mom
+"""
+
+[[message]]
+key = "a47"
+language = "en"
+from = "Priyanka Rao <priyanka.rao@quarrydata.example>"
+bulk = false
+subject = "Coffee next week?"
+body = """
+Hi Jordan,
+
+It's been ages since we worked together at Tallyboard! I'm in Riverton next week for a conference and would love to catch up over coffee if you have time.
+
+I'm free Tuesday afternoon or Wednesday morning. Also, I wanted to pick your brain about the design-systems role on my team — no pressure at all, just curious what you think.
+
+Best,
+Priyanka
+"""
+
+[[message]]
+key = "a48"
+language = "en"
+from = "Grindstone Support <support@grindstonegear.example>"
+bulk = false
+subject = "Re: [Ticket #88213] Grinder making a clicking noise"
+body = """
+Hi Jordan,
+
+Thanks for the video — that clicking sound is the upper burr carrier, and it's covered under your warranty.
+
+We've created a free replacement order for the burr carrier assembly (order #GG-R-1120). It should arrive in 3–5 business days with a prepaid return label for the old part.
+
+Installation instructions: https://grindstonegear.example/help/burr-carrier
+
+If the noise continues after the swap, just reply to this ticket.
+
+Best,
+Theo
+Grindstone Customer Support
+"""
+
+[[message]]
+key = "a49"
+language = "en"
+from = "Quillpad <team@quillpad.example>"
+bulk = true
+subject = "We're retiring the classic editor on December 1"
+body = """
+Hi Jordan,
+
+Over the past year, nearly all Quillpad writers have moved to the new editor. To focus our work, we'll retire the classic editor on December 1.
+
+What this means for you
+- Your documents are safe and will open in the new editor automatically.
+- Custom keyboard shortcuts carry over.
+- Two classic-only features, word-count goals and typewriter mode, are coming to the new editor in November.
+
+Preview the new editor now from Settings > Labs.
+
+Read the FAQ: https://quillpad.example/blog/classic-editor-retirement
+
+The Quillpad Team
+Email settings: https://quillpad.example/settings/email
+"""
+
+[[message]]
+key = "a50"
+language = "en"
+from = "Swift Pulse <digest@swiftpulse.example>"
+bulk = true
+subject = "Swift Pulse #212: strict memory safety in practice"
+body = """
+SWIFT PULSE — Issue 212
+
+Strict memory safety in practice
+A walkthrough of migrating a mid-sized package to strict memory safety, including which unsafe constructs needed rewriting and which just needed an explicit marker.
+https://swiftpulse.example/212/strict-memory-safety
+
+Testing async code without flakiness
+Five patterns for deterministic tests of actors and task groups.
+https://swiftpulse.example/212/async-tests
+
+Library of the week
+A tiny package for typed, versioned JSON settings migrations.
+https://swiftpulse.example/212/library
+
+Swift Pulse is written by independent developers. Unsubscribe: https://swiftpulse.example/unsubscribe
+"""
+
+[[message]]
+key = "a51"
+language = "es"
+from = "Casa Lumbre <ofertas@casalumbre.example>"
+bulk = true
+subject = "Rebajas de otoño: hasta un 40 % en textiles para el hogar"
+body = """
+Llegan las rebajas de otoño a Casa Lumbre.
+
+Hasta un 40 % de descuento en mantas, cojines y cortinas, solo hasta el domingo.
+
+Manta de lana merino, ahora 59 € (antes 95 €)
+Funda de cojín de lino, ahora 14 € (antes 22 €)
+Cortinas térmicas, desde 39 €
+
+Envío gratis en pedidos superiores a 50 €.
+
+Descubre las rebajas: https://casalumbre.example/rebajas
+
+Recibes este correo porque te suscribiste a nuestro boletín.
+Darse de baja: https://casalumbre.example/baja
+"""
+
+[[message]]
+key = "a52"
+language = "es"
+from = "Cuaderno de Cultura <redaccion@cuadernodecultura.example>"
+bulk = true
+subject = "Cuaderno de Cultura: tres novelas para leer este otoño"
+body = """
+Hola, Lucía:
+
+Esta semana en Cuaderno de Cultura:
+
+Tres novelas para leer este otoño
+Nuestra crítica Irene Salvat recomienda una saga familiar ambientada en Cádiz, un thriller literario y una novela breve sobre la memoria.
+Leer más: https://cuadernodecultura.example/otono-novelas
+
+Entrevista: el director de teatro que reinventa los clásicos
+Hablamos con Andrés Vilaró sobre su nueva versión de una obra del Siglo de Oro.
+Leer más: https://cuadernodecultura.example/entrevista-vilaro
+
+Agenda: exposiciones que no te puedes perder en noviembre.
+
+Gracias por leernos.
+Darse de baja: https://cuadernodecultura.example/baja
+"""
+
+[[message]]
+key = "a53"
+language = "es"
+from = "Mercadillo Verde <pedidos@mercadilloverde.example>"
+bulk = false
+subject = "Confirmación de tu pedido n.º MV-77310"
+body = """
+Hola, Lucía:
+
+Gracias por tu compra. Hemos recibido tu pedido y lo estamos preparando.
+
+Pedido n.º MV-77310 — 21 de octubre de 2026
+
+1 × Caja de verduras de temporada — 24,90 €
+1 × Aceite de oliva virgen extra, 1 l — 9,50 €
+
+Gastos de envío: 3,90 €
+Total: 38,30 €
+
+Entrega prevista: viernes, 23 de octubre, entre las 18:00 y las 21:00.
+
+Consulta tu pedido: https://mercadilloverde.example/pedidos/MV-77310
+
+Mercadillo Verde
+"""
+
+[[message]]
+key = "a54"
+language = "es"
+from = "Marta Iglesias <marta.iglesias@correonido.example>"
+bulk = false
+subject = "¿Cena el viernes?"
+body = """
+¡Hola, Lu!
+
+¿Te apetece cenar el viernes? Quería probar el restaurante nuevo de la plaza, el que tiene la terraza con estufas. Si te viene bien, reservo para las nueve.
+
+Por cierto, ya terminé el libro que me prestaste. ¡Me encantó el final! Te lo devuelvo el viernes.
+
+Un beso,
+Marta
+"""
+
+[[message]]
+key = "a55"
+language = "es"
+from = "Clínica Veterinaria Alameda <encuestas@vetalameda.example>"
+bulk = true
+subject = "¿Qué tal fue tu visita? Cuéntanos en un minuto"
+body = """
+Hola, Lucía:
+
+Gracias por visitarnos con Toby la semana pasada. Nos gustaría saber qué tal fue tu experiencia.
+
+¿Recomendarías nuestra clínica a un amigo?
+Valora tu visita: https://vetalameda.example/encuesta/4471
+
+La encuesta dura menos de un minuto y nos ayuda a mejorar.
+
+Un saludo,
+Clínica Veterinaria Alameda
+
+Darse de baja de las encuestas: https://vetalameda.example/baja
+"""
+
+[[message]]
+key = "a56"
+language = "es"
+from = "Fundación Raíces <donaciones@fundacionraices.example>"
+bulk = true
+subject = "Lucía, con 10 € al mes un niño puede ir a la escuela"
+body = """
+Querida Lucía:
+
+En las comunidades rurales donde trabajamos, uno de cada tres niños deja la escuela antes de los doce años para ayudar en casa.
+
+Con solo 10 € al mes puedes cubrir el material escolar, el comedor y el transporte de un niño durante todo el curso.
+
+Hazte socia hoy: https://fundacionraices.example/socios
+
+Tu donación desgrava hasta un 80 % en la declaración de la renta.
+
+Gracias por tu generosidad,
+Equipo de Fundación Raíces
+
+Darse de baja: https://fundacionraices.example/baja
+"""
+
+[[message]]
+key = "a57"
+language = "es"
+from = "Club Ciclista Sierra Norte <club@ccsierranorte.example>"
+bulk = true
+subject = "Salida del domingo y asamblea de socios"
+body = """
+Hola, compañeros:
+
+Salida del domingo
+Saldremos a las 8:30 desde la gasolinera de la rotonda. Ruta de 75 km por el puerto de La Cruz, ritmo medio. No olvidéis luces y chubasquero.
+
+Asamblea anual
+La asamblea de socios será el sábado 14 de noviembre a las 19:00 en el local del club. Se votará el calendario de 2027 y la renovación de la equipación.
+
+Las cuotas de 2027 se podrán pagar a partir del 1 de diciembre.
+
+¡Nos vemos en la carretera!
+La Junta Directiva
+
+Calendario del club: https://ccsierranorte.example/calendario
+"""
+
+[[message]]
+key = "a58"
+language = "es"
+from = "Zapatería Paso Firme <tienda@pasofirme.example>"
+bulk = true
+subject = "Tu carrito te está esperando"
+body = """
+Hola, Lucía:
+
+Hemos guardado los artículos de tu carrito, pero no podemos reservarlos por mucho tiempo.
+
+Botín de piel, color camel, talla 38 — 89,00 €
+
+Completa tu compra: https://pasofirme.example/carrito
+
+Envío y devoluciones gratuitos.
+
+Zapatería Paso Firme
+Darse de baja: https://pasofirme.example/baja
+"""
+
+[[message]]
+key = "a59"
+language = "fr"
+from = "Maison Clairval <offres@maisonclairval.example>"
+bulk = true
+subject = "Soldes d'automne : jusqu'à -40 % sur la vaisselle"
+body = """
+Les soldes d'automne commencent chez Maison Clairval !
+
+Jusqu'à -40 % sur la vaisselle, les verres et le linge de table, jusqu'à dimanche seulement.
+
+Service de 18 assiettes en grès, 79 € au lieu de 129 €
+Lot de 6 verres à vin, 24 € au lieu de 36 €
+Nappe en lin lavé, à partir de 39 €
+
+Livraison offerte dès 60 € d'achat.
+
+Découvrir les soldes : https://maisonclairval.example/soldes
+
+Vous recevez cet e-mail car vous êtes inscrit à notre lettre d'information.
+Se désabonner : https://maisonclairval.example/desabonnement
+"""
+
+[[message]]
+key = "a60"
+language = "fr"
+from = "La Gazette des Sciences <redaction@gazettedessciences.example>"
+bulk = true
+subject = "La Gazette des Sciences : pourquoi les abeilles dansent"
+body = """
+Bonjour Camille,
+
+Au sommaire cette semaine :
+
+Pourquoi les abeilles dansent
+Une équipe de chercheurs a décodé de nouvelles nuances de la « danse frétillante », qui indique la distance et la direction des fleurs.
+Lire l'article : https://gazettedessciences.example/abeilles-danse
+
+Le télescope qui écoute l'univers
+Visite d'un radiotélescope installé dans les Alpes.
+Lire l'article : https://gazettedessciences.example/radiotelescope
+
+La question des lecteurs : pourquoi le ciel est-il bleu ?
+
+Bonne lecture,
+La rédaction
+
+Se désabonner : https://gazettedessciences.example/desabonnement
+"""
+
+[[message]]
+key = "a61"
+language = "fr"
+from = "Colis Rapide <suivi@colisrapide.example>"
+bulk = false
+subject = "Votre colis est en cours de livraison"
+body = """
+Bonjour Camille,
+
+Votre colis de la boutique Atelier Brun a été expédié.
+
+Numéro de suivi : CR 4410 8823 115
+Livraison prévue : mardi 27 octobre, avant 13 h
+
+Suivre mon colis : https://colisrapide.example/suivi/CR44108823115
+
+Vous serez absent ? Choisissez un point relais depuis le lien ci-dessus.
+
+Colis Rapide
+"""
+
+[[message]]
+key = "a62"
+language = "fr"
+from = "Julien Marchand <julien.marchand@courriel-net.example>"
+bulk = false
+subject = "Week-end en Bretagne"
+body = """
+Salut Camille,
+
+Alors, toujours partante pour le week-end en Bretagne début novembre ? J'ai trouvé une petite maison près de Paimpol, avec vue sur la mer, pour quatre personnes. Si ça te va, je réserve ce soir.
+
+Léa propose qu'on parte vendredi après le travail. On pourrait partager la voiture.
+
+Dis-moi vite !
+Bises,
+Julien
+"""
+
+[[message]]
+key = "a63"
+language = "fr"
+from = "Festival Lumières d'Hiver <billetterie@lumieresdhiver.example>"
+bulk = true
+subject = "Billetterie ouverte : Festival Lumières d'Hiver 2026"
+body = """
+La billetterie du Festival Lumières d'Hiver est ouverte !
+
+Du 11 au 14 décembre, quatre soirées de concerts, d'installations lumineuses et de spectacles en plein air au parc de la Tête d'Or.
+
+Pass une soirée : 25 €
+Pass quatre soirées : 79 €
+Tarif réduit pour les étudiants et les moins de 12 ans.
+
+Réserver mes billets : https://lumieresdhiver.example/billetterie
+
+Les places sont limitées pour la soirée d'ouverture.
+
+Se désabonner : https://lumieresdhiver.example/desabonnement
+"""
+
+[[message]]
+key = "a64"
+language = "fr"
+from = "Banque Horizon <offres@banquehorizon.example>"
+bulk = true
+subject = "Votre carte Horizon Premier sans cotisation la première année"
+body = """
+Bonjour Camille,
+
+Profitez de la carte Horizon Premier sans cotisation la première année.
+
+- Assurance voyage et location de voiture incluses
+- Paiements sans frais à l'étranger
+- 1 % reversé sur vos achats en points fidélité
+
+Offre réservée aux nouveaux souscripteurs jusqu'au 30 novembre, sous réserve d'acceptation de votre dossier.
+
+Découvrir l'offre : https://banquehorizon.example/premier
+
+Se désabonner des offres : https://banquehorizon.example/preferences
+"""
+
+[[message]]
+key = "a65"
+language = "fr"
+from = "Notabene <equipe@notabene-app.example>"
+bulk = true
+subject = "Nouveautés Notabene : recherche hors ligne et widgets"
+body = """
+Bonjour Camille,
+
+Voici les nouveautés de Notabene ce mois-ci.
+
+Recherche hors ligne
+Retrouvez vos notes même sans connexion, y compris le texte des PDF joints.
+
+Widgets
+Ajoutez vos notes épinglées à l'écran d'accueil de votre iPhone ou de votre Mac.
+
+Corrections
+- La synchronisation ne duplique plus les notes modifiées sur deux appareils.
+- L'export Markdown conserve les listes imbriquées.
+
+Notes de version complètes : https://notabene-app.example/nouveautes
+
+L'équipe Notabene
+Préférences e-mail : https://notabene-app.example/preferences
+"""
