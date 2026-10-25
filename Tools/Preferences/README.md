@@ -62,3 +62,119 @@ effective-prompt cache keys prevent reuse across policy contexts. No reserved
 corpus holdout is involved.
 
 See [observations and limitations](../../docs/probes/graymail-preferences.md).
+
+## Preference adherence
+
+`adherence.py` measures whether each message gets the action a stated preference
+profile calls for, without the user labeling mail: graymail follows the profile
+(Keep → Inbox, Review → Review, Junk → Junk), personal and transactional mail
+expects Inbox, and spam and scams are scored separately as the spam path. Its four
+subcommands build a blind message set, freeze two labelers' agreed categories, run
+each profile through `spamwise-eval` and score the reports. Every output directory
+or frozen file must not already exist; outputs are private (mode 700/600).
+
+### Message set
+
+```sh
+pyenv exec python -I adherence.py build \
+  --downloads /absolute/private/downloads \
+  --output /absolute/private/adherence/messages \
+  --intent /absolute/private/intent-by-template.json \
+  --private /absolute/private/adherence/private
+```
+
+The downloads directory holds the `sources.json` files; their SHA-256 hashes are
+verified. A fixed seed selects 80 Marketeam records spread round-robin across
+subject themes and greeting audiences, wrapped as colleague mail from fictional
+agency domains, plus five unmodified Nazario phishing and five Guenter spam
+samples. `authored.toml` supplies 65 synthetic messages (50 English, 8 Spanish,
+7 French) covering the graymail categories Marketeam lacks, wanted controls and
+boundary cases. Every sender domain is a reserved `.example` name; no message
+carries Authentication-Results. Ids `m001`… are shuffled across sources, and the
+build is byte-for-byte reproducible.
+
+`manifest.json` records each id's source, source record or template key and
+SHA-256, never a category. Authored templates carry no intended category either.
+`--intent` takes the author's private template-key → category map and writes
+`authored-intent.json` keyed by message id under `--private`, which labelers must
+not read; `score --intent` compares it with the frozen labels as a sanity check.
+
+### Labels
+
+Labelers follow a rubric that lists `MailCategory`'s categories and descriptions
+and asks for each message's main purpose, not its sender. Each writes
+`{"labeler": …, "labels": {"m001": "promotion", …}, "notes": {…}}`.
+
+```sh
+pyenv exec python -I adherence.py freeze \
+  --messages /absolute/private/adherence/messages \
+  --labels /absolute/private/adherence/labeling/labeler-a.json \
+           /absolute/private/adherence/labeling/labeler-b.json \
+  --output /absolute/private/adherence/frozen/labels.json
+```
+
+`labels.json` keeps only messages both labelers labeled alike, with raw agreement,
+Cohen's kappa, each excluded id with both labels, and a seeded 50/50 dev/holdout
+split stratified by category. Freezing refuses to overwrite an existing file.
+
+### Runs
+
+`profiles.json` defines five profiles. `defaults` matches
+`CategoryPreferences.defaults`. `declutter` sends selling (promotions, carts,
+events, financial offers, fundraising, cold outreach), social notifications and
+surveys to Junk, newsletters and product news to Review, and keeps community
+mail. `deal-seeker` keeps
+promotions and events, sends carts, financial offers and cold outreach to Junk and
+fundraising to Review, keeping the rest. `inbox-minimalist` sends every graymail
+category to Junk except newsletters, which go to Review. `permissive` keeps
+everything.
+
+```sh
+pyenv exec python -I adherence.py run \
+  --executable /absolute/path/to/spamwise-eval --tag baseline \
+  --commit "$(git rev-parse HEAD)" \
+  --messages /absolute/private/adherence/messages \
+  --output /absolute/private/adherence/runs
+```
+
+Each profile gets its own AppState snapshot (its `categoryPreferences`, Balanced
+strength, dry run, and no rules, corrections, Contacts, history or trusted
+servers), cache and reports under `runs/<tag>/<profile>/`. Profiles run
+sequentially and the first unusable pass stops the tag, without retry or model
+fallback. The evaluator's report lists only results that differ from a folder's
+expected label, so each profile runs twice over identical bytes: once under
+`good/`, which lists every non-Inbox result, and once under `junk/`, which lists
+every non-Junk result. `observations.json` merges both; a `categoryConfidence`
+field, when the evaluator reports one, is kept. Without `--live`, runs use the
+explicit mock model with deterministic verdicts keyed by message hash, which
+check plumbing only.
+
+With spending authorization, add
+`--live --budget-store /absolute/private/evaluation-budget.store --budget-limit USD`
+(optionally `--reservation`, default $0.008). The first pass of each profile goes
+through `Scripts/evaluate-with-keychain.swift` with explicit Claude. It must
+classify every message with no failed provider call. The second pass replays the
+cache against a fresh zero-ceiling ledger, so any uncached request is refused
+rather than sent. Five profiles over 155 messages reserve at most 775 requests,
+$6.20 at the default reservation. A `--timeout` (default 3600 seconds per
+invocation) kills the launcher's whole process group, evaluator included.
+
+### Scores
+
+```sh
+pyenv exec python -I adherence.py score \
+  --frozen /absolute/private/adherence/frozen/labels.json \
+  --runs /absolute/private/adherence/runs --tag baseline --tag candidate \
+  --output /absolute/private/adherence/scores
+```
+
+`score.json` and `score.md` report dev and holdout separately, per profile and
+pooled: adherence, expected-versus-effective action confusion, wrong Junk
+(expected Inbox or Review; ids listed), missed Junk, Review burden, model category
+accuracy against the frozen labels and spam-path outcomes. Adherence and wrong-Junk
+rates carry Wilson 95% intervals. A recorded preference that differs from the
+profile's state stops scoring. When every model result carries
+`categoryConfidence`, a threshold sweep from 50 to 100 in steps of 5 recomputes
+each Junk-preferred graymail decision as Junk at or above the threshold and Review
+below it, keeping every other effective label. Choose a threshold on dev and
+confirm it on holdout.
