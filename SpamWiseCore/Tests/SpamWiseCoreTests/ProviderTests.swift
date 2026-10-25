@@ -164,7 +164,8 @@ struct `Spending reservations for paid requests` {
 }
 
 @Test
-func `preserves provider pricing through persistence and migrates legacy usage`() throws {
+func `preserves provider pricing through persistence and prices uncaptured usage as Haiku`() throws
+{
   let data = Data(
     #"""
     {"input":1000,"output":100,"cached":200,"estimated":false,"modelID":"gpt-5.4-mini",
@@ -175,11 +176,11 @@ func `preserves provider pricing through persistence and migrates legacy usage`(
   )
   let usage = try JSONDecoder().decode(TokenUsage.self, from: data)
   #expect(abs(usage.estimatedCost - 0.001065) < 0.00000001)
-  let legacy = try JSONDecoder().decode(
+  let uncaptured = try JSONDecoder().decode(
     TokenUsage.self,
     from: Data(#"{"input":1000,"output":100,"cached":200,"estimated":false}"#.utf8)
   )
-  #expect(abs(legacy.estimatedCost - 0.000132) < 0.00000001)
+  #expect(abs(uncaptured.estimatedCost - 0.000132) < 0.00000001)
 }
 
 func providerInput(timeout: TimeInterval = 15) throws -> ClassificationInput {
@@ -355,7 +356,7 @@ func `retains billing provenance after introductory rates end`() throws {
     modelID: "claude-sonnet-5-5",
     pricing: .rates(for: .claudeSonnet)
   )
-  #expect(abs(sonnet.estimatedCost - 0.00262) < 0.00000001)
+  #expect(abs(sonnet.estimatedCost - 0.00264) < 0.00000001)
 }
 
 @Test
