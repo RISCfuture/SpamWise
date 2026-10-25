@@ -66,6 +66,7 @@ PREFERENCE_ACTIONS = {"keep": "inbox", "review": "review", "junk": "junk"}
 ACTIONS = ("inbox", "review", "junk", "unclassified")
 SPLITS = ("dev", "holdout")
 SWEEP_THRESHOLDS = tuple(range(50, 101, 5))
+JUNK_THRESHOLDS = {"conservative": 99, "balanced": 95, "aggressive": 90}
 MARKETEAM = "marketeam-56377f4"
 MARKETEAM_COUNT = 80
 THREAT_COUNTS = {"nazario-2025": 5, "guenter-2026-09": 5}
@@ -712,11 +713,19 @@ def pass_command(config, corpus, state, cache, report, replay_store):
     ]
 
 
-def pass_problem(report, count, replay):
-    """Why a pass cannot be used, or None: every message classified, a replay fully cached."""
+def pass_problem(report, count, replay, fail_open=False):
+    """
+    Why a pass cannot be used, or None.
+
+    Every message must be reported and a replay fully cached. A pass whose report lists every
+    result may leave messages unclassified, which then score as unclassified; otherwise every
+    message must be classified, because the replay pass could not classify them either.
+    """
     metrics = report["metrics"]
     if sum(sum(row.values()) for row in metrics["confusion"].values()) != count:
         return "incomplete_report"
+    if fail_open:
+        return None
     if metrics["unclassified"]:
         return "unclassified_messages"
     if report["failedProviderCalls"]:
@@ -739,6 +748,24 @@ OBSERVATION_FIELDS = (
 )
 
 
+def observation_rows(rows):
+    """Key evaluator result rows by message id, keeping only the observed fields."""
+    return {
+        Path(row["file"]).stem: {
+            key: row[key] for key in OBSERVATION_FIELDS if key in row
+        }
+        for row in rows
+    }
+
+
+def listed_observations(report, ids):
+    """Every message's result from an evaluator report that lists them all."""
+    rows = observation_rows(report["observations"])
+    if set(rows) != set(ids):
+        raise ValueError("missing_observations")
+    return dict(sorted(rows.items()))
+
+
 def merge_passes(inbox_report, junk_report, ids):
     """
     Recover every message's result from two passes over identical bytes.
@@ -749,9 +776,9 @@ def merge_passes(inbox_report, junk_report, ids):
     """
     rows = {}
     for report in (inbox_report, junk_report):
-        for row in report["metrics"]["misclassifications"]:
-            message = Path(row["file"]).stem
-            observation = {key: row[key] for key in OBSERVATION_FIELDS if key in row}
+        for message, observation in observation_rows(
+            report["metrics"]["misclassifications"]
+        ).items():
             if rows.setdefault(message, observation) != observation:
                 raise ValueError(f"inconsistent_passes:{message}")
     if set(rows) != set(ids):
@@ -779,7 +806,12 @@ def invoke(command, timeout, stderr_path):
 
 
 def run_profile(config, directory, name, preferences, messages):
-    """Evaluate one profile in an isolated directory, stopping at the first unusable pass."""
+    """
+    Evaluate one profile in an isolated directory, stopping at the first unusable pass.
+
+    A report that lists every result needs only the Inbox pass, and its unclassified messages
+    stay in the results; otherwise the Junk pass replays the cache to recover the rest.
+    """
     directory.mkdir(mode=0o700)
     state = directory / "state.json"
     write_json(state, state_for(preferences), exclusive=True)
@@ -804,11 +836,18 @@ def run_profile(config, directory, name, preferences, messages):
         if status != 0:
             return {**result, "status": f"{pass_name}_pass_exit_{status}"}
         report = read_json(report_path)
-        if problem := pass_problem(report, len(messages), replay):
+        listed = "observations" in report
+        if problem := pass_problem(report, len(messages), replay, fail_open=listed):
             return {**result, "status": f"{pass_name}_pass_{problem}"}
         reports[pass_name] = report
-    observations = merge_passes(reports["inbox"], reports["junk"], messages)
+        if listed:
+            break
     first = reports["inbox"]
+    observations = (
+        listed_observations(first, messages)
+        if "observations" in first
+        else merge_passes(first, reports["junk"], messages)
+    )
     write_json(
         directory / "observations.json",
         {
@@ -825,7 +864,11 @@ def run_profile(config, directory, name, preferences, messages):
         "status": "completed",
         "model": first["model"],
         "provider_calls": first["providerCalls"],
+        "failed_provider_calls": first["failedProviderCalls"],
         "cache_hits": first["cacheHits"],
+        "unclassified": sorted(
+            message for message, row in observations.items() if not row.get("label")
+        ),
         "new_usage": first["newUsage"],
         "estimated_cost_usd": first.get("newEstimatedCostUSD"),
         "category_confidence": any(
@@ -929,8 +972,15 @@ def effective(row):
     return row.get("label") or "unclassified"
 
 
-def swept_action(row, preferences, threshold):
-    """Junk at or above `threshold` category confidence for a Junk-preferred category, else Review."""
+def swept_action(
+    row, preferences, threshold, junk_threshold=JUNK_THRESHOLDS["balanced"]
+):
+    """
+    The action `Decision.evaluate` takes for a Junk-preferred category at `threshold`.
+
+    Junk at or above `threshold` category confidence; below it, Junk only for a Junk label at
+    least `junk_threshold` confident, else Review. Every other result keeps its effective label.
+    """
     category = row.get("category")
     if (
         threshold is not None
@@ -939,18 +989,35 @@ def swept_action(row, preferences, threshold):
         and preferences[category] == "junk"
         and row.get("categoryConfidence") is not None
     ):
-        return "junk" if row["categoryConfidence"] >= threshold else "review"
+        confident_junk = (
+            row.get("modelLabel") == "junk"
+            and row.get("confidence", 0) >= junk_threshold
+        )
+        return (
+            "junk"
+            if row["categoryConfidence"] >= threshold or confident_junk
+            else "review"
+        )
     return effective(row)
 
 
-def items_for(observations, preferences, labels, split, threshold=None):
+def items_for(
+    observations,
+    preferences,
+    labels,
+    split,
+    threshold=None,
+    junk_threshold=JUNK_THRESHOLDS["balanced"],
+):
     """Pair each frozen message in `split` with its expected and effective actions."""
     return [
         {
             "id": message,
             "truth": label["category"],
             "expected": expected_action(preferences, label["category"]),
-            "effective": swept_action(observations[message], preferences, threshold),
+            "effective": swept_action(
+                observations[message], preferences, threshold, junk_threshold
+            ),
             "model_category": observations[message].get("category"),
         }
         for message, label in labels.items()
@@ -1058,6 +1125,7 @@ def score_tag(runs, tag, frozen):
                 labels,
                 split,
                 threshold,
+                JUNK_THRESHOLDS[document["strength"]],
             )
             for name, document in profiles.items()
         }
