@@ -247,8 +247,10 @@ jobs:
 
       - name: Reject documentation warnings in package sources
         run: |
-          if grep -E "^$GITHUB_WORKSPACE/SpamWiseCore/[^:]+:[0-9]+:[0-9]+: warning:" \
-            "$RUNNER_TEMP/docbuild.log" | sort -u; then
+          warnings=$(grep -E "^$GITHUB_WORKSPACE/SpamWiseCore/[^:]+:[0-9]+:[0-9]+: warning:" \
+            "$RUNNER_TEMP/docbuild.log" | sort -u || true)
+          if [ -n "$warnings" ]; then
+            echo "$warnings"
             echo "::error::DocC reported warnings in SpamWiseCore sources."
             exit 1
           fi
