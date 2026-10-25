@@ -67,7 +67,8 @@ struct OnboardingView: View {
               RelationshipSettingsView(
                 relationships: model.relationships,
                 settings: model.settings,
-                shared: model.shared
+                shared: model.shared,
+                imap: model.imap
               )
             }
           case .preferences:
