@@ -370,29 +370,30 @@ struct `Statistical training` {
     #expect(enrichedEvidence.learnedMargin == expected)
   }
 
-  @Test(arguments: [(GraymailPreference.keep, true), (.junk, false)])
+  @Test(arguments: [(categoryConfidence: 0, trains: true), (100, false)])
   func `self trains only on a confident prediction whose label decided`(
-    preference: GraymailPreference,
+    categoryConfidence: Int,
     trains: Bool
   ) async throws {
     let store = try testStore(), trained = try trained()
     try await StateRepository.update(store) {
       $0.learning = trained
       $0.settings.advancedOptions.bayes = true
-      $0.settings.categoryPreferences[.newsletter] = preference
+      $0.settings.categoryPreferences[.promotion] = .junk
     }
     let message = try learningMessage(
-      "observatory telescope meeting research colleague agenda discussion digest"
+      "casino jackpot lottery prize lucky winner claim reward offer",
+      sender: "deals@shop.top"
     )
     let pipeline = Pipeline(
       store: store,
       classifier: MockClassifier(
         verdict: .init(
-          label: .inbox,
-          category: .newsletter,
-          categoryConfidence: 100,
+          label: .junk,
+          category: .promotion,
+          categoryConfidence: categoryConfidence,
           confidence: 99,
-          reason: "Research digest"
+          reason: "Prize promotion"
         )
       )
     )
@@ -400,6 +401,7 @@ struct `Statistical training` {
       message,
       identity: .init(accountID: "eval", contentHash: message.hash)
     )
+    #expect(record.decision.label == .junk)
     #expect(record.decision.followsCategoryPreference != trains)
     let samples = try await StateRepository.load(store).learning.samples
     #expect(samples.contains { $0.provenance == .highConfidencePrediction } == trains)

@@ -3,7 +3,7 @@
 This evaluation measures whether SpamWise gives each message the action that the
 user's mail choices call for, and sets `FilteringStrength.graymailThreshold`: the
 category confidence at which graymail in a category the user chose Junk for moves to
-Junk, whatever its label. It compares main (`0c74636`, label policy only) with the
+Junk, unless the model answered Inbox. It compares main (`0c74636`, label policy only) with the
 category-confidence change (`0b7db68`, provisional 95, 85 and 75). The result sets the
 values to 95, 90 and 85. They are still provisional. Status is in
 [TODO.md](../../TODO.md).
@@ -95,7 +95,9 @@ confidence, so its decisions were recomputed offline at each threshold from 50 t
 so a Junk label at 95 or more still moves the message. A plain rule that uses Review
 below the threshold gives identical numbers at every threshold, because no
 Junk-preferred verdict combined a Junk label at 95 or more with a category confidence
-below the threshold. The harness's `score` sweep reproduces them.
+below the threshold. The harness's `score` sweep reproduces them. No Junk-preferred
+verdict in either binary's runs had an Inbox label, so leaving an Inbox answer at
+Review changes none of these numbers.
 
 The threshold was chosen on dev only. The rule was the lowest threshold with zero dev
 wrong Junk across both profiles and the highest adherence among those, so the dev

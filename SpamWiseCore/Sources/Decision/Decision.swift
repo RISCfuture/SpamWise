@@ -19,7 +19,7 @@ public enum FilteringStrength: String, Codable, Sendable, CaseIterable {
   }
   /**
    Minimum category confidence for moving graymail to Junk because the user chose Junk for its
-   category, whatever the verdict's label.
+   category, unless the verdict's label is Inbox.
 
    Chosen on the development split of the October 2026 preference-adherence evaluation and
    still provisional; see `docs/probes/2026-10-25-preference-adherence.md`.
@@ -160,7 +160,9 @@ public struct Decision: Codable, Sendable, Equatable {
      - reason: Why the verdict was reached; defaults to the verdict's own explanation.
      - junkThreshold: The minimum confidence for a Junk action; lower Junk verdicts become Review.
      - graymailThreshold: The minimum category confidence for moving graymail the user chose Junk
-       for to Junk, whatever the verdict's label, for ``DecisionReason/categoryPreference(_:)``.
+       for to Junk, for ``DecisionReason/categoryPreference(_:)``, when the verdict's label is
+       Review or Junk. An Inbox label, such as one that follows the user's additional instructions,
+       a correction or an unconfirmed Allow rule, becomes Review.
      - review: The annotation for Review messages.
      - concealsContent: Whether part of the message couldn't be read reliably; an Inbox verdict
        then becomes Review for ``DecisionReason/concealedContent``.
@@ -197,10 +199,11 @@ public struct Decision: Codable, Sendable, Equatable {
 }
 
 extension Verdict {
-  /// Whether the user chose Junk for this verdict's graymail category and the verdict is at least
-  /// `threshold` sure of that category.
+  /// Whether the user chose Junk for this verdict's graymail category, the verdict is at least
+  /// `threshold` sure of that category, and its label does not keep the message in Inbox.
   fileprivate func isPreferredJunk(_ preference: GraymailPreference?, threshold: Int) -> Bool {
-    guard preference == .junk, category.isGraymail, let categoryConfidence else { return false }
+    guard preference == .junk, label != .inbox, category.isGraymail, let categoryConfidence
+    else { return false }
     return categoryConfidence >= threshold
   }
 }
