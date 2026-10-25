@@ -69,6 +69,14 @@ struct ClassifierOptions: ParsableArguments {
   @Option(help: "Spending ceiling in USD to record in the budget ledger, keeping commitments.")
   var budgetLimit: Double?
 
+  @Option(
+    help: """
+      Spending reserved before each uncached request, in USD: at most the model's default and at \
+      least the cost of a full-size request at its standard rates.
+      """
+  )
+  var reservation: Double?
+
   @Option(help: "Uncached input rate override, in USD per million tokens.")
   var inputPrice: Double?
 
@@ -125,6 +133,7 @@ struct ClassifierOptions: ParsableArguments {
     try requireProviderOnlyOptions()
     try requireBudgetLedger()
     try requireValidAmounts()
+    try requireBoundedReservation()
   }
 
   /// Builds the selected classifier, refusing live calls without explicit authorization.
@@ -137,7 +146,9 @@ struct ClassifierOptions: ParsableArguments {
 
   private func requireProviderOnlyOptions() throws {
     if model == .mock {
-      let providerOnly = [budgetStore != nil, budgetLimit != nil, pricingOverridden]
+      let providerOnly = [
+        budgetStore != nil, budgetLimit != nil, reservation != nil, pricingOverridden
+      ]
       guard !providerOnly.contains(true) else {
         throw ValidationError(
           String(
@@ -178,6 +189,23 @@ struct ClassifierOptions: ParsableArguments {
     }
   }
 
+  /// Refuses a reservation that could fall short of a request's cost or exceed the default.
+  private func requireBoundedReservation() throws {
+    guard let reservation, case .provider(let model) = model,
+      let standard = model.reservationUSD
+    else { return }
+    let minimum = ModelTokenPricing.rates(for: model).maximumRequestCost
+    guard reservation >= minimum, reservation <= standard else {
+      throw ValidationError(
+        String(
+          localized:
+            "--reservation must be from \(minimum.formatted()) to \(standard.formatted()) USD.",
+          bundle: .module
+        )
+      )
+    }
+  }
+
   private func mockClassifier() throws -> any Classifier {
     guard let mockResponses else {
       return MockClassifier(
@@ -210,7 +238,7 @@ struct ClassifierOptions: ParsableArguments {
         at: budgetStore.map { URL(filePath: $0) },
         limitUSD: budgetLimit
       ),
-      upperBoundUSD: reservationUSD
+      upperBoundUSD: reservation ?? reservationUSD
     )
   }
 }

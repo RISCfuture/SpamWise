@@ -78,6 +78,12 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
 extension ModelTokenPricing {
   private static let requestFramingTokens = 1_024
 
+  /// Upper-bound USD for any request at these rates: one whose prompt fills
+  /// ``PromptBuilder/maximumPromptBytes``.
+  public var maximumRequestCost: Double {
+    maximumCost(promptBytes: PromptBuilder.maximumPromptBytes)
+  }
+
   /**
    Upper-bound USD for one request at these rates.
 
@@ -85,11 +91,12 @@ extension ModelTokenPricing {
    request framing and the output schema, and the full response-token limit counts as output.
    */
   public func maximumCost(of input: ClassificationInput) throws -> Double {
-    let inputTokens =
-      try PromptBuilder.prompt(input).utf8.count + PromptBuilder.instructions.utf8.count
-      + Self.requestFramingTokens
-    return TokenUsage(
-      input: inputTokens,
+    maximumCost(promptBytes: try PromptBuilder.prompt(input).utf8.count)
+  }
+
+  private func maximumCost(promptBytes: Int) -> Double {
+    TokenUsage(
+      input: promptBytes + PromptBuilder.instructions.utf8.count + Self.requestFramingTokens,
       output: ClassificationLimits.maximumResponseTokens,
       pricing: self
     ).estimatedCost
