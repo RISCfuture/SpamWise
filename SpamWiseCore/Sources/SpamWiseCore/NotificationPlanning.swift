@@ -71,9 +71,7 @@ public enum NotificationPlanning {
       !settings.dryRun, !preferences.isQuiet(at: now, calendar: calendar)
     else { return nil }
     let intervalSec = Double(preferences.boundedIntervalMin) * 60
-    let lastBatch = try await store.snapshot { context in
-      try context.document(key).map { try JSONDecoder().decode(Ledger.self, from: $0) }
-    }?.lastBatch
+    let lastBatch = try await store.readSnapshot(key, default: Ledger()).lastBatch
     guard now.timeIntervalSince(lastBatch ?? since) >= intervalSec else { return nil }
     var query = ActivityQuery(); query.start = since
     let records = try await StateRepository.activity(
