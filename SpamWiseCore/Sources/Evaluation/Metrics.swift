@@ -112,18 +112,15 @@ public struct EvaluationObservation: Codable, Sendable {
   }
 
   private func decided(by policy: (Verdict) throws -> Decision) -> Self {
-    let verdict = modelLabel.flatMap { label in
-      confidence.map { confidence in
-        Verdict(
-          label: label,
-          category: category ?? .unknown,
-          categoryConfidence: categoryConfidence,
-          confidence: confidence,
-          reason: reason
-        )
-      }
-    }
-    guard let verdict, let decision = try? policy(verdict) else { return self }
+    guard let modelLabel, let confidence else { return self }
+    let verdict = Verdict(
+      label: modelLabel,
+      category: category ?? .unknown,
+      categoryConfidence: categoryConfidence,
+      confidence: confidence,
+      reason: reason
+    )
+    guard let decision = try? policy(verdict) else { return self }
     var row = self
     row.label = decision.label
     row.action = decision.action
