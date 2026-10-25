@@ -110,9 +110,10 @@ public enum TrainingFolders {
    the claims of placements the traversal no longer found.
 
    A claim is released once nothing more can come of its correction, so placing the message in
-   the folder again applies it again. Claims stay while their correction awaits dispatch or a move
-   recheck, or when its move may have been sent without being confirmed, and every claim stays
-   after a traversal that met unreadable messages or more messages than SpamWise tracks.
+   the folder again applies it again; that includes a correction whose move failed before any
+   command was sent. Claims stay while their correction awaits dispatch or a move recheck, or
+   when its move may have been sent without being confirmed, and every claim stays after a
+   traversal that met unreadable messages or more messages than SpamWise tracks.
 
    - Parameters:
      - identities: The messages on the page.
@@ -205,6 +206,10 @@ extension AppState {
 extension DecisionRecord {
   /// Whether this correction awaits dispatch, or may have sent a move whose result is unknown.
   fileprivate var holdsTrainingClaim: Bool {
-    outcome == .pending || (decision.action != .none && [.requested, .failed].contains(outcome))
+    outcome == .pending || (decision.action != .none && mayHaveSentUnconfirmedAction)
+  }
+
+  private var mayHaveSentUnconfirmedAction: Bool {
+    outcome == .requested || (outcome == .failed && !actionNeverSent)
   }
 }
