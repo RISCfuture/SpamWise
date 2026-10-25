@@ -26,6 +26,19 @@ struct `Correction of a message whose classification failed` {
     try await pipeline.correct(recordID: failed.id, label: label, adapter: adapter)
   }
 
+  /// Corrects the failed record as Junk, running `interruption` once between saving the
+  /// correction and claiming its mail steps.
+  private func correctJunk(interruptedBy interruption: @escaping @Sendable () async throws -> Void)
+    async throws -> DecisionRecord
+  {
+    let checks = Counter()
+    await adapter.beforeEachSupportCheck {
+      checks.increment()
+      if checks.value == 1 { try? await interruption() }
+    }
+    return try await correct(.junk)
+  }
+
   private func edit(_ body: @escaping @Sendable (inout AdvancedSettings) -> Void) async throws {
     try await StateRepository.editSettings(store) { body(&$0.advancedOptions) }
   }
@@ -45,6 +58,38 @@ struct `Correction of a message whose classification failed` {
       ) : pipeline
     _ = await preview.process(try envelope(), adapter: adapter, forceDryRun: true)
     #expect(try await state().retries == [pending])
+  }
+
+  @Test(arguments: [false, true])
+  func `keeps a correction in force when other mail or the policy changes before it claims`(
+    editsPolicy: Bool
+  ) async throws {
+    let other = try envelope("authentic-contact")
+    let pipeline = pipeline, adapter = adapter, store = store
+    let correction = try await correctJunk {
+      if editsPolicy {
+        try await StateRepository.editSettings(store) { $0.strength = .aggressive }
+      } else {
+        _ = try await pipeline.correct(envelope: other, label: .inbox, adapter: adapter)
+      }
+    }
+    #expect(correction.outcome == .dryRun)
+    let current = try await state()
+    #expect(current.records.count(where: { $0.path == .correction }) == (editsPolicy ? 1 : 2))
+    #expect(current.revision == correction.revision + 1)
+  }
+
+  @Test
+  func `lets a newer correction of the same message replace an older one`() async throws {
+    let pipeline = pipeline, adapter = adapter, failed = failed
+    let older = try await correctJunk {
+      _ = try await pipeline.correct(recordID: failed.id, label: .inbox, adapter: adapter)
+    }
+    #expect(older.outcome == .superseded)
+    let newer = try #require(
+      await state().records.first { $0.path == .correction && $0.correctedLabel == .inbox }
+    )
+    #expect(newer.outcome == .dryRun)
   }
 
   @Test
@@ -187,6 +232,17 @@ struct `Correction of selected mail` {
   @Test
   func `classifies the user's own address instead of trusting it as a contact`() async {
     #expect(await pipeline.process(selected).path == .model)
+  }
+
+  @Test
+  func `saves no record of a selected message whose correction fails`() async throws {
+    await #expect(throws: CorrectionError.reviewRequiresAddressScope) {
+      try await pipeline.correct(envelope: selected, label: .review, scope: .domain)
+    }
+    await #expect(throws: TrainingFolderError.planInactive) {
+      try await pipeline.correct(envelope: selected, label: .junk, trainingPlanID: "missing")
+    }
+    #expect(try await StateRepository.load(store).records.isEmpty)
   }
 
   @Test

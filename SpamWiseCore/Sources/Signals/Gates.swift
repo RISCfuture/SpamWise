@@ -40,20 +40,6 @@ public struct SenderHistory: Codable, Sendable, Equatable {
   /// Number of those receipts that the user confirmed and trusted servers authenticated for the
   /// From domain; nil means none.
   public var authenticatedReceiptCount: Int?
-  /// Timestamp of the most recent known receipt, when available.
-  public var lastReceipt: Date?
-  /// Human-readable history with unknown and partial states preserved.
-  public var summary: String {
-    if replyCount > 0 { return "User replied to this sender \(replyCount) times" }
-    if receiptCount > 0 { return "\(receiptCount) order confirmations from this sender" }
-    if availability == .unavailable { return "History unavailable; relationship unknown" }
-    if receivedCount > 0 {
-      return "\(receivedCount) prior messages; no confirmed reply or order in imported history"
-    }
-    return availability == .complete
-      ? "No prior mail in the completely imported history window"
-      : "No match in partial history; relationship unknown"
-  }
   /// Creates history counts as given; the default availability leaves the relationship unknown.
   public init(
     availability: HistoryAvailability = .unavailable,

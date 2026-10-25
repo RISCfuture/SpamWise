@@ -63,6 +63,55 @@ struct `Junk dispatch with actions enabled` {
     #expect(await adapter.actions == [.moveToJunk])
   }
 
+  @Test(.timeLimit(.minutes(1)))
+  func `acts once when two pipelines classify the same delivery at the same time`()
+    async throws
+  {
+    let latch = ClassificationLatch(), message = try envelope(), adapter = adapter
+    let pipelines = (0..<2).map { _ in gatedPipeline(latch) }
+    let outcomes = await withTaskGroup(of: DecisionRecord.self) { group in
+      for pipeline in pipelines {
+        group.addTask { await pipeline.process(message, adapter: adapter) }
+      }
+      await latch.waitForArrivals(pipelines.count)
+      await latch.release()
+      return await group.reduce(into: []) { $0.append($1) }
+    }
+    #expect(outcomes.map(\.outcome).sorted { $0.rawValue < $1.rawValue } == [.applied, .duplicate])
+    #expect(await adapter.actions == [.moveToJunk])
+    let applied = try #require(outcomes.first { $0.outcome == .applied })
+    let claims = try await StateRepository.load(store, StateSlices(claims: .all)).claimedActions
+    #expect(claims[message.identity.key] == applied.id)
+  }
+
+  @Test(.timeLimit(.minutes(1)))
+  func `refuses a second delivery while the first is still being classified`() async throws {
+    let latch = ClassificationLatch(), calls = Counter(), message = try envelope()
+    let pipeline = gatedPipeline(latch, counting: calls), adapter = adapter
+    let first = Task { await pipeline.process(message, adapter: adapter) }
+    await latch.waitForArrivals(1)
+    let second = await pipeline.process(message, adapter: adapter)
+    await latch.release()
+    #expect(second.outcome == .duplicate)
+    #expect(second.decision.reason == .duplicateCallback)
+    #expect(await first.value.outcome == .applied)
+    #expect(calls.value == 1)
+  }
+
+  /// A pipeline over this suite's store whose Junk verdicts wait at `latch`.
+  private func gatedPipeline(_ latch: ClassificationLatch, counting calls: Counter = Counter())
+    -> Pipeline
+  {
+    Pipeline(
+      store: store,
+      classifier: MockClassifier(operation: { _ in
+        calls.increment()
+        await latch.arriveAndWait()
+        return Verdict(label: .junk, confidence: 99, reason: "lure")
+      })
+    )
+  }
+
   @Test
   func `previews a processed message without acting or reusing its record`() async throws {
     let first = await pipeline.process(try envelope(), adapter: adapter)

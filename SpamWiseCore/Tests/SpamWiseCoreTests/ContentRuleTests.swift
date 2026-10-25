@@ -129,12 +129,115 @@ func `leaves the decision to the classifier when an unusable rule outranks a mat
     store: store,
     classifier: MockClassifier(verdict: .init(label: .junk, confidence: 99, reason: "lure"))
   )
+  _ = await pipeline.process(try envelope(), forceDryRun: true)
+  #expect(try await StateRepository.load(store).contentRuleSkips.isEmpty)
   let record = await pipeline.process(try envelope())
   #expect(record.path == .model)
   #expect(record.outcome == .dryRun)
   let state = try await StateRepository.load(store)
   #expect(state.contentRuleSkips == [unusable.id: 1])
   #expect(state.contentRuleHits.isEmpty)
+}
+
+@Test(arguments: [
+  (sender: SenderRuleCase.addressBlock, content: RuleDisposition.allow, decidedBySender: true),
+  (.domainAllow, .block, true),
+  (.none, .block, false)
+])
+func `decides by address rule, then domain rule, then content rule, then Contacts`(
+  sender: SenderRuleCase,
+  content: RuleDisposition,
+  decidedBySender: Bool
+) async throws {
+  let screened = try await screenContact(content: [content], sender: sender.rule, trusted: true)
+  let contentRule = screened.rules[0]
+  let expected: GateReason =
+    if let rule = sender.rule {
+      .senderRule(scope: rule.scope, disposition: rule.disposition)
+    } else {
+      .contentRule(id: contentRule.id, disposition: content, note: nil)
+    }
+  #expect(screened.record.decision.reason == .gate(expected))
+  #expect(screened.state.contentRuleHits == (decidedBySender ? [:] : [contentRule.id: 1]))
+}
+
+@Test(arguments: [
+  (content: [RuleDisposition.allow], trusted: false, label: MailLabel.review, deciding: Int?.none),
+  ([.allow], true, .inbox, 0),
+  ([.block], false, .junk, 0),
+  ([.allow, .block], false, .junk, 1)
+])
+func `lets a content Allow rule decide only for an authenticated sender`(
+  content: [RuleDisposition],
+  trusted: Bool,
+  label: MailLabel,
+  deciding: Int?
+) async throws {
+  let screened = try await screenContact(content: content, trusted: trusted, isContact: false)
+  #expect(screened.record.path == (deciding == nil ? .model : .gate))
+  #expect(screened.record.decision.label == label)
+  #expect(screened.state.contentRuleHits == (deciding.map { [screened.rules[$0].id: 1] } ?? [:]))
+}
+
+/// The sender rules the precedence test saves for the authentic contact.
+enum SenderRuleCase: Sendable, CustomTestStringConvertible {
+  case none, addressBlock, domainAllow
+
+  var rule: SenderRule? {
+    switch self {
+      case .none: nil
+      case .addressBlock:
+        SenderRule(scope: .address, value: "colleague@example.net", disposition: .block)
+      case .domainAllow: SenderRule(scope: .domain, value: "example.net", disposition: .allow)
+    }
+  }
+
+  var testDescription: String {
+    switch self {
+      case .none: "no sender rule"
+      case .addressBlock: "address Block rule"
+      case .domainAllow: "domain Allow rule"
+    }
+  }
+}
+
+/**
+ Processes the authentic contact's message, whose subject mentions Tuesday, under content rules
+ on Tuesday and an optional sender rule, with a classifier that answers Review.
+
+ - Parameters:
+   - content: The content rules' dispositions, highest-ranked first.
+   - trusted: Whether the account trusts the receiving server that authenticated the sender.
+   - isContact: Whether the sender is in Contacts.
+ */
+private func screenContact(
+  content: [RuleDisposition],
+  sender: SenderRule? = nil,
+  trusted: Bool,
+  isContact: Bool = true
+) async throws -> (record: DecisionRecord, state: AppState, rules: [ContentRule]) {
+  let store = try testStore(), message = try envelope("authentic-contact"), saved = Date.now
+  let rules = content.enumerated().map { rank, disposition in
+    var rule = ContentRule()
+    rule.pattern = "Tuesday"; rule.disposition = disposition
+    rule.updatedAt = saved.addingTimeInterval(-Double(rank))
+    return rule
+  }
+  let address = try MIMEParser().parse(message.raw).fromAddress
+  try await StateRepository.update(store) { state in
+    state.contentRules = rules
+    state.rules = sender.map { [$0] } ?? []
+    if isContact { state.contactAddresses = [address]; state.contactsUpdatedAt = .now }
+  }
+  if trusted {
+    try await AuthenticationTrust.save(["mx.example"], accountID: "account-A", store: store)
+  }
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(verdict: .init(label: .review, confidence: 50, reason: "unsure"))
+  )
+  let record = await pipeline.process(message)
+  return (record, try await StateRepository.load(store), rules)
 }
 
 @Test

@@ -17,7 +17,7 @@ actor RecordingAdapter: MailClientAdapter {
   var persistedBeforeAction: [Bool] = []
   private var observedStore: Store?
   private var afterAction: (@Sendable () throws -> Void)?
-  private var supportCheck: (@Sendable () -> Void)?
+  private var supportCheck: (@Sendable () async -> Void)?
 
   private static func isClaimed(_ identity: MessageIdentity, in store: Store) async throws -> Bool {
     let state = try await StateRepository.load(
@@ -59,20 +59,26 @@ actor RecordingAdapter: MailClientAdapter {
   func allow() { failure = nil }
   func deny(with error: any Error = IntegrationError.permissionDenied) { failure = error }
   func refuse(_ action: MailAction) { unsupported.insert(action) }
-  func supports(_ action: MailAction) -> Bool {
-    supportCheck?()
+  func supports(_ action: MailAction) async -> Bool {
+    await supportCheck?()
     return !unsupported.contains(action)
   }
   /// Runs `body` whenever dispatch asks whether an action is supported, before it claims the action.
-  func beforeEachSupportCheck(_ body: @escaping @Sendable () -> Void) { supportCheck = body }
+  func beforeEachSupportCheck(_ body: @escaping @Sendable () async -> Void) { supportCheck = body }
   func moveIdentity(to identity: MessageIdentity) { updatedIdentity = identity }
 }
+/// The directory holding this test process's stores.
+private let testStoresDirectory = FileManager.default.temporaryDirectory.appending(
+  path: "SpamWise-tests/\(UUID())"
+)
+/// Arranges for ``testStoresDirectory`` to be removed when the test process exits.
+private let removesTestStoresAtExit: Void = {
+  atexit { try? FileManager.default.removeItem(at: testStoresDirectory) }
+}()
+/// A new store in this test process's directory, which is removed when the process exits.
 func testStore() throws -> Store {
-  try Store(
-    url: FileManager.default.temporaryDirectory.appending(
-      path: "SpamWise-tests/\(UUID())/state.store"
-    )
-  )
+  _ = removesTestStoresAtExit
+  return try Store(url: testStoresDirectory.appending(path: "\(UUID())/state.store"))
 }
 func envelope(_ name: String = "filler-spam") throws -> MailEnvelope {
   let raw = try fixture(name)
@@ -163,4 +169,61 @@ func enableSpamhausEvidence(in settings: inout Settings) {
   evidence.termsAcknowledged = true
   evidence.spamhausTransport = .https
   settings.advancedOptions.externalEvidence = evidence
+}
+
+/// Holds classifier calls until released, so tests can line up concurrent work behind them.
+actor ClassificationLatch {
+  private var arrivals = 0
+  private var isReleased = false
+  private var held: [CheckedContinuation<Void, Never>] = []
+  private var arrivalWaiters: [(count: Int, continuation: CheckedContinuation<Void, Never>)] = []
+
+  /// Records an arriving call, then waits until ``release()``.
+  func arriveAndWait() async {
+    arrivals += 1
+    let arrived = arrivalWaiters.filter { $0.count <= arrivals }
+    arrivalWaiters.removeAll { $0.count <= arrivals }
+    for waiter in arrived { waiter.continuation.resume() }
+    guard !isReleased else { return }
+    await withCheckedContinuation { held.append($0) }
+  }
+
+  /// Waits until `count` calls have arrived.
+  func waitForArrivals(_ count: Int) async {
+    guard arrivals < count else { return }
+    await withCheckedContinuation { arrivalWaiters.append((count, $0)) }
+  }
+
+  /// Lets every held call, and every later one, continue.
+  func release() {
+    isReleased = true
+    for continuation in held { continuation.resume() }
+    held = []
+  }
+}
+
+/// Builds Spamhaus lookups whose queries, over either transport, only count in `queries`.
+func countingSpamhaus(_ queries: Counter) -> Pipeline.SpamhausLookupFactory {
+  { configuration in
+    SpamhausDomainLookup(
+      configuration: configuration,
+      query: { _, _ in
+        queries.increment()
+        return .init(status: .answered, addresses: [])
+      },
+      key: { "synthetic-key" },
+      httpsQuery: { _, _, _ in
+        queries.increment()
+        return .init(status: .answered, addresses: [])
+      }
+    )
+  }
+}
+
+/// A local Rspamd scan that only counts in `scans`.
+func countingRspamd(_ scans: Counter) -> Pipeline.RspamdScan {
+  { _, _ in
+    scans.increment()
+    return ExternalEvidenceFinding(source: .localRspamd, subject: "message", status: .unknown)
+  }
 }
