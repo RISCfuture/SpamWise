@@ -23,10 +23,10 @@ final class OnboardingTests: UITestCase {
   func testSetupPreferenceAppliesInSettings() {
     let mail = IntroductionScreen.launchOffline().continueSetup().continueSetup()
     let preferences = mail.continueSetup()
-    XCTAssertTrue(preferences.waitForChoice("Flag for Review", for: "promotion"))
-    preferences.choose("Move to Junk", for: "promotion")
+    XCTAssertTrue(preferences.waitForChoice(.flag, for: "promotion"))
+    preferences.choose(.junk, for: "promotion")
     let settings = preferences.continueSetup().finish().openPreferencesSettings()
-    XCTAssertTrue(settings.waitForChoice("Move to Junk", for: "promotion"))
+    XCTAssertTrue(settings.waitForChoice(.junk, for: "promotion"))
   }
 
   @MainActor

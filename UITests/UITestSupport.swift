@@ -118,7 +118,7 @@ extension XCUIElement {
 
   /// Waits until the element, such as a segment, is selected.
   func waitForSelection(timeout: TimeInterval = UITestTiming.transition) -> Bool {
-    wait(for: \.isSelected, toEqual: true, timeout: timeout)
+    wait(until: NSPredicate(format: "selected == YES OR value == 1"), timeout: timeout)
   }
 }
 

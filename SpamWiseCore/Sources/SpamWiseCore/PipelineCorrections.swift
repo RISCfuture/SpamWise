@@ -47,6 +47,11 @@ extension Pipeline {
    a claim that cannot be recorded, is reported through the returned record's outcome.
 
    - Parameters:
+     - recordID: The Activity record being corrected.
+     - label: The label the user chose.
+     - scope: Whether the saved rule covers the sender's address or its whole domain.
+     - adapter: The integration that reads the message and performs the mail steps.
+     - trainingPlanID: The training folder whose placement this correction claims, if any.
      - savesRule: Whether the correction saves a sender rule; a scam whose From address is
        likely forged is corrected without one.
      - category: What kind of mail the user says the message is, replacing the model's category

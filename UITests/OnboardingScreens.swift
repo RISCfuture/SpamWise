@@ -71,6 +71,9 @@ struct MailSetupScreen {
   }
 }
 
+/// A graymail preference, in the order its segmented control shows it.
+enum GraymailChoice: Int { case keep, flag, junk }
+
 /// The choice for each kind of graymail, in setup or in Settings → Preferences.
 @MainActor
 struct CategoryPreferencesScreen {
@@ -83,18 +86,17 @@ struct CategoryPreferencesScreen {
     return Self(app: app)
   }
 
-  private func choice(_ description: String, for category: String) -> XCUIElement {
-    app.radioGroups["preferences.\(category)"].radioButtons[AppText.localized(description)]
+  private func segment(_ choice: GraymailChoice, for category: String) -> XCUIElement {
+    app.radioGroups["preferences.\(category)"].radioButtons.element(boundBy: choice.rawValue)
   }
 
-  /// Chooses the preference whose accessibility label is `description`, such as "Move to Junk".
-  func choose(_ description: String, for category: String) {
-    choice(description, for: category).click()
+  func choose(_ choice: GraymailChoice, for category: String) {
+    segment(choice, for: category).click()
   }
 
-  /// Waits until the preference described by `description` is selected for `category`.
-  func waitForChoice(_ description: String, for category: String) -> Bool {
-    choice(description, for: category).waitForSelection()
+  /// Waits until `choice` is selected for `category`.
+  func waitForChoice(_ choice: GraymailChoice, for category: String) -> Bool {
+    segment(choice, for: category).waitForSelection()
   }
 
   func continueSetup() -> FinishSetupScreen {

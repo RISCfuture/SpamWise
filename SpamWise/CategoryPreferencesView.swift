@@ -40,7 +40,6 @@ private struct CategoryPreferenceRow: View {
       Picker(category.localizedName, selection: $preference) {
         ForEach(GraymailPreference.allCases, id: \.self) { choice in
           Text(choice.localizedTitle).tag(choice)
-            .accessibilityLabel(choice.localizedDescription)
         }
       }
       .pickerStyle(.segmented)

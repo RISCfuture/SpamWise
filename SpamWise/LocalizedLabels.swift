@@ -202,7 +202,7 @@ extension GraymailPreference {
       case .junk: String(localized: "Junk")
     }
   }
-  /// What this preference does, for the accessibility label of a short title.
+  /// What this preference does, in a full phrase.
   var localizedDescription: String {
     switch self {
       case .keep: String(localized: "Keep in Inbox")
