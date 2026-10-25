@@ -17,13 +17,17 @@ public enum MailCommand: String, Sendable, CaseIterable {
   case moveToJunk = "junk"
   /// Moves the message to its account's Inbox.
   case moveToInbox = "inbox"
-  /// Applies the orange flag unless the user already set another flag.
+  /// Applies the orange flag unless the message already has a flag; an orange flag already
+  /// there is reported without change, so SpamWise never takes it as its own.
   case orangeFlag = "flag"
-  /// Applies the orange background unless the user already set another color.
+  /// Applies the orange background unless the message already has a color; an orange background
+  /// already there is reported without change, so SpamWise never takes it as its own.
   case orangeBackground = "background"
-  /// Removes the orange flag; another flag the user set stays.
+  /// Removes the orange flag; another flag the user set stays. The adapter sends it only for a
+  /// flag SpamWise set.
   case clearOrangeFlag = "unflag"
-  /// Removes the orange background; another color the user set stays.
+  /// Removes the orange background; another color the user set stays. The adapter sends it only
+  /// for a background SpamWise set.
   case clearOrangeBackground = "unbackground"
   /// Marks the message read while it remains in its account's Junk mailbox.
   case markRead = "read"

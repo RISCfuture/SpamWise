@@ -3,7 +3,9 @@ import Testing
 import SpamWiseCore
 
 @Test
-func `records action failures separately from verdicts`() async throws {
+func `records action failures separately from verdicts and never redoes a sent action`()
+  async throws
+{
   let store = try testStore(), adapter = RecordingAdapter()
   await adapter.deny(); try await enableActions(store)
   let pipeline = Pipeline(
@@ -14,6 +16,11 @@ func `records action failures separately from verdicts`() async throws {
   #expect(record.verdict?.label == .review)
   #expect(record.outcome == .failed)
   #expect(record.actionError != nil)
+  let claims = try await StateRepository.load(store).claimedActions
+  #expect(claims[record.identity.key] == record.id)
+  await adapter.allow()
+  #expect(await pipeline.process(try envelope(), adapter: adapter).id == record.id)
+  #expect(await adapter.actions.isEmpty)
   let rejection = ActionNotAttempted(cause: IntegrationError.staleMessage)
   await adapter.deny(with: rejection)
   let rejected = await pipeline.process(try envelope("personal"), adapter: adapter)

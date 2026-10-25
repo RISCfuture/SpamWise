@@ -77,7 +77,9 @@ struct `integrates bounded IMAP messages` {
   }
 
   @Test
-  func `rejects missing MOVE capability and ambiguous special use roles`() async throws {
+  func `rejects missing MOVE capability and ambiguous special use roles, ignoring Trash`()
+    async throws
+  {
     let withoutMove = IMAPTranscript.authenticated(capabilities: "IMAP4rev1 SPECIAL-USE")
     let server = IMAPTestServer(
       withoutMove.roles().examine(validity: 33, exists: 0),
@@ -86,7 +88,14 @@ struct `integrates bounded IMAP messages` {
           "LIST",
           "* LIST (\\Junk) \"/\" \"Junk Mail\"",
           "* LIST (\\Junk) \"/\" \"Other Junk\""
+        ),
+      IMAPTranscript.authenticated()
+        .then(
+          "LIST",
+          "* LIST (\\Junk \\Trash) \"/\" \"Bin\"",
+          "* LIST (\\Junk) \"/\" \"Junk Mail\""
         )
+        .examine(validity: 33, exists: 0)
     )
     let adapter = await server.adapter(validations: try await Self.validatedStore())
     #expect(await adapter.supports(.moveToJunk))
@@ -99,26 +108,54 @@ struct `integrates bounded IMAP messages` {
     await #expect(throws: IntegrationError.ambiguous) {
       _ = try await server.adapter().validateReadOnly()
     }
+    #expect(try await server.adapter().validateReadOnly().junkMailbox == "Junk Mail")
     #expect(await !server.commands.contains { $0.hasPrefix("SELECT") || $0.hasPrefix("UID MOVE") })
   }
 
-  @Test(arguments: [true, false])
-  func `requires exact content and a UID mapping to confirm a move`(_ mapping: Bool) async throws {
+  @Test(arguments: [(true, true), (true, false), (false, false)])
+  func `requires exact content and a UID mapping to confirm a move`(
+    mapping: Bool,
+    foundAtDestination: Bool
+  ) async throws {
     let raw = "From: sender@example.com\r\nSubject: bounded\r\n\r\nS9 OK content is opaque"
     var transcript = IMAPTranscript.authenticated(fragment: 1).roles()
       .select(validity: 33).body(raw, uid: 7)
       .move(uid: 7, to: "Junk Mail", copyUID: mapping ? (40, 90) : nil)
-    if mapping { transcript = transcript.examine("Junk Mail", validity: 40).body(raw, uid: 90) }
+    if mapping {
+      transcript = transcript.examine("Junk Mail", validity: 40)
+      transcript =
+        foundAtDestination ? transcript.body(raw, uid: 90) : transcript.then("UID FETCH 90 ")
+    }
     let server = IMAPTestServer(transcript)
     let adapter = await server.adapter(validations: try await Self.validatedStore())
     let receipt = try await adapter.perform(.moveToJunk, for: Self.identity(raw))
-    #expect(receipt.confirmed == mapping)
-    #expect(receipt.updatedIdentity?.localID == (mapping ? 90 : nil))
-    #expect(receipt.updatedIdentity?.mailbox == (mapping ? "Junk Mail" : nil))
-    #expect(receipt.updatedIdentity.map(\.key) == (mapping ? Self.identity(raw).key : nil))
+    let verified = mapping && foundAtDestination
+    #expect(receipt.confirmed == verified)
+    #expect(receipt.updatedIdentity?.localID == (verified ? 90 : nil))
+    #expect(receipt.updatedIdentity?.mailbox == (verified ? "Junk Mail" : nil))
+    #expect(receipt.updatedIdentity.map(\.key) == (verified ? Self.identity(raw).key : nil))
     let commands = await server.commands
     #expect(commands.contains { $0.hasPrefix("UID FETCH 7 ") && $0.contains("BODY.PEEK[]") })
     #expect(!commands.contains { $0.contains("EXPUNGE") || $0.contains("STORE") })
+  }
+
+  @Test(arguments: [false, true])
+  func `never reports a move the server refused or lost as not attempted`(dropsConnection: Bool)
+    async throws
+  {
+    let raw = "From: sender@example.com\r\nSubject: bounded\r\n\r\nRefused"
+    let revalidated = IMAPTranscript.authenticated().roles().select(validity: 33).body(raw, uid: 7)
+    let server = IMAPTestServer(
+      dropsConnection
+        ? revalidated.drops(at: "UID MOVE")
+        : revalidated.then("UID MOVE", completion: "NO [CANNOT] refused")
+    )
+    let adapter = await server.adapter(validations: try await Self.validatedStore())
+    let error = await #expect(throws: (any Error).self) {
+      _ = try await adapter.perform(.moveToJunk, for: Self.identity(raw))
+    }
+    #expect(!(error is ActionNotAttempted))
+    #expect(await server.commands.filter { $0.hasPrefix("UID MOVE") }.count == 1)
   }
 
   @Test(arguments: [
@@ -217,14 +254,15 @@ struct `integrates bounded IMAP messages` {
   }
 
   @Test
-  func `refuses credential injection and cancelled reads without sending more commands`()
+  func `sends a non-ASCII password but refuses credential injection and cancelled reads`()
     async throws
   {
     let server = IMAPTestServer(
       IMAPTranscript().then("CAPABILITY", "* CAPABILITY IMAP4rev1"),
-      IMAPTranscript().stalls(at: "CAPABILITY")
+      IMAPTranscript().stalls(at: "CAPABILITY"),
+      Self.validated
     )
-    await #expect(throws: IMAPError.invalidConfiguration) {
+    await #expect(throws: IMAPError.authenticationFailed) {
       _ = try await server.adapter(password: "password\r\nS3 DELETE INBOX").validateReadOnly()
     }
     let adapter = await server.adapter()
@@ -233,6 +271,9 @@ struct `integrates bounded IMAP messages` {
     task.cancel()
     await #expect(throws: CancellationError.self) { _ = try await task.value }
     #expect(await server.commands == ["CAPABILITY", "CAPABILITY"])
+    let password = "pässwörd"
+    _ = try await server.adapter(password: password).validateReadOnly()
+    #expect(await server.commands.contains("LOGIN \"user\" {\(password.utf8.count)}\(password)"))
   }
 
   @Test
