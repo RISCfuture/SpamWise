@@ -7,11 +7,11 @@
 <h2><a name="in-activity" id="in-activity"></a>Corregir un mensaje en Actividad</h2>
 <p>Selecciona el mensaje en Actividad y elige una de estas opciones del menú Filtrado, o haz clic en el mensaje con la tecla Control pulsada:</p>
 <ul>
-<li>Marcar como deseado (Opción + Comando + G) mueve el mensaje a Entrada.</li>
+<li>Marcar como deseado (Opción + Comando + G) mueve el mensaje a Entrada. Cuando Mail confirma el movimiento, SpamWise también le quita la marca de correo no deseado de Mail, para que Mail deje de mostrarlo como no deseado.</li>
 <li>Marcar como no deseado (Opción + Comando + J) lo mueve al buzón de correo no deseado de la cuenta.</li>
 <li>Marcar para revisión (Opción + Comando + R) lo devuelve a Entrada con la marca de revisión.</li>
 </ul>
-<p>También puedes usar los botones Deseado, No deseado y Revisar de Corregir esta decisión, en el inspector. SpamWise guarda primero tu corrección y después pide a Mail que mueva el mensaje. Si el movimiento falla, la corrección sigue guardada y el Resultado del inspector muestra lo que ocurrió en Mail. Un mensaje sin dirección de remitente no se puede corregir; muévelo en Mail.</p>
+<p>También puedes usar los botones Deseado, No deseado y Revisar de Corregir esta decisión, en el inspector. SpamWise guarda primero tu corrección y después pide a Mail que mueva el mensaje. Si el movimiento falla, la corrección sigue guardada y el Resultado del inspector muestra lo que ocurrió en Mail. Con Marcar como deseado, el inspector también muestra si se quitó la marca de correo no deseado de Mail; Marcar como no deseado nunca añade esa marca. Un mensaje sin dirección de remitente no se puede corregir; muévelo en Mail.</p>
 <h2><a name="what-it-remembers" id="what-it-remembers"></a>Qué recuerda una corrección</h2>
 <ul>
 <li>Marcar como deseado crea una regla Permitir para la dirección del remitente, y Marcar como no deseado crea una regla Bloquear. Una corrección nueva sustituye la regla anterior de esa dirección.</li>
@@ -34,7 +34,7 @@
 <p>Crea un atajo para cada etiqueta que uses. Las teclas funcionan en cualquier app, también en Mail, y corrigen el mensaje seleccionado en Mail.</p>
 
 <h2><a name="move-in-mail" id="move-in-mail"></a>Sacar un mensaje de No deseado en Mail</h2>
-<p>Si SpamWise movió un mensaje a No deseado y tú lo devuelves a Entrada en Mail, o le quitas la marca de correo no deseado, SpamWise lo trata como marcado como deseado la próxima vez que comprueba tu Entrada: permite al remitente y aprende del mensaje. Funciona igual con una conexión IMAP y cualquier app de correo. No ocurre:</p>
+<p>Si SpamWise movió un mensaje a No deseado y tú lo devuelves a Entrada en Mail, o le quitas la marca de correo no deseado, SpamWise lo trata como marcado como deseado la próxima vez que comprueba tu Entrada: permite al remitente, aprende del mensaje y le quita la marca de correo no deseado de Mail si aún la tiene. Funciona igual con una conexión IMAP y cualquier app de correo. No ocurre:</p>
 <ul>
 <li>durante una simulación;</li>
 <li>si sacas el mensaje de No deseado en los 30 segundos más o menos posteriores al movimiento. SpamWise vuelve a comprobar cada movimiento a No deseado unos 30 segundos después y solo aprende de los que seguían en su sitio. Si SpamWise se cerró antes de esa comprobación, no aprende nada de ese mensaje;</li>

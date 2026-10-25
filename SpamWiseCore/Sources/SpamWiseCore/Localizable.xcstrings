@@ -113,6 +113,38 @@
         }
       }
     },
+    "Couldn’t confirm that Mail’s junk mark was cleared. The move to Inbox remains recorded; this step will not retry.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo confirmar que se quitó la marca de correo no deseado de Mail. El movimiento a Entrada sigue registrado; este paso no se reintentará."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de confirmer que la marque indésirable de Mail a été retirée. Le déplacement vers Réception reste enregistré ; cette étape ne sera pas retentée."
+          }
+        }
+      }
+    },
+    "Clearing Mail’s junk mark could not be saved. The confirmed move to Inbox is retained.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar la eliminación de la marca de correo no deseado de Mail. Se conserva el movimiento confirmado a Entrada."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le retrait de la marque indésirable de Mail n’a pas pu être enregistré. Le déplacement confirmé vers Réception est conservé."
+          }
+        }
+      }
+    },
     "Couldn’t save the folder plan.": {
       "localizations": {
         "es": {

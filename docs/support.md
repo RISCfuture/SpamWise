@@ -72,7 +72,9 @@ fails; check the displayed action outcome.
 If you move a message SpamWise put in Junk back to the Inbox in Mail, or choose Not
 Junk, SpamWise treats it as marked Good on its next check and allows the sender. That
 doesn't happen in dry run, or, with Apple Mail, within about 30 seconds of SpamWise's
-move, while it confirms that the move held. Learning from it moves no mail.
+move, while it confirms that the move held. Learning from it moves no mail. Once a
+message marked Good is confirmed in the Inbox, SpamWise clears Mail's own junk mark on
+it; it never sets that mark.
 
 Review Junk, in the Filtering menu, provides a bounded, read-only list that says why
 each message is there, until you explicitly choose to restore one. It asks first when

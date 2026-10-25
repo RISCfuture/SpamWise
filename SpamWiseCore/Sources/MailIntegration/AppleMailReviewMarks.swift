@@ -5,8 +5,8 @@ import SpamWiseCore
 enum MailChange: Equatable {
   /// Mail confirmed the change.
   case applied
-  /// The message shows the requested Review annotation, which stays the user's because SpamWise
-  /// didn't see that it set it.
+  /// The message already shows the requested state. A Review annotation then stays the user's,
+  /// because SpamWise didn't see that it set it.
   case alreadyApplied
   /// Mail reported that the message doesn't show the change yet; it may still apply it.
   case unconfirmed
@@ -17,12 +17,12 @@ enum MailChange: Equatable {
 
 extension MailCommand {
   /// The command that applies the Review annotation this command applies or removes; nil for
-  /// moves, read status and opening.
+  /// moves, read status, the junk mark and opening.
   var reviewAnnotation: Self? {
     switch self {
       case .orangeFlag, .clearOrangeFlag: .orangeFlag
       case .orangeBackground, .clearOrangeBackground: .orangeBackground
-      case .moveToJunk, .moveToInbox, .markRead, .open: nil
+      case .moveToJunk, .moveToInbox, .markRead, .clearJunkMark, .open: nil
     }
   }
   /// Whether this command removes a Review annotation.

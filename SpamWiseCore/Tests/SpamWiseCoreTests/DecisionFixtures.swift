@@ -15,6 +15,10 @@ actor RecordingAdapter: MailClientAdapter {
   var failRead = true
   /// Whether each performed action found its decision and claim already persisted in the observed store.
   var persistedBeforeAction: [Bool] = []
+  /// What each request to clear the junk mark reports; nil fails it.
+  var junkMark: JunkMarkChange? = .cleared
+  /// Whether each junk-mark request found its step already claimed in the observed store.
+  var junkMarkClaimedBeforeRequest: [Bool] = []
   private var observedStore: Store?
   private var afterAction: (@Sendable () throws -> Void)?
   private var supportCheck: (@Sendable () async -> Void)?
@@ -37,6 +41,17 @@ actor RecordingAdapter: MailClientAdapter {
     return try markReadInJunk(identity)
   }
   func allowMarkRead() { failRead = false }
+  func clearJunkMarkInInbox(_ identity: MessageIdentity) async throws -> JunkMarkChange {
+    if let observedStore {
+      let records = try await StateRepository.load(observedStore).records
+      junkMarkClaimedBeforeRequest.append(
+        records.contains { $0.identity.key == identity.key && $0.junkMarkOutcome == .requested }
+      )
+    }
+    guard let junkMark else { throw IntegrationError.staleMessage }
+    return junkMark
+  }
+  func reportJunkMark(_ change: JunkMarkChange?) { junkMark = change }
   func lookup(_: MessageIdentity) throws -> MailEnvelope? {
     lookups += 1
     return message
