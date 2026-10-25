@@ -302,7 +302,7 @@ func `rejects a disposable probe whose move reverts before the settling window e
 /**
  A pipeline that has just moved a message to Junk, automatically or through the user's Mark Junk
  correction, whose recheck finds it gone when `reverted`. Mail later shows the message in Inbox as
- ``returned``.
+ ``returned``; searches for it after the move answer `laterFinds` in turn.
  */
 private struct SettlingJunkMove {
   /// Longer than a loaded machine takes to classify and move the message, so the move is
@@ -314,18 +314,21 @@ private struct SettlingJunkMove {
     raw: Data(MailReply.probeSource.utf8)
   )
 
-  let store: Store, adapter: AppleMailAdapter, pipeline: Pipeline
+  let store: Store, runner: StubAppleEvents, adapter: AppleMailAdapter, pipeline: Pipeline
   let record: DecisionRecord, elapsed: Duration
 
-  init(reverted: Bool, byCorrection: Bool = false) async throws {
+  init(reverted: Bool, byCorrection: Bool = false, laterFinds: [ScriptValue] = []) async throws {
     store = try testStore()
     try await StateRepository.update(store) { state in
       state.settings.dryRun = byCorrection
       state.settings.validatedAccounts = ["account"]
     }
     let junk = MailReply.found(MailReply.message(mailbox: "Junk", localID: 2))
-    let runner = StubAppleEvents(
-      [.findMessages: [MailReply.found(MailReply.message())], .applyAction: [MailReply.applied]],
+    runner = StubAppleEvents(
+      [
+        .findMessages: [MailReply.found(MailReply.message())] + laterFinds,
+        .applyAction: [MailReply.applied]
+      ],
       observations: [
         .junk: [junk, junk] + (reverted ? [MailReply.found()] : []),
         .inbox: [MailReply.found(MailReply.message(localID: 3))]
@@ -351,8 +354,10 @@ private struct SettlingJunkMove {
     (record, elapsed) = (moved, clock.now - start)
   }
 
-  func correctReturned() async -> [DecisionRecord] {
-    await pipeline.correctMailReturnedFromJunk([Self.returned], adapter: adapter)
+  /// Corrects ``returned`` through `pipeline`, or a relaunched one sharing the store.
+  func correctReturned(relaunched: Bool = false) async -> [DecisionRecord] {
+    let pipeline = relaunched ? Pipeline(store: store, classifier: junkClassifier) : pipeline
+    return await pipeline.correctMailReturnedFromJunk([Self.returned], adapter: adapter)
   }
 
   func settledOutcome() async throws -> ActionOutcome? {
@@ -379,11 +384,22 @@ func `treats Apple Mail rescued after a settled Junk move as an implicit Good co
 {
   let move = try await SettlingJunkMove(reverted: false)
   #expect(await move.correctReturned().isEmpty)
+  #expect(await move.correctReturned(relaunched: true).isEmpty)
   #expect(try await move.settledOutcome() == .applied)
   #expect(await move.correctReturned().map(\.decision.label) == [.inbox])
   let rules = try await StateRepository.load(move.store).rules
   #expect(rules.contains { $0.value == "probe@example.org" && $0.disposition == .allow })
   #expect(await move.correctReturned().isEmpty)
+}
+
+@Test
+func `leaves mail that left Inbox again in place when learning its rescue`() async throws {
+  let rejunked = MailReply.found(MailReply.message(mailbox: "Junk", localID: 4))
+  let move = try await SettlingJunkMove(reverted: false, laterFinds: [MailReply.found(), rejunked])
+  #expect(try await move.settledOutcome() == .applied)
+  let correction = try #require(await move.correctReturned().first)
+  #expect(correction.outcome == .failed)
+  #expect(await move.runner.moves.count == 1)
 }
 
 @Test
