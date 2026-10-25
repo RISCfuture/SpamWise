@@ -1277,7 +1277,7 @@
         }
       }
     },
-    "Each message’s sender, subject, shortened text and evidence are sent with your additional instructions and up to %lld similar corrections from the same account. Mail can contain sensitive information.": {
+    "Each message’s sender, subject, shortened text and evidence are sent with your additional instructions and up to %lld similar corrections from the same account or your imported reviewed examples. Mail can contain sensitive information.": {
       "localizations": {
         "en": {
           "variations": {
@@ -1285,13 +1285,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Each message’s sender, subject, shortened text and evidence are sent with your additional instructions and up to %lld similar correction from the same account. Mail can contain sensitive information."
+                  "value": "Each message’s sender, subject, shortened text and evidence are sent with your additional instructions and up to %lld similar correction from the same account or your imported reviewed examples. Mail can contain sensitive information."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Each message’s sender, subject, shortened text and evidence are sent with your additional instructions and up to %lld similar corrections from the same account. Mail can contain sensitive information."
+                  "value": "Each message’s sender, subject, shortened text and evidence are sent with your additional instructions and up to %lld similar corrections from the same account or your imported reviewed examples. Mail can contain sensitive information."
                 }
               }
             }
@@ -1303,19 +1303,19 @@
               "many": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tus instrucciones adicionales y hasta %lld de correcciones similares de la misma cuenta. El correo puede contener información confidencial."
+                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tus instrucciones adicionales y hasta %lld de correcciones similares de la misma cuenta o de los ejemplos revisados que importaste. El correo puede contener información confidencial."
                 }
               },
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tus instrucciones adicionales y hasta %lld corrección similar de la misma cuenta. El correo puede contener información confidencial."
+                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tus instrucciones adicionales y hasta %lld corrección similar de la misma cuenta o de los ejemplos revisados que importaste. El correo puede contener información confidencial."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tus instrucciones adicionales y hasta %lld correcciones similares de la misma cuenta. El correo puede contener información confidencial."
+                  "value": "Se envían el remitente, el asunto, el texto abreviado y las pruebas de cada mensaje, junto con tus instrucciones adicionales y hasta %lld correcciones similares de la misma cuenta o de los ejemplos revisados que importaste. El correo puede contener información confidencial."
                 }
               }
             }
@@ -1327,19 +1327,19 @@
               "many": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec vos instructions supplémentaires et jusqu’à %lld de corrections similaires du même compte. Les messages peuvent contenir des informations sensibles."
+                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec vos instructions supplémentaires et jusqu’à %lld de corrections similaires du même compte ou de vos exemples vérifiés importés. Les messages peuvent contenir des informations sensibles."
                 }
               },
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec vos instructions supplémentaires et jusqu’à %lld correction similaire du même compte. Les messages peuvent contenir des informations sensibles."
+                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec vos instructions supplémentaires et jusqu’à %lld correction similaire du même compte ou de vos exemples vérifiés importés. Les messages peuvent contenir des informations sensibles."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec vos instructions supplémentaires et jusqu’à %lld corrections similaires du même compte. Les messages peuvent contenir des informations sensibles."
+                  "value": "L’expéditeur, l’objet, le texte abrégé et les indices de chaque message sont envoyés avec vos instructions supplémentaires et jusqu’à %lld corrections similaires du même compte ou de vos exemples vérifiés importés. Les messages peuvent contenir des informations sensibles."
                 }
               }
             }
@@ -13245,6 +13245,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pendant une simulation, Activité montre ce que ferait SpamWise et les messages restent où ils sont. Quand vous la désactivez, SpamWise agit sur les messages examinés qui sont toujours dans votre boîte de réception."
+          }
+        }
+      }
+    },
+    "In a dry run, Activity shows what SpamWise would do and mail stays where it is. When you turn it off, SpamWise acts only on mail that arrives afterward; mail it already checked stays where it is.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En una simulación, Actividad muestra lo que haría SpamWise y el correo se queda donde está. Cuando la desactivas, SpamWise actúa solo sobre el correo que llega después; el correo ya revisado se queda donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pendant une simulation, Activité montre ce que ferait SpamWise et les messages restent où ils sont. Quand vous la désactivez, SpamWise agit seulement sur les messages qui arrivent ensuite ; les messages déjà examinés restent où ils sont."
           }
         }
       }

@@ -246,5 +246,5 @@ tracks status, and [CHANGELOG.md](CHANGELOG.md) holds release notes. The origina
 
 ## License
 
-No license has been selected yet; all rights are reserved. Third-party components are
-listed in [CREDITS.md](CREDITS.md).
+SpamWise is available under the [MIT License](LICENSE). Third-party components are listed
+in [CREDITS.md](CREDITS.md).

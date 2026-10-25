@@ -2,8 +2,8 @@
 
 The source lives in the private repository
 [RISCfuture/SpamWise](https://github.com/RISCfuture/SpamWise). App pricing is free;
-external provider usage is billed separately by the provider. No source-code license
-has been selected. Whether publication has happened is tracked in
+external provider usage is billed separately by the provider. The source is under the
+[MIT License](../LICENSE). Whether publication has happened is tracked in
 [TODO.md](../TODO.md).
 
 ## Planned addresses
@@ -30,8 +30,7 @@ Before changing visibility or deploying, review the generated site locally and t
 [privacy](privacy.md), [support](support.md) and [compatibility](mail-compatibility.md)
 pages. Run a credential scan over the full history: committed history becomes public
 with the repository, and a pattern scan is bounded, not a guarantee about every
-possible credential format. Source licensing is a separate choice; a free app price
-does not select a source license.
+possible credential format.
 
 Publishing binaries and submitting to the App Store are separate, concrete release
 approvals. See [packaging](packaging.md) and [App Store packaging](app-store.md).
