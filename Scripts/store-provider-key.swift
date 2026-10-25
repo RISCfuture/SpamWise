@@ -1,13 +1,21 @@
 import Foundation
 import Security
 
+// Saves a provider API key as a login-Keychain setup item for the evaluation tools.
+//
+//   swift Scripts/store-provider-key.swift openai|gemini|claude
+//   op read "op://…" | swift Scripts/store-provider-key.swift openai|gemini|claude
+//
+// On a terminal it asks for the key without echoing it; otherwise it reads the key from
+// standard input.
+
 enum SetupKeyError: Error, LocalizedError {
   case usage, invalidInput, keychain(OSStatus), verification
 
   var errorDescription: String? { "Could not save the provider setup key." }
   var failureReason: String? {
     switch self {
-      case .usage: "Usage: pbpaste | swift Scripts/store-provider-key.swift openai|gemini|claude"
+      case .usage: "Usage: swift Scripts/store-provider-key.swift openai|gemini|claude"
       case .invalidInput: "No recognizable provider key was received; nothing was saved."
       case .keychain(let status): "Keychain returned status \(status)."
       case .verification: "The saved Keychain value could not be verified."
@@ -15,17 +23,34 @@ enum SetupKeyError: Error, LocalizedError {
   }
 }
 
+let maximumKeyBytes = 512
+
+/// Reads the key from a no-echo prompt on a terminal, or from standard input otherwise.
+func readKey() throws -> String {
+  guard isatty(STDIN_FILENO) == 1 else {
+    let input = FileHandle.standardInput.readData(ofLength: maximumKeyBytes + 1)
+    guard input.count <= maximumKeyBytes, let text = String(data: input, encoding: .utf8) else {
+      throw SetupKeyError.invalidInput
+    }
+    return text
+  }
+  var buffer = [CChar](repeating: 0, count: maximumKeyBytes + 2)
+  guard
+    unsafe readpassphrase("Provider API key: ", &buffer, buffer.count, RPP_REQUIRE_TTY) != nil
+  else { throw SetupKeyError.invalidInput }
+  let bytes = buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
+  guard bytes.count <= maximumKeyBytes, let text = String(bytes: bytes, encoding: .utf8) else {
+    throw SetupKeyError.invalidInput
+  }
+  return text
+}
+
 func storeSetupKey() throws {
   let providers = ["openai": "openai", "gemini": "gemini", "claude": "anthropic"]
   guard CommandLine.arguments.count == 2,
     let provider = providers[CommandLine.arguments[1]]
   else { throw SetupKeyError.usage }
-  let maximumKeyBytes = 512
-  let input = FileHandle.standardInput.readData(ofLength: maximumKeyBytes + 1)
-  guard input.count <= maximumKeyBytes, let text = String(data: input, encoding: .utf8) else {
-    throw SetupKeyError.invalidInput
-  }
-  let key = text.trimmingCharacters(in: .whitespacesAndNewlines)
+  let key = try readKey().trimmingCharacters(in: .whitespacesAndNewlines)
   let prefix = provider == "gemini" ? "AIza" : "sk-"
   guard key.hasPrefix(prefix), key.count >= 20, !key.contains(where: \.isWhitespace) else {
     throw SetupKeyError.invalidInput
@@ -43,7 +68,6 @@ func storeSetupKey() throws {
   if status == errSecItemNotFound {
     var item = query
     item[kSecValueData as String] = secret
-    item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
     status = SecItemAdd(item as CFDictionary, nil)
   }
   guard status == errSecSuccess else { throw SetupKeyError.keychain(status) }

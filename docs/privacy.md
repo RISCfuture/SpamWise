@@ -1,6 +1,6 @@
 # SpamWise privacy policy
 
-Publication draft · Updated October 18, 2026
+Publication draft · Updated October 25, 2026
 
 SpamWise is developed by Tim Morgan. For privacy questions or requests, contact
 [tim@tim.codes](mailto:tim@tim.codes). This page describes the current implementation
@@ -24,15 +24,15 @@ The following stay on your Mac, in SpamWise's containers:
   refreshed hourly while SpamWise runs;
 - sender and receipt history built from bounded Sent and Inbox pages;
 - for each account, the receiving-server names seen in the Authentication-Results
-  headers of up to 50 recent messages, used to work out which servers' results to
-  trust, and the servers you choose to trust;
+  and ARC-Authentication-Results headers of up to 50 recent messages, used to work
+  out which servers' results to trust, and the servers you choose to trust;
 - a cache of domain registration ages, when domain-age lookups are on: up to 2,048
   domains, kept seven days, or one hour when the age was unknown;
-- additional bounded message text, only when you turn on learning or reviewed-content
-  retention.
+- additional bounded message text, only when you turn on learning or **Keep text of
+  reviewed messages**.
 
 Credentials are stored only in Keychain: your model-provider API keys, a Spamhaus query
-key and IMAP passwords or OAuth tokens. Settings → Accounts → Keys and passwords lists
+key and your IMAP password. Settings → Accounts → Keys and passwords lists
 each saved credential with Remove, and Remove All SpamWise Keys and Passwords… deletes
 every one; Forget Connection… deletes the IMAP password. Portable backups are encrypted
 with a recovery key that you keep separately, and they exclude credentials. Exports can contain
@@ -48,8 +48,10 @@ allow mail sharing.
 Cloud classification requires your own API key and a separate permission for the
 selected provider. Each request can include the sender's address and display name, the
 subject, shortened message text, available evidence such as authentication results and
-link domains, your filtering preferences, and up to five earlier corrections from the
-same account, quoted with the sender's domain rather than address. Enabled attachment
+link domains, your filtering preferences, and the number of similar earlier
+corrections you choose (five by default, up to 20). Those corrections come from the
+same account, or from any account for reviewed examples you import, and are quoted
+with the sender's domain rather than address. Enabled attachment
 text extraction and image OCR add text to that context. Email can contain personal,
 confidential or sensitive information about you and other people. SpamWise sends
 requests directly to the selected provider using your API key; Tim Morgan does not
@@ -76,7 +78,7 @@ system version information in its request header. Provider terms, account settin
 retention exceptions and service locations govern their processing. Your provider
 may charge for requests separately from the free app.
 
-You can revoke mail-sharing permission in Settings → Classifier, under Mail sharing.
+You can revoke mail-sharing permission in Settings → Provider, under Mail sharing.
 Revocation stops new requests; it cannot recall requests already sent or delete a provider's records.
 Contact the provider for its deletion and account-control options.
 

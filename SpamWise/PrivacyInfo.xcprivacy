@@ -54,9 +54,10 @@
 
 		<!--
 		  The user's own words that travel with each request: their filtering
-		  preferences and up to five subjects and excerpts of earlier corrections
-		  from the same account, quoted with the sender's domain rather than
-		  address.
+		  preferences and the subjects and excerpts of the similar earlier
+		  corrections the user chooses to include (five by default, up to 20),
+		  from the same account or, for imported reviewed examples, any account,
+		  quoted with the sender's domain rather than address.
 		-->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
