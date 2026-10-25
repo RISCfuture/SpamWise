@@ -103,7 +103,7 @@ struct `Training folder corrections` {
   }
 
   @Test
-  func `keeps claims and discards observations when a sweep cannot release them`()
+  func `keeps claims but not observations a sweep cannot release, and forgets both with the plan`()
     async throws
   {
     try await correct()
