@@ -91,37 +91,53 @@ struct `Monthly spending limit` {
   }
 
   @Test
-  func `defers refused mail once, before gathering its evidence, however often it is swept`()
+  func `defers refused mail once, before gathering evidence, reading its images only once`()
     async throws
   {
     _ = try await SpendingLimit.reserve(usd: 0.25, store: store)
-    try await StateRepository.editSettings(store) { enableSpamhausEvidence(in: &$0) }
-    let lookups = Counter()
+    try await StateRepository.editSettings(store) {
+      enableSpamhausEvidence(in: &$0)
+      $0.advancedOptions.imageOCR = true
+    }
+    let lookups = Counter(), recognitions = Counter(), requests = Counter()
     let refused = Pipeline(
       store: store,
       classifier: SpendingLimitedClassifier(
-        MockClassifier { _ in
-          Issue.record("The spending limit must refuse the request before the provider sees it")
+        MockClassifier { input in
+          requests.increment()
+          #expect(input.message.text.contains("Offer shown inside image"))
           throw ClassificationError.network
         },
         model: .gptMini,
         store: store
       ),
-      spamhaus: countingSpamhaus(lookups)
+      spamhaus: countingSpamhaus(lookups),
+      imageOCR: EmbeddedImageOCR { _ in
+        recognitions.increment()
+        return "Offer shown inside image"
+      }
+    )
+    let raw = imageMessage()
+    let illustrated = MailEnvelope(
+      identity: .init(accountID: "account-A", contentHash: stableHash(raw)),
+      raw: raw
     )
     for _ in 0..<2 {
       let swept = try await refused.processBatch(
-        [envelope()],
+        [envelope(), illustrated],
         adapter: nil,
         dryRun: true,
         skipsSettled: true
       )
-      #expect(swept.count == 1)
+      #expect(swept.count == 2)
     }
     let deferred = try await StateRepository.load(store).records
-    #expect(deferred.count == 1 && deferred.allSatisfy(\.deferredBySpendingLimit))
-    #expect(lookups.value == 0)
+    #expect(deferred.count == 2 && deferred.allSatisfy(\.deferredBySpendingLimit))
+    #expect(lookups.value == 0 && requests.value == 0)
     #expect(try await SpendingLimit.load(store).limitReached)
+    try await SpendingLimit.setLimit(usd: nil, store: store)
+    _ = await refused.process(illustrated, forceDryRun: true)
+    #expect(requests.value == 1 && recognitions.value == 1)
   }
 
   @Test

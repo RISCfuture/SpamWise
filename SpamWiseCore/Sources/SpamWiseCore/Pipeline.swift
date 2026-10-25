@@ -20,12 +20,15 @@ public actor Pipeline {
   let rspamdScan: RspamdScan
   let spamhaus: SpamhausLookupFactory
   let threatDetector: (any ThreatDetector)?
+  let imageOCR: EmbeddedImageOCR
   var inFlight: Set<String> = []
   /// Processed-message index entries whose write failed, keyed by identity, awaiting another attempt.
   var unrecordedResults: [String: (record: DecisionRecord, failure: ProcessingFailure?)] = [:]
   /// Scheduled rechecks of moves confirmed before their provider settled, with the record each
   /// rechecks, keyed by check.
   var moveSettlements: [UUID: (recordID: UUID, check: Task<Void, Never>)] = [:]
+  /// Image text of messages the spending limit deferred, which their later sweeps reuse.
+  var deferredImageTexts = DeferredImageTexts()
   /**
    Creates a pipeline that persists to `store` and classifies with `classifier`.
 
@@ -40,6 +43,8 @@ public actor Pipeline {
        live transports and the Spamhaus key from the shared Keychain.
      - threatDetector: Assesses threats in each classified message; without it records carry no
        threat assessment.
+     - imageOCR: Recognizes text in embedded images when that setting is on; by default with
+       on-device Vision.
    */
   public init(
     store: Store,
@@ -47,11 +52,12 @@ public actor Pipeline {
     rdap: RDAPLookup? = nil,
     rspamdScan: @escaping RspamdScan = { await RspamdLookup().lookup(raw: $0, timeout: $1) },
     spamhaus: @escaping SpamhausLookupFactory = Pipeline.liveSpamhaus,
-    threatDetector: (any ThreatDetector)? = nil
+    threatDetector: (any ThreatDetector)? = nil,
+    imageOCR: EmbeddedImageOCR = EmbeddedImageOCR()
   ) {
     self.store = store; self.classifier = classifier; self.rdap = rdap
     self.rspamdScan = rspamdScan; self.spamhaus = spamhaus
-    self.threatDetector = threatDetector
+    self.threatDetector = threatDetector; self.imageOCR = imageOCR
   }
   /// The Spamhaus lookup over the live transports, reading its key from the shared Keychain.
   public static func liveSpamhaus(_ configuration: SpamhausConfiguration) -> SpamhausDomainLookup {
@@ -125,14 +131,17 @@ public actor Pipeline {
       )
     }
     var message = parsed.inspection.message
-    if settings.imageOCR, let text = await EmbeddedImageOCR().text(from: parsed.inspection.images) {
+    let images = parsed.inspection.images
+    let imageText =
+      settings.imageOCR && !images.isEmpty ? await imageText(in: images, of: envelope.raw) : nil
+    if let text = imageText?.text {
       message.text = Self.leadingImageText(
         text,
         body: message.text,
         bodyTokenBudget: current.settings.bodyTokenBudget
       )
     }
-    return await processParsed(
+    let record = await processParsed(
       message,
       identity: envelope.identity,
       adapter: adapter,
@@ -143,6 +152,8 @@ public actor Pipeline {
       discovered: discovered,
       raw: envelope.raw
     )
+    if let imageText { retain(imageText, after: record) }
+    return record
   }
   /**
    Classifies, persists, then conditionally dispatches one parsed message, failing open on errors.

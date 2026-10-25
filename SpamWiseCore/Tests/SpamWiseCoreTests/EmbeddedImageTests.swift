@@ -5,7 +5,8 @@ import SpamWiseCore
 private let pixelPNG =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4y8AAAAASUVORK5CYII="
 
-private func imageMessage(
+/// A raw message with `parts` embedded images of `mime` type carrying `payload`.
+func imageMessage(
   parts: Int = 1,
   payload: String = pixelPNG,
   attachment: Bool = false,
