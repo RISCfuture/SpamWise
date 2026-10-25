@@ -35,6 +35,12 @@ struct `Reviewed corpus import` {
 
   private func state() async throws -> AppState { try await StateRepository.load(store) }
 
+  private func keepReviewedText(_ keeps: Bool) async throws {
+    try await StateRepository.editSettings(store) {
+      $0.advancedOptions.retainReviewedContent = keeps
+    }
+  }
+
   @Test
   func `derives learning features from each complete message`() {
     #expect(imported.learning.samples.count == Self.importedCount)
@@ -68,6 +74,21 @@ struct `Reviewed corpus import` {
     let labels = try await state().reviewedLabels
     #expect(labels.count == Self.importedCount)
     #expect(labels.last?.label == .inbox)
+  }
+
+  @Test
+  func `deletes kept text and imported excerpts when keeping text is turned off`() async throws {
+    try await keepReviewedText(true)
+    var kept = examples[0]
+    kept.hash = "kept delivery"
+    try await CorpusManagement.importMessages([kept], label: .junk, store: store)
+    let keeping = try await state()
+    #expect(keeping.reviewedLabels.contains { $0.message != nil })
+    #expect(keeping.corrections.contains { !$0.excerpt.isEmpty })
+    try await keepReviewedText(false)
+    let cleared = try await state()
+    #expect(cleared.reviewedLabels.allSatisfy { $0.message == nil })
+    #expect(Set(cleared.corrections.map(\.excerpt)) == [""])
   }
 
   @Test
