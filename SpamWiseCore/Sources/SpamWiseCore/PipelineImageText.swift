@@ -29,8 +29,9 @@ struct RecognizedImageText: Sendable {
 }
 
 /**
- Image text of messages the spending limit deferred, by raw-message digest, so every later
- sweep of a deferred message reuses its text instead of recognizing its images again.
+ Image text of messages with embedded images that the spending limit deferred, by raw-message
+ digest, so every later sweep of a deferred message reuses its text instead of recognizing its
+ images again.
 
  It forgets the oldest message once full. A sweep stops paging at a page of deferred messages,
  so the capacity covers several accounts' deferred pages.
