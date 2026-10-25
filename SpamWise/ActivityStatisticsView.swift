@@ -92,7 +92,7 @@ struct ActivityStatisticsView: View {
   private func load() async {
     do {
       let records = try await activity.records(matching: query)
-      statistics = ActivityStatistics(records: records.filter { $0.path != .verification })
+      statistics = ActivityStatistics(records: records)
       status = nil
     } catch {
       status = .failure(OperationFailure(error))
