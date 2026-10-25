@@ -12479,6 +12479,22 @@
         }
       }
     },
+    "SpamWise decides new mail from this sender without the rule. Mail already filtered stays where it is.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise decide el correo nuevo de este remitente sin la regla. El correo ya filtrado se queda donde está."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise traite les nouveaux messages de cet expéditeur sans la règle. Les messages déjà filtrés restent où ils sont."
+          }
+        }
+      }
+    },
     "SpamWise didn’t put this message in Junk. Another filter or the mail server did.": {
       "localizations": {
         "es": {
