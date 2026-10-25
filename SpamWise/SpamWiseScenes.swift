@@ -63,11 +63,7 @@ public struct SpamWiseScenes: Scene {
   public init(model: AppModel, updates: (any UpdateChecking)? = nil) {
     self.model = model
     self.updates = updates
-    _showsMenuBarItem = AppStorage(
-      wrappedValue: true,
-      MenuBarLabel.preferenceKey,
-      store: model.services.preferences
-    )
+    _showsMenuBarItem = MenuBarLabel.isShown(in: model.services.preferences)
   }
 
   /// Shows Activity, and any sheet, when a URL, file, notification or the Dock asks for it.

@@ -37,6 +37,13 @@ struct GeneralSettingsScreen {
 
   func checkMailConnection() { app.buttons["settings.checkMail"].click() }
 
+  /// Turns off the menu bar item.
+  func hideMenuBarItem() {
+    let toggle = app.switches["settings.menuBar"]
+    toggle.click()
+    XCTAssertTrue(toggle.waitForSwitch(false))
+  }
+
   /// Asks to turn dry run off, which the app confirms first.
   func requestLiveFiltering() -> LiveFilteringConfirmation {
     dryRunToggle.click()
