@@ -133,7 +133,7 @@ extension DecisionRecord {
   var displaySubject: String {
     subject
       ?? (path == .verification
-        ? String(localized: "API connection verification") : String(localized: "No subject"))
+        ? String(localized: "Provider key check") : String(localized: "No subject"))
   }
 }
 

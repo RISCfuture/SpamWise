@@ -89,7 +89,7 @@ extension DecisionReason {
         String(localized: "Your correction for this sender’s domain", bundle: .module)
       case .selectedForCorrection:
         String(localized: "Selected in Mail for correction", bundle: .module)
-      case .connectionVerified: String(localized: "Haiku 5.5 connection verified", bundle: .module)
+      case .connectionVerified: String(localized: "Claude connection verified", bundle: .module)
       case .paused: String(localized: "Filtering paused", bundle: .module)
       case .messageUnreadable:
         String(localized: "Not classified: the message couldn’t be read.", bundle: .module)
@@ -131,7 +131,7 @@ extension DecisionReason {
       case .model(let text), .legacy(let text): text
       case .userCorrection(let scope): "User correction (\(scope.rawValue))"
       case .selectedForCorrection: "Explicitly selected for correction"
-      case .connectionVerified: "Haiku 5.5 connection verified"
+      case .connectionVerified: "Claude connection verified"
       case .paused: "Filtering paused"
       case .messageUnreadable: Self.legacyFailurePrefix + "message parsing failed"
       case .unreadableSender: "review: no single readable From mailbox"

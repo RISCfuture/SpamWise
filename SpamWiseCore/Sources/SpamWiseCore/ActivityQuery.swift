@@ -3,7 +3,7 @@ import SwiftData
 
 /// Filters the bounded local log without reclassifying messages.
 public struct ActivityQuery: Sendable {
-  /// Case-insensitive search over sender, subject, account and the reason as displayed.
+  /// Case-insensitive search over sender, subject and reason.
   public var text = ""
   /// Exact account scope; nil includes all accounts.
   public var accountID: String?
@@ -32,8 +32,7 @@ public struct ActivityQuery: Sendable {
         && (!correctionsOnly || row.correctedLabel != nil)
         && (text.isEmpty || row.sender.localizedStandardContains(text)
           || row.subject.localizedStandardContains(text)
-          || row.reason.localizedStandardContains(text)
-          || row.accountID.flatMap { $0.localizedStandardContains(text) } == true)
+          || row.reason.localizedStandardContains(text))
     }
   }
   /// Creates an unfiltered query.
@@ -48,10 +47,8 @@ public struct ActivityQuery: Sendable {
         && (end == nil || record.date <= end!)
         && (!correctionsOnly || record.correctedLabel != nil)
         && (text.isEmpty
-          || [
-            record.sender, record.subject, record.decision.reason.localizedDescription,
-            record.identity.accountID
-          ].contains { $0?.localizedCaseInsensitiveContains(text) == true })
+          || [record.sender, record.subject, record.decision.reason.localizedDescription]
+            .contains { $0?.localizedCaseInsensitiveContains(text) == true })
     }.sorted(using: sort.comparators)
   }
 }
@@ -184,13 +181,11 @@ public struct DiagnosticSummary: Encodable, Sendable {
   /// Number of pending retries, without retained message content.
   public let retryCount: Int
   /// Exports only fixed-schema operational values, never arbitrary error text.
-  public init(state: AppState) {
-    paused = state.settings.paused; dryRun = state.settings.dryRun
-    route = state.settings.incomingRoute
-    validatedAccountCount = state.settings.validatedAccounts.count
-    outcomes = Dictionary(grouping: state.records, by: { $0.outcome.rawValue }).mapValues(\.count)
-    reasons = Dictionary(grouping: state.records, by: \.decision.reason.diagnosticCategory)
-      .mapValues(\.count)
-    retryCount = state.retries.count
+  init(settings: Settings, retryCount: Int, outcomes: [String: Int], reasons: [String: Int]) {
+    paused = settings.paused; dryRun = settings.dryRun
+    route = settings.incomingRoute
+    validatedAccountCount = settings.validatedAccounts.count
+    self.outcomes = outcomes; self.reasons = reasons
+    self.retryCount = retryCount
   }
 }
