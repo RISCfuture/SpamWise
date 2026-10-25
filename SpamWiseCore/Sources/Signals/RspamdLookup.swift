@@ -65,13 +65,17 @@ public struct RspamdLookup: Sendable {
   private static func isValid(_ response: Response) -> Bool {
     response.symbols.count <= maximumSymbols && response.symbols.allSatisfy(isValid)
       && isValid(score: response.score) && isValid(score: response.requiredScore)
-      && (response.action.map(actions.contains) ?? true)
+  }
+
+  /// The scanner's action when it is one of Rspamd's built-in actions, not an operator's own.
+  private static func builtInAction(_ response: Response) -> String? {
+    response.action.flatMap { actions.contains($0) ? $0 : nil }
   }
 
   /// The scanner's overall action and scores, then symbols by descending weight and name.
   private static func details(_ response: Response) -> [String] {
     let verdict = [
-      response.action.map { "action: \($0)" }, response.score.map { "score: \($0)" },
+      builtInAction(response).map { "action: \($0)" }, response.score.map { "score: \($0)" },
       response.requiredScore.map { "required score: \($0)" }
     ].compactMap(\.self)
     let symbols = response.symbols.sorted {
@@ -89,7 +93,7 @@ public struct RspamdLookup: Sendable {
    or ``maximumScanTime``.
 
    The first detail holds the overall action, score and required score the scanner reported,
-   followed by the heaviest symbols.
+   followed by the heaviest symbols. A custom action is left out; its scores and symbols remain.
    */
   public func lookup(raw: Data, timeout: TimeInterval? = nil) async -> ExternalEvidenceFinding {
     let unknown = ExternalEvidenceFinding(
