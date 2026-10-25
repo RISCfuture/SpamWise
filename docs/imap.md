@@ -8,7 +8,8 @@ coverage only; live acceptance is tracked in [TODO.md](../TODO.md).
 
 In the app, set Settings → Accounts → Mail connection to IMAP and confirm Switch to
 IMAP, which turns dry run on; each connection keeps its own mailbox check. **Save
-Connection** stores the password or OAuth token in the shared Keychain, and **Check
+Connection** stores the password in the shared Keychain (the app signs in with a
+password only; the daemon also accepts an OAuth token), and **Check
 Connection** performs the validation described below for the app. **Forget
 Connection…** deletes that credential, revokes the app's validation of the endpoint
 and returns to Apple Mail with dry run on. The rest of this page describes the daemon.
