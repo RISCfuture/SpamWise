@@ -11,11 +11,14 @@ extension Pipeline {
   /**
    Marks a confirmed Junk move read when the setting asks, recording the step separately.
 
-   A step whose request cannot be saved is never sent and is reported without an outcome; a
-   result that cannot be saved is reported as requested.
+   A step whose request cannot be saved is never sent and is reported without an outcome, with
+   an error only when `settingOn` says the user asked for the step; a result that cannot be
+   saved is reported as requested.
+
+   - Parameter settingOn: Whether the mark-as-read setting was on when the move was claimed.
    */
-  func markJunkRead(_ original: DecisionRecord, adapter: any MailClientAdapter) async
-    -> DecisionRecord
+  func markJunkRead(_ original: DecisionRecord, adapter: any MailClientAdapter, settingOn: Bool)
+    async -> DecisionRecord
   {
     guard original.outcome == .applied, original.decision.action == .moveToJunk,
       !Task.isCancelled
@@ -37,6 +40,7 @@ extension Pipeline {
         return state.records[index]
       }
     } catch {
+      guard settingOn else { return original }
       var unsaved = original
       unsaved.readStatusError = Self.readStatusNotSaved
       return unsaved
