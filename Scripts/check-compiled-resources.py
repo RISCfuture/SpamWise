@@ -5,7 +5,8 @@ The Mail rule script ships compiled as SpamWise/SpamWiseRule.scpt; its decompile
 Resources/SpamWiseRule.applescript, ignoring indentation and blank lines. Each Help language's
 search.cshelpindex must hold the same entries that hiutil builds from that language's pages now.
 hiutil gives every entry a fresh UUID and writes the archive in no fixed order, so the indexes are
-compared by the sorted strings they carry rather than byte for byte.
+compared by the sorted strings they carry rather than byte for byte. Each entry's attributes are a
+binary blob of length-prefixed strings: UTF-16 behind a byte-order mark, or 8-bit text.
 
 Usage: python3 Scripts/check-compiled-resources.py
 """
@@ -24,8 +25,8 @@ HELP_RESOURCES = ROOT / "SpamWise" / "SpamWise.help" / "Contents" / "Resources"
 INDEX_NAME = "search.cshelpindex"
 
 UUID = re.compile(rb"[0-9A-F]{8}-(?:[0-9A-F]{4}-){3}[0-9A-F]{12}")
-ASCII_RUN = re.compile(rb"[\x20-\x7e]{4,}")
-UTF16_RUN = re.compile(rb"(?:[\x20-\x7e]\x00){4,}")
+TEXT_RUN = re.compile(rb"(?:[\x20-\x7e]|[\xc2-\xf4][\x80-\xbf]+){4,}")
+BYTE_ORDER_MARK = b"\xff\xfe"
 
 
 def significant_lines(text):
@@ -59,6 +60,22 @@ def build_index(book, language, output):
     )
 
 
+def utf16_strings(blob):
+    """Decodes each UTF-16 string, whose 32-bit length counts its byte-order mark."""
+    strings = []
+    start = blob.find(BYTE_ORDER_MARK, 4)
+    while start != -1:
+        length = int.from_bytes(blob[start - 4 : start], "little")
+        end = start + length
+        if length >= 2 and length % 2 == 0 and end <= len(blob):
+            text = blob[start + 2 : end].decode("utf-16-le", errors="replace")
+            strings.append(text.encode())
+            start = blob.find(BYTE_ORDER_MARK, end)
+        else:
+            start = blob.find(BYTE_ORDER_MARK, start + 1)
+    return strings
+
+
 def index_strings(index, scratch):
     archive_path = scratch / f"{index.parent.name}-{index.stem}.plist"
     subprocess.run(
@@ -70,8 +87,8 @@ def index_strings(index, scratch):
         if isinstance(item, str):
             found.append(item.encode())
         elif isinstance(item, bytes):
-            found += ASCII_RUN.findall(item)
-            found += [run.decode("utf-16-le").encode() for run in UTF16_RUN.findall(item)]
+            found += TEXT_RUN.findall(item)
+            found += utf16_strings(item)
     return sorted(UUID.sub(b"", string) for string in found)
 
 
