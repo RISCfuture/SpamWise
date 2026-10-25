@@ -76,7 +76,9 @@ public struct ThresholdCalibration: Codable, Sendable {
    Observations without a partition contribute only to ``curve`` and the current-threshold
    metrics. Each strength's selection holds the graymail category threshold at that strength's.
 
-   - Parameter strength: The strength whose graymail category threshold ``curve`` holds.
+   - Parameters:
+     - observations: Independently labeled results to score.
+     - strength: The strength whose graymail category threshold ``curve`` holds.
    */
   public init(observations: [EvaluationObservation], strength: FilteringStrength = .balanced) {
     let training = observations.filter { $0.partition == .training }
