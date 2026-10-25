@@ -7,12 +7,29 @@ struct `Monthly spending limit` {
   private static let october = Date(timeIntervalSince1970: 1_792_000_000)
   private static let november = Date(timeIntervalSince1970: 1_794_700_000)
   private static let reservationUSD = 0.10, reservationMicroUSD: UInt64 = 100_000
+  private static let lockAttempts = 5
   private let store: Store
 
   /// Sets a $0.25 limit in October, which fits two $0.10 reservations.
   init() async throws {
     store = try testStore()
     try await SpendingLimit.setLimit(usd: 0.25, store: store, at: Self.october)
+  }
+
+  /// Reserves the standard amount in October, retrying while another reservation holds the lock.
+  private static func reserveRetryingLock(in store: Store) async -> (any Error)? {
+    var lastError: (any Error)?
+    for _ in 0..<lockAttempts {
+      do {
+        _ = try await SpendingLimit.reserve(usd: reservationUSD, store: store, at: october)
+        return nil
+      } catch let error as StoreError where error.retryable {
+        lastError = error
+      } catch {
+        return error
+      }
+    }
+    return lastError
   }
 
   private func reserve(_ usd: Double = Self.reservationUSD, at date: Date = Self.october)
@@ -28,29 +45,15 @@ struct `Monthly spending limit` {
     let outcomes = await withTaskGroup(of: (any Error)?.self, returning: [(any Error)?].self) {
       group in
       for _ in 0..<8 {
-        group.addTask {
-          do {
-            _ = try await SpendingLimit.reserve(
-              usd: Self.reservationUSD,
-              store: store,
-              at: Self.october
-            )
-            return nil
-          } catch { return error }
-        }
+        group.addTask { await Self.reserveRetryingLock(in: store) }
       }
       return await group.reduce(into: []) { $0.append($1) }
     }
-    let successes = outcomes.filter { $0 == nil }.count
-    #expect(
-      outcomes.compactMap(\.self).allSatisfy {
-        $0 as? SpendingLimitError == .limitReached || $0 is StoreError
-      }
-    )
-    #expect(successes <= 2)
+    #expect(outcomes.filter { $0 == nil }.count == 2)
+    #expect(outcomes.compactMap(\.self).allSatisfy { $0 as? SpendingLimitError == .limitReached })
     #expect(
       try await SpendingLimit.load(store, at: Self.october).committedMicroUSD
-        == UInt64(successes) * Self.reservationMicroUSD
+        == 2 * Self.reservationMicroUSD
     )
   }
 
@@ -88,10 +91,23 @@ struct `Monthly spending limit` {
   }
 
   @Test
-  func `records one deferred decision however often refused mail is swept`() async throws {
+  func `defers refused mail once, before gathering its evidence, however often it is swept`()
+    async throws
+  {
+    _ = try await SpendingLimit.reserve(usd: 0.25, store: store)
+    try await StateRepository.editSettings(store) { enableSpamhausEvidence(in: &$0) }
+    let lookups = Counter()
     let refused = Pipeline(
       store: store,
-      classifier: MockClassifier(operation: { _ in throw SpendingLimitError.limitReached })
+      classifier: SpendingLimitedClassifier(
+        MockClassifier { _ in
+          Issue.record("The spending limit must refuse the request before the provider sees it")
+          throw ClassificationError.network
+        },
+        model: .gptMini,
+        store: store
+      ),
+      spamhaus: countingSpamhaus(lookups)
     )
     for _ in 0..<2 {
       let swept = try await refused.processBatch(
@@ -104,5 +120,24 @@ struct `Monthly spending limit` {
     }
     let deferred = try await StateRepository.load(store).records
     #expect(deferred.count == 1 && deferred.allSatisfy(\.deferredBySpendingLimit))
+    #expect(lookups.value == 0)
+    #expect(try await SpendingLimit.load(store).limitReached)
+  }
+
+  @Test
+  func `still decides by a sender rule once the limit is reached`() async throws {
+    _ = try await SpendingLimit.reserve(usd: 0.25, store: store)
+    let blocked = try envelope()
+    let sender = try MIMEParser().parse(blocked.raw).fromAddress
+    try await StateRepository.update(store) {
+      $0.rules = [SenderRule(scope: .address, value: sender, disposition: .block)]
+    }
+    let limited = Pipeline(
+      store: store,
+      classifier: SpendingLimitedClassifier(junkClassifier, model: .gptMini, store: store)
+    )
+    let record = await limited.process(blocked)
+    #expect(record.path == .gate)
+    #expect(record.decision.label == .junk)
   }
 }

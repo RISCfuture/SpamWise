@@ -114,30 +114,36 @@ func `sends mail whose evidence alone exceeds the prompt limit to Review`() asyn
   #expect(await adapter.actions == [.orangeFlag])
 }
 
-@Test(arguments: [(localOnly: true, lookups: false), (false, false), (true, true)])
-func `makes no evidence lookups in local-only mode or with lookups off`(
+@Test(arguments: [
+  (localOnly: true, lookups: false), (false, false), (true, true), (false, true)
+])
+func `makes evidence lookups only when they are on and local-only mode is off`(
   localOnly: Bool,
   lookups: Bool
 ) async throws {
-  let store = try testStore(), network = StubRDAP()
+  let store = try testStore(), network = StubRDAP(), spamhaus = Counter(), rspamd = Counter()
   try await StateRepository.editSettings(store) { settings in
     settings.mailOptions.localOnly = localOnly
     if lookups {
       settings.advancedOptions.domainRegistrationLookup = true
       enableSpamhausEvidence(in: &settings)
+      settings.advancedOptions.externalEvidence?.localRspamd = true
     }
   }
+  let looksUp = lookups && !localOnly
   let pipeline = Pipeline(
     store: store,
     classifier: MockClassifier(operation: { input in
-      #expect(input.evidence.domainAgeDays == nil)
-      #expect(input.evidence.auxiliaryFindings == nil)
+      #expect((input.evidence.auxiliaryFindings != nil) == looksUp)
       return Verdict(label: .review, confidence: 10, reason: "unknown")
     }),
-    rdap: RDAPLookup(fetcher: network)
+    rdap: RDAPLookup(fetcher: network),
+    rspamdScan: countingRspamd(rspamd),
+    spamhaus: countingSpamhaus(spamhaus)
   )
   #expect(await pipeline.process(try envelope()).path == .model)
-  #expect(await network.calls == 0)
+  let calls = [await network.calls, spamhaus.value, rspamd.value]
+  #expect(calls.allSatisfy { looksUp ? $0 > 0 : $0 == 0 })
 }
 
 @Test

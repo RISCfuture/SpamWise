@@ -231,8 +231,26 @@ public struct RetryJob: Codable, Sendable, Equatable, Identifiable {
   public var due: Date
   /// Time after which this queued retry must be discarded.
   public var expires: Date
-  /// Whether the retry runs as a forced dry run; previews never queue retries, so queued jobs store false.
-  public var dryRun: Bool
+  /// Evidence summaries the first attempt gathered, such as attachment and Rspamd findings.
+  public var auxiliaryFindings: [String]
+}
+extension RetryJob {
+  /// Decodes a retry, treating missing or unreadable findings as none.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    self.init(
+      identity: try values.decode(MessageIdentity.self, forKey: .identity),
+      message: try values.decode(ParsedMessage.self, forKey: .message),
+      revision: try values.decode(Int.self, forKey: .revision),
+      attempt: try values.decode(Int.self, forKey: .attempt),
+      due: try values.decode(Date.self, forKey: .due),
+      expires: try values.decode(Date.self, forKey: .expires),
+      auxiliaryFindings: values.lenient(.auxiliaryFindings, default: [])
+    )
+  }
+  private enum CodingKeys: String, CodingKey {
+    case identity, message, revision, attempt, due, expires, auxiliaryFindings
+  }
 }
 /// Account-scoped, deduplicated correspondence and receipt history.
 public struct HistoryIndex: Codable, Sendable, Equatable {

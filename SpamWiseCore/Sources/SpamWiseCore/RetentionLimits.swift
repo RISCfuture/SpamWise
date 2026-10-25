@@ -12,6 +12,10 @@ public enum RetentionLimits {
   public static let reviewedLabels = 500
   /// Queued classification retries.
   public static let retries = 100
+  /// Evidence findings kept with one queued retry.
+  public static let retryFindings = 10
+  /// Characters kept from one retry finding.
+  public static let retryFindingCharacters = 300
   /// Explicit sender rules.
   public static let senderRules = 10_000
   /// User-authored content rules.
