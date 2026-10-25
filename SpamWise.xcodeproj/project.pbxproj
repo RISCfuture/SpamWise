@@ -751,7 +751,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MailExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
@@ -763,7 +762,6 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.MailExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -778,7 +776,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MailExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
@@ -790,7 +787,6 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.SpamWise.MailExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -941,13 +937,14 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SpamWise-MAS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads messages in Mail to classify them and, when you allow it, moves unwanted mail to Junk, flags messages for review, and restores mail you correct.";
-				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise uses your contacts’ email addresses to recognize people you know.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -982,13 +979,14 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SpamWise-MAS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads messages in Mail to classify them and, when you allow it, moves unwanted mail to Junk, flags messages for review, and restores mail you correct.";
-				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise uses your contacts’ email addresses to recognize people you know.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1023,13 +1021,14 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SpamWise-download/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads messages in Mail to classify them and, when you allow it, moves unwanted mail to Junk, flags messages for review, and restores mail you correct.";
-				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise uses your contacts’ email addresses to recognize people you know.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1064,13 +1063,14 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SpamWise-download/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = SpamWise;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SpamWise reads messages in Mail to classify them and, when you allow it, moves unwanted mail to Junk, flags messages for review, and restores mail you correct.";
-				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise keeps messages from your contacts in your Inbox.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "SpamWise uses your contacts’ email addresses to recognize people you know.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Tim Morgan";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

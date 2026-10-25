@@ -1,3 +1,4 @@
+// Xcode's App Intents metadata extraction warns about a target that does not link AppIntents.
 import AppIntents
 import MailKit
 

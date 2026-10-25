@@ -12,10 +12,11 @@ team_id("2NFSK2WB24")
 # `type` is only the default for a bare `match` run; the Fastfile passes the type each edition needs,
 # so this repository holds both an `appstore` and a `developer_id` profile for each identifier below.
 #
-# Both bundles are listed because both carry the App Group and shared keychain access group
-# entitlements, which only a provisioning profile can authorize. gym builds the export options from
-# match's mapping and turns an unsynced identifier into an empty value that `exportArchive` rejects,
-# so a missing entry here is a failed export.
+# Both bundles are listed because a distribution export signs each with a profile of its own: an App
+# Store export needs one for every bundle, and the app's also authorizes its App Group and shared
+# keychain access group. gym builds the export options from match's mapping and turns an unsynced
+# identifier into an empty value that `exportArchive` rejects, so a missing entry here is a failed
+# export.
 app_identifier([
   "codes.tim.SpamWise",
   "codes.tim.SpamWise.MailExtension"
