@@ -13,15 +13,19 @@
           }
         },
         "es" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Consultar el estado de ${applicationName}"
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "Consultar el estado de ${applicationName}"
+            ]
           }
         },
         "fr" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Vérifier l’état de ${applicationName}"
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "Vérifier l’état de ${applicationName}"
+            ]
           }
         }
       }
