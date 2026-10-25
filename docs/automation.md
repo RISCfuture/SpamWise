@@ -5,7 +5,9 @@ SpamWise defines four App Intents for Shortcuts: **Preview Selected Mail**,
 The first two require one selected Mail message, completed setup, SpamWise connected
 through Apple Mail rather than IMAP, Mail Automation permission, and an unlocked Mac. Preview uses the configured provider and spending
 limit; it never requests mail actions. Correction saves an address rule and example
-before attempting its action under Pause, dry run and account validation.
+before attempting its action under Pause, dry run and account validation. A Junk
+correction of a sender that trusted authentication didn't confirm first asks for
+confirmation, as the app's Junk corrections do; declining saves nothing.
 
 Status speaks the current filtering state, as the menu bar shows it, and returns
 redacted JSON as its value; export returns the same data as a JSON file. Neither
