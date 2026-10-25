@@ -40,6 +40,14 @@ extension MIMEParser {
     return encoding == .utf8 ? String(decoding: data, as: UTF8.self) : fallbackText(data)
   }
 
+  /// Decodes text without a declared character set as UTF-8 when it is valid, otherwise as
+  /// Windows-1252, recording the invalid UTF-8.
+  static func undeclaredText(_ data: Data, issues: inout Set<DecodingIssue>) -> String {
+    if let text = String(data: data, encoding: .utf8) { return text }
+    issues.insert(.invalidCharacters)
+    return fallbackText(data)
+  }
+
   /// Removes a part's transfer encoding, reading an unknown encoding as 8-bit text.
   static func transferDecoded(
     _ raw: String,
@@ -123,7 +131,7 @@ extension MIMEParser {
         Range(match.range(at: number), in: value).map { String(value[$0]) } ?? ""
       }
       let gap = value[position..<range.lowerBound]
-      if !(previousWasEncoded && gap.allSatisfy(\.isWhitespace)) {
+      if !(previousWasEncoded && gap.allSatisfy(\.isFoldingWhitespace)) {
         result += unencodedHeader(String(gap), issues: &issues)
       }
       if let decoded = encodedWord(charset: field(1), encoding: field(2), text: field(3)) {

@@ -56,7 +56,7 @@ public struct Mailbox: Sendable, Equatable {
   }
 
   private static func validated(_ candidate: String) -> String? {
-    let trimmed = candidate.trimmingCharacters(in: .whitespaces)
+    let trimmed = candidate.trimmingFoldingWhitespace
     guard trimmed.utf8.count <= maximumAddressBytes,
       trimmed.range(of: addressPattern, options: [.regularExpression, .caseInsensitive]) != nil
     else { return nil }
@@ -105,13 +105,8 @@ private struct MailboxScanner {
     return members + [current]
   }
 
-  /// Treats only ASCII whitespace as folding, since raw 8-bit header bytes appear as Latin-1.
-  private static func isFoldingWhitespace(_ character: Character) -> Bool {
-    character.isASCII && character.isWhitespace
-  }
-
   private static func collapsed(_ text: String) -> String {
-    text.split(whereSeparator: isFoldingWhitespace).joined(separator: " ")
+    text.split(whereSeparator: \.isFoldingWhitespace).joined(separator: " ")
   }
 
   mutating func mailbox() -> MailboxLexeme? {
@@ -136,7 +131,7 @@ private struct MailboxScanner {
           if lexeme.angle == nil { phrase.append(character) } else { trailing.append(character) }
       }
     }
-    guard trailing.allSatisfy(Self.isFoldingWhitespace) else { return nil }
+    guard trailing.allSatisfy(\.isFoldingWhitespace) else { return nil }
     lexeme.phrase = Self.collapsed(phrase)
     lexeme.comments = Self.collapsed(comments.joined(separator: " "))
     return lexeme

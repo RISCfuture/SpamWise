@@ -60,10 +60,16 @@ public struct MIMEParser: Sendable {
       .joined(separator: "\n")
   }
 
-  /// Returns the declared character set, UTF-8 when absent, or nil when declared ambiguously.
-  private static func charset(of part: MIMEPart) -> String? {
+  /// Decodes a text part's bytes in its declared character set, or as undeclared text without one.
+  private static func characters(
+    _ data: Data,
+    of part: MIMEPart,
+    issues: inout Set<DecodingIssue>
+  ) -> String {
     let charset = part.contentType.parameter("charset")
-    return charset == .absent ? "utf-8" : charset.value
+    return charset == .absent
+      ? undeclaredText(data, issues: &issues)
+      : decode(data, charset: charset.value, issues: &issues)
   }
 
   /// Reads a URL candidate as a web URL with forward slashes, or nil when it has no host.
@@ -204,9 +210,9 @@ public struct MIMEParser: Sendable {
     }
 
     private mutating func decodedText(_ part: MIMEPart, body: String) -> String {
-      let decoded = MIMEParser.decode(
+      let decoded = MIMEParser.characters(
         MIMEParser.transferDecoded(body, encoding: part.transferEncoding, issues: &issues),
-        charset: MIMEParser.charset(of: part),
+        of: part,
         issues: &issues
       )
       guard part.mediaType == "text/html" else {
