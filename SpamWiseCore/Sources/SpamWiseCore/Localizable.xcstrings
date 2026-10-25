@@ -1793,18 +1793,18 @@
         }
       }
     },
-    "The message has no Message-ID, so SpamWise can’t confirm a move and left it in place.": {
+    "The message has no Message-ID, so SpamWise doesn’t move it automatically and left it in place.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El mensaje no tiene Message-ID, así que SpamWise no puede confirmar un traslado y lo dejó donde está."
+            "value": "El mensaje no tiene Message-ID, así que SpamWise no lo traslada automáticamente y lo dejó donde está."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le message n’a pas de Message-ID ; SpamWise ne peut donc pas confirmer un déplacement et l’a laissé en place."
+            "value": "Le message n’a pas de Message-ID ; SpamWise ne le déplace donc pas automatiquement et l’a laissé en place."
           }
         }
       }

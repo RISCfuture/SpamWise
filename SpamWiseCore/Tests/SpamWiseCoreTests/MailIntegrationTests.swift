@@ -80,6 +80,42 @@ func `corrects a message wherever it has moved within its account`() async throw
   #expect(receipt.updatedIdentity?.localID == 8)
 }
 
+@Test(arguments: [true, false])
+func `verifies a corrected move of mail without a Message-ID by size and content`(
+  arrives: Bool
+) async throws {
+  let lookalike = MailReply.message(
+    mailbox: "Junk",
+    localID: 9,
+    messageID: "",
+    source: "From: other@example.org\r\n\r\nSame size, other text"
+  )
+  let moved = MailReply.message(mailbox: "Junk", localID: 8, messageID: "")
+  let runner = StubAppleEvents([
+    .findMessages: [MailReply.found(MailReply.message(messageID: ""))],
+    .applyAction: [MailReply.applied],
+    .observeMessages: [arrives ? MailReply.found(lookalike, moved) : MailReply.found(lookalike)]
+  ])
+  let adapter = AppleMailAdapter(
+    runner: runner,
+    moveSettlingTime: arrives ? AppleMailAdapter.defaultMoveSettlingTime : .milliseconds(100),
+    observationInterval: .zero
+  )
+  let receipt = try await adapter.performCorrection(
+    .moveToJunk,
+    for: MailReply.identity(messageID: nil)
+  )
+  #expect(receipt.confirmed == arrives)
+  #expect(receipt.updatedIdentity?.localID == (arrives ? 8 : nil))
+  let observation = MailRequest.observe(
+    accountID: "account",
+    role: .junk,
+    messageID: nil,
+    byteCount: MailReply.probeSource.utf8.count
+  )
+  #expect(await runner.requests.contains(observation))
+}
+
 @Test
 func `runs corrections and lookups interactively and automatic actions in the background`()
   async throws

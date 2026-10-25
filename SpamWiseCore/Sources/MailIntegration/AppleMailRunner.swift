@@ -338,7 +338,10 @@ extension MailRequest {
           .integer(location.byteCount)
         ]
       case let .observe(accountID, role, messageID, byteCount):
-        [.string(accountID), .string(role.rawValue), .string(messageID), .integer(byteCount)]
+        [
+          .string(accountID), .string(role.rawValue), .string(messageID ?? ""),
+          .integer(byteCount)
+        ]
     }
   }
   /// A presence flag followed by the date, or the epoch when absent.
