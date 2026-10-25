@@ -14,34 +14,6 @@ extension AuthenticationHeaders {
 
   /// The authserv-id of the receiving provider's ARC set, or nil when the message doesn't qualify.
   public static func arcServer(_ headers: [String: [String]]) -> String? {
-    receivingARCReport(headers)?.server
-  }
-
-  /**
-   The receiving provider's ARC results, trusted, when its authserv-id is in `trustedServers`.
-
-   Only results that the topmost Authentication-Results header also reports, with the same
-   mechanism, result and domain, are returned, so an ARC set that the provider didn't add can't
-   claim more than the provider's own header. Empty when the message doesn't qualify or the
-   authserv-id isn't trusted.
-   */
-  public static func trustedARCResults(
-    _ headers: [String: [String]],
-    trustedServers: Set<String>
-  ) -> [AuthResult] {
-    guard let arc = receivingARCReport(headers), normalized(trustedServers).contains(arc.server),
-      let topmost = headers["authentication-results"]?.first
-    else { return [] }
-    let corroborating = report(topmost).results.compactMap {
-      result($0, server: arc.server, trusted: true)
-    }
-    return arc.results.compactMap { result($0, server: arc.server, trusted: true) }
-      .filter(corroborating.contains)
-  }
-
-  private static func receivingARCReport(_ headers: [String: [String]])
-    -> (server: String, results: ArraySlice<String>)?
-  {
     guard let topmost = headers["authentication-results"]?.first, report(topmost).server.isEmpty,
       let seals = headers["arc-seal"], seals.count == 1,
       instance(inTags: seals[0]) == receivingInstance,
@@ -49,8 +21,26 @@ extension AuthenticationHeaders {
     else { return nil }
     let fields = sets[0].components(separatedBy: ";")
     guard let first = fields.first, instanceTag(first) == receivingInstance else { return nil }
-    let payload = report(fields.dropFirst().joined(separator: ";"))
-    return payload.server.isEmpty ? nil : payload
+    let server = report(fields.dropFirst().joined(separator: ";")).server
+    return server.isEmpty ? nil : server
+  }
+
+  /**
+   The topmost Authentication-Results header's results, trusted and attributed to the receiving
+   provider's ARC authserv-id, when that authserv-id is in `trustedServers`.
+
+   The ARC set only names the server; its own results are ignored, so a set the provider didn't
+   add can neither add results to the provider's header nor leave out its failures. Empty when the
+   message doesn't qualify or the authserv-id isn't trusted.
+   */
+  public static func resultsTrustedThroughARC(
+    _ headers: [String: [String]],
+    trustedServers: Set<String>
+  ) -> [AuthResult] {
+    guard let server = arcServer(headers), normalized(trustedServers).contains(server),
+      let topmost = headers["authentication-results"]?.first
+    else { return [] }
+    return report(topmost).results.compactMap { result($0, server: server, trusted: true) }
   }
 
   /// The `i=` value among a header's `;`-separated tags.

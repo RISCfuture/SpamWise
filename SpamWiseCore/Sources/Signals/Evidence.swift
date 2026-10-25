@@ -105,9 +105,9 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
      - contact: Whether the sender is a contact; nil when unknown.
      - domainAgeDays: The sender domain's registration age in days; nil when unknown.
      - trustedAuthServers: Receiving-server identifiers of the message's account. Only
-       their topmost Authentication-Results headers, or the receiving provider's ARC set that
-       ``AuthenticationHeaders/trustedARCResults(_:trustedServers:)`` accepts, produce trusted
-       results.
+       their topmost Authentication-Results headers, or a topmost header without a server that
+       ``AuthenticationHeaders/resultsTrustedThroughARC(_:trustedServers:)`` attributes to one,
+       produce trusted results.
    */
   public init(
     message: ParsedMessage,
@@ -118,9 +118,12 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   ) {
     let resolver = DomainResolver()
     let trustedServers = AuthenticationHeaders.normalized(trustedAuthServers)
-    // Trusted ARC results come first, so the bound on results never drops them.
+    // Results trusted through ARC come first, so the bound on results never drops them.
     let claims =
-      AuthenticationHeaders.trustedARCResults(message.headers, trustedServers: trustedServers)
+      AuthenticationHeaders.resultsTrustedThroughARC(
+        message.headers,
+        trustedServers: trustedServers
+      )
       + AuthenticationHeaders.parse(
         message.headers["authentication-results"] ?? [],
         trustedServers: trustedServers
