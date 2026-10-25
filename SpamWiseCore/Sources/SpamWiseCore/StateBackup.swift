@@ -81,9 +81,10 @@ public enum StateBackup {
   /**
    Authenticates and validates the whole archive before replacing portable state atomically.
 
-   This Mac keeps its choice of whether to retain reviewed message text, so the backup's text is
-   restored only while that setting is on. A version-one backup has no trust exclusions or
-   learning options, so restoring one keeps this Mac's.
+   This Mac keeps its choice of whether to retain reviewed message text, so the backup's text,
+   reviewed messages and correction excerpts alike, is restored only while that setting is on. A
+   version-one backup has no trust exclusions or learning options, so restoring one keeps this
+   Mac's.
    */
   public static func restore(_ data: Data, recoveryKey: String, store: Store) async throws {
     let payload: Payload
@@ -103,11 +104,11 @@ public enum StateBackup {
       let ruleIDs = Set(state.contentRules.map(\.id))
       state.contentRuleHits = state.contentRuleHits.filter { ruleIDs.contains($0.key) }
       state.contentRuleSkips = state.contentRuleSkips.filter { ruleIDs.contains($0.key) }
-      state.corrections = payload.corrections
+      let retainsContent = state.settings.advancedOptions.retainReviewedContent
+      state.corrections =
+        retainsContent ? payload.corrections : payload.corrections.map(withoutExcerpt)
       state.learning = payload.learning ?? LearningState()
-      state.reviewedLabels =
-        state.settings.advancedOptions.retainReviewedContent
-        ? payload.labels : payload.labels.map(withoutMessage)
+      state.reviewedLabels = retainsContent ? payload.labels : payload.labels.map(withoutMessage)
       state.settings.policy =
         PromptBuilder.formerDefaultPolicies.contains(payload.policy)
         ? PromptBuilder.defaultPolicy : payload.policy
