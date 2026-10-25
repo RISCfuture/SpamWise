@@ -87,6 +87,14 @@ public enum PromptBuilder {
     result authenticates the From domain, that address may be forged, so they are moderate \
     evidence of a wanted sender, weaker than a trusted authentication failure or signs of \
     impersonation.
+    bayesLogOdds and learnedMargin are optional scores from filters trained on the recipient's \
+    corrections. They are uncalibrated: positive leans junk, negative leans inbox. They are weak \
+    evidence, never decisive alone.
+    auxiliaryFindings are computed by SpamWise, not written by the sender. A Spamhaus DBL listed \
+    result is strong evidence of a bad domain reputation; unknown means unknown. Local Rspamd \
+    symbols are weak evidence. Message decoding degraded means some text may be garbled. An \
+    unconfirmed content Allow rule match is the recipient's evidence that authentication did not \
+    confirm.
     Platforms that notify on a person's behalf may show that person's address in the display name.
     History unavailable or partial means unknown, not no relationship. Do not infer a purchase \
     from a shipping claim.
