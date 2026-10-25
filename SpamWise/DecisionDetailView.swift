@@ -73,6 +73,9 @@ private struct DecisionSummaryView: View {
           .foregroundStyle(.secondary)
       }
       Text(row.decision.reason.localizedDescription).textSelection(.enabled)
+      if row.decision.followsCategoryPreference, let verdict = row.verdict {
+        Text(verdict.reason).foregroundStyle(.secondary).textSelection(.enabled)
+      }
     }
     if let category = row.verdict?.category, category != .unknown {
       LabeledContent("Kind of mail", value: category.localizedName)
@@ -307,6 +310,11 @@ private struct DecisionDiagnosticsView: View {
     if let verdict = row.verdict {
       LabeledContent("Confidence") {
         Text(Double(verdict.confidence) / 100, format: .percent)
+      }
+      if let categoryConfidence = verdict.categoryConfidence {
+        LabeledContent("Confidence in kind of mail") {
+          Text(Double(categoryConfidence) / 100, format: .percent)
+        }
       }
       LabeledContent("Input tokens", value: verdict.usage.input.formatted())
       LabeledContent("Output tokens", value: verdict.usage.output.formatted())

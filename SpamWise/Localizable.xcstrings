@@ -761,6 +761,22 @@
         }
       }
     },
+    "Confidence in kind of mail": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confianza en el tipo de correo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confiance dans le type de message"
+          }
+        }
+      }
+    },
     "Configure Folders…": {
       "localizations": {
         "es": {
