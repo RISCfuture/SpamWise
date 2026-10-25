@@ -32,12 +32,12 @@ struct SetupClassifierView: View {
       }
       .pickerStyle(.radioGroup)
       .accessibilityIdentifier("setup.provider")
-      LabeledContent("Model", value: advanced.model.displayName)
       ProviderDescription(backend: advanced.backend)
       ReadinessNote(readiness: readiness, backend: advanced.backend)
     }
     if advanced.backend.isCloud {
       Section(advanced.backend.localizedTitle) {
+        APIKeyExplanation(backend: advanced.backend)
         KeyEntryView(
           credentials: credentials,
           model: advanced.model,
@@ -65,6 +65,22 @@ private struct ProviderDescription: View {
       }
     }
     .foregroundStyle(.secondary)
+  }
+}
+
+/// What an API key is and how to get one, for people who haven’t used one before.
+private struct APIKeyExplanation: View {
+  let backend: ModelBackend
+
+  var body: some View {
+    Text(
+      """
+      An API key is a long code, like a password, that lets SpamWise use \
+      \(backend.localizedTitle) with your own account. Choose Get an API key to create one on the \
+      provider’s website, then copy it and paste it below. The provider bills your account for \
+      the mail SpamWise sends it.
+      """
+    )
   }
 }
 
