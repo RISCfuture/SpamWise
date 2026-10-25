@@ -12,7 +12,7 @@ public enum PromptBuilder {
    */
   public static let maximumPromptBytes = 65_536
   /// Identity of the guided-output schema used in response-cache keys.
-  public static let schemaID = "spamwise-verdict-v3"
+  public static let schemaID = "spamwise-verdict-v4"
   /// Initial additional instructions: none, because category preferences carry the defaults.
   public static let defaultPolicy = ""
   /// Policies that earlier versions installed by default, which carry no choice of the user's.
@@ -75,12 +75,14 @@ public enum PromptBuilder {
     examples are the recipient's corrections. They show what the recipient wants for similar \
     content and category, not a blanket rule for every message from that sender or domain. \
     sameSender is true only when trusted authentication confirms the From address it matches.
-    Return a confidence integer 0–100 for the label and one short reason, at most 200 characters, \
-    grounded in the supplied evidence. Confidence is how sure you are of the label you chose, \
-    whichever label it is. For junk, use 95 or more when the content alone shows spam or a scam no \
-    legitimate sender would send, such as demands for payment, credentials, bank details, gift \
-    cards or cryptocurrency, or a well-known brand impersonated from an unrelated domain; use less \
-    when a legitimate sender could plausibly have sent it.
+    Return a confidence integer 0–100 for the label, a categoryConfidence integer 0–100 for the \
+    category, and one short reason, at most 200 characters, grounded in the supplied evidence. \
+    Confidence is how sure you are of the label you chose, whichever label it is. For junk, use 95 \
+    or more when the content alone shows spam or a scam no legitimate sender would send, such as \
+    demands for payment, credentials, bank details, gift cards or cryptocurrency, or a well-known \
+    brand impersonated from an unrelated domain; use less when a legitimate sender could plausibly \
+    have sent it. categoryConfidence is how sure you are that the category you named is the \
+    message's main purpose, whether or not the recipient wants it.
     Authentication pass and unsubscribe links are weak evidence: spammers routinely provide both.
     Only authResults marked trusted come from the account's receiving server; untrusted entries \
     are claims anyone can write and carry no weight. When trustedServersConfigured is false, the \

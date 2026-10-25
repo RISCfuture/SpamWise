@@ -17,8 +17,16 @@ enum GuidedCategory: String {
 @Generable
 struct GuidedVerdict {
   var category: GuidedCategory
+  @Guide(
+    description: "Uncalibrated confidence from 0 through 100 that the category is right",
+    .range(0...100)
+  )
+  var categoryConfidence: Int
   var label: GuidedLabel
-  @Guide(description: "Uncalibrated confidence from 0 through 100", .range(0...100))
+  @Guide(
+    description: "Uncalibrated confidence from 0 through 100 that the label is right",
+    .range(0...100)
+  )
   var confidence: Int
   @Guide(description: "One short evidence-grounded sentence, at most 240 characters")
   var reason: String
@@ -28,7 +36,7 @@ extension Verdict {
   /**
    Validates a guided response and records the session's measured usage at the model's rates.
 
-   A reason longer than the guide asks for is shortened rather than rejected, as ``init(label:category:confidence:reason:usage:)`` does.
+   A reason longer than the guide asks for is shortened rather than rejected, as ``init(label:category:categoryConfidence:confidence:reason:usage:)`` does.
    */
   init(guided: GuidedVerdict, session: LanguageModelSession, model: ModelIdentifier) throws {
     guard let label = MailLabel(rawValue: guided.label.rawValue),
@@ -38,6 +46,7 @@ extension Verdict {
     self.init(
       label: label,
       category: category,
+      categoryConfidence: guided.categoryConfidence,
       confidence: guided.confidence,
       reason: guided.reason,
       usage: .init(

@@ -70,7 +70,15 @@ public struct Verdict: Codable, Sendable, Equatable {
   public var label: MailLabel
   /// What kind of mail the model judged the message to be.
   public var category: MailCategory
-  /// Uncalibrated model confidence on the integer scale 0 through 100.
+  /**
+   Uncalibrated confidence from 0 through 100 that ``category`` is right, whether or not the
+   recipient wants the mail.
+
+   Nil for verdicts that name no category confidence, such as gate verdicts and records from
+   earlier versions; a graymail preference then never moves the message to Junk on its own.
+   */
+  public var categoryConfidence: Int?
+  /// Uncalibrated model confidence in ``label`` on the integer scale 0 through 100.
   public var confidence: Int
   /// Short explanation of the evidence or policy behind this result.
   public var reason: String
@@ -80,34 +88,43 @@ public struct Verdict: Codable, Sendable, Equatable {
   public init(
     label: MailLabel,
     category: MailCategory = .unknown,
+    categoryConfidence: Int? = nil,
     confidence: Int,
     reason: String,
     usage: TokenUsage = .init()
   ) {
-    self.label = label; self.category = category; self.confidence = confidence
+    self.label = label; self.category = category; self.categoryConfidence = categoryConfidence
+    self.confidence = confidence
     self.reason = String(reason.prefix(ClassificationLimits.maximumReasonCharacters))
     self.usage = usage
   }
-  /// Decodes a stored verdict; one recorded before categories existed is ``MailCategory/unknown``.
+  /**
+   Decodes a stored verdict; one recorded before categories existed is ``MailCategory/unknown``,
+   and one without a category confidence has none.
+   */
   public init(from decoder: any Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     self.init(
       label: try values.decode(MailLabel.self, forKey: .label),
       category: try values.decodeIfPresent(MailCategory.self, forKey: .category) ?? .unknown,
+      categoryConfidence: try? values.decodeIfPresent(Int.self, forKey: .categoryConfidence),
       confidence: try values.decode(Int.self, forKey: .confidence),
       reason: try values.decode(String.self, forKey: .reason),
       usage: try values.decode(TokenUsage.self, forKey: .usage)
     )
   }
 
-  /// Rejects confidence outside 0 through 100 and empty explanations.
+  /// Rejects either confidence outside 0 through 100 and empty explanations.
   public func validated() throws -> Self {
     guard ClassificationLimits.confidenceRange.contains(confidence),
+      categoryConfidence.map(ClassificationLimits.confidenceRange.contains) ?? true,
       !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     else { throw ClassificationError.invalidOutput }
     return self
   }
-  private enum CodingKeys: String, CodingKey { case label, category, confidence, reason, usage }
+  private enum CodingKeys: String, CodingKey {
+    case label, category, categoryConfidence, confidence, reason, usage
+  }
 }
 /// A bounded quotation of an explicit user correction.
 public struct CorrectionExample: Codable, Sendable, Equatable, Identifiable {

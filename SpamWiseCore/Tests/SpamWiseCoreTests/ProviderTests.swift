@@ -212,7 +212,7 @@ private func providerHTTP(_ body: String, status: Int = 200) -> ModelHTTPClient 
 private let openAIResponse =
   #"""
   {"status":"completed","output":[{"type":"message","role":"assistant","content":[
-    {"type":"output_text","text":"{\"label\":\"inbox\",\"confidence\":93,\"reason\":\"Personal correspondence\"}"}]}],
+    {"type":"output_text","text":"{\"category\":\"personal\",\"categoryConfidence\":88,\"label\":\"inbox\",\"confidence\":93,\"reason\":\"Personal correspondence\"}"}]}],
     "usage":{"input_tokens":1000,"output_tokens":100,"input_tokens_details":{"cached_tokens":200}}}
   """#
 
@@ -269,6 +269,7 @@ func `sends OpenAI an unstored bounded request for its model`() async throws {
 func `accounts OpenAI usage and cost with cached input`() async throws {
   let result = try await openAIClassifier().classify(providerInput())
   #expect(result.label == .inbox)
+  #expect(result.category == .personal && result.categoryConfidence == 88)
   #expect(result.usage.output == 100)
   #expect(result.usage.modelID == "gpt-5.4-mini")
   #expect(abs(result.usage.estimatedCost - 0.001065) < 0.00000001)
@@ -288,6 +289,7 @@ func `sends Gemini its key in a header rather than the URL`() async throws {
 func `accounts Gemini thinking tokens as output and cached input`() async throws {
   let result = try await geminiClassifier().classify(providerInput())
   #expect(result.label == .review)
+  #expect(result.categoryConfidence == nil)
   #expect(result.usage.output == 100)
   #expect(result.usage.cached == 200)
   #expect(result.usage.modelID == "gemini-3.8-flash")
@@ -295,6 +297,7 @@ func `accounts Gemini thinking tokens as output and cached input`() async throws
 
 @Test(arguments: [
   "{}", "not json", openAIResponse.replacingOccurrences(of: "93", with: "101"),
+  openAIResponse.replacingOccurrences(of: "88", with: "101"),
   openAIResponse.replacingOccurrences(of: "completed", with: "incomplete"),
   openAIResponse.replacingOccurrences(of: "\"cached_tokens\":200", with: "\"cached_tokens\":2000")
 ])
