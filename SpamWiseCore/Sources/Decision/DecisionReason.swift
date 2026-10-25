@@ -11,7 +11,7 @@ public enum DecisionReason: Codable, Sendable, Equatable {
   /// The classifier's own explanation, written in the language its instructions request.
   case model(String)
   /// The user chose Junk for this graymail category and the classifier was confident enough of
-  /// the category, whatever its label.
+  /// the category, with a Review or Junk label.
   case categoryPreference(MailCategory)
   /// The user corrected the decision at the given rule scope.
   case userCorrection(scope: RuleScope)

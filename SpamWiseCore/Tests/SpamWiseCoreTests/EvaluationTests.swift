@@ -69,7 +69,7 @@ struct `Evaluation report` {
       confidence: 20,
       path: .model,
       reason: "bulk",
-      modelLabel: .inbox
+      modelLabel: .review
     )
     (row.category, row.categoryConfidence, row.preference) = (.promotion, 87, .junk)
     let aggressive = row.decided(strength: .aggressive)

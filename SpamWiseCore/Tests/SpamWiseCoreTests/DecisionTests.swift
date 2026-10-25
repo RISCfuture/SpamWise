@@ -51,6 +51,7 @@ func `bounds a graymail verdict by the user's preference for its category`(
   #expect(try label(.junk, .junk, confidence: strength.threshold - 1) == .review)
   let unsure = strength.graymailThreshold - 1
   #expect(try label(.inbox, .junk, categoryConfidence: unsure) == .review)
+  #expect(try label(.inbox, .junk, categoryConfidence: 100) == .review)
   #expect(try label(.junk, .junk, confidence: 0, categoryConfidence: unsure) == .review)
 }
 
@@ -72,7 +73,7 @@ func `moves graymail the user chose Junk for once its category is certain enough
       preference: .junk
     )
   }
-  for label in MailLabel.allCases {
+  for label in [MailLabel.review, .junk] {
     let moved = try decision(label, .abandonedCart)
     #expect(moved.action == .moveToJunk && moved.reason == .categoryPreference(.abandonedCart))
     #expect(moved.followsCategoryPreference && moved.preference == .junk)
