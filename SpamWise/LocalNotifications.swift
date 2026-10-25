@@ -4,12 +4,16 @@ import SpamWiseCore
 
 @MainActor
 final class LocalNotifications: NSObject, UNUserNotificationCenterDelegate {
+  private static let reviewCategory = "review"
+  /// Shows Activity for a clicked summary, presenting the digest when it announced Review mail.
+  var open: (ActivitySheet?) -> Void = { _ in }
+
   func configure() {
     let center = UNUserNotificationCenter.current()
     center.delegate = self
     center.setNotificationCategories([
       UNNotificationCategory(
-        identifier: "review",
+        identifier: Self.reviewCategory,
         actions: [
           UNNotificationAction(
             identifier: "review",
@@ -34,34 +38,42 @@ final class LocalNotifications: NSObject, UNUserNotificationCenterDelegate {
       @unknown default: String(localized: "Notification status unavailable")
     }
   }
-  func deliver(store: Store) async throws {
+  /// Posts the summary of a batch that `settings` allow announcing now, if one is due.
+  func deliver(store: Store, settings: SpamWiseCore.Settings) async throws {
     let center = UNUserNotificationCenter.current()
     let authorization = await center.notificationSettings().authorizationStatus
     guard authorization == .authorized || authorization == .provisional else { return }
-    guard let batch = try await NotificationPlanning.claim(store: store) else { return }
-    let settings = try await StateRepository.load(store, StateSlices()).settings
-    let options = settings.mailOptions.notifications
-    guard !settings.paused, !settings.dryRun, options.enabledSince != nil,
-      !options.isQuiet(at: .now)
-    else { return }
+    guard let batch = try await NotificationPlanning.claim(store: store, settings: settings) else {
+      return
+    }
     let content = UNMutableNotificationContent()
     content.title = String(localized: "SpamWise mail summary")
     content.body = String(
       localized: "Review: \(batch.review). Good: \(batch.good). Open SpamWise to inspect decisions."
     )
-    content.categoryIdentifier = batch.review > 0 ? "review" : "activity"
+    content.categoryIdentifier = batch.review > 0 ? Self.reviewCategory : "activity"
     try await center.add(
       UNNotificationRequest(identifier: "SpamWise-summary", content: content, trigger: nil)
     )
+  }
+  /// Shows the summary even while SpamWise is the active app, since its batch is already claimed.
+  nonisolated func userNotificationCenter(
+    _: UNUserNotificationCenter,
+    willPresent _: UNNotification,
+    withCompletionHandler completionHandler:
+      @escaping @Sendable (UNNotificationPresentationOptions)
+      -> Void
+  ) {
+    completionHandler([.banner, .list])
   }
   nonisolated func userNotificationCenter(
     _: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse
   ) async {
-    let destination =
-      response.notification.request.content.categoryIdentifier == "review" ? "review" : "activity"
-    await MainActor.run {
-      if let url = URL(string: "spamwise://" + destination) { NSWorkspace.shared.open(url) }
-    }
+    let category = response.notification.request.content.categoryIdentifier
+    await respond(toCategory: category)
+  }
+  private func respond(toCategory category: String) {
+    open(category == Self.reviewCategory ? .digest : nil)
   }
 }
