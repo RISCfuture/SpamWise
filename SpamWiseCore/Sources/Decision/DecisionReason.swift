@@ -36,45 +36,12 @@ public enum DecisionReason: Codable, Sendable, Equatable {
   case duplicateCallback
   /// An earlier decision already claimed the message's action.
   case actionAlreadyClaimed
-  /// Untyped text from a record that an earlier version stored, shown as written.
-  case legacy(String)
   /// A stored reason this version does not recognize, such as one a newer version wrote.
   case unrecognized
-
-  /**
-   Maps reason text that an earlier version stored to the matching reason, or keeps it as
-   ``legacy(_:)``.
-
-   - Parameters:
-     - text: The stored reason text.
-     - label: The stored decision label, which supplies a legacy content rule's disposition.
-   */
-  public init(legacy text: String, label: MailLabel?) {
-    if let id = Self.suffix(of: text, after: Self.legacyContentRulePrefix).flatMap(UUID.init) {
-      self = .gate(.contentRule(id: id, disposition: label == .inbox ? .allow : .block, note: nil))
-    } else if let error = Self.suffix(of: text, after: Self.legacyFailurePrefix)
-      .flatMap(ClassificationError.init)
-    {
-      self = .classificationFailed(error)
-    } else {
-      self = Self.fixedReasons.first { $0.diagnosticDescription == text } ?? .legacy(text)
-    }
-  }
 }
 
 extension DecisionReason {
-  private static let legacyContentRulePrefix = "gate: user content rule "
-  private static let legacyFailurePrefix = "unclassified: "
-  private static let fixedReasons: [Self] =
-    RuleScope.allCases.flatMap { scope in
-      [RuleDisposition.allow, .block].map { .gate(.senderRule(scope: scope, disposition: $0)) }
-        + [.userCorrection(scope: scope)]
-    } + [
-      .gate(.contact), .gate(.priorCorrespondence), .gate(.orderHistory), .campaign,
-      .selectedForCorrection, .connectionVerified, .paused, .messageUnreadable,
-      .spendingLimitReached, .storageUnavailable, .processingFailed, .duplicateCallback,
-      .actionAlreadyClaimed
-    ]
+  private static let unclassifiedPrefix = "unclassified: "
 
   /// The explanation in the user's language.
   public var localizedDescription: String {
@@ -82,7 +49,7 @@ extension DecisionReason {
       case .gate(let gate): gate.localizedDescription
       case .campaign:
         String(localized: "Review: matches a campaign you marked as junk", bundle: .module)
-      case .model(let text), .legacy(let text): text
+      case .model(let text): text
       case .userCorrection(.address):
         String(localized: "Your correction for this sender’s address", bundle: .module)
       case .userCorrection(.domain):
@@ -128,36 +95,28 @@ extension DecisionReason {
     switch self {
       case .gate(let gate): gate.diagnosticDescription
       case .campaign: "review: authenticated match to explicitly junked campaign"
-      case .model(let text), .legacy(let text): text
+      case .model(let text): text
       case .userCorrection(let scope): "User correction (\(scope.rawValue))"
       case .selectedForCorrection: "Explicitly selected for correction"
       case .connectionVerified: "Claude connection verified"
       case .paused: "Filtering paused"
-      case .messageUnreadable: Self.legacyFailurePrefix + "message parsing failed"
+      case .messageUnreadable: Self.unclassifiedPrefix + "message parsing failed"
       case .unreadableSender: "review: no single readable From mailbox"
       case .concealedContent: "review: ambiguous or unread MIME content"
-      case .classificationFailed(let error): Self.legacyFailurePrefix + error.rawValue
+      case .classificationFailed(let error): Self.unclassifiedPrefix + error.rawValue
       case .spendingLimitReached:
-        Self.legacyFailurePrefix + "spending limit reached; no provider request was made"
-      case .storageUnavailable: Self.legacyFailurePrefix + "shared storage unavailable"
-      case .processingFailed: Self.legacyFailurePrefix + "persistence or integration unavailable"
+        Self.unclassifiedPrefix + "spending limit reached; no provider request was made"
+      case .storageUnavailable: Self.unclassifiedPrefix + "shared storage unavailable"
+      case .processingFailed: Self.unclassifiedPrefix + "persistence or integration unavailable"
       case .duplicateCallback: "Duplicate callback already in progress"
       case .actionAlreadyClaimed: "Action already claimed; the earlier decision is retained"
       case .unrecognized: "Unrecognized reason"
     }
   }
 
-  /// The diagnostic form without model or legacy text, safe for content-free support exports.
+  /// The diagnostic form without model text, safe for content-free support exports.
   public var diagnosticCategory: String {
-    switch self {
-      case .model: "model"
-      case .legacy: "legacy"
-      default: diagnosticDescription
-    }
-  }
-
-  private static func suffix(of text: String, after prefix: String) -> String? {
-    text.hasPrefix(prefix) ? String(text.dropFirst(prefix.count)) : nil
+    if case .model = self { "model" } else { diagnosticDescription }
   }
 }
 

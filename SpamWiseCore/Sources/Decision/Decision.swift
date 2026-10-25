@@ -94,20 +94,12 @@ public struct Decision: Codable, Sendable, Equatable {
   ) {
     self.label = label; self.action = action; self.reason = reason; self.preference = preference
   }
-  /**
-   Decodes a stored decision, mapping a reason saved as text to ``DecisionReason`` and a reason
-   this version cannot decode to ``DecisionReason/unrecognized``.
-   */
+  /// Decodes a stored decision, mapping a reason this version cannot decode to ``DecisionReason/unrecognized``.
   public init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     label = try container.decodeIfPresent(MailLabel.self, forKey: .label)
     action = try container.decode(MailAction.self, forKey: .action)
-    reason =
-      if let text = try? container.decode(String.self, forKey: .reason) {
-        DecisionReason(legacy: text, label: label)
-      } else {
-        (try? container.decode(DecisionReason.self, forKey: .reason)) ?? .unrecognized
-      }
+    reason = (try? container.decode(DecisionReason.self, forKey: .reason)) ?? .unrecognized
     preference = try? container.decodeIfPresent(GraymailPreference.self, forKey: .preference)
   }
   /**

@@ -2,16 +2,16 @@ public import Foundation
 import SwiftData
 import Synchronization
 
-/// One-time preparation of a store: the transactional import of the single-document snapshot.
+/// One-time preparation of a store: its schema mark, checked before any other state access.
 enum StatePersistence {
-  private static let legacyStateKey = "application-v1"
-  private static let legacyHealthKey = "mail-health-v1"
+  /// Single-document snapshots that builds before the entity schema stored.
+  private static let snapshotKeys = ["application-v1", "mail-health-v1"]
   private static let schemaKey = "state.schema"
   private static let entitySchema = 2
   private static let preparedStores = Mutex<Set<URL>>([])
 
   /**
-   Imports a single-document snapshot once per process, before any other state access.
+   Checks the store's schema mark once per process, before any other state access.
 
    - Throws: ``StoredStateError/newerVersion`` when a newer version marked the entity schema, so
      this version neither reads nor writes that state.
@@ -19,43 +19,25 @@ enum StatePersistence {
   static func prepared(_ store: Store) async throws {
     guard !preparedStores.withLock({ $0.contains(store.url) }) else { return }
     try await store.transaction { context in
-      try importLegacyState(context)
+      try markSchema(context)
       try context.save()
     }
     preparedStores.withLock { _ = $0.insert(store.url) }
   }
   /**
-   Moves the single-document snapshot into entity rows in one transaction.
-
-   The snapshot is deleted only by the same save that commits its rows, so an interrupted or
-   failed import leaves it in place. An unreadable snapshot is set aside for recovery instead
-   of being discarded. Once the entity schema is marked, a snapshot written later by an older
-   version is never imported over newer state.
+   Marks an unmarked store with the entity schema, first setting aside any single-document
+   snapshot it holds for recovery, since this version doesn't read that format.
    */
-  private static func importLegacyState(_ context: ModelContext) throws {
+  private static func markSchema(_ context: ModelContext) throws {
     if let mark = try context.document(schemaKey) {
       let schema = try? JSONDecoder().decode(Int.self, from: mark)
       guard let schema, schema <= entitySchema else { throw StoredStateError.newerVersion }
       return
     }
-    if let legacy = try context.document(legacyStateKey) {
-      do {
-        let state = try JSONDecoder().decode(AppState.self, from: legacy)
-        try StateTransaction(importing: state, context: context).stage()
-      } catch is DecodingError {
-        try StateRecovery.quarantine(legacy, source: legacyStateKey, in: context)
-      }
-      try context.removeDocument(legacyStateKey)
-    }
-    if let health = try context.document(legacyHealthKey) {
-      if let states = try? JSONDecoder().decode([String: MailScanHealth].self, from: health) {
-        for (key, value) in states {
-          context.insert(MailHealthRow(key: key, payload: try JSONEncoder().encode(value)))
-        }
-      } else {
-        try StateRecovery.quarantine(health, source: legacyHealthKey, in: context)
-      }
-      try context.removeDocument(legacyHealthKey)
+    for key in snapshotKeys {
+      guard let snapshot = try context.document(key) else { continue }
+      try StateRecovery.quarantine(snapshot, source: key, in: context)
+      try context.removeDocument(key)
     }
     try context.setDocument(schemaKey, JSONEncoder().encode(entitySchema))
     try context.markChanged(

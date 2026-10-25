@@ -8,6 +8,7 @@ import SpamWiseCore
 struct `sweeps new IMAP Inbox mail` {
   /// A connection lifetime within the session's fetch margin, so each sweep fetches one message.
   private static let expiringLifetime = TimeAmount.seconds(5)
+  private static let cursorKey = "imap-sweep-v1:" + IMAPConfiguration.test.endpointFingerprint
 
   private static func inbox(exists: Int, uidNext: Int? = nil) -> IMAPTranscript {
     IMAPTranscript.authenticated().examine(validity: 33, exists: exists, uidNext: uidNext)
@@ -27,7 +28,7 @@ struct `sweeps new IMAP Inbox mail` {
   }
 
   @Test
-  func `starts at the newest existing UID and reads every new message before older pages`()
+  func `starts at the newest existing UID and reads only the mail that arrives after it`()
     async throws
   {
     let store = try testStore()
@@ -42,18 +43,17 @@ struct `sweeps new IMAP Inbox mail` {
     var transcript = Self.inbox(exists: 7, uidNext: 8)
       .metadata(Self.rows(1...7, size: estimatedSize))
     for uid in 4...7 { transcript = transcript.body(raw, uid: uid, sequence: uid) }
-    let delivered = IMAPTestServer(
-      transcript.metadata(Self.rows(2...3, size: raw.utf8.count))
-    )
+    let delivered = IMAPTestServer(transcript)
     let messages = try await Self.committedSweep(delivered, limit: 2, store: store)
     #expect(messages.map(\.identity.localID) == [4, 5, 6, 7])
-    let commands = await delivered.commands
-    #expect(commands.contains("FETCH 2:3 (UID RFC822.SIZE)"))
-    #expect(commands.filter { $0.contains("BODY.PEEK") }.count == 4)
+    #expect(
+      await delivered.commands.filter { $0.contains("FETCH") }
+        == ["FETCH 1:7 (UID RFC822.SIZE)"] + (4...7).map { "UID FETCH \($0) (UID BODY.PEEK[])" }
+    )
   }
 
   @Test
-  func `resumes new mail deferred by the byte budget before revisiting older pages`()
+  func `resumes new mail deferred by the byte budget without reading earlier mail again`()
     async throws
   {
     let store = try testStore()
@@ -68,13 +68,68 @@ struct `sweeps new IMAP Inbox mail` {
     for uid in 1...4 { first = first.body(raw, uid: uid, sequence: uid) }
     let deferred = try await Self.committedSweep(IMAPTestServer(first), limit: 20, store: store)
     #expect(deferred.map(\.identity.localID) == [1, 2, 3, 4])
-    var second = Self.inbox(exists: 5, uidNext: 6).metadata(Self.rows(1...5, size: 1_000_000))
-      .body(raw, uid: 5, sequence: 5).metadata(Self.rows(1...4, size: 1_000_000))
-    for uid in (1...4).reversed() { second = second.body(raw, uid: uid, sequence: uid) }
-    let server = IMAPTestServer(second)
+    let server = IMAPTestServer(
+      Self.inbox(exists: 5, uidNext: 6).metadata(Self.rows(1...5, size: 1_000_000))
+        .body(raw, uid: 5, sequence: 5)
+    )
     let resumed = try await Self.committedSweep(server, limit: 20, store: store)
-    #expect(resumed.map(\.identity.localID) == [5, 4, 3, 2, 1])
-    #expect(await server.commands.contains("FETCH 1:4 (UID RFC822.SIZE)"))
+    #expect(resumed.map(\.identity.localID) == [5])
+    #expect(await server.commands.filter { $0.contains("FETCH") }.count == 2)
+  }
+
+  @Test
+  func `leaves the older part of a burst too deep to scan to a backfill`() async throws {
+    let store = try testStore()
+    let raw = "From: sender@example.com\r\n\r\nHello"
+    _ = try await Self.committedSweep(
+      IMAPTestServer(Self.inbox(exists: 0, uidNext: 1)),
+      limit: 1,
+      store: store
+    )
+    var burst = Self.inbox(exists: 2100, uidNext: 2101)
+    for last in stride(from: 2100, to: 100, by: -100) {
+      burst = burst.metadata(Self.rows(last - 99...last, size: raw.utf8.count))
+    }
+    for uid in 101...105 { burst = burst.body(raw, uid: uid, sequence: uid) }
+    let read = try await Self.committedSweep(IMAPTestServer(burst), limit: 1, store: store)
+    #expect(read.map(\.identity.localID) == Array(101...105))
+    let cursor = try await store.read(Self.cursorKey, default: IMAPSweepCursor())
+    #expect(cursor.backfill == IMAPBackfill(lowWaterUID: 0, ceilingUID: 101))
+    #expect(cursor.offset == 2000)
+  }
+
+  @Test
+  func `reads a pending backfill once, skipping mail already read, and then stops`()
+    async throws
+  {
+    let store = try testStore()
+    let raw = "From: sender@example.com\r\n\r\nHello", size = raw.utf8.count
+    try await store.update(Self.cursorKey, default: IMAPSweepCursor()) {
+      $0 = IMAPSweepCursor(
+        validity: 33,
+        boundaryUID: 0,
+        highWaterUID: 10,
+        backfill: IMAPBackfill(lowWaterUID: 5, ceilingUID: 9)
+      )
+    }
+    let sweeps = [
+      Self.inbox(exists: 10, uidNext: 11).metadata(Self.rows(1...10, size: size))
+        .metadata(Self.rows(8...10, size: size)).body(raw, uid: 8, sequence: 8),
+      Self.inbox(exists: 12, uidNext: 13).metadata(Self.rows(1...12, size: size))
+        .body(raw, uid: 11, sequence: 11).body(raw, uid: 12, sequence: 12)
+        .metadata(Self.rows(7...9, size: size)).body(raw, uid: 7, sequence: 7),
+      Self.inbox(exists: 12, uidNext: 13).metadata(Self.rows(1...12, size: size))
+        .metadata(Self.rows(4...6, size: size)).body(raw, uid: 6, sequence: 6),
+      Self.inbox(exists: 12, uidNext: 13).metadata(Self.rows(1...12, size: size))
+    ]
+    var read: [[Int?]] = []
+    for transcript in sweeps {
+      read.append(
+        try await Self.committedSweep(IMAPTestServer(transcript), limit: 3, store: store)
+          .map(\.identity.localID)
+      )
+    }
+    #expect(read == [[8], [11, 12, 7], [6], []])
   }
 
   @Test
@@ -123,34 +178,6 @@ struct `sweeps new IMAP Inbox mail` {
     )
     let read = try await Self.committedSweep(next, limit: 20, store: store)
     #expect(read.map(\.identity.localID) == [2])
-  }
-
-  @Test
-  func `resumes from sweep progress saved under the host as written`() async throws {
-    var mixedCase = IMAPConfiguration.test
-    mixedCase.host = "IMAP.Example.com"
-    let raw = "From: sender@example.com\r\n\r\nHello"
-    let original = try testStore(), upgraded = try testStore()
-    let first = await IMAPTestServer(Self.inbox(exists: 0, uidNext: 1)).adapter(mixedCase)
-    try await first.commit(
-      try await first.nextInboxSweep(limit: 20, cursorStore: original),
-      cursorStore: original
-    )
-    let cursor = try await original.read(
-      "imap-sweep-v1:" + mixedCase.endpointFingerprint,
-      default: IMAPSweepCursor()
-    )
-    try await upgraded.update(
-      "imap-sweep-v1:" + mixedCase.legacyEndpointFingerprint,
-      default: IMAPSweepCursor()
-    ) { $0 = cursor }
-    let delivered = IMAPTestServer(
-      Self.inbox(exists: 2, uidNext: 3).metadata(Self.rows(1...2, size: raw.utf8.count))
-        .body(raw, uid: 1, sequence: 1).body(raw, uid: 2, sequence: 2)
-    )
-    let sweep = try await delivered.adapter(mixedCase)
-      .nextInboxSweep(limit: 20, cursorStore: upgraded)
-    #expect(sweep.messages.map(\.identity.localID) == [1, 2])
   }
 
   @Test

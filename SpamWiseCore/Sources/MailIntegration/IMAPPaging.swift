@@ -16,7 +16,8 @@ extension IMAPAdapter {
     session: IMAPSession,
     offset: Int = 0,
     selection: IMAPMailboxSelection? = nil,
-    aboveUID boundary: Int = 0
+    aboveUID boundary: Int = 0,
+    belowUID ceiling: Int = .max
   ) async throws -> (envelopes: [MailEnvelope], nextOffset: Int) {
     guard limit > 0 else { return ([], offset) }
     let selected: IMAPMailboxSelection
@@ -37,7 +38,7 @@ extension IMAPAdapter {
     var total = 0, nextOffset = selected.count - first + 1
     for row in metadata {
       guard row.uid > boundary else { return (envelopes, 0) }
-      guard row.size <= MIMEParser.maximumMessageBytes else { continue }
+      guard row.uid < ceiling, row.size <= MIMEParser.maximumMessageBytes else { continue }
       guard row.size <= maximumPageBytes - total, envelopes.isEmpty || !session.isPastFetchDeadline
       else {
         nextOffset = selected.count - row.sequence
@@ -84,32 +85,71 @@ extension IMAPAdapter {
       selection: selected,
       session: session
     )
-    var envelopes = arrivals.envelopes
-    var offset = cursor.currentOffset(validity: selected.validity, count: selected.count)
-    if arrivals.caughtUp, !session.isPastFetchDeadline,
-      max(offset, arrivals.scanned) < selected.count
-    {
-      let backfill = try await messages(
-        mailbox: "INBOX",
-        account: account,
-        limit: limit,
-        session: session,
-        offset: max(offset, arrivals.scanned),
-        selection: selected,
-        aboveUID: boundary
-      )
-      envelopes += backfill.envelopes
-      offset = backfill.nextOffset < maximumBackfillDepth ? backfill.nextOffset : 0
-    }
-    return (
-      envelopes,
-      IMAPSweepCursor(
-        offset: offset,
-        validity: selected.validity,
-        boundaryUID: boundary,
-        highWaterUID: arrivals.highWater
-      )
+    var next = IMAPSweepCursor(
+      offset: cursor.currentOffset(validity: selected.validity, count: selected.count),
+      validity: selected.validity,
+      boundaryUID: boundary,
+      highWaterUID: arrivals.highWater,
+      backfill: cursor.backfill
     )
+    if let overflow = arrivals.overflow {
+      next.backfill = next.backfill?.merged(with: overflow) ?? overflow
+      next.offset = arrivals.scanned
+      return (arrivals.envelopes, next)
+    }
+    guard arrivals.caughtUp, !session.isPastFetchDeadline else { return (arrivals.envelopes, next) }
+    let backfilled = try await backfillPage(
+      account: account,
+      limit: limit,
+      cursor: &next,
+      from: max(next.offset, arrivals.scanned),
+      selection: selected,
+      session: session
+    )
+    return (arrivals.envelopes + backfilled, next)
+  }
+
+  /**
+   Reads one page of the cursor's pending backfill from position `start`, counted from the newest
+   message, and advances the cursor past it.
+
+   The ceiling drops to the oldest message the page read, so mail that later arrivals push into
+   the page's positions is skipped without being fetched again. The backfill is complete, and the
+   cursor holds none, once the page reaches its low-water mark, the oldest message or the backfill
+   depth limit.
+   */
+  private static func backfillPage(
+    account: String,
+    limit: Int,
+    cursor: inout IMAPSweepCursor,
+    from start: Int,
+    selection: IMAPMailboxSelection,
+    session: IMAPSession
+  ) async throws -> [MailEnvelope] {
+    guard let backfill = cursor.backfill else { return [] }
+    guard start < selection.count else {
+      cursor.completeBackfill()
+      return []
+    }
+    let page = try await messages(
+      mailbox: "INBOX",
+      account: account,
+      limit: limit,
+      session: session,
+      offset: start,
+      selection: selection,
+      aboveUID: backfill.lowWaterUID,
+      belowUID: backfill.ceilingUID
+    )
+    if (1..<maximumBackfillDepth).contains(page.nextOffset) {
+      cursor.offset = page.nextOffset
+      if let oldest = page.envelopes.compactMap(\.identity.localID).min() {
+        cursor.backfill?.ceilingUID = oldest
+      }
+    } else {
+      cursor.completeBackfill()
+    }
+    return page.envelopes
   }
 
   /**
@@ -117,7 +157,8 @@ extension IMAPAdapter {
    and, after the first fetch, before the session's fetch deadline.
 
    UIDs grow with arrival order, so the high-water mark advances without gaps. An arrival burst
-   deeper than the scan budget leaves its oldest part to the backfill. RFC822.SIZE only
+   deeper than the scan budget leaves its oldest part to the backfill, which ``IMAPArrivals/overflow``
+   describes. RFC822.SIZE only
    estimates each message for the budget; a message whose literal exceeds the size limit stays
    unclassified, the mark passes it and reading stops, since the session can't continue.
    */
@@ -134,6 +175,9 @@ extension IMAPAdapter {
       session: session
     )
     var result = IMAPArrivals(highWater: highWater, scanned: pending.count)
+    if !reached, let oldest = pending.last {
+      result.overflow = IMAPBackfill(lowWaterUID: highWater, ceilingUID: oldest.uid)
+    }
     var bytes = 0
     for row in pending.reversed() {
       guard result.envelopes.count < min(limit, maximumPageSize) * maximumArrivalPages else {
@@ -235,6 +279,8 @@ struct IMAPArrivals {
   var scanned: Int
   /// Whether every message above the previous mark was read.
   var caughtUp = false
+  /// The older part of a burst deeper than the scan budget, which only a backfill reads.
+  var overflow: IMAPBackfill?
 }
 
 private struct IMAPMetadata {

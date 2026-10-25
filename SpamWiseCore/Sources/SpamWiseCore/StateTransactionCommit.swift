@@ -67,7 +67,7 @@ extension StateTransaction {
   private static func hits(_ state: AppState) -> [HitCount] {
     state.contentRuleHits.map { HitCount(id: $0.key.uuidString, count: $0.value) }
   }
-  func commitCollections(stamp: Int, _ changed: inout Set<StateSlice>) throws {
+  func commitCollections(_ changed: inout Set<StateSlice>) throws {
     let ordered = [
       try commitOrdered(.rules, state.rules, baseline.rules, key: \.id) {
         SenderRuleRow(key: $0, order: $1, payload: $2)
@@ -100,13 +100,13 @@ extension StateTransaction {
     if try commitRows(.contentRuleHits, Self.hits(state), Self.hits(baseline), hits) {
       changed.insert(.contentRuleHits)
     }
-    if try commitRecords(stamp: stamp) { changed.insert(.records) }
+    if try commitRecords() { changed.insert(.records) }
     if try commitRetries() { changed.insert(.retries) }
     if try commitClaims() { changed.insert(.claims) }
     if try commitHistories() { changed.insert(.histories) }
     try prune(changed)
   }
-  private func commitRecords(stamp: Int) throws -> Bool {
+  private func commitRecords() throws -> Bool {
     let codec = RowCodec<DecisionRecord, RecordRow>(
       key: { $0.id.uuidString },
       make: { key, _ in RecordRow(key: key) },
@@ -118,7 +118,6 @@ extension StateTransaction {
         row.correctedLabel = record.correctedLabel?.rawValue
         row.sender = record.sender ?? ""; row.subject = record.subject ?? ""
         row.reason = record.decision.reason.localizedDescription
-        row.changeStamp = stamp
       }
     )
     return try commitRows(.records, state.records, baseline.records, codec)

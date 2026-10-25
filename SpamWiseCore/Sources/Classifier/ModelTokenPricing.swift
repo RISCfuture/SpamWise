@@ -4,7 +4,7 @@ public import Foundation
 public struct ModelTokenPricing: Codable, Sendable, Equatable {
   private static let geminiStandardPricingDate = Date(timeIntervalSince1970: 1_798_761_600)
   private static let geminiStandardPriceMultiplier = 2.0
-  static let legacyHaiku = Self(
+  static let claudeHaiku = Self(
     input: 0.10,
     output: 0.50,
     cached: 0.01,
@@ -41,9 +41,9 @@ public struct ModelTokenPricing: Codable, Sendable, Equatable {
   public static func rates(for model: ModelIdentifier, at date: Date = .now) -> Self {
     let anthropic = "https://platform.claude.com/docs/en/about-claude/pricing"
     switch model {
-      case .claudeHaiku: return .legacyHaiku
+      case .claudeHaiku: return .claudeHaiku
       case .claudeSonnet:
-        return .init(input: 2, output: 10, cached: 0.10, source: anthropic, verified: "2026-10-16")
+        return .init(input: 2, output: 10, cached: 0.20, source: anthropic, verified: "2026-10-24")
       case .claudeOpus:
         return .init(input: 4, output: 20, cached: 0.20, source: anthropic, verified: "2026-10-16")
       case .gptMini:

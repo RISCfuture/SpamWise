@@ -226,10 +226,11 @@ extension AppState {
     }
   }
   fileprivate mutating func importLabel(_ sample: ImportedSample, label: MailLabel) {
+    let retainsContent = settings.advancedOptions.retainReviewedContent
     var reviewed = ReviewedLabel(
       identity: MessageIdentity(accountID: nil, contentHash: sample.message.hash),
       label: label,
-      message: settings.advancedOptions.retainReviewedContent ? sample.message : nil,
+      message: retainsContent ? sample.message : nil,
       sampleID: sample.sampleID
     )
     reviewed.origin = .reviewedImport
@@ -246,7 +247,7 @@ extension AppState {
       sender: sample.message.fromAddress,
       domain: DomainResolver().domain(ofAddress: sample.message.fromAddress),
       subject: sample.message.subject,
-      excerpt: sample.message.text,
+      excerpt: retainsContent ? sample.message.text : "",
       label: label,
       promptScope: .everyAccount
     )

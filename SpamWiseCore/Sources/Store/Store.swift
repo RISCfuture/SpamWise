@@ -193,7 +193,6 @@ public actor Store {
     if let cached = Self.cachedContainer(for: url) { return cached }
     let created = try ModelContainer(
       for: Schema(versionedSchema: StoreSchemaV2.self),
-      migrationPlan: StoreMigrationPlan.self,
       configurations: ModelConfiguration(url: url, cloudKitDatabase: .none)
     )
     return Self.containers.withLock { containers in

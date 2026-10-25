@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import Testing
 import SpamWiseCore
@@ -85,5 +86,111 @@ struct `Encrypted state backup` {
     #expect(restored.settings.paused && restored.settings.dryRun)
     #expect(restored.settings.validatedAccounts.isEmpty)
     #expect(try await SpendingLimit.load(store).committedMicroUSD == reservation.microUSD)
+  }
+
+  @Test
+  func `restores message text only while this Mac retains reviewed text`() async throws {
+    let message = try MIMEParser().parse(fixture("personal")).boundedForRetention()
+    var state = backedUp
+    state.reviewedLabels = [
+      ReviewedLabel(
+        identity: .init(accountID: "account-A", contentHash: message.hash),
+        label: .inbox,
+        message: message
+      )
+    ]
+    state.corrections = [
+      CorrectionExample(
+        sender: "friend@example.org",
+        domain: "example.org",
+        subject: "Hello",
+        excerpt: "Quoted body text",
+        label: .inbox,
+        promptScope: .account("account-A")
+      )
+    ]
+    let archive = try StateBackup.export(state, recoveryKey: key, includeContent: true)
+    for retains in [false, true] {
+      try await StateRepository.editSettings(store) {
+        $0.advancedOptions.retainReviewedContent = retains
+      }
+      try await StateBackup.restore(archive, recoveryKey: key, store: store)
+      let restored = try await StateRepository.load(store)
+      #expect(restored.settings.advancedOptions.retainReviewedContent == retains)
+      #expect(restored.reviewedLabels.map { $0.message != nil } == [retains])
+      #expect(restored.corrections.map(\.excerpt) == [retains ? "Quoted body text" : ""])
+    }
+  }
+
+  @Test
+  func `leaves correction excerpts out of a backup without message text`() async throws {
+    try await StateRepository.editSettings(store) {
+      $0.advancedOptions.retainReviewedContent = true
+    }
+    var state = backedUp
+    state.corrections = [
+      CorrectionExample(
+        sender: "friend@example.org",
+        domain: "example.org",
+        subject: "Hello",
+        excerpt: "Quoted body text",
+        label: .inbox,
+        promptScope: .account("account-A")
+      )
+    ]
+    for (includeContent, excerpt) in [(false, ""), (true, "Quoted body text")] {
+      let archive = try StateBackup.export(state, recoveryKey: key, includeContent: includeContent)
+      try await StateBackup.restore(archive, recoveryKey: key, store: store)
+      #expect(try await StateRepository.load(store).corrections.map(\.excerpt) == [excerpt])
+    }
+  }
+
+  @Test
+  func `restores trust exclusions and learning options a backup saved`() async throws {
+    var state = backedUp
+    state.settings.mailOptions.trustExclusions = ["alias@example.org"]
+    state.settings.advancedOptions.bayes = true
+    let archive = try StateBackup.export(state, recoveryKey: key)
+    try await StateBackup.restore(archive, recoveryKey: key, store: store)
+    let restored = try await StateRepository.load(store).settings
+    #expect(restored.mailOptions.trustExclusions == ["alias@example.org"])
+    #expect(restored.advancedOptions.bayes)
+    #expect(!restored.advancedOptions.fingerprints && !restored.advancedOptions.learnedWeights)
+  }
+
+  @Test
+  func `keeps this Mac's trust exclusions and learning options for a version-one backup`()
+    async throws
+  {
+    try await StateRepository.editSettings(store) {
+      $0.mailOptions.trustExclusions = ["alias@example.org"]
+      $0.advancedOptions.fingerprints = true
+    }
+    try await StateBackup.restore(try versionOne(archive), recoveryKey: key, store: store)
+    let restored = try await StateRepository.load(store)
+    #expect(restored.rules == backedUp.rules)
+    #expect(restored.settings.mailOptions.trustExclusions == ["alias@example.org"])
+    #expect(restored.settings.advancedOptions.fingerprints)
+  }
+
+  /// Rewrites `archive` in the version-one format, which has no trust exclusions or learning options.
+  private func versionOne(_ archive: Data) throws -> Data {
+    let authentication = Data("SpamWise-backup-v1".utf8)
+    let sealingKey = SymmetricKey(data: try #require(Data(base64Encoded: key)))
+    let plain = try AES.GCM.open(
+      AES.GCM.SealedBox(combined: archive),
+      using: sealingKey,
+      authenticating: authentication
+    )
+    var payload = try #require(JSONSerialization.jsonObject(with: plain) as? [String: Any])
+    payload["version"] = 1
+    payload.removeValue(forKey: "trustExclusions"); payload.removeValue(forKey: "learningOptions")
+    return try #require(
+      try AES.GCM.seal(
+        JSONSerialization.data(withJSONObject: payload),
+        using: sealingKey,
+        authenticating: authentication
+      ).combined
+    )
   }
 }
