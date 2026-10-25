@@ -69,7 +69,7 @@ Filesystem permission, an unconfigured ledger or budget exhaustion prevents
 evaluation. The store's transaction and cross-process lock remain responsible for
 each reservation.
 
-For `corpus`, optional `--state snapshot.json` reads an `AppState` with rules, corrections, Contacts, and history under account ID `eval`. Each run uses a fresh temporary classification store, forces dry run, and clears action claims and retries. It does not mutate the app's classification state; paid requests reserve spending in the explicit `--budget-store` ledger. RDAP is unknown, external DNS/Rspamd and image OCR are disabled, and no remote URLs from mail are fetched.
+For `corpus`, optional `--state snapshot.json` reads an `AppState` with rules, corrections, Contacts, history under account ID `eval`, category preferences and filtering strength; `--strength` overrides the snapshot's strength. Each run uses a fresh temporary classification store, forces dry run, and clears action claims and retries. It does not mutate the app's classification state; paid requests reserve spending in the explicit `--budget-store` ledger. RDAP is unknown, external DNS/Rspamd and image OCR are disabled, and no remote URLs from mail are fetched.
 
 ## Reviewed-label exports
 

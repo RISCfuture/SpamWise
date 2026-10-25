@@ -25,15 +25,16 @@ struct RunReport: Encodable {
 
   init(
     options: ClassifierOptions,
+    run: EvaluationRun,
     observations: [EvaluationObservation],
-    cache: CachedClassifier,
     reviewed: ReviewedCorpus.Summary? = nil
   ) async {
+    let cache = run.cache
     model = options.model.description
-    strength = options.strength
+    strength = run.strength
     metrics = EvaluationReport(observations: observations)
     self.observations = observations
-    calibration = ThresholdCalibration(observations: observations, strength: options.strength)
+    calibration = ThresholdCalibration(observations: observations, strength: strength)
     calibrationStatus = Self.calibrationStatus(metrics: metrics, observations: observations)
     cacheHits = await cache.hits
     let isMock = options.model == .mock

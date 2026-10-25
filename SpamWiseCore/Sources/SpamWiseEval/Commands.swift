@@ -36,7 +36,12 @@ struct CorpusCommand: AsyncParsableCommand {
   @Argument(help: "Corpus directory.")
   var directory: String
 
-  @Option(help: "AppState JSON supplying rules, contacts and history under account ID eval.")
+  @Option(
+    help: """
+      AppState JSON supplying rules, contacts, history under account ID eval, mail choices and \
+      filtering strength.
+      """
+  )
   var state: String?
 
   @OptionGroup var classifier: ClassifierOptions
@@ -48,7 +53,7 @@ struct CorpusCommand: AsyncParsableCommand {
       try await EvaluationRun.with(classifier, seed: EvaluationRun.seed(at: state)) { run in
         let observations = try await run.corpus(at: root)
         try report.publish(
-          await RunReport(options: classifier, observations: observations, cache: run.cache)
+          await RunReport(options: classifier, run: run, observations: observations)
         )
       }
     }
@@ -95,8 +100,8 @@ struct ReviewedCommand: AsyncParsableCommand {
         try report.publish(
           await RunReport(
             options: classifier,
+            run: run,
             observations: observations,
-            cache: run.cache,
             reviewed: corpus.summary
           )
         )
