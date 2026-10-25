@@ -6,14 +6,10 @@ import SpamWiseCore
 @MainActor
 @Suite
 struct `First read of shared storage` {
-  private let store: Store
+  private let temporary: TemporaryStore
+  private var store: Store { temporary.store }
 
-  init() throws {
-    store = try Store(
-      url: FileManager.default.temporaryDirectory
-        .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
-    )
-  }
+  init() throws { temporary = try TemporaryStore() }
 
   @Test
   func `starts setup when nothing has been saved`() async {

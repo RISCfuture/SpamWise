@@ -6,9 +6,13 @@ import SpamWiseCore
 @MainActor
 @Suite
 struct `Optimistic settings edits` {
+  private let temporary: TemporaryStore
+  private var store: Store { temporary.store }
+
+  init() throws { temporary = try TemporaryStore() }
+
   @Test
   func `survive a reload while their write is pending`() async throws {
-    let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     await shared.refresh()
     try await StateRepository.editSettings(store) { $0.policy = "Saved by another process" }
@@ -20,7 +24,6 @@ struct `Optimistic settings edits` {
 
   @Test
   func `show the stored value again once their write fails`() async throws {
-    let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     let settings = SettingsModel(shared: shared)
     await shared.refresh()
@@ -36,7 +39,6 @@ struct `Optimistic settings edits` {
 
   @Test
   func `persist rapid edits in the order made`() async throws {
-    let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     let settings = SettingsModel(shared: shared)
     await shared.refresh()
@@ -52,7 +54,6 @@ struct `Optimistic settings edits` {
   func `change only their own field and withdraw terms with the Spamhaus service`()
     async throws
   {
-    let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     let settings = SettingsModel(shared: shared)
     await shared.refresh()
@@ -70,7 +71,6 @@ struct `Optimistic settings edits` {
 
   @Test
   func `switch to the on-device model when filtering is kept on this Mac`() async throws {
-    let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     let settings = SettingsModel(shared: shared)
     await shared.refresh()
@@ -84,7 +84,6 @@ struct `Optimistic settings edits` {
 
   @Test
   func `save a stepper edit still waiting in its draft before quitting`() async throws {
-    let store = try temporaryStore()
     let shared = SharedStateModel(store: store)
     let settings = SettingsModel(shared: shared)
     await shared.refresh()
@@ -93,13 +92,6 @@ struct `Optimistic settings edits` {
     await settings.savePendingEdits()
     #expect(try await StateRepository.load(store, StateSlices()).settings.correctionLimit == edited)
     #expect(!settings.correctionLimit.hasUnsavedEdit)
-  }
-
-  private func temporaryStore() throws -> Store {
-    try Store(
-      url: FileManager.default.temporaryDirectory
-        .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
-    )
   }
 
   /// Waits for every settings write queued so far.
@@ -111,12 +103,13 @@ struct `Optimistic settings edits` {
 @MainActor
 @Suite
 struct `Set-aside storage` {
+  private let temporary: TemporaryStore
+  private var store: Store { temporary.store }
+
+  init() throws { temporary = try TemporaryStore() }
+
   @Test
   func `asks for recovery when data is set aside after launch`() async throws {
-    let store = try Store(
-      url: FileManager.default.temporaryDirectory
-        .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
-    )
     let shared = SharedStateModel(store: store)
     await shared.refresh()
     try await store.update("state.contacts", default: "unreadable") { _ in }

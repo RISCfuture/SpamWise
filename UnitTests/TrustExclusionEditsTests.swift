@@ -6,12 +6,13 @@ import SpamWiseCore
 @MainActor
 @Suite
 struct `Trust exception edits` {
+  private let temporary: TemporaryStore
+  private var store: Store { temporary.store }
+
+  init() throws { temporary = try TemporaryStore() }
+
   @Test
   func `keep an edit that can't be saved until it is corrected`() async throws {
-    let store = try Store(
-      url: FileManager.default.temporaryDirectory
-        .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
-    )
     let shared = SharedStateModel(store: store)
     let relationships = RelationshipsModel(services: services(store: store), shared: shared)
     await shared.refresh()

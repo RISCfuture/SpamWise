@@ -142,6 +142,16 @@ struct `Reviewed-message capacity` {
 @MainActor
 @Suite
 struct `Selected-message corrections` {
+  private let storage: TemporaryStore
+  /// A store whose location is a directory, so every transaction on it fails.
+  private let unreadable: TemporaryStore
+
+  init() throws {
+    storage = try TemporaryStore()
+    unreadable = try TemporaryStore()
+    try FileManager.default.createDirectory(at: unreadable.url, withIntermediateDirectories: true)
+  }
+
   @Test
   func `overlap each message's wait for Mail to show it in Junk`() async throws {
     let mail = SelectedInbox(count: CorrectionsModel.maximumOverlappingCorrections)
@@ -157,7 +167,7 @@ struct `Selected-message corrections` {
   func `ask before blocking senders whose check fails`() async throws {
     let mail = SelectedInbox(count: 2)
     let corrections = CorrectionsModel(
-      testing: try await services(mail: mail, checksSendersWith: unreadableStore())
+      testing: try await services(mail: mail, checksSendersWith: unreadable.store)
     )
     #expect(corrections.correctSelection(.junk) {})
     await corrections.selection.run { nil }.value
@@ -182,7 +192,7 @@ struct `Selected-message corrections` {
   private func services(mail: SelectedInbox, checksSendersWith pipelineStore: Store? = nil)
     async throws -> AppServices
   {
-    let store = try Store(url: temporaryStoreURL())
+    let store = storage.store
     try await StateRepository.update(store) { state in
       state.settings.dryRun = false
       state.settings.validatedAccounts = [SelectedInbox.accountID]
@@ -202,19 +212,6 @@ struct `Selected-message corrections` {
       preferences: try #require(UserDefaults(suiteName: "codes.tim.SpamWise.UnitTests.\(UUID())")),
       uiTesting: true
     )
-  }
-
-  private func temporaryStoreURL() -> URL {
-    FileManager.default.temporaryDirectory
-      .appending(path: "SpamWise-UnitTests-\(UUID())/state.store")
-  }
-
-  /// A store whose location is a directory, so every transaction on it fails.
-  private func unreadableStore() throws -> Store {
-    let url = temporaryStoreURL()
-    let store = try Store(url: url)
-    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-    return store
   }
 }
 
