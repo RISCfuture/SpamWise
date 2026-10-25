@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# Fails when the release tag already exists and names a commit other than the one this run builds.
+# Fails when the release tag already exists and names a commit other than the one this run builds,
+# or when GitHub can't say whether the tag exists.
 #
 #   Scripts/check-release-tag.sh <version>
 #
@@ -22,8 +23,14 @@ if ! [[ $version =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
   exit 1
 fi
 
-if tagged=$(gh api "repos/$GITHUB_REPOSITORY/commits/$version" --jq .sha 2>/dev/null) \
-  && [ "$tagged" != "$GITHUB_SHA" ]; then
-  echo "::error::Tag $version points at $tagged, but this run builds $GITHUB_SHA."
+# Only a confirmed 404 means the tag is missing; any other API error stops the run.
+if errors=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$version" --silent 2>&1); then
+  tagged=$(gh api "repos/$GITHUB_REPOSITORY/commits/refs/tags/$version" --jq .sha)
+  if [ "$tagged" != "$GITHUB_SHA" ]; then
+    echo "::error::Tag $version points at $tagged, but this run builds $GITHUB_SHA."
+    exit 1
+  fi
+elif [[ $errors != *"(HTTP 404)"* ]]; then
+  echo "::error::Couldn't check whether tag $version exists: $errors"
   exit 1
 fi
