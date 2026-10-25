@@ -148,7 +148,7 @@ private struct UndoCorrectionButton: View {
   private var label: String { VerdictBadge.title(for: row.effectiveLabel) }
 
   var body: some View {
-    Button("Undo latest correction…") { confirming = true }
+    Button("Undo Latest Correction…") { confirming = true }
       .disabled(corrections.decision.isBusy)
       .accessibilityIdentifier("correction.undo")
       .confirmationDialog(
