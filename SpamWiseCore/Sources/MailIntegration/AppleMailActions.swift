@@ -97,6 +97,9 @@ extension AppleMailAdapter {
   /**
    Acts on a user-corrected message wherever it now is in its account, then observes the result.
 
+   A moved message without a Message-ID is observed among the destination's messages of its size
+   and confirmed by its content.
+
    - Throws: ``ActionNotAttempted`` when the message can't be resolved, or Mail refuses before
      changing it.
    */
@@ -207,7 +210,6 @@ extension AppleMailAdapter {
       case .applied: break
     }
     guard let destination = command.destination else { return .init(confirmed: true) }
-    guard target.location.messageID != nil else { return .init(confirmed: false) }
     return await observeMove(of: target, to: destination, confirmation: confirmation)
   }
   /// Whether `command` has anything to change: clearing Review applies only to a mark SpamWise set.
@@ -309,14 +311,20 @@ extension AppleMailAdapter {
   {
     try await copies(of: identity, in: role, byteCount: byteCount).first
   }
+  /**
+   The account's `role` mailbox copies with the identity's content, found by Message-ID or, for
+   mail without one, by `byteCount`; none when neither is known.
+   */
   private func copies(of identity: MessageIdentity, in role: MailboxRole, byteCount: Int)
     async throws -> [MessageIdentity]
   {
-    guard let account = identity.accountID, let messageID = identity.messageID else { return [] }
+    guard let account = identity.accountID, identity.messageID != nil || byteCount >= 0 else {
+      return []
+    }
     let request = MailRequest.observe(
       accountID: account,
       role: role,
-      messageID: messageID,
+      messageID: identity.messageID,
       byteCount: byteCount
     )
     guard let values = try await invoke(request).list else { throw IntegrationError.scriptFailed }

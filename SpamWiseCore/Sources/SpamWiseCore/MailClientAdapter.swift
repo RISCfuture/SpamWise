@@ -131,7 +131,7 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
   case messageNotFound
   /// The message left the mailbox where it was recorded, so it was not changed.
   case messageMoved
-  /// The message has no Message-ID, so a move could not be confirmed and was not attempted.
+  /// The message has no Message-ID, which automatic moves require, so no move was attempted.
   case missingMessageID
   /// The message source exceeds the readable size limit.
   case messageTooLarge
@@ -229,7 +229,7 @@ public enum IntegrationError: MailIntegrationFailure, LocalizedError, Sendable, 
       case .missingMessageID:
         String(
           localized:
-            "The message has no Message-ID, so SpamWise can’t confirm a move and left it in place.",
+            "The message has no Message-ID, so SpamWise doesn’t move it automatically and left it in place.",
           bundle: .module
         )
       case .existingAnnotation:
