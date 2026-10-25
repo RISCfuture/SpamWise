@@ -87,7 +87,7 @@ extension AppleMailAdapter {
    is applied once the message shows it within the settling window, though an annotation added
    by a request Mail didn't answer stays the user's.
 
-   - Throws: ``ActionNotAttempted`` when the message can't be resolved, the record of Review
+   - Throws: `ActionNotAttempted` when the message can't be resolved, the record of Review
      marks SpamWise set can't be read before clearing one, or Mail refuses before changing it, as
      when it has left its mailbox or another flag or color is already set.
    */
@@ -102,7 +102,7 @@ extension AppleMailAdapter {
    A moved message without a Message-ID is observed among the destination's messages of its size
    and confirmed by its content.
 
-   - Throws: ``ActionNotAttempted`` when the message can't be resolved, or Mail refuses before
+   - Throws: `ActionNotAttempted` when the message can't be resolved, or Mail refuses before
      changing it.
    */
   public func performCorrection(_ action: MailAction, for identity: MessageIdentity) async throws
@@ -126,7 +126,7 @@ extension AppleMailAdapter {
    Clears Mail's junk mark on a corrected message after rechecking it and its account's Inbox
    membership, and reads the mark back.
 
-   - Throws: ``ActionNotAttempted`` when the message can't be resolved where it was recorded,
+   - Throws: `ActionNotAttempted` when the message can't be resolved where it was recorded,
      or Mail refuses before changing it because it has left the Inbox.
    */
   public func clearJunkMarkInInbox(_ identity: MessageIdentity) async throws -> JunkMarkChange {
