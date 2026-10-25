@@ -29,7 +29,7 @@ PAGES = {
     ),
     "mail-compatibility": (
         "Mail compatibility",
-        "Observed Apple Mail compatibility and outstanding acceptance work for SpamWise.",
+        "SpamWise's Mac and Mail requirements, tested accounts and how it checks its moves.",
     ),
 }
 

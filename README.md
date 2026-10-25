@@ -98,9 +98,9 @@ they need and never write to the store or Keychain directly.
   store-backed sorting, and every sheet is an `ActivitySheet` case presented through
   `ActivityRouter`. The menu bar and the Activity footer show one aggregate filtering
   state, such as dry run, offline or failing.
-- Settings has General, Classifier, Accounts, Rules, Policy and Advanced tabs. Every
-  control applies on change; text fields and steppers save after a short pause or
-  when focus leaves them.
+- Settings has General, Provider, Accounts, Rules, Mail Choices and Advanced tabs.
+  Every control applies on change; text fields and steppers save after a short pause,
+  when focus leaves them, or when the app quits.
 
 ### Schemes
 
@@ -143,11 +143,13 @@ Scripts/check.sh            # CI's unsigned checks, with warnings as errors
 Scripts/ui-check.sh         # XCTest UI flows; development-signed
 ```
 
-`check.sh` checks package localizations and the Help book, runs the package tests,
-builds both editions and the extension, checks the app icon and runs the hostless unit
-tests, failing on any warning. Products land in `.build/check/`; pass another name
-(`Scripts/check.sh feature-x`) to keep concurrent builds apart. The pieces can run
-alone:
+`check.sh` checks local package references, package localizations, the Help book, and
+the committed Mail rule script and Help search indexes against their sources. It runs
+the corpus and preference tool tests and the package tests, builds both editions in
+the Release configuration (checking each app icon) and the extension, and runs the
+hostless unit tests, failing on any build diagnostic. Products land in
+`.build/check/`; pass another name (`Scripts/check.sh feature-x`) to keep concurrent
+builds apart. The pieces can run alone:
 
 | Layer | Command |
 | --- | --- |
@@ -156,8 +158,10 @@ alone:
 | UI tests | `Scripts/ui-check.sh`, which signs for team `2NFSK2WB24` and runs `UITests` from `SpamWise.xctestplan` against the App Store edition |
 | Package localizations | `python3 Scripts/check-core-localizations.py`: every package string uses its module's catalog and has matching es/fr values |
 | Help book | `python3 Scripts/check-help-book.py`: every anchor the app opens exists in all three languages, and links resolve |
+| Compiled resources | `python3 Scripts/check-compiled-resources.py`: the Mail rule script and Help search indexes match their sources (`Scripts/help-index.sh` rebuilds the indexes) |
+| Tool tests | `python3 -B -m unittest discover -s Tools/Corpus -p 'test_*.py'`, and the same for `Tools/Preferences` |
 | Documentation | `xcodebuild docbuild -scheme SpamWiseCore-Package -destination 'platform=macOS,arch=arm64'`, run in `SpamWiseCore/` |
-| Store concurrency | `bash Scripts/store-check.sh`: two processes make 50 transactions each, a third reads 100 |
+| Store concurrency | `bash Scripts/store-check.sh [build-token]`: two processes make 50 transactions each, a third reads 100 |
 | Format | `swift format format -i -r SpamWise SpamWise-MAS SpamWise-download SpamWiseCore/Sources SpamWiseCore/Tests MailExtension UITests UnitTests` |
 | Lint | `swiftlint lint --strict`, with the house parent config that `.swiftlint.yml` names |
 
@@ -176,36 +180,40 @@ labeled-corpus runs with `spamwise-eval`.
 
 ### Continuous integration
 
-Pushes and pull requests to `main` run two workflows on Xcode 27 runners:
+Pushes and pull requests to `main` run two workflows:
 
 | Workflow | Job | Checks |
 | --- | --- | --- |
-| `ci.yml` | Package Tests | `swift test` with warnings as errors |
+| `ci.yml` | Source Checks | Package references, localizations, Help anchors and the corpus and preference tool tests, on Linux |
+| | Package Tests | `swift test` with warnings as errors |
 | | Unit Tests | The hostless `SpamWise Common` tests |
-| | Build Editions | Unsigned builds of both editions and the Mail extension |
+| | Build Editions | Unsigned Release builds of both editions, with the app-icon check, and of the Mail extension |
 | | UI Tests | `UITests` against an ad-hoc-signed App Store edition in test mode |
 | | Documentation | The package's DocC; any warning in SpamWiseCore sources fails |
-| `lint.yml` | Run SwiftLint | `swiftlint lint --strict` |
+| `lint.yml` | Run SwiftLint | `swiftlint lint --strict` with a pinned, digest-checked SwiftLint |
 
-No CI job drives Mail: real actions need a signed app, a configured account and
-Automation approval. `site.yml` validates the prerelease site on pull requests that
-touch it and deploys only from a manual run on `main`; `release.yml` runs the release
-lanes for a pushed version tag. CI does not run the localization or Help checks, so
-run `Scripts/check.sh` before pushing.
+The package, unit and build jobs also fail on any build diagnostic in their logs. No CI
+job drives Mail: real actions need a signed app, a configured account and Automation
+approval. CI doesn't compare the compiled Mail rule script and Help indexes with their
+sources, so run `Scripts/check.sh` before pushing. `site.yml` validates the prerelease
+site on pull requests that touch it and deploys only from a manual run on `main`;
+`release.yml` runs the release lanes for a pushed version tag.
 
 ## Running
 
-Complete the four setup steps. Allow SpamWise to control Mail when macOS asks;
-Contacts is optional. Do not grant Full Disk Access: SpamWise never reads Mail's
-databases. Choose a model; a cloud provider needs your own API key, stored in Keychain,
+Complete the five setup steps: an introduction, the provider, the Mail connection,
+how to treat each kind of bulk mail, and a dry run. Allow SpamWise to control Mail
+when macOS asks; Contacts is optional. Do not grant Full Disk Access: SpamWise never
+reads Mail's databases. A cloud provider needs your own API key, stored in Keychain,
 and separate permission to share mail with it.
 
 Check the Mail connection in Settings → Accounts to validate each account's Inbox and
-Junk mailboxes, review the dry-run results in Activity, then turn dry run off in
-General. SpamWise filters only while it runs: closing its windows leaves the menu-bar
-app monitoring, and launch at login is optional. Automatic scans consider mail received
-after setup; older mail is filtered only through an explicit preview under the
-account's Older mail in Settings → Accounts.
+Junk mailboxes, review the dry-run results in Activity, then choose Start Filtering…
+and confirm. SpamWise filters only while it runs: closing its windows leaves it
+filtering, reachable from its menu bar item or Dock icon, and opening at login is
+optional. Automatic checks consider mail received after setup; older mail is filtered
+only through an explicit preview under each account's Mailboxes and Details → Older
+mail in Settings → Accounts. The [support guide](docs/support.md) covers everyday use.
 
 `spamwise-daemon` filters one IMAP account headlessly; see [IMAP](docs/imap.md).
 

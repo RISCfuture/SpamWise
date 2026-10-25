@@ -6,8 +6,10 @@ Mail, either from the app (Settings → Accounts) or headlessly with
 on [swift-nio-imap](https://github.com/apple/swift-nio-imap) and has offline protocol
 coverage only; live acceptance is tracked in [TODO.md](../TODO.md).
 
-In the app, set Settings → Accounts → Mail connection to IMAP and confirm Switch to
-IMAP, which turns dry run on; each connection keeps its own mailbox check. **Save
+In the app, choose IMAP in the Mail connection section of Settings → Accounts, which
+sits below the Apple Mail sections while Apple Mail is selected, and confirm Switch to
+IMAP. That turns dry run on and scrolls to the IMAP account fields; each connection
+keeps its own mailbox check. **Save
 Connection** stores the password in the shared Keychain (the app signs in with a
 password only; the daemon also accepts an OAuth token), and **Check
 Connection** performs the validation described below for the app. **Forget
@@ -169,10 +171,14 @@ attempted, so the message stays where it was and nothing is claimed as moved.
 Junk moves use `UID MOVE` to the server-designated Junk mailbox. Review is stored as
 the `$SpamWiseReview` keyword, or `\Flagged` where the mailbox admits no new keywords.
 Clearing Review removes the keyword, but removes `\Flagged` only where SpamWise set it:
-a message the user had already flagged keeps its flag. A message SpamWise moved to Junk that
-later reappears in Inbox was rescued in another client: SpamWise records it as an
-implicit Good correction, which also marks the sender as wanted, and never junks it
-again.
+a message the user had already flagged keeps its flag. A message SpamWise moved to Junk
+that later reappears in Inbox was rescued in another client: SpamWise records it as
+an implicit Good correction, which also marks the sender as wanted, and doesn't junk
+it again. An IMAP move counts as settled once it is verified, so the next live sweep
+can learn the rescue; dry-run sweeps learn nothing. The correction moves no mail: it
+acts only on the message where the Inbox sweep saw it, so a message re-junked or filed
+elsewhere in the meantime stays where it is, and its correction step is recorded as
+failed or not attempted.
 
 `probe` is an optional end-to-end move test. Place a disposable message whose
 subject starts with `[SpamWise Probe]` in Inbox and pass its current Inbox UID (an

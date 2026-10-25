@@ -1,9 +1,11 @@
-# Optional evidence and embedded-image OCR
+# Evidence, receiving-server trust and embedded-image OCR
 
-These features supply observations to the classifier. They do not select a mail
-action, override an explicit rule, or bypass a trusted-contact/history gate.
+The optional features here supply observations to the classifier. They do not select
+a mail action, override an explicit rule, or bypass a trusted-contact/history gate.
 Missing permission, service errors, malformed responses, and timeouts mean
 **unknown**. Enable each feature deliberately; all are optional.
+[Receiving-server trust](#receiving-server-trust) decides which authentication results
+SpamWise believes.
 
 ## Spamhaus domain and URI-host reputation
 
@@ -57,14 +59,48 @@ errors, unavailable services, excess output, and malformed results produce unkno
 evidence. The local endpoint is not authenticated: enable this only for a scanner you
 control, and stop using it if another process takes its port.
 
-SpamWise parses the [JSON symbol response](https://docs.rspamd.com/developers/protocol/),
-retaining at most 20 symbol names and finite scores as untrusted evidence. It
-ignores the server's proposed action. It does not invoke learning, fuzzy-write,
-administration, deletion, or message-delivery commands. Scanning may still have
-side effects configured in the local Rspamd server, such as logging or automatic
+SpamWise parses the [JSON symbol response](https://docs.rspamd.com/developers/protocol/)
+into at most 20 untrusted evidence details: first the scanner's overall score, required score and action, then
+symbols by descending absolute score and then by name. A response with more than 200
+symbols, a malformed symbol name or a score that isn't finite or is out of range is
+unknown. An action outside Rspamd's built-in set, such as one the operator configured,
+is left out while the scores and symbols are kept. The action is evidence for the
+classifier, never a mail action. SpamWise does not invoke learning, fuzzy-write,
+administration, deletion, or message-delivery commands. Scanning may still have side
+effects configured in the local Rspamd server, such as logging or automatic
 statistical learning. A [signed sandbox runtime probe](probes/rspamd-runtime.md)
 scanned synthetic mail against native Rspamd 4.2.2; that validates the transport, not
 the quality or privacy of an independently installed scanner's rules.
+
+## Receiving-server trust
+
+Authentication-Results headers are untrusted by default, because a sender can add
+headers naming any server. Each account trusts only the receiving servers the user
+confirms in Settings → Accounts, by their authserv-id. Only the topmost header from
+each trusted server counts, and only while no untrusted or repeated server appears
+above it. Allow rules, Contacts and reply or receipt history decide only for a sender
+with a trusted DKIM or DMARC pass for the From address's registrable domain and no
+trusted DMARC failure; otherwise they reach the classifier as evidence. Block rules
+always apply.
+
+SpamWise suggests servers from up to 50 of each account's messages while the account
+trusts none. A server is detected when the contiguous topmost headers of at least 90%
+of at least ten sampled messages name it; a server a sender names lower down appears
+only in that sender's mail, so it doesn't reach that share.
+
+Microsoft 365 and Outlook.com add a topmost Authentication-Results header with no
+authserv-id, so for them the receiving provider's ARC-Authentication-Results header
+supplies the name. ARC signatures are not verified, so this relies on position alone.
+A message qualifies only when its topmost Authentication-Results header has no
+authserv-id and it carries a single ARC-Seal and a single
+ARC-Authentication-Results, both instance `i=1`: the provider adds that set on
+arrival, and a set the sender supplied, or one a forwarder or mailing list added,
+would make the provider's own a later instance. The ARC set only names the server.
+When that name is trusted, the results trusted are those in the provider's topmost
+Authentication-Results header; the ARC set's own results are never used. Detection
+applies the same 90%-of-ten rule to ARC names, consulted only when no
+Authentication-Results server is consistent, and Settings explains that the detected
+server came from ARC headers.
 
 ## Embedded-image OCR
 

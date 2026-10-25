@@ -13,15 +13,15 @@ changes. It is not an App Store Connect submission; open release work is in
 | --- | --- |
 | Apple Mail | Bounded source/history reads and account-scoped actions through public Apple Events, with macOS Automation consent. No Mail database access or Full Disk Access |
 | Mail extension | Returns no decision for any message and stores nothing; its manifest declares no collection |
-| IMAP | Optional direct TLS connection to the configured server with the user's password or OAuth token; bounded reads with `BODY.PEEK`, account-scoped moves and Review keywords |
+| IMAP | Optional direct TLS connection to the configured server with the user's password (the headless daemon can also use an OAuth bearer token); bounded reads with `BODY.PEEK`, account-scoped moves and Review keywords |
 | Contacts | Optional. Email addresses are matched locally and snapshotted in the App Group store, refreshed hourly while the app runs; whether a sender is a contact can appear in an authorized model request |
-| SwiftData App Group store | Settings, rules, decisions, bounded retries/corrections/retained labels, learned signals, action claims, spending, sender/receipt history, the Contacts snapshot, and per-account Authentication-Results receiving-server observations (up to 50 messages and 16 servers) plus the trusted servers the user confirms |
+| SwiftData App Group store | Settings, rules, decisions, bounded retries/corrections/retained labels, learned signals, action claims, spending, sender/receipt history, the Contacts snapshot, and per-account Authentication-Results and ARC-Authentication-Results receiving-server observations (up to 50 messages and 16 servers) plus the trusted servers the user confirms |
 | App Group files | `rdap-cache.json`: registration ages for up to 2,048 domains, kept seven days, or one hour when unknown |
 | Keychain (shared group) | Provider API keys, the Spamhaus HTTPS query key and IMAP credentials. Excluded from backups, settings and default diagnostics |
-| Claude | Messages API, user's key, fresh bounded request; SDK/app/OS information in User-Agent; no SpamWise proxy |
+| Claude | Messages API through the Claude SDK's default URL session, user's key, per-request deadline and response-token cap; SDK/app/OS information in User-Agent; no SpamWise proxy |
 | OpenAI | Responses API, user's key, `store: false`, bounded request, no hosted tools or background response polling |
 | Gemini | `generateContent`, user's key, bounded request; no account billing/contract eligibility detection |
-| Model request content | Sender address and display name, subject, shortened body, enabled attachment/OCR text, evidence, filtering preferences and up to five same-account correction excerpts quoted by domain. Requires per-provider mail-sharing consent; blocked in local mode |
+| Model request content | Sender address and display name, subject, shortened body, enabled attachment/OCR text, evidence, filtering preferences and the user-chosen number of similar correction excerpts (five by default, up to 20) quoted by domain, from the same account or, for imported reviewed examples, any account. Requires per-provider mail-sharing consent; blocked in local mode |
 | RDAP | Opt-in sender-domain lookup through IANA bootstrap data and the listed registration services |
 | Spamhaus DBL, public DNS | Opt-in, terms acknowledged. In-process DNS questions for From, Reply-To, Return-Path and link domains (at most five per message) sent only to the configured resolver; available in both editions |
 | Spamhaus DBL, HTTPS | Opt-in, terms acknowledged. Same domains sent to `apibl.spamhaus.net` with the user's query key in the Authorization header; no redirects, cookies, credential persistence or cache |
