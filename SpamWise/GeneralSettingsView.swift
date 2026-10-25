@@ -75,11 +75,7 @@ private struct MenuBarSettingsView: View {
   }
 
   init(preferences: UserDefaults) {
-    _showsMenuBarItem = AppStorage(
-      wrappedValue: true,
-      MenuBarLabel.preferenceKey,
-      store: preferences
-    )
+    _showsMenuBarItem = MenuBarLabel.isShown(in: preferences)
   }
 }
 

@@ -80,6 +80,20 @@ struct ActivityScreen {
 
   func pause() { app.buttons["activity.pause"].click() }
 
+  /// Closes the Activity window, which leaves SpamWise running.
+  func close() {
+    app.typeKey("w", modifierFlags: .command)
+    XCTAssertTrue(
+      Self.modes(in: app).firstMatch.waitForNonExistence(timeout: UITestTiming.transition)
+    )
+  }
+
+  /// Opens `spamwise://activity` and waits until the Activity window shows.
+  func reopenFromURL() -> Bool {
+    app.open(URL(string: "spamwise://activity")!)
+    return Self.modes(in: app).firstMatch.waitForExistence(timeout: UITestTiming.transition)
+  }
+
   /// Whether the Filtering menu offers to mark the selected decision as Junk.
   func canMarkSelectionAsJunk() -> Bool {
     app.menuBars.menuBarItems[AppText.localized("Filtering")].click()

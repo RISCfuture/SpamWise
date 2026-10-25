@@ -22,6 +22,18 @@ final class DryRunTests: UITestCase {
   }
 }
 
+/// Hiding the menu bar item, after which Activity stays reachable.
+final class MenuBarItemTests: UITestCase {
+  @MainActor
+  func testActivityReopensFromItsURLWithTheMenuBarItemHidden() {
+    let settings = ActivityScreen.launchCorrectionFixture().openGeneralSettings()
+    settings.hideMenuBarItem()
+    let activity = settings.close()
+    activity.close()
+    XCTAssertTrue(activity.reopenFromURL())
+  }
+}
+
 /// Spamhaus domain lookups, whose terms must be accepted again for each service.
 final class SpamhausSettingsTests: UITestCase {
   @MainActor
