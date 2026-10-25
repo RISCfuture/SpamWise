@@ -22,6 +22,8 @@ struct IMAPRevalidation {
 
 extension IMAPAdapter {
   private static let reviewKeyword = Flag("$SpamWiseReview")
+  /// The registered junk keyword and the older one Apple Mail and Thunderbird also set.
+  private static let junkKeywords = [Flag("$Junk"), Flag("Junk")]
 
   static func move(
     _ identity: MessageIdentity,
@@ -157,6 +159,33 @@ extension IMAPAdapter {
       $0.uid == target.uid && $0.flags?.contains(flag) == false
     }
     return .init(confirmed: confirmed)
+  }
+
+  /**
+   Removes whichever junk keywords an Inbox message carries, confirming from the flags the
+   server returns.
+
+   - Throws: ``ActionNotAttempted`` when the message isn't recorded in the Inbox or fails its
+     recheck, so nothing was stored.
+   */
+  static func clearJunkKeywords(_ identity: MessageIdentity, session: IMAPSession)
+    async throws -> JunkMarkChange
+  {
+    let target = try await notAttempted {
+      guard identity.mailbox?.uppercased() == "INBOX" else { throw IntegrationError.messageMoved }
+      let uid = try await revalidatePresent(identity, writable: true, session: session).uid
+      let flags = try await flags(uid: uid, session: session)
+      return (uid: uid, keywords: junkKeywords.filter(flags.contains))
+    }
+    guard !target.keywords.isEmpty else { return .absent }
+    let reply = try await session.command(
+      .uidStore(try uidSet(target.uid), [], .flags(.remove(silent: false, list: target.keywords)))
+    )
+    let cleared = reply.fetches.contains { fetch in
+      fetch.uid == target.uid
+        && fetch.flags.map { !$0.contains(where: junkKeywords.contains) } == true
+    }
+    return cleared ? .cleared : .unconfirmed
   }
 
   /// The Review keyword when the mailbox admits it, else `\Flagged`, else nil.

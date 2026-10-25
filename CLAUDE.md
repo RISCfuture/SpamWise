@@ -8,8 +8,10 @@ those record later owner decisions. `TODO.md` is the single status source. Branc
 ## Product invariants
 
 - Never expose delete or Trash. Actions are limited to the account's own Inbox and Junk
-  moves, Review annotations (orange flag or background) and optional read status after
-  a confirmed Junk move.
+  moves, Review annotations (orange flag or background), optional read status after a
+  confirmed Junk move, and clearing Mail's own junk mark (IMAP's `$Junk` and `Junk`
+  keywords) after a Good correction's confirmed move to Inbox. SpamWise never sets a junk
+  mark.
 - Persist the decision and an at-most-once action claim before dispatching; never retry
   a dispatched action automatically.
 - Fail open: errors leave mail untouched and record unknown or failed outcomes. Messages

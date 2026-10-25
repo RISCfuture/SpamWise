@@ -48,7 +48,7 @@ enum MailScripts {
   /// Limit for each individual Apple Event sent to Mail.
   static let eventTimeoutSeconds = 8
   /// What the action handler returns, without changing the message, when it already shows the
-  /// requested orange flag or background.
+  /// requested orange flag or background, or has no junk mark to clear.
   static let alreadyAnnotated = "already"
   /// Permission and timeout failures that must never be mistaken for an unreadable message.
   static let propagatedFailures = [-1743, -10004, -1712]
@@ -365,7 +365,8 @@ enum MailScripts {
             if commandName is "\(MailCommand.moveToJunk.rawValue)" or ¬
                 commandName is "\(MailCommand.markRead.rawValue)" then
                 set destination to my roleBox("\(MailboxRole.junk.rawValue)", accountID)
-            else if commandName is "\(MailCommand.moveToInbox.rawValue)" then
+            else if commandName is "\(MailCommand.moveToInbox.rawValue)" or ¬
+                commandName is "\(MailCommand.clearJunkMark.rawValue)" then
                 set destination to my roleBox("\(MailboxRole.inbox.rawValue)", accountID)
             end if
             set m to my exactMessage(accountID, mailboxName, wantedLocal, wantedID, expectedBytes)
@@ -402,6 +403,14 @@ enum MailScripts {
                     end considering
                     set read status of m to true
                     return (read status of m) is true
+                else if commandName is "\(MailCommand.clearJunkMark.rawValue)" then
+                    considering case
+                        if (name of mailbox of m) is not (name of destination) then error ¬
+                            "Message left Inbox" number \(Failure.messageMissing.rawValue)
+                    end considering
+                    if (junk mail status of m) is false then return "\(alreadyAnnotated)"
+                    set junk mail status of m to false
+                    return (junk mail status of m) is false
                 else if commandName is "\(MailCommand.open.rawValue)" then
                     open m
                     activate
