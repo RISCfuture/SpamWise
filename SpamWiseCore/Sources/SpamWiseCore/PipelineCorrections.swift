@@ -137,6 +137,7 @@ extension Pipeline {
   {
     var record = correction
     record.outcome = .failed
+    record.actionNeverSent = true
     record.actionError = Self.notAttemptedDescription(cause)
     try? await saveObservedOutcome(record)
     return record

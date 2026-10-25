@@ -292,6 +292,7 @@ public actor Pipeline {
       return unclassified
     }
     record.outcome = .failed
+    record.actionNeverSent = true
     record.actionError = Self.notAttemptedDescription(error)
     try? await saveObservedOutcome(record)
     return record

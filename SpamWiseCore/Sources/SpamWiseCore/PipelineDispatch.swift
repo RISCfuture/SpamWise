@@ -125,6 +125,7 @@ extension Pipeline {
         record.outcome = .integrationUnavailable
       } else {
         record.outcome = .requested
+        record.actionNeverSent = false
         state.claimedActions[key] = record.id
       }
       state.records[index] = record
@@ -189,14 +190,16 @@ extension Pipeline {
   }
 
   /**
-   Saves `record` and restores the claim this dispatch replaced, in one transaction that
-   cancellation does not interrupt.
+   Saves `stopped`, marked as never sent, and restores the claim this dispatch replaced, in one
+   transaction that cancellation does not interrupt.
 
    Nothing was sent, so at-most-once still holds. When the save fails the claim stays, which
    only prevents a later attempt.
    */
-  private func release(_ claim: ActionClaim, as record: DecisionRecord) async -> DecisionRecord {
-    let key = record.identity.key, replaced = claim.replacedClaim, store = store
+  private func release(_ claim: ActionClaim, as stopped: DecisionRecord) async -> DecisionRecord {
+    var unsent = stopped
+    unsent.actionNeverSent = true
+    let record = unsent, key = record.identity.key, replaced = claim.replacedClaim, store = store
     let slices = StateSlices(records: .only([record.id]), claims: .only([key]))
     try? await Task {
       try await StateRepository.update(store, loading: slices) { state in
