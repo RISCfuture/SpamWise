@@ -442,6 +442,26 @@ func `invokes compiled handlers with typed arguments and private error numbers`(
   _ = try AppleScriptLibrary(source: MailScripts.library)
 }
 
+@Test(arguments: [
+  ("imap.gmail.com", "Junk", true), ("IMAP.GoogleMail.com.", "Spam", true),
+  ("imap.gmail.com", "[Gmail]/Spam", false), ("imap.googlemail.com", "[Google Mail]/Spam", false),
+  ("imap.notgmail.com", "Junk", false), ("", "Junk", false)
+])
+func `warns when a Gmail account's Junk mailbox is a label instead of Gmail's Spam`(
+  server: String,
+  junk: String,
+  bypassesSpam: Bool
+) async throws {
+  let runner = StubAppleEvents([
+    .destinationNames: [
+      .list([.list([.string("INBOX")]), .list([.string(junk)]), .string(server)])
+    ]
+  ])
+  let destinations = try await AppleMailAdapter(runner: runner).destinations(accountID: "account-A")
+  #expect(destinations.isUnambiguous)
+  #expect(destinations.junkBypassesGmailSpam == bypassesSpam)
+}
+
 @Test
 @MainActor
 func `decodes Apple Event booleans and integers too large for AppleScript integers`() throws {
