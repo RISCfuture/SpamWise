@@ -26,17 +26,34 @@ func `treats hours in an overnight or daytime period, or any invalid hour, as qu
   #expect(preferences.isQuiet(at: date, calendar: utcCalendar) == quiet)
 }
 
+@Test(arguments: [
+  (json: #"{"quietStartHour":0,"quietEndHour":0}"#, enabled: false, start: 22, end: 8),
+  (#"{"quietStartHour":9,"quietEndHour":17}"#, true, 9, 17),
+  (#"{"quietHoursEnabled":false,"quietStartHour":9,"quietEndHour":17}"#, false, 9, 17)
+])
+func `keeps quiet hours that are turned off, reading equal hours as off`(
+  json: String,
+  enabled: Bool,
+  start: Int,
+  end: Int
+) throws {
+  let preferences = try JSONDecoder().decode(NotificationPreferences.self, from: Data(json.utf8))
+  #expect(preferences.quietHoursEnabled == enabled)
+  #expect((preferences.quietStartHour, preferences.quietEndHour) == (start, end))
+}
+
 @Suite
 struct `Notification batches` {
   private static let now = Date(timeIntervalSince1970: 1_800_014_400)
   private let store: Store
 
-  /// Enables notifications an hour ago without quiet hours, then records one applied Review decision.
+  /// Enables notifications an hour ago with quiet hours from noon turned off, then records one
+  /// applied Review decision.
   init() async throws {
     store = try testStore()
     var preferences = NotificationPreferences()
     preferences.enabledSince = Self.now.addingTimeInterval(-3600)
-    preferences.quietStartHour = 0; preferences.quietEndHour = 0
+    preferences.quietHoursEnabled = false; preferences.quietStartHour = 12
     let configured = preferences
     try await StateRepository.update(store) { state in
       state.settings.dryRun = false
@@ -111,7 +128,7 @@ struct `Notification batches` {
       switch self {
         case .paused: settings.paused = true
         case .dryRun: settings.dryRun = true
-        case .quietHours: settings.mailOptions.notifications.quietEndHour = 23
+        case .quietHours: settings.mailOptions.notifications.quietHoursEnabled = true
       }
     }
   }
