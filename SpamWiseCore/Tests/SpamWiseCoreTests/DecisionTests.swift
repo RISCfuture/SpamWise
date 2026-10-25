@@ -22,22 +22,79 @@ func `selects actions at each decision threshold`(
 func `bounds a graymail verdict by the user's preference for its category`(
   _ strength: FilteringStrength
 ) throws {
-  func label(_ label: MailLabel, _ preference: GraymailPreference, confidence: Int = 100) throws
-    -> MailLabel?
-  {
+  func label(
+    _ label: MailLabel,
+    _ preference: GraymailPreference,
+    confidence: Int = 100,
+    categoryConfidence: Int? = nil
+  ) throws -> MailLabel? {
     try Decision.evaluate(
-      .init(label: label, category: .promotion, confidence: confidence, reason: "fixture"),
+      .init(
+        label: label,
+        category: .promotion,
+        categoryConfidence: categoryConfidence,
+        confidence: confidence,
+        reason: "fixture"
+      ),
       strength: strength,
       preference: preference
     ).label
   }
-  #expect(try label(.junk, .keep) == .review)
-  #expect(try label(.inbox, .keep) == .inbox)
-  #expect(try label(.inbox, .review) == .review)
-  #expect(try label(.junk, .review) == .review)
+  for categoryConfidence in [nil, 100] {
+    #expect(try label(.junk, .keep, categoryConfidence: categoryConfidence) == .review)
+    #expect(try label(.inbox, .keep, categoryConfidence: categoryConfidence) == .inbox)
+    #expect(try label(.inbox, .review, categoryConfidence: categoryConfidence) == .review)
+    #expect(try label(.junk, .review, categoryConfidence: categoryConfidence) == .review)
+  }
   #expect(try label(.inbox, .junk) == .review)
   #expect(try label(.junk, .junk) == .junk)
   #expect(try label(.junk, .junk, confidence: strength.threshold - 1) == .review)
+  let unsure = strength.graymailThreshold - 1
+  #expect(try label(.inbox, .junk, categoryConfidence: unsure) == .review)
+  #expect(try label(.junk, .junk, confidence: 0, categoryConfidence: unsure) == .review)
+}
+
+@Test(arguments: FilteringStrength.allCases)
+func `moves graymail the user chose Junk for once its category is certain enough`(
+  _ strength: FilteringStrength
+) throws {
+  func decision(_ label: MailLabel, _ category: MailCategory) throws -> Decision {
+    try Decision.evaluate(
+      .init(
+        label: label,
+        category: category,
+        categoryConfidence: strength.graymailThreshold,
+        confidence: 0,
+        reason: "fixture"
+      ),
+      strength: strength,
+      concealsContent: true,
+      preference: .junk
+    )
+  }
+  for label in MailLabel.allCases {
+    let moved = try decision(label, .abandonedCart)
+    #expect(moved.action == .moveToJunk && moved.reason == .categoryPreference(.abandonedCart))
+    #expect(moved.followsCategoryPreference && moved.preference == .junk)
+    #expect(try decision(label, .transactional).label == .review)
+  }
+}
+
+@Test
+func `keeps the label policy for a stored verdict without a category confidence`() throws {
+  func decision(_ label: MailLabel, confidence: Int) throws -> Decision {
+    let stored = Data(
+      (#"{"label":"\#(label.rawValue)","category":"newsletter","confidence":\#(confidence),"#
+        + #""reason":"stored","usage":{"input":0,"output":0,"cached":0,"estimated":true}}"#)
+        .utf8
+    )
+    let verdict = try JSONDecoder().decode(Verdict.self, from: stored)
+    #expect(verdict.categoryConfidence == nil)
+    return try Decision.evaluate(verdict, preference: .junk)
+  }
+  #expect(try decision(.inbox, confidence: 100).label == .review)
+  #expect(try decision(.junk, confidence: 94).label == .review)
+  #expect(try decision(.junk, confidence: 95).reason == .model("stored"))
 }
 
 @Test
@@ -61,10 +118,19 @@ func `annotates Review with the chosen treatment`() throws {
   #expect(try Decision.evaluate(verdict, review: .orangeBackground).action == .orangeBackground)
 }
 
-@Test
-func `rejects confidence outside 0 through 100`() {
+@Test(arguments: [(confidence: 999, categoryConfidence: 50), (50, -1), (50, 101)])
+func `rejects confidence outside 0 through 100`(confidence: Int, categoryConfidence: Int) {
   #expect(throws: ClassificationError.self) {
-    try Decision.evaluate(.init(label: .junk, confidence: 999, reason: "invalid"))
+    try Decision.evaluate(
+      .init(
+        label: .junk,
+        category: .promotion,
+        categoryConfidence: categoryConfidence,
+        confidence: confidence,
+        reason: "invalid"
+      ),
+      preference: .junk
+    )
   }
 }
 

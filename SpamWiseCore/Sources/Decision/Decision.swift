@@ -3,15 +3,28 @@ public import Classifier
 
 /// Provisional confidence thresholds, pending held-out calibration.
 public enum FilteringStrength: String, Codable, Sendable, CaseIterable {
-  /// Requires confidence of at least 99 before a Junk action.
+  /// Requires confidence of at least 99 before a Junk action, or category confidence of 95 for
+  /// graymail the user chose Junk for.
   case conservative
-  /// Requires confidence of at least 95 before a Junk action.
+  /// Requires confidence of at least 95 before a Junk action, or category confidence of 85 for
+  /// graymail the user chose Junk for.
   case balanced
-  /// Requires confidence of at least 90 before a Junk action.
+  /// Requires confidence of at least 90 before a Junk action, or category confidence of 75 for
+  /// graymail the user chose Junk for.
   case aggressive
   /// Minimum provisional confidence required to act on a Junk verdict.
   public var threshold: Int {
     switch self { case .conservative: 99;  case .balanced: 95;  case .aggressive: 90
+    }
+  }
+  /**
+   Minimum category confidence for moving graymail to Junk because the user chose Junk for its
+   category, whatever the verdict's label.
+
+   Provisional pending the graymail adherence evaluation.
+   */
+  public var graymailThreshold: Int {
+    switch self { case .conservative: 95;  case .balanced: 85;  case .aggressive: 75
     }
   }
 }
@@ -85,6 +98,10 @@ public struct Decision: Codable, Sendable, Equatable {
   public var reason: DecisionReason
   /// The user's preference for the verdict's graymail category, when one shaped this result.
   public var preference: GraymailPreference?
+  /// Whether the user's Junk preference for the verdict's category, not its label, chose Junk.
+  public var followsCategoryPreference: Bool {
+    if case .categoryPreference = reason { true } else { false }
+  }
   /// Records a label and action as given; ``evaluate(_:reason:strength:review:concealsContent:preference:)`` derives them by policy.
   public init(
     label: MailLabel?,
@@ -108,7 +125,7 @@ public struct Decision: Codable, Sendable, Equatable {
    - Parameters:
      - verdict: The validated classification.
      - reason: Why the verdict was reached; defaults to the verdict's own explanation.
-     - strength: The Junk confidence threshold.
+     - strength: The Junk confidence and graymail category-confidence thresholds.
      - review: The annotation for Review messages.
      - concealsContent: Whether part of the message couldn't be read reliably; an Inbox verdict
        then becomes Review for ``DecisionReason/concealedContent``.
@@ -127,19 +144,22 @@ public struct Decision: Codable, Sendable, Equatable {
       verdict,
       reason: reason,
       junkThreshold: strength.threshold,
+      graymailThreshold: strength.graymailThreshold,
       review: review,
       concealsContent: concealsContent,
       preference: preference
     )
   }
   /**
-   Applies deterministic policy at an explicit Junk confidence threshold, as calibration
-   reports do when they score thresholds between the named strengths.
+   Applies deterministic policy at explicit thresholds, as calibration reports do when they score
+   thresholds between the named strengths.
 
    - Parameters:
      - verdict: The validated classification.
      - reason: Why the verdict was reached; defaults to the verdict's own explanation.
      - junkThreshold: The minimum confidence for a Junk action; lower Junk verdicts become Review.
+     - graymailThreshold: The minimum category confidence for moving graymail the user chose Junk
+       for to Junk, whatever the verdict's label, for ``DecisionReason/categoryPreference(_:)``.
      - review: The annotation for Review messages.
      - concealsContent: Whether part of the message couldn't be read reliably; an Inbox verdict
        then becomes Review for ``DecisionReason/concealedContent``.
@@ -150,14 +170,19 @@ public struct Decision: Codable, Sendable, Equatable {
     _ verdict: Verdict,
     reason: DecisionReason? = nil,
     junkThreshold: Int,
+    graymailThreshold: Int,
     review: ReviewTreatment = .orangeFlag,
     concealsContent: Bool = false,
     preference: GraymailPreference? = nil
   ) throws -> Self {
     _ = try verdict.validated()
     var label = verdict.label.bounded(by: preference)
-    if label == .junk, verdict.confidence < junkThreshold { label = .review }
     var reason = reason ?? .model(verdict.reason)
+    if verdict.isPreferredJunk(preference, threshold: graymailThreshold) {
+      (label, reason) = (.junk, .categoryPreference(verdict.category))
+    } else if label == .junk, verdict.confidence < junkThreshold {
+      label = .review
+    }
     if concealsContent, label == .inbox { (label, reason) = (.review, .concealedContent) }
     let action: MailAction
     switch label {
@@ -168,6 +193,15 @@ public struct Decision: Codable, Sendable, Equatable {
     return .init(label: label, action: action, reason: reason, preference: preference)
   }
   private enum CodingKeys: String, CodingKey { case label, action, reason, preference }
+}
+
+extension Verdict {
+  /// Whether the user chose Junk for this verdict's graymail category and the verdict is at least
+  /// `threshold` sure of that category.
+  fileprivate func isPreferredJunk(_ preference: GraymailPreference?, threshold: Int) -> Bool {
+    guard preference == .junk, category.isGraymail, let categoryConfidence else { return false }
+    return categoryConfidence >= threshold
+  }
 }
 
 extension MailLabel {

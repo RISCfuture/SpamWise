@@ -401,6 +401,22 @@
         }
       }
     },
+    "You chose Junk for %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegiste No deseado para %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous avez choisi Indésirables pour %@"
+          }
+        }
+      }
+    },
     "Your correction for this sender’s address": {
       "localizations": {
         "es": {

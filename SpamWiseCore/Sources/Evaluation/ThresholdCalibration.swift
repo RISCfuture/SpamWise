@@ -1,6 +1,9 @@
 public import SpamWiseCore
 
-/// Cumulative model precision and whole-cohort policy metrics at one Junk confidence threshold.
+/**
+ Cumulative model precision and whole-cohort policy metrics at one Junk confidence threshold,
+ with the graymail category threshold held at ``ThresholdCalibration/graymailThreshold``.
+ */
 public struct ThresholdPoint: Codable, Sendable {
   /// The minimum confidence for a Junk action.
   public var threshold: Int
@@ -12,7 +15,7 @@ public struct ThresholdPoint: Codable, Sendable {
   /// false-positive upper bound.
   public var metrics: BinaryMetrics
 
-  init(threshold: Int, observations: [EvaluationObservation]) {
+  init(threshold: Int, graymailThreshold: Int, observations: [EvaluationObservation]) {
     let verdicts = observations.filter {
       $0.path == .model && $0.truth != .graymail && $0.modelLabel == .junk
         && ($0.confidence ?? Int.min) >= threshold
@@ -22,7 +25,11 @@ public struct ThresholdPoint: Codable, Sendable {
     cumulativePrecision =
       verdicts.isEmpty
       ? nil : Double(verdicts.filter { $0.truth == .junk }.count) / Double(verdicts.count)
-    metrics = BinaryMetrics(observations.map { $0.decided(junkThreshold: threshold) })
+    metrics = BinaryMetrics(
+      observations.map {
+        $0.decided(junkThreshold: threshold, graymailThreshold: graymailThreshold)
+      }
+    )
   }
 }
 
@@ -55,6 +62,8 @@ public struct ThresholdCalibration: Codable, Sendable {
   private static let balancedFalsePositiveTarget = 0.002
   private static let aggressiveFalsePositiveTarget = 0.005
   private static let ruleOfThreeErrors = 3.0
+  /// The category confidence that moves graymail the user chose Junk for, throughout ``curve``.
+  public var graymailThreshold: Int
   /// Metrics at each threshold across every observation.
   public var curve: [ThresholdPoint]
   /// The current and selected threshold for each strength.
@@ -65,12 +74,21 @@ public struct ThresholdCalibration: Codable, Sendable {
    validates it on the held-out partition.
 
    Observations without a partition contribute only to ``curve`` and the current-threshold
-   metrics.
+   metrics. Each strength's selection holds the graymail category threshold at that strength's.
+
+   - Parameter strength: The strength whose graymail category threshold ``curve`` holds.
    */
-  public init(observations: [EvaluationObservation]) {
+  public init(observations: [EvaluationObservation], strength: FilteringStrength = .balanced) {
     let training = observations.filter { $0.partition == .training }
     let heldOut = observations.filter { $0.partition == .heldOut }
-    curve = Self.thresholds.map { ThresholdPoint(threshold: $0, observations: observations) }
+    graymailThreshold = strength.graymailThreshold
+    curve = Self.thresholds.map { [graymailThreshold] in
+      ThresholdPoint(
+        threshold: $0,
+        graymailThreshold: graymailThreshold,
+        observations: observations
+      )
+    }
     strengths = FilteringStrength.allCases.map { strength in
       Self.calibrate(strength, all: observations, training: training, heldOut: heldOut)
     }
@@ -99,25 +117,31 @@ public struct ThresholdCalibration: Codable, Sendable {
   ) -> StrengthCalibration {
     let target = falsePositiveTarget(for: strength)
     let selected = thresholds.first { threshold in
-      meets(target, metrics(training, junkThreshold: threshold))
+      meets(target, metrics(training, junkThreshold: threshold, strength: strength))
     }
-    let validation = selected.map { metrics(heldOut, junkThreshold: $0) }
+    let validation = selected.map { metrics(heldOut, junkThreshold: $0, strength: strength) }
     return StrengthCalibration(
       strength: strength,
       currentThreshold: strength.threshold,
       current: BinaryMetrics(all.map { $0.decided(strength: strength) }),
       falsePositiveTarget: target,
       selectedThreshold: selected,
-      training: selected.map { metrics(training, junkThreshold: $0) },
+      training: selected.map { metrics(training, junkThreshold: $0, strength: strength) },
       heldOut: validation,
       validated: validation.map { meets(target, $0) } ?? false
     )
   }
 
-  private static func metrics(_ rows: [EvaluationObservation], junkThreshold: Int)
-    -> BinaryMetrics
-  {
-    BinaryMetrics(rows.map { $0.decided(junkThreshold: junkThreshold) })
+  private static func metrics(
+    _ rows: [EvaluationObservation],
+    junkThreshold: Int,
+    strength: FilteringStrength
+  ) -> BinaryMetrics {
+    BinaryMetrics(
+      rows.map {
+        $0.decided(junkThreshold: junkThreshold, graymailThreshold: strength.graymailThreshold)
+      }
+    )
   }
 
   private static func meets(_ target: Double, _ metrics: BinaryMetrics) -> Bool {
