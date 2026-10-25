@@ -185,8 +185,9 @@ extension StateRepository {
   /**
    The redacted support summary of the whole log.
 
-   Outcomes are counted from their column, and reasons from each record's stored decision
-   alone, so no record is decoded in full.
+   Outcomes are counted from their column. Reasons are counted by decoding only the decision
+   from each record's payload; a record whose decision can't be read counts as
+   ``DiagnosticSummary/unreadableReason``.
    */
   public static func diagnosticSummary(_ store: Store) async throws -> DiagnosticSummary {
     let state = try await load(store, StateSlices(retries: .all))
@@ -199,10 +200,11 @@ extension StateRepository {
       return (
         Dictionary(grouping: try context.fetch(outcomeColumn), by: \.outcome).mapValues(\.count),
         Dictionary(
-          grouping: try context.fetch(payloadColumn).compactMap {
-            try? decoder.decode(StoredDecision.self, from: $0.payload).decision.reason
+          grouping: try context.fetch(payloadColumn).map {
+            (try? decoder.decode(StoredDecision.self, from: $0.payload))?.decision.reason
+              .diagnosticCategory ?? DiagnosticSummary.unreadableReason
           },
-          by: \.diagnosticCategory
+          by: \.self
         ).mapValues(\.count)
       )
     }

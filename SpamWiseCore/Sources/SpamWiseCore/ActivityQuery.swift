@@ -126,7 +126,7 @@ public struct ActivityStatistics: Codable, Sendable {
    sample, not overall accuracy; nil when nothing was reviewed.
    */
   public let reviewedMistakeUpperBound: Double?
-  /// Estimated cost recorded on the selected decisions.
+  /// Estimated cost recorded on the selected records, including provider connection checks.
   public let estimatedCostUSD: Double
   /// Decisions per account; missing identities remain explicitly unknown.
   public let accountCounts: [String: Int]
@@ -134,8 +134,14 @@ public struct ActivityStatistics: Codable, Sendable {
   public let dailyCounts: [Date: Int]
   /// Decisions per account and calendar day, keyed like ``accountCounts``.
   public let accountDailyCounts: [String: [Date: Int]]
-  /// Calculates counts without assuming that uncorrected predictions were correct.
-  public init(records: [DecisionRecord], calendar: Calendar = .current) {
+  /**
+   Calculates counts without assuming that uncorrected predictions were correct.
+
+   Provider connection checks count toward ``estimatedCostUSD`` but not as decisions.
+   */
+  public init(records allRecords: [DecisionRecord], calendar: Calendar = .current) {
+    estimatedCostUSD = allRecords.reduce(0) { $0 + ($1.verdict?.usage.estimatedCost ?? 0) }
+    let records = allRecords.filter { $0.path != .verification }
     decisions = records.count
     let latest = Dictionary(grouping: records, by: { $0.identity.key }).values.compactMap {
       $0.max { $0.date < $1.date }
@@ -150,7 +156,6 @@ public struct ActivityStatistics: Codable, Sendable {
       errors: reviewedMistakes,
       trials: reviewedDecisions
     )
-    estimatedCostUSD = records.reduce(0) { $0 + ($1.verdict?.usage.estimatedCost ?? 0) }
     let byAccount = Dictionary(grouping: records) { $0.identity.accountID ?? Self.unknownAccount }
     accountCounts = byAccount.mapValues(\.count)
     dailyCounts = Self.dailyCounts(of: records, calendar: calendar)
@@ -164,6 +169,8 @@ public struct ActivityStatistics: Codable, Sendable {
 
 /// Content-free support snapshot; account identifiers, subjects and sender addresses are omitted.
 public struct DiagnosticSummary: Encodable, Sendable {
+  /// The reason category of a record whose decision can't be read.
+  public static let unreadableReason = "unreadable"
   /// Version of this redacted export format.
   public let version = 1
   /// Whether the user paused filtering.
