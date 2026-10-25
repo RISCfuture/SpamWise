@@ -18,6 +18,8 @@ final class SettingsModel {
   var saveFailure: OperationFailure?
   /// Why the latest spending-limit change was refused.
   var spendingLimitError: String?
+  /// Whether SpamWise opens at login, a system setting outside shared storage.
+  let loginItem = LoginItemModel()
   @ObservationIgnored private let shared: SharedStateModel
   @ObservationIgnored private var tail: Task<Void, Never>?
   /// The additional instructions, saved after a pause in typing; text over the limit stays unsaved.

@@ -40,6 +40,8 @@ struct UnverifiedSenderPrompt: View {
   let message: String
   let confirmTitle: LocalizedStringKey
   var skipTitle: LocalizedStringKey?
+  /// Whether Return chooses the skip, the choice that blocks no unverified sender.
+  var skipIsDefault = false
   let cancel: () -> Void
   var skip: () -> Void = {}
   let confirm: () -> Void
@@ -47,7 +49,9 @@ struct UnverifiedSenderPrompt: View {
   var body: some View {
     InlineWarning(text: message, identifier: "correction.warning") {
       Button("Cancel", action: cancel)
-      if let skipTitle { Button(skipTitle, action: skip) }
+      if let skipTitle {
+        Button(skipTitle, action: skip).keyboardShortcut(skipIsDefault ? .defaultAction : nil)
+      }
       Button(confirmTitle, action: confirm).accessibilityIdentifier("correction.warning.confirm")
     }
   }

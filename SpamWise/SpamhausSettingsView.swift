@@ -61,7 +61,7 @@ private struct SpamhausKeyEntry: View {
     SecureField("Spamhaus HTTPS query key", text: $key, prompt: Text("Query key"))
       .accessibilityIdentifier("spamhaus.key")
       .onSubmit(save)
-    Button("Save query key", action: save)
+    Button("Save Query Key", action: save)
       .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
       .accessibilityIdentifier("spamhaus.saveKey")
     OperationStatusView(operation: credentials.spamhausKey, identifier: "spamhaus.keyStatus")

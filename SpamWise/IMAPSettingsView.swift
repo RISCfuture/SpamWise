@@ -16,9 +16,13 @@ struct IMAPSettingsView: View {
       Section("IMAP account") {
         IMAPAccountFields(imap: imap).disabled(imap.operation.isBusy)
         HStack {
-          Button("Save Connection") { imap.save() }.accessibilityIdentifier("imap.save")
+          Button("Save Connection") { imap.save() }
+            .disabled(!imap.canSave)
+            .accessibilityIdentifier("imap.save")
           Button("Check Connection") { imap.check() }.accessibilityIdentifier("imap.validate")
-          if imap.operation.isBusy { ProgressView().controlSize(.small) }
+          if imap.operation.isBusy {
+            ProgressView { Text("Working…") }.labelsHidden().controlSize(.small)
+          }
           Spacer()
           if imap.hasSavedConnection { ForgetIMAPConnectionButton(imap: imap) }
           HelpButton(page: "imap-connection")
@@ -95,10 +99,10 @@ private struct IMAPAccountFields: View {
     SecureField(
       "Password or token",
       text: $imap.credential,
-      prompt: imap.hasSavedConnection ? Text("Saved in Keychain") : Text("Required")
+      prompt: imap.canKeepSavedCredential ? Text("Saved in Keychain") : Text("Required")
     )
     .accessibilityIdentifier("imap.credential")
-    if imap.hasSavedConnection {
+    if imap.canKeepSavedCredential {
       Text("Leave the password blank to keep the saved one.").foregroundStyle(.secondary)
     }
     DisclosureGroup("Connection options") {

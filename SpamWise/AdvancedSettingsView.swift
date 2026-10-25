@@ -2,7 +2,7 @@ import SwiftUI
 import SpamWiseCore
 import MailIntegration
 
-/// The Advanced tab: optional evidence, classification context, learning and notifications.
+/// The Advanced tab: optional evidence, classification context, learning, backups and diagnostics.
 struct AdvancedSettingsView: View {
   let model: AppModel
 
@@ -18,7 +18,6 @@ struct AdvancedSettingsView: View {
         rules: model.rules,
         activity: model.activity
       )
-      NotificationSettingsView(notifications: model.notifications, settings: settings)
       BackupSettingsView(backup: model.backup)
       DiagnosticsSection(model: model)
     }.formStyle(.grouped)
@@ -28,6 +27,8 @@ struct AdvancedSettingsView: View {
 /// How much context accompanies each message; each burst of clicks saves once.
 private struct ContextSection: View {
   private static let bodyTokenBudgetStep = 100
+  /// About how many English words one token of message text holds.
+  private static let wordsPerToken = 0.75
   let settings: SettingsModel
 
   var body: some View {
@@ -40,7 +41,7 @@ private struct ContextSection: View {
         in: ClassificationLimits.correctionLimitRange
       )
       Stepper(
-        "Message text: about \(bodyBudget.value) tokens",
+        "Message text sent: about \(Self.words(inTokens: bodyBudget.value)) words",
         value: $bodyBudget.value,
         in: ClassificationLimits.bodyTokenBudgetRange,
         step: Self.bodyTokenBudgetStep
@@ -56,6 +57,10 @@ private struct ContextSection: View {
       )
       .foregroundStyle(.secondary)
     }
+  }
+
+  private static func words(inTokens tokens: Int) -> Int {
+    Int((Double(tokens) * wordsPerToken).rounded())
   }
 }
 
@@ -86,8 +91,10 @@ private struct MoveTestView: View {
   var body: some View {
     LabeledContent {
       HStack {
-        if mail.moveTest.isBusy { ProgressView().controlSize(.small) }
-        Button("Test selected message") { mail.testDisposableMessage() }
+        if mail.moveTest.isBusy {
+          ProgressView { Text("Testing the selected message…") }.labelsHidden().controlSize(.small)
+        }
+        Button("Test Selected Message") { mail.testDisposableMessage() }
           .disabled(mail.moveTest.isBusy)
       }
     } label: {

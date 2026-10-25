@@ -33,10 +33,6 @@ public struct CorrectionUndo: Codable, Sendable, Equatable {
   public let recordID: UUID
   /// Required current policy generation.
   public let revision: Int
-  /// Number of sender rules in the restoration preview.
-  public var ruleCount: Int { snapshot.rules.count }
-  /// Number of quoted examples in the restoration preview.
-  public var exampleCount: Int { snapshot.corrections.count }
   /// Whether the correction's reviewed label and learning were recorded after the snapshot.
   var confirmed = false
   fileprivate let snapshot: Snapshot
@@ -73,6 +69,10 @@ public struct CorrectionUndo: Codable, Sendable, Equatable {
       transaction.state.restore(undo)
       try transaction.commit()
     }
+  }
+  /// Whether `record` is the correction this undo reverts or the decision it corrected.
+  public func applies(to record: DecisionRecord) -> Bool {
+    record.id == recordID || record.id == sourceID
   }
   /// Rejects stale undo after any policy change.
   public func isAvailable(in state: AppState) -> Bool {

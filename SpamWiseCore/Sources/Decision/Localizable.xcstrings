@@ -209,6 +209,22 @@
         }
       }
     },
+    "Claude connection verified": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conexión con Claude verificada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion à Claude vérifiée"
+          }
+        }
+      }
+    },
     "Filtering paused": {
       "localizations": {
         "es": {
@@ -221,22 +237,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Filtrage en pause"
-          }
-        }
-      }
-    },
-    "Haiku 5.5 connection verified": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conexión con Haiku 5.5 verificada"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connexion à Haiku 5.5 vérifiée"
           }
         }
       }

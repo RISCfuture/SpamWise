@@ -53,7 +53,7 @@ struct CorpusView: View {
     .frame(minWidth: 760, minHeight: 450)
     .fileImporter(
       isPresented: $importing,
-      allowedContentTypes: [.data],
+      allowedContentTypes: [.emailMessage],
       allowsMultipleSelection: true
     ) {
       if case .success(let urls) = $0 { requestImport(urls) }
@@ -154,7 +154,9 @@ private struct CorpusActions: View {
       Button("Forget…", role: .destructive, action: forget)
         .disabled(selection.isEmpty)
         .accessibilityIdentifier("corpus.forget")
-      if corpus.operation.isBusy { ProgressView().controlSize(.small) }
+      if corpus.operation.isBusy {
+        ProgressView { Text("Updating your reviewed examples…") }.labelsHidden().controlSize(.small)
+      }
       Spacer()
       Menu("More") {
         Button("Export Reviewed Messages…", action: export).disabled(corpus.labels.isEmpty)

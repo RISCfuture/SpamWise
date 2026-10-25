@@ -36,12 +36,12 @@ struct KeyEntryView: View {
     .onSubmit(submit)
     .accessibilityIdentifier("setup.key")
     HStack {
-      Button(verifies ? "Verify and save key" : "Save key", action: submit)
+      Button(verifies ? "Verify and Save Key" : "Save Key", action: submit)
         .keyboardShortcut(canSubmit ? .defaultAction : nil)
         .disabled(!canSubmit)
         .accessibilityIdentifier("setup.saveKey")
       if operation.isBusy {
-        ProgressView().controlSize(.small)
+        ProgressView { Text("Saving the key…") }.labelsHidden().controlSize(.small)
         if verifies {
           Text("Verifying with \(model.displayName)…").foregroundStyle(.secondary)
         }
@@ -52,11 +52,11 @@ struct KeyEntryView: View {
       }
     }
     if credentials.savedKeys.contains(backend), draft.isEmpty {
-      Text("A key is saved in Keychain. Enter a new one to replace it.")
-        .foregroundStyle(.secondary)
+      SavedKeyRow(credentials: credentials, backend: backend)
     }
     KeyEntryNote(model: model, isLocalOnly: isLocalOnly)
     OperationStatusView(operation: operation, identifier: "setup.keyStatus")
+    OperationStatusView(operation: credentials.storedCredentials)
   }
 
   /**
@@ -90,6 +90,36 @@ struct KeyEntryView: View {
     Task {
       await run.value
       if operation.failure == nil { key.wrappedValue = "" }
+    }
+  }
+}
+
+/// The saved key's note, with Remove Key after confirming.
+private struct SavedKeyRow: View {
+  let credentials: CredentialsModel
+  let backend: ModelBackend
+  @State private var confirming = false
+
+  var body: some View {
+    HStack {
+      Text("A key is saved in Keychain. Enter a new one to replace it.")
+        .foregroundStyle(.secondary)
+      Spacer()
+      Button("Remove Key…", role: .destructive) { confirming = true }
+        .disabled(credentials.storedCredentials.isBusy)
+        .accessibilityIdentifier("setup.removeKey")
+    }
+    .confirmationDialog(
+      "Remove the \(backend.localizedTitle) API key?",
+      isPresented: $confirming,
+      titleVisibility: .visible
+    ) {
+      Button("Remove Key", role: .destructive) { credentials.remove(.provider(backend)) }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text(
+        "SpamWise removes the key from Keychain and can’t use \(backend.localizedTitle) until you enter a key again."
+      )
     }
   }
 }

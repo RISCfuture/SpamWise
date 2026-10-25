@@ -25,24 +25,39 @@ struct `Sender rule management` {
   }
 
   @Test
-  func `rejects an import with an invalid rule without changing rules or audit`() async throws {
+  func `rejects an archive with an invalid rule`() {
     let invalid = Data(
       #"{"version":1,"rules":[{"scope":"domain","value":"com","disposition":"block","updatedAt":0}]}"#
         .utf8
     )
-    await #expect(throws: RuleManagementError.self) {
-      try await RuleManagement.importRules(invalid, store: store)
+    #expect(throws: RuleManagementError.invalidRule) {
+      try RuleManagement.previewImport(invalid, against: saved.rules)
     }
-    let state = try await StateRepository.load(store)
-    #expect(state.rules == saved.rules)
-    #expect(state.auditEvents.count == saved.auditEvents.count)
   }
 
   @Test
-  func `imports exported rules with their identities`() async throws {
+  func `previews and imports exported rules with their identities`() async throws {
     let other = try testStore()
-    try await RuleManagement.importRules(RuleManagement.exportRules(saved.rules), store: other)
-    #expect(try await StateRepository.load(other).rules.map(\.id) == saved.rules.map(\.id))
+    try await RuleManagement.save(
+      scope: .address,
+      value: "person@example.com",
+      disposition: .block,
+      store: other
+    )
+    let shop = SenderRule(scope: .domain, value: "shop.example", disposition: .block)
+    let archive = try RuleManagement.exportRules(saved.rules + [shop])
+    let preview = try RuleManagement.previewImport(
+      archive,
+      against: try await StateRepository.load(other).rules
+    )
+    #expect(preview.added == 1)
+    #expect(preview.replaced == 1)
+    #expect(preview.unchanged == 0)
+    #expect(preview.blocksToAllow == ["person@example.com"])
+    try await RuleManagement.commitImport(preview, store: other)
+    let imported = try await StateRepository.load(other).rules
+    #expect(Set(imported.map(\.id)) == Set((saved.rules + [shop]).map(\.id)))
+    #expect(imported.allSatisfy { $0.disposition == ($0.id == shop.id ? .block : .allow) })
   }
 
   @Test

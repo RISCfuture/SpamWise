@@ -26,7 +26,7 @@ struct CorrectionResultsView: View {
           if corrections.selection.isBusy, corrections.selectionResults.isEmpty,
             corrections.selectionProgress == nil
           {
-            ProgressView()
+            ProgressView { Text("Reading the selected messages…") }.labelsHidden()
           }
         }
         OperationStatusView(operation: corrections.selection, identifier: "corrections.status")
@@ -37,10 +37,15 @@ struct CorrectionResultsView: View {
       .toolbar { CorrectionResultsToolbar(corrections: corrections, dismiss: dismiss) }
     }
     .frame(minWidth: 520, minHeight: 320)
+    .onDisappear { corrections.cancelPendingSelection() }
   }
 }
 
-/// Done, which leaves a running batch going, and Cancel, which stops it.
+/**
+ Done, which closes the sheet, taking Escape while no batch runs.
+
+ While a batch runs, Escape goes to Cancel, which stops it, and Done leaves it running.
+ */
 private struct CorrectionResultsToolbar: ToolbarContent {
   let corrections: CorrectionsModel
   let dismiss: DismissAction
@@ -52,11 +57,11 @@ private struct CorrectionResultsToolbar: ToolbarContent {
           .keyboardShortcut(.cancelAction)
           .accessibilityIdentifier("corrections.cancel")
       }
-    }
-    ToolbarItem(placement: .confirmationAction) {
-      Button("Done") { dismiss() }
-        .keyboardShortcut(.defaultAction)
-        .accessibilityIdentifier("corrections.done")
+      ToolbarItem(placement: .confirmationAction) {
+        Button("Done") { dismiss() }.accessibilityIdentifier("corrections.done")
+      }
+    } else {
+      DoneToolbarItem(dismiss: dismiss, identifier: "corrections.done")
     }
   }
 }
@@ -74,6 +79,7 @@ private struct UnverifiedSelectionPrompt: View {
       ),
       confirmTitle: "Block All",
       skipTitle: "Skip Unverified Senders",
+      skipIsDefault: true,
       cancel: corrections.cancelPendingSelection,
       skip: { corrections.confirmPendingSelection(skippingUnverified: true) },
       confirm: { corrections.confirmPendingSelection(skippingUnverified: false) }
@@ -92,7 +98,7 @@ private struct SelectionResultRow: View {
         case let .corrected(record, conflict):
           Text("Correction saved. Mail action: \(record.outcome.localizedTitle).")
             .foregroundStyle(.secondary)
-          if let error = record.actionError { Text(error).foregroundStyle(.secondary) }
+          if let error = record.actionError { WarningLabel(verbatim: error) }
           if let conflict {
             RuleConflictPrompt(rule: conflict, keep: nil) {
               corrections.removeOverridingRule(conflict)
@@ -101,7 +107,7 @@ private struct SelectionResultRow: View {
         case .skipped(let reason):
           Text(reason.localizedDescription).foregroundStyle(.secondary)
         case .failed(let description):
-          Label(description, systemImage: "exclamationmark.triangle")
+          WarningLabel(verbatim: description)
       }
     }
   }

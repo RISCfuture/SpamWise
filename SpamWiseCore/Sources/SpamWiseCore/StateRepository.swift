@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Classifier
+import Decision
 
 /// Typed transactions over the shared application state.
 public enum StateRepository {
@@ -171,6 +172,39 @@ extension StateRepository {
       try context.fetchCount(FetchDescriptor(predicate: query.predicate))
     }
   }
+  /**
+   The redacted support summary of the whole log.
+
+   Outcomes are counted from their column. Reasons are counted by decoding only the decision
+   from each record's payload; a record whose decision can't be read counts as
+   ``DiagnosticSummary/unreadableReason``.
+   */
+  public static func diagnosticSummary(_ store: Store) async throws -> DiagnosticSummary {
+    let state = try await load(store, StateSlices(retries: .all))
+    let (outcomes, reasons) = try await store.snapshot { context in
+      var outcomeColumn = FetchDescriptor<RecordRow>()
+      outcomeColumn.propertiesToFetch = [\.outcome]
+      var payloadColumn = FetchDescriptor<RecordRow>()
+      payloadColumn.propertiesToFetch = [\.payload]
+      let decoder = JSONDecoder()
+      return (
+        Dictionary(grouping: try context.fetch(outcomeColumn), by: \.outcome).mapValues(\.count),
+        Dictionary(
+          grouping: try context.fetch(payloadColumn).map {
+            (try? decoder.decode(StoredDecision.self, from: $0.payload))?.decision.reason
+              .diagnosticCategory ?? DiagnosticSummary.unreadableReason
+          },
+          by: \.self
+        ).mapValues(\.count)
+      )
+    }
+    return DiagnosticSummary(
+      settings: state.settings,
+      retryCount: state.retries.count,
+      outcomes: outcomes,
+      reasons: reasons
+    )
+  }
   /// ``AppState/historyEligibleInbox`` of the whole log, read from indexed columns without decoding it.
   public static func historyEligibleInbox(_ store: Store) async throws
     -> [String: InboxEligibility]
@@ -197,4 +231,9 @@ extension StateRepository {
       retries: pending.retries
     )
   }
+}
+
+/// The decision of a stored record, decoded without the rest of the record.
+private struct StoredDecision: Decodable {
+  let decision: Decision
 }

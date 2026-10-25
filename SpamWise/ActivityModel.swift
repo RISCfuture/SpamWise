@@ -81,6 +81,13 @@ final class ActivityModel {
     rows.first { $0.id == id }
   }
 
+  /// The stored record with `id`, shown or not; nil once the log no longer holds it or it can't be read.
+  func storedRecord(id: UUID) async -> DecisionRecord? {
+    guard let store else { return record(id: id) }
+    return try? await StateRepository.load(store, StateSlices(records: .only([id]))).records
+      .first { $0.id == id }
+  }
+
   /// Fetches the shown page and today's counts, after a short pause so typing coalesces.
   func reload() async {
     guard let store else { return }
@@ -124,8 +131,7 @@ final class ActivityModel {
   /// The redacted diagnostics that the status intent also returns.
   func diagnostics() async throws -> Data {
     guard let store else { throw SharedStorageError.unavailable }
-    let state = try await StateRepository.load(store, StateSlices(records: .all, retries: .all))
-    return try JSONEncoder.pretty.encode(DiagnosticSummary(state: state))
+    return try JSONEncoder.pretty.encode(try await StateRepository.diagnosticSummary(store))
   }
 
   /// Distinct senders seen in Activity or corrections at each of `domains`.
@@ -195,9 +201,11 @@ struct TodaySummary: Equatable {
 
   init() {}
 
+  /// Counts `records`, leaving out provider key checks, which decide no message.
   init(_ records: [DecisionRecord]) {
-    decisions = records.count
-    junk = records.count { $0.decision.label == .junk }
-    review = records.count { $0.decision.label == .review }
+    let messages = records.filter { $0.path != .verification }
+    decisions = messages.count
+    junk = messages.count { $0.decision.label == .junk }
+    review = messages.count { $0.decision.label == .review }
   }
 }

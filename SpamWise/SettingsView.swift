@@ -57,7 +57,7 @@ struct SettingsView: View {
     self.model = model
     _selectedPane = AppStorage(
       wrappedValue: .general,
-      "settings.selectedPane",
+      SettingsPane.preferenceKey,
       store: model.services.preferences
     )
   }
@@ -67,14 +67,17 @@ struct SettingsView: View {
 enum SettingsPane: String, CaseIterable, Identifiable {
   case general, classifier, accounts, rules, preferences, advanced
 
+  /// The interface preference that remembers the tab Settings shows.
+  static let preferenceKey = "settings.selectedPane"
+
   var id: Self { self }
   var title: LocalizedStringResource {
     switch self {
       case .general: "General"
-      case .classifier: "Classifier"
+      case .classifier: "Provider"
       case .accounts: "Accounts"
       case .rules: "Rules"
-      case .preferences: "Preferences"
+      case .preferences: "Mail Choices"
       case .advanced: "Advanced"
     }
   }
@@ -87,6 +90,11 @@ enum SettingsPane: String, CaseIterable, Identifiable {
       case .preferences: "slider.horizontal.3"
       case .advanced: "gearshape.2"
     }
+  }
+
+  /// Makes this the tab Settings shows, including in a Settings window that is already open.
+  func select(in preferences: UserDefaults) {
+    preferences.set(rawValue, forKey: Self.preferenceKey)
   }
 }
 

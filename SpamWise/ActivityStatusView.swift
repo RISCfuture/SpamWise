@@ -1,27 +1,41 @@
 import SwiftUI
 import SpamWiseCore
 
-/// The Activity footer: filtering mode, background checks, announcements and today's totals.
+/// The Activity footer: filtering mode, leaving dry run, checks, announcements and today’s totals.
 struct ActivityStatusView: View {
   let model: AppModel
+  @Environment(\.openSettings)
+  private var openSettings
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       Divider()
       HStack {
         FilteringStateView(state: model.scanning.filteringState)
+        LeaveDryRunButton(
+          state: model.scanning.filteringState,
+          transport: model.shared.settings.advancedOptions.transport,
+          canStartFiltering: model.router.canConfirmLiveFiltering
+        ) {
+          model.router.confirmLiveFiltering()
+        } checkConnection: {
+          showConnectionCheck(preferences: model.services.preferences, openSettings: openSettings)
+        }
         BackgroundCheckView(scanning: model.scanning)
         Spacer()
-        TodayTotalsView(today: model.activity.today, monthCost: model.shared.monthCost)
+        TodayTotalsView(
+          today: model.activity.today,
+          monthCost: model.shared.monthCost,
+          backend: model.shared.settings.advancedOptions.backend
+        )
       }
       if let digest = model.shared.pendingDigest {
         DigestAnnouncementView(count: digest.records.count) { model.router.present(.digest) }
       }
       if model.shared.spendingLimitReached {
-        Text(
+        WarningLabel(
           "Monthly spending limit reached — new mail isn’t sent to the provider until next month or a higher limit."
         )
-        .foregroundStyle(.primary)
         .accessibilityIdentifier("activity.spendingLimit")
       }
       MissingProviderKeyBanner(
@@ -62,7 +76,7 @@ private struct BackgroundCheckView: View {
 
   var body: some View {
     if let progress = scanning.progress {
-      ProgressView().controlSize(.small)
+      ProgressView { Text("Checking mail…") }.labelsHidden().controlSize(.small)
       if progress.total > 0 {
         Text("Checking mail… \(progress.processed) of \(progress.total)")
           .foregroundStyle(.secondary)
@@ -75,24 +89,27 @@ private struct BackgroundCheckView: View {
       Text("Last checked \(date, format: .activityDate)").foregroundStyle(.secondary)
     }
     if scanning.preview.isBusy {
-      ProgressView().controlSize(.small)
+      ProgressView { Text("Running dry run…") }.labelsHidden().controlSize(.small)
       Text("Running dry run…").foregroundStyle(.secondary)
       Button("Stop Dry Run") { scanning.preview.cancel() }
     }
   }
 }
 
+/// Today's counts, and this month's estimated cost for a provider that charges for its API.
 private struct TodayTotalsView: View {
   let today: TodaySummary
   let monthCost: Double
+  let backend: ModelBackend
 
   var body: some View {
     Text("Today: \(today.decisions) messages, \(today.junk) Junk, \(today.review) Review")
       .foregroundStyle(.secondary)
       .accessibilityIdentifier("activity.today")
-    Text("Month: \(monthCost, format: .currency(code: "USD"))")
-      .foregroundStyle(.secondary)
-      .help("Estimated API cost this month")
+    if backend.requiresAPIKey {
+      Text("Estimated cost this month: \(EstimatedCost.formatted(monthCost))")
+        .foregroundStyle(.secondary)
+    }
   }
 }
 

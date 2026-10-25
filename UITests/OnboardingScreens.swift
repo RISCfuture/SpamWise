@@ -74,7 +74,7 @@ struct MailSetupScreen {
 /// A graymail preference, in the order its segmented control shows it.
 enum GraymailChoice: Int { case keep, flag, junk }
 
-/// The choice for each kind of graymail, in setup or in Settings → Preferences.
+/// The choice for each kind of graymail, in setup or in Settings → Mail Choices.
 @MainActor
 struct CategoryPreferencesScreen {
   let app: XCUIApplication
