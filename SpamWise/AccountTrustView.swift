@@ -9,16 +9,17 @@ struct AccountTrustView: View {
   let trust: AuthenticationTrustModel
   let accountID: String
   @State private var editing = false
+  @State private var confirmsStop = false
 
   private var authentication: AccountAuthentication? { trust.accounts[accountID] }
   private var trusted: [String] { (authentication?.trustedServers ?? []).sorted() }
 
   var body: some View {
-    LabeledContent("Trusted mail server") {
+    LabeledContent("Recognize senders you know") {
       if trusted.isEmpty {
-        Text("None").foregroundStyle(.secondary)
+        Text("Off").foregroundStyle(.secondary)
       } else {
-        Text(trusted.joined(separator: ", ")).textSelection(.enabled)
+        Text("On (\(trusted.joined(separator: ", ")))").textSelection(.enabled)
       }
     }
     .sheet(isPresented: $editing) {
@@ -33,7 +34,22 @@ struct AccountTrustView: View {
     } else {
       HStack {
         Button("Edit…") { editing = true }
-        Button("Stop Trusting") { trust.stopTrusting(accountID: accountID) }
+        Button("Stop Trusting…") { confirmsStop = true }
+      }
+      .confirmationDialog(
+        "Stop trusting this account’s mail server?",
+        isPresented: $confirmsStop,
+        titleVisibility: .visible
+      ) {
+        Button("Stop Trusting", role: .destructive) { trust.stopTrusting(accountID: accountID) }
+        Button("Cancel", role: .cancel) {}
+      } message: {
+        Text(
+          """
+          Mail in this account from people in Contacts, people you’ve written to and senders with \
+          Allow rules will no longer go straight to Inbox. It only becomes less likely to be Junk.
+          """
+        )
       }
     }
     OperationStatusView(operation: trust.operation(for: accountID))
@@ -97,8 +113,15 @@ private struct TrustedServersEditor: View {
           .accessibilityIdentifier("account.trust.servers")
         Text(
           """
-          Enter the server named first in this account’s Authentication-Results headers. Separate \
+          Enter the server that receives this account’s mail and checks who sent it. Separate \
           several with commas.
+          """
+        )
+        .foregroundStyle(.secondary)
+        Text(
+          """
+          For experts: it’s the server named first in the Authentication-Results header of mail \
+          this account receives.
           """
         )
         .foregroundStyle(.secondary)

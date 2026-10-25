@@ -65,8 +65,8 @@ struct ProviderSharingSummary: View {
       )
       Text(
         """
-        Keys stay in Keychain until you choose Remove in Settings → Accounts → Keys and passwords. \
-        Forget Connection removes a saved IMAP password.
+        Keys stay in Keychain until you remove them. Forget Connection removes a saved IMAP \
+        password.
         """
       )
       if backend == .gemini {

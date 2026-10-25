@@ -2,7 +2,7 @@ import SwiftUI
 import SpamWiseCore
 import MailIntegration
 
-/// The Advanced tab: optional evidence, classification context, learning and notifications.
+/// The Advanced tab: optional evidence, classification context, learning, backups and diagnostics.
 struct AdvancedSettingsView: View {
   let model: AppModel
 
@@ -18,7 +18,6 @@ struct AdvancedSettingsView: View {
         rules: model.rules,
         activity: model.activity
       )
-      NotificationSettingsView(notifications: model.notifications, settings: settings)
       BackupSettingsView(backup: model.backup)
       DiagnosticsSection(model: model)
     }.formStyle(.grouped)

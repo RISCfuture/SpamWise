@@ -107,6 +107,12 @@ struct BackupExportView: View {
 
 /// A generated recovery key in selectable monospaced text, with Copy and Save to File.
 private struct RecoveryKeyView: View {
+  /// How long a copied key stays on the clipboard, unless something else is copied first.
+  private static let clipboardLifetime: Duration = .seconds(60)
+  /// Marks a clipboard item as a secret that clipboard managers shouldn't keep or show.
+  private static let concealedType = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
+  /// Marks a clipboard item that clipboard managers shouldn't record in their history.
+  private static let transientType = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")
   let key: String
   @State private var saving = false
   @State private var status: OperationStatus?
@@ -129,10 +135,36 @@ private struct RecoveryKeyView: View {
     StatusLabel(status: status)
   }
 
-  private func copy() {
+  /**
+   Puts `text` on this Mac's clipboard only, marked so clipboard managers skip it.
+
+   - Returns: The clipboard's change count after the write.
+   */
+  private static func writeConcealed(_ text: String) -> Int {
+    let pasteboard = NSPasteboard.general
+    pasteboard.prepareForNewContents(with: .currentHostOnly)
+    let item = NSPasteboardItem()
+    item.setString(text, forType: .string)
+    item.setData(Data(), forType: concealedType)
+    item.setData(Data(), forType: transientType)
+    pasteboard.writeObjects([item])
+    return pasteboard.changeCount
+  }
+
+  /// Clears the clipboard once the key's lifetime ends, unless anything was copied since.
+  private static func clearIfUnchanged(after changeCount: Int) async {
+    guard (try? await Task.sleep(for: clipboardLifetime)) != nil,
+      NSPasteboard.general.changeCount == changeCount
+    else { return }
     NSPasteboard.general.clearContents()
-    NSPasteboard.general.setString(key, forType: .string)
-    status = .message(String(localized: "Recovery key copied."))
+  }
+
+  private func copy() {
+    let changeCount = Self.writeConcealed(key)
+    status = .message(
+      String(localized: "Recovery key copied. SpamWise clears it from the clipboard in a minute.")
+    )
+    Task { await Self.clearIfUnchanged(after: changeCount) }
   }
 }
 
