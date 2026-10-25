@@ -12,6 +12,12 @@ struct `Text attachment extraction` {
     <script>fetch('https://attacker.example')</script><img \
     src="https://attacker.example/pixel"><p>Invoice offer</p>
     """
+  private static let encapsulated = """
+    From: Bank <alerts@bank.example>
+    Subject: =?utf-8?q?Caf=C3=A9?= account
+
+    Verify at https://phish.example/login
+    """
   private static let oversizedPadding = String(repeating: "x", count: 66_000)
   private let raw = Data(Self.source.utf8)
 
@@ -87,6 +93,47 @@ struct `Text attachment extraction` {
     let degraded = try DocumentInspection(raw: malformed)
     #expect(degraded.coverage.map(\.status) == [.extracted])
     #expect(degraded.message.decodingIssues?.contains(.invalidBase64) == true)
+  }
+
+  @Test
+  func `reads an inline encapsulated message as untrusted text`() throws {
+    let forwarded = try MIMEParser().parse(
+      Data(
+        ("From: friend@example.org\nContent-Type: multipart/mixed; boundary=b\n\n"
+          + "--b\n\nHave a look\n--b\nContent-Type: message/rfc822\n\n"
+          + Self.encapsulated + "\n--b--\n").utf8
+      )
+    )
+    #expect(
+      forwarded.text
+        == "Have a look\nEncapsulated message (untrusted):\nFrom: Bank <alerts@bank.example>\n"
+        + "Subject: Café account\nVerify at https://phish.example/login"
+    )
+    #expect(forwarded.urls == ["https://phish.example/login"])
+    #expect(forwarded.decodingIssues == nil)
+  }
+
+  @Test
+  func `reads a top-level encapsulated message`() throws {
+    let wrapped = try MIMEParser().parse(
+      Data(("From: friend@example.org\nContent-Type: message/rfc822\n\n" + Self.encapsulated).utf8)
+    )
+    #expect(wrapped.text.hasPrefix("Encapsulated message (untrusted):\nFrom: Bank"))
+    #expect(wrapped.text.hasSuffix("Verify at https://phish.example/login"))
+  }
+
+  @Test
+  func `conceals an encapsulated message it can't read`() throws {
+    let encoded = try MIMEParser().parse(
+      Data(
+        ("From: friend@example.org\nContent-Type: message/rfc822\n"
+          + "Content-Transfer-Encoding: base64\n\n"
+          + Data(Self.encapsulated.utf8).base64EncodedString()).utf8
+      )
+    )
+    #expect(encoded.text.isEmpty)
+    #expect(encoded.decodingIssues == [.unreadableEncapsulatedMessage])
+    #expect(encoded.concealsContent)
   }
 
   @Test

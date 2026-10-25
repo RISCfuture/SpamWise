@@ -21,6 +21,7 @@ public struct ParsedMessage: Codable, Sendable, Equatable {
 
    Differing `multipart/alternative` parts each appear whole, under an `[Alternative N]` marker.
    Text an HTML part conceals from view follows that part's visible text, under a notice.
+   An encapsulated message's sender, subject and text follow a notice of their own.
    */
   public var text: String
   /// Distinct extracted URLs, at most 40, never fetched: visible text and anchor links first,
@@ -85,11 +86,16 @@ public enum DecodingIssue: String, Codable, Sendable, CaseIterable {
   case invalidMultipartBoundary = "invalidMultipartBoundary"
   /// The message had more than 128 parts or nesting deeper than 12 levels; the rest was skipped.
   case partLimitExceeded = "partLimitExceeded"
+  /// An encapsulated message had a transfer encoding other than 7bit, 8bit or binary and was
+  /// skipped.
+  case unreadableEncapsulatedMessage = "unreadableEncapsulatedMessage"
 
   /// Whether the issue left content unread or misread its structure, where mail apps may differ.
   public var concealsContent: Bool {
     switch self {
-      case .ambiguousPartHeaders, .invalidMultipartBoundary, .partLimitExceeded: true
+      case .ambiguousPartHeaders, .invalidMultipartBoundary, .partLimitExceeded,
+        .unreadableEncapsulatedMessage:
+        true
       default: false
     }
   }
