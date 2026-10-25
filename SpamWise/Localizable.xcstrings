@@ -2857,6 +2857,22 @@
         }
       }
     },
+    "Undo Latest Correction…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deshacer la última corrección…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler la dernière correction…"
+          }
+        }
+      }
+    },
     "Undo Rules and Learning": {
       "localizations": {
         "es": {
@@ -6005,22 +6021,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Règles et apprentissage de la correction annulés ; action dans Mail inchangée"
-          }
-        }
-      }
-    },
-    "Undo latest correction…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deshacer la última corrección…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Annuler la dernière correction…"
           }
         }
       }
