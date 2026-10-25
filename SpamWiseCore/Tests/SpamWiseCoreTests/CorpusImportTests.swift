@@ -47,6 +47,7 @@ struct `Reviewed corpus import` {
     #expect(imported.rules.count == 1)
     #expect(imported.records.isEmpty)
     #expect(imported.reviewedLabels.allSatisfy { $0.message == nil })
+    #expect(Set(imported.corrections.map(\.excerpt)) == [""])
   }
 
   @Test
@@ -175,7 +176,6 @@ struct `Junk folder bootstrap` {
     #expect(
       state.reviewedLabels.count == 25 && state.reviewedLabels.allSatisfy { $0.label == .junk }
     )
-    #expect(state.corrections.allSatisfy { !$0.excerpt.isEmpty })
     #expect(state.rules.isEmpty)
   }
 }
