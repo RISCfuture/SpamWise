@@ -199,7 +199,7 @@ struct MessagePreviewSheet: View {
   var body: some View {
     NavigationStack {
       MessageTextView(text: preview.text)
-        .navigationTitle("Message preview")
+        .navigationTitle("Message Preview")
         .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "preview.done") }
     }
     .frame(minWidth: 560, minHeight: 400)

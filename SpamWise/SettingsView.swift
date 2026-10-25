@@ -71,10 +71,10 @@ enum SettingsPane: String, CaseIterable, Identifiable {
   var title: LocalizedStringResource {
     switch self {
       case .general: "General"
-      case .classifier: "Classifier"
+      case .classifier: "Provider"
       case .accounts: "Accounts"
       case .rules: "Rules"
-      case .preferences: "Preferences"
+      case .preferences: "Mail Choices"
       case .advanced: "Advanced"
     }
   }

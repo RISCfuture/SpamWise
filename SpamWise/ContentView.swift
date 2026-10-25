@@ -295,7 +295,7 @@ private struct ActivityFilterMenu: View {
       }
       Toggle("Corrections only", isOn: $activity.query.correctionsOnly)
       Toggle("Today only", isOn: $activity.showsTodayOnly)
-      Button("Date range…") { router.present(.dateFilter) }
+      Button("Date Range…") { router.present(.dateFilter) }
       Divider()
       Button("Clear Filters") { activity.clearFilters() }
         .disabled(!activity.query.hasFilters)

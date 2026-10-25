@@ -32,7 +32,7 @@ struct SetupPreviewView: View {
         .foregroundStyle(.secondary)
       }
       HStack {
-        Button("Dry run recent mail") { scanning.previewRecent() }
+        Button("Dry Run Recent Mail") { scanning.previewRecent() }
           .disabled(scanning.preview.isBusy)
           .accessibilityIdentifier("setup.dryRun")
         if scanning.preview.isBusy {

@@ -61,8 +61,8 @@ struct ActivityStatisticsView: View {
         }
         Section {
           HStack {
-            Button("Export statistics") { exportStatistics() }.disabled(statistics == nil)
-            Button("Export redacted diagnostics") { exportDiagnostics() }
+            Button("Export Statistics…") { exportStatistics() }.disabled(statistics == nil)
+            Button("Export Redacted Diagnostics…") { exportDiagnostics() }
             Spacer()
             HelpButton(page: "statistics")
           }
@@ -70,7 +70,7 @@ struct ActivityStatisticsView: View {
         }
       }
       .formStyle(.grouped)
-      .navigationTitle("Activity statistics")
+      .navigationTitle("Activity Statistics")
       .toolbar { DoneToolbarItem(dismiss: dismiss, identifier: "statistics.done") }
     }
     .frame(minWidth: 600, minHeight: 600)

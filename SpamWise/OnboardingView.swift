@@ -96,15 +96,15 @@ struct OnboardingView: View {
         complete: complete
       )
     }
-    .frame(minWidth: 560, idealWidth: 640, maxWidth: 760, minHeight: 480, idealHeight: 560)
+    .frame(minWidth: 560, idealWidth: 640, minHeight: 480, idealHeight: 560)
     .task { await model.credentials.refreshSavedKeys() }
   }
 
   private var continueTitle: LocalizedStringKey {
-    step == .classifier && !readiness.isReady ? "Skip for now" : "Continue"
+    step == .classifier && !readiness.isReady ? "Skip for Now" : "Continue"
   }
   private var finishTitle: LocalizedStringKey {
-    close != nil && settings.onboardingComplete ? "Done" : "Finish setup"
+    close != nil && settings.onboardingComplete ? "Done" : "Finish Setup"
   }
 
   /// Completes first-run setup, or only dismisses when setup was completed before.

@@ -50,9 +50,9 @@ struct BackupRestoreControls: View {
       } message: {
         Text(
           """
-          Your rules, policy, corrections and learning are replaced with the backup’s. Filtering \
-          pauses with dry run on until you check your accounts. Keys, passwords and spending stay \
-          as they are.
+          Your rules, additional instructions, corrections and learning are replaced with the \
+          backup’s. Filtering pauses with dry run on until you check your accounts. Keys, \
+          passwords and spending stay as they are.
           """
         )
       }

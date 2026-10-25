@@ -1,18 +1,18 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "Allow mail sharing with the selected provider in Settings → Classifier first.": {
+    "Allow mail sharing with the selected provider in Settings → Provider first.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Primero permite compartir el correo con el proveedor elegido en Ajustes → Clasificador."
+            "value": "Primero permite compartir el correo con el proveedor elegido en Ajustes → Proveedor."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Autorisez d’abord le partage des messages avec le fournisseur choisi dans Réglages → Classificateur."
+            "value": "Autorisez d’abord le partage des messages avec le fournisseur choisi dans Réglages → Fournisseur."
           }
         }
       }

@@ -67,7 +67,7 @@ struct MailAccountSection<Scope: View>: View {
       if needsMailboxCheck { MailboxCheckWarning(isAppleMail: isAppleMail) }
       AccountCoverageView(summary: summary)
       AccountTrustView(trust: model.trust, accountID: accountID)
-      DisclosureGroup("Advanced") {
+      DisclosureGroup("Mailboxes and Details") {
         if isAppleMail {
           MailDestinationView(mail: model.mail, shared: model.shared, accountID: accountID)
         }
@@ -104,7 +104,7 @@ private struct MailboxCheckWarning: View {
       WarningLabel(
         """
         SpamWise won’t move this account’s mail until it finds the Inbox and Junk mailboxes. Check \
-        Mail Connection, or check the mailboxes under Advanced.
+        Mail Connection, or open Mailboxes and Details and choose Check Mailboxes.
         """
       )
     } else {
