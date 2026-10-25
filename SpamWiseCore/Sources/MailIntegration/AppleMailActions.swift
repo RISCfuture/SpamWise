@@ -84,7 +84,8 @@ extension AppleMailAdapter {
 
    An orange flag or background already on the message is reported as applied without change,
    and clearing Review removes only one that SpamWise set. A Review change Mail doesn't confirm
-   is applied once the message shows it within the settling window.
+   is applied once the message shows it within the settling window, though an annotation added
+   by a request Mail didn't answer stays the user's.
 
    - Throws: ``ActionNotAttempted`` when the message can't be resolved, the record of Review
      marks SpamWise set can't be read before clearing one, or Mail refuses before changing it, as
@@ -206,7 +207,7 @@ extension AppleMailAdapter {
     let change = try await observedChange(command, to: target.location)
     await record(change, of: command, on: identity)
     switch change {
-      case .unconfirmed: return .init(confirmed: false)
+      case .unconfirmed, .unanswered: return .init(confirmed: false)
       case .alreadyApplied: return .init(confirmed: true)
       case .applied: break
     }
@@ -234,13 +235,19 @@ extension AppleMailAdapter {
   /**
    Requests a change; when Mail doesn't confirm a Review change, reads the message until it shows
    the change or ``moveSettlingTime`` passes, without sending the change again.
+
+   An unanswered request may have found the annotation already on the message, so an annotation
+   it adds that later shows stays the user's.
    */
   private func observedChange(_ command: MailCommand, to location: MailMessageLocation)
     async throws -> MailChange
   {
     let change = try await requestChange(command, to: location)
-    guard change == .unconfirmed, command.reviewAnnotation != nil else { return change }
-    return await observesReview(command, on: location) ? .applied : .unconfirmed
+    guard [.unconfirmed, .unanswered].contains(change), command.reviewAnnotation != nil else {
+      return change
+    }
+    guard await observesReview(command, on: location) else { return .unconfirmed }
+    return change == .unanswered && !command.removesReview ? .alreadyApplied : .applied
   }
   private func observesReview(_ command: MailCommand, on location: MailMessageLocation) async
     -> Bool
@@ -258,7 +265,7 @@ extension AppleMailAdapter {
     }
     return false
   }
-  /// Reports what Mail confirmed; cancellation or timeout after sending is unconfirmed.
+  /// Reports what Mail confirmed; cancellation or timeout after sending is unanswered.
   private func applyChange(_ command: MailCommand, to location: MailMessageLocation) async throws
     -> MailChange
   {
@@ -266,9 +273,9 @@ extension AppleMailAdapter {
     do {
       reply = try await invoke(.apply(command, target: location))
     } catch is CancellationError {
-      return .unconfirmed
+      return .unanswered
     } catch IntegrationError.timedOut {
-      return .unconfirmed
+      return .unanswered
     }
     switch reply {
       case .boolean(true): return .applied
