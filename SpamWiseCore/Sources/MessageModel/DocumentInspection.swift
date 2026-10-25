@@ -9,9 +9,11 @@ public struct AttachmentTextCoverage: Sendable, Equatable {
 
   /// Describes text extraction only; none of these states establishes attachment safety.
   public enum Status: Sendable {
-    /// Plain text or lexical HTML was decoded within the MIME parser's limits.
+    /// Plain text, lexical HTML or an encapsulated message was decoded within the MIME parser's
+    /// limits.
     case extracted
-    /// Attached plain text or HTML was left out because attachment text extraction is off.
+    /// Attached plain text, HTML or a message was left out because attachment text extraction is
+    /// off.
     case omitted
     /// The declared format requires an unavailable document decoder.
     case unsupported
@@ -57,7 +59,8 @@ public struct DocumentInspection: Sendable {
 
    - Parameters:
      - raw: The message source.
-     - includeTextAttachments: Whether attached plain text and HTML join the message text.
+     - includeTextAttachments: Whether attached plain text, HTML and messages join the message
+       text.
    - Throws: ``ParseError`` when the message can't be parsed at all.
    */
   public init(raw: Data, includeTextAttachments: Bool = true) throws {
