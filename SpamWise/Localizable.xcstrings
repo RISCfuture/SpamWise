@@ -11267,6 +11267,22 @@
         }
       }
     },
+    "Show SpamWise in the menu bar": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar SpamWise en la barra de menús"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher SpamWise dans la barre des menus"
+          }
+        }
+      }
+    },
     "Sign in with an OAuth token": {
       "localizations": {
         "es": {
@@ -11359,6 +11375,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "SpamWise ne peut pas récupérer cette clé. Sans elle, cette sauvegarde ne peut pas être restaurée."
+          }
+        }
+      }
+    },
+    "SpamWise checks mail while it’s open, even with its windows closed. At login it opens without a window; use its menu bar item or Dock icon. Mail must be open too.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise comprueba el correo mientras está abierto, incluso con sus ventanas cerradas. Al iniciar sesión se abre sin ventana; usa su ítem de la barra de menús o su icono del Dock. Mail también debe estar abierto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise vérifie les messages tant qu’il est ouvert, même fenêtres fermées. À l’ouverture de session, il s’ouvre sans fenêtre ; utilisez son icône dans la barre des menus ou dans le Dock. Mail doit aussi être ouvert."
           }
         }
       }
@@ -16937,6 +16969,22 @@
         }
       }
     },
+    "SpamWise: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SpamWise : %@"
+          }
+        }
+      }
+    },
     "Stop sorting new mail until you resume. Mail already sorted stays where it is.": {
       "localizations": {
         "es": {
@@ -17309,22 +17357,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aucune clé API pour %@. Les nouveaux messages ne sont pas classés tant que vous n’en ajoutez pas une ci-dessous."
-          }
-        }
-      }
-    },
-    "SpamWise checks mail while it’s open, even with its windows closed. At login it opens without a window; use its menu bar item. Mail must be open too.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise comprueba el correo mientras está abierto, incluso con sus ventanas cerradas. Al iniciar sesión se abre sin ventana; usa su ítem de la barra de menús. Mail también debe estar abierto."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SpamWise vérifie les messages tant qu’il est ouvert, même fenêtres fermées. À l’ouverture de session, il s’ouvre sans fenêtre ; utilisez son icône dans la barre des menus. Mail doit aussi être ouvert."
           }
         }
       }
@@ -18491,6 +18523,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Statistiques SpamWise"
+          }
+        }
+      }
+    },
+    "When it’s hidden, click SpamWise in the Dock to open Activity.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando está oculto, haz clic en SpamWise en el Dock para abrir Actividad."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorsqu’il est masqué, cliquez sur SpamWise dans le Dock pour ouvrir Activité."
           }
         }
       }

@@ -10,6 +10,7 @@ struct GeneralSettingsView: View {
   var body: some View {
     Form {
       StartupSettingsView(loginItem: settings.loginItem)
+      MenuBarSettingsView(preferences: model.services.preferences)
       UpdateSettingsView()
       Section {
         Picker("Filtering strength", selection: settings.binding(\.strength)) {
@@ -56,6 +57,29 @@ struct GeneralSettingsView: View {
         }
       }
     }.formStyle(.grouped)
+  }
+}
+
+/// Whether SpamWise shows its menu bar item, an interface preference of this Mac.
+private struct MenuBarSettingsView: View {
+  @AppStorage private var showsMenuBarItem: Bool
+
+  var body: some View {
+    Section {
+      Toggle("Show SpamWise in the menu bar", isOn: $showsMenuBarItem)
+        .accessibilityIdentifier("settings.menuBar")
+    } footer: {
+      Text("When it’s hidden, click SpamWise in the Dock to open Activity.")
+        .foregroundStyle(.secondary)
+    }
+  }
+
+  init(preferences: UserDefaults) {
+    _showsMenuBarItem = AppStorage(
+      wrappedValue: true,
+      MenuBarLabel.preferenceKey,
+      store: preferences
+    )
   }
 }
 
@@ -137,6 +161,10 @@ private struct IMAPRoleCheck: View {
 }
 
 #Preview("General") { GeneralSettingsView(model: PreviewHelper.model()) {} }
+#Preview("Menu bar") {
+  Form { MenuBarSettingsView(preferences: PreviewHelper.model().services.preferences) }
+    .formStyle(.grouped)
+}
 #Preview("Dry run toggle") {
   let model = PreviewHelper.model()
   Form { DryRunToggle(settings: model.settings, mail: model.mail, imap: model.imap) }
