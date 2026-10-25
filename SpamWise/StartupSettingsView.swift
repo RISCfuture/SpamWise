@@ -23,7 +23,7 @@ struct StartupSettingsView: View {
       Text(
         """
         SpamWise checks mail while it’s open, even with its windows closed. At login it opens \
-        without a window; use its menu bar item. Mail must be open too.
+        without a window; use its menu bar item or Dock icon. Mail must be open too.
         """
       )
       .foregroundStyle(.secondary)

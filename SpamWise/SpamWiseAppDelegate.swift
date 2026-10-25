@@ -6,8 +6,10 @@ public import AppKit
  Each edition's `App` installs it with `@NSApplicationDelegateAdaptor` and builds its scenes
  from ``model``. When macOS opens SpamWise at login, or launches it for a Mail rule's
  `check-inbox` URL, the Activity window closes as soon as settings show setup is finished, so
- filtering continues from the menu bar. URLs and backup files reach ``AppModel`` here rather
- than through a window. Quitting waits for edits still waiting to be saved.
+ filtering continues in the background. Closing every window never quits, and clicking the Dock
+ icon with no window open shows Activity, so SpamWise stays reachable with its menu bar item
+ hidden. URLs and backup files reach ``AppModel`` here rather than through a window. Quitting
+ waits for edits still waiting to be saved.
  */
 @MainActor
 public final class SpamWiseAppDelegate: NSObject, NSApplicationDelegate {
@@ -43,6 +45,15 @@ public final class SpamWiseAppDelegate: NSObject, NSApplicationDelegate {
     }
     for url in urls { model.handle(url) }
   }
+
+  /// Shows Activity when the Dock icon is clicked while no window is open.
+  public func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows: Bool) -> Bool {
+    if !hasVisibleWindows { model.showActivity() }
+    return false
+  }
+
+  /// Keeps SpamWise checking mail after its last window closes.
+  public func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool { false }
 
   /// Quits once settings and trust-exclusion edits that are still waiting to be saved are written.
   public func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
