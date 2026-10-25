@@ -1,5 +1,6 @@
 import Foundation
 import FoundationModels
+import Synchronization
 import Testing
 import SpamWiseCore
 
@@ -435,4 +436,34 @@ func `preserves Apple backend errors and validates session results`() async thro
     }
   )
   await #expect(throws: ClassificationError.refused) { try await refusal.classify(providerInput()) }
+}
+
+@Test
+func `shortens a prompt that exceeds the Apple model's context`() async throws {
+  let contextTokens = 3_000
+  let message = try MIMEParser().parse(
+    Data(
+      ("From: shop@example.jp\nSubject: お知らせ\n\n"
+        + String(repeating: "日本語の長い本文です。", count: 1_500)).utf8
+    )
+  )
+  let fitted = Mutex<String?>(nil)
+  let apple = AppleClassifier(
+    backend: .onDevice,
+    generate: { _, _, prompt, _ in
+      let tokens = prompt.unicodeScalars.count
+      guard tokens <= contextTokens else {
+        throw LanguageModelError.contextSizeExceeded(
+          .init(contextSize: contextTokens, tokenCount: tokens, debugDescription: "Fixture")
+        )
+      }
+      fitted.withLock { $0 = prompt }
+      return Verdict(label: .review, confidence: 60, reason: "Shortened")
+    }
+  )
+  let verdict = try await apple.classify(
+    .init(message: message, evidence: .init(message: message), timeout: 15)
+  )
+  #expect(verdict.label == .review)
+  #expect(fitted.withLock { $0 }?.contains(#""shortenedToFit":true"#) == true)
 }
