@@ -64,6 +64,14 @@ public struct ConfiguredClassifier: Classifier {
   }
 }
 
+extension ConfiguredClassifier: SpendingAdmission {
+  func admits(_ input: ClassificationInput) async throws -> Bool {
+    let model = try await StateRepository.load(store, StateSlices()).settings.advancedOptions.model
+    guard model.reservationUSD != nil else { return true }
+    return try await SpendingLimit.admits(input, model: model, store: store)
+  }
+}
+
 private struct ConsentCheckedClassifier: Classifier {
   let underlying: any Classifier
   let store: Store

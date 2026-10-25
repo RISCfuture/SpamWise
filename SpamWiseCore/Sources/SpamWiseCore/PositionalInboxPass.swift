@@ -77,7 +77,8 @@ public struct PositionalInboxPass: Sendable {
       segment.visited += page.visitedCount
       segment.unavailable += page.unavailableCount
       guard processed.completed else { segment.interrupted = true; break }
-      segment.unfinished = !processed.records.isEmpty && position < page.total
+      segment.unfinished =
+        processed.records.contains { !$0.deferredBySpendingLimit } && position < page.total
       guard segment.unfinished else { break }
     }
     return segment

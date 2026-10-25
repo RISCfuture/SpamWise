@@ -45,6 +45,7 @@ extension Pipeline {
       return claimed
     }
     let settles = discovered || !forceDryRun || state.settings.dryRun
+    var pending: DecisionRecord?
     do {
       if state.settings.paused {
         return try await paused(
@@ -66,18 +67,19 @@ extension Pipeline {
         revision: state.revision
       )
       try await save(record)
+      pending = record
       let dispatched = try await dispatch(record, adapter: adapter, forceDryRun: forceDryRun)
       if settles { await remember(dispatched, discoveredAs: identity) }
       return dispatched
     } catch {
-      let record = failure(
+      let unclassified = failure(
         identity: identity,
         reason: DecisionReason(failure: error),
         revision: state.revision
       )
-      try? await saveFailure(record)
+      let record = await recordFailure(error, of: pending, otherwise: unclassified)
       if settles {
-        await remember(record, discoveredAs: identity, failure: Self.failureKind(error))
+        await remember(unclassified, discoveredAs: identity, failure: Self.failureKind(error))
       }
       return record
     }

@@ -197,9 +197,12 @@ func `flags mail without one readable sender for Review without classifying it`(
   #expect(classified.value == 0)
 }
 
-@Test(arguments: ["self-mail", "forwarded-contact", "list-contact"])
-func `keeps self and forwarded authentication claims untrusted when excluding aliases`(
-  _ name: String
+@Test(arguments: [
+  (name: "self-mail", trusted: true), ("forwarded-contact", false), ("list-contact", false)
+])
+func `leaves an excluded contact to the classifier even when trusted servers authenticate it`(
+  _ name: String,
+  trusted: Bool
 ) async throws {
   let store = try testStore()
   let raw = try fixture(name), message = try MIMEParser().parse(raw)
@@ -208,11 +211,12 @@ func `keeps self and forwarded authentication claims untrusted when excluding al
     $0.contactAddresses = [address]; $0.contactsUpdatedAt = .now
     $0.settings.mailOptions.trustExclusions = [address]
   }
+  try await AuthenticationTrust.save(["mx.example.org"], accountID: "account", store: store)
   let pipeline = Pipeline(
     store: store,
     classifier: MockClassifier(operation: { input in
       #expect(input.evidence.contact == nil)
-      #expect(input.evidence.authResults.allSatisfy { !$0.trusted })
+      #expect(input.evidence.authResults.contains(where: \.trusted) == trusted)
       return .init(label: .review, confidence: 50, reason: "Authentication remains unknown")
     })
   )

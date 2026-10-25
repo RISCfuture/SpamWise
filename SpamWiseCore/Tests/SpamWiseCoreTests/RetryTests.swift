@@ -21,6 +21,34 @@ func `consumes retries only within the selected account`() async throws {
   #expect(state.records.last?.decision.label == .inbox)
   #expect(await adapter.actions.isEmpty)
 }
+@Test
+func `retries with the evidence the first attempt gathered`() async throws {
+  let store = try testStore(), scans = Counter()
+  try await StateRepository.editSettings(store) { settings in
+    var evidence = ExternalEvidenceSettings()
+    evidence.localRspamd = true
+    settings.advancedOptions.externalEvidence = evidence
+  }
+  let scanned = ExternalEvidenceFinding(source: .localRspamd, subject: "message", status: .unknown)
+    .summary
+  _ = await Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { _ in throw ClassificationError.rateLimited }),
+    rspamdScan: countingRspamd(scans)
+  ).process(try envelope())
+  #expect(try await StateRepository.load(store).retries.map(\.auxiliaryFindings) == [[scanned]])
+  let retried = Pipeline(
+    store: store,
+    classifier: MockClassifier(operation: { input in
+      #expect(input.evidence.auxiliaryFindings?.contains(scanned) == true)
+      return .init(label: .inbox, confidence: 99, reason: "Retry succeeded")
+    }),
+    rspamdScan: countingRspamd(scans)
+  )
+  await retried.retryDue(adapter: RecordingAdapter(), now: Date().addingTimeInterval(35))
+  #expect(scans.value == 1)
+  #expect(try await StateRepository.load(store).records.last?.decision.label == .inbox)
+}
 @Test(arguments: [false, true])
 func `retains unstarted retries across cancellation and restart`(cancelBeforeStart: Bool)
   async throws
