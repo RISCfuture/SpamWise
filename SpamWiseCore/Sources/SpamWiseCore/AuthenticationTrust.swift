@@ -8,6 +8,8 @@ public struct AuthServerObservations: Codable, Sendable, Equatable {
   public private(set) var messageKeys: [String] = []
   /// Number of sampled messages whose leading Authentication-Results headers named each server.
   public private(set) var serverCounts: [String: Int] = [:]
+  /// Number of sampled messages whose receiving provider's ARC set named each server.
+  public private(set) var arcServerCounts: [String: Int] = [:]
   /// Whether the bounded sample is full, so no further message is recorded.
   public var isComplete: Bool {
     messageKeys.count >= RetentionLimits.authServerObservationMessages
@@ -17,30 +19,50 @@ public struct AuthServerObservations: Codable, Sendable, Equatable {
 
    A server is detected when the leading headers of at least 90% of at least ten sampled messages
    name it. A server that a sender names below the provider's own headers appears only in that
-   sender's messages, so it does not reach that share.
+   sender's messages, so it does not reach that share. ARC sets are consulted only when no
+   Authentication-Results server reaches it.
    */
   public var detection: AuthServerDetection {
     let count = messageKeys.count
     guard count >= Self.minimumMessages else {
       return .collecting(observed: count, required: Self.minimumMessages)
     }
-    let consistent = serverCounts.filter {
-      Double($0.value) >= Self.consistentShare * Double(count)
-    }.keys
-    return consistent.isEmpty ? .inconsistent : .detected(Set(consistent))
+    let consistent = Self.consistent(serverCounts, of: count)
+    if !consistent.isEmpty { return .detected(consistent) }
+    let arc = Self.consistent(arcServerCounts, of: count)
+    return arc.isEmpty ? .inconsistent : .detectedFromARC(arc)
   }
   /// Creates an empty sample.
   public init() {}
-  /// Records one message's leading servers, once per message, until the sample is full.
-  mutating func observe(_ servers: [String], identityKey: String) {
-    guard !servers.isEmpty, !isComplete, !messageKeys.contains(identityKey) else { return }
-    messageKeys.append(identityKey)
-    for server in Set(servers)
-    where serverCounts[server] != nil
-      || serverCounts.count < RetentionLimits.authServerObservationServers
-    {
-      serverCounts[server, default: 0] += 1
+  /// Decodes each field independently, using its default when absent or unreadable.
+  public init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    messageKeys = values.lenient(.messageKeys, default: [])
+    serverCounts = values.lenient(.serverCounts, default: [:])
+    arcServerCounts = values.lenient(.arcServerCounts, default: [:])
+  }
+  private static func consistent(_ counts: [String: Int], of messages: Int) -> Set<String> {
+    Set(counts.filter { Double($0.value) >= consistentShare * Double(messages) }.keys)
+  }
+  private static func count(_ servers: Set<String>, in counts: inout [String: Int]) {
+    for server in servers
+    where counts[server] != nil || counts.count < RetentionLimits.authServerObservationServers {
+      counts[server, default: 0] += 1
     }
+  }
+  /**
+   Records one message's leading servers and its receiving provider's ARC server, once per
+   message, until the sample is full.
+   */
+  mutating func observe(_ servers: [String], arcServer: String?, identityKey: String) {
+    guard !servers.isEmpty || arcServer != nil, !isComplete, !messageKeys.contains(identityKey)
+    else { return }
+    messageKeys.append(identityKey)
+    Self.count(Set(servers), in: &serverCounts)
+    Self.count(Set([arcServer].compactMap(\.self)), in: &arcServerCounts)
+  }
+  private enum CodingKeys: String, CodingKey {
+    case messageKeys, serverCounts, arcServerCounts
   }
 }
 
@@ -50,8 +72,21 @@ public enum AuthServerDetection: Sendable, Equatable {
   case collecting(observed: Int, required: Int)
   /// These authserv-ids led the headers of nearly every sampled message; trust needs confirmation.
   case detected(Set<String>)
+  /**
+   The provider's Authentication-Results headers name no server, but its ARC sets named these
+   authserv-ids in nearly every sampled message; trust needs confirmation.
+   */
+  case detectedFromARC(Set<String>)
   /// No authserv-id led the headers consistently, so the account needs one set explicitly.
   case inconsistent
+
+  /// The servers that confirming the detection would trust; nil until any is detected.
+  public var detectedServers: Set<String>? {
+    switch self {
+      case .detected(let servers), .detectedFromARC(let servers): servers
+      case .collecting, .inconsistent: nil
+    }
+  }
 }
 
 /// One account's trusted receiving servers and detection progress.
@@ -106,8 +141,9 @@ public enum AuthenticationTrustError: AuthenticationTrustFailure, Sendable, Loca
 
  Until an account trusts a server, no authentication result in its mail is trusted, so Allow
  rules, Contacts and correspondence history reach the classifier as evidence instead of deciding
- messages. SpamWise samples the leading headers of each such account's mail to propose servers,
- which take effect only once confirmed or set explicitly.
+ messages. SpamWise samples the leading headers of each such account's mail, and the receiving
+ provider's ARC set where those headers name no server, to propose servers, which take effect only
+ once confirmed or set explicitly.
  */
 public enum AuthenticationTrust {
   private static let maximumServers = 8
@@ -132,7 +168,7 @@ public enum AuthenticationTrust {
   public static func confirmDetected(accountID: String, store: Store) async throws {
     let observations = try await StateRepository.load(store, StateSlices([.authentication]))
       .authServerObservations[accountID]
-    guard case .detected(let servers) = observations?.detection else {
+    guard let servers = observations?.detection.detectedServers else {
       throw AuthenticationTrustError.notDetected
     }
     try await save(Array(servers), accountID: accountID, store: store)
@@ -174,10 +210,11 @@ extension Pipeline {
     let servers = AuthenticationHeaders.leadingServers(
       message.headers["authentication-results"] ?? []
     )
-    guard !servers.isEmpty else { return }
+    let arcServer = AuthenticationHeaders.arcServer(message.headers)
+    guard !servers.isEmpty || arcServer != nil else { return }
     try? await StateRepository.update(store, loading: StateSlices([.authentication])) { state in
       state.authServerObservations[accountID, default: .init()]
-        .observe(servers, identityKey: identity.key)
+        .observe(servers, arcServer: arcServer, identityKey: identity.key)
     }
   }
 }

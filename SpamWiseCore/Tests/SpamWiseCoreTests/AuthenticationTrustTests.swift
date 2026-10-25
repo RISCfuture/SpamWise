@@ -90,6 +90,39 @@ func `detects an account's receiving servers before trusting them on confirmatio
 }
 
 @Test
+func `detects a provider from its ARC set, ignoring one a sender forged below it`() async throws {
+  let store = try testStore()
+  let pipeline = Pipeline(
+    store: store,
+    classifier: MockClassifier(verdict: .init(label: .review, confidence: 50, reason: "Unknown"))
+  )
+  func receive(_ index: Int) async -> DecisionRecord {
+    let arc =
+      index == 0
+      ? [MicrosoftHeaders.arcSet(instance: 2), MicrosoftHeaders.arcSet(server: "forger.example")]
+      : [MicrosoftHeaders.arcSet()]
+    let raw = Data(
+      (["From: sender\(index)@example.org", MicrosoftHeaders.receipt()] + arc
+        + ["Subject: Message \(index)", "", "Body \(index)"]).joined(separator: "\n").utf8
+    )
+    return await pipeline.process(
+      MailEnvelope(identity: .init(accountID: "account-A", contentHash: stableHash(raw)), raw: raw)
+    )
+  }
+  func detection() async throws -> AuthServerDetection? {
+    try await AuthenticationTrust.accounts(store)["account-A"]?.detection
+  }
+  for index in 0..<10 { _ = await receive(index) }
+  #expect(try await detection() == .collecting(observed: 9, required: 10))
+  _ = await receive(10)
+  #expect(try await detection() == .detectedFromARC(["mx.microsoft.com"]))
+  try await AuthenticationTrust.confirmDetected(accountID: "account-A", store: store)
+  let trusted = try await AuthenticationTrust.trustedServers(store)
+  #expect(trusted == ["account-A": ["mx.microsoft.com"]])
+  #expect(await receive(11).evidence?.senderAuthentication == .alignedPass)
+}
+
+@Test
 func `refuses a receiving server name that is not a host`() async throws {
   await #expect(throws: AuthenticationTrustError.invalidServer) {
     try await AuthenticationTrust.save(["mx example"], accountID: "account-A", store: testStore())

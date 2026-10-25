@@ -57,6 +57,52 @@ func `never trusts results without an authserv-id`() {
   #expect(exchange.allSatisfy { !$0.trusted && $0.server.isEmpty })
 }
 
+@Test(arguments: [
+  (
+    headers: [MicrosoftHeaders.receipt(), MicrosoftHeaders.arcSet()], trusted: "mx.microsoft.com",
+    expected: SenderAuthentication.alignedPass
+  ),
+  ([MicrosoftHeaders.receipt(), MicrosoftHeaders.arcSet()], "mx.google.com", .unverified),
+  (
+    [
+      MicrosoftHeaders.receipt(), MicrosoftHeaders.arcSet(instance: 2),
+      MicrosoftHeaders.arcSet(server: "forger.example")
+    ], "mx.microsoft.com", .unverified
+  ),
+  (
+    [
+      MicrosoftHeaders.receipt(
+        "dkim=pass header.d=other.example; dmarc=fail header.from=example.org"
+      ),
+      MicrosoftHeaders.arcSet()
+    ], "mx.microsoft.com", .unverified
+  ),
+  (
+    [
+      "Authentication-Results: mx.google.com; dkim=none", MicrosoftHeaders.receipt(),
+      MicrosoftHeaders.arcSet()
+    ], "mx.microsoft.com", .unverified
+  ),
+  (
+    [MicrosoftHeaders.receipt(), MicrosoftHeaders.arcSet(instance: 2)], "mx.microsoft.com",
+    .unverified
+  )
+])
+func `trusts only the receiving provider's sole ARC set, as far as its own header agrees`(
+  headers: [String],
+  trusted: String,
+  expected: SenderAuthentication
+) throws {
+  let raw = (["From: jane@example.org"] + headers + ["Subject: Hello", "", "Body"])
+    .joined(separator: "\n")
+  let evidence = EvidenceBundle(
+    message: try MIMEParser().parse(Data(raw.utf8)),
+    trustedAuthServers: [trusted]
+  )
+  #expect(evidence.senderAuthentication == expected)
+  #expect(evidence.authResults.filter(\.trusted).allSatisfy { $0.server == "mx.microsoft.com" })
+}
+
 @Test
 func `bounds flooded sender, authentication and link evidence`() throws {
   let links = (1...25).reversed().map { "https://link\($0).com/" }.joined(separator: " ")
@@ -225,4 +271,27 @@ func `leaves an excluded contact to the classifier even when trusted servers aut
   )
   #expect(result.path == .model)
   #expect(result.decision.label == .review)
+}
+
+/// Headers that Microsoft 365 and Outlook.com add on receipt, as `Name: value` lines.
+enum MicrosoftHeaders {
+  static let results =
+    "spf=pass smtp.mailfrom=example.org; dkim=pass header.d=example.org; dmarc=pass header.from=example.org"
+
+  /// The Authentication-Results header, which names no server.
+  static func receipt(_ results: String = results) -> String {
+    "Authentication-Results: \(results)"
+  }
+
+  /// An ARC-Seal and ARC-Authentication-Results pair of one instance.
+  static func arcSet(
+    instance: Int = 1,
+    server: String = "mx.microsoft.com",
+    results: String = results
+  ) -> String {
+    """
+    ARC-Seal: i=\(instance); a=rsa-sha256; d=microsoft.com; cv=none; b=signature
+    ARC-Authentication-Results: i=\(instance); \(server) 1; \(results)
+    """
+  }
 }

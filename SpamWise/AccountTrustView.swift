@@ -65,14 +65,17 @@ private struct TrustDetectionView: View {
   var body: some View {
     switch detection {
       case .detected(let servers):
-        LabeledContent("Detected server") {
-          Text(servers.sorted().joined(separator: ", ")).textSelection(.enabled)
-        }
-        HStack {
-          Button("Trust Detected Server", action: confirm)
-            .accessibilityIdentifier("account.trust.confirm")
-          Button("Enter Another…", action: edit)
-        }
+        DetectedServerView(servers: servers, confirm: confirm, edit: edit)
+      case .detectedFromARC(let servers):
+        DetectedServerView(servers: servers, confirm: confirm, edit: edit)
+        Text(
+          """
+          This account’s provider names its server only in ARC headers, as Microsoft 365 and \
+          Outlook.com do. SpamWise reads only the one the provider adds when mail arrives, never \
+          ones a sender includes.
+          """
+        )
+        .foregroundStyle(.secondary)
       case .inconsistent:
         Text("SpamWise couldn’t tell which server receives this account’s mail. Enter it yourself.")
           .foregroundStyle(.secondary)
@@ -93,6 +96,24 @@ private struct TrustDetectionView: View {
       """
     )
     .foregroundStyle(.secondary)
+  }
+}
+
+/// A server detected in an untrusted account's mail, with controls to trust it or enter another.
+private struct DetectedServerView: View {
+  let servers: Set<String>
+  let confirm: () -> Void
+  let edit: () -> Void
+
+  var body: some View {
+    LabeledContent("Detected server") {
+      Text(servers.sorted().joined(separator: ", ")).textSelection(.enabled)
+    }
+    HStack {
+      Button("Trust Detected Server", action: confirm)
+        .accessibilityIdentifier("account.trust.confirm")
+      Button("Enter Another…", action: edit)
+    }
   }
 }
 
@@ -121,7 +142,8 @@ private struct TrustedServersEditor: View {
         Text(
           """
           For experts: it’s the server named first in the Authentication-Results header of mail \
-          this account receives.
+          this account receives. Microsoft 365 and Outlook.com name it only in \
+          ARC-Authentication-Results.
           """
         )
         .foregroundStyle(.secondary)
@@ -163,6 +185,14 @@ private struct TrustedServersEditor: View {
 #Preview("Detected") {
   let model = PreviewHelper.accountsModel()
   Form { AccountTrustView(trust: model.trust, accountID: "icloud") }.formStyle(.grouped)
+}
+#Preview("Detected from ARC") {
+  let model = PreviewHelper.accountsModel()
+  model.trust.accounts["icloud"] = .init(
+    trustedServers: [],
+    detection: .detectedFromARC(["mx.microsoft.com"])
+  )
+  return Form { AccountTrustView(trust: model.trust, accountID: "icloud") }.formStyle(.grouped)
 }
 #Preview("Trusted") {
   let model = PreviewHelper.accountsModel()
