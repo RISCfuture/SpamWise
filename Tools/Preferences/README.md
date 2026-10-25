@@ -89,9 +89,10 @@ subject themes and greeting audiences, wrapped as colleague mail from fictional
 agency domains, plus five unmodified Nazario phishing and five Guenter spam
 samples. `authored.toml` supplies 65 synthetic messages (50 English, 8 Spanish,
 7 French) covering the graymail categories Marketeam lacks, wanted controls and
-boundary cases. Every sender domain is a reserved `.example` name; no message
-carries Authentication-Results. Ids `m001`… are shuffled across sources, and the
-build is byte-for-byte reproducible.
+boundary cases. Authored and Marketeam senders use reserved `.example` domains and
+carry no Authentication-Results; the public samples keep their original headers,
+including the phishing samples' Authentication-Results, which no profile trusts. Ids
+`m001`… are shuffled across sources, and the build is byte-for-byte reproducible.
 
 `manifest.json` records each id's source, source record or template key and
 SHA-256, never a category. Authored templates carry no intended category either.
@@ -141,21 +142,24 @@ Each profile gets its own AppState snapshot (its `categoryPreferences`, Balanced
 strength, dry run, and no rules, corrections, Contacts, history or trusted
 servers), cache and reports under `runs/<tag>/<profile>/`. Profiles run
 sequentially and the first unusable pass stops the tag, without retry or model
-fallback. The evaluator's report lists only results that differ from a folder's
-expected label, so each profile runs twice over identical bytes: once under
-`good/`, which lists every non-Inbox result, and once under `junk/`, which lists
-every non-Junk result. `observations.json` merges both; a `categoryConfidence`
-field, when the evaluator reports one, is kept. Without `--live`, runs use the
+fallback. An evaluator that lists every message's result in `observations` needs
+one pass under `good/`; a message it could not classify stays in the results and
+scores as unclassified, as the app leaves such mail untouched. An older evaluator
+lists only results that differ from a folder's expected label, so each profile
+runs twice over identical bytes: once under `good/`, which lists every non-Inbox
+result, and once under `junk/`, which lists every non-Junk result.
+`observations.json` holds every result; a `categoryConfidence` field, when the
+evaluator reports one, is kept. Without `--live`, runs use the
 explicit mock model with deterministic verdicts keyed by message hash, which
 check plumbing only.
 
 With spending authorization, add
 `--live --budget-store /absolute/private/evaluation-budget.store --budget-limit USD`
 (optionally `--reservation`, default $0.008). The first pass of each profile goes
-through `Scripts/evaluate-with-keychain.swift` with explicit Claude. It must
-classify every message with no failed provider call. The second pass replays the
-cache against a fresh zero-ceiling ledger, so any uncached request is refused
-rather than sent. Five profiles over 155 messages reserve at most 775 requests,
+through `Scripts/evaluate-with-keychain.swift` with explicit Claude. When a second
+pass follows, the first must classify every message with no failed provider call,
+and the second replays the cache against a fresh zero-ceiling ledger, so any
+uncached request is refused rather than sent. Five profiles over 155 messages reserve at most 775 requests,
 $6.20 at the default reservation. A `--timeout` (default 3600 seconds per
 invocation) kills the launcher's whole process group, evaluator included.
 
@@ -175,6 +179,7 @@ accuracy against the frozen labels and spam-path outcomes. Adherence and wrong-J
 rates carry Wilson 95% intervals. A recorded preference that differs from the
 profile's state stops scoring. When every model result carries
 `categoryConfidence`, a threshold sweep from 50 to 100 in steps of 5 recomputes
-each Junk-preferred graymail decision as Junk at or above the threshold and Review
-below it, keeping every other effective label. Choose a threshold on dev and
+each Junk-preferred graymail decision as `Decision.evaluate` does: Junk at or above
+the threshold, and below it Junk only for a Junk label confident enough for the
+run's strength, otherwise Review. Every other effective label is kept. Choose a threshold on dev and
 confirm it on holdout.

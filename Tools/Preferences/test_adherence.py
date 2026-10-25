@@ -163,7 +163,16 @@ class ScoringTests(unittest.TestCase):
 
     def test_sweep_moves_only_junk_preferred_categories_by_category_confidence(self):
         rows = {
-            "low": observation("junk", "promotion", 70),
+            "low": {
+                **observation("junk", "promotion", 70),
+                "modelLabel": "junk",
+                "confidence": 94,
+            },
+            "confident": {
+                **observation("review", "promotion", 70),
+                "modelLabel": "junk",
+                "confidence": 95,
+            },
             "high": observation("review", "promotion", 90),
             "kept": observation("review", "newsletter", 99),
             "older": observation("junk", "promotion"),
@@ -173,7 +182,14 @@ class ScoringTests(unittest.TestCase):
             for message, row in rows.items()
         }
         self.assertEqual(
-            swept, {"low": "review", "high": "junk", "kept": "review", "older": "junk"}
+            swept,
+            {
+                "low": "review",
+                "confident": "junk",
+                "high": "junk",
+                "kept": "review",
+                "older": "junk",
+            },
         )
         self.assertEqual(adherence.swept_action(rows["low"], PREFERENCES, None), "junk")
 
@@ -218,6 +234,40 @@ class RunTests(unittest.TestCase):
         junk_pass["metrics"]["misclassifications"][1]["category"] = "promotion"
         with self.assertRaises(ValueError):
             adherence.merge_passes(inbox_pass, junk_pass, {"m1", "m2", "m3"})
+
+    def test_listed_results_need_one_pass_and_keep_unclassified_messages(self):
+        listed = {
+            **report([]),
+            "failedProviderCalls": 1,
+            "observations": [
+                {"file": "good/m1.eml", "label": "inbox", "path": "model"},
+                {"file": "good/m2.eml", "label": None, "path": "error"},
+            ],
+            "model": "mock",
+            "strength": "balanced",
+            "newUsage": {},
+        }
+        listed["metrics"]["unclassified"] = 1
+        listed["metrics"]["confusion"] = {"good": {"inbox": 1, "unclassified": 1}}
+
+        def evaluate(command, timeout, stderr_path):
+            write_json(Path(command[command.index("--output") + 1]), listed)
+            return 0
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / "profile"
+            config = adherence.RunConfig(executable=Path("/unused"))
+            with patch.object(adherence, "invoke", side_effect=evaluate) as runner:
+                result = adherence.run_profile(
+                    config, directory, "p", PREFERENCES, {"m1": b"", "m2": b""}
+                )
+            runner.assert_called_once()
+            self.assertEqual(result["status"], "completed")
+            self.assertEqual(result["unclassified"], ["m2"])
+            observations = json.loads((directory / "observations.json").read_text())
+            self.assertEqual(
+                adherence.effective(observations["observations"]["m2"]), "unclassified"
+            )
 
     def test_live_replay_pass_cannot_spend(self):
         config = adherence.RunConfig(
