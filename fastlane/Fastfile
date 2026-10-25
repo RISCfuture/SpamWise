@@ -52,9 +52,10 @@ def edition(name)
   end
 end
 
-# Every bundle that carries entitlements, and so needs a provisioning profile of its own. Both carry
-# the App Group and shared keychain access group, which a bare signature cannot satisfy, and both
-# editions export both bundles. SpamWiseCommon.framework is signed with the app's identity.
+# Every bundle both editions export, each signed with a provisioning profile of its own. The app's
+# authorizes the App Group and shared keychain access group, which a bare signature cannot satisfy;
+# the extension holds only the App Sandbox entitlement, but an App Store export still wants a profile
+# for it. SpamWiseCommon.framework is signed with the app's identity.
 APP_IDENTIFIERS = [APP_IDENTIFIER, "codes.tim.SpamWise.MailExtension"].freeze
 
 # The repository the downloadable edition checks for updates, from the tracked xcconfig. GitHub's
@@ -135,6 +136,22 @@ def exported_app_version(app)
   exported_app_value(app, "CFBundleShortVersionString")
 end
 
+# The Help book's own Info.plist. Help Viewer caches a book's pages and index by its bundle version,
+# so each release stamps the version it ships.
+HELP_BOOK_INFO = File.join(REPO_ROOT, "SpamWise", "SpamWise.help", "Contents", "Info.plist")
+
+# Runs the block with the Help book stamped with the given version and build, then restores the
+# checked-in plist so a release leaves the working tree as it found it.
+def with_help_book_stamped(version:, build:)
+  original = File.binread(HELP_BOOK_INFO)
+  { "CFBundleShortVersionString" => version, "CFBundleVersion" => build }.each do |key, value|
+    sh("plutil", "-replace", key, "-string", value.to_s, HELP_BOOK_INFO) if value
+  end
+  yield
+ensure
+  File.binwrite(HELP_BOOK_INFO, original) if original
+end
+
 # Fails unless the bundle carries the compiled Icon Composer icon.
 def check_app_icon(app)
   sh("bash", File.join(REPO_ROOT, "Scripts", "check-app-icon.sh"), app)
@@ -175,6 +192,13 @@ end
 
 # App Store Connect's ceiling on a "What's New" entry.
 RELEASE_NOTES_LIMIT = 4000
+
+# The marketing versions App Store Connect accepts: two or three dot-separated integers.
+MARKETING_VERSION_PATTERN = /\A\d+(\.\d+){1,2}\z/
+
+def valid_marketing_version?(version)
+  version.to_s.match?(MARKETING_VERSION_PATTERN)
+end
 
 # How long to wait for Apple to finish processing an upload, and how often to ask. The wait is capped
 # so a stuck build fails the job rather than holding a runner indefinitely.
@@ -339,9 +363,13 @@ platform :mac do
     File.write(build_number_file, next_build_number) if build_number_file
   end
 
-  desc "Refuse to start a release whose notes or update repository are missing (CI)"
+  desc "Refuse to start a release whose version, notes or update repository are invalid (CI)"
   lane :ci_verify_release_notes do |options|
     version = options.fetch(:version)
+    unless valid_marketing_version?(version)
+      UI.user_error!("#{version.inspect} is not a marketing version App Store Connect accepts; " \
+                     "tag releases as 1.2 or 1.2.3.")
+    end
 
     # Every locale falls back to the default section, so checking it alone needs no App Store
     # Connect credentials, which lets this run before anything is built.
@@ -406,13 +434,15 @@ platform :mac do
     stamps << "MARKETING_VERSION=#{options[:version]}" if options[:version]
     stamps << "CURRENT_PROJECT_VERSION=#{options[:build]}" if options[:build]
 
-    build_app(
-      scheme:           config.fetch(:scheme),
-      destination:      "generic/platform=macOS",
-      export_method:    config.fetch(:export_method),
-      output_directory: OUTPUT_DIRECTORY,
-      xcargs:           "#{stamps.join(' ')} -allowProvisioningUpdates #{provisioning_authentication_args}".strip
-    )
+    with_help_book_stamped(version: options[:version], build: options[:build]) do
+      build_app(
+        scheme:           config.fetch(:scheme),
+        destination:      "generic/platform=macOS",
+        export_method:    config.fetch(:export_method),
+        output_directory: OUTPUT_DIRECTORY,
+        xcargs:           "#{stamps.join(' ')} -allowProvisioningUpdates #{provisioning_authentication_args}".strip
+      )
+    end
     check_app_icon(archived_app)
   end
 

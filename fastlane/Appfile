@@ -1,5 +1,5 @@
 app_identifier("codes.tim.SpamWise") # The bundle identifier of your app
-apple_id("apple@timothymorgan.info") # Your Apple Developer Portal username
+apple_id(ENV.fetch("FASTLANE_APPLE_ID", nil)) # Optional Apple ID; see .env.example
 
 # SpamWise ships two editions sharing this identifier: an App Store build uploaded to App Store
 # Connect, and a Developer ID build notarized and published as a disk image. The App Store Connect
