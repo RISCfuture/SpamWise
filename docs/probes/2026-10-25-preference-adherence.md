@@ -21,9 +21,10 @@ There are 155 messages. The harness and message set are in `Tools/Preferences`
 | Guenter spam, 2026-09 | 5 | Public, unmodified |
 
 The downloads matched the SHA-256 hashes in
-[`Tools/Corpus/sources.json`](../../Tools/Corpus/sources.json). No message carries
-Authentication-Results. Message ids are shuffled across sources, and the manifest
-holds no categories.
+[`Tools/Corpus/sources.json`](../../Tools/Corpus/sources.json). Only the five
+phishing samples carry Authentication-Results, their original headers, and no
+profile configures a trusted receiving server. Message ids are shuffled across
+sources, and the manifest holds no categories.
 
 Two labelers, both Claude agents working independently from a written rubric that
 lists `MailCategory` and asks for each message's main purpose, labeled all 155
@@ -91,21 +92,24 @@ Rates carry Wilson 95% intervals. An unclassified message counts against adheren
 The candidate reports every message's label, confidence, category and category
 confidence, so its decisions were recomputed offline at each threshold from 50 to
 100 using `Decision.evaluate`'s rule. Below the threshold the label policy applies,
-so a Junk label at 95 or more still moves the message. The harness's simpler sweep,
-which uses Review below the threshold, gave identical numbers at every threshold,
-because no Junk-preferred verdict combined a Junk label at 95 or more with a category
-confidence below the threshold.
+so a Junk label at 95 or more still moves the message. A plain rule that uses Review
+below the threshold gives identical numbers at every threshold, because no
+Junk-preferred verdict combined a Junk label at 95 or more with a category confidence
+below the threshold. The harness's `score` sweep reproduces them.
 
 The threshold was chosen on dev only. The rule was the lowest threshold with zero dev
-wrong Junk across both profiles and the highest adherence among those. The choice was
-recorded before the holdout numbers were read.
+wrong Junk across both profiles and the highest adherence among those, so the dev
+numbers alone determine it. The choice was recorded before the holdout scores were
+written, although the same batch had already computed the holdout sweep.
 
 Three candidate requests failed: one timeout (m119) in `declutter` and two network
 errors (m110, m111) in `deal-seeker`, all dev messages. They stay unclassified, which
-is how the app fails open: the mail is left untouched. A failed first pass stops the
-harness before its replay pass, so those two profiles' results come from the
-evaluator's complete `observations` list. The baseline evaluator has no such list,
-and its two runs completed both passes with no failures.
+is how the app fails open: the mail is left untouched. The harness used for these
+runs stopped a profile whose first pass left a message unclassified, before its
+replay pass, so those two profiles' results were taken from the evaluator's complete
+`observations` list. The harness now reads that list itself in one pass and gives
+the same rows. The baseline evaluator has no such list, and its two runs completed
+both passes with no failures.
 
 ## Results
 
@@ -196,7 +200,8 @@ the harm grows.
   missed Junk but had 11 wrong Junk against 1. Lowering it only adds harm.
 - **Conservative: 95, not min(Balanced + 10, 100) = 100.** No dev verdict reached
   category confidence 100 (the maximum was 97), so 100 would turn the category path
-  off for Conservative. 95 had zero dev wrong Junk.
+  off for Conservative. 95 had zero dev wrong Junk. This amendment was recorded
+  after the holdout scores were written, on that dev-only reason.
 
 `Decision.swift` now has 95, 90 and 85. The Help pages on filtering strength
 (en, es, fr), `docs/evaluation.md` and the evaluation test that sits between
