@@ -160,7 +160,7 @@ private struct SetupNavigation: View {
         Button("Back") { step = previous }
       }
       Spacer()
-      if isBusy { ProgressView().controlSize(.small) }
+      if isBusy { ProgressView { Text("Working…") }.labelsHidden().controlSize(.small) }
       if let next = step.next {
         Button(continueTitle) { step = next }
           .keyboardShortcut(continuesByDefault ? .defaultAction : nil)

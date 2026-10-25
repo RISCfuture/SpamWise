@@ -20,7 +20,9 @@ struct IMAPSettingsView: View {
             .disabled(!imap.canSave)
             .accessibilityIdentifier("imap.save")
           Button("Check Connection") { imap.check() }.accessibilityIdentifier("imap.validate")
-          if imap.operation.isBusy { ProgressView().controlSize(.small) }
+          if imap.operation.isBusy {
+            ProgressView { Text("Working…") }.labelsHidden().controlSize(.small)
+          }
           Spacer()
           if imap.hasSavedConnection { ForgetIMAPConnectionButton(imap: imap) }
           HelpButton(page: "imap-connection")

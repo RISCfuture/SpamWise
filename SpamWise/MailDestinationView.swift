@@ -18,7 +18,9 @@ struct MailDestinationView: View {
     )
     HStack {
       Button("Check Mailboxes") { read() }
-      if reading.isBusy { ProgressView().controlSize(.small) }
+      if reading.isBusy {
+        ProgressView { Text("Checking mailboxes…") }.labelsHidden().controlSize(.small)
+      }
     }
     if let destinations {
       LabeledContent("Inbox", value: names(destinations.inbox))

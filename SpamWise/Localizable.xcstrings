@@ -681,6 +681,54 @@
         }
       }
     },
+    "Checking mailboxes…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando los buzones…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification des boîtes aux lettres…"
+          }
+        }
+      }
+    },
+    "Checking the connection…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando la conexión…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification de la connexion…"
+          }
+        }
+      }
+    },
+    "Checking the Mail connection…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando la conexión con Mail…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérification de la connexion à Mail…"
+          }
+        }
+      }
+    },
     "Choose a folder": {
       "localizations": {
         "es": {
@@ -873,6 +921,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connecté. SpamWise a trouvé les boîtes de réception et d’indésirables."
+          }
+        }
+      }
+    },
+    "Connecting Contacts…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectando Contactos…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion à Contacts…"
           }
         }
       }
@@ -1523,6 +1587,22 @@
         }
       }
     },
+    "Importing history…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importando el historial…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importation de l’historique…"
+          }
+        }
+      }
+    },
     "Just This Sender": {
       "localizations": {
         "es": {
@@ -2169,6 +2249,22 @@
         }
       }
     },
+    "Previewing the page…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previsualizando la página…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prévisualisation de la page…"
+          }
+        }
+      }
+    },
     "Quiet hours": {
       "localizations": {
         "es": {
@@ -2441,6 +2537,54 @@
         }
       }
     },
+    "Saving the examples…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardando los ejemplos…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement des exemples…"
+          }
+        }
+      }
+    },
+    "Saving the key…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardando la clave…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement de la clé…"
+          }
+        }
+      }
+    },
+    "Saving the plan…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardando el plan…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement de la configuration…"
+          }
+        }
+      }
+    },
     "Scan Junk Folders": {
       "localizations": {
         "es": {
@@ -2453,6 +2597,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Analyser les dossiers d’indésirables"
+          }
+        }
+      }
+    },
+    "Scanning Junk folders…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analizando las carpetas de no deseado…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyse des dossiers d’indésirables…"
           }
         }
       }
@@ -2757,6 +2917,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tester le message sélectionné"
+          }
+        }
+      }
+    },
+    "Testing the rule…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probando la regla…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test de la règle…"
+          }
+        }
+      }
+    },
+    "Testing the selected message…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probando el mensaje seleccionado…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test du message sélectionné…"
           }
         }
       }
@@ -6057,6 +6249,70 @@
         }
       }
     },
+    "Updating content rules…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualizando las reglas de contenido…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mise à jour des règles de contenu…"
+          }
+        }
+      }
+    },
+    "Updating folder plans…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualizando los planes de carpetas…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mise à jour des configurations de dossiers…"
+          }
+        }
+      }
+    },
+    "Updating sender rules…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualizando las reglas de remitente…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mise à jour des règles d’expéditeur…"
+          }
+        }
+      }
+    },
+    "Updating your reviewed examples…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualizando tus ejemplos revisados…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mise à jour de vos exemples vérifiés…"
+          }
+        }
+      }
+    },
     "Usage": {
       "localizations": {
         "es": {
@@ -6277,6 +6533,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quelles données sont envoyées"
+          }
+        }
+      }
+    },
+    "Working…": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Procesando…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traitement en cours…"
           }
         }
       }
