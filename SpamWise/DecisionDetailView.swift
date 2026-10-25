@@ -33,7 +33,7 @@ struct DecisionDetailView: View {
         if let undo = shared.state.correctionUndo, undo.applies(to: row),
           undo.isAvailable(in: shared.state)
         {
-          UndoCorrectionButton(corrections: corrections, row: row)
+          UndoCorrectionButton(corrections: corrections, row: row, undo: undo)
         }
         OperationStatusView(
           operation: corrections.decision,
@@ -139,28 +139,45 @@ private struct MessageAccessSection: View {
   }
 }
 
-/// Undoes the correction this decision shows, naming the sender and verdict it reverts.
+/// Undoes the correction this decision shows, naming the sender and verdict it reverts, or the
+/// whole selected-message batch it belongs to.
 private struct UndoCorrectionButton: View {
   let corrections: CorrectionsModel
   let row: DecisionRecord
+  let undo: CorrectionUndo
   @State private var confirming = false
 
   private var label: String { VerdictBadge.title(for: row.effectiveLabel) }
+
+  private var title: String {
+    undo.correctionCount == 1
+      ? String(localized: "Undo marking messages from \(row.displaySender) as \(label)?")
+      : String(localized: "Undo marking \(undo.correctionCount) selected messages as \(label)?")
+  }
+
+  private var message: String {
+    let restored =
+      undo.correctionCount == 1
+      ? String(
+        localized:
+          "Rules and examples go back to how they were before that correction. Mail doesn’t move."
+      )
+      : String(
+        localized:
+          "Rules and examples go back to how they were before those corrections. Mail doesn’t move."
+      )
+    return [restored, undo.retainedDescription].compactMap(\.self).joined(separator: " ")
+  }
 
   var body: some View {
     Button("Undo Latest Correction…") { confirming = true }
       .disabled(corrections.decision.isBusy)
       .accessibilityIdentifier("correction.undo")
-      .confirmationDialog(
-        "Undo marking messages from \(row.displaySender) as \(label)?",
-        isPresented: $confirming
-      ) {
+      .confirmationDialog(title, isPresented: $confirming) {
         Button("Undo Rules and Learning") { corrections.undoLatestCorrection() }
           .accessibilityIdentifier("correction.undo.confirm")
       } message: {
-        Text(
-          "Rules and examples go back to how they were before that correction. Mail doesn’t move."
-        )
+        Text(message)
       }
   }
 }
