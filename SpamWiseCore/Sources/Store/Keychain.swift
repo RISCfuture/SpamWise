@@ -7,7 +7,7 @@ public protocol CredentialFailure: Error {}
 
 /// Credential lookup or update failures.
 public enum KeychainError: CredentialFailure, Sendable, LocalizedError {
-  /// Keychain returned an unsuccessful status or unusable credential data.
+  /// Keychain returned an unsuccessful status.
   case status(OSStatus)
   /// No nonempty credential is available.
   case missing
@@ -68,16 +68,16 @@ public struct APIKeychain: Sendable {
       case .onDevice, .privateCloudCompute: return nil
     }
   }
-  /// Returns the stored credential, throwing ``KeychainError/missing`` when none is stored.
+  /// Returns the stored credential, throwing ``KeychainError/missing`` when none is stored or it is empty or unreadable.
   public func read() throws -> String {
     var query = query; query[kSecReturnData as String] = true
     query[kSecMatchLimit as String] = kSecMatchLimitOne
     var result: CFTypeRef?
     let status = unsafe SecItemCopyMatching(query as CFDictionary, &result)
     if status == errSecItemNotFound { throw KeychainError.missing }
-    guard status == errSecSuccess, let data = result as? Data,
-      let key = String(data: data, encoding: .utf8)
-    else { throw KeychainError.status(status) }
+    guard status == errSecSuccess else { throw KeychainError.status(status) }
+    guard let data = result as? Data, let key = String(data: data, encoding: .utf8), !key.isEmpty
+    else { throw KeychainError.missing }
     return key
   }
   /**

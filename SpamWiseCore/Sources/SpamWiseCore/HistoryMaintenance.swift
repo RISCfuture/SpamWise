@@ -60,9 +60,10 @@ public struct HistoryMaintenance: Sendable {
       do {
         cursor = try await maintain(account.id, cursor: cursor)
         succeeded = true
+      } catch let backfill as BackfillFailure {
+        failure = backfill.error; cursor = backfill.cursor
       } catch let error where Self.isIsolated(error) {
         failure = error
-        cursor.recordFailure(pageSize: Self.pageSize)
       }
       cursor.lastRun = now
       try await save(cursor, for: account.id)
@@ -109,9 +110,15 @@ public struct HistoryMaintenance: Sendable {
     try await HistoryRepository.ingest(accountID: accountID, sent: head.envelopes, in: store)
     cursor.advanceHead(to: head)
     guard let offset = cursor.backfillOffset, budget > 0 else { return cursor }
-    let backfill = try await readBackfill(accountID, from: offset, budget: &budget)
+    let backfill: (envelopes: [MailEnvelope], next: Int?)
+    do {
+      backfill = try await readBackfill(accountID, from: offset, budget: &budget)
+    } catch let error where Self.isIsolated(error) {
+      cursor.recordFailure(pageSize: Self.pageSize)
+      throw BackfillFailure(error: error, cursor: cursor)
+    }
     try await HistoryRepository.ingest(accountID: accountID, sent: backfill.envelopes, in: store)
-    cursor.backfillOffset = backfill.next
+    cursor.advanceBackfill(to: backfill.next)
     return cursor
   }
 
@@ -210,23 +217,30 @@ extension HistoryMaintenance {
 
     /// Moves the mark to the newest message, continuing the backfill after a head that never reached it.
     mutating func advanceHead(to read: HeadRead) {
-      if read.exhausted {
-        backfillOffset = nil
-      } else if !read.foundMark {
-        backfillOffset = read.reached
-      }
+      let next = read.exhausted ? nil : read.foundMark ? backfillOffset : read.reached
+      if next != backfillOffset { advanceBackfill(to: next) }
       mark = read.newest ?? mark
+    }
+
+    /// Continues the backfill from `next` after its pages were read.
+    mutating func advanceBackfill(to next: Int?) {
+      backfillOffset = next
       failures = 0
     }
 
-    /// Counts a failed run, stepping past a backfill page that keeps failing.
+    /// Counts a failed backfill read, stepping past a backfill page that keeps failing.
     mutating func recordFailure(pageSize: Int) {
       failures += 1
       guard failures >= HistoryMaintenance.maximumPageFailures, let offset = backfillOffset
       else { return }
-      backfillOffset = offset + pageSize
-      failures = 0
+      advanceBackfill(to: offset + pageSize)
     }
+  }
+
+  /// A failed backfill read, carrying the cursor that already counts the head read before it.
+  struct BackfillFailure: Error {
+    let error: any Error
+    let cursor: SentCursor
   }
 
   /// Messages read from the newest Sent position.
@@ -259,12 +273,12 @@ extension StateRepository {
     )
     let superseded = ActionOutcome.superseded.rawValue
     let decisions = try await store.snapshot { context in
-      try context.fetch(
-        FetchDescriptor<RecordRow>(
-          predicate: #Predicate { keys.contains($0.identityKey) && $0.outcome != superseded },
-          sortBy: [SortDescriptor(\.date)]
-        )
-      ).map {
+      var descriptor = FetchDescriptor<RecordRow>(
+        predicate: #Predicate { keys.contains($0.identityKey) && $0.outcome != superseded },
+        sortBy: [SortDescriptor(\.date)]
+      )
+      descriptor.propertiesToFetch = [\.identityKey, \.label, \.correctedLabel, \.date]
+      return try context.fetch(descriptor).map {
         InboxDecision(
           key: $0.identityKey,
           corrected: $0.correctedLabel.flatMap(MailLabel.init(rawValue:)),
