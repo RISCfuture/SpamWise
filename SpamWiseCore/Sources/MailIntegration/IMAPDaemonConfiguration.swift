@@ -45,7 +45,13 @@ public struct IMAPCredentialReference: Codable, Sendable {
     let secret = try resolvedSecret()
     return oauthBearer ? .oauthBearer(secret) : .password(secret)
   }
-  /// Reads the referenced secret without requesting interactive Keychain authentication.
+  /**
+   Reads the referenced secret without printing or persisting it.
+
+   The Keychain read disallows authentication UI, which doesn't extend to a login Keychain
+   item's access list: unless the item trusts the reading executable, macOS may show an access
+   prompt and the read waits until someone answers it. Environment references never prompt.
+   */
   public func resolvedSecret() throws -> String {
     try validate()
     let secret: String
@@ -171,7 +177,7 @@ public struct IMAPDaemonConfiguration: Codable, Sendable {
    Reads the referenced API key for `backend`, for an explicit `providerCredentials` map.
 
    - Throws: `ClassificationError.missingCredential` when the map has no reference for
-     `backend` or its secret is unset or unreadable without interaction.
+     `backend` or its secret is unset or unreadable.
    */
   public func providerKey(for backend: ModelBackend) throws -> String {
     guard let reference = providerCredentials?[backend] else {

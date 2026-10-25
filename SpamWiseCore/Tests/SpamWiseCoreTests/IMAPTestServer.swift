@@ -40,6 +40,15 @@ struct IMAPTranscript: Sendable {
     return copy
   }
 
+  /// Expects a command and closes the connection without answering it.
+  func drops(at command: String) -> Self {
+    var copy = self
+    copy.exchanges.append(
+      .init(command: command, responses: [], completion: nil, closesConnection: true)
+    )
+    return copy
+  }
+
   /// Special-use discovery listing the given Junk and Sent mailboxes.
   func roles(junk: String = "Junk Mail", sent: String = "Sent") -> Self {
     then("LIST", "* LIST (\\Junk) \"/\" \"\(junk)\"", "* LIST (\\Sent) \"/\" \"\(sent)\"")
@@ -105,6 +114,7 @@ struct IMAPTranscript: Sendable {
     var command: String
     var responses: [String]
     var completion: String?
+    var closesConnection = false
   }
 
   /// One message's sequence number, UID and size in a metadata FETCH.
@@ -122,11 +132,16 @@ struct IMAPTranscript: Sendable {
 /// Serves one transcript per connection over in-memory NIO channels and records every command.
 actor IMAPTestServer {
   private var pending: [IMAPTranscript]
+  private let lifetime: TimeAmount
   /// Commands received, without tags, in order.
   private(set) var commands: [String] = []
   private(set) var connections = 0
 
-  init(_ transcripts: IMAPTranscript...) { pending = transcripts }
+  /// Serves `transcripts` in turn, one per connection, each with the given connection lifetime.
+  init(_ transcripts: IMAPTranscript..., lifetime: TimeAmount = IMAPPipeline.sessionLifetime) {
+    pending = transcripts
+    self.lifetime = lifetime
+  }
 
   /// Opens the next scripted connection through the production response pipeline.
   func connect() async throws -> IMAPConnection {
@@ -134,8 +149,9 @@ actor IMAPTestServer {
     let transcript = pending.removeFirst()
     connections += 1
     let channel = NIOAsyncTestingChannel()
+    let lifetime = lifetime
     let connection = try await channel.testingEventLoop.executeInContext {
-      try IMAPPipeline.configure(channel)
+      try IMAPPipeline.configure(channel, lifetime: lifetime)
     }
     try await channel.connect(to: SocketAddress(ipAddress: "127.0.0.1", port: 993))
     Task { await serve(transcript, on: channel) }
@@ -166,7 +182,12 @@ actor IMAPTestServer {
           Issue.record("Expected “\(exchange.command)”, received “\(command)”")
           return
         }
-        guard let completion = exchange.completion else { return }
+        guard let completion = exchange.completion else {
+          if exchange.closesConnection {
+            try await channel.testingEventLoop.executeInContext { channel.close(promise: nil) }
+          }
+          return
+        }
         let reply = exchange.responses.map { $0 + "\r\n" }.joined() + "\(tag) \(completion)\r\n"
         try await send(reply, fragment: transcript.fragment, on: channel)
       }

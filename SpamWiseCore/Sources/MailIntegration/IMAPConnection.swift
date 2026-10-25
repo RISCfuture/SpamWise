@@ -4,13 +4,29 @@ import NIOCore
 import NIOIMAP
 import NIOTransportServices
 import SpamWiseCore
+import Synchronization
 
 /// A connected channel whose pipeline decodes IMAP responses into an ordered, bounded stream.
 struct IMAPConnection: Sendable {
   /// The connection's NIO channel; writes accept `IMAPClientHandler.Message` values.
   let channel: any Channel
-  /// Decoded responses in arrival order; the stream fails with an ``IMAPError`` on protocol errors.
+  /// Decoded responses in arrival order; the stream fails with an ``IMAPError`` on protocol
+  /// errors, and with ``IMAPError/deadlineExceeded`` at the cutoff.
   let responses: AsyncThrowingStream<Response, any Error>
+  /// When the pipeline closes the connection, whatever it is doing.
+  let cutoff: ContinuousClock.Instant
+  /// Records that the cutoff closed the connection.
+  let expiry: IMAPConnectionExpiry
+}
+
+/// Whether a connection's cutoff has closed it.
+final class IMAPConnectionExpiry: Sendable {
+  private let expired = Atomic(false)
+
+  /// True once the cutoff has closed the connection.
+  var hasExpired: Bool { expired.load(ordering: .acquiring) }
+
+  func expire() { expired.store(true, ordering: .releasing) }
 }
 
 /// Opens implicit-TLS IMAP connections and installs the bounded response pipeline.
@@ -39,8 +55,10 @@ enum IMAPPipeline {
     }
   }
 
-  /// Installs IMAP framing and the response stream, and schedules the session cutoff. Runs on the channel's event loop.
-  static func configure(_ channel: any Channel) throws -> IMAPConnection {
+  /// Installs IMAP framing and the response stream, and schedules the cutoff `lifetime` from now. Runs on the channel's event loop.
+  static func configure(_ channel: any Channel, lifetime: TimeAmount = sessionLifetime) throws
+    -> IMAPConnection
+  {
     let (responses, continuation) = AsyncThrowingStream.makeStream(
       of: Response.self,
       bufferingPolicy: .bufferingOldest(maximumBufferedResponses)
@@ -51,8 +69,14 @@ enum IMAPPipeline {
       IMAPClientHandler(parserOptions: parserOptions),
       IMAPResponseForwarder(continuation: continuation)
     )
-    channel.eventLoop.scheduleTask(in: sessionLifetime) { channel.close(promise: nil) }
-    return IMAPConnection(channel: channel, responses: responses)
+    let expiry = IMAPConnectionExpiry()
+    let cutoff = ContinuousClock.now + .nanoseconds(lifetime.nanoseconds)
+    channel.eventLoop.scheduleTask(in: lifetime) {
+      expiry.expire()
+      continuation.finish(throwing: IMAPError.deadlineExceeded)
+      channel.close(promise: nil)
+    }
+    return IMAPConnection(channel: channel, responses: responses, cutoff: cutoff, expiry: expiry)
   }
 }
 

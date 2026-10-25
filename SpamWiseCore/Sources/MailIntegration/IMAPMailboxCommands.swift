@@ -96,17 +96,23 @@ extension IMAPAdapter {
     return IMAPMailboxRoles(junk: junk.first, sent: sent.first)
   }
 
-  /// Fetches one message by UID without setting Seen; nil when the UID no longer exists.
+  /**
+   Fetches one message by UID without setting Seen; nil when the UID no longer exists.
+
+   The body literal's own length is authoritative, since servers may report an estimated
+   RFC822.SIZE.
+
+   - Throws: ``IMAPError/limitExceeded`` when the literal exceeds the message size limit, which
+     leaves the session unusable.
+   */
   static func fetch(uid: Int, session: IMAPSession) async throws -> Data? {
     let reply = try await session.command(
-      .uidFetch(try uidSet(uid), [.uid, .rfc822Size, .bodySection(peek: true, .complete, nil)], [])
+      .uidFetch(try uidSet(uid), [.uid, .bodySection(peek: true, .complete, nil)], [])
     )
     let matching = reply.fetches.filter { $0.uid == uid }
     guard matching.count <= 1 else { throw IntegrationError.ambiguous }
     guard let message = matching.first else { return nil }
-    guard let size = message.size, size <= MIMEParser.maximumMessageBytes, let body = message.body,
-      body.count == size
-    else { throw IMAPError.malformedResponse }
+    guard let body = message.body else { throw IMAPError.malformedResponse }
     return body
   }
 

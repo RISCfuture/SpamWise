@@ -1,10 +1,14 @@
 import Foundation
+import NIOCore
 import Testing
 @testable import MailIntegration
 import SpamWiseCore
 
 @Suite
 struct `sweeps new IMAP Inbox mail` {
+  /// A connection lifetime within the session's fetch margin, so each sweep fetches one message.
+  private static let expiringLifetime = TimeAmount.seconds(5)
+
   private static func inbox(exists: Int, uidNext: Int? = nil) -> IMAPTranscript {
     IMAPTranscript.authenticated().examine(validity: 33, exists: exists, uidNext: uidNext)
   }
@@ -27,7 +31,7 @@ struct `sweeps new IMAP Inbox mail` {
     async throws
   {
     let store = try testStore()
-    let raw = "From: sender@example.com\r\n\r\nHello"
+    let raw = "From: sender@example.com\r\n\r\nHello", estimatedSize = raw.utf8.count + 3
     let boundary = IMAPTestServer(
       Self.inbox(exists: 3).metadata([.init(3, uid: 3, size: 10)])
     )
@@ -36,7 +40,7 @@ struct `sweeps new IMAP Inbox mail` {
       await boundary.commands.filter { $0.contains("FETCH") } == ["FETCH 3 (UID RFC822.SIZE)"]
     )
     var transcript = Self.inbox(exists: 7, uidNext: 8)
-      .metadata(Self.rows(1...7, size: raw.utf8.count))
+      .metadata(Self.rows(1...7, size: estimatedSize))
     for uid in 4...7 { transcript = transcript.body(raw, uid: uid, sequence: uid) }
     let delivered = IMAPTestServer(
       transcript.metadata(Self.rows(2...3, size: raw.utf8.count))
@@ -71,6 +75,54 @@ struct `sweeps new IMAP Inbox mail` {
     let resumed = try await Self.committedSweep(server, limit: 20, store: store)
     #expect(resumed.map(\.identity.localID) == [5, 4, 3, 2, 1])
     #expect(await server.commands.contains("FETCH 1:4 (UID RFC822.SIZE)"))
+  }
+
+  @Test
+  func `keeps the new mail read before the connection cutoff and resumes after it`()
+    async throws
+  {
+    let store = try testStore()
+    let raw = "From: sender@example.com\r\n\r\nHello"
+    _ = try await Self.committedSweep(
+      IMAPTestServer(Self.inbox(exists: 0, uidNext: 1)),
+      limit: 20,
+      store: store
+    )
+    for uid in 1...2 {
+      let server = IMAPTestServer(
+        Self.inbox(exists: 2, uidNext: 3).metadata(Self.rows(1...2, size: raw.utf8.count))
+          .body(raw, uid: uid, sequence: uid),
+        lifetime: Self.expiringLifetime
+      )
+      let read = try await Self.committedSweep(server, limit: 20, store: store)
+      #expect(read.map(\.identity.localID) == [uid])
+    }
+  }
+
+  @Test
+  func `passes new mail whose literal exceeds the size limit its server reported`()
+    async throws
+  {
+    let store = try testStore()
+    let raw = "From: sender@example.com\r\n\r\nHello"
+    _ = try await Self.committedSweep(
+      IMAPTestServer(Self.inbox(exists: 0, uidNext: 1)),
+      limit: 20,
+      store: store
+    )
+    let oversized = "* 1 FETCH (UID 1 BODY[] {\(MIMEParser.maximumMessageBytes + 1)}"
+    let underReported = IMAPTestServer(
+      Self.inbox(exists: 2, uidNext: 3).metadata(Self.rows(1...2, size: raw.utf8.count))
+        .then("UID FETCH 1 ", oversized)
+    )
+    #expect(try await Self.committedSweep(underReported, limit: 20, store: store).isEmpty)
+    let next = IMAPTestServer(
+      Self.inbox(exists: 2, uidNext: 3).metadata(Self.rows(1...2, size: raw.utf8.count))
+        .body(raw, uid: 2, sequence: 2)
+        .metadata(Self.rows(1...1, size: raw.utf8.count)).then("UID FETCH 1 ", oversized)
+    )
+    let read = try await Self.committedSweep(next, limit: 20, store: store)
+    #expect(read.map(\.identity.localID) == [2])
   }
 
   @Test

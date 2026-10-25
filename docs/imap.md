@@ -45,10 +45,17 @@ must advertise both `AUTH=OAUTHBEARER` and `SASL-IR`. Token issuance and refresh
 belong to the caller; SpamWise never invents or refreshes an OAuth grant.
 
 Instead of `environment`, set `keychainService` and `keychainAccount` to an
-existing login Keychain generic-password item. Only references belong in JSON;
-unknown fields, including inline passwords, are rejected. Resolve environment
-secrets only for the consuming process, for example through an existing
-1Password environment. Never put secret values in command arguments or logs.
+existing login Keychain generic-password item. The item must trust the
+`spamwise-daemon` executable, or the first read may show a Keychain access prompt
+that the run waits on. Create it with the daemon in its access list, for example
+`security add-generic-password -s <service> -a <account> -T <path to spamwise-daemon> -w`,
+which asks for the password instead of taking it as an argument. Run `validate`
+once while attended so any remaining prompt can be answered; unattended runs
+should prefer environment references, which never prompt. Only references belong
+in JSON; unknown fields, including inline passwords, are rejected. Resolve
+environment secrets only for the consuming process, for example through an
+existing 1Password environment. Never put secret values in command arguments or
+logs.
 
 Omit `statePath` to use the signed app's App Group store. An unsigned CLI may
 require an explicit private state path and has its own settings and action
@@ -58,7 +65,8 @@ keyed by exactly `claude`, `openAI`, or `gemini`. Each reference accepts either
 unknown providers, OAuth flags, and references for Apple's keyless backends are
 rejected. The selected paid provider must have its own reference. No credential
 is reused between providers, and missing references or secrets fail open without
-fallback. Keychain reads do not request interactive authentication.
+fallback. Login Keychain references for providers need the same access list as
+the IMAP credential.
 
 Omitting `providerCredentials` preserves the signed app's shared Keychain lookup.
 An unsigned standalone executable should supply explicit environment or login
@@ -173,12 +181,21 @@ restoration records daemon validation; the probe never changes the dry-run setti
 
 ## Protocol limits and interoperability
 
-Each connection closes 30 seconds after it opens, whatever it is doing; consecutive
-operations reuse a session opened within the last 10 seconds. Responses are parsed
-by swift-nio-imap with at most 16 message attributes per fetch, 8,192 buffered
-responses, 2,048 responses and 4.2 MB per command. Message literals are capped at 2
-MB. A page includes at most 100 messages and 4 MB of content. Oversized, malformed,
-ambiguous, interrupted or unsupported responses fail open.
+Each connection closes 30 seconds after it opens, whatever it is doing, and the
+operation it interrupts fails as timed out; consecutive operations reuse a session
+opened within the last 10 seconds. A sweep starts no new message fetch within 5
+seconds of the cutoff, after its first, and keeps the new mail it has read, so a
+slow link makes progress across runs instead of repeating the same batch.
+Responses are parsed by swift-nio-imap with at most 16 message attributes per
+fetch, 8,192 buffered responses, 2,048 responses and 4.2 MB per command. Message
+literals are capped at 2 MB. A page includes at most 100 messages and 4 MB of
+content. `RFC822.SIZE` is only a hint for these budgets, since servers such as
+Exchange report estimates: the fetched literal's own length counts. A message
+whose literal exceeds 2 MB stays unclassified like other oversized mail, and the
+sweep ends there with its progress past that message. Oversized, malformed,
+ambiguous, interrupted or unsupported responses fail open. Passwords may contain
+any characters except NUL, CR and LF, and are sent as literals when they are not
+plain ASCII.
 
 Mailbox roles come from SPECIAL-USE rather than guessed localized names. Multiple
 Junk/Sent designations are rejected. Trash and nonselectable roles are excluded.
@@ -188,7 +205,8 @@ never incoming mail's own claims as proof of trust.
 
 Only server-supported `UID MOVE` is used. There is no COPY/STORE Deleted/EXPUNGE
 fallback, mailbox creation or Trash/delete command. A tagged success without a
-matching COPYUID mapping is retained as an uncertain outcome.
+matching COPYUID mapping, or whose message can't then be verified at its
+destination, is retained as an uncertain outcome.
 
 The implementation follows [IMAP4rev2](https://www.rfc-editor.org/rfc/rfc9051.html),
 [SPECIAL-USE](https://www.rfc-editor.org/rfc/rfc6154.html),
