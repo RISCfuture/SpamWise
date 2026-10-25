@@ -76,6 +76,28 @@ struct `Tracked user operations` {
     #expect(!queuedRan)
     #expect(operation.status == .message(OperationFailure.describe(CancellationError())))
   }
+
+  @Test
+  func `finish discarded runs silently before the next run`() async {
+    let operation = TrackedOperation()
+    var staleWorkFinished = false
+    let running = operation.run {
+      try await Task.sleep(for: .seconds(60))
+      staleWorkFinished = true
+      return "Opened"
+    }
+    let queued = operation.run {
+      staleWorkFinished = true
+      return "Opened"
+    }
+    operation.discard()
+    let next = operation.run { "Read" }
+    await running.value
+    await queued.value
+    await next.value
+    #expect(!staleWorkFinished)
+    #expect(operation.status == .message("Read"))
+  }
 }
 
 @MainActor

@@ -91,7 +91,10 @@ private struct ActivityView: View {
   private var showsInspector = true
 
   private var selected: DecisionRecord? { model.activity.record(id: selection) }
-  /// The selection, which clears the previous decision's correction and message statuses when it changes.
+  /**
+   The selection, which clears the previous decision's correction status and abandons its message
+   request when it changes.
+   */
   private var tableSelection: Binding<UUID?> {
     Binding(
       get: { selection },
@@ -99,7 +102,7 @@ private struct ActivityView: View {
         guard id != selection else { return }
         selection = id
         model.corrections.decision.status = nil
-        model.messages.operation.status = nil
+        model.messages.abandon()
       }
     )
   }
