@@ -138,7 +138,7 @@ public actor IMAPAdapter: MailClientAdapter {
     -> ActionReceipt
   {
     guard action != .none else { return .init(confirmed: true) }
-    try await Self.notAttempted {
+    try await notAttempted {
       try await requireActionValidation()
       try validateIdentity(identity)
     }
