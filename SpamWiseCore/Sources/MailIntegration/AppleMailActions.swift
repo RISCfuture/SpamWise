@@ -120,16 +120,16 @@ extension AppleMailAdapter {
   {
     try await interactively { try await markReadInJunk(identity) }
   }
-  /// Explicit UI probe: only a selected Inbox message named [SpamWise Probe] is eligible.
+  /// Explicit UI probe: only a selected Inbox message named [SpamWise Probe] with a Message-ID is eligible.
   public func testDisposableMessage() async throws -> String {
     try await interactively { try await probe() }
   }
 
   private func probe() async throws -> String {
     let selected = try await selectedMessage()
-    guard selected.identity.messageID != nil else { throw IntegrationError.missingMessageID }
     guard let account = selected.identity.accountID,
       try MIMEParser().parse(selected.raw).subject.hasPrefix(Self.probeSubjectPrefix),
+      selected.identity.messageID != nil,
       try await observedIdentity(of: selected.identity, in: .inbox) != nil
     else { throw IntegrationError.notProbeMessage }
     let junk = try Self.movedIdentity(await settledMove(.moveToJunk, of: selected.identity))
