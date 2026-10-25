@@ -456,15 +456,29 @@ func `preserves Apple backend errors and validates session results`() async thro
 
 @Test
 func `shortens a prompt that exceeds the Apple model's context`() async throws {
-  let contextTokens = 3_000
   let message = try MIMEParser().parse(
     Data(
       ("From: shop@example.jp\nSubject: お知らせ\n\n"
         + String(repeating: "日本語の長い本文です。", count: 1_500)).utf8
     )
   )
+  let input = ClassificationInput(message: message, evidence: .init(message: message), timeout: 15)
   let fitted = Mutex<String?>(nil)
-  let apple = AppleClassifier(
+  let verdict = try await appleClassifier(contextTokens: 3_000) { prompt in
+    fitted.withLock { $0 = prompt }
+  }.classify(input)
+  #expect(verdict.label == .review)
+  #expect(fitted.withLock { $0 }?.contains("shortenedToFit") == false)
+  await #expect(throws: ClassificationError.contextExceeded) {
+    try await appleClassifier(contextTokens: 100) { _ in }.classify(input)
+  }
+}
+
+private func appleClassifier(
+  contextTokens: Int,
+  fitted: @escaping @Sendable (String) -> Void
+) -> AppleClassifier {
+  AppleClassifier(
     backend: .onDevice,
     generate: { _, _, prompt, _ in
       let tokens = prompt.unicodeScalars.count
@@ -473,13 +487,8 @@ func `shortens a prompt that exceeds the Apple model's context`() async throws {
           .init(contextSize: contextTokens, tokenCount: tokens, debugDescription: "Fixture")
         )
       }
-      fitted.withLock { $0 = prompt }
+      fitted(prompt)
       return Verdict(label: .review, confidence: 60, reason: "Shortened")
     }
   )
-  let verdict = try await apple.classify(
-    .init(message: message, evidence: .init(message: message), timeout: 15)
-  )
-  #expect(verdict.label == .review)
-  #expect(fitted.withLock { $0 }?.contains(#""shortenedToFit":true"#) == true)
 }

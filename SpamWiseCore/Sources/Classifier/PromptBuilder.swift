@@ -216,12 +216,18 @@ public enum PromptBuilder {
       budget = PromptBudget(input)
     }
 
-    /// Returns the next rendering of at most `maximumBytes`, or nil once none is left.
+    /**
+     Returns the next rendering of at most `maximumBytes`, or nil once none is left.
+
+     Only a rendering that exceeds ``maximumPromptBytes`` marks the shorter ones `shortenedToFit`;
+     a smaller `maximumBytes` reflects the provider's capacity, not the message's size.
+     */
     mutating func next(maximumBytes: Int = maximumPromptBytes) throws -> String? {
       while var current = budget {
         let prompt = try render(input, body: body, budget: current)
-        budget = current.shrink() ? current : nil
-        if prompt.utf8.count <= maximumBytes { return prompt }
+        let bytes = prompt.utf8.count
+        budget = current.shrink(markingShortened: bytes > maximumPromptBytes) ? current : nil
+        if bytes <= maximumBytes { return prompt }
       }
       return nil
     }
@@ -242,7 +248,7 @@ public enum PromptBuilder {
         * ClassificationLimits.charactersPerToken
     }
 
-    mutating func shrink() -> Bool {
+    mutating func shrink(markingShortened oversized: Bool) -> Bool {
       if examples > 0 {
         examples /= 2
       } else if bodyCharacters > 0 {
@@ -250,7 +256,7 @@ public enum PromptBuilder {
       } else {
         return false
       }
-      shortened = true
+      shortened = shortened || oversized
       return true
     }
   }
