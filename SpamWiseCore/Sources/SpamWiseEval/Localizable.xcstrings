@@ -163,6 +163,28 @@
         }
       }
     },
+    "--reservation must be from %@ to %@ USD.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "--reservation must be from %1$@ to %2$@ USD."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--reservation debe estar entre %1$@ y %2$@ USD."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "--reservation doit être compris entre %1$@ et %2$@ USD."
+          }
+        }
+      }
+    },
     "--state is allowed only with --partition training.": {
       "localizations": {
         "es": {
