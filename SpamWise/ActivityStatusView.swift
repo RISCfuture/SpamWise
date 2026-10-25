@@ -19,7 +19,11 @@ struct ActivityStatusView: View {
         }
         BackgroundCheckView(scanning: model.scanning)
         Spacer()
-        TodayTotalsView(today: model.activity.today, monthCost: model.shared.monthCost)
+        TodayTotalsView(
+          today: model.activity.today,
+          monthCost: model.shared.monthCost,
+          backend: model.shared.settings.advancedOptions.backend
+        )
       }
       if let digest = model.shared.pendingDigest {
         DigestAnnouncementView(count: digest.records.count) { model.router.present(.digest) }
@@ -89,17 +93,20 @@ private struct BackgroundCheckView: View {
   }
 }
 
+/// Today's counts, and this month's estimated cost for a provider that charges for its API.
 private struct TodayTotalsView: View {
   let today: TodaySummary
   let monthCost: Double
+  let backend: ModelBackend
 
   var body: some View {
     Text("Today: \(today.decisions) messages, \(today.junk) Junk, \(today.review) Review")
       .foregroundStyle(.secondary)
       .accessibilityIdentifier("activity.today")
-    Text("Month: \(monthCost, format: .currency(code: "USD"))")
-      .foregroundStyle(.secondary)
-      .help("Estimated API cost this month")
+    if backend.requiresAPIKey {
+      Text("Estimated cost this month: \(EstimatedCost.formatted(monthCost))")
+        .foregroundStyle(.secondary)
+    }
   }
 }
 
