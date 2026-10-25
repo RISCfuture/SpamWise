@@ -29,16 +29,18 @@ guidance informs the design.
 - Settings has General, Classifier, Accounts, Rules, Policy and Advanced tabs, built
   as grouped forms with section footers. Every control applies on change; there are
   no Save buttons for settings. Conditional controls appear only when relevant, one
-  Diagnostics disclosure holds Mail access, pending retries and the move test, and the
-  app remembers the selected tab.
+  Diagnostics disclosure holds Mail access, pending retries and, in Debug builds only,
+  the move test, and the app remembers the selected tab.
 - First launch presents four setup steps in the main window: an introduction, the
   provider choice with its key and mail-sharing consent, the Mail connection, and a
   dry run whose results are listed. General can reopen them in a sheet with Cancel.
 - Each operation shows its own progress, result or failure with a recovery action,
   next to the control that started it. Destructive actions confirm first.
 - A menu-bar extra keeps monitoring, Pause and selected-message corrections reachable
-  with every window closed. Its items carry no key equivalents, because those fire
-  only while the menu is open; Shortcuts supplies global keys.
+  with every window closed, and its symbol and spoken title follow the filtering state.
+  Its items carry no key equivalents, because those fire only while the menu is open;
+  Shortcuts supplies global keys. General can hide it; closing every window never
+  quits, and clicking the Dock icon with no window open shows Activity.
 - Help buttons use the native AppKit control and open anchored Help pages.
 - Every view has injected previews. Interface text is localized in English, Spanish
   and French.
