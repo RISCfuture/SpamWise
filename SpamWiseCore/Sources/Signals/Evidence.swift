@@ -105,7 +105,9 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
      - contact: Whether the sender is a contact; nil when unknown.
      - domainAgeDays: The sender domain's registration age in days; nil when unknown.
      - trustedAuthServers: Receiving-server identifiers of the message's account. Only
-       their topmost Authentication-Results headers produce trusted results.
+       their topmost Authentication-Results headers, or the receiving provider's ARC set that
+       ``AuthenticationHeaders/trustedARCResults(_:trustedServers:)`` accepts, produce trusted
+       results.
    */
   public init(
     message: ParsedMessage,
@@ -116,10 +118,13 @@ public struct EvidenceBundle: Codable, Sendable, Equatable {
   ) {
     let resolver = DomainResolver()
     let trustedServers = AuthenticationHeaders.normalized(trustedAuthServers)
-    let claims = AuthenticationHeaders.parse(
-      message.headers["authentication-results"] ?? [],
-      trustedServers: trustedServers
-    )
+    // Trusted ARC results come first, so the bound on results never drops them.
+    let claims =
+      AuthenticationHeaders.trustedARCResults(message.headers, trustedServers: trustedServers)
+      + AuthenticationHeaders.parse(
+        message.headers["authentication-results"] ?? [],
+        trustedServers: trustedServers
+      )
     let domains = message.urls.compactMap { URL(string: $0)?.host }
       .compactMap(resolver.registrableDomain).uniqued()
     fromAddress = message.fromAddress
@@ -240,7 +245,7 @@ public enum AuthenticationHeaders {
     Set(servers.compactMap(normalizedServer))
   }
   /// Splits a header into its reporting server, empty when absent, and its result fields.
-  private static func report(_ header: String) -> (server: String, results: ArraySlice<String>) {
+  static func report(_ header: String) -> (server: String, results: ArraySlice<String>) {
     let fields = header.lowercased().components(separatedBy: ";")
     guard captures(methodPattern, in: fields[0]) == nil else { return ("", fields[...]) }
     let token = fields[0].components(separatedBy: .whitespacesAndNewlines).first { !$0.isEmpty }
@@ -255,7 +260,7 @@ public enum AuthenticationHeaders {
       return leading
     }
   }
-  private static func result(_ field: String, server: String, trusted: Bool) -> AuthResult? {
+  static func result(_ field: String, server: String, trusted: Bool) -> AuthResult? {
     guard let match = captures(methodPattern, in: field), match.count == 2 else { return nil }
     let domain = domainProperties[match[0], default: []].lazy
       .compactMap { captures(propertyPattern($0), in: field)?.first }

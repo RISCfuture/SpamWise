@@ -1523,18 +1523,18 @@
         }
       }
     },
-    "For experts: it’s the server named first in the Authentication-Results header of mail this account receives.": {
+    "For experts: it’s the server named first in the Authentication-Results header of mail this account receives. Microsoft 365 and Outlook.com name it only in ARC-Authentication-Results.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Para expertos: es el servidor que aparece primero en la cabecera Authentication-Results del correo que recibe esta cuenta."
+            "value": "Para expertos: es el servidor que aparece primero en la cabecera Authentication-Results del correo que recibe esta cuenta. Microsoft 365 y Outlook.com solo lo indican en ARC-Authentication-Results."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour les experts : c’est le serveur nommé en premier dans l’en-tête Authentication-Results des messages que reçoit ce compte."
+            "value": "Pour les experts : c’est le serveur nommé en premier dans l’en-tête Authentication-Results des messages que reçoit ce compte. Microsoft 365 et Outlook.com ne le nomment que dans ARC-Authentication-Results."
           }
         }
       }
@@ -2981,6 +2981,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ces règles de blocage deviennent des règles d’autorisation : %@."
+          }
+        }
+      }
+    },
+    "This account’s provider names its server only in ARC headers, as Microsoft 365 and Outlook.com do. SpamWise reads only the one the provider adds when mail arrives, never ones a sender includes.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El proveedor de esta cuenta solo indica su servidor en las cabeceras ARC, como hacen Microsoft 365 y Outlook.com. SpamWise lee solo la que añade el proveedor cuando llega el correo, nunca las que incluye un remitente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fournisseur de ce compte ne nomme son serveur que dans les en-têtes ARC, comme le font Microsoft 365 et Outlook.com. SpamWise lit uniquement celui que le fournisseur ajoute à l’arrivée du message, jamais ceux qu’inclut un expéditeur."
           }
         }
       }
