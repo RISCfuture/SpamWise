@@ -38,15 +38,15 @@ handling. See [detection design](docs/detection-design.md) and
   - [x] Train and evaluate a fixed local character-TF-IDF/logistic Spanish phishing baseline using subject/body only. At score 0.5, development validation detects 188/212 phishing messages with 5/176 legitimate false alarms; at 0.9, detection falls to 46/212 with zero observed false alarms. No production threshold or model is selected; frozen holdouts remain untouched and API spend is zero.
 - [x] Persist independent assessments, provenance and unknown states; keep historical records unassessed and update evaluation/cache identities. See [assessment behavior](docs/threat-assessments.md).
 - [ ] Assess threats on trusted-contact/history paths without silently overriding explicit action rules or presenting unscanned mail as safe.
-  - [x] Add the bounded independent detector path to all successful classifications, preserve rule actions and exclude preference-derived learning scores; show absent coverage explicitly in the inspector.
+  - [x] Add the bounded independent detector path to all successful classifications, preserve rule actions and exclude preference-derived learning scores. Records and diagnostics mark mail no detector assessed as unassessed rather than safe.
   - [ ] Connect a quality-validated production detector. The app reports unassessed coverage; synthetic injected detectors establish orchestration only.
   - [x] Hide the inspector's threat section when no detector ran.
 - [ ] Evaluate targeted impersonation, payment diversion and other fraud using account-scoped context; preserve unknown history.
 - [ ] Evaluate zero-shot graymail preferences and incremental private personalization; distinguish example retrieval from actual model fine-tuning.
   - [x] Run a reproducible 12-context EN/ES/FR synthetic policy-only/two-example comparison; record labels, effective actions, usage and limitations in [preference results](docs/probes/graymail-preferences.md). Examples showed no categorical improvement; this is not fine tuning or independent real-mail quality.
   - [x] Screen the default against 16 private Junk candidates, four real wanted controls and eight synthetic wanted controls, with a sender-disjoint reserved set; tune unknown promotions to Review and preserve ordinary wanted mail. Compare one simulated correction and four deceptive challenges in [first-run results](docs/probes/graymail-oobe.md). One-shot benefit and broad quality remain unproven.
-  - [x] Screen 495 owner-confirmed unwanted Junk messages and 15 provisional wanted controls with sender-disjoint development and holdout sets; add category preferences, a setup Junk-folder import and category-level correction follow-ups, and fix reason-length failures (21 of 86 shipped requests). Owner-equivalent preferences flagged 40/40 unwanted holdout messages but moved none, since no confidence reached 95; they also flagged 7/9 wanted controls. The Junk import showed no measurable benefit. See [Junk-folder results](docs/probes/junk-folder-oobe.md).
-  - [ ] Validate a clean signed-app setup and provider request, independent owners and campaigns, owner-adjudicated labels, multilingual mail and repeated runs before claiming general zero-shot or one-shot quality.
+  - [x] Screen 495 account-holder-confirmed unwanted Junk messages and 15 provisional wanted controls with sender-disjoint development and holdout sets; add category preferences, a setup Junk-folder import and category-level correction follow-ups, and fix reason-length failures (21 of 86 shipped requests). Account-equivalent preferences flagged 40/40 unwanted holdout messages but moved none, since no confidence reached 95; they also flagged 7/9 wanted controls. The Junk import showed no measurable benefit. See [Junk-folder results](docs/probes/junk-folder-oobe.md).
+  - [ ] Validate a clean signed-app setup and provider request, independent account holders and campaigns, independently adjudicated labels, multilingual mail and repeated runs before claiming general zero-shot or one-shot quality.
 - [ ] Establish dedicated attachment/malware coverage without treating text-model predictions as antivirus results.
 
 ## Implemented and verified offline
@@ -54,17 +54,20 @@ handling. See [detection design](docs/detection-design.md) and
 - [x] Explicit Apple on-device, OpenAI and Gemini classifiers alongside Claude, from one model catalog. Fresh sessions, bounded prompts/results, measured usage where available, explicit prices, refusal handling, retried Anthropic server errors and no fallback. A missing key is reported as a missing credential. Private Cloud Compute is hidden in both editions and rejected if restored, because neither holds Apple's managed entitlement.
 - [x] Address/domain rule editing, validated atomic import and export. Address rules precede domain rules, content rules and relationships. Block rules always apply; Allow rules need trusted aligned authentication.
 - [x] Per-account trusted receiving servers. Authentication-Results are trusted only from the account's configured servers; Allow rules, Contacts, reply and receipt history need a trusted aligned pass and are otherwise model evidence. Receiving servers are sampled from up to 50 messages per account to detect a consistent set. The forged-contact fixture passes with no exclusion configured.
+- [x] Identify Microsoft 365 and Outlook.com receiving servers, whose topmost Authentication-Results header names none, from the provider's lone instance-1 ARC-Authentication-Results set. The ARC set only names the server; the provider's own topmost header supplies the trusted results. See [receiving-server trust](docs/evidence.md#receiving-server-trust).
 - [x] Policy suggestions from consistent corrections, applied only by the user.
-- [x] Retrieval of up to five similar same-account reviewed examples, quoting domains rather than full addresses and shortening quoted text.
+- [x] Retrieval of similar reviewed examples, five by default (0–20), from the same account or, for imported reviewed examples, any account, quoting domains rather than full addresses and shortening quoted text. `sameSender` is set only for a trusted aligned sender.
 - [x] Bounded regularized evidence weights and Bayes as optional weak signals, with minimum reviewed-data gates. Product learning uses every label; the 20% hold-out applies only to evaluation.
 - [x] Anchored campaign fingerprints from explicit Junk corrections, suppressed by conflicting Good examples and Review signatures. Matches go to Review, never straight to Junk. Junk anchors need a trusted DMARC pass, so fingerprints stay inert until an account trusts its receiving servers.
 - [x] Optional Spamhaus DBL lookups for From, Reply-To, Return-Path and link domains, with explicit terms acknowledgement and unknown results for service errors. Public DNS uses in-process resolver queries to one configured resolver and works in both editions.
 - [x] Optional user-keyed Spamhaus HTTPS transport, shared Keychain storage, explicit service selection, bounded requests and fail-open handling. Live authorization awaits an HTTPS-enabled account; free DNS access does not establish HTTPS entitlement. See [setup and limits](docs/spamhaus.md).
 - [x] Optional local Rspamd symbols through the fixed-loopback HTTP transport; errors remain unknown. It works in the signed sandbox harness without new entitlements, defaults off and is blocked in local-only mode. No external executable transport exists.
 - [x] Bounded Vision OCR of embedded PNG and JPEG parts without remote image loading. Other formats are not decoded until OCR moves into a separate worker (SS-17).
-- [x] IMAP adapter on swift-nio-imap with implicit TLS, UIDVALIDITY/UID identity, SPECIAL-USE discovery, capability checks, Review as `$SpamWiseReview` or `\Flagged`, verified move identities, and implicit Good corrections for mail rescued from Junk in another client. The headless `spamwise-daemon` (`run`, `validate`, `probe`) records daemon-scoped validation.
+- [x] IMAP adapter on swift-nio-imap with implicit TLS, UIDVALIDITY/UID identity, SPECIAL-USE discovery, capability checks, Review as `$SpamWiseReview` or `\Flagged`, verified move identities, and implicit Good corrections for mail rescued from Junk in another client. Each message is read once; a backfill runs only after a burst deeper than the 2,000-message scan. The app signs in with a password; the headless `spamwise-daemon` (`run`, `validate`, `probe`) also accepts an OAuth bearer token and records daemon-scoped validation.
+- [x] Learn implicit Good corrections from Apple Mail messages dragged from Junk back to Inbox or marked Not Junk, as IMAP does, only for a Junk move recorded as settled (on Apple Mail, still in place at its 30-second recheck). The correction moves no mail and acts only where the sweep saw the message.
+- [x] Move and verify corrections of mail without a Message-ID by recorded size and exact content; automatic moves still leave such mail in place and say why.
 - [x] Local weekly digest of unresolved Review items, without sending email.
-- [x] Explicit Good/Junk/Review label collection and optional bounded reviewed-text export for later evaluation.
+- [x] Explicit Good/Junk/Review label collection. With **Keep text of reviewed messages** on (Settings → Advanced → Learning from corrections), Reviewed Messages keeps and exports bounded reviewed text for later evaluation; with it off, imported examples keep no body excerpt and a restore withholds a backup's message text.
 - [x] Production spending: an optional user-set monthly limit, off by default, reserves each paid request's token-bound maximum and settles it to measured usage. The conservative lifetime ledger is confined to `spamwise-eval`, which requires an explicit `--budget-store`; its authorized additional evaluation ceiling is $150, not a spending target.
 - [x] Retain unstarted persistent retries when cancellation interrupts a batch; individual atomic claims reject superseded jobs. Transient failures retry with backoff for up to three days, and Pause or dry-run edits no longer invalidate pending work.
 - [x] Shared state in real SwiftData entities with change tokens and slice-scoped loads, a cross-process lock, retention limits and a set-aside path for unreadable state. Pre-1.0 stores are not imported: a single-document snapshot from a build before the entity schema is set aside for recovery.
@@ -80,15 +83,51 @@ and [packaging](docs/packaging.md) for limits and reproducible commands.
   - [ ] Give count strings plural variants in the app and package catalogs.
   - [ ] Inspect the reworked Settings, Activity, setup and correction screens in Spanish and French for wrapping, truncation and footer layout. Include the Backup and restore and Your addresses and exceptions sections, the folder-plan discard confirmation, the storage-unavailable main window, the local-only key note and the About panel's notices.
 - [ ] Check the bundled third-party notices whenever a pinned package changes. `SpamWise/ThirdPartyNotices.txt`, `SpamWise-download/DownloadThirdPartyNotices.txt` and the NOTICE excerpts in `CREDITS.md` reproduce the pinned checkouts verbatim, but no script regenerates or verifies them against `Package.resolved`.
-- [ ] Localize the `spamwise-eval` and `spamwise-daemon` executables: embed an Info.plist declaring `CFBundleLocalizations` so their catalogs resolve at runtime, route the daemon's `print()` output through localized strings, and give its failure messages CLI-specific recovery suggestions.
+- [ ] Give `spamwise-daemon`'s failure messages CLI-specific recovery suggestions. Both executables embed an Info.plist declaring `CFBundleLocalizations`, and the daemon's output goes through localized strings.
 - [ ] Decide whether to run `swiftlint analyze`. It stays out of CI: its `explicit_self` findings contradict the house style, its `unused_declaration` findings were false positives, and its `unused_import` autofix removed imports the build needs. A useful gate would disable those rules and read a full `xcodebuild` log.
-- [ ] Save a Settings text or stepper edit that is still inside its debounce window when the app quits. Return, focus loss and closing the view save it; quitting does not.
+- [x] Save Settings text and stepper edits, and trust-exclusion edits, still inside their debounce window when the app quits.
 - [ ] Show an IMAP account that was never checked as not validated, rather than Dry run, when Apple Mail accounts are validated; `FilteringStatus` checks validated accounts globally.
 - [ ] Ask for the same unverified-sender confirmation in the Correct Selected Mail App Intent that the app's Junk corrections ask for.
-- [ ] Add Help buttons for the newer Help pages (rules, folders, Review Junk, backup, notifications, reviewed messages, statistics, IMAP) on the screens they describe.
-- [ ] Test a selected-message correction batch in the hostless unit tests against a stub Apple Events runner.
+- [x] Add Help buttons for the newer Help pages (rules, folders, Review Junk, backup, notifications, reviewed messages, statistics, IMAP) on the screens they describe.
+- [x] Test a selected-message correction batch in the hostless unit tests against a stub Apple Events runner.
 - [ ] Resolve correction records left pending when the process ends between saving a correction and recording its mail outcome, or when storage stays locked through every retry of that outcome. A claim failure is reported as a failed, not-attempted outcome, but nothing revisits a pending correction later; decide the age after which a pending correction with no action claim reads as not attempted.
+- [ ] Stop repeating embedded-image OCR for a message the monthly spending limit defers: each later sweep decodes and recognizes its images again. This needs a per-message OCR cache or a decision to skip OCR until the limit allows the request.
+- [ ] Give the store's keyed documents (`Store.read(_:default:)` and its update) a set-aside path. They decode strictly, so an unreadable document fails every read and update of it instead of being set aside for recovery like other unreadable state.
+- [ ] Add a reason-category column to `RecordRow` so Activity can filter and count by status category from the store rather than by decoding every reason.
+- [ ] Owner action: reset a store written by builds before 1.0 once. SpamWise clears only the orange Review marks it recorded setting, and those builds recorded none, so corrections leave their marks in place.
 - [ ] Make Apple Mail handler calls interruptible. Interactive calls (corrections, lookups, selections, account and destination reads, the probe) and background calls (sweeps, pages, automatic actions) run on separate queues with separate OSAKit component instances, so a correction no longer waits behind a page script, and each call has a 30-second wall-clock limit. A call that times out or is cancelled still runs to completion on its lane, because in-process OSA execution cannot be stopped. `NSUserAppleScriptTask` is not a fit: it runs only scripts the user installs in `~/Library/Application Scripts` and has no cancellation. A terminable XPC helper needs its own `automation.apple-events` entitlement and Mail temporary exception, a signed check that macOS attributes its Automation consent to the app rather than prompting for the helper, and a design for launchd's roughly ten-second restart spacing seen with the document worker; killing it still would not stop an Apple Event Mail has already received. This needs signed runtime work.
+
+### Dependencies and code-review follow-ups
+
+Open findings from code reviews and audits, each confirmed against the current code.
+
+- [ ] Fix the dependencies upstream, then bump their pins:
+  - [ ] ClaudeForFoundationModels: let SpamWise inject a hardened URL session. Claude requests use the SDK's default session (shared cookies and cache, same-origin redirects, no response cap), unlike the ephemeral, redirect-refusing OpenAI and Gemini client, and the per-request timeout gives every classification a new executor and session.
+  - [ ] XCUITestKit: its `ios-release.yml` runs unpinned actions and `curl | bash` alongside signing secrets.
+- [ ] Classification and app behavior:
+  - [ ] Show model confidence as an uncalibrated score out of 100, as Help describes it, rather than as a percentage in the inspector.
+  - [ ] Keep the images already accepted when a later embedded image is excess or invalid; today one such image drops OCR for the whole message.
+  - [ ] Cache the fitted learned-weight and Bayes models; with learning on, both are refitted for every message, inside the classification budget and again while admitting a prediction.
+  - [ ] Decide whether Bayes self-training should admit high-confidence model verdicts at all. Contradiction, contact and history guards limit it, but a prompt-injected verdict can still become a weak sample.
+  - [ ] Run the RDAP and Spamhaus lookups concurrently under the shared deadline instead of one after the other.
+  - [ ] Move the hourly Contacts enumeration off the cooperative thread pool.
+  - [ ] Key monthly costs and weekly digests by a fixed Gregorian calendar rather than `Calendar.current`.
+  - [ ] Export statistics with labeled ISO-8601 days; daily counts encode as an unlabeled alternating array.
+- [ ] Command-line tools:
+  - [ ] Require the daemon configuration's `allowsActions` as well as `--actions`; the flag replaces it today.
+  - [ ] Give `spamwise-daemon` and `spamwise-eval` domain-age lookups when the setting is on, or say they are unavailable.
+  - [ ] Freeze learning and drop corpus-matching corrections in `spamwise-eval corpus --state`, and offer a label-free way to supply additional instructions for held-out runs, recorded in the report.
+  - [ ] Create `spamwise-eval` exports, reports and caches as private (0700 directories, 0600 files); Mail exports and reports use the default umask.
+  - [ ] Move `spamwise-eval`'s argument guards and report logic into a tested library.
+  - [ ] Report `Scripts/store-probe.swift` argument errors as usage errors, not `StoreError.invalidPath`.
+- [ ] Research tools:
+  - [ ] Corpus: quarantine records whose MIME parsing raises `IndexError`, read JSONL line by line in `audit.py` (U+2028 splits records today), time `bsdtar` by inactivity, keep precise failure reasons, compute SpaPhish cross-split counts after assignment, verify pinned model weights, tokenizer and config hashes before loading, and split bundled tests.
+  - [ ] `Tools/Preferences/run.py` and `Scripts/evaluate-with-keychain.swift`: a timeout kills only the launcher, leaving the evaluator, which holds the key, running.
+  - [ ] Document worker: fail the symbol check when `nm` fails, retry a reconnect that reaches the cancelled worker, keep text from other pages when one page has none, and test the pure logic outside the signed harness.
+  - [ ] Site generator: derive each table's label from its heading and deduplicate heading anchors.
+  - [ ] Record a tool hash in every result artifact and regenerate or annotate stale ones; key mock responses by fixture rather than by raw-byte hash.
+- [ ] Tests: URLProtocol tests for the loopback Rspamd transport's limits; a test that fails a write after a successful load to prove persistence before action; assertions moved out of fixture closures; specific error assertions in place of `(any Error).self`; a domain Block over a contact case; injected clocks in place of wall-clock waits; and predicate waits before UI absence checks.
+- [ ] Code structure and documentation: replace bare-string Help anchors, routes and categories, unit-less money and time values and hand-written clamps with named types and helpers; map `ReviewTreatment` with an exhaustive switch; replace the `@_exported` core re-exports with explicit imports; give `CachedThreatDetector` a caller or make it internal; share the latest-record reduction and resource limits instead of repeating them; and give public enum cases DocC comments.
 
 ## Live acceptance and external prerequisites
 
@@ -99,7 +138,7 @@ eligible user configures [optional access](docs/spamhaus.md).
 - [ ] Meet the brief's §8 fixture criterion. **Unmet:** the offline fixture check gets its two Inbox, two Junk and one Review outcomes from hand-written mock verdicts, so it exercises plumbing, not the prompt, instructions or evidence; the only real-backend run, on-device, returned Review for all five. Run the five fixtures once against Claude within the $150 ceiling, with `--state eval/fixture-state.json`, and record the labels.
 - [ ] Verify each newly selected provider with its own credentials and evaluate quality before relying on it. OpenAI setup-key storage and read access in login Keychain work; the one synthetic OpenAI request was rate-limited (HTTP 429) with no verdict or usage, and the $150 ledger retains its $1 reservation. Successful classification and operational shared-Keychain import remain pending. Gemini waits for a key. Apple on-device completed five synthetic requests but returned Review for every fixture. Refusal is never spam evidence.
 - [ ] Validate optional DNS service terms/resolver, local Rspamd availability and real OCR fixtures on the signed distribution. A sandbox-denied optional operation remains unknown.
-  - [x] Verify six synthetic EN/ES/FR PNG/JPEG/GIF/TIFF cases through native Vision in a signed sandboxed harness, with malformed/remote-only inputs unknown. Observe local-mode guards and a network-observer positive control. See [runtime evidence and limits](docs/probes/local-evidence-runtime.md).
+  - [x] Verify six synthetic EN/ES/FR PNG/JPEG/GIF/TIFF cases through native Vision in a signed sandboxed harness, with malformed/remote-only inputs unknown. The app has since stopped decoding GIF and TIFF. Observe local-mode guards and a network-observer positive control. See [runtime evidence and limits](docs/probes/local-evidence-runtime.md).
   - [x] Build pinned Rspamd 4.2.2 and verify the HTTP adapter against a disposable local scanner, including empty results, stopped-service unknown, redirects without forwarding, streaming overflow, service errors, shortened deadlines, cancellation and concurrent scans. See [scanner evidence](docs/probes/rspamd-runtime.md). Installed service rules and representative quality remain separate.
   - [ ] Confirm in-process DNS queries from the signed, sandboxed app against a real resolver.
 - [ ] Complete signed live onboarding and correction acceptance.
@@ -108,28 +147,31 @@ eligible user configures [optional access](docs/spamhaus.md).
   - [ ] Complete fresh-user live onboarding, timed against the brief's five-minute target.
   - [ ] Run the rewritten Apple Events handlers from the signed app: account and special-mailbox resolution, the `whose` queries (including the local-ID-first and size-first candidate queries), message-size agreement between lookup and action, the 1,000-mailbox walk for a recorded folder, the received-date filter, the separate interactive and background OSAKit lanes, and the move polling window and settled recheck under iCloud and Google synchronization.
   - [ ] Run the reworked corrections on generated mail from the signed app: a menu-bar batch with progress and Stop, domain scope, the unverified-sender confirmation, Classify Again, and Review Junk's Block-rule prompt and restore.
-- [ ] Accept IMAP before relying on it. The route is selectable in Settings → Accounts, where Check Connection, a read-only check, validates the account for actions, but no live TLS authentication, SPECIAL-USE discovery, move or Review keyword has run against a real server. Test with disposable probes on at least one provider supporting `UID MOVE`, including OAuth bearer authentication, reconnects, switching transports, Forget Connection and the daemon's `validate`/`probe`/`run --actions` path.
+  - [ ] Check on a running build: hiding the menu bar item in General, reopening Activity from the Dock with the item hidden, URL, file and notification window requests handled at the scene with the item hidden, and VoiceOver reading the menu bar item's state title.
+- [ ] Accept IMAP before relying on it. The route is selectable in Settings → Accounts, where Check Connection, a read-only check, validates the account for actions, but no live TLS authentication, SPECIAL-USE discovery, move or Review keyword has run against a real server. Test with disposable probes on at least one provider supporting `UID MOVE`, including password sign-in from the app, reconnects, switching transports, Forget Connection, and the daemon's OAuth bearer authentication and `validate`/`probe`/`run --actions` path. A connection saved with an OAuth token by an earlier build now signs in with it as a password and fails open; re-enter a password.
+  - [ ] Owner decision: should going live revisit IMAP mail previewed during dry run? IMAP reads each message once, so previewed mail stays where it is when filtering goes live, unlike Apple Mail; a dry-run-to-live rescan is designed but not built.
 - [ ] Make trusted receiving servers usable and safe.
   - [x] Settings → Accounts shows each account's trusted mail server or detection progress, with Trust Detected Server, Enter Server…, Edit… and Stop Trusting. Until the user trusts a server, relationships and Allow rules in that account are model evidence only.
   - [x] Before a Junk correction writes a Block rule for an unauthenticated sender, ask for confirmation in the inspector, the digest and selected-message batches, saying the From address may be forged.
   - [ ] Make an address lose its authenticated receipt credit when one of its messages is later labeled Junk or Review, including corpus relabels, and confirm through the pipeline that a persisted receipt count without trusted aligned authentication never allows a sender.
   - [ ] Give the headless daemon a way to confirm trusted servers; today it can only use trust set through the shared store.
-- [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. An automatic or correction move is confirmed after two consecutive matching observations two seconds apart, and the pipeline rechecks it once the 30-second settling window ends, marking the outcome unconfirmed if the message is no longer its destination's one copy. The disposable probe waits the full window for each move. These are client observations, not server acknowledgements, and a recheck pending when the app quits is lost. Ambiguous same-account Sent copies remain untouched.
+- [ ] Extend move synchronization coverage to slow/offline servers and longer observation windows. An automatic or correction move is confirmed after two consecutive matching observations two seconds apart, and the pipeline rechecks it once the 30-second settling window ends, marking the outcome unconfirmed if the message is no longer its destination's one copy. The disposable probe waits the full window for each move. These are client observations, not server acknowledgements. A recheck pending when the app quits is lost, and that move never counts as settled, so rescuing its message teaches nothing. Ambiguous same-account Sent copies remain untouched.
 - [ ] Measure automatic sweep latency on large and mutating mailboxes. Bounded repeating scans do not promise immediate coverage.
 - [ ] Calibrate general detectors on source-audited public holdouts and evaluate personalization incrementally on independently reviewed mail. No labeled personal corpus exists yet; it is not a universal-training or initial-use prerequisite. Conservative 99, Balanced 95 and Aggressive 90 remain provisional; the evaluator's calibration targets (0.1%, 0.2% and 0.5% false-positive bounds) are provisional too. Approximately 1,500 independent good examples with zero false positives are needed for a rule-of-three upper bound of 0.2%; mock fixtures do not establish that target.
   - The user is accumulating SpamSieve-classified mail in each account's Junk folder. Preserve these folders as candidate sources; keep SpamSieve predictions separate from human-confirmed labels. Include reviewed wanted mail and graymail, exclude generated probes, deduplicate, and reserve a holdout before tuning. See [evaluation](docs/evaluation.md).
-- [ ] Obtain PCC managed entitlement approval and matching profiles if PCC is desired.
+- [ ] Obtain PCC managed entitlement approval and matching profiles if PCC is desired. Private Cloud Compute has no token-counting API, so its context fit can't be measured before a request, unlike the on-device model's.
 - [ ] Get an early App Review decision on the `com.apple.mail` Apple Events temporary exception before further store work. Every action path depends on it and the extension alone does nothing, so a refusal also risks a minimum-functionality rejection. If it is refused, decide between an IMAP-only store build and no store edition. Developer ID is the primary channel meanwhile. See [App Store feasibility](docs/app-store-feasibility.md).
 - [ ] Complete App Store Connect metadata/privacy disclosures, the exception justification, signed store export, store validation and App Review. Authenticated validation stops because no App Store Connect app record exists for `codes.tim.SpamWise` (error 19). No upload or publication has been performed. See [App Store packaging](docs/app-store.md).
   - [x] Prepare provider-retention disclosures, a source/artifact privacy audit, Mail exception/reviewer notes, and a responsive static marketing/privacy/support site under `docs/`. Publication and final privacy answers remain separate steps.
   - [x] Declare Emails or Text Messages and Other User Content (App Functionality, not linked to tracking) in the app's privacy manifest; give the extension a manifest declaring no collection.
+  - [ ] Owner choice: the app category. The bundle declares Utilities (`INFOPLIST_KEY_LSApplicationCategoryType` in the four app configurations) while the [App Store draft](docs/app-store.md) says Productivity; set both to the chosen one.
 
 ## Remaining gates and who can close them
 
 | Gate | Affected work | Needed next |
 | --- | --- | --- |
 | Provider/account access | New-provider acceptance, §8 fixture run, PCC | Unlock the saved OpenAI setup key for operational import and supply usable quota; provide the Gemini key; authorize the Claude fixture run; obtain Apple's PCC grant if desired |
-| Publisher/release decisions | Store acceptance, SS-20 | Approve making `RISCfuture/SpamWise` public and publishing the site; create the App Store Connect record; obtain the Mail exception decision and reviewer access |
+| Publisher/release decisions | Store acceptance, SS-20 | Choose a source license (then add `LICENSE` and update the README); decide whether to rewrite history before going public, since earlier commits still hold a removed agent code review and probe notes with private-mail detail; approve making `RISCfuture/SpamWise` public and publishing the site; choose the app category; create the App Store Connect record; obtain the Mail exception decision and reviewer access |
 | Interactive environment coverage | Fresh onboarding, IMAP, SS-01/02/06/07/08/09/14/18 | A fresh macOS user/permission flow, notification permission, controlled sleep/lock/reboot/offline/reconnect sessions, a second device, an IMAP test account and additional account/hardware configurations |
 | Independent quality evidence | General spam/phishing, targeted fraud, graymail, calibration, SS-03/05/21/22/23 | Contemporary licensed legitimate negatives, reviewed language/objective labels and unseen campaign-separated evaluation; private preferences need the user's judgments. Current screened models failed specificity, so none is shipped as a universal detector |
 | Technical containment and threat coverage | PDF production, SS-17, malware | Resolve hard memory containment and worker lifecycle/cancellation before app integration; obtain adversarial document/malware evidence |
@@ -178,6 +220,7 @@ creating separate completion criteria for the same work.
   - [x] Persist per-account paging and display scan health.
   - [x] Check each account's new Inbox mail first on every tick and Mail-rule trigger, then continue a bounded backfill to a per-account start boundary: setup completion, the time a later account is first checked or included, or the upgrade time for existing installations; IMAP reads UIDs above a per-UIDVALIDITY high-water mark first. Queue triggers that arrive during a scan, keep processed identities in a durable index independent of Activity, and filter older mail only through an explicit dry-run preview before applying. Verified offline against date-filtered fixtures.
   - [ ] Confirm in a live run that the date-filtered page script orders mail newest first and that Mail filters a large Inbox within the 8-second script limit.
+  - [ ] Confirm in a live run that Mail stays frontmost and Activity stays closed when the Mail rule's `open -g spamwise://check-inbox` fires, both while SpamWise runs and when the rule launches it.
   - [x] Keep oversized or unavailable sources from blocking later readable mail; persist unreadable counts, retry on the next sweep and preserve training claims on incomplete reads. See [paging behavior and limits](docs/probes/unreadable-mail-pages.md).
   - [x] Fall back when a page keeps timing out: halve the page after each consecutive timeout (one message after four) and skip a backfill position that still times out after six. Record per-account coverage (visited, classified, reviewed, unclassified), consecutive failures and timeouts, and the latest pass start.
   - [x] Verify controlled incoming delivery and continuing scans with windows closed and after app relaunch.
@@ -195,6 +238,7 @@ creating separate completion criteria for the same work.
   move tests; preserve source-folder/action provenance and clean up generated probes.
   - [x] Expose account-specific special-mailbox destination previews.
   - [ ] Verify concurrent-filter behavior and slow/offline provider synchronization.
+  - [ ] Verify coexistence with Mail's own Junk Mail filter, on by default, in both its mark-only mode (whose colors can resemble Review) and its move-to-Junk mode.
 
 - [ ] **SS-03 — Offer a genuinely local filtering mode.** SpamSieve's
   [documented privacy baseline](https://c-command.com/spamsieve/features) is processing
@@ -223,6 +267,7 @@ creating separate completion criteria for the same work.
   - [x] Reject a new selected-message correction while one runs; automatic sweeps don't block user corrections.
   - [ ] Overlap or batch post-move verification; moves still settle one at a time.
   - [ ] Verify Good and Review corrections, a multi-message selection and a Shortcuts key while Mail is frontmost live.
+  - [ ] Check at runtime whether Preview and Correct Selected Mail, which declare `.foreground`, bring SpamWise forward, before switching them to run in the background.
 
 - [ ] **SS-05 — Demonstrate quality and performance against SpamSieve.** Use its
   [published accuracy statistics](https://c-command.com/spamsieve/help/statistics)
@@ -251,8 +296,8 @@ creating separate completion criteria for the same work.
   - [x] Keep monitoring independent of windows and provide opt-in login registration.
   - [x] Verify scan progress with all app windows closed and persisted scope/progress after app quit/relaunch.
   - [x] Report one aggregate filtering state in the menu bar and Activity footer: setup incomplete, paused, Mail not authorized, Mail not running, offline, failing, mailboxes not found, dry run or filtering.
-  - [ ] Launch at login in the background, without presenting a window.
-  - [ ] Evaluate App Nap during unattended sweeps, for example with `ProcessInfo.beginActivity`.
+  - [x] Open at login without presenting a window: a login launch closes the Activity window that SwiftUI opens.
+  - [x] Keep App Nap off while Mail work runs with no window visible, through `ProcessInfo.beginActivity`, still allowing idle sleep. Sustained unattended timing stays under SS-01's latency item.
   - [ ] Verify screen-lock, OS restart, sleep/wake and fresh-user acceptance.
 
 ### P1 — daily workflows and control
@@ -281,6 +326,7 @@ creating separate completion criteria for the same work.
   Ordinary Junk moves and server classifications must not count as user training.
   Test from a second device and preserve failures for review.
   - [x] Implement dedicated-folder baseline, atomic training claims and retained failures.
+  - [x] Move a placement trained during dry run once filtering goes live, only while its correction stands (not undone or corrected again). A complete traversal releases claims it no longer finds, and a folder over 5,000 messages completes with a noted limit.
   - [ ] Verify deliberate placement from a second device and reconnect behavior.
 
 - [ ] **SS-09 — Select accounts and folders to filter, and refilter deliberately.**
@@ -295,7 +341,7 @@ creating separate completion criteria for the same work.
     - [x] Exact account/path plans, date boundaries, cancellable dry-run preview, and a core plan lifecycle (disable and remove) with a specific error when the 20-plan limit is reached.
     - [x] List saved plans independently of folder discovery, including unresolved ones, with a Process toggle and confirmed Remove, and show plan errors under Save Plan.
     - [ ] Support folder exclusion; the Inbox is always swept for selected accounts.
-  - [x] Verify signed historical preview in a generated folder and fail-closed behavior after renaming that folder; the saved scope remains unchanged and the generated message stays untouched.
+  - [x] Verify signed folder resolution and a no-action historical preview in a generated folder, and fail-closed behavior after renaming that folder; the saved scope remains unchanged and the generated message stays untouched. Classification was not exercised: provider consent was off, so the preview returned `consentRequired`.
   - [ ] Extend coverage to actual server rules and reconnects.
 
 - [x] **SS-10 — Expand rules beyond literal sender addresses/domains.** SpamSieve
@@ -349,6 +395,7 @@ creating separate completion criteria for the same work.
   - [x] Implement quiet batched notifications, review ranking and separate post-Junk read status.
   - [x] Verify a generated message remains unread during Junk settling, then becomes read only after the confirmed Junk outcome; independently compare unchanged source.
   - [ ] Verify signed notification delivery and deep links after permission is granted.
+  - [ ] Decide whether notifications offer correction actions, as this item's direct correction links ask, or stay count-only with Review in SpamWise.
 
 - [ ] **SS-15 — Protect against own-address and trusted-sender spoofing.** SpamSieve
   has an [own-address exception to Contacts trust](https://c-command.com/spamsieve/help/catch-spam-sent-from-my).
@@ -381,7 +428,8 @@ creating separate completion criteria for the same work.
   extraction and additional image formats, with malicious, encrypted and oversized
   fixtures. Keep attachment content untrusted, never execute macros or fetch remote
   content, and distinguish unreadable attachments from spam evidence.
-  - [x] Add bounded text/HTML attachments and additional verified still-image formats.
+  - [x] Add bounded text/HTML attachment extraction.
+  - [ ] Decode GIF, TIFF and HEIC images for OCR in an isolated worker. The app reads only PNG and JPEG, checking each part's signature before ImageIO sees it.
   - [x] Complete isolated PDF/document extraction evaluation and encrypted/resource-limit fixtures. See [ten-case probe and limits](docs/probes/document-inspection.md).
   - [x] Build and test a signed restricted XPC harness with mutual code requirements, bounded data-only messages, sandbox file/network denial and crash/CPU/wall/resident-watchdog recovery. See [worker behavior and shipping limits](Tools/DocumentWorker/README.md).
   - [ ] Establish enforceable memory containment, acceptable lifecycle latency and adversarial coverage before integrating production PDF extraction. The sampled watchdog demonstrably overshoots; PDFs remain unsupported in the app.
@@ -395,7 +443,7 @@ creating separate completion criteria for the same work.
   unsupported cases, macOS 27 and hardware requirements; older-macOS support needs a
   feasibility decision rather than an automatic deployment-target downgrade. No
   additional mail-client adapters or direct server integrations are required.
-  - [x] Publish the specific iCloud/Google evidence and unsupported/runtime-pending matrix.
+  - [x] Publish tested iCloud and Google behavior and untested account types on the [Mail compatibility](docs/mail-compatibility.md) page; the per-check probe matrix is in the [live Mail follow-up](docs/probes/live-mail-followup.md).
   - [ ] Complete offline recovery and broader account/hardware acceptance.
 
 - [x] **SS-19 — Expose documented automation.** SpamSieve supplies an
@@ -421,7 +469,7 @@ creating separate completion criteria for the same work.
   - [x] Maintain a [functionality ledger](docs/distribution-differences.md) for the two editions.
   - [x] Build separate `SpamWise-MAS` and `SpamWise-download` targets over the shared `SpamWise Common` framework. The download edition runs scheduled and manual GitHubUpdateChecker checks and hands the user the downloaded disk image; the store edition links no updater. See [updating](docs/updating.md).
   - [x] Add fastlane lanes that archive both editions, notarize and staple the download app and its disk image, upload the store build, and a tag-driven release workflow with `CHANGELOG.md` notes.
-  - [x] Add CI: `ci.yml` runs the package tests, builds both editions and the extension, and runs the hostless unit tests on pushes and pull requests to `main`; `lint.yml` runs SwiftLint.
+  - [x] Add CI: on pushes and pull requests to `main`, `ci.yml` runs the source checks and Python tool tests on Linux, the package tests, Release builds of both editions with the icon check and of the extension, and the hostless unit tests, failing on any build diagnostic; `lint.yml` runs a pinned SwiftLint.
   - [x] Add CI jobs that run the UI tests against an ad-hoc-signed App Store edition in test mode and build the package's DocC, failing on any warning in SpamWiseCore sources.
   - [ ] Confirm the UI job passes on a hosted runner; XCUITest Accessibility there and the ad-hoc runner without a provisioning profile are unexercised.
   - [x] Prepare and browser-check five static prerelease pages at desktop and mobile widths, with local assets and no analytics.
@@ -443,6 +491,7 @@ creating separate completion criteria for the same work.
     - [x] Compare shipped, category-preference and Junk-import conditions on a frozen private holdout; the import changed no effective decision ([Junk-folder results](docs/probes/junk-folder-oobe.md)).
   - [x] Complete the synthetic multilingual policy/example smoke test with $0.0020729 estimated new cost and $1.20 conservative reservations; leave thresholds unchanged.
   - [ ] Measure semantic-preference benefit on independently reviewed unseen mail.
+  - [ ] Evaluate adversarial prompt injection and contradictory examples. Classifier tests cover escaping and separation only.
 
 - [ ] **SS-22 — Reduce review effort without hiding risk.** Rank Review and rescue
   candidates by disagreement and likely error; explain the specific rule/evidence
@@ -452,6 +501,7 @@ creating separate completion criteria for the same work.
   uncluttered English/Spanish/French flows.
   - [x] Rank review by action failure, disagreement and uncertainty; report observed review effort.
   - [ ] Measure review effort at the matched false-positive bound.
+  - [ ] Show the effect of a proposed correction in the inspector before it is saved.
 
 - [ ] **SS-23 — Make local/cloud tradeoffs explicit and measurable.** After SS-03
   and SS-05, evaluate an opt-in local-first classifier policy with separately
