@@ -29,6 +29,31 @@ struct `Junk dispatch claims` {
   }
 
   @Test
+  func `marks a decision whose claim can't be saved instead of adding a failure record`()
+    async throws
+  {
+    let lock = try StoreLockHolder(store)
+    let (checked, signal) = AsyncStream.makeStream(of: Void.self)
+    await adapter.beforeEachSupportCheck {
+      lock.hold()
+      signal.yield()
+    }
+    let pipeline = pipeline, adapter = adapter, message = try envelope()
+    let processing = Task { await pipeline.process(message, adapter: adapter) }
+    for await _ in checked { break }
+    processing.cancel()
+    try await Task.sleep(for: lockHoldAfterCancellation)
+    lock.release()
+    let unstarted = await processing.value
+    #expect(unstarted.outcome == .failed)
+    #expect(unstarted.decision.label == .junk)
+    let records = try await StateRepository.load(store).records
+    #expect(records.map(\.id) == [unstarted.id])
+    #expect(records.map(\.outcome) == [.failed])
+    #expect(await adapter.actions.isEmpty)
+  }
+
+  @Test
   func `adds no failure record when storage fails after acting`() async throws {
     await adapter.afterEachAction { [store] in try blockStorage(store) }
     let moved = await pipeline.process(try envelope(), adapter: adapter)
@@ -97,6 +122,13 @@ struct `Correction dispatch` {
       ]
     )
     #expect(corrections.map(\.outcome) == [.applied, .applied, .applied])
+  }
+
+  @Test
+  func `removes the Review flag from a message corrected in Mail`() async throws {
+    let good = try await pipeline.correct(envelope: try envelope(), label: .inbox, adapter: adapter)
+    #expect(good.outcome == .applied)
+    #expect(await adapter.actions == [.orangeFlag, .moveToInbox, .clearOrangeFlag])
   }
 
   @Test
