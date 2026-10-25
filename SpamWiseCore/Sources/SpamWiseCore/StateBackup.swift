@@ -89,6 +89,9 @@ public enum StateBackup {
     try await StateRepository.update(store, loading: slices) { state in
       state.rules = payload.rules
       state.contentRules = payload.contentRules ?? []
+      let ruleIDs = Set(state.contentRules.map(\.id))
+      state.contentRuleHits = state.contentRuleHits.filter { ruleIDs.contains($0.key) }
+      state.contentRuleSkips = state.contentRuleSkips.filter { ruleIDs.contains($0.key) }
       state.corrections = payload.corrections
       state.learning = payload.learning ?? LearningState()
       state.reviewedLabels = payload.labels
@@ -108,7 +111,9 @@ public enum StateBackup {
     }
   }
   private static func key(_ encoded: String) throws -> SymmetricKey {
-    guard let bytes = Data(base64Encoded: encoded), bytes.count == keyBytes else {
+    guard let bytes = Data(base64Encoded: encoded.trimmingCharacters(in: .whitespacesAndNewlines)),
+      bytes.count == keyBytes
+    else {
       throw BackupError.invalidArchive
     }
     return SymmetricKey(data: bytes)
@@ -119,6 +124,7 @@ public enum StateBackup {
       payload.labels.count <= RetentionLimits.reviewedLabels,
       payload.policy.count <= RetentionLimits.policyCharacters,
       Set(payload.rules.map(\.id)).count == payload.rules.count,
+      Set(payload.corrections.map(\.id)).count == payload.corrections.count,
       Set(payload.labels.map(\.id)).count == payload.labels.count
     else { throw BackupError.invalidArchive }
     for rule in payload.rules {
@@ -126,15 +132,25 @@ public enum StateBackup {
         throw BackupError.invalidArchive
       }
     }
-    guard (payload.contentRules?.count ?? 0) <= RetentionLimits.contentRules else {
-      throw BackupError.invalidArchive
-    }
-    for rule in payload.contentRules ?? [] { try ContentRules.validate(rule) }
+    try ContentRuleManagement.validate(payload.contentRules ?? [])
+    try validate(payload.corrections, labels: payload.labels)
     for label in payload.labels {
       if let message = label.message {
         guard message == message.boundedForRetention(),
           label.sampleID == LearningSample.identity(for: message)
         else { throw BackupError.invalidArchive }
+      }
+    }
+  }
+  /// Requires bounded corrections, quoting every account's mail only for a restored reviewed label.
+  private static func validate(_ corrections: [CorrectionExample], labels: [ReviewedLabel]) throws {
+    let sampleIDs = Set(labels.map(\.linkedSampleID))
+    for correction in corrections {
+      guard correction.isBounded else { throw BackupError.invalidArchive }
+      if correction.promptScope == .everyAccount {
+        guard let sampleID = correction.sampleID, sampleIDs.contains(sampleID) else {
+          throw BackupError.invalidArchive
+        }
       }
     }
   }

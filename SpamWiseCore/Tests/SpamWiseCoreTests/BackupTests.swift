@@ -48,10 +48,40 @@ struct `Encrypted state backup` {
   }
 
   @Test
+  func `rejects corrections that exceed their bounds or quote every account unlinked`()
+    async throws
+  {
+    let valid = CorrectionExample(
+      sender: "friend@example.org",
+      domain: "example.org",
+      subject: "Hello",
+      excerpt: "",
+      label: .inbox,
+      promptScope: .account("account-A")
+    )
+    var oversized = valid, unlinked = valid
+    oversized.subject = String(repeating: "a", count: 101)
+    unlinked.promptScope = .everyAccount
+    for invalid in [[oversized], [unlinked], [valid, valid]] {
+      var state = backedUp
+      state.corrections = invalid
+      let archive = try StateBackup.export(state, recoveryKey: key)
+      await #expect(throws: BackupError.self) {
+        try await StateBackup.restore(archive, recoveryKey: key, store: store)
+      }
+    }
+    #expect(try await StateRepository.load(store).revision == backedUp.revision)
+  }
+
+  @Test
   func `restores rules with actions disabled and spending preserved`() async throws {
-    try await StateBackup.restore(archive, recoveryKey: key, store: store)
+    try await StateRepository.update(store, loading: StateSlices([.contentRules])) {
+      $0.contentRuleHits[UUID()] = 3
+    }
+    try await StateBackup.restore(archive, recoveryKey: " \(key)\n", store: store)
     let restored = try await StateRepository.load(store)
     #expect(restored.rules == backedUp.rules)
+    #expect(restored.contentRuleHits.isEmpty)
     #expect(restored.settings.paused && restored.settings.dryRun)
     #expect(restored.settings.validatedAccounts.isEmpty)
     #expect(try await SpendingLimit.load(store).committedMicroUSD == reservation.microUSD)

@@ -48,6 +48,38 @@
           }
         }
       }
+    },
+    "The content rules could not be imported.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron importar las reglas de contenido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les règles de contenu n’ont pas pu être importées."
+          }
+        }
+      }
+    },
+    "The rule file is invalid or exceeds the import limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El archivo de reglas no es válido o supera el límite de importación."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le fichier de règles est invalide ou dépasse la limite d’importation."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -13,20 +13,26 @@ public enum ContentRuleManagement {
   }
   /// Validates the complete archive before merging rules by identity and invalidating old work.
   public static func importRules(_ data: Data, store: Store) async throws {
-    guard data.count <= maximumArchiveBytes else { throw ContentRuleError.invalid }
-    let archive = try JSONDecoder().decode(Archive.self, from: data)
-    guard archive.version == 1 else { throw ContentRuleError.invalid }
+    guard data.count <= maximumArchiveBytes else { throw ContentRuleError.invalidArchive }
+    let archive: Archive
+    do { archive = try JSONDecoder().decode(Archive.self, from: data) } catch {
+      throw ContentRuleError.invalidArchive
+    }
+    guard archive.version == 1 else { throw ContentRuleError.invalidArchive }
     try validate(archive.rules)
     try await StateRepository.update(store, loading: StateSlices([.contentRules])) { state in
       let importedIDs = Set(archive.rules.map(\.id))
       let combined = state.contentRules.filter { !importedIDs.contains($0.id) } + archive.rules
       try validate(combined)
       state.contentRules = combined
-      for id in importedIDs { state.contentRuleSkips[id] = nil }
+      for id in importedIDs {
+        state.contentRuleHits[id] = nil; state.contentRuleSkips[id] = nil
+      }
       state.invalidatePendingWork(.contentRulesImported(count: archive.rules.count))
     }
   }
-  private static func validate(_ rules: [ContentRule]) throws {
+  /// Requires at most the retained number of valid rules, each with a distinct identity.
+  static func validate(_ rules: [ContentRule]) throws {
     guard rules.count <= maximumRules, Set(rules.map(\.id)).count == rules.count else {
       throw ContentRuleError.invalid
     }
@@ -38,6 +44,12 @@ public enum ContentRuleManagement {
     var updated = rule; updated.updatedAt = .now
     let saved = updated
     try await StateRepository.update(store, loading: StateSlices([.contentRules])) { state in
+      let stored = state.contentRules.first { $0.id == saved.id }
+      if stored?.field != saved.field || stored?.operation != saved.operation
+        || stored?.pattern != saved.pattern
+      {
+        state.contentRuleHits[saved.id] = nil
+      }
       state.contentRules.removeAll { $0.id == saved.id }
       state.contentRules.append(saved)
       guard state.contentRules.count <= maximumRules else { throw ContentRuleError.invalid }
@@ -72,7 +84,7 @@ public enum ContentRuleManagement {
     try await StateRepository.update(store, loading: StateSlices([.contentRules])) { state in
       guard let rule = state.contentRules.first(where: { $0.id == id }) else { return }
       state.contentRules.removeAll { $0.id == id }
-      state.contentRuleSkips[id] = nil
+      state.contentRuleHits[id] = nil; state.contentRuleSkips[id] = nil
       state.invalidatePendingWork(.contentRuleRemoved(field: rule.field, pattern: rule.pattern))
     }
   }
