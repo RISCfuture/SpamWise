@@ -8779,6 +8779,22 @@
         }
       }
     },
+    "An API key is a long code, like a password, that lets SpamWise use %@ with your own account. Choose Get an API key to create one on the provider’s website, then copy it and paste it below. The provider bills your account for the mail SpamWise sends it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una clave de API es un código largo, como una contraseña, que permite a SpamWise usar %@ con tu propia cuenta. Elige Obtener una clave de API para crear una en el sitio web del proveedor y, después, cópiala y pégala abajo. El proveedor cobra a tu cuenta por el correo que SpamWise le envía."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une clé API est un long code, comme un mot de passe, qui permet à SpamWise d’utiliser %@ avec votre propre compte. Choisissez Obtenir une clé API pour en créer une sur le site web du fournisseur, puis copiez-la et collez-la ci-dessous. Le fournisseur facture votre compte pour les messages que SpamWise lui envoie."
+          }
+        }
+      }
+    },
     "Applies To": {
       "localizations": {
         "es": {
