@@ -27,13 +27,14 @@ public actor AppleMailAdapter: MailClientAdapter {
    Creates an adapter over a Mail handler runner, raising negative durations to zero.
 
    Each move waits up to `moveSettlingTime`, 30 seconds by default, for Mail to show the message
-   in its destination before reporting the result.
+   in its destination before reporting the result, as does a Review change Mail didn't confirm.
 
    - Parameters:
      - runner: Executes Mail handler requests.
      - callTimeLimit: Wall-clock limit for each handler call.
-     - moveSettlingTime: Longest time to wait for Mail to show a moved message.
-     - observationInterval: Delay between observations of a moved message.
+     - moveSettlingTime: Longest time to wait for Mail to show a moved message or an
+       unconfirmed Review change.
+     - observationInterval: Delay between observations of a moved message or Review change.
      - reviewMarks: The store recording each orange flag or background SpamWise set. Clearing
        Review removes only those, so without a store it removes none.
    */
