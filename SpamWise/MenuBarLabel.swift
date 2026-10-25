@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /**
@@ -11,7 +12,17 @@ struct MenuBarLabel: View {
 
   var body: some View {
     let state = scanning.filteringState
-    Label("SpamWise: \(state.localizedTitle)", systemImage: state.menuBarSymbol)
+    let title = String(localized: "SpamWise: \(state.localizedTitle)")
+    Label {
+      Text(title)
+    } icon: {
+      Image(nsImage: Self.symbol(state.menuBarSymbol, describedAs: title))
+    }
+  }
+
+  /// The status item takes its accessibility name from the image, so the symbol carries the title.
+  private static func symbol(_ name: String, describedAs title: String) -> NSImage {
+    NSImage(systemSymbolName: name, accessibilityDescription: title) ?? NSImage()
   }
 
   /// Whether the menu bar item is shown, an interface preference of this Mac that starts on.
