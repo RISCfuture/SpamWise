@@ -61,7 +61,7 @@ Resolve the next build number and write it where CI can read it
 [bundle exec] fastlane mac ci_verify_release_notes
 ```
 
-Refuse to start a release whose notes or update repository are missing (CI)
+Refuse to start a release whose version, notes or update repository are invalid (CI)
 
 ### mac ci_finish_release
 
