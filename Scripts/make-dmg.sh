@@ -28,15 +28,17 @@ xcrun stapler validate "$app" >/dev/null \
 
 mkdir -p "$output_directory"
 dmg="$output_directory/SpamWise-$version.dmg"
-rm -f "$dmg"
 
-# hdiutil refuses to overwrite, and a stale staging directory would ship whatever it holds.
+# A fresh staging directory, because a stale one would ship whatever it holds.
 stage="$(mktemp -d)"
-trap 'rm -rf "$stage"' EXIT
+log="$(mktemp)"
+trap 'rm -rf "$stage" "$log"' EXIT
 
 ditto "$app" "$stage/$(basename "$app")"
 ln -s /Applications "$stage/Applications"
 
-hdiutil create -volname "SpamWise $version" -srcfolder "$stage" -ov -format UDZO "$dmg" >/dev/null
+# The path is this script's only output, so diskutil's progress is shown only when imaging fails.
+diskutil image create from --format UDZO --volumeName "SpamWise $version" "$stage" "$dmg" \
+  >/dev/null 2>"$log" || { cat "$log" >&2; exit 1; }
 
 echo "$dmg"
