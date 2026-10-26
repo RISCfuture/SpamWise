@@ -5,8 +5,9 @@ user's mail choices call for, and sets `FilteringStrength.graymailThreshold`: th
 category confidence at which graymail in a category the user chose Junk for moves to
 Junk, unless the model answered Inbox. It compares main (`0c74636`, label policy only) with the
 category-confidence change (`0b7db68`, provisional 95, 85 and 75). The result sets the
-values to 95, 90 and 85. They are still provisional. Status is in
-[TODO.md](../../TODO.md).
+values to 95, 90 and 85, and a second round over all five profiles
+([All five profiles](#all-five-profiles)) confirms 90. They are still provisional.
+Status is in [TODO.md](../../TODO.md).
 
 ## Data
 
@@ -58,8 +59,9 @@ coldOutreach and one scam.
 
 ## Profiles
 
-`profiles.json` defines five profiles. The $5 ledger allowed four profile runs (see
-Cost), so two were run on both binaries:
+`profiles.json` defines five profiles. The first round's $5 ledger allowed four
+profile runs (see Cost), so it ran two on both binaries, and the threshold was chosen
+from them:
 
 - `declutter`: Junk for promotions, carts, events, social notifications, surveys,
   financial offers, fundraising and cold outreach; Flag for newsletters and product
@@ -67,8 +69,10 @@ Cost), so two were run on both binaries:
 - `deal-seeker`: Junk for carts, financial offers and cold outreach; Flag for
   fundraising; Keep for the rest, including promotions and events.
 
-`defaults` and `permissive` choose no Junk, so the change can't affect their
-decisions. `inbox-minimalist` was not run.
+The second round ran the other three on both binaries: `defaults` and `permissive`,
+which choose no Junk, so the change can't affect their decisions, and
+`inbox-minimalist`, which chooses Junk for every graymail category except
+newsletters.
 
 ## Method
 
@@ -209,15 +213,71 @@ the harm grows.
 (en, es, fr), `docs/evaluation.md` and the evaluation test that sits between
 Aggressive and Balanced use the new values.
 
+## All five profiles
+
+A second round ran `defaults`, `inbox-minimalist` and `permissive` on the baseline
+(`0c74636`) and on main after the threshold change (`eb1c704`), against the same
+frozen labels and split. `eb1c704` sends the same `spamwise-verdict-v4` prompt as
+`0b7db68`; only the decision step differs. The candidate's rows below recompute every
+profile, including the first round's two, at each category threshold through the
+harness's sweep, so the 90 rows are what main ships.
+
+Ten of the 930 requests failed: timeouts for m003 and m095 (baseline) and m001 and
+m147 (candidate), and network errors for m001, m033 and m034 (baseline) and m004,
+m060 and m061 (candidate), the last six in the `inbox-minimalist` runs that were
+running at the same time. None was retried, and each is scored as unclassified. The
+baseline evaluator lists only messages that miss their folder, so its replay pass
+cannot run with an uncached message; for those three profiles the replay left out
+the failed messages and the merge kept them unclassified.
+
+| Split | Binary | Adherence | Wrong Junk | Missed Junk | Review burden |
+| --- | --- | --- | --- | --- | --- |
+| dev | baseline | 239/370 64.6% | 0/322 | 48/48 | 41.4% |
+| dev | candidate 85 | 264/370 71.4% | 2/322: m044, m140 | 0/48 | 33.0% |
+| dev | candidate 90 | 259/370 70.0% | 0/322 | 5/48 | 34.9% |
+| dev | candidate 95 | 227/370 61.4% | 0/322 | 37/48 | 43.5% |
+| holdout | baseline | 184/365 50.4% | 0/317 | 48/48 | 55.3% |
+| holdout | candidate 85 | 222/365 60.8% | 3/317: m013, m035, m152 | 2/48 | 44.4% |
+| holdout | candidate 90 | 216/365 59.2% | 0/317 | 8/48 | 46.8% |
+| holdout | candidate 95 | 190/365 52.1% | 0/317 | 34/48 | 54.0% |
+
+Adherence by profile, baseline against candidate 90:
+
+| Profile | Dev | Holdout |
+| --- | --- | --- |
+| `declutter` | 56.8% → 68.9% | 41.1% → 54.8% |
+| `deal-seeker` | 67.6% → 71.6% | 52.1% → 63.0% |
+| `inbox-minimalist` | 47.3% → 66.2% | 32.9% → 56.2% |
+| `defaults` | 74.3% → 70.3% | 63.0% → 60.3% |
+| `permissive` | 77.0% → 73.0% | 63.0% → 61.6% |
+
+90 still gives zero wrong Junk in every profile on both splits; at 85,
+`inbox-minimalist` adds dev m044, again colleague mail called cold outreach. No
+spam or scam reached Inbox in any run.
+
+`defaults` and `permissive` choose no Junk, so their difference is the prompt and run
+noise alone. Paired over both splits, 17 messages matched their expected action only
+on the baseline and 9 only on the candidate (exact McNemar p = 0.17). Most were
+colleague mail moving between Inbox and Review in both directions; the rest were
+Keep graymail (three `permissive` cold-outreach messages, a cart reminder, a
+newsletter and an event) that the candidate answered Junk, which a Keep choice turns
+into Review. Wanted mail reaching Inbox in those two profiles fell from 179 to 170
+of 269 across both splits. That is not significant here, but it is the direction to
+watch when real reviewed mail is available.
+
 ## Cost
 
-There were 620 requests (155 per profile run), with 3 failures. They used 2,006,757
-input and 60,061 output tokens, an estimated **$0.23** at Haiku's captured rates
-($0.10 and $0.50 per million). The task ledger committed **$4.96 of its $5 ceiling**
-at $0.008 per request, the evaluator's minimum reservation (about $0.0078) rounded
-up. The ledger never refunds a reservation, so it, and not the actual spend, limited
-the runs to four. The replay passes used their own zero-ceiling ledgers and made no
-provider request.
+The first round made 620 requests (155 per profile run), with 3 failures. They used
+2,006,757 input and 60,061 output tokens, an estimated **$0.23** at Haiku's captured
+rates ($0.10 and $0.50 per million). The task ledger committed **$4.96 of its $5
+ceiling** at $0.008 per request, the evaluator's minimum reservation (about $0.0078)
+rounded up. The ledger never refunds a reservation, so it, and not the actual spend,
+limited that round to four runs.
+
+The second round raised the same ledger's ceiling to $12.41 and made 930 requests,
+with 10 failures: 2,989,849 input and 88,802 output tokens, an estimated **$0.34**.
+The ledger now holds **$12.40** committed. Both rounds together cost about **$0.57**.
+Replay passes used their own zero-ceiling ledgers and made no provider request.
 
 ## Limitations
 
@@ -225,17 +285,18 @@ provider request.
   from one LLM-written dataset. The public spam and phishing controls number 10.
 - The labelers are Claude agents, and so is the classifier (Haiku). Their perfect
   agreement may reflect a shared reading of the rubric.
-- One model, one run per profile, and two of five profiles. Variation between runs
-  wasn't measured, but the two profiles alone moved category confidence across the
-  85 boundary.
+- One model and one run per profile. Variation between runs wasn't measured, but the
+  profiles alone moved category confidence across the 85 boundary.
 - No trusted receiving server, Contacts, history, rules or corrections. With a trusted
   receiving server, relationship gates send known colleagues to Inbox before the
   model sees them, so the colleague-mail risk measured here applies to new or
   unverified senders.
-- Small counts: 25 or 26 Junk-expected and about 120 wrong-Junk-eligible messages per
-  split. Zero wrong Junk bounds the rate only below about 3%.
+- Small counts: 48 Junk-expected and about 320 wrong-Junk-eligible decisions per split
+  across the five profiles, which reuse the same 77 or 78 messages. Zero wrong Junk
+  bounds the rate only below about 1.2%, and less tightly for distinct messages.
 - The threshold was chosen on dev, the scale is coarse, and 90 sits one step above
   the highest misfiled wanted mail.
 - The candidate's Inbox-expected adherence was lower than the baseline's on dev (73
-  against 84 of 115) and close on holdout (57 against 61 of 113). Single runs can't
-  separate an effect of the v4 prompt from noise.
+  against 84 of 115) and close on holdout (57 against 61 of 113) in the first round,
+  and slightly lower again in the profiles without Junk choices (170 against 179 of
+  269). Neither difference is significant, but both point the same way.
