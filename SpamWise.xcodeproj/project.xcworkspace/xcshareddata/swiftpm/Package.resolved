@@ -1,12 +1,13 @@
 {
-  "originHash" : "8a9ea83b8c7b0ba6fa1d2ce9c3faf265d91d31ebb43b8e04a983f4ca02b2e473",
+  "originHash" : "8124a43ca6c038c345e323333a3c9af5eb2e2bd2f208ff4091ca37411d9ffa5f",
   "pins" : [
     {
       "identity" : "claudeforfoundationmodels",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/anthropics/ClaudeForFoundationModels.git",
       "state" : {
-        "revision" : "0262e1a766c461a4268dcec656eca95dd74cebf8"
+        "revision" : "0262e1a766c461a4268dcec656eca95dd74cebf8",
+        "version" : "0.2.3"
       }
     },
     {
@@ -86,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "21de5f08c1a166a6dd293d0e587ad977bf8dac5d",
-        "version" : "2.103.0"
+        "revision" : "6db9d9abd92ad7399b8a564cafbb87d3507245fa",
+        "version" : "2.104.0"
       }
     },
     {

@@ -34,12 +34,12 @@ let package = Package(
   dependencies: [
     .package(
       url: "https://github.com/anthropics/ClaudeForFoundationModels.git",
-      revision: "0262e1a766c461a4268dcec656eca95dd74cebf8"
+      from: "0.2.3"
     ),
-    .package(url: "https://github.com/apple/swift-argument-parser.git", exact: "1.8.2"),
-    .package(url: "https://github.com/apple/swift-nio.git", exact: "2.103.0"),
-    .package(url: "https://github.com/apple/swift-nio-imap.git", exact: "0.4.0"),
-    .package(url: "https://github.com/apple/swift-nio-transport-services.git", exact: "1.28.0")
+    .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.8.2"),
+    .package(url: "https://github.com/apple/swift-nio.git", from: "2.104.0"),
+    .package(url: "https://github.com/apple/swift-nio-imap.git", from: "0.4.0"),
+    .package(url: "https://github.com/apple/swift-nio-transport-services.git", from: "1.28.0")
   ],
   targets: [
     .target(
