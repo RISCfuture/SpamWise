@@ -80,11 +80,26 @@ enum MailScripts {
             end if
             set found to {}
             repeat with b in candidates
-                if (id of account of b) is accountID then set end of found to contents of b
+                if my belongsToAccount(contents of b, accountID) then set end of found to contents \
+    of b
             end repeat
             return found
         end tell
     end roleBoxes
+    on belongsToAccount(b, accountID)
+        with timeout of \(eventTimeoutSeconds) seconds
+            tell application "Mail"
+                try
+                    set mailboxAccount to account of b
+                on error number failureNumber
+                    if failureNumber is -1728 then return false
+                    error number failureNumber
+                end try
+                if mailboxAccount is missing value then return false
+                return (id of mailboxAccount) is accountID
+            end tell
+        end timeout
+    end belongsToAccount
     on roleBox(roleName, accountID)
         set found to my roleBoxes(roleName, accountID)
         if (count of found) is not 1 then error "Mailbox unresolved" number \

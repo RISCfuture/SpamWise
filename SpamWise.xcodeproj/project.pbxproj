@@ -1158,8 +1158,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/GitHubUpdateChecker";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.3.0;
+				kind = revision;
+				revision = 65dc827b7614fdd6bcb56bc0e897b5dfe00363ff;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

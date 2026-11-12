@@ -1,5 +1,5 @@
 {
-  "originHash" : "8124a43ca6c038c345e323333a3c9af5eb2e2bd2f208ff4091ca37411d9ffa5f",
+  "originHash" : "d14bdd1db40e9992788939e18685587ffcb6607d4a0bef8e275060bfcd377516",
   "pins" : [
     {
       "identity" : "claudeforfoundationmodels",
@@ -15,8 +15,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/GitHubUpdateChecker",
       "state" : {
-        "revision" : "3ee903e0b69b4f1c8b46e3eacbad8a98fe0e76e9",
-        "version" : "2.3.0"
+        "revision" : "65dc827b7614fdd6bcb56bc0e897b5dfe00363ff"
       }
     },
     {
@@ -69,8 +68,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log",
       "state" : {
-        "revision" : "4038b6a4f74a1426f47eb1dd5b4bb5628a15d597",
-        "version" : "1.16.1"
+        "revision" : "e3da04078777e6a1b72ce19981fbd6539b0847d8",
+        "version" : "1.17.0"
       }
     },
     {

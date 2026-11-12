@@ -176,6 +176,11 @@ class ScoringTests(unittest.TestCase):
             "high": observation("review", "promotion", 90),
             "kept": observation("review", "newsletter", 99),
             "older": observation("junk", "promotion"),
+            "protected": {
+                **observation("review", "promotion", 99),
+                "modelLabel": "inbox",
+                "confidence": 99,
+            },
         }
         swept = {
             message: adherence.swept_action(row, PREFERENCES, 80)
@@ -189,6 +194,7 @@ class ScoringTests(unittest.TestCase):
                 "high": "junk",
                 "kept": "review",
                 "older": "junk",
+                "protected": "review",
             },
         )
         self.assertEqual(adherence.swept_action(rows["low"], PREFERENCES, None), "junk")

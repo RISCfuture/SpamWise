@@ -483,6 +483,31 @@ func `invokes compiled handlers with typed arguments and private error numbers`(
   _ = try AppleScriptLibrary(source: MailScripts.library)
 }
 
+@Test
+@MainActor
+func `resolves account Junk alongside local mailboxes without an account`() throws {
+  let source =
+    MailScripts.library.replacingOccurrences(
+      of: "set candidates to mailboxes of junk mailbox",
+      with: "set candidates to my fixtureBoxes()"
+    ) + """
+
+      on fixtureBoxes()
+          using terms from application "Mail"
+              return {{name:"Junk"}, {name:"Junk", account:missing value}, ¬
+                  {name:"Junk", account:{id:"other-account"}}, ¬
+                  {name:"Account Junk", account:{id:"account"}}}
+          end using terms from
+      end fixtureBoxes
+      on scopedJunk()
+          set boxes to my roleBoxes("junk", "account")
+          return {count of boxes, name of item 1 of boxes}
+      end scopedJunk
+      """
+  let library = try AppleScriptLibrary(source: source)
+  #expect(try library.call("scopedjunk", []) == .list([.integer(1), .string("Account Junk")]))
+}
+
 @Test(arguments: [
   ("imap.gmail.com", "Junk", true), ("IMAP.GoogleMail.com.", "Spam", true),
   ("imap.gmail.com", "[Gmail]/Spam", false), ("imap.googlemail.com", "[Google Mail]/Spam", false),

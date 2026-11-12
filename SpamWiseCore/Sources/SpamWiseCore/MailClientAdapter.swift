@@ -123,7 +123,15 @@ public struct ActionNotAttempted: MailIntegrationFailure, LocalizedError {
     )
   }
   /// The non-sensitive cause, when the underlying failure provides one.
-  public var failureReason: String? { (cause as? any LocalizedError)?.failureReason }
+  public var failureReason: String? {
+    if cause as? IntegrationError == .timedOut {
+      return String(
+        localized: "Mail didn’t respond in time before the change was sent.",
+        bundle: .module
+      )
+    }
+    return (cause as? any LocalizedError)?.failureReason
+  }
   /// Wraps the failure that stopped an action before dispatch.
   public init(cause: any Error) { self.cause = cause }
 }

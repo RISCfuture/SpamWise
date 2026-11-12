@@ -183,3 +183,39 @@ each Junk-preferred graymail decision as `Decision.evaluate` does: Junk at or ab
 the threshold, and below it Junk only for a Junk label confident enough for the
 run's strength, otherwise Review. Every other effective label is kept. Choose a threshold on dev and
 confirm it on holdout.
+
+## Personal efficacy reconciliation
+
+`efficacy.py` joins saved, account-scoped metadata snapshots with the human
+observation ledger. It reads no Mail data or production store, calls no provider,
+and changes no messages, training, rules, or settings.
+
+```sh
+pyenv exec python efficacy.py /absolute/private/SpamWise-Efficacy --update-metrics
+```
+
+Run after saving a snapshot or updating `observations.json`, including a manual
+rescue or cleanup. The command pools records by record ID, uses their newest
+snapshot state, and joins the latest standing human label by message hash. Nested
+rescue observations count once. Manual cleanup can establish a human label but
+never establishes a training correction. Confirmed false positives require a
+human Good label and a matching live, settled automatic Junk action; other Junk
+placements remain unattributed. First live decisions include messages previously
+seen in dry run, while labeled epoch samples use each message's first decision.
+
+Each run writes a private dated reconciliation under `reports/`. With
+`--update-metrics`, it archives the previous aggregate beside that report and
+refreshes its derived fields. `snapshot_captured_at` and `observations_through`
+separate the two evidence cutoffs; `reconciled_at` is computation time, not a new
+Mail audit. Existing daily deltas still describe their original snapshot interval.
+Historical error text is retained as diagnostic evidence even when later snapshots
+reduce it to a generic error code. Dispatch accounting follows `never_sent`.
+
+The report also replays category thresholds from 60 through 100 on explicitly
+labeled live model decisions under the recorded current category preferences and
+strength, using the same evaluator as the preference probe. It reports wanted mail
+sent to Junk, unwanted mail caught, and Review workload for each category. These
+selected observations are development evidence, not an independent holdout;
+`validated` remains false and no production thresholds are selected. Categories
+without wanted controls cannot establish safety. Personal reports and hashes must
+stay outside the repository.

@@ -20,11 +20,17 @@ struct `Junk dispatch claims` {
     )
   }
 
-  @Test
-  func `releases the claim of an action that was never attempted`() async throws {
-    await adapter.deny(with: ActionNotAttempted(cause: IntegrationError.accountUnverified))
+  @Test(arguments: [IntegrationError.accountUnverified, .timedOut])
+  func `releases the claim of an action that was never attempted`(
+    cause: IntegrationError
+  ) async throws {
+    await adapter.deny(with: ActionNotAttempted(cause: cause))
     let refused = await pipeline.process(try envelope(), adapter: adapter)
     #expect(refused.outcome == .failed)
+    #expect(refused.actionNeverSent)
+    if cause == .timedOut {
+      #expect(ActionNotAttempted(cause: cause).failureReason != cause.failureReason)
+    }
     #expect(try await StateRepository.load(store).claimedActions.isEmpty)
   }
 

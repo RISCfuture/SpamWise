@@ -989,6 +989,8 @@ def swept_action(
         and preferences[category] == "junk"
         and row.get("categoryConfidence") is not None
     ):
+        if row.get("modelLabel") == "inbox":
+            return "review"
         confident_junk = (
             row.get("modelLabel") == "junk"
             and row.get("confidence", 0) >= junk_threshold

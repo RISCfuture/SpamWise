@@ -547,6 +547,22 @@
         }
       }
     },
+    "Mail didn’t respond in time before the change was sent.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail no respondió a tiempo antes de que se enviara el cambio."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail n’a pas répondu à temps avant l’envoi de la modification."
+          }
+        }
+      }
+    },
     "Mail didn’t respond in time, so a requested change may still happen.": {
       "localizations": {
         "es": {
