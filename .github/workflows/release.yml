@@ -27,6 +27,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  route:
+    uses: RISCfuture/ci-workflows/.github/workflows/minerva-route.yml@1.1.0
+    permissions:
+      contents: read
+
   # Before the release job's App Store upload, which cannot be undone: a dispatched version whose
   # tag already names another commit stops here.
   tag:
@@ -45,11 +50,10 @@ jobs:
         run: Scripts/check-release-tag.sh "$VERSION"
 
   release:
-    needs: tag
-    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@1.2.1
+    needs: [route, tag]
+    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@1.3.0
     with:
-      # GitHub names its macOS images after the major Xcode version they carry.
-      runner: xcode-27
+      runner: ${{ needs.route.outputs.xcode-27 }}
       ruby-version: "4.0.9"
       # Not a platform in the Apple sense: the reusable workflow runs the release lane once per
       # entry, and `ci_release` reads each one as an edition name.
